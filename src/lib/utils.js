@@ -11,3 +11,7 @@ export async function generateImage(prompt, width = 256, height = 256) {
   console.warn('generateImage is not implemented');
   return 'https://via.placeholder.com/' + width + 'x' + height;
 }
+
+export function formatCurrency(amount) {
+  return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(amount);
+}

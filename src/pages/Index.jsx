@@ -1,9 +1,10 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Loader2, Gift, Volume2, VolumeX, Zap, Settings, DollarSign, Sparkles, CreditCard, HelpCircle } from "lucide-react";
-import { generateImage } from '@/lib/utils';
+import { Loader2, Gift, Volume2, VolumeX, Zap, Settings, DollarSign, Sparkles, CreditCard, HelpCircle, Trophy, Star } from "lucide-react";
+import { generateImage, formatCurrency } from '@/lib/utils';
 import { Link } from "react-router-dom";
+import { motion, AnimatePresence } from "framer-motion";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Progress } from "@/components/ui/progress";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
@@ -40,6 +41,10 @@ const Index = () => {
   const [lastWin, setLastWin] = useState(null);
   const [multiplier, setMultiplier] = useState(1);
   const [freeSpins, setFreeSpins] = useState(0);
+  const [loyaltyPoints, setLoyaltyPoints] = useState(0);
+  const [progressiveJackpot, setProgressiveJackpot] = useState(100000);
+  const [showMiniGame, setShowMiniGame] = useState(false);
+  const [winningLines, setWinningLines] = useState([]);
 
   const symbols = ['🍒', '🍋', '🍇', '🍊', '🍉', '💎', '7️⃣', '🃏', '🎰', '🌟'];
   const [games, setGames] = useState([
@@ -48,6 +53,20 @@ const Index = () => {
     { id: 'treasure', name: "Treasure Hunt", image: null },
     { id: 'space', name: "Space Odyssey", image: null },
   ]);
+
+  const loyaltyTiers = useMemo(() => [
+    { name: 'Bronze', points: 0, color: 'text-amber-600' },
+    { name: 'Silver', points: 1000, color: 'text-gray-400' },
+    { name: 'Gold', points: 5000, color: 'text-yellow-400' },
+    { name: 'Platinum', points: 10000, color: 'text-blue-400' },
+    { name: 'Diamond', points: 25000, color: 'text-purple-400' },
+  ], []);
+
+  const currentTier = useMemo(() => {
+    return loyaltyTiers.reduce((acc, tier) => 
+      loyaltyPoints >= tier.points ? tier : acc
+    , loyaltyTiers[0]);
+  }, [loyaltyPoints, loyaltyTiers]);
 
   useEffect(() => {
     const generateGameImages = async () => {
@@ -68,11 +87,14 @@ const Index = () => {
       return;
     } else {
       setBalance(prevBalance => prevBalance - bet);
+      // Contribute to progressive jackpot
+      setProgressiveJackpot(prevJackpot => prevJackpot + bet * 0.01);
     }
 
     setSpinning(true);
     setWinAmount(0);
     setLastWin(null);
+    setWinningLines([]);
 
     const newReels = reels.map(() =>
       Array.from({ length: 3 }, () => symbols[Math.floor(Math.random() * symbols.length)])
@@ -83,16 +105,22 @@ const Index = () => {
     setTimeout(() => {
       setReels(newReels);
       setSpinning(false);
-      const win = checkWin(newReels);
+      const { win, lines } = checkWin(newReels);
       if (win > 0) {
         const totalWin = win * multiplier;
         setBalance(prevBalance => prevBalance + totalWin);
         setWinAmount(totalWin);
         setLastWin({ amount: totalWin, multiplier });
+        setWinningLines(lines);
       }
       updateBonusProgress();
       checkForFreeSpins(newReels);
+      updateLoyaltyPoints(bet);
     }, spinDuration);
+  };
+
+  const updateLoyaltyPoints = (betAmount) => {
+    setLoyaltyPoints(prevPoints => prevPoints + Math.floor(betAmount * 0.1));
   };
 
   const checkForFreeSpins = (newReels) => {
@@ -109,18 +137,31 @@ const Index = () => {
 
   const checkWin = (newReels) => {
     let win = 0;
+    let winningLines = [];
+
     // Check rows
     for (let i = 0; i < 3; i++) {
       if (newReels[0][i] === newReels[1][i] && newReels[1][i] === newReels[2][i] && newReels[2][i] === newReels[3][i] && newReels[3][i] === newReels[4][i]) {
         win += bet * getMultiplier(newReels[0][i]) * 5; // 5x for all 5 reels
+        winningLines.push({ type: 'row', index: i });
       } else if (newReels[0][i] === newReels[1][i] && newReels[1][i] === newReels[2][i] && newReels[2][i] === newReels[3][i]) {
         win += bet * getMultiplier(newReels[0][i]) * 2; // 2x for 4 reels
+        winningLines.push({ type: 'row', index: i });
       } else if (newReels[0][i] === newReels[1][i] && newReels[1][i] === newReels[2][i]) {
         win += bet * getMultiplier(newReels[0][i]);
+        winningLines.push({ type: 'row', index: i });
       }
     }
-    // Check diagonals and other paylines...
-    // (Add more complex win patterns here)
+
+    // Check diagonals
+    if (newReels[0][0] === newReels[1][1] && newReels[1][1] === newReels[2][2] && newReels[2][2] === newReels[3][1] && newReels[3][1] === newReels[4][0]) {
+      win += bet * getMultiplier(newReels[0][0]) * 5;
+      winningLines.push({ type: 'diagonal', direction: 'top-left' });
+    }
+    if (newReels[0][2] === newReels[1][1] && newReels[1][1] === newReels[2][0] && newReels[2][0] === newReels[3][1] && newReels[3][1] === newReels[4][2]) {
+      win += bet * getMultiplier(newReels[0][2]) * 5;
+      winningLines.push({ type: 'diagonal', direction: 'bottom-left' });
+    }
 
     if (win > 0) {
       setBalance(prevBalance => prevBalance + win);
@@ -129,6 +170,8 @@ const Index = () => {
         triggerJackpot();
       }
     }
+
+    return { win, lines: winningLines };
   };
 
   const getMultiplier = (symbol) => {
@@ -220,18 +263,41 @@ const Index = () => {
 
   return (
     <div className="container mx-auto px-4 py-8" style={{backgroundImage: 'url("https://source.unsplash.com/random/1920x1080?matrix")', backgroundSize: 'cover', backgroundAttachment: 'fixed'}}>
-      {lastWin && (
-        <Alert className="mb-4 bg-green-500 text-white">
-          <Sparkles className="h-4 w-4" />
-          <AlertTitle>Big Win!</AlertTitle>
-          <AlertDescription>
-            You won ${lastWin.amount} {lastWin.multiplier > 1 && `with a ${lastWin.multiplier}x multiplier`}
-            {lastWin.type === 'bonus' && ' in the Bonus Game'}
-            {lastWin.freeSpins && ` and ${lastWin.freeSpins} Free Spins!`}
-          </AlertDescription>
-        </Alert>
-      )}
+      <AnimatePresence>
+        {lastWin && (
+          <motion.div
+            initial={{ opacity: 0, y: -50 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -50 }}
+            transition={{ duration: 0.5 }}
+          >
+            <Alert className="mb-4 bg-green-500 text-white">
+              <Sparkles className="h-4 w-4" />
+              <AlertTitle>Big Win!</AlertTitle>
+              <AlertDescription>
+                You won {formatCurrency(lastWin.amount)} {lastWin.multiplier > 1 && `with a ${lastWin.multiplier}x multiplier`}
+                {lastWin.type === 'bonus' && ' in the Bonus Game'}
+                {lastWin.freeSpins && ` and ${lastWin.freeSpins} Free Spins!`}
+              </AlertDescription>
+            </Alert>
+          </motion.div>
+        )}
+      </AnimatePresence>
       <img src="https://source.unsplash.com/random/256x256?logo" alt="Matrix Slots Extravaganza" className="mx-auto mb-8 w-64 object-cover" />
+      
+      {/* Loyalty Program Display */}
+      <Card className="mb-8 bg-gradient-to-r from-indigo-600 to-purple-600 text-white">
+        <CardContent className="flex items-center justify-between p-6">
+          <div>
+            <h2 className="text-2xl font-bold mb-2">Loyalty Program</h2>
+            <p className="text-lg">
+              Current Tier: <span className={`font-bold ${currentTier.color}`}>{currentTier.name}</span>
+            </p>
+            <p>Points: {loyaltyPoints}</p>
+          </div>
+          <Trophy className="h-12 w-12 text-yellow-400" />
+        </CardContent>
+      </Card>
       
       {/* Featured Promotion */}
       <Card className="mb-8 bg-gradient-to-r from-purple-600 to-indigo-600 text-white">
@@ -405,7 +471,13 @@ const Index = () => {
                 <div className="mt-6 text-center">
                   <h3 className="text-2xl mb-2">Jackpot</h3>
                   <div className="text-4xl text-yellow-400 animate-pulse">
-                    ${jackpotTicker.toLocaleString()}
+                    {formatCurrency(jackpotTicker)}
+                  </div>
+                </div>
+                <div className="mt-6 text-center">
+                  <h3 className="text-2xl mb-2">Progressive Jackpot</h3>
+                  <div className="text-4xl text-green-400 animate-pulse">
+                    {formatCurrency(progressiveJackpot)}
                   </div>
                 </div>
               </CardContent>
@@ -418,6 +490,24 @@ const Index = () => {
       <div className="mb-8">
         <SideBet onWin={(amount) => setBalance(prevBalance => prevBalance + amount)} />
       </div>
+
+      {/* Mini-Game */}
+      {showMiniGame && (
+        <Card className="mb-8 bg-gradient-to-r from-pink-500 to-purple-500 text-white">
+          <CardContent className="p-6">
+            <h3 className="text-2xl font-bold mb-4">Mini-Game: Double or Nothing</h3>
+            <p className="mb-4">Choose Heads or Tails to double your last win!</p>
+            <div className="flex justify-center space-x-4">
+              <Button onClick={() => handleMiniGame('heads')} className="bg-yellow-400 text-black hover:bg-yellow-500">
+                Heads
+              </Button>
+              <Button onClick={() => handleMiniGame('tails')} className="bg-yellow-400 text-black hover:bg-yellow-500">
+                Tails
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Leaderboard */}
       <LeaderBoard />
