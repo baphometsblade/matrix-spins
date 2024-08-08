@@ -6,8 +6,24 @@ export function cn(...inputs) {
   return twMerge(clsx(inputs))
 }
 
-export function generateImage(prompt, width = 256, height = 256) {
-  return pico.generate(prompt, { width, height });
+import OpenAI from 'openai';
+
+const openai = new OpenAI(process.env.OPENAI_API_KEY);
+
+export async function generateImage(prompt, width = 1024, height = 1024) {
+  try {
+    const response = await openai.images.generate({
+      model: "dall-e-3",
+      prompt: prompt,
+      size: `${width}x${height}`,
+      quality: "standard",
+      n: 1,
+    });
+    return response.data[0].url;
+  } catch (error) {
+    console.error("Error generating image:", error);
+    return null;
+  }
 }
 
 export function formatCurrency(amount) {

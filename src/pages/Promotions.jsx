@@ -52,10 +52,13 @@ const [promotions, setPromotions] = useState([
 
 useEffect(() => {
   const generatePromotionImages = async () => {
-    const updatedPromotions = await Promise.all(promotions.map(async (promo) => ({
-      ...promo,
-      image: await generateImage(`${promo.title} casino promotion, digital art style, vibrant colors, eye-catching`)
-    })));
+    const updatedPromotions = await Promise.all(promotions.map(async (promo) => {
+      const imageUrl = await generateImage(`${promo.title} casino promotion, digital art style, vibrant colors, eye-catching`);
+      return {
+        ...promo,
+        image: imageUrl
+      };
+    }));
     setPromotions(updatedPromotions);
   };
   generatePromotionImages();
