@@ -1,23 +1,34 @@
 import { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Loader2, Coins, Gift } from "lucide-react";
+import { Loader2, Coins, Gift, Volume2, VolumeX, Zap } from "lucide-react";
 import { Link } from "react-router-dom";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Progress } from "@/components/ui/progress";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import PayTable from '../components/PayTable';
 
 const Index = () => {
   const [balance, setBalance] = useState(1000);
   const [bet, setBet] = useState(10);
-  const [reels, setReels] = useState([['🍒', '🍋', '🍇'], ['🍒', '🍋', '🍇'], ['🍒', '🍋', '🍇']]);
+  const [reels, setReels] = useState([['🍒', '🍋', '🍇'], ['🍒', '🍋', '🍇'], ['🍒', '🍋', '🍇'], ['🍒', '🍋', '🍇'], ['🍒', '🍋', '🍇']]);
   const [spinning, setSpinning] = useState(false);
   const [winAmount, setWinAmount] = useState(0);
+  const [jackpot, setJackpot] = useState(10000);
+  const [sound, setSound] = useState(true);
+  const [autoPlay, setAutoPlay] = useState(false);
+  const [autoPlayCount, setAutoPlayCount] = useState(0);
+  const [selectedGame, setSelectedGame] = useState('matrix');
+  const [paylines, setPaylines] = useState(20);
+  const [bonusProgress, setBonusProgress] = useState(0);
 
-  const symbols = ['🍒', '🍋', '🍇', '🍊', '🍉', '💎', '7️⃣'];
+  const symbols = ['🍒', '🍋', '🍇', '🍊', '🍉', '💎', '7️⃣', '🃏', '🎰', '🌟'];
 
   const games = [
-    { name: "Neon Nights", image: "https://source.unsplash.com/random/300x200?neon" },
-    { name: "Treasure Hunt", image: "https://source.unsplash.com/random/300x200?treasure" },
-    { name: "Space Odyssey", image: "https://source.unsplash.com/random/300x200?space" },
-    { name: "Mystic Forest", image: "https://source.unsplash.com/random/300x200?forest" },
+    { id: 'matrix', name: "Matrix Mayhem", image: "https://source.unsplash.com/random/300x200?matrix" },
+    { id: 'neon', name: "Neon Nights", image: "https://source.unsplash.com/random/300x200?neon" },
+    { id: 'treasure', name: "Treasure Hunt", image: "https://source.unsplash.com/random/300x200?treasure" },
+    { id: 'space', name: "Space Odyssey", image: "https://source.unsplash.com/random/300x200?space" },
   ];
 
   const spinReels = () => {
@@ -38,6 +49,7 @@ const Index = () => {
       setReels(newReels);
       setSpinning(false);
       checkWin(newReels);
+      updateBonusProgress();
     }, 1000);
   };
 
@@ -45,28 +57,33 @@ const Index = () => {
     let win = 0;
     // Check rows
     for (let i = 0; i < 3; i++) {
-      if (newReels[0][i] === newReels[1][i] && newReels[1][i] === newReels[2][i]) {
+      if (newReels[0][i] === newReels[1][i] && newReels[1][i] === newReels[2][i] && newReels[2][i] === newReels[3][i] && newReels[3][i] === newReels[4][i]) {
+        win += bet * getMultiplier(newReels[0][i]) * 5; // 5x for all 5 reels
+      } else if (newReels[0][i] === newReels[1][i] && newReels[1][i] === newReels[2][i] && newReels[2][i] === newReels[3][i]) {
+        win += bet * getMultiplier(newReels[0][i]) * 2; // 2x for 4 reels
+      } else if (newReels[0][i] === newReels[1][i] && newReels[1][i] === newReels[2][i]) {
         win += bet * getMultiplier(newReels[0][i]);
       }
     }
-    // Check diagonals
-    if (newReels[0][0] === newReels[1][1] && newReels[1][1] === newReels[2][2]) {
-      win += bet * getMultiplier(newReels[0][0]);
-    }
-    if (newReels[0][2] === newReels[1][1] && newReels[1][1] === newReels[2][0]) {
-      win += bet * getMultiplier(newReels[0][2]);
-    }
+    // Check diagonals and other paylines...
+    // (Add more complex win patterns here)
 
     if (win > 0) {
       setBalance(prevBalance => prevBalance + win);
       setWinAmount(win);
+      if (win >= bet * 50) {
+        triggerJackpot();
+      }
     }
   };
 
   const getMultiplier = (symbol) => {
     switch (symbol) {
-      case '💎': return 10;
-      case '7️⃣': return 7;
+      case '🌟': return 100;
+      case '🎰': return 50;
+      case '🃏': return 25;
+      case '💎': return 15;
+      case '7️⃣': return 10;
       case '🍉': return 5;
       case '🍊': return 4;
       case '🍇': return 3;
@@ -76,70 +93,166 @@ const Index = () => {
     }
   };
 
+  const triggerJackpot = () => {
+    setBalance(prevBalance => prevBalance + jackpot);
+    setWinAmount(prevWin => prevWin + jackpot);
+    setJackpot(10000); // Reset jackpot
+    // Add jackpot animation here
+  };
+
+  const updateBonusProgress = () => {
+    setBonusProgress(prev => {
+      const newProgress = prev + 5;
+      if (newProgress >= 100) {
+        triggerBonusGame();
+        return 0;
+      }
+      return newProgress;
+    });
+  };
+
+  const triggerBonusGame = () => {
+    // Implement bonus game logic here
+    alert("Bonus Game Triggered! You won 500 credits!");
+    setBalance(prevBalance => prevBalance + 500);
+  };
+
+  const toggleAutoPlay = () => {
+    setAutoPlay(!autoPlay);
+    if (!autoPlay) {
+      setAutoPlayCount(10); // Start with 10 auto spins
+      runAutoPlay();
+    }
+  };
+
+  const runAutoPlay = () => {
+    if (autoPlayCount > 0 && balance >= bet) {
+      spinReels();
+      setAutoPlayCount(prev => prev - 1);
+      setTimeout(runAutoPlay, 2000);
+    } else {
+      setAutoPlay(false);
+    }
+  };
+
+  useEffect(() => {
+    const jackpotInterval = setInterval(() => {
+      setJackpot(prevJackpot => prevJackpot + 1);
+    }, 1000);
+
+    return () => clearInterval(jackpotInterval);
+  }, []);
+
   return (
     <div className="container mx-auto px-4 py-8">
-      <h1 className="text-5xl font-bold text-white mb-8 text-center">Welcome to Matrix Slots</h1>
+      <h1 className="text-5xl font-bold text-white mb-8 text-center">Matrix Slots Extravaganza</h1>
       
       {/* Featured Promotion */}
-      <Card className="mb-8 bg-gradient-to-r from-yellow-400 to-orange-500 text-black">
+      <Card className="mb-8 bg-gradient-to-r from-purple-600 to-indigo-600 text-white">
         <CardContent className="flex items-center justify-between p-6">
           <div>
-            <h2 className="text-2xl font-bold mb-2">Welcome Bonus</h2>
-            <p className="text-lg">Get 200% bonus up to $1000 on your first deposit!</p>
+            <h2 className="text-3xl font-bold mb-2">Mega Welcome Package</h2>
+            <p className="text-xl">Get 300% bonus up to $3000 + 100 Free Spins on your first 3 deposits!</p>
           </div>
-          <Button className="bg-black text-white hover:bg-gray-800">
-            <Gift className="mr-2 h-4 w-4" />
+          <Button className="bg-yellow-400 text-black hover:bg-yellow-500">
+            <Gift className="mr-2 h-5 w-5" />
             Claim Now
           </Button>
         </CardContent>
       </Card>
 
-      {/* Matrix Slots Game */}
-      <Card className="mb-8 bg-black/50 text-white">
-        <CardHeader>
-          <CardTitle className="text-center text-2xl">Matrix Slots</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-3 gap-4 mb-6">
-            {reels.map((reel, i) => (
-              <div key={i} className="bg-gray-800 p-4 rounded-lg">
-                {reel.map((symbol, j) => (
-                  <div key={j} className="text-4xl text-center mb-2">{symbol}</div>
-                ))}
-              </div>
-            ))}
-          </div>
-          <div className="flex justify-between items-center mb-6">
-            <div className="text-xl">Balance: ${balance}</div>
-            <div className="text-xl">Bet: ${bet}</div>
-          </div>
-          <div className="flex justify-center space-x-4 mb-6">
-            <Button onClick={() => setBet(Math.max(1, bet - 1))} variant="secondary">-</Button>
-            <Button onClick={() => setBet(Math.min(100, bet + 1))} variant="secondary">+</Button>
-          </div>
-          <Button 
-            onClick={spinReels} 
-            disabled={spinning} 
-            className="w-full bg-gradient-to-r from-green-400 to-blue-500 hover:from-green-500 hover:to-blue-600"
-          >
-            {spinning ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Coins className="mr-2 h-4 w-4" />}
-            {spinning ? 'Spinning...' : 'Spin'}
-          </Button>
-          {winAmount > 0 && (
-            <div className="mt-4 text-center text-2xl text-yellow-400">You won ${winAmount}!</div>
-          )}
-        </CardContent>
-      </Card>
+      {/* Game Selection Tabs */}
+      <Tabs defaultValue={selectedGame} onValueChange={setSelectedGame} className="mb-8">
+        <TabsList className="grid w-full grid-cols-4 bg-black/50">
+          {games.map(game => (
+            <TabsTrigger key={game.id} value={game.id} className="text-white data-[state=active]:bg-purple-600">
+              {game.name}
+            </TabsTrigger>
+          ))}
+        </TabsList>
+        {games.map(game => (
+          <TabsContent key={game.id} value={game.id}>
+            <Card className="bg-black/50 text-white">
+              <CardHeader>
+                <CardTitle className="text-center text-3xl">{game.name}</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-5 gap-2 mb-6">
+                  {reels.map((reel, i) => (
+                    <div key={i} className="bg-gray-800 p-2 rounded-lg">
+                      {reel.map((symbol, j) => (
+                        <div key={j} className="text-4xl text-center mb-2">{symbol}</div>
+                      ))}
+                    </div>
+                  ))}
+                </div>
+                <div className="flex justify-between items-center mb-6">
+                  <div className="text-xl">Balance: ${balance}</div>
+                  <div className="text-xl">Bet: ${bet}</div>
+                  <div className="text-xl">Paylines: {paylines}</div>
+                </div>
+                <div className="flex justify-center space-x-4 mb-6">
+                  <Button onClick={() => setBet(Math.max(1, bet - 1))} variant="secondary">-</Button>
+                  <Button onClick={() => setBet(Math.min(100, bet + 1))} variant="secondary">+</Button>
+                  <Button onClick={() => setPaylines(Math.max(1, paylines - 1))} variant="secondary">-</Button>
+                  <Button onClick={() => setPaylines(Math.min(25, paylines + 1))} variant="secondary">+</Button>
+                </div>
+                <div className="flex justify-between mb-6">
+                  <Button 
+                    onClick={spinReels} 
+                    disabled={spinning || autoPlay} 
+                    className="w-1/3 bg-gradient-to-r from-green-400 to-blue-500 hover:from-green-500 hover:to-blue-600"
+                  >
+                    {spinning ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : <Coins className="mr-2 h-5 w-5" />}
+                    {spinning ? 'Spinning...' : 'Spin'}
+                  </Button>
+                  <Button 
+                    onClick={toggleAutoPlay}
+                    className={`w-1/4 ${autoPlay ? 'bg-red-500 hover:bg-red-600' : 'bg-blue-500 hover:bg-blue-600'}`}
+                  >
+                    <Zap className="mr-2 h-5 w-5" />
+                    {autoPlay ? `Stop (${autoPlayCount})` : 'Auto Play'}
+                  </Button>
+                  <PayTable />
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button onClick={() => setSound(!sound)} variant="outline" className="w-12">
+                          {sound ? <Volume2 className="h-5 w-5" /> : <VolumeX className="h-5 w-5" />}
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p>{sound ? 'Mute' : 'Unmute'} game sounds</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                </div>
+                {winAmount > 0 && (
+                  <div className="mt-4 text-center text-3xl text-yellow-400 animate-pulse">You won ${winAmount}!</div>
+                )}
+                <div className="mt-6">
+                  <h3 className="text-xl mb-2">Bonus Progress</h3>
+                  <Progress value={bonusProgress} className="w-full" />
+                </div>
+                <div className="mt-6 text-center">
+                  <h3 className="text-2xl mb-2">Jackpot</h3>
+                  <div className="text-4xl text-yellow-400">${jackpot.toLocaleString()}</div>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+        ))}
+      </Tabs>
 
       {/* Other Games */}
-      <h2 className="text-3xl font-bold text-white mb-4">More Games</h2>
+      <h2 className="text-3xl font-bold text-white mb-4">More Exciting Games</h2>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         {games.map((game, index) => (
-          <Card key={index} className="bg-black/50 text-white overflow-hidden">
+          <Card key={index} className="bg-black/50 text-white overflow-hidden hover:shadow-lg transition-shadow duration-300">
             <img src={game.image} alt={game.name} className="w-full h-40 object-cover" />
             <CardContent className="p-4">
               <h3 className="text-xl font-bold mb-2">{game.name}</h3>
-              <Button className="w-full bg-green-500 hover:bg-green-600 text-black">
+              <Button className="w-full bg-gradient-to-r from-pink-500 to-purple-500 hover:from-pink-600 hover:to-purple-600 text-white">
                 Play Now
               </Button>
             </CardContent>
