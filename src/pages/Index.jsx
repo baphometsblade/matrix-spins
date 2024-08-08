@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Loader2, Coins, Gift, Volume2, VolumeX, Zap, DollarSign, Settings } from "lucide-react";
+import { generateImage } from '@picojs/pico';
 import { Link } from "react-router-dom";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Progress } from "@/components/ui/progress";
@@ -31,25 +32,35 @@ const Index = () => {
   const [showSettings, setShowSettings] = useState(false);
 
   const symbols = ['🍒', '🍋', '🍇', '🍊', '🍉', '💎', '7️⃣', '🃏', '🎰', '🌟'];
-  const symbolImages = {
-    '🍒': '/assets/cherry.svg',
-    '🍋': '/assets/lemon.svg',
-    '🍇': '/assets/grapes.svg',
-    '🍊': '/assets/orange.svg',
-    '🍉': '/assets/watermelon.svg',
-    '💎': '/assets/diamond.svg',
-    '7️⃣': '/assets/seven.svg',
-    '🃏': '/assets/joker.svg',
-    '🎰': '/assets/slot-machine.svg',
-    '🌟': '/assets/star.svg',
-  };
+  const [symbolImages, setSymbolImages] = useState({});
+  const [games, setGames] = useState([
+    { id: 'matrix', name: "Matrix Mayhem", image: null },
+    { id: 'neon', name: "Neon Nights", image: null },
+    { id: 'treasure', name: "Treasure Hunt", image: null },
+    { id: 'space', name: "Space Odyssey", image: null },
+  ]);
 
-  const games = [
-    { id: 'matrix', name: "Matrix Mayhem", image: "https://picsum.photos/seed/matrix/300/200" },
-    { id: 'neon', name: "Neon Nights", image: "https://picsum.photos/seed/neon/300/200" },
-    { id: 'treasure', name: "Treasure Hunt", image: "https://picsum.photos/seed/treasure/300/200" },
-    { id: 'space', name: "Space Odyssey", image: "https://picsum.photos/seed/space/300/200" },
-  ];
+  useEffect(() => {
+    const generateSymbolImages = async () => {
+      const images = {};
+      for (const symbol of symbols) {
+        const image = await generateImage(`Slot machine symbol: ${symbol}`, { width: 64, height: 64 });
+        images[symbol] = image;
+      }
+      setSymbolImages(images);
+    };
+
+    const generateGameImages = async () => {
+      const updatedGames = await Promise.all(games.map(async (game) => {
+        const image = await generateImage(`Casino game: ${game.name}`, { width: 300, height: 200 });
+        return { ...game, image };
+      }));
+      setGames(updatedGames);
+    };
+
+    generateSymbolImages();
+    generateGameImages();
+  }, []);
 
   const spinReels = () => {
     if (balance < bet) {
@@ -204,7 +215,11 @@ const Index = () => {
                     <div key={i} className="bg-gray-800 p-2 rounded-lg">
                       {reel.map((symbol, j) => (
                         <div key={j} className="text-center mb-2">
-                          <img src={symbolImages[symbol]} alt={symbol} className="w-16 h-16 mx-auto" />
+                          {symbolImages[symbol] ? (
+                            <img src={symbolImages[symbol]} alt={symbol} className="w-16 h-16 mx-auto" />
+                          ) : (
+                            <div className="w-16 h-16 mx-auto bg-gray-600 animate-pulse" />
+                          )}
                         </div>
                       ))}
                     </div>
@@ -314,7 +329,11 @@ const Index = () => {
         {games.map((game, index) => (
           <Card key={index} className="bg-black/50 text-white overflow-hidden hover:shadow-lg transition-shadow duration-300">
             <div className="relative">
-              <img src={game.image} alt={game.name} className="w-full h-40 object-cover" />
+              {game.image ? (
+                <img src={game.image} alt={game.name} className="w-full h-40 object-cover" />
+              ) : (
+                <div className="w-full h-40 bg-gray-600 animate-pulse" />
+              )}
               <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent flex items-end p-4">
                 <h3 className="text-xl font-bold text-white">{game.name}</h3>
               </div>
