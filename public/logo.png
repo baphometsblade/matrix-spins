@@ -1,0 +1,18 @@
+<lov-add-dependency>sharp@latest</lov-add-dependency>
+
+const sharp = require('sharp');
+const { generateImage } = require('../src/lib/utils');
+
+(async () => {
+  const logoPrompt = "Futuristic 3D logo for Matrix Slots Extravaganza, combining slot machine elements with matrix-style digital effects, metallic finish, neon accents";
+  const logoUrl = await generateImage(logoPrompt, 256, 256);
+  
+  const response = await fetch(logoUrl);
+  const buffer = await response.arrayBuffer();
+  
+  await sharp(Buffer.from(buffer))
+    .png()
+    .toFile('public/logo.png');
+
+  console.log('Logo created successfully');
+})();

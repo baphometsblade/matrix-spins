@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { generateImage } from '@/lib/utils';
 import { Loader2, Gift, Volume2, VolumeX, Zap, Settings, DollarSign, Sparkles, CreditCard, HelpCircle, Trophy, Star, RefreshCw } from "lucide-react";
 import { generateImage, formatCurrency, saveImage } from '@/lib/utils';
 import { Link } from "react-router-dom";
@@ -288,8 +289,19 @@ const Index = () => {
     };
   }, [jackpot]);
 
+  const [backgroundImage, setBackgroundImage] = useState(null);
+
+  useEffect(() => {
+    const generateBackgroundImage = async () => {
+      const imagePrompt = "Futuristic casino background with matrix-style digital rain, neon lights, and slot machines, photorealistic style";
+      const imageUrl = await generateImage(imagePrompt, 1920, 1080);
+      setBackgroundImage(imageUrl);
+    };
+    generateBackgroundImage();
+  }, []);
+
   return (
-    <div className="container mx-auto px-4 py-8" style={{backgroundImage: 'url("https://source.unsplash.com/random/1920x1080?matrix,casino")', backgroundSize: 'cover', backgroundAttachment: 'fixed'}}>
+    <div className="container mx-auto px-4 py-8" style={{backgroundImage: `url("${backgroundImage}")`, backgroundSize: 'cover', backgroundAttachment: 'fixed'}}>
       <AnimatePresence>
         {lastWin && (
           <motion.div
@@ -310,7 +322,7 @@ const Index = () => {
           </motion.div>
         )}
       </AnimatePresence>
-      <img src="https://source.unsplash.com/random/256x256?logo" alt="Matrix Slots Extravaganza" className="mx-auto mb-8 w-64 object-cover" />
+      <img src="/logo.png" alt="Matrix Slots Extravaganza" className="mx-auto mb-8 w-64 object-cover" />
       
       {/* Loyalty Program Display */}
       <Card className="mb-8 bg-gradient-to-r from-indigo-600 to-purple-600 text-white">
