@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Loader2, Gift, Volume2, VolumeX, Zap, Settings } from "lucide-react";
+import { generateImage } from '@/lib/utils';
 import { Link } from "react-router-dom";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Progress } from "@/components/ui/progress";
@@ -31,12 +32,23 @@ const Index = () => {
   const [showSettings, setShowSettings] = useState(false);
 
   const symbols = ['🍒', '🍋', '🍇', '🍊', '🍉', '💎', '7️⃣', '🃏', '🎰', '🌟'];
-  const [games] = useState([
-    { id: 'matrix', name: "Matrix Mayhem", image: "/placeholder.svg" },
-    { id: 'neon', name: "Neon Nights", image: "/placeholder.svg" },
-    { id: 'treasure', name: "Treasure Hunt", image: "/placeholder.svg" },
-    { id: 'space', name: "Space Odyssey", image: "/placeholder.svg" },
+  const [games, setGames] = useState([
+    { id: 'matrix', name: "Matrix Mayhem", image: null },
+    { id: 'neon', name: "Neon Nights", image: null },
+    { id: 'treasure', name: "Treasure Hunt", image: null },
+    { id: 'space', name: "Space Odyssey", image: null },
   ]);
+
+  useEffect(() => {
+    const generateGameImages = async () => {
+      const updatedGames = await Promise.all(games.map(async (game) => ({
+        ...game,
+        image: await generateImage(`${game.name} slot machine game, digital art style`)
+      })));
+      setGames(updatedGames);
+    };
+    generateGameImages();
+  }, []);
 
   const spinReels = () => {
     if (balance < bet) {
