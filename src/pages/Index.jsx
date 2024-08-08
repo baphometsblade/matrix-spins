@@ -31,6 +31,18 @@ const Index = () => {
   const [showSettings, setShowSettings] = useState(false);
 
   const symbols = ['🍒', '🍋', '🍇', '🍊', '🍉', '💎', '7️⃣', '🃏', '🎰', '🌟'];
+  const symbolImages = {
+    '🍒': '/assets/cherry.svg',
+    '🍋': '/assets/lemon.svg',
+    '🍇': '/assets/grapes.svg',
+    '🍊': '/assets/orange.svg',
+    '🍉': '/assets/watermelon.svg',
+    '💎': '/assets/diamond.svg',
+    '7️⃣': '/assets/seven.svg',
+    '🃏': '/assets/joker.svg',
+    '🎰': '/assets/slot-machine.svg',
+    '🌟': '/assets/star.svg',
+  };
 
   const games = [
     { id: 'matrix', name: "Matrix Mayhem", image: "https://picsum.photos/seed/matrix/300/200" },
@@ -154,8 +166,8 @@ const Index = () => {
   }, []);
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <h1 className="text-5xl font-bold text-white mb-8 text-center">Matrix Slots Extravaganza</h1>
+    <div className="container mx-auto px-4 py-8" style={{backgroundImage: 'url("/assets/matrix-background.jpg")', backgroundSize: 'cover', backgroundAttachment: 'fixed'}}>
+      <img src="/assets/logo.svg" alt="Matrix Slots Extravaganza" className="mx-auto mb-8 w-64" />
       
       {/* Featured Promotion */}
       <Card className="mb-8 bg-gradient-to-r from-purple-600 to-indigo-600 text-white">
@@ -191,7 +203,9 @@ const Index = () => {
                   {reels.map((reel, i) => (
                     <div key={i} className="bg-gray-800 p-2 rounded-lg">
                       {reel.map((symbol, j) => (
-                        <div key={j} className="text-4xl text-center mb-2">{symbol}</div>
+                        <div key={j} className="text-center mb-2">
+                          <img src={symbolImages[symbol]} alt={symbol} className="w-16 h-16 mx-auto" />
+                        </div>
                       ))}
                     </div>
                   ))}
@@ -213,7 +227,11 @@ const Index = () => {
                     disabled={spinning || autoPlay} 
                     className="w-1/3 bg-gradient-to-r from-green-400 to-blue-500 hover:from-green-500 hover:to-blue-600"
                   >
-                    {spinning ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : <Coins className="mr-2 h-5 w-5" />}
+                    {spinning ? (
+                      <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                    ) : (
+                      <img src="/assets/spin-button.svg" alt="Spin" className="mr-2 h-5 w-5" />
+                    )}
                     {spinning ? 'Spinning...' : 'Spin'}
                   </Button>
                   <Button 
