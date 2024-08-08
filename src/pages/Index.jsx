@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Loader2, Gift, Volume2, VolumeX, Zap, Settings, DollarSign, Sparkles, CreditCard, HelpCircle, Dice } from "lucide-react";
+import { Loader2, Gift, Volume2, VolumeX, Zap, Settings, DollarSign, Sparkles, CreditCard, HelpCircle } from "lucide-react";
 import { generateImage } from '@/lib/utils';
 import { Link } from "react-router-dom";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -219,7 +219,7 @@ const Index = () => {
   }, [jackpot]);
 
   return (
-    <div className="container mx-auto px-4 py-8" style={{backgroundImage: 'url("/assets/matrix-background.jpg")', backgroundSize: 'cover', backgroundAttachment: 'fixed'}}>
+    <div className="container mx-auto px-4 py-8" style={{backgroundImage: 'url("https://source.unsplash.com/random/1920x1080?matrix")', backgroundSize: 'cover', backgroundAttachment: 'fixed'}}>
       {lastWin && (
         <Alert className="mb-4 bg-green-500 text-white">
           <Sparkles className="h-4 w-4" />
@@ -231,7 +231,7 @@ const Index = () => {
           </AlertDescription>
         </Alert>
       )}
-      <img src="/assets/logo.svg" alt="Matrix Slots Extravaganza" className="mx-auto mb-8 w-64" />
+      <img src="https://source.unsplash.com/random/256x256?logo" alt="Matrix Slots Extravaganza" className="mx-auto mb-8 w-64 object-cover" />
       
       {/* Featured Promotion */}
       <Card className="mb-8 bg-gradient-to-r from-purple-600 to-indigo-600 text-white">
@@ -303,7 +303,7 @@ const Index = () => {
                     {spinning ? (
                       <Loader2 className="mr-2 h-5 w-5 animate-spin" />
                     ) : (
-                      <img src="/assets/spin-button.svg" alt="Spin" className="mr-2 h-5 w-5" />
+                      <Zap className="mr-2 h-5 w-5" />
                     )}
                     {spinning ? 'Spinning...' : 'Spin'}
                   </Button>
