@@ -6,10 +6,24 @@ export function cn(...inputs) {
   return twMerge(clsx(inputs))
 }
 
-export async function generateImage(prompt, width = 256, height = 256) {
-  // Placeholder function as generateImage is not available
-  console.warn('generateImage is not implemented');
-  return 'https://via.placeholder.com/' + width + 'x' + height;
+export function generateImage(prompt, width = 256, height = 256) {
+  window.postMessage({
+    action: "generateImage",
+    prompt: prompt,
+    width: width,
+    height: height
+  }, "https://a.picoapps.xyz/boy-every");
+  
+  // Return a promise that resolves with the image URL
+  return new Promise((resolve) => {
+    const handleMessage = (event) => {
+      if (event.origin === "https://a.picoapps.xyz" && event.data.action === "imageGenerated") {
+        window.removeEventListener("message", handleMessage);
+        resolve(event.data.imageUrl);
+      }
+    };
+    window.addEventListener("message", handleMessage);
+  });
 }
 
 export function formatCurrency(amount) {
