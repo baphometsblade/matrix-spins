@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Loader2, Gift, Volume2, VolumeX, Zap, Settings, DollarSign, Sparkles, CreditCard, HelpCircle, Trophy, Star } from "lucide-react";
+import { Loader2, Gift, Volume2, VolumeX, Zap, Settings, DollarSign, Sparkles, CreditCard, HelpCircle, Trophy, Star, RefreshCw } from "lucide-react";
 import { generateImage, formatCurrency } from '@/lib/utils';
 import { Link } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
@@ -13,6 +13,7 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Slider } from "@/components/ui/slider";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { useToast } from "@/components/ui/use-toast";
 import PayTable from '../components/PayTable';
 import LeaderBoard from '../components/LeaderBoard';
 import BonusWheel from '../components/BonusWheel';
@@ -21,6 +22,7 @@ import HelpDialog from '../components/HelpDialog';
 import SideBet from '../components/SideBet';
 
 const Index = () => {
+  const { toast } = useToast();
   const [balance, setBalance] = useState(1000);
   const [bet, setBet] = useState(10);
   const [reels, setReels] = useState([['🍒', '🍋', '🍇'], ['🍒', '🍋', '🍇'], ['🍒', '🍋', '🍇'], ['🍒', '🍋', '🍇'], ['🍒', '🍋', '🍇']]);
@@ -45,6 +47,7 @@ const Index = () => {
   const [progressiveJackpot, setProgressiveJackpot] = useState(100000);
   const [showMiniGame, setShowMiniGame] = useState(false);
   const [winningLines, setWinningLines] = useState([]);
+  const [recentWins, setRecentWins] = useState([]);
 
   const symbols = ['🍒', '🍋', '🍇', '🍊', '🍉', '💎', '7️⃣', '🃏', '🎰', '🌟'];
   const [games, setGames] = useState([
@@ -90,15 +93,18 @@ const Index = () => {
     generateGameImages();
   }, []);
 
-  const spinReels = () => {
+  const spinReels = useCallback(() => {
     if (freeSpins > 0) {
       setFreeSpins(prevFreeSpins => prevFreeSpins - 1);
     } else if (balance < bet) {
-      alert("Insufficient balance!");
+      toast({
+        title: "Insufficient Balance",
+        description: "Please deposit more funds to continue playing.",
+        variant: "destructive",
+      });
       return;
     } else {
       setBalance(prevBalance => prevBalance - bet);
-      // Contribute to progressive jackpot
       setProgressiveJackpot(prevJackpot => prevJackpot + bet * 0.01);
     }
 
@@ -123,12 +129,13 @@ const Index = () => {
         setWinAmount(totalWin);
         setLastWin({ amount: totalWin, multiplier });
         setWinningLines(lines);
+        setRecentWins(prevWins => [{ amount: totalWin, timestamp: Date.now() }, ...prevWins.slice(0, 4)]);
       }
       updateBonusProgress();
       checkForFreeSpins(newReels);
       updateLoyaltyPoints(bet);
     }, spinDuration);
-  };
+  }, [balance, bet, freeSpins, multiplier, progressiveJackpot, reels, symbols, turboMode, animationSpeed, toast]);
 
   const updateLoyaltyPoints = (betAmount) => {
     setLoyaltyPoints(prevPoints => prevPoints + Math.floor(betAmount * 0.1));
@@ -273,7 +280,7 @@ const Index = () => {
   }, [jackpot]);
 
   return (
-    <div className="container mx-auto px-4 py-8" style={{backgroundImage: 'url("https://source.unsplash.com/random/1920x1080?matrix")', backgroundSize: 'cover', backgroundAttachment: 'fixed'}}>
+    <div className="container mx-auto px-4 py-8" style={{backgroundImage: 'url("https://source.unsplash.com/random/1920x1080?matrix,casino")', backgroundSize: 'cover', backgroundAttachment: 'fixed'}}>
       <AnimatePresence>
         {lastWin && (
           <motion.div
@@ -305,6 +312,10 @@ const Index = () => {
               Current Tier: <span className={`font-bold ${currentTier.color}`}>{currentTier.name}</span>
             </p>
             <p>Points: {loyaltyPoints}</p>
+          </div>
+          <div className="text-right">
+            <p className="text-sm mb-1">Next Tier: {loyaltyTiers[loyaltyTiers.indexOf(currentTier) + 1]?.name || 'Max Tier'}</p>
+            <Progress value={(loyaltyPoints / (loyaltyTiers[loyaltyTiers.indexOf(currentTier) + 1]?.points || loyaltyPoints)) * 100} className="w-32" />
           </div>
           <Trophy className="h-12 w-12 text-yellow-400" />
         </CardContent>
@@ -388,7 +399,7 @@ const Index = () => {
                     onClick={toggleAutoPlay}
                     className={`w-1/5 ${autoPlay ? 'bg-red-500 hover:bg-red-600' : 'bg-blue-500 hover:bg-blue-600'}`}
                   >
-                    <Zap className="mr-2 h-5 w-5" />
+                    <RefreshCw className="mr-2 h-5 w-5" />
                     {autoPlay ? `Stop (${autoPlayCount})` : 'Auto Play'}
                   </Button>
                   <Button
@@ -444,6 +455,17 @@ const Index = () => {
                       </div>
                     </DialogContent>
                   </Dialog>
+                </div>
+                <div className="mt-4">
+                  <h3 className="text-xl mb-2">Recent Wins</h3>
+                  <div className="flex justify-between">
+                    {recentWins.map((win, index) => (
+                      <div key={index} className="text-center">
+                        <p className="text-lg font-bold text-yellow-400">{formatCurrency(win.amount)}</p>
+                        <p className="text-sm">{new Date(win.timestamp).toLocaleTimeString()}</p>
+                      </div>
+                    ))}
+                  </div>
                 </div>
                 <BonusWheel
                   isOpen={showBonusWheel}
