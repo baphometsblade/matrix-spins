@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Dice } from "lucide-react";
+import { DiceIcon } from "lucide-react";
 
 const SideBet = ({ onWin }) => {
   const [betAmount, setBetAmount] = useState(1);
@@ -19,7 +19,7 @@ const SideBet = ({ onWin }) => {
     <Card className="bg-purple-900 text-white">
       <CardHeader>
         <CardTitle className="flex items-center">
-          <Dice className="mr-2 h-5 w-5" />
+          <DiceIcon className="mr-2 h-5 w-5" />
           Lucky Dice Side Bet
         </CardTitle>
       </CardHeader>
