@@ -1,6 +1,40 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+@keyframes matrix-rain {
+  0% {
+    transform: translateY(-100%);
+  }
+  100% {
+    transform: translateY(100%);
+  }
+}
+
+.matrix-rain {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(180deg, rgba(0,255,0,0.1) 0%, rgba(0,255,0,0.2) 50%, rgba(0,255,0,0.1) 100%);
+  background-size: 100% 20px;
+  animation: matrix-rain 20s linear infinite;
+}
+
+.matrix-rain::before {
+  content: '01010101010101010101';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  color: rgba(0,255,0,0.3);
+  font-size: 20px;
+  line-height: 20px;
+  white-space: nowrap;
+  text-shadow: 0 0 5px rgba(0,255,0,0.5);
+}
  
 @layer base {
   :root {

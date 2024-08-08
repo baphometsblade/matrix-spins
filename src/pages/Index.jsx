@@ -49,12 +49,12 @@ const Index = () => {
   const [winningLines, setWinningLines] = useState([]);
   const [recentWins, setRecentWins] = useState([]);
 
-  const symbols = ['🍒', '🍋', '🍇', '🍊', '🍉', '💎', '7️⃣', '🃏', '🎰', '🌟'];
+  const symbols = ['🔵', '🟢', '🔴', '🟣', '🟡', '💊', '🕶️', '🖥️', '🔓', '⏳'];
   const [games, setGames] = useState([
-    { id: 'matrix', name: "Matrix Mayhem", image: null },
-    { id: 'neon', name: "Neon Nights", image: null },
-    { id: 'treasure', name: "Treasure Hunt", image: null },
-    { id: 'space', name: "Space Odyssey", image: null },
+    { id: 'matrix', name: "Matrix Reloaded", image: null },
+    { id: 'cyber', name: "Cybernetic Spin", image: null },
+    { id: 'quantum', name: "Quantum Quandary", image: null },
+    { id: 'neural', name: "Neural Network", image: null },
   ]);
 
   useEffect(() => {
@@ -122,29 +122,47 @@ const Index = () => {
     setLastWin(null);
     setWinningLines([]);
 
-    const newReels = reels.map(() =>
-      Array.from({ length: 3 }, () => symbols[Math.floor(Math.random() * symbols.length)])
-    );
+    // Matrix-style reel animation
+    const animateReels = (currentFrame) => {
+      if (currentFrame < 20) { // 20 frames of animation
+        const animatedReels = reels.map(() =>
+          Array.from({ length: 3 }, () => symbols[Math.floor(Math.random() * symbols.length)])
+        );
+        setReels(animatedReels);
+        setTimeout(() => animateReels(currentFrame + 1), 50);
+      } else {
+        // Final reel state
+        const newReels = reels.map(() =>
+          Array.from({ length: 3 }, () => symbols[Math.floor(Math.random() * symbols.length)])
+        );
+        setReels(newReels);
+        setSpinning(false);
+        const { win, lines } = checkWin(newReels);
+        if (win > 0) {
+          const totalWin = win * multiplier;
+          setBalance(prevBalance => prevBalance + totalWin);
+          setWinAmount(totalWin);
+          setLastWin({ amount: totalWin, multiplier });
+          setWinningLines(lines);
+          setRecentWins(prevWins => [{ amount: totalWin, timestamp: Date.now() }, ...prevWins.slice(0, 4)]);
+        
+          // Matrix-style win animation
+          animateWin(lines);
+        }
+        updateBonusProgress();
+        updateLoyaltyPoints(bet);
+      }
+    };
 
     const spinDuration = turboMode ? 500 : 1000 / animationSpeed;
-
-    setTimeout(() => {
-      setReels(newReels);
-      setSpinning(false);
-      const { win, lines } = checkWin(newReels);
-      if (win > 0) {
-        const totalWin = win * multiplier;
-        setBalance(prevBalance => prevBalance + totalWin);
-        setWinAmount(totalWin);
-        setLastWin({ amount: totalWin, multiplier });
-        setWinningLines(lines);
-        setRecentWins(prevWins => [{ amount: totalWin, timestamp: Date.now() }, ...prevWins.slice(0, 4)]);
-      }
-      updateBonusProgress();
-      checkForFreeSpins(newReels);
-      updateLoyaltyPoints(bet);
-    }, spinDuration);
+    setTimeout(() => animateReels(0), spinDuration);
   }, [balance, bet, freeSpins, multiplier, progressiveJackpot, reels, symbols, turboMode, animationSpeed, toast]);
+
+  const animateWin = (lines) => {
+    // Implement a Matrix-style "digital rain" animation over winning lines
+    // This is a placeholder for the actual animation logic
+    console.log("Animating win for lines:", lines);
+  };
 
   const updateLoyaltyPoints = (betAmount) => {
     setLoyaltyPoints(prevPoints => prevPoints + Math.floor(betAmount * 0.1));
@@ -166,29 +184,33 @@ const Index = () => {
     let win = 0;
     let winningLines = [];
 
-    // Check rows
-    for (let i = 0; i < 3; i++) {
-      if (newReels[0][i] === newReels[1][i] && newReels[1][i] === newReels[2][i] && newReels[2][i] === newReels[3][i] && newReels[3][i] === newReels[4][i]) {
-        win += bet * getMultiplier(newReels[0][i]) * 5; // 5x for all 5 reels
-        winningLines.push({ type: 'row', index: i });
-      } else if (newReels[0][i] === newReels[1][i] && newReels[1][i] === newReels[2][i] && newReels[2][i] === newReels[3][i]) {
-        win += bet * getMultiplier(newReels[0][i]) * 2; // 2x for 4 reels
-        winningLines.push({ type: 'row', index: i });
-      } else if (newReels[0][i] === newReels[1][i] && newReels[1][i] === newReels[2][i]) {
-        win += bet * getMultiplier(newReels[0][i]);
-        winningLines.push({ type: 'row', index: i });
-      }
-    }
+    // Matrix-style paylines
+    const paylines = [
+      [[0,0], [1,0], [2,0], [3,0], [4,0]], // Horizontal top
+      [[0,1], [1,1], [2,1], [3,1], [4,1]], // Horizontal middle
+      [[0,2], [1,2], [2,2], [3,2], [4,2]], // Horizontal bottom
+      [[0,0], [1,1], [2,2], [3,1], [4,0]], // V-shape
+      [[0,2], [1,1], [2,0], [3,1], [4,2]], // Inverted V-shape
+      [[0,0], [1,0], [2,1], [3,2], [4,2]], // Zigzag top-left to bottom-right
+      [[0,2], [1,2], [2,1], [3,0], [4,0]], // Zigzag bottom-left to top-right
+      [[0,1], [1,0], [2,1], [3,2], [4,1]], // W-shape
+      [[0,1], [1,2], [2,1], [3,0], [4,1]]  // M-shape
+    ];
 
-    // Check diagonals
-    if (newReels[0][0] === newReels[1][1] && newReels[1][1] === newReels[2][2] && newReels[2][2] === newReels[3][1] && newReels[3][1] === newReels[4][0]) {
-      win += bet * getMultiplier(newReels[0][0]) * 5;
-      winningLines.push({ type: 'diagonal', direction: 'top-left' });
-    }
-    if (newReels[0][2] === newReels[1][1] && newReels[1][1] === newReels[2][0] && newReels[2][0] === newReels[3][1] && newReels[3][1] === newReels[4][2]) {
-      win += bet * getMultiplier(newReels[0][2]) * 5;
-      winningLines.push({ type: 'diagonal', direction: 'bottom-left' });
-    }
+    paylines.forEach((line, index) => {
+      const symbols = line.map(([x, y]) => newReels[x][y]);
+      const uniqueSymbols = new Set(symbols);
+    
+      if (uniqueSymbols.size === 1) {
+        const symbol = symbols[0];
+        win += bet * getMultiplier(symbol) * 5;
+        winningLines.push({ type: 'payline', index });
+      } else if (uniqueSymbols.size === 2 && symbols.filter(s => s === '💊').length >= 3) {
+        // Special case: At least 3 '💊' (red pill) symbols trigger a win
+        win += bet * getMultiplier('💊') * 3;
+        winningLines.push({ type: 'payline', index });
+      }
+    });
 
     if (win > 0) {
       setBalance(prevBalance => prevBalance + win);
@@ -198,21 +220,37 @@ const Index = () => {
       }
     }
 
+    // Check for scatter symbols (🕶️) to trigger free spins
+    const scatterCount = newReels.flat().filter(symbol => symbol === '🕶️').length;
+    if (scatterCount >= 3) {
+      triggerFreeSpins(scatterCount);
+    }
+
     return { win, lines: winningLines };
+  };
+
+  const triggerFreeSpins = (scatterCount) => {
+    const freeSpinsAwarded = scatterCount * 5;
+    setFreeSpins(prevFreeSpins => prevFreeSpins + freeSpinsAwarded);
+    toast({
+      title: "Free Spins Triggered!",
+      description: `You've won ${freeSpinsAwarded} free spins!`,
+      variant: "success",
+    });
   };
 
   const getMultiplier = (symbol) => {
     switch (symbol) {
-      case '🌟': return 100;
-      case '🎰': return 50;
-      case '🃏': return 25;
-      case '💎': return 15;
-      case '7️⃣': return 10;
-      case '🍉': return 5;
-      case '🍊': return 4;
-      case '🍇': return 3;
-      case '🍋': return 2;
-      case '🍒': return 1;
+      case '⏳': return 100; // Time manipulation symbol
+      case '🖥️': return 50; // Computer terminal symbol
+      case '🕶️': return 25; // Sunglasses symbol (Neo's iconic accessory)
+      case '💊': return 15; // Red pill symbol
+      case '🔓': return 10; // Unlocked symbol (breaking free from the Matrix)
+      case '🟣': return 5;  // Purple orb
+      case '🔴': return 4;  // Red orb
+      case '🟢': return 3;  // Green orb
+      case '🔵': return 2;  // Blue orb
+      case '🟡': return 1;  // Yellow orb
       default: return 0;
     }
   };
@@ -221,7 +259,29 @@ const Index = () => {
     setBalance(prevBalance => prevBalance + jackpot);
     setWinAmount(prevWin => prevWin + jackpot);
     setJackpot(10000); // Reset jackpot
-    // Add jackpot animation here
+  
+    // Matrix-style jackpot animation
+    toast({
+      title: "JACKPOT!",
+      description: `You've won the jackpot of ${formatCurrency(jackpot)}!`,
+      variant: "success",
+      duration: 5000,
+    });
+
+    // Trigger a full-screen Matrix-style "digital rain" animation
+    const jackpotAnimation = document.createElement('div');
+    jackpotAnimation.className = 'fixed inset-0 bg-black z-50 flex items-center justify-center';
+    jackpotAnimation.innerHTML = `
+      <div class="text-green-500 text-6xl font-bold animate-pulse">
+        JACKPOT: ${formatCurrency(jackpot)}
+      </div>
+    `;
+    document.body.appendChild(jackpotAnimation);
+
+    // Remove the animation after 5 seconds
+    setTimeout(() => {
+      document.body.removeChild(jackpotAnimation);
+    }, 5000);
   };
 
   const updateBonusProgress = () => {
@@ -324,20 +384,26 @@ const Index = () => {
       <img src="/logo.png" alt="Matrix Slots Extravaganza" className="mx-auto mb-8 w-64 object-cover" />
       
       {/* Loyalty Program Display */}
-      <Card className="mb-8 bg-gradient-to-r from-indigo-600 to-purple-600 text-white">
-        <CardContent className="flex items-center justify-between p-6">
+      <Card className="mb-8 bg-gradient-to-r from-green-600 to-blue-600 text-white overflow-hidden relative">
+        <div className="absolute inset-0 opacity-20">
+          {/* Matrix-style digital rain background */}
+          <div className="matrix-rain"></div>
+        </div>
+        <CardContent className="flex items-center justify-between p-6 relative z-10">
           <div>
-            <h2 className="text-2xl font-bold mb-2">Loyalty Program</h2>
+            <h2 className="text-2xl font-bold mb-2">Neural Network Rewards</h2>
             <p className="text-lg">
-              Current Tier: <span className={`font-bold ${currentTier.color}`}>{currentTier.name}</span>
+              Current Node: <span className={`font-bold ${currentTier.color}`}>{currentTier.name}</span>
             </p>
-            <p>Points: {loyaltyPoints}</p>
+            <p>Data Points: {loyaltyPoints}</p>
           </div>
           <div className="text-right">
-            <p className="text-sm mb-1">Next Tier: {loyaltyTiers[loyaltyTiers.indexOf(currentTier) + 1]?.name || 'Max Tier'}</p>
+            <p className="text-sm mb-1">Next Node: {loyaltyTiers[loyaltyTiers.indexOf(currentTier) + 1]?.name || 'Singularity Achieved'}</p>
             <Progress value={(loyaltyPoints / (loyaltyTiers[loyaltyTiers.indexOf(currentTier) + 1]?.points || loyaltyPoints)) * 100} className="w-32" />
           </div>
-          <Trophy className="h-12 w-12 text-yellow-400" />
+          <div className="h-16 w-16 bg-blue-500 rounded-full flex items-center justify-center">
+            <Zap className="h-10 w-10 text-white" />
+          </div>
         </CardContent>
       </Card>
       
