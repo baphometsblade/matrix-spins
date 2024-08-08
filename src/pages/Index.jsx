@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Loader2, Gift, Volume2, VolumeX, Zap, Settings } from "lucide-react";
+import { Loader2, Gift, Volume2, VolumeX, Zap, Settings, DollarSign, Sparkles } from "lucide-react";
 import { generateImage } from '@/lib/utils';
 import { Link } from "react-router-dom";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -11,8 +11,10 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Slider } from "@/components/ui/slider";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import PayTable from '../components/PayTable';
 import LeaderBoard from '../components/LeaderBoard';
+import BonusWheel from '../components/BonusWheel';
 
 const Index = () => {
   const [balance, setBalance] = useState(1000);
@@ -30,6 +32,9 @@ const Index = () => {
   const [turboMode, setTurboMode] = useState(false);
   const [animationSpeed, setAnimationSpeed] = useState(1);
   const [showSettings, setShowSettings] = useState(false);
+  const [showBonusWheel, setShowBonusWheel] = useState(false);
+  const [lastWin, setLastWin] = useState(null);
+  const [multiplier, setMultiplier] = useState(1);
 
   const symbols = ['🍒', '🍋', '🍇', '🍊', '🍉', '💎', '7️⃣', '🃏', '🎰', '🌟'];
   const [games, setGames] = useState([
@@ -59,6 +64,7 @@ const Index = () => {
     setSpinning(true);
     setBalance(prevBalance => prevBalance - bet);
     setWinAmount(0);
+    setLastWin(null);
 
     const newReels = reels.map(() =>
       Array.from({ length: 3 }, () => symbols[Math.floor(Math.random() * symbols.length)])
@@ -69,7 +75,13 @@ const Index = () => {
     setTimeout(() => {
       setReels(newReels);
       setSpinning(false);
-      checkWin(newReels);
+      const win = checkWin(newReels);
+      if (win > 0) {
+        const totalWin = win * multiplier;
+        setBalance(prevBalance => prevBalance + totalWin);
+        setWinAmount(totalWin);
+        setLastWin({ amount: totalWin, multiplier });
+      }
       updateBonusProgress();
     }, spinDuration);
   };
@@ -133,9 +145,13 @@ const Index = () => {
   };
 
   const triggerBonusGame = () => {
-    // Implement bonus game logic here
-    alert("Bonus Game Triggered! You won 500 credits!");
-    setBalance(prevBalance => prevBalance + 500);
+    setShowBonusWheel(true);
+  };
+
+  const handleBonusWheelResult = (result) => {
+    setBalance(prevBalance => prevBalance + result);
+    setShowBonusWheel(false);
+    setLastWin({ amount: result, multiplier: 1, type: 'bonus' });
   };
 
   const toggleAutoPlay = () => {
@@ -166,6 +182,16 @@ const Index = () => {
 
   return (
     <div className="container mx-auto px-4 py-8" style={{backgroundImage: 'url("/assets/matrix-background.jpg")', backgroundSize: 'cover', backgroundAttachment: 'fixed'}}>
+      {lastWin && (
+        <Alert className="mb-4 bg-green-500 text-white">
+          <Sparkles className="h-4 w-4" />
+          <AlertTitle>Big Win!</AlertTitle>
+          <AlertDescription>
+            You won ${lastWin.amount} {lastWin.multiplier > 1 && `with a ${lastWin.multiplier}x multiplier`}
+            {lastWin.type === 'bonus' && ' in the Bonus Game'}!
+          </AlertDescription>
+        </Alert>
+      )}
       <img src="/assets/logo.svg" alt="Matrix Slots Extravaganza" className="mx-auto mb-8 w-64" />
       
       {/* Featured Promotion */}
@@ -224,7 +250,7 @@ const Index = () => {
                   <Button 
                     onClick={spinReels} 
                     disabled={spinning || autoPlay} 
-                    className="w-1/3 bg-gradient-to-r from-green-400 to-blue-500 hover:from-green-500 hover:to-blue-600"
+                    className="w-1/4 bg-gradient-to-r from-green-400 to-blue-500 hover:from-green-500 hover:to-blue-600"
                   >
                     {spinning ? (
                       <Loader2 className="mr-2 h-5 w-5 animate-spin" />
@@ -235,10 +261,17 @@ const Index = () => {
                   </Button>
                   <Button 
                     onClick={toggleAutoPlay}
-                    className={`w-1/4 ${autoPlay ? 'bg-red-500 hover:bg-red-600' : 'bg-blue-500 hover:bg-blue-600'}`}
+                    className={`w-1/5 ${autoPlay ? 'bg-red-500 hover:bg-red-600' : 'bg-blue-500 hover:bg-blue-600'}`}
                   >
                     <Zap className="mr-2 h-5 w-5" />
                     {autoPlay ? `Stop (${autoPlayCount})` : 'Auto Play'}
+                  </Button>
+                  <Button
+                    onClick={() => setMultiplier(prevMultiplier => prevMultiplier < 5 ? prevMultiplier + 1 : 1)}
+                    className="w-1/5 bg-purple-500 hover:bg-purple-600"
+                  >
+                    <DollarSign className="mr-2 h-5 w-5" />
+                    {`Multiplier: ${multiplier}x`}
                   </Button>
                   <PayTable />
                   <TooltipProvider>
@@ -287,6 +320,11 @@ const Index = () => {
                     </DialogContent>
                   </Dialog>
                 </div>
+                <BonusWheel
+                  isOpen={showBonusWheel}
+                  onClose={() => setShowBonusWheel(false)}
+                  onResult={handleBonusWheelResult}
+                />
                 {winAmount > 0 && (
                   <div className="mt-4 text-center text-3xl text-yellow-400 animate-pulse">You won ${winAmount}!</div>
                 )}
