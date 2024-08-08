@@ -53,10 +53,12 @@ const [promotions, setPromotions] = useState([
 useEffect(() => {
   const generatePromotionImages = async () => {
     const updatedPromotions = await Promise.all(promotions.map(async (promo) => {
-      const imageUrl = await generateImage(`${promo.title} casino promotion, digital art style, vibrant colors, eye-catching`);
+      const imagePrompt = `${promo.title} casino promotion, digital art style, vibrant colors, eye-catching`;
+      const imageUrl = await generateImage(imagePrompt);
+      const image = await pico.loadImage(imageUrl);
       return {
         ...promo,
-        image: imageUrl
+        image: image
       };
     }));
     setPromotions(updatedPromotions);
@@ -72,7 +74,7 @@ const Promotions = () => {
         {promotions.map((promo, index) => (
           <Card key={index} className={`bg-gradient-to-br ${promo.color} text-white overflow-hidden`}>
             {promo.image && (
-              <img src={promo.image} alt={promo.title} className="w-full h-48 object-cover" />
+              <img src={promo.image.src} alt={promo.title} className="w-full h-48 object-cover" />
             )}
             <CardHeader className="flex flex-row items-center space-x-4 pb-2">
               {promo.icon}
