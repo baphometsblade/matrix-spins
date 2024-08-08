@@ -1,7 +1,7 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Loader2, Gift, Volume2, VolumeX, Zap, Settings, DollarSign, Sparkles, CreditCard, HelpCircle } from "lucide-react";
+import { Loader2, Gift, Volume2, VolumeX, Zap, Settings, DollarSign, Sparkles, CreditCard, HelpCircle, Dice } from "lucide-react";
 import { generateImage } from '@/lib/utils';
 import { Link } from "react-router-dom";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -17,6 +17,7 @@ import LeaderBoard from '../components/LeaderBoard';
 import BonusWheel from '../components/BonusWheel';
 import DepositDialog from '../components/DepositDialog';
 import HelpDialog from '../components/HelpDialog';
+import SideBet from '../components/SideBet';
 
 const Index = () => {
   const [balance, setBalance] = useState(1000);
@@ -25,6 +26,7 @@ const Index = () => {
   const [spinning, setSpinning] = useState(false);
   const [winAmount, setWinAmount] = useState(0);
   const [jackpot, setJackpot] = useState(10000);
+  const [jackpotTicker, setJackpotTicker] = useState(10000);
   const [sound, setSound] = useState(true);
   const [autoPlay, setAutoPlay] = useState(false);
   const [autoPlayCount, setAutoPlayCount] = useState(0);
@@ -163,9 +165,16 @@ const Index = () => {
     });
   };
 
-  const triggerBonusGame = () => {
+  const triggerBonusGame = useCallback(() => {
     setShowBonusWheel(true);
-  };
+  }, []);
+
+  useEffect(() => {
+    if (bonusProgress >= 100) {
+      triggerBonusGame();
+      setBonusProgress(0);
+    }
+  }, [bonusProgress, triggerBonusGame]);
 
   const handleBonusWheelResult = (result) => {
     setBalance(prevBalance => prevBalance + result);
@@ -193,11 +202,21 @@ const Index = () => {
 
   useEffect(() => {
     const jackpotInterval = setInterval(() => {
-      setJackpot(prevJackpot => prevJackpot + 1);
+      setJackpot(prevJackpot => prevJackpot + Math.floor(Math.random() * 10) + 1);
     }, 1000);
 
-    return () => clearInterval(jackpotInterval);
-  }, []);
+    const tickerInterval = setInterval(() => {
+      setJackpotTicker(prevTicker => {
+        const diff = jackpot - prevTicker;
+        return prevTicker + Math.ceil(diff / 10);
+      });
+    }, 100);
+
+    return () => {
+      clearInterval(jackpotInterval);
+      clearInterval(tickerInterval);
+    };
+  }, [jackpot]);
 
   return (
     <div className="container mx-auto px-4 py-8" style={{backgroundImage: 'url("/assets/matrix-background.jpg")', backgroundSize: 'cover', backgroundAttachment: 'fixed'}}>
@@ -354,8 +373,30 @@ const Index = () => {
                   onClose={() => setShowBonusWheel(false)}
                   onResult={handleBonusWheelResult}
                 />
+                {bonusProgress >= 80 && (
+                  <div className="mt-4 text-center">
+                    <Button
+                      onClick={triggerBonusGame}
+                      className="bg-yellow-400 text-black hover:bg-yellow-500 animate-pulse"
+                    >
+                      <Gift className="mr-2 h-5 w-5" />
+                      Claim Bonus Spin!
+                    </Button>
+                  </div>
+                )}
                 {winAmount > 0 && (
-                  <div className="mt-4 text-center text-3xl text-yellow-400 animate-pulse">You won ${winAmount}!</div>
+                  <div className="mt-4 text-center">
+                    <div className="text-3xl text-yellow-400 animate-bounce">
+                      You won ${winAmount}!
+                    </div>
+                    <div className="mt-2">
+                      <Sparkles className="inline-block mr-2 h-6 w-6 text-yellow-400" />
+                      <span className="text-xl text-green-400">
+                        {winAmount >= bet * 10 ? 'Big Win!' : winAmount >= bet * 5 ? 'Great Win!' : 'Nice Win!'}
+                      </span>
+                      <Sparkles className="inline-block ml-2 h-6 w-6 text-yellow-400" />
+                    </div>
+                  </div>
                 )}
                 <div className="mt-6">
                   <h3 className="text-xl mb-2">Bonus Progress</h3>
@@ -363,13 +404,20 @@ const Index = () => {
                 </div>
                 <div className="mt-6 text-center">
                   <h3 className="text-2xl mb-2">Jackpot</h3>
-                  <div className="text-4xl text-yellow-400">${jackpot.toLocaleString()}</div>
+                  <div className="text-4xl text-yellow-400 animate-pulse">
+                    ${jackpotTicker.toLocaleString()}
+                  </div>
                 </div>
               </CardContent>
             </Card>
           </TabsContent>
         ))}
       </Tabs>
+
+      {/* Side Bet */}
+      <div className="mb-8">
+        <SideBet onWin={(amount) => setBalance(prevBalance => prevBalance + amount)} />
+      </div>
 
       {/* Leaderboard */}
       <LeaderBoard />
