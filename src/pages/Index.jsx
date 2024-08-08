@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Loader2, Gift, Volume2, VolumeX, Zap, Settings, DollarSign, Sparkles, CreditCard, HelpCircle, Trophy, Star } from "lucide-react";
 import { generateImage, formatCurrency } from '@/lib/utils';
+import * as pico from '@picojs/pico';
 import { Link } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -72,7 +73,7 @@ const Index = () => {
     const generateGameImages = async () => {
       const updatedGames = await Promise.all(games.map(async (game) => ({
         ...game,
-        image: await generateImage(`${game.name} slot machine game, digital art style`)
+        image: await generateImage(`${game.name} slot machine game, digital art style, vibrant colors, detailed`)
       })));
       setGames(updatedGames);
     };

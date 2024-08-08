@@ -3,6 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Gift, Calendar, Users, Zap, Trophy, Sparkles } from "lucide-react";
 import { generateImage } from '@/lib/utils';
+import * as pico from '@picojs/pico';
 
 const [promotions, setPromotions] = useState([
   {
@@ -53,7 +54,7 @@ useEffect(() => {
   const generatePromotionImages = async () => {
     const updatedPromotions = await Promise.all(promotions.map(async (promo) => ({
       ...promo,
-      image: await generateImage(`${promo.title} casino promotion, digital art style`)
+      image: await generateImage(`${promo.title} casino promotion, digital art style, vibrant colors, eye-catching`)
     })));
     setPromotions(updatedPromotions);
   };
