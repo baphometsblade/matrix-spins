@@ -89,10 +89,13 @@ const Index = () => {
 
   useEffect(() => {
     const generateGameImages = async () => {
-      const updatedGames = await Promise.all(games.map(async (game) => ({
-        ...game,
-        image: await generateImage(`${game.name} slot machine game, digital art style, vibrant colors, detailed`)
-      })));
+      const updatedGames = await Promise.all(games.map(async (game) => {
+        const imageUrl = await generateImage(`${game.name} slot machine game, digital art style, vibrant colors, detailed`);
+        return {
+          ...game,
+          image: imageUrl
+        };
+      }));
       setGames(updatedGames);
     };
     generateGameImages();

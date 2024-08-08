@@ -3,9 +3,9 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Gift, Calendar, Users, Zap, Trophy, Sparkles } from "lucide-react";
 import { generateImage } from '@/lib/utils';
-import * as pico from '@picojs/pico';
 
-const [promotions, setPromotions] = useState([
+const Promotions = () => {
+  const [promotions, setPromotions] = useState([
   {
     title: "Welcome Package",
     description: "Get up to $1000 + 200 Free Spins on your first 3 deposits!",
@@ -50,23 +50,20 @@ const [promotions, setPromotions] = useState([
   },
 ]);
 
-useEffect(() => {
-  const generatePromotionImages = async () => {
-    const updatedPromotions = await Promise.all(promotions.map(async (promo) => {
-      const imagePrompt = `${promo.title} casino promotion, digital art style, vibrant colors, eye-catching`;
-      const imageUrl = await generateImage(imagePrompt);
-      const image = await pico.loadImage(imageUrl);
-      return {
-        ...promo,
-        image: image
-      };
-    }));
-    setPromotions(updatedPromotions);
-  };
-  generatePromotionImages();
-}, []);
-
-const Promotions = () => {
+  useEffect(() => {
+    const generatePromotionImages = async () => {
+      const updatedPromotions = await Promise.all(promotions.map(async (promo) => {
+        const imagePrompt = `${promo.title} casino promotion, digital art style, vibrant colors, eye-catching`;
+        const imageUrl = await generateImage(imagePrompt);
+        return {
+          ...promo,
+          image: imageUrl
+        };
+      }));
+      setPromotions(updatedPromotions);
+    };
+    generatePromotionImages();
+  }, []);
   return (
     <div className="container mx-auto px-4 py-8">
       <h1 className="text-4xl font-bold text-white mb-8 text-center">Exciting Promotions</h1>
