@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Loader2, Gift, Volume2, VolumeX, Zap, Settings, DollarSign, Sparkles } from "lucide-react";
+import { Loader2, Gift, Volume2, VolumeX, Zap, Settings, DollarSign, Sparkles, CreditCard, HelpCircle } from "lucide-react";
 import { generateImage } from '@/lib/utils';
 import { Link } from "react-router-dom";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -15,6 +15,8 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import PayTable from '../components/PayTable';
 import LeaderBoard from '../components/LeaderBoard';
 import BonusWheel from '../components/BonusWheel';
+import DepositDialog from '../components/DepositDialog';
+import HelpDialog from '../components/HelpDialog';
 
 const Index = () => {
   const [balance, setBalance] = useState(1000);
@@ -35,6 +37,7 @@ const Index = () => {
   const [showBonusWheel, setShowBonusWheel] = useState(false);
   const [lastWin, setLastWin] = useState(null);
   const [multiplier, setMultiplier] = useState(1);
+  const [freeSpins, setFreeSpins] = useState(0);
 
   const symbols = ['🍒', '🍋', '🍇', '🍊', '🍉', '💎', '7️⃣', '🃏', '🎰', '🌟'];
   const [games, setGames] = useState([
@@ -56,13 +59,16 @@ const Index = () => {
   }, []);
 
   const spinReels = () => {
-    if (balance < bet) {
+    if (freeSpins > 0) {
+      setFreeSpins(prevFreeSpins => prevFreeSpins - 1);
+    } else if (balance < bet) {
       alert("Insufficient balance!");
       return;
+    } else {
+      setBalance(prevBalance => prevBalance - bet);
     }
 
     setSpinning(true);
-    setBalance(prevBalance => prevBalance - bet);
     setWinAmount(0);
     setLastWin(null);
 
@@ -83,7 +89,20 @@ const Index = () => {
         setLastWin({ amount: totalWin, multiplier });
       }
       updateBonusProgress();
+      checkForFreeSpins(newReels);
     }, spinDuration);
+  };
+
+  const checkForFreeSpins = (newReels) => {
+    const scatterCount = newReels.flat().filter(symbol => symbol === '🃏').length;
+    if (scatterCount >= 3) {
+      const newFreeSpins = scatterCount * 5;
+      setFreeSpins(prevFreeSpins => prevFreeSpins + newFreeSpins);
+      setLastWin(prevWin => ({
+        ...prevWin,
+        freeSpins: newFreeSpins
+      }));
+    }
   };
 
   const checkWin = (newReels) => {
@@ -188,7 +207,8 @@ const Index = () => {
           <AlertTitle>Big Win!</AlertTitle>
           <AlertDescription>
             You won ${lastWin.amount} {lastWin.multiplier > 1 && `with a ${lastWin.multiplier}x multiplier`}
-            {lastWin.type === 'bonus' && ' in the Bonus Game'}!
+            {lastWin.type === 'bonus' && ' in the Bonus Game'}
+            {lastWin.freeSpins && ` and ${lastWin.freeSpins} Free Spins!`}
           </AlertDescription>
         </Alert>
       )}
@@ -207,6 +227,12 @@ const Index = () => {
           </Button>
         </CardContent>
       </Card>
+
+      {/* User Actions */}
+      <div className="flex justify-end space-x-4 mb-4">
+        <DepositDialog onDeposit={(amount) => setBalance(prevBalance => prevBalance + amount)} />
+        <HelpDialog />
+      </div>
 
       {/* Game Selection Tabs */}
       <Tabs defaultValue={selectedGame} onValueChange={setSelectedGame} className="mb-8">
@@ -239,6 +265,9 @@ const Index = () => {
                   <div className="text-xl">Balance: ${balance}</div>
                   <div className="text-xl">Bet: ${bet}</div>
                   <div className="text-xl">Paylines: {paylines}</div>
+                  {freeSpins > 0 && (
+                    <div className="text-xl text-yellow-400">Free Spins: {freeSpins}</div>
+                  )}
                 </div>
                 <div className="flex justify-center space-x-4 mb-6">
                   <Button onClick={() => setBet(Math.max(1, bet - 1))} variant="secondary">-</Button>
