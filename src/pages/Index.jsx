@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Loader2, Coins } from "lucide-react";
+import { Loader2, Coins, Gift } from "lucide-react";
+import { Link } from "react-router-dom";
 
 const Index = () => {
   const [balance, setBalance] = useState(1000);
@@ -11,6 +12,13 @@ const Index = () => {
   const [winAmount, setWinAmount] = useState(0);
 
   const symbols = ['🍒', '🍋', '🍇', '🍊', '🍉', '💎', '7️⃣'];
+
+  const games = [
+    { name: "Neon Nights", image: "https://source.unsplash.com/random/300x200?neon" },
+    { name: "Treasure Hunt", image: "https://source.unsplash.com/random/300x200?treasure" },
+    { name: "Space Odyssey", image: "https://source.unsplash.com/random/300x200?space" },
+    { name: "Mystic Forest", image: "https://source.unsplash.com/random/300x200?forest" },
+  ];
 
   const spinReels = () => {
     if (balance < bet) {
@@ -68,61 +76,28 @@ const Index = () => {
     }
   };
 
-  useEffect(() => {
-    const handleMessage = (event) => {
-      if (event.data.action === "generateImage" && event.data.prompt) {
-        generateImage(event.data.prompt);
-      }
-    };
-
-    window.addEventListener('message', handleMessage);
-    return () => window.removeEventListener('message', handleMessage);
-  }, []);
-
-  const generateImage = (prompt) => {
-    document.getElementById('spinner').classList.remove('hidden');
-    document.getElementById('imageContainer').innerHTML = '';
-
-    fetch("https://backend.buildpicoapps.com/aero/run/image-generation-api?pk=v1-Z0FBQUFBQm1zN3RVWDV1dk5hY3hkaV9JZ05fR3BlN1dvMzdsMDVvampPVHBfcGhPS1J0eGE5aEs0cFdCY3ptU2VqVW8ya3ZEdWMxZE9FZkVXVGR5ZTAxQ2pZM3liT2x2OFE9PQ==", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ prompt: prompt })
-    })
-    .then(response => response.json())
-    .then(data => {
-      if (data.status === 'success') {
-        const imageUrl = data.imageUrl;
-        fetch("https://backend.buildpicoapps.com/db/create?app_id=boy-every&table_name=image_urls", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ row: [imageUrl] })
-        })
-        .then(() => {
-          const imgElement = document.createElement('img');
-          imgElement.src = imageUrl;
-          imgElement.className = 'w-full h-auto rounded-lg shadow-md';
-          document.getElementById('imageContainer').appendChild(imgElement);
-        });
-      } else {
-        console.error('Error generating image:', data);
-        alert('Failed to generate image. Please try again.');
-      }
-    })
-    .catch(error => {
-      console.log('Error fetching images:', error);
-      alert('Error fetching images. Please try again.');
-    })
-    .finally(() => {
-      document.getElementById('spinner').classList.add('hidden');
-    });
-  };
-
   return (
-    <div className="min-h-screen bg-gradient-to-r from-purple-900 to-indigo-900 flex flex-col items-center justify-center p-4">
-      <h1 className="text-5xl font-bold text-white mb-8">Matrix Slots</h1>
-      <Card className="w-full max-w-3xl bg-black/50 text-white">
+    <div className="container mx-auto px-4 py-8">
+      <h1 className="text-5xl font-bold text-white mb-8 text-center">Welcome to Matrix Slots</h1>
+      
+      {/* Featured Promotion */}
+      <Card className="mb-8 bg-gradient-to-r from-yellow-400 to-orange-500 text-black">
+        <CardContent className="flex items-center justify-between p-6">
+          <div>
+            <h2 className="text-2xl font-bold mb-2">Welcome Bonus</h2>
+            <p className="text-lg">Get 200% bonus up to $1000 on your first deposit!</p>
+          </div>
+          <Button className="bg-black text-white hover:bg-gray-800">
+            <Gift className="mr-2 h-4 w-4" />
+            Claim Now
+          </Button>
+        </CardContent>
+      </Card>
+
+      {/* Matrix Slots Game */}
+      <Card className="mb-8 bg-black/50 text-white">
         <CardHeader>
-          <CardTitle className="text-center text-2xl">Spin to Win!</CardTitle>
+          <CardTitle className="text-center text-2xl">Matrix Slots</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-3 gap-4 mb-6">
@@ -155,9 +130,21 @@ const Index = () => {
           )}
         </CardContent>
       </Card>
-      <div id="imageContainer" className="mt-8 w-full max-w-3xl"></div>
-      <div id="spinner" className="hidden mt-4">
-        <Loader2 className="h-8 w-8 animate-spin text-white" />
+
+      {/* Other Games */}
+      <h2 className="text-3xl font-bold text-white mb-4">More Games</h2>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        {games.map((game, index) => (
+          <Card key={index} className="bg-black/50 text-white overflow-hidden">
+            <img src={game.image} alt={game.name} className="w-full h-40 object-cover" />
+            <CardContent className="p-4">
+              <h3 className="text-xl font-bold mb-2">{game.name}</h3>
+              <Button className="w-full bg-green-500 hover:bg-green-600 text-black">
+                Play Now
+              </Button>
+            </CardContent>
+          </Card>
+        ))}
       </div>
     </div>
   );
