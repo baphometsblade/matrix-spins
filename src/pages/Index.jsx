@@ -25,10 +25,10 @@ const Index = () => {
   const symbols = ['🍒', '🍋', '🍇', '🍊', '🍉', '💎', '7️⃣', '🃏', '🎰', '🌟'];
 
   const games = [
-    { id: 'matrix', name: "Matrix Mayhem", image: "https://source.unsplash.com/random/300x200?matrix" },
-    { id: 'neon', name: "Neon Nights", image: "https://source.unsplash.com/random/300x200?neon" },
-    { id: 'treasure', name: "Treasure Hunt", image: "https://source.unsplash.com/random/300x200?treasure" },
-    { id: 'space', name: "Space Odyssey", image: "https://source.unsplash.com/random/300x200?space" },
+    { id: 'matrix', name: "Matrix Mayhem", image: "https://a.picoapps.xyz/boy-every" },
+    { id: 'neon', name: "Neon Nights", image: "https://a.picoapps.xyz/boy-every" },
+    { id: 'treasure', name: "Treasure Hunt", image: "https://a.picoapps.xyz/boy-every" },
+    { id: 'space', name: "Space Odyssey", image: "https://a.picoapps.xyz/boy-every" },
   ];
 
   const spinReels = () => {
@@ -249,9 +249,13 @@ const Index = () => {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         {games.map((game, index) => (
           <Card key={index} className="bg-black/50 text-white overflow-hidden hover:shadow-lg transition-shadow duration-300">
-            <img src={game.image} alt={game.name} className="w-full h-40 object-cover" />
+            <div className="relative">
+              <img src={game.image} alt={game.name} className="w-full h-40 object-cover" />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent flex items-end p-4">
+                <h3 className="text-xl font-bold text-white">{game.name}</h3>
+              </div>
+            </div>
             <CardContent className="p-4">
-              <h3 className="text-xl font-bold mb-2">{game.name}</h3>
               <Button className="w-full bg-gradient-to-r from-pink-500 to-purple-500 hover:from-pink-600 hover:to-purple-600 text-white">
                 Play Now
               </Button>
