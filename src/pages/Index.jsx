@@ -3,7 +3,6 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Loader2, Gift, Volume2, VolumeX, Zap, Settings, DollarSign, Sparkles, CreditCard, HelpCircle, Trophy, Star } from "lucide-react";
 import { generateImage, formatCurrency } from '@/lib/utils';
-import * as pico from '@picojs/pico';
 import { Link } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -54,6 +53,17 @@ const Index = () => {
     { id: 'treasure', name: "Treasure Hunt", image: null },
     { id: 'space', name: "Space Odyssey", image: null },
   ]);
+
+  useEffect(() => {
+    const generateGameImages = async () => {
+      const updatedGames = await Promise.all(games.map(async (game) => ({
+        ...game,
+        image: await generateImage(`${game.name} slot machine game, digital art style, vibrant colors, detailed`)
+      })));
+      setGames(updatedGames);
+    };
+    generateGameImages();
+  }, []);
 
   const loyaltyTiers = useMemo(() => [
     { name: 'Bronze', points: 0, color: 'text-amber-600' },
@@ -519,7 +529,13 @@ const Index = () => {
         {games.map((game, index) => (
           <Card key={index} className="bg-black/50 text-white overflow-hidden hover:shadow-lg transition-shadow duration-300">
             <div className="relative">
-              <img src={game.image} alt={game.name} className="w-full h-40 object-cover" />
+              {game.image ? (
+                <img src={game.image} alt={game.name} className="w-full h-40 object-cover" />
+              ) : (
+                <div className="w-full h-40 bg-gray-700 flex items-center justify-center">
+                  <Loader2 className="h-8 w-8 animate-spin text-white" />
+                </div>
+              )}
               <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent flex items-end p-4">
                 <h3 className="text-xl font-bold text-white">{game.name}</h3>
               </div>
