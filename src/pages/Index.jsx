@@ -1,12 +1,17 @@
 import { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Loader2, Coins, Gift, Volume2, VolumeX, Zap } from "lucide-react";
+import { Loader2, Coins, Gift, Volume2, VolumeX, Zap, DollarSign, Settings } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Progress } from "@/components/ui/progress";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
+import { Slider } from "@/components/ui/slider";
 import PayTable from '../components/PayTable';
+import LeaderBoard from '../components/LeaderBoard';
 
 const Index = () => {
   const [balance, setBalance] = useState(1000);
@@ -21,14 +26,17 @@ const Index = () => {
   const [selectedGame, setSelectedGame] = useState('matrix');
   const [paylines, setPaylines] = useState(20);
   const [bonusProgress, setBonusProgress] = useState(0);
+  const [turboMode, setTurboMode] = useState(false);
+  const [animationSpeed, setAnimationSpeed] = useState(1);
+  const [showSettings, setShowSettings] = useState(false);
 
   const symbols = ['🍒', '🍋', '🍇', '🍊', '🍉', '💎', '7️⃣', '🃏', '🎰', '🌟'];
 
   const games = [
-    { id: 'matrix', name: "Matrix Mayhem", image: "https://a.picoapps.xyz/boy-every" },
-    { id: 'neon', name: "Neon Nights", image: "https://a.picoapps.xyz/boy-every" },
-    { id: 'treasure', name: "Treasure Hunt", image: "https://a.picoapps.xyz/boy-every" },
-    { id: 'space', name: "Space Odyssey", image: "https://a.picoapps.xyz/boy-every" },
+    { id: 'matrix', name: "Matrix Mayhem", image: "https://picsum.photos/seed/matrix/300/200" },
+    { id: 'neon', name: "Neon Nights", image: "https://picsum.photos/seed/neon/300/200" },
+    { id: 'treasure', name: "Treasure Hunt", image: "https://picsum.photos/seed/treasure/300/200" },
+    { id: 'space', name: "Space Odyssey", image: "https://picsum.photos/seed/space/300/200" },
   ];
 
   const spinReels = () => {
@@ -45,12 +53,14 @@ const Index = () => {
       Array.from({ length: 3 }, () => symbols[Math.floor(Math.random() * symbols.length)])
     );
 
+    const spinDuration = turboMode ? 500 : 1000 / animationSpeed;
+
     setTimeout(() => {
       setReels(newReels);
       setSpinning(false);
       checkWin(newReels);
       updateBonusProgress();
-    }, 1000);
+    }, spinDuration);
   };
 
   const checkWin = (newReels) => {
@@ -226,6 +236,39 @@ const Index = () => {
                       </TooltipContent>
                     </Tooltip>
                   </TooltipProvider>
+                  <Dialog open={showSettings} onOpenChange={setShowSettings}>
+                    <DialogTrigger asChild>
+                      <Button variant="outline" className="w-12">
+                        <Settings className="h-5 w-5" />
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent className="bg-gray-900 text-white">
+                      <DialogHeader>
+                        <DialogTitle>Game Settings</DialogTitle>
+                      </DialogHeader>
+                      <div className="space-y-4">
+                        <div className="flex items-center justify-between">
+                          <Label htmlFor="turbo-mode">Turbo Mode</Label>
+                          <Switch
+                            id="turbo-mode"
+                            checked={turboMode}
+                            onCheckedChange={setTurboMode}
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="animation-speed">Animation Speed</Label>
+                          <Slider
+                            id="animation-speed"
+                            min={0.5}
+                            max={2}
+                            step={0.1}
+                            value={[animationSpeed]}
+                            onValueChange={([value]) => setAnimationSpeed(value)}
+                          />
+                        </div>
+                      </div>
+                    </DialogContent>
+                  </Dialog>
                 </div>
                 {winAmount > 0 && (
                   <div className="mt-4 text-center text-3xl text-yellow-400 animate-pulse">You won ${winAmount}!</div>
@@ -243,6 +286,9 @@ const Index = () => {
           </TabsContent>
         ))}
       </Tabs>
+
+      {/* Leaderboard */}
+      <LeaderBoard />
 
       {/* Other Games */}
       <h2 className="text-3xl font-bold text-white mb-4">More Exciting Games</h2>
