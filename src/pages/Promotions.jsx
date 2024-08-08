@@ -19,6 +19,34 @@ const [promotions, setPromotions] = useState([
     color: "from-green-400 to-emerald-500",
     image: null,
   },
+  {
+    title: "Refer a Friend",
+    description: "Get $100 for each friend you refer who makes a deposit!",
+    icon: <Users className="h-8 w-8 text-blue-400" />,
+    color: "from-blue-400 to-indigo-500",
+    image: null,
+  },
+  {
+    title: "Daily Drops & Wins",
+    description: "Win a share of $1,000,000 in our daily tournaments!",
+    icon: <Zap className="h-8 w-8 text-purple-400" />,
+    color: "from-purple-400 to-pink-500",
+    image: null,
+  },
+  {
+    title: "VIP Program",
+    description: "Unlock exclusive rewards and personalized offers!",
+    icon: <Trophy className="h-8 w-8 text-red-400" />,
+    color: "from-red-400 to-rose-500",
+    image: null,
+  },
+  {
+    title: "Slot of the Week",
+    description: "Get 50 free spins on our featured slot every week!",
+    icon: <Sparkles className="h-8 w-8 text-cyan-400" />,
+    color: "from-cyan-400 to-teal-500",
+    image: null,
+  },
 ]);
 
 useEffect(() => {
@@ -31,31 +59,6 @@ useEffect(() => {
   };
   generatePromotionImages();
 }, []);
-  {
-    title: "Refer a Friend",
-    description: "Get $100 for each friend you refer who makes a deposit!",
-    icon: <Users className="h-8 w-8 text-blue-400" />,
-    color: "from-blue-400 to-indigo-500",
-  },
-  {
-    title: "Daily Drops & Wins",
-    description: "Win a share of $1,000,000 in our daily tournaments!",
-    icon: <Zap className="h-8 w-8 text-purple-400" />,
-    color: "from-purple-400 to-pink-500",
-  },
-  {
-    title: "VIP Program",
-    description: "Unlock exclusive rewards and personalized offers!",
-    icon: <Trophy className="h-8 w-8 text-red-400" />,
-    color: "from-red-400 to-rose-500",
-  },
-  {
-    title: "Slot of the Week",
-    description: "Get 50 free spins on our featured slot every week!",
-    icon: <Sparkles className="h-8 w-8 text-cyan-400" />,
-    color: "from-cyan-400 to-teal-500",
-  },
-];
 
 const Promotions = () => {
   return (
