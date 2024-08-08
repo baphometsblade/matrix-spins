@@ -7,5 +7,7 @@ export function cn(...inputs) {
 }
 
 export async function generateImage(prompt, width = 256, height = 256) {
-  return await pico.generateImage(prompt, { width, height })
+  // Placeholder function as generateImage is not available
+  console.warn('generateImage is not implemented');
+  return 'https://via.placeholder.com/' + width + 'x' + height;
 }
