@@ -90,7 +90,8 @@ const Index = () => {
   useEffect(() => {
     const generateGameImages = async () => {
       const updatedGames = await Promise.all(games.map(async (game) => {
-        const imageUrl = await generateImage(`${game.name} slot machine game, digital art style, vibrant colors, detailed`);
+        const prompt = `Hyper-realistic 3D render of a ${game.name} themed slot machine, neon lights, futuristic casino environment, highly detailed, cinematic lighting, 8k resolution`;
+        const imageUrl = await generateImage(prompt);
         return {
           ...game,
           image: imageUrl

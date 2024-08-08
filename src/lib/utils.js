@@ -12,7 +12,8 @@ export function formatCurrency(amount) {
 // Mock functions for image generation and saving
 export async function generateImage(prompt, width = 1024, height = 1024) {
   console.log(`Generating image: ${prompt} (${width}x${height})`);
-  return `https://picsum.photos/${width}/${height}`;
+  // In a real implementation, this would call an AI image generation API
+  return `https://source.unsplash.com/random/${width}x${height}?${encodeURIComponent(prompt)}`;
 }
 
 export async function saveImage(imageUrl, fileName) {

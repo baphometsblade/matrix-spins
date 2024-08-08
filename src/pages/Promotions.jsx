@@ -53,7 +53,7 @@ const Promotions = () => {
   useEffect(() => {
     const generatePromotionImages = async () => {
       const updatedPromotions = await Promise.all(promotions.map(async (promo) => {
-        const imagePrompt = `${promo.title} casino promotion, digital art style, vibrant colors, eye-catching`;
+        const imagePrompt = `Photorealistic 3D render of ${promo.title} casino promotion, luxury casino background, dynamic composition, vibrant colors, eye-catching visual elements, 8k resolution`;
         const imageUrl = await generateImage(imagePrompt);
         return {
           ...promo,
