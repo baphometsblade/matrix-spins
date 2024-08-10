@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Loader2, Gift, Volume2, VolumeX, Zap, Settings, DollarSign, Sparkles, CreditCard, HelpCircle, Trophy, Star, RefreshCw } from "lucide-react";
+import { Loader2, Gift, Volume2, VolumeX, Zap, Settings, DollarSign, Sparkles, CreditCard, HelpCircle, Trophy, Star, RefreshCw, Lock, Unlock } from "lucide-react";
 import { generateImage, formatCurrency, saveImage, generateSlotAssets } from '@/lib/utils';
 import { Link } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
@@ -20,12 +20,13 @@ import BonusWheel from '../components/BonusWheel';
 import DepositDialog from '../components/DepositDialog';
 import HelpDialog from '../components/HelpDialog';
 import SideBet from '../components/SideBet';
+import { useQuery } from '@tanstack/react-query';
 
 const Index = () => {
   const { toast } = useToast();
   const [balance, setBalance] = useState(1000);
   const [bet, setBet] = useState(10);
-  const [reels, setReels] = useState([['🍒', '🍋', '🍇'], ['🍒', '🍋', '🍇'], ['🍒', '🍋', '🍇'], ['🍒', '🍋', '🍇'], ['🍒', '🍋', '🍇']]);
+  const [reels, setReels] = useState([['🔵', '🟢', '🔴'], ['🟣', '🟡', '💊'], ['🕶️', '🖥️', '🔓'], ['⏳', '🔵', '🟢'], ['🔴', '🟣', '🟡']]);
   const [spinning, setSpinning] = useState(false);
   const [winAmount, setWinAmount] = useState(0);
   const [jackpot, setJackpot] = useState(10000);
@@ -48,8 +49,25 @@ const Index = () => {
   const [showMiniGame, setShowMiniGame] = useState(false);
   const [winningLines, setWinningLines] = useState([]);
   const [recentWins, setRecentWins] = useState([]);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
 
   const symbols = ['🔵', '🟢', '🔴', '🟣', '🟡', '💊', '🕶️', '🖥️', '🔓', '⏳'];
+
+  const { data: serverJackpot } = useQuery({
+    queryKey: ['jackpot'],
+    queryFn: async () => {
+      // Simulating an API call
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      return Math.floor(Math.random() * 1000000) + 100000;
+    },
+    refetchInterval: 30000, // Refetch every 30 seconds
+  });
+
+  useEffect(() => {
+    if (serverJackpot) {
+      setJackpot(serverJackpot);
+    }
+  }, [serverJackpot]);
   const [games, setGames] = useState([
     { id: 'matrix', name: "Matrix Reloaded", image: null, assets: [] },
     { id: 'cyber', name: "Cybernetic Spin", image: null, assets: [] },
@@ -463,8 +481,8 @@ const Index = () => {
                   ))}
                 </div>
                 <div className="flex justify-between items-center mb-6">
-                  <div className="text-xl">Balance: ${balance}</div>
-                  <div className="text-xl">Bet: ${bet}</div>
+                  <div className="text-xl">Balance: {formatCurrency(balance)}</div>
+                  <div className="text-xl">Bet: {formatCurrency(bet)}</div>
                   <div className="text-xl">Paylines: {paylines}</div>
                   {freeSpins > 0 && (
                     <div className="text-xl text-yellow-400">Free Spins: {freeSpins}</div>
@@ -475,6 +493,15 @@ const Index = () => {
                   <Button onClick={() => setBet(Math.min(100, bet + 1))} variant="secondary">+</Button>
                   <Button onClick={() => setPaylines(Math.max(1, paylines - 1))} variant="secondary">-</Button>
                   <Button onClick={() => setPaylines(Math.min(25, paylines + 1))} variant="secondary">+</Button>
+                </div>
+                <div className="flex justify-center mb-6">
+                  <Button
+                    onClick={() => setIsLoggedIn(!isLoggedIn)}
+                    className={`w-1/4 ${isLoggedIn ? 'bg-red-500 hover:bg-red-600' : 'bg-green-500 hover:bg-green-600'}`}
+                  >
+                    {isLoggedIn ? <Lock className="mr-2 h-5 w-5" /> : <Unlock className="mr-2 h-5 w-5" />}
+                    {isLoggedIn ? 'Logout' : 'Login'}
+                  </Button>
                 </div>
                 <div className="flex justify-between mb-6">
                   <Button 
@@ -605,6 +632,14 @@ const Index = () => {
                   <h3 className="text-2xl mb-2">Progressive Jackpot</h3>
                   <div className="text-4xl text-green-400 animate-pulse">
                     {formatCurrency(progressiveJackpot)}
+                  </div>
+                </div>
+                <div className="mt-6">
+                  <h3 className="text-xl mb-2">Winning Lines</h3>
+                  <div className="grid grid-cols-5 gap-2">
+                    {winningLines.map((line, index) => (
+                      <div key={index} className="bg-green-500 h-1"></div>
+                    ))}
                   </div>
                 </div>
               </CardContent>
