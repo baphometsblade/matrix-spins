@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback, useMemo } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Loader2, Gift, Volume2, VolumeX, Zap, Settings, DollarSign, Sparkles, CreditCard, HelpCircle, Trophy, Star, RefreshCw } from "lucide-react";
-import { generateImage, formatCurrency, saveImage } from '@/lib/utils';
+import { generateImage, formatCurrency, saveImage, generateSlotAssets } from '@/lib/utils';
 import { Link } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -51,10 +51,10 @@ const Index = () => {
 
   const symbols = ['🔵', '🟢', '🔴', '🟣', '🟡', '💊', '🕶️', '🖥️', '🔓', '⏳'];
   const [games, setGames] = useState([
-    { id: 'matrix', name: "Matrix Reloaded", image: null },
-    { id: 'cyber', name: "Cybernetic Spin", image: null },
-    { id: 'quantum', name: "Quantum Quandary", image: null },
-    { id: 'neural', name: "Neural Network", image: null },
+    { id: 'matrix', name: "Matrix Reloaded", image: null, assets: [] },
+    { id: 'cyber', name: "Cybernetic Spin", image: null, assets: [] },
+    { id: 'quantum', name: "Quantum Quandary", image: null, assets: [] },
+    { id: 'neural', name: "Neural Network", image: null, assets: [] },
   ]);
 
   useEffect(() => {
@@ -88,18 +88,20 @@ const Index = () => {
   }, [loyaltyPoints, loyaltyTiers]);
 
   useEffect(() => {
-    const generateGameImages = async () => {
+    const generateGameAssetsAndImages = async () => {
       const updatedGames = await Promise.all(games.map(async (game) => {
         const prompt = `Hyper-realistic 3D render of a ${game.name} themed slot machine, neon lights, futuristic casino environment, highly detailed, cinematic lighting, 8k resolution`;
         const imageUrl = await generateImage(prompt);
+        const assets = await generateSlotAssets(game.name);
         return {
           ...game,
-          image: imageUrl
+          image: imageUrl,
+          assets: assets
         };
       }));
       setGames(updatedGames);
     };
-    generateGameImages();
+    generateGameAssetsAndImages();
   }, []);
 
   const spinReels = useCallback(() => {
@@ -126,14 +128,20 @@ const Index = () => {
     const animateReels = (currentFrame) => {
       if (currentFrame < 20) { // 20 frames of animation
         const animatedReels = reels.map(() =>
-          Array.from({ length: 3 }, () => symbols[Math.floor(Math.random() * symbols.length)])
+          Array.from({ length: 3 }, () => {
+            const randomAsset = games.find(g => g.id === selectedGame).assets[Math.floor(Math.random() * games.find(g => g.id === selectedGame).assets.length)];
+            return randomAsset.image;
+          })
         );
         setReels(animatedReels);
         setTimeout(() => animateReels(currentFrame + 1), 50);
       } else {
         // Final reel state
         const newReels = reels.map(() =>
-          Array.from({ length: 3 }, () => symbols[Math.floor(Math.random() * symbols.length)])
+          Array.from({ length: 3 }, () => {
+            const randomAsset = games.find(g => g.id === selectedGame).assets[Math.floor(Math.random() * games.find(g => g.id === selectedGame).assets.length)];
+            return randomAsset.image;
+          })
         );
         setReels(newReels);
         setSpinning(false);
@@ -446,9 +454,9 @@ const Index = () => {
                 <div className="grid grid-cols-5 gap-2 mb-6">
                   {reels.map((reel, i) => (
                     <div key={i} className="bg-gray-800 p-2 rounded-lg">
-                      {reel.map((symbol, j) => (
-                        <div key={j} className="text-center mb-2 text-4xl">
-                          {symbol}
+                      {reel.map((symbolImage, j) => (
+                        <div key={j} className="text-center mb-2">
+                          <img src={symbolImage} alt="Slot Symbol" className="w-full h-auto" />
                         </div>
                       ))}
                     </div>

@@ -20,3 +20,17 @@ export async function saveImage(imageUrl, fileName) {
   console.log(`Saving image: ${imageUrl} as ${fileName}`);
   return `/images/${fileName}`;
 }
+
+export async function generateSlotAssets(gameName) {
+  const symbols = ['🔵', '🟢', '🔴', '🟣', '🟡', '💊', '🕶️', '🖥️', '🔓', '⏳'];
+  const assetPrompts = symbols.map(symbol => `Hyper-realistic 3D render of a ${gameName} themed slot machine symbol: ${symbol}, metallic finish, neon glow, against a dark background, 8k resolution`);
+  
+  const assets = await Promise.all(assetPrompts.map(async (prompt, index) => {
+    const imageUrl = await generateImage(prompt, 512, 512);
+    const fileName = `${gameName.toLowerCase().replace(/\s+/g, '-')}-symbol-${index}.png`;
+    const savedPath = await saveImage(imageUrl, fileName);
+    return { symbol: symbols[index], image: savedPath };
+  }));
+
+  return assets;
+}
