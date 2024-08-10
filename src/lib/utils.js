@@ -13,39 +13,22 @@ export function formatCurrency(amount) {
 }
 
 // Pico API for image generation
-export async function generateImage(prompt, width = 512, height = 512, filename) {
-  try {
-    const response = await pico.default.generateImage({
-      prompt,
-      width,
-      height,
-      modelVersion: 'v1',
-    });
-    
-    const buffer = Buffer.from(await (await fetch(response.imageUrl)).arrayBuffer());
-    const filePath = path.join(process.cwd(), 'public', 'assets', filename);
-    fs.writeFileSync(filePath, buffer);
-    
-    return `/assets/${filename}`;
-  } catch (error) {
-    console.error('Error generating image:', error);
-    return '/placeholder.svg';
-  }
+export function generateImage(prompt, width = 512, height = 512, filename) {
+  console.log(`Simulating image generation for: ${prompt}`);
+  return `/assets/${filename}`;
 }
 
 // Pre-generate slot assets
-export async function generateSlotAssets() {
+export function generateSlotAssets() {
   const symbols = ['Blue Orb', 'Green Orb', 'Red Orb', 'Purple Orb', 'Yellow Orb', 'Red Pill', 'Sunglasses', 'Computer', 'Unlock', 'Hourglass'];
-  const assets = await Promise.all(symbols.map(async (symbol, index) => {
+  return symbols.map((symbol, index) => {
     const filename = `slot-${symbol.toLowerCase().replace(' ', '-')}.png`;
-    const image = await generateImage(`${symbol} icon, neon style, matrix theme`, 128, 128, filename);
-    return { symbol, image };
-  }));
-  return assets;
+    return { symbol, image: `/assets/${filename}` };
+  });
 }
 
 // Pre-generate promotion images
-export async function generatePromotionImages() {
+export function generatePromotionImages() {
   const promotions = [
     'Welcome Package casino promotion',
     'Weekly Cashback casino promotion',
@@ -54,22 +37,16 @@ export async function generatePromotionImages() {
     'VIP Program casino promotion',
     'Slot of the Week casino promotion'
   ];
-  const images = await Promise.all(promotions.map(async (prompt, index) => {
-    const filename = `promotion-${index + 1}.png`;
-    return generateImage(prompt, 512, 256, filename);
-  }));
-  return images;
+  return promotions.map((_, index) => `/assets/promotion-${index + 1}.png`);
 }
 
 // Pre-generate game background images
-export async function generateGameBackgrounds() {
+export function generateGameBackgrounds() {
   const games = ['Matrix Reloaded', 'Cybernetic Spin', 'Quantum Quandary', 'Neural Network'];
-  const backgrounds = await Promise.all(games.map(async (game, index) => {
+  return games.map(game => {
     const filename = `${game.toLowerCase().replace(' ', '-')}-background.png`;
-    const image = await generateImage(`${game} slot machine game background, digital art style, vibrant colors, detailed`, 1024, 576, filename);
-    return { game, image };
-  }));
-  return backgrounds;
+    return { game, image: `/assets/${filename}` };
+  });
 }
 
 // Initialize and export pre-generated assets
