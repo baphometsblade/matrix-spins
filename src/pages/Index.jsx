@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Loader2, Gift, Volume2, VolumeX, Zap, Settings, DollarSign, Sparkles, CreditCard, HelpCircle, Trophy, Star, RefreshCw, Lock, Unlock, CoinIcon, Calendar } from "lucide-react";
+import { Loader2, Gift, Volume2, VolumeX, Zap, Settings, DollarSign, Sparkles, CreditCard, HelpCircle, Trophy, Star, RefreshCw, Lock, Unlock, CoinIcon, Calendar, Maximize2, Minimize2 } from "lucide-react";
 import { formatCurrency, slotAssets, gameBackgrounds, safeGenerateImage } from '@/lib/utils';
 import { Link } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
@@ -22,6 +22,7 @@ import HelpDialog from '../components/HelpDialog';
 import SideBet from '../components/SideBet';
 import { useQuery } from '@tanstack/react-query';
 import { Badge } from "@/components/ui/badge";
+import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerTrigger } from "@/components/ui/drawer";
 
 const Index = () => {
   useEffect(() => {
@@ -97,6 +98,8 @@ const Index = () => {
   const [winningLines, setWinningLines] = useState([]);
   const [recentWins, setRecentWins] = useState([]);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  const [showStats, setShowStats] = useState(false);
 
   const symbols = [
     '/assets/matrix-blue-orb.png',
@@ -110,6 +113,26 @@ const Index = () => {
     '/assets/matrix-unlock.png',
     '/assets/matrix-hourglass.png'
   ];
+
+  const toggleFullscreen = () => {
+    if (!document.fullscreenElement) {
+      document.documentElement.requestFullscreen();
+      setIsFullscreen(true);
+    } else {
+      if (document.exitFullscreen) {
+        document.exitFullscreen();
+        setIsFullscreen(false);
+      }
+    }
+  };
+
+  const playerStats = {
+    totalSpins: 1000,
+    totalWins: 500,
+    biggestWin: 1000,
+    currentStreak: 3,
+    longestStreak: 7,
+  };
 
   const { data: serverJackpot } = useQuery({
     queryKey: ['jackpot'],
@@ -606,7 +629,7 @@ const Index = () => {
                     </div>
                   </div>
                 </div>
-                <div className="flex justify-center mb-6">
+                <div className="flex justify-between mb-6">
                   <Button
                     onClick={() => setIsLoggedIn(!isLoggedIn)}
                     className={`w-1/4 ${isLoggedIn ? 'bg-red-500 hover:bg-red-600' : 'bg-green-500 hover:bg-green-600'}`}
@@ -614,6 +637,48 @@ const Index = () => {
                     {isLoggedIn ? <Lock className="mr-2 h-5 w-5" /> : <Unlock className="mr-2 h-5 w-5" />}
                     {isLoggedIn ? 'Logout' : 'Login'}
                   </Button>
+                  <Button
+                    onClick={toggleFullscreen}
+                    className="w-1/4 bg-purple-500 hover:bg-purple-600"
+                  >
+                    {isFullscreen ? <Minimize2 className="mr-2 h-5 w-5" /> : <Maximize2 className="mr-2 h-5 w-5" />}
+                    {isFullscreen ? 'Exit Fullscreen' : 'Fullscreen'}
+                  </Button>
+                  <Drawer>
+                    <DrawerTrigger asChild>
+                      <Button className="w-1/4 bg-blue-500 hover:bg-blue-600">
+                        <Trophy className="mr-2 h-5 w-5" />
+                        Player Stats
+                      </Button>
+                    </DrawerTrigger>
+                    <DrawerContent>
+                      <DrawerHeader>
+                        <DrawerTitle>Your Gaming Statistics</DrawerTitle>
+                      </DrawerHeader>
+                      <div className="p-4 space-y-4">
+                        <div className="flex justify-between">
+                          <span>Total Spins:</span>
+                          <span>{playerStats.totalSpins}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span>Total Wins:</span>
+                          <span>{playerStats.totalWins}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span>Biggest Win:</span>
+                          <span>{formatCurrency(playerStats.biggestWin)}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span>Current Streak:</span>
+                          <span>{playerStats.currentStreak}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span>Longest Streak:</span>
+                          <span>{playerStats.longestStreak}</span>
+                        </div>
+                      </div>
+                    </DrawerContent>
+                  </Drawer>
                 </div>
                 <div className="flex justify-center mb-6">
                   <Button 
@@ -693,11 +758,26 @@ const Index = () => {
                 </div>
                 <div className="mt-4">
                   <h3 className="text-xl mb-2">Recent Wins</h3>
-                  <div className="flex justify-between">
+                  <div className="grid grid-cols-3 gap-4">
                     {recentWins.map((win, index) => (
+                      <Card key={index} className="bg-gradient-to-br from-yellow-400 to-yellow-600 text-black p-2">
+                        <CardContent className="text-center">
+                          <p className="text-lg font-bold">{formatCurrency(win.amount)}</p>
+                          <p className="text-sm">{new Date(win.timestamp).toLocaleTimeString()}</p>
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
+                </div>
+                <div className="mt-6">
+                  <h3 className="text-xl mb-2">Hot and Cold Symbols</h3>
+                  <div className="flex justify-between">
+                    {symbols.slice(0, 5).map((symbol, index) => (
                       <div key={index} className="text-center">
-                        <p className="text-lg font-bold text-yellow-400">{formatCurrency(win.amount)}</p>
-                        <p className="text-sm">{new Date(win.timestamp).toLocaleTimeString()}</p>
+                        <img src={symbol} alt={`Symbol ${index + 1}`} className="w-12 h-12 mx-auto mb-2" />
+                        <Badge variant={index < 2 ? "success" : "destructive"}>
+                          {index < 2 ? 'Hot' : 'Cold'}
+                        </Badge>
                       </div>
                     ))}
                   </div>
