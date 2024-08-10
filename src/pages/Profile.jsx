@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Trophy, Star, Zap, CoinIcon, Clock } from "lucide-react";
+import { Trophy, Star, Zap, Coin, Clock } from "lucide-react";
 import { formatCurrency } from '@/lib/utils';
 
 const Profile = () => {
