@@ -889,7 +889,6 @@ const Index = () => {
           </Card>
         ))}
       </div>
-      <DailyBonus />
     </div>
   );
 };
