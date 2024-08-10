@@ -1,6 +1,5 @@
 import { clsx } from "clsx"
 import { twMerge } from "tailwind-merge"
-import { generateImage as picoGenerateImage } from '@picojs/pico';
 
 export function cn(...inputs) {
   return twMerge(clsx(inputs))
@@ -10,29 +9,11 @@ export function formatCurrency(amount) {
   return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(amount);
 }
 
-// Image generation function using Pico API
+// Placeholder function for image generation
 export async function generateImage(prompt, width = 512, height = 512, filename) {
-  console.log(`Generating image for: ${prompt}`);
-  
-  try {
-    const image = await picoGenerateImage({
-      prompt,
-      width,
-      height,
-      steps: 50,
-      cfg_scale: 7.5,
-      sampler: 'k_euler_ancestral',
-    });
-
-    // Save the image to the public/assets directory
-    const filePath = `/assets/${filename}`;
-    await image.save(`public${filePath}`);
-
-    return filePath;
-  } catch (error) {
-    console.error('Error generating image:', error);
-    return '/placeholder.svg'; // Fallback to placeholder if generation fails
-  }
+  console.log(`Image generation requested for: ${prompt}`);
+  // In a real implementation, this would call an actual image generation API
+  return '/placeholder.svg';
 }
 
 // Pre-generate slot assets
