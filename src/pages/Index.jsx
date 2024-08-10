@@ -894,8 +894,6 @@ const Index = () => {
   );
 };
 
-export default Index;
-
 // Separate component for DailyBonus
 const DailyBonus = () => {
   const [lastClaimDate, setLastClaimDate] = useState(null);
@@ -942,3 +940,5 @@ const DailyBonus = () => {
     </Card>
   );
 };
+
+export default Index;
