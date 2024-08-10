@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Loader2, Gift, Volume2, VolumeX, Zap, Settings, DollarSign, Sparkles, CreditCard, HelpCircle, Trophy, Star, RefreshCw, Lock, Unlock, CoinIcon } from "lucide-react";
+import { Loader2, Gift, Volume2, VolumeX, Zap, Settings, DollarSign, Sparkles, CreditCard, HelpCircle, Trophy, Star, RefreshCw, Lock, Unlock, CoinIcon, Calendar } from "lucide-react";
 import { formatCurrency, slotAssets, gameBackgrounds, generateImage } from '@/lib/utils';
 import { Link } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
@@ -394,10 +394,34 @@ const Index = () => {
     };
   }, [jackpot]);
 
-  const [backgroundImage, setBackgroundImage] = useState(null);
+  const [backgroundImage, setBackgroundImage] = useState('/assets/matrix-background.png');
+  const [specialEvent, setSpecialEvent] = useState(null);
+
+  useEffect(() => {
+    // Check for special events
+    const currentDate = new Date();
+    if (currentDate.getMonth() === 11 && currentDate.getDate() === 25) {
+      setSpecialEvent({
+        name: "Christmas Spins",
+        description: "Get 50 free spins on Christmas Day!",
+        icon: <Gift className="h-6 w-6 text-red-500" />
+      });
+    }
+  }, []);
 
   return (
-    <div className="container mx-auto px-4 py-8" style={{backgroundImage: `url("/placeholder.svg")`, backgroundSize: 'cover', backgroundAttachment: 'fixed'}}>
+    <div className="container mx-auto px-4 py-8 relative">
+      <div 
+        className="absolute inset-0 z-0" 
+        style={{
+          backgroundImage: `url(${backgroundImage})`,
+          backgroundSize: 'cover',
+          backgroundAttachment: 'fixed',
+          filter: 'blur(5px)',
+          opacity: 0.3
+        }}
+      ></div>
+      <div className="relative z-10">
       <AnimatePresence>
         {lastWin && (
           <motion.div
@@ -514,9 +538,14 @@ const Index = () => {
                       <div className="absolute inset-0 flex">
                         {reels.map((reel, i) => (
                           <div key={i} className="flex-1 border-r-2 border-gray-600 last:border-r-0">
-                            <div className="relative h-full" style={{transform: `translateY(${spinning ? '-100%' : '0'})`}}>
-                              {reel.map((symbolImage, j) => (
-                                <div key={j} className="absolute inset-0" style={{top: `${j * 100}%`}}>
+                            <div 
+                              className="relative h-full transition-transform duration-1000 ease-in-out" 
+                              style={{
+                                transform: spinning ? `translateY(${-100 * (reel.length - 3)}%)` : 'translateY(0)',
+                              }}
+                            >
+                              {[...reel, ...reel].map((symbolImage, j) => (
+                                <div key={j} className="absolute inset-0" style={{top: `${j * (100 / 3)}%`}}>
                                   <img src={symbolImage} alt="Slot Symbol" className="w-full h-full object-contain p-2" />
                                 </div>
                               ))}
@@ -529,6 +558,22 @@ const Index = () => {
                   <div className="absolute top-0 left-0 right-0 h-1/6 bg-gradient-to-b from-gray-900 to-transparent"></div>
                   <div className="absolute bottom-0 left-0 right-0 h-1/6 bg-gradient-to-t from-gray-900 to-transparent"></div>
                 </div>
+                {specialEvent && (
+                  <Card className="mb-4 bg-gradient-to-r from-red-500 to-green-500 text-white">
+                    <CardContent className="flex items-center justify-between p-4">
+                      <div className="flex items-center">
+                        {specialEvent.icon}
+                        <div className="ml-4">
+                          <h3 className="text-xl font-bold">{specialEvent.name}</h3>
+                          <p>{specialEvent.description}</p>
+                        </div>
+                      </div>
+                      <Button className="bg-white text-black hover:bg-gray-200">
+                        Claim Now
+                      </Button>
+                    </CardContent>
+                  </Card>
+                )}
                 <div className="flex justify-between items-center mb-6 bg-gradient-to-r from-gray-800 to-gray-900 p-4 rounded-lg shadow-lg">
                   <div className="flex items-center space-x-6">
                     <div className="text-2xl">
@@ -765,6 +810,52 @@ const Index = () => {
         ))}
       </div>
     </div>
+  );
+};
+
+const DailyBonus = () => {
+  const [lastClaimDate, setLastClaimDate] = useState(null);
+  const [showBonus, setShowBonus] = useState(false);
+
+  useEffect(() => {
+    const storedDate = localStorage.getItem('lastDailyBonusClaim');
+    if (storedDate) {
+      setLastClaimDate(new Date(storedDate));
+    }
+    
+    const today = new Date();
+    if (!storedDate || new Date(storedDate).getDate() !== today.getDate()) {
+      setShowBonus(true);
+    }
+  }, []);
+
+  const claimBonus = () => {
+    const today = new Date();
+    localStorage.setItem('lastDailyBonusClaim', today.toISOString());
+    setLastClaimDate(today);
+    setShowBonus(false);
+    // Add logic to credit the bonus to the player's account
+  };
+
+  if (!showBonus) return null;
+
+  return (
+    <Card className="fixed bottom-4 right-4 bg-gradient-to-r from-yellow-400 to-orange-500 text-white">
+      <CardContent className="p-4">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center">
+            <Calendar className="h-8 w-8 mr-4" />
+            <div>
+              <h3 className="text-xl font-bold">Daily Bonus</h3>
+              <p>Claim your free spins!</p>
+            </div>
+          </div>
+          <Button onClick={claimBonus} className="bg-white text-black hover:bg-gray-200">
+            Claim
+          </Button>
+        </div>
+      </CardContent>
+    </Card>
   );
 };
 
