@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback, useMemo } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Loader2, Gift, Volume2, VolumeX, Zap, Settings, DollarSign, Sparkles, CreditCard, HelpCircle, Trophy, Star, RefreshCw, Lock, Unlock } from "lucide-react";
-import { formatCurrency, slotAssets } from '@/lib/utils';
+import { formatCurrency, slotAssets, gameBackgrounds } from '@/lib/utils';
 import { Link } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -26,7 +26,13 @@ const Index = () => {
   const { toast } = useToast();
   const [balance, setBalance] = useState(1000);
   const [bet, setBet] = useState(10);
-  const [reels, setReels] = useState([['🔵', '🟢', '🔴'], ['🟣', '🟡', '💊'], ['🕶️', '🖥️', '🔓'], ['⏳', '🔵', '🟢'], ['🔴', '🟣', '🟡']]);
+  const [reels, setReels] = useState([
+    ['/assets/slot-blue-orb.png', '/assets/slot-green-orb.png', '/assets/slot-red-orb.png'],
+    ['/assets/slot-purple-orb.png', '/assets/slot-yellow-orb.png', '/assets/slot-red-pill.png'],
+    ['/assets/slot-sunglasses.png', '/assets/slot-computer.png', '/assets/slot-unlock.png'],
+    ['/assets/slot-hourglass.png', '/assets/slot-blue-orb.png', '/assets/slot-green-orb.png'],
+    ['/assets/slot-red-orb.png', '/assets/slot-purple-orb.png', '/assets/slot-yellow-orb.png']
+  ]);
   const [spinning, setSpinning] = useState(false);
   const [winAmount, setWinAmount] = useState(0);
   const [jackpot, setJackpot] = useState(10000);
@@ -51,7 +57,18 @@ const Index = () => {
   const [recentWins, setRecentWins] = useState([]);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
 
-  const symbols = ['🔵', '🟢', '🔴', '🟣', '🟡', '💊', '🕶️', '🖥️', '🔓', '⏳'];
+  const symbols = [
+    '/assets/slot-blue-orb.png',
+    '/assets/slot-green-orb.png',
+    '/assets/slot-red-orb.png',
+    '/assets/slot-purple-orb.png',
+    '/assets/slot-yellow-orb.png',
+    '/assets/slot-red-pill.png',
+    '/assets/slot-sunglasses.png',
+    '/assets/slot-computer.png',
+    '/assets/slot-unlock.png',
+    '/assets/slot-hourglass.png'
+  ];
 
   const { data: serverJackpot } = useQuery({
     queryKey: ['jackpot'],
@@ -68,28 +85,13 @@ const Index = () => {
       setJackpot(serverJackpot);
     }
   }, [serverJackpot]);
-  const [games, setGames] = useState([
-    { id: 'matrix', name: "Matrix Reloaded", image: null, assets: [] },
-    { id: 'cyber', name: "Cybernetic Spin", image: null, assets: [] },
-    { id: 'quantum', name: "Quantum Quandary", image: null, assets: [] },
-    { id: 'neural', name: "Neural Network", image: null, assets: [] },
-  ]);
 
-  useEffect(() => {
-    const generateAndSaveGameImages = async () => {
-      const updatedGames = await Promise.all(games.map(async (game) => {
-        const imagePrompt = `${game.name} slot machine game, digital art style, vibrant colors, detailed`;
-        const imageUrl = await generateImage(imagePrompt);
-        const savedImagePath = await saveImage(imageUrl, `${game.id}.png`);
-        return {
-          ...game,
-          image: savedImagePath
-        };
-      }));
-      setGames(updatedGames);
-    };
-    generateAndSaveGameImages();
-  }, []);
+  const [games, setGames] = useState([
+    { id: 'matrix', name: "Matrix Reloaded", image: '/assets/matrix-reloaded-background.png', assets: slotAssets.matrix },
+    { id: 'cyber', name: "Cybernetic Spin", image: '/assets/cybernetic-spin-background.png', assets: slotAssets.matrix },
+    { id: 'quantum', name: "Quantum Quandary", image: '/assets/quantum-quandary-background.png', assets: slotAssets.matrix },
+    { id: 'neural', name: "Neural Network", image: '/assets/neural-network-background.png', assets: slotAssets.matrix },
+  ]);
 
   const loyaltyTiers = useMemo(() => [
     { name: 'Bronze', points: 0, color: 'text-amber-600' },
@@ -104,16 +106,6 @@ const Index = () => {
       loyaltyPoints >= tier.points ? tier : acc
     , loyaltyTiers[0]);
   }, [loyaltyPoints, loyaltyTiers]);
-
-  useEffect(() => {
-    // Use placeholder images for game backgrounds
-    const updatedGames = games.map(game => ({
-      ...game,
-      image: '/placeholder.svg',
-      assets: slotAssets[game.id] || slotAssets.matrix // Fallback to matrix assets if not found
-    }));
-    setGames(updatedGames);
-  }, []);
 
   const spinReels = useCallback(() => {
     if (freeSpins > 0) {
@@ -139,20 +131,14 @@ const Index = () => {
     const animateReels = (currentFrame) => {
       if (currentFrame < 20) { // 20 frames of animation
         const animatedReels = reels.map(() =>
-          Array.from({ length: 3 }, () => {
-            const randomAsset = games.find(g => g.id === selectedGame).assets[Math.floor(Math.random() * games.find(g => g.id === selectedGame).assets.length)];
-            return randomAsset.image;
-          })
+          Array.from({ length: 3 }, () => symbols[Math.floor(Math.random() * symbols.length)])
         );
         setReels(animatedReels);
         setTimeout(() => animateReels(currentFrame + 1), 50);
       } else {
         // Final reel state
         const newReels = reels.map(() =>
-          Array.from({ length: 3 }, () => {
-            const randomAsset = games.find(g => g.id === selectedGame).assets[Math.floor(Math.random() * games.find(g => g.id === selectedGame).assets.length)];
-            return randomAsset.image;
-          })
+          Array.from({ length: 3 }, () => symbols[Math.floor(Math.random() * symbols.length)])
         );
         setReels(newReels);
         setSpinning(false);
