@@ -862,6 +862,13 @@ const DailyBonus = () => {
 };
 
 export default Index;
+
+// Separate component for DailyBonus
+const DailyBonus = () => {
+  const [lastClaimDate, setLastClaimDate] = useState(null);
+  const [showBonus, setShowBonus] = useState(false);
+
+  useEffect(() => {
     const storedDate = localStorage.getItem('lastDailyBonusClaim');
     if (storedDate) {
       setLastClaimDate(new Date(storedDate));
