@@ -67,11 +67,11 @@ const Index = () => {
   const [balance, setBalance] = useState(1000);
   const [bet, setBet] = useState(10);
   const [reels, setReels] = useState([
-    ['/assets/slot-blue-orb.png', '/assets/slot-green-orb.png', '/assets/slot-red-orb.png'],
-    ['/assets/slot-purple-orb.png', '/assets/slot-yellow-orb.png', '/assets/slot-red-pill.png'],
-    ['/assets/slot-sunglasses.png', '/assets/slot-computer.png', '/assets/slot-unlock.png'],
-    ['/assets/slot-hourglass.png', '/assets/slot-blue-orb.png', '/assets/slot-green-orb.png'],
-    ['/assets/slot-red-orb.png', '/assets/slot-purple-orb.png', '/assets/slot-yellow-orb.png']
+    ['/assets/matrix-blue-orb.png', '/assets/matrix-green-orb.png', '/assets/matrix-red-orb.png'],
+    ['/assets/matrix-purple-orb.png', '/assets/matrix-yellow-orb.png', '/assets/matrix-pill.png'],
+    ['/assets/matrix-sunglasses.png', '/assets/matrix-computer.png', '/assets/matrix-unlock.png'],
+    ['/assets/matrix-hourglass.png', '/assets/matrix-blue-orb.png', '/assets/matrix-green-orb.png'],
+    ['/assets/matrix-red-orb.png', '/assets/matrix-purple-orb.png', '/assets/matrix-yellow-orb.png']
   ]);
   const [spinning, setSpinning] = useState(false);
   const [winAmount, setWinAmount] = useState(0);
@@ -98,16 +98,16 @@ const Index = () => {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
 
   const symbols = [
-    '/assets/slot-blue-orb.png',
-    '/assets/slot-green-orb.png',
-    '/assets/slot-red-orb.png',
-    '/assets/slot-purple-orb.png',
-    '/assets/slot-yellow-orb.png',
-    '/assets/slot-red-pill.png',
-    '/assets/slot-sunglasses.png',
-    '/assets/slot-computer.png',
-    '/assets/slot-unlock.png',
-    '/assets/slot-hourglass.png'
+    '/assets/matrix-blue-orb.png',
+    '/assets/matrix-green-orb.png',
+    '/assets/matrix-red-orb.png',
+    '/assets/matrix-purple-orb.png',
+    '/assets/matrix-yellow-orb.png',
+    '/assets/matrix-pill.png',
+    '/assets/matrix-sunglasses.png',
+    '/assets/matrix-computer.png',
+    '/assets/matrix-unlock.png',
+    '/assets/matrix-hourglass.png'
   ];
 
   const { data: serverJackpot } = useQuery({
@@ -286,16 +286,16 @@ const Index = () => {
 
   const getMultiplier = (symbol) => {
     switch (symbol) {
-      case '⏳': return 100; // Time manipulation symbol
-      case '🖥️': return 50; // Computer terminal symbol
-      case '🕶️': return 25; // Sunglasses symbol (Neo's iconic accessory)
-      case '💊': return 15; // Red pill symbol
-      case '🔓': return 10; // Unlocked symbol (breaking free from the Matrix)
-      case '🟣': return 5;  // Purple orb
-      case '🔴': return 4;  // Red orb
-      case '🟢': return 3;  // Green orb
-      case '🔵': return 2;  // Blue orb
-      case '🟡': return 1;  // Yellow orb
+      case '/assets/matrix-hourglass.png': return 100; // Time manipulation symbol
+      case '/assets/matrix-computer.png': return 50; // Computer terminal symbol
+      case '/assets/matrix-sunglasses.png': return 25; // Sunglasses symbol (Neo's iconic accessory)
+      case '/assets/matrix-pill.png': return 15; // Red pill symbol
+      case '/assets/matrix-unlock.png': return 10; // Unlocked symbol (breaking free from the Matrix)
+      case '/assets/matrix-purple-orb.png': return 5;  // Purple orb
+      case '/assets/matrix-red-orb.png': return 4;  // Red orb
+      case '/assets/matrix-green-orb.png': return 3;  // Green orb
+      case '/assets/matrix-blue-orb.png': return 2;  // Blue orb
+      case '/assets/matrix-yellow-orb.png': return 1;  // Yellow orb
       default: return 0;
     }
   };
