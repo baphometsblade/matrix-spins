@@ -809,6 +809,7 @@ const Index = () => {
           </Card>
         ))}
       </div>
+      <DailyBonus />
     </div>
   );
 };
@@ -861,5 +862,3 @@ const DailyBonus = () => {
     </Card>
   );
 };
-
-export default Index;
