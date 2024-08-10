@@ -465,9 +465,13 @@ const Index = () => {
 
       {/* Game Selection Tabs */}
       <Tabs defaultValue={selectedGame} onValueChange={setSelectedGame} className="mb-8">
-        <TabsList className="grid w-full grid-cols-4 bg-black/50">
+        <TabsList className="flex w-full bg-gradient-to-r from-purple-600 to-indigo-600 p-1 rounded-lg">
           {games.map(game => (
-            <TabsTrigger key={game.id} value={game.id} className="text-white data-[state=active]:bg-purple-600">
+            <TabsTrigger 
+              key={game.id} 
+              value={game.id} 
+              className="flex-1 py-2 text-white data-[state=active]:bg-white data-[state=active]:text-purple-600 rounded-md transition-all duration-200"
+            >
               {game.name}
             </TabsTrigger>
           ))}
@@ -479,52 +483,56 @@ const Index = () => {
                 <CardTitle className="text-center text-3xl">{game.name}</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="relative w-full aspect-[16/9] mb-6 overflow-hidden rounded-lg">
-                  <div className="absolute inset-0 bg-gradient-to-b from-purple-900 to-indigo-900"></div>
+                <div className="relative w-full aspect-[16/9] mb-6 overflow-hidden rounded-lg bg-gradient-to-b from-gray-800 to-gray-900 shadow-2xl">
                   <div className="absolute inset-0 flex items-center justify-center">
-                    <div className="grid grid-cols-5 gap-1 p-4 bg-black/80 rounded-lg shadow-lg">
-                      {reels.map((reel, i) => (
-                        <div key={i} className="bg-gradient-to-b from-gray-800 to-gray-900 rounded-lg overflow-hidden">
-                          {reel.map((symbolImage, j) => (
-                            <div key={j} className="p-1">
-                              <img src={symbolImage} alt="Slot Symbol" className="w-full h-auto rounded-md" />
+                    <div className="relative w-4/5 h-4/5 bg-gradient-to-b from-gray-700 to-gray-800 rounded-xl shadow-inner overflow-hidden">
+                      <div className="absolute inset-0 flex">
+                        {reels.map((reel, i) => (
+                          <div key={i} className="flex-1 border-r-2 border-gray-600 last:border-r-0">
+                            <div className="relative h-full" style={{transform: `translateY(${spinning ? '-100%' : '0'})`}}>
+                              {reel.map((symbolImage, j) => (
+                                <div key={j} className="absolute inset-0" style={{top: `${j * 100}%`}}>
+                                  <img src={symbolImage} alt="Slot Symbol" className="w-full h-full object-contain p-2" />
+                                </div>
+                              ))}
                             </div>
-                          ))}
-                        </div>
-                      ))}
+                          </div>
+                        ))}
+                      </div>
                     </div>
                   </div>
-                  <div className="absolute bottom-0 left-0 right-0 h-1/3 bg-gradient-to-t from-black to-transparent"></div>
+                  <div className="absolute top-0 left-0 right-0 h-1/6 bg-gradient-to-b from-gray-900 to-transparent"></div>
+                  <div className="absolute bottom-0 left-0 right-0 h-1/6 bg-gradient-to-t from-gray-900 to-transparent"></div>
                 </div>
-                <div className="flex flex-col sm:flex-row justify-between items-center mb-6 bg-black/50 p-4 rounded-lg">
-                  <div className="flex items-center space-x-4 mb-4 sm:mb-0">
-                    <div className="text-xl">
+                <div className="flex justify-between items-center mb-6 bg-gradient-to-r from-gray-800 to-gray-900 p-4 rounded-lg shadow-lg">
+                  <div className="flex items-center space-x-6">
+                    <div className="text-2xl">
                       <span className="text-gray-400">Balance:</span> 
-                      <span className="text-green-400 font-bold">{formatCurrency(balance)}</span>
+                      <span className="text-green-400 font-bold ml-2">{formatCurrency(balance)}</span>
                     </div>
                     {freeSpins > 0 && (
-                      <div className="text-xl">
+                      <div className="text-2xl">
                         <span className="text-gray-400">Free Spins:</span> 
-                        <span className="text-yellow-400 font-bold">{freeSpins}</span>
+                        <span className="text-yellow-400 font-bold ml-2">{freeSpins}</span>
                       </div>
                     )}
                   </div>
-                  <div className="flex items-center space-x-4">
-                    <div className="flex items-center">
-                      <Button onClick={() => setBet(Math.max(1, bet - 1))} variant="outline" size="sm" className="rounded-r-none">-</Button>
+                  <div className="flex items-center space-x-6">
+                    <div className="flex items-center bg-gray-700 rounded-lg overflow-hidden">
+                      <Button onClick={() => setBet(Math.max(1, bet - 1))} variant="ghost" size="sm" className="text-white hover:bg-gray-600">-</Button>
                       <div className="px-4 py-2 bg-gray-800 text-white">
                         <span className="text-gray-400">Bet:</span> 
-                        <span className="font-bold">{formatCurrency(bet)}</span>
+                        <span className="font-bold ml-2">{formatCurrency(bet)}</span>
                       </div>
-                      <Button onClick={() => setBet(Math.min(100, bet + 1))} variant="outline" size="sm" className="rounded-l-none">+</Button>
+                      <Button onClick={() => setBet(Math.min(100, bet + 1))} variant="ghost" size="sm" className="text-white hover:bg-gray-600">+</Button>
                     </div>
-                    <div className="flex items-center">
-                      <Button onClick={() => setPaylines(Math.max(1, paylines - 1))} variant="outline" size="sm" className="rounded-r-none">-</Button>
+                    <div className="flex items-center bg-gray-700 rounded-lg overflow-hidden">
+                      <Button onClick={() => setPaylines(Math.max(1, paylines - 1))} variant="ghost" size="sm" className="text-white hover:bg-gray-600">-</Button>
                       <div className="px-4 py-2 bg-gray-800 text-white">
                         <span className="text-gray-400">Lines:</span> 
-                        <span className="font-bold">{paylines}</span>
+                        <span className="font-bold ml-2">{paylines}</span>
                       </div>
-                      <Button onClick={() => setPaylines(Math.min(25, paylines + 1))} variant="outline" size="sm" className="rounded-l-none">+</Button>
+                      <Button onClick={() => setPaylines(Math.min(25, paylines + 1))} variant="ghost" size="sm" className="text-white hover:bg-gray-600">+</Button>
                     </div>
                   </div>
                 </div>
@@ -537,19 +545,21 @@ const Index = () => {
                     {isLoggedIn ? 'Logout' : 'Login'}
                   </Button>
                 </div>
-                <div className="flex justify-between mb-6">
+                <div className="flex justify-center mb-6">
                   <Button 
                     onClick={spinReels} 
                     disabled={spinning || autoPlay} 
-                    className="w-full sm:w-1/3 h-16 text-2xl font-bold bg-gradient-to-r from-yellow-400 to-orange-500 hover:from-yellow-500 hover:to-orange-600 text-black shadow-lg"
+                    className="w-1/2 h-20 text-3xl font-bold bg-gradient-to-r from-green-400 to-blue-500 hover:from-green-500 hover:to-blue-600 text-white shadow-lg rounded-full transform hover:scale-105 transition-transform duration-200"
                   >
                     {spinning ? (
-                      <Loader2 className="mr-2 h-8 w-8 animate-spin" />
+                      <Loader2 className="mr-2 h-10 w-10 animate-spin" />
                     ) : (
-                      <Zap className="mr-2 h-8 w-8" />
+                      <Zap className="mr-2 h-10 w-10" />
                     )}
                     {spinning ? 'Spinning...' : 'SPIN'}
                   </Button>
+                </div>
+                <div className="flex justify-between mb-6">
                   <Button 
                     onClick={toggleAutoPlay}
                     className={`w-1/5 ${autoPlay ? 'bg-red-500 hover:bg-red-600' : 'bg-blue-500 hover:bg-blue-600'}`}
