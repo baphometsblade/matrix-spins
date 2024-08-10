@@ -376,17 +376,8 @@ const Index = () => {
 
   const [backgroundImage, setBackgroundImage] = useState(null);
 
-  useEffect(() => {
-    const generateBackgroundImage = async () => {
-      const imagePrompt = "Futuristic casino background with matrix-style digital rain, neon lights, and slot machines, photorealistic style";
-      const imageUrl = await generateImage(imagePrompt, 1920, 1080);
-      setBackgroundImage(imageUrl);
-    };
-    generateBackgroundImage();
-  }, []);
-
   return (
-    <div className="container mx-auto px-4 py-8" style={{backgroundImage: `url("${backgroundImage}")`, backgroundSize: 'cover', backgroundAttachment: 'fixed'}}>
+    <div className="container mx-auto px-4 py-8" style={{backgroundImage: `url("/placeholder.svg")`, backgroundSize: 'cover', backgroundAttachment: 'fixed'}}>
       <AnimatePresence>
         {lastWin && (
           <motion.div
@@ -680,13 +671,7 @@ const Index = () => {
         {games.map((game, index) => (
           <Card key={index} className="bg-black/50 text-white overflow-hidden hover:shadow-lg transition-shadow duration-300">
             <div className="relative">
-              {game.image ? (
-                <img src={game.image.src} alt={game.name} className="w-full h-40 object-cover" />
-              ) : (
-                <div className="w-full h-40 bg-gray-700 flex items-center justify-center">
-                  <Loader2 className="h-8 w-8 animate-spin text-white" />
-                </div>
-              )}
+              <img src="/placeholder.svg" alt={game.name} className="w-full h-40 object-cover" />
               <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent flex items-end p-4">
                 <h3 className="text-xl font-bold text-white">{game.name}</h3>
               </div>

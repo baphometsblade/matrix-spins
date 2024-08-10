@@ -50,29 +50,14 @@ const Promotions = () => {
   },
 ]);
 
-  useEffect(() => {
-    const generatePromotionImages = async () => {
-      const updatedPromotions = await Promise.all(promotions.map(async (promo) => {
-        const imagePrompt = `Photorealistic 3D render of ${promo.title} casino promotion, luxury casino background, dynamic composition, vibrant colors, eye-catching visual elements, 8k resolution`;
-        const imageUrl = await generateImage(imagePrompt);
-        return {
-          ...promo,
-          image: imageUrl
-        };
-      }));
-      setPromotions(updatedPromotions);
-    };
-    generatePromotionImages();
-  }, []);
+  // Removed the useEffect for image generation
   return (
     <div className="container mx-auto px-4 py-8">
       <h1 className="text-4xl font-bold text-white mb-8 text-center">Exciting Promotions</h1>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
         {promotions.map((promo, index) => (
           <Card key={index} className={`bg-gradient-to-br ${promo.color} text-white overflow-hidden`}>
-            {promo.image && (
-              <img src={promo.image.src} alt={promo.title} className="w-full h-48 object-cover" />
-            )}
+            <img src="/placeholder.svg" alt={promo.title} className="w-full h-48 object-cover" />
             <CardHeader className="flex flex-row items-center space-x-4 pb-2">
               {promo.icon}
               <CardTitle className="text-2xl font-bold">{promo.title}</CardTitle>
