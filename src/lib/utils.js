@@ -9,11 +9,28 @@ export function formatCurrency(amount) {
   return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(amount);
 }
 
-// Placeholder function for image generation
+// Function for image generation using the provided API
 export async function generateImage(prompt, width = 512, height = 512, filename) {
   console.log(`Image generation requested for: ${prompt}`);
-  // In a real implementation, this would call an actual image generation API
-  return '/placeholder.svg';
+  try {
+    const response = await fetch('https://backend.buildpicoapps.com/aero/run/image-generation-api?pk=your_api_key_here', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ prompt }),
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const data = await response.json();
+    return data.imageUrl; // Assuming the API returns an imageUrl in the response
+  } catch (error) {
+    console.error('Error generating image:', error);
+    return '/placeholder.svg';
+  }
 }
 
 // Helper function to safely generate images

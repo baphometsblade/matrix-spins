@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Gift, Calendar, Users, Zap, Trophy, Sparkles } from "lucide-react";
-import { safeGenerateImage } from '@/lib/utils';
+import { generateImage } from '@/lib/utils';
 
 const Promotions = () => {
   const [promotions, setPromotions] = useState([
@@ -54,8 +54,8 @@ const Promotions = () => {
     const generatePromotionImages = async () => {
       const updatedPromotions = await Promise.all(
         promotions.map(async (promo, index) => {
-          const imagePath = await safeGenerateImage(promo.prompt, 800, 400, `promotion-${index + 1}.png`);
-          return { ...promo, image: imagePath };
+          const imageUrl = await generateImage(promo.prompt);
+          return { ...promo, image: imageUrl };
         })
       );
       setPromotions(updatedPromotions);
