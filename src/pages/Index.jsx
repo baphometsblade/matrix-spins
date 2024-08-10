@@ -106,20 +106,13 @@ const Index = () => {
   }, [loyaltyPoints, loyaltyTiers]);
 
   useEffect(() => {
-    const generateGameAssetsAndImages = async () => {
-      const updatedGames = await Promise.all(games.map(async (game) => {
-        const prompt = `Hyper-realistic 3D render of a ${game.name} themed slot machine, neon lights, futuristic casino environment, highly detailed, cinematic lighting, 8k resolution`;
-        const imageUrl = await generateImage(prompt);
-        const assets = await generateSlotAssets(game.name);
-        return {
-          ...game,
-          image: imageUrl,
-          assets: assets
-        };
-      }));
-      setGames(updatedGames);
-    };
-    generateGameAssetsAndImages();
+    // Use pre-generated assets
+    const updatedGames = games.map(game => ({
+      ...game,
+      image: `/assets/${game.id}-background.png`,
+      assets: slotAssets[game.id] || slotAssets.matrix // Fallback to matrix assets if not found
+    }));
+    setGames(updatedGames);
   }, []);
 
   const spinReels = useCallback(() => {
