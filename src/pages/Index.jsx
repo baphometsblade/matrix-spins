@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback, useMemo } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Loader2, Gift, Volume2, VolumeX, Zap, Settings, DollarSign, Sparkles, CreditCard, HelpCircle, Trophy, Star, RefreshCw, Lock, Unlock } from "lucide-react";
-import { formatCurrency, slotAssets, gameBackgrounds } from '@/lib/utils';
+import { formatCurrency, slotAssets, gameBackgrounds, generateImage } from '@/lib/utils';
 import { Link } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -23,6 +23,27 @@ import SideBet from '../components/SideBet';
 import { useQuery } from '@tanstack/react-query';
 
 const Index = () => {
+  useEffect(() => {
+    const generateImages = async () => {
+      await generateImage("Matrix-style slot machine symbol: Blue Orb", 128, 128, "slot-blue-orb.png");
+      await generateImage("Matrix-style slot machine symbol: Green Orb", 128, 128, "slot-green-orb.png");
+      await generateImage("Matrix-style slot machine symbol: Red Orb", 128, 128, "slot-red-orb.png");
+      await generateImage("Matrix-style slot machine symbol: Purple Orb", 128, 128, "slot-purple-orb.png");
+      await generateImage("Matrix-style slot machine symbol: Yellow Orb", 128, 128, "slot-yellow-orb.png");
+      await generateImage("Matrix-style slot machine symbol: Red Pill", 128, 128, "slot-red-pill.png");
+      await generateImage("Matrix-style slot machine symbol: Sunglasses", 128, 128, "slot-sunglasses.png");
+      await generateImage("Matrix-style slot machine symbol: Computer", 128, 128, "slot-computer.png");
+      await generateImage("Matrix-style slot machine symbol: Unlock", 128, 128, "slot-unlock.png");
+      await generateImage("Matrix-style slot machine symbol: Hourglass", 128, 128, "slot-hourglass.png");
+      
+      await generateImage("Matrix Reloaded game background", 1920, 1080, "matrix-reloaded-background.png");
+      await generateImage("Cybernetic Spin game background", 1920, 1080, "cybernetic-spin-background.png");
+      await generateImage("Quantum Quandary game background", 1920, 1080, "quantum-quandary-background.png");
+      await generateImage("Neural Network game background", 1920, 1080, "neural-network-background.png");
+    };
+
+    generateImages();
+  }, []);
   const { toast } = useToast();
   const [balance, setBalance] = useState(1000);
   const [bet, setBet] = useState(10);
