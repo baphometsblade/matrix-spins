@@ -1,6 +1,6 @@
 import { clsx } from "clsx"
 import { twMerge } from "tailwind-merge"
-import pico from '@picojs/pico';
+import * as pico from '@picojs/pico';
 
 export function cn(...inputs) {
   return twMerge(clsx(inputs))
@@ -13,7 +13,7 @@ export function formatCurrency(amount) {
 // Pico API for image generation
 export async function generateImage(prompt, width = 512, height = 512) {
   try {
-    const response = await pico.generateImage({
+    const response = await pico.default.generateImage({
       prompt,
       width,
       height,
