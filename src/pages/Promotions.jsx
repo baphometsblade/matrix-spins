@@ -51,10 +51,10 @@ const Promotions = () => {
 ]);
 
   useEffect(() => {
-    // Use pre-generated promotion images
-    const updatedPromotions = promotions.map((promo, index) => ({
+    // Use placeholder images for promotions
+    const updatedPromotions = promotions.map((promo) => ({
       ...promo,
-      image: `/assets/promotion-${index + 1}.png`
+      image: '/placeholder.svg'
     }));
     setPromotions(updatedPromotions);
   }, []);

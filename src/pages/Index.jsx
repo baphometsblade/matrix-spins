@@ -106,10 +106,10 @@ const Index = () => {
   }, [loyaltyPoints, loyaltyTiers]);
 
   useEffect(() => {
-    // Use pre-generated assets
+    // Use placeholder images for game backgrounds
     const updatedGames = games.map(game => ({
       ...game,
-      image: `/assets/${game.id}-background.png`,
+      image: '/placeholder.svg',
       assets: slotAssets[game.id] || slotAssets.matrix // Fallback to matrix assets if not found
     }));
     setGames(updatedGames);
