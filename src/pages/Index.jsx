@@ -25,21 +25,40 @@ import { useQuery } from '@tanstack/react-query';
 const Index = () => {
   useEffect(() => {
     const generateImages = async () => {
-      await generateImage("Matrix-style slot machine symbol: Blue Orb", 128, 128, "slot-blue-orb.png");
-      await generateImage("Matrix-style slot machine symbol: Green Orb", 128, 128, "slot-green-orb.png");
-      await generateImage("Matrix-style slot machine symbol: Red Orb", 128, 128, "slot-red-orb.png");
-      await generateImage("Matrix-style slot machine symbol: Purple Orb", 128, 128, "slot-purple-orb.png");
-      await generateImage("Matrix-style slot machine symbol: Yellow Orb", 128, 128, "slot-yellow-orb.png");
-      await generateImage("Matrix-style slot machine symbol: Red Pill", 128, 128, "slot-red-pill.png");
-      await generateImage("Matrix-style slot machine symbol: Sunglasses", 128, 128, "slot-sunglasses.png");
-      await generateImage("Matrix-style slot machine symbol: Computer", 128, 128, "slot-computer.png");
-      await generateImage("Matrix-style slot machine symbol: Unlock", 128, 128, "slot-unlock.png");
-      await generateImage("Matrix-style slot machine symbol: Hourglass", 128, 128, "slot-hourglass.png");
-      
-      await generateImage("Matrix Reloaded game background", 1920, 1080, "matrix-reloaded-background.png");
-      await generateImage("Cybernetic Spin game background", 1920, 1080, "cybernetic-spin-background.png");
-      await generateImage("Quantum Quandary game background", 1920, 1080, "quantum-quandary-background.png");
-      await generateImage("Neural Network game background", 1920, 1080, "neural-network-background.png");
+      const symbolPrompts = [
+        "Matrix-style slot machine symbol: Blue Orb",
+        "Matrix-style slot machine symbol: Green Orb",
+        "Matrix-style slot machine symbol: Red Orb",
+        "Matrix-style slot machine symbol: Purple Orb",
+        "Matrix-style slot machine symbol: Yellow Orb",
+        "Matrix-style slot machine symbol: Red Pill",
+        "Matrix-style slot machine symbol: Sunglasses",
+        "Matrix-style slot machine symbol: Computer",
+        "Matrix-style slot machine symbol: Unlock",
+        "Matrix-style slot machine symbol: Hourglass"
+      ];
+
+      const backgroundPrompts = [
+        "Matrix Reloaded game background",
+        "Cybernetic Spin game background",
+        "Quantum Quandary game background",
+        "Neural Network game background"
+      ];
+
+      const symbolImages = await Promise.all(
+        symbolPrompts.map((prompt, index) => 
+          generateImage(prompt, 128, 128, `slot-${prompt.split(': ')[1].toLowerCase().replace(' ', '-')}.png`)
+        )
+      );
+
+      const backgroundImages = await Promise.all(
+        backgroundPrompts.map((prompt, index) => 
+          generateImage(prompt, 1920, 1080, `${prompt.toLowerCase().replace(' ', '-')}-background.png`)
+        )
+      );
+
+      setSymbols(symbolImages);
+      setBackgrounds(backgroundImages);
     };
 
     generateImages();

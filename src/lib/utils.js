@@ -1,8 +1,8 @@
 import { clsx } from "clsx"
 import { twMerge } from "tailwind-merge"
-import sharp from 'sharp';
-import fs from 'fs/promises';
-import path from 'path';
+import { clsx } from "clsx"
+import { twMerge } from "tailwind-merge"
+import { generateImage as picoGenerateImage } from '@picojs/pico';
 
 export function cn(...inputs) {
   return twMerge(clsx(inputs))
@@ -12,27 +12,29 @@ export function formatCurrency(amount) {
   return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(amount);
 }
 
-// Image generation function
+// Image generation function using Pico API
 export async function generateImage(prompt, width = 512, height = 512, filename) {
   console.log(`Generating image for: ${prompt}`);
   
-  // In a real application, you would use an AI image generation service here
-  // For this example, we'll create a simple colored rectangle
-  const buffer = await sharp({
-    create: {
-      width: width,
-      height: height,
-      channels: 4,
-      background: { r: Math.random() * 255, g: Math.random() * 255, b: Math.random() * 255, alpha: 1 }
-    }
-  })
-    .png()
-    .toBuffer();
+  try {
+    const image = await picoGenerateImage({
+      prompt,
+      width,
+      height,
+      steps: 50,
+      cfg_scale: 7.5,
+      sampler: 'k_euler_ancestral',
+    });
 
-  const filePath = path.join(process.cwd(), 'public', 'assets', filename);
-  await fs.writeFile(filePath, buffer);
+    // Save the image to the public/assets directory
+    const filePath = `/assets/${filename}`;
+    await image.save(`public${filePath}`);
 
-  return `/assets/${filename}`;
+    return filePath;
+  } catch (error) {
+    console.error('Error generating image:', error);
+    return '/placeholder.svg'; // Fallback to placeholder if generation fails
+  }
 }
 
 // Pre-generate slot assets

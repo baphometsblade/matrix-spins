@@ -1,54 +1,68 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Gift, Calendar, Users, Zap, Trophy, Sparkles } from "lucide-react";
-import { promotionImages } from '@/lib/utils';
+import { generateImage } from '@/lib/utils';
 
 const Promotions = () => {
-  const [promotions] = useState([
+  const [promotions, setPromotions] = useState([
     {
       title: "Welcome Package",
       description: "Get up to $1000 + 200 Free Spins on your first 3 deposits!",
       icon: <Gift className="h-8 w-8 text-yellow-400" />,
       color: "from-yellow-400 to-orange-500",
-      image: '/assets/promotion-1.png',
+      prompt: "Casino welcome package with stacks of chips and free spin symbols",
     },
     {
       title: "Weekly Cashback",
       description: "Enjoy 15% cashback on your losses every week, up to $500!",
       icon: <Calendar className="h-8 w-8 text-green-400" />,
       color: "from-green-400 to-emerald-500",
-      image: '/assets/promotion-2.png',
+      prompt: "Casino cashback promotion with calendar and money symbols",
     },
     {
       title: "Refer a Friend",
       description: "Get $100 for each friend you refer who makes a deposit!",
       icon: <Users className="h-8 w-8 text-blue-400" />,
       color: "from-blue-400 to-indigo-500",
-      image: '/assets/promotion-3.png',
+      prompt: "Casino refer a friend promotion with people icons and money symbols",
     },
     {
       title: "Daily Drops & Wins",
       description: "Win a share of $1,000,000 in our daily tournaments!",
       icon: <Zap className="h-8 w-8 text-purple-400" />,
       color: "from-purple-400 to-pink-500",
-      image: '/assets/promotion-4.png',
+      prompt: "Casino daily tournament promotion with trophy and lightning bolt symbols",
     },
     {
       title: "VIP Program",
       description: "Unlock exclusive rewards and personalized offers!",
       icon: <Trophy className="h-8 w-8 text-red-400" />,
       color: "from-red-400 to-rose-500",
-      image: '/assets/promotion-5.png',
+      prompt: "Casino VIP program promotion with crown and exclusive access symbols",
     },
     {
       title: "Slot of the Week",
       description: "Get 50 free spins on our featured slot every week!",
       icon: <Sparkles className="h-8 w-8 text-cyan-400" />,
       color: "from-cyan-400 to-teal-500",
-      image: '/assets/promotion-6.png',
+      prompt: "Casino slot of the week promotion with slot machine and sparkle symbols",
     },
   ]);
+
+  useEffect(() => {
+    const generatePromotionImages = async () => {
+      const updatedPromotions = await Promise.all(
+        promotions.map(async (promo, index) => {
+          const imagePath = await generateImage(promo.prompt, 800, 400, `promotion-${index + 1}.png`);
+          return { ...promo, image: imagePath };
+        })
+      );
+      setPromotions(updatedPromotions);
+    };
+
+    generatePromotionImages();
+  }, []);
   return (
     <div className="container mx-auto px-4 py-8">
       <h1 className="text-4xl font-bold text-white mb-8 text-center">Exciting Promotions</h1>
