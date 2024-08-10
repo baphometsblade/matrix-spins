@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Loader2, Gift, Volume2, VolumeX, Zap, Settings, DollarSign, Sparkles, CreditCard, HelpCircle, Trophy, Star, RefreshCw, Lock, Unlock, CoinIcon, Calendar, Maximize2, Minimize2 } from "lucide-react";
+import { Loader2, Gift, Volume2, VolumeX, Zap, Settings, DollarSign, Sparkles, CreditCard, HelpCircle, Trophy, Star, RefreshCw, Lock, Unlock, Coins, Calendar, Maximize2, Minimize2 } from "lucide-react";
 import { formatCurrency, slotAssets, gameBackgrounds, safeGenerateImage } from '@/lib/utils';
 import { Link } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
@@ -856,11 +856,11 @@ const Index = () => {
             <p className="mb-4">Choose Heads or Tails to double your last win of {formatCurrency(lastWin?.amount || 0)}!</p>
             <div className="flex justify-center space-x-4">
               <Button onClick={() => handleMiniGame('heads')} className="bg-yellow-400 text-black hover:bg-yellow-500">
-                <CoinIcon className="mr-2 h-5 w-5" />
+                <Coins className="mr-2 h-5 w-5" />
                 Heads
               </Button>
               <Button onClick={() => handleMiniGame('tails')} className="bg-yellow-400 text-black hover:bg-yellow-500">
-                <CoinIcon className="mr-2 h-5 w-5" />
+                <Coins className="mr-2 h-5 w-5" />
                 Tails
               </Button>
             </div>
