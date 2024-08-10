@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback, useMemo } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Loader2, Gift, Volume2, VolumeX, Zap, Settings, DollarSign, Sparkles, CreditCard, HelpCircle, Trophy, Star, RefreshCw, Lock, Unlock, CoinIcon, Calendar } from "lucide-react";
-import { formatCurrency, slotAssets, gameBackgrounds, generateImage } from '@/lib/utils';
+import { formatCurrency, slotAssets, gameBackgrounds, safeGenerateImage } from '@/lib/utils';
 import { Link } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -48,13 +48,13 @@ const Index = () => {
 
       const symbolImages = await Promise.all(
         symbolPrompts.map((prompt, index) => 
-          generateImage(prompt, 128, 128, `slot-${prompt.split(': ')[1].toLowerCase().replace(' ', '-')}.png`)
+          safeGenerateImage(prompt, 128, 128, `slot-${prompt.split(': ')[1].toLowerCase().replace(' ', '-')}.png`)
         )
       );
 
       const backgroundImages = await Promise.all(
         backgroundPrompts.map((prompt, index) => 
-          generateImage(prompt, 1920, 1080, `${prompt.toLowerCase().replace(' ', '-')}-background.png`)
+          safeGenerateImage(prompt, 1920, 1080, `${prompt.toLowerCase().replace(' ', '-')}-background.png`)
         )
       );
 

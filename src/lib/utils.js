@@ -16,6 +16,16 @@ export async function generateImage(prompt, width = 512, height = 512, filename)
   return '/placeholder.svg';
 }
 
+// Helper function to safely generate images
+export async function safeGenerateImage(prompt, width = 512, height = 512, filename) {
+  try {
+    return await generateImage(prompt, width, height, filename);
+  } catch (error) {
+    console.error('Error generating image:', error);
+    return '/placeholder.svg';
+  }
+}
+
 // Pre-generate slot assets
 export function generateSlotAssets() {
   const symbols = ['Blue Orb', 'Green Orb', 'Red Orb', 'Purple Orb', 'Yellow Orb', 'Red Pill', 'Sunglasses', 'Computer', 'Unlock', 'Hourglass'];
