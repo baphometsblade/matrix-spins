@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Loader2, Gift, Volume2, VolumeX, Zap, Settings, DollarSign, Sparkles, CreditCard, HelpCircle, Trophy, Star, RefreshCw, Lock, Unlock } from "lucide-react";
+import { Loader2, Gift, Volume2, VolumeX, Zap, Settings, DollarSign, Sparkles, CreditCard, HelpCircle, Trophy, Star, RefreshCw, Lock, Unlock, CoinIcon } from "lucide-react";
 import { formatCurrency, slotAssets, gameBackgrounds, generateImage } from '@/lib/utils';
 import { Link } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
@@ -21,6 +21,7 @@ import DepositDialog from '../components/DepositDialog';
 import HelpDialog from '../components/HelpDialog';
 import SideBet from '../components/SideBet';
 import { useQuery } from '@tanstack/react-query';
+import { Badge } from "@/components/ui/badge";
 
 const Index = () => {
   useEffect(() => {
@@ -442,6 +443,30 @@ const Index = () => {
           </div>
         </CardContent>
       </Card>
+
+      {/* Loyalty Benefits */}
+      <Card className="mb-8 bg-black/50 text-white">
+        <CardHeader>
+          <CardTitle className="flex items-center">
+            <Trophy className="mr-2 h-6 w-6 text-yellow-400" />
+            Loyalty Benefits
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {loyaltyTiers.map((tier, index) => (
+              <div key={index} className={`p-4 rounded-lg ${currentTier.name === tier.name ? 'bg-gradient-to-r from-green-500 to-blue-500' : 'bg-gray-800'}`}>
+                <h3 className={`text-xl font-bold mb-2 ${tier.color}`}>{tier.name}</h3>
+                <ul className="list-disc list-inside">
+                  <li>Daily Bonus: {index * 5 + 5}%</li>
+                  <li>Cashback: {index * 0.5 + 0.5}%</li>
+                  <li>VIP Support: {index >= 2 ? 'Yes' : 'No'}</li>
+                </ul>
+              </div>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
       
       {/* Featured Promotion */}
       <Card className="mb-8 bg-gradient-to-r from-purple-600 to-indigo-600 text-white">
@@ -702,12 +727,14 @@ const Index = () => {
         <Card className="mb-8 bg-gradient-to-r from-pink-500 to-purple-500 text-white">
           <CardContent className="p-6">
             <h3 className="text-2xl font-bold mb-4">Mini-Game: Double or Nothing</h3>
-            <p className="mb-4">Choose Heads or Tails to double your last win!</p>
+            <p className="mb-4">Choose Heads or Tails to double your last win of {formatCurrency(lastWin?.amount || 0)}!</p>
             <div className="flex justify-center space-x-4">
               <Button onClick={() => handleMiniGame('heads')} className="bg-yellow-400 text-black hover:bg-yellow-500">
+                <CoinIcon className="mr-2 h-5 w-5" />
                 Heads
               </Button>
               <Button onClick={() => handleMiniGame('tails')} className="bg-yellow-400 text-black hover:bg-yellow-500">
+                <CoinIcon className="mr-2 h-5 w-5" />
                 Tails
               </Button>
             </div>
