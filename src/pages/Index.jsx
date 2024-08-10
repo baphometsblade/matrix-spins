@@ -892,6 +892,7 @@ const Index = () => {
       </div>
       <DailyBonus />
     </div>
+    </div>
   );
 };
 
