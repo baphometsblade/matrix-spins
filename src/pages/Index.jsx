@@ -33,27 +33,11 @@ const Index = () => {
   const { theme, setTheme } = useTheme();
   const [showResponsibleGamingInfo, setShowResponsibleGamingInfo] = useState(false);
   const [timeSpent, setTimeSpent] = useState(0);
+  const [symbols, setSymbols] = useState([]);
+  const [backgrounds, setBackgrounds] = useState([]);
 
-  // Keep all the existing state and effects
-
-  return (
-    <div className="container mx-auto px-4 py-8">
-      <h1 className="text-4xl font-bold text-white mb-8 text-center">Welcome to Matrix Slots Extravaganza</h1>
-      <Card className="bg-black/50 text-white">
-        <CardHeader>
-          <CardTitle>Get Started</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <p className="mb-4">Experience the thrill of our Matrix-themed slot games!</p>
-          <Button className="bg-green-500 hover:bg-green-600">Play Now</Button>
-        </CardContent>
-      </Card>
-      {/* Uncomment and add back other components as needed */}
-    </div>
-  );
-};
-
-export default Index;
+  useEffect(() => {
+    const generateImages = async () => {
       const symbolPrompts = [
         "A glowing blue orb with matrix code inside",
         "A pulsating green orb with digital patterns",
@@ -87,6 +71,45 @@ export default Index;
     };
 
     generateImages();
+
+    // Start tracking time spent
+    const interval = setInterval(() => {
+      setTimeSpent(prevTime => prevTime + 1);
+    }, 60000); // Update every minute
+
+    return () => clearInterval(interval);
+  }, []);
+
+  // For debugging
+  console.log("Index component rendered");
+
+  useEffect(() => {
+    // Check if the player has been playing for more than 2 hours
+    if (timeSpent >= 120) {
+      setShowResponsibleGamingInfo(true);
+    }
+  }, [timeSpent]);
+
+  // ... rest of your component code ...
+
+  return (
+    <div className="container mx-auto px-4 py-8">
+      <h1 className="text-4xl font-bold text-white mb-8 text-center">Welcome to Matrix Slots Extravaganza</h1>
+      <Card className="bg-black/50 text-white">
+        <CardHeader>
+          <CardTitle>Get Started</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <p className="mb-4">Experience the thrill of our Matrix-themed slot games!</p>
+          <Button className="bg-green-500 hover:bg-green-600">Play Now</Button>
+        </CardContent>
+      </Card>
+      {/* Uncomment and add back other components as needed */}
+    </div>
+  );
+};
+
+export default Index;
 
     // Start tracking time spent
     const interval = setInterval(() => {
