@@ -6,7 +6,6 @@ import { formatCurrency, slotAssets, gameBackgrounds, safeGenerateImage } from '
 import confetti from 'canvas-confetti';
 import { useTheme } from 'next-themes';
 import { Link } from "react-router-dom";
-import { useEffect } from 'react';
 import { motion, AnimatePresence, useAnimation } from "framer-motion";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Progress } from "@/components/ui/progress";
@@ -592,7 +591,7 @@ const Index = () => {
           </motion.div>
         )}
       </AnimatePresence>
-      <img src={await safeGenerateImage("Futuristic 3D logo for Matrix Slots Extravaganza, combining slot machine elements with matrix-style digital effects, metallic finish, neon accents", 256, 256)} alt="Matrix Slots Extravaganza" className="mx-auto mb-8 w-64 h-64 object-cover" />
+      <img src="/logo.png" alt="Matrix Slots Extravaganza" className="mx-auto mb-8 w-64 h-64 object-cover" />
       
       {/* Loyalty Program Display */}
       <Card className="mb-8 bg-gradient-to-r from-green-600 to-blue-600 text-white overflow-hidden relative">
