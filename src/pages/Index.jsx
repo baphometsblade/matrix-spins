@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Loader2, Gift, Volume2, VolumeX, Zap, Settings, DollarSign, Sparkles, CreditCard, HelpCircle, Trophy, Star, RefreshCw, Lock, Unlock, Coins, Calendar, Maximize2, Minimize2, Fireworks } from "lucide-react";
+import { Loader2, Gift, Volume2, VolumeX, Zap, Settings, DollarSign, Sparkles, CreditCard, HelpCircle, Trophy, Star, RefreshCw, Lock, Unlock, Coins, Calendar, Maximize2, Minimize2 } from "lucide-react";
 import { formatCurrency, slotAssets, gameBackgrounds, safeGenerateImage } from '@/lib/utils';
 import { Link } from "react-router-dom";
 import { motion, AnimatePresence, useAnimation } from "framer-motion";
@@ -861,13 +861,7 @@ const Index = () => {
                       </span>
                       <Sparkles className="inline-block ml-2 h-6 w-6 text-yellow-400" />
                     </div>
-                    <motion.div
-                      initial={{ scale: 0 }}
-                      animate={{ scale: [0, 1.2, 1] }}
-                      transition={{ duration: 0.5, times: [0, 0.5, 1] }}
-                    >
-                      <Fireworks className="h-12 w-12 mx-auto mt-4 text-yellow-400" />
-                    </motion.div>
+                    {/* Fireworks component removed */}
                   </motion.div>
                 )}
                 <div className="mt-6">
