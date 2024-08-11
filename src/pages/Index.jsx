@@ -10,7 +10,7 @@ import { Progress } from "@/components/ui/progress";
 import DailyBonus from "@/components/DailyBonus";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import SpecialEventBanner from '@/components/SpecialEventBanner';
+import SpecialEventBanner from '../components/SpecialEventBanner';
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Slider } from "@/components/ui/slider";
