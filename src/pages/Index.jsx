@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Loader2, Gift, Volume2, VolumeX, Zap, Settings, DollarSign, Sparkles, CreditCard, HelpCircle, Trophy, Star, RefreshCw, Lock, Unlock, Coins, Calendar, Maximize2, Minimize2, AlertTriangle, Info, ChevronLeft, ChevronRight } from "lucide-react";
+import { Loader2, Gift, Volume2, VolumeX, Zap, Settings, DollarSign, Sparkles, CreditCard, HelpCircle, Trophy, Star, RefreshCw, Lock, Unlock, Coins, Calendar, Maximize2, Minimize2, AlertTriangle, Info, ChevronLeft, ChevronRight, Code } from "lucide-react";
 import { formatCurrency, slotAssets, gameBackgrounds } from '@/lib/utils';
 import confetti from 'canvas-confetti';
 import { useTheme } from 'next-themes';
@@ -66,19 +66,56 @@ const Index = () => {
     ['/assets/matrix-red-orb.png', '/assets/matrix-purple-orb.png', '/assets/matrix-yellow-orb.png']
   ]);
 
+  const [matrixCode, setMatrixCode] = useState('');
+
+  useEffect(() => {
+    const generateMatrixCode = () => {
+      const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789@#$%^&*()_+';
+      let result = '';
+      for (let i = 0; i < 20; i++) {
+        result += characters.charAt(Math.floor(Math.random() * characters.length));
+      }
+      setMatrixCode(result);
+    };
+
+    const interval = setInterval(generateMatrixCode, 100);
+    return () => clearInterval(interval);
+  }, []);
+
   return (
-    <div className="container mx-auto px-4 py-8">
-      <h1 className="text-4xl font-bold text-white mb-8 text-center">Welcome to Matrix Slots Extravaganza</h1>
-      <Card className="bg-black/50 text-white">
+    <div className="container mx-auto px-4 py-8 relative">
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <div className="matrix-rain"></div>
+      </div>
+      <h1 className="text-4xl font-bold text-green-400 mb-8 text-center relative z-10">Welcome to Matrix Slots Extravaganza</h1>
+      <Card className="bg-black/70 text-green-400 border border-green-400 relative overflow-hidden">
+        <div className="absolute inset-0 opacity-10">
+          <div className="matrix-rain"></div>
+        </div>
         <CardHeader>
-          <CardTitle>Get Started</CardTitle>
+          <CardTitle className="flex items-center">
+            <Code className="mr-2 h-6 w-6" />
+            Enter the Matrix
+          </CardTitle>
         </CardHeader>
         <CardContent>
-          <p className="mb-4">Experience the thrill of our Matrix-themed slot games!</p>
-          <Button className="bg-green-500 hover:bg-green-600">Play Now</Button>
+          <p className="mb-4">Decode the system and win big in our Matrix-themed slot games!</p>
+          <div className="mb-4 font-mono text-sm overflow-hidden">
+            <motion.div
+              initial={{ y: 20, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              transition={{ duration: 0.5 }}
+            >
+              {matrixCode}
+            </motion.div>
+          </div>
+          <Button className="bg-green-500 hover:bg-green-600 text-black font-bold">
+            <Zap className="mr-2 h-5 w-5" />
+            Jack In
+          </Button>
         </CardContent>
       </Card>
-      {/* Uncomment and add back other components as needed */}
+      {/* Other components will be added here */}
     </div>
   );
 };
