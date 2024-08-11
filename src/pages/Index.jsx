@@ -34,44 +34,29 @@ const Index = () => {
   const [timeSpent, setTimeSpent] = useState(0);
 
   useEffect(() => {
-    const generateImages = async () => {
-      const symbolPrompts = [
-        "Matrix-style slot machine symbol: Blue Orb",
-        "Matrix-style slot machine symbol: Green Orb",
-        "Matrix-style slot machine symbol: Red Orb",
-        "Matrix-style slot machine symbol: Purple Orb",
-        "Matrix-style slot machine symbol: Yellow Orb",
-        "Matrix-style slot machine symbol: Red Pill",
-        "Matrix-style slot machine symbol: Sunglasses",
-        "Matrix-style slot machine symbol: Computer",
-        "Matrix-style slot machine symbol: Unlock",
-        "Matrix-style slot machine symbol: Hourglass"
-      ];
+    // Use placeholder images instead of generating them
+    const symbolImages = [
+      '/assets/matrix-blue-orb.png',
+      '/assets/matrix-green-orb.png',
+      '/assets/matrix-red-orb.png',
+      '/assets/matrix-purple-orb.png',
+      '/assets/matrix-yellow-orb.png',
+      '/assets/matrix-pill.png',
+      '/assets/matrix-sunglasses.png',
+      '/assets/matrix-computer.png',
+      '/assets/matrix-unlock.png',
+      '/assets/matrix-hourglass.png'
+    ];
 
-      const backgroundPrompts = [
-        "Matrix Reloaded game background",
-        "Cybernetic Spin game background",
-        "Quantum Quandary game background",
-        "Neural Network game background"
-      ];
+    const backgroundImages = [
+      '/assets/matrix-background.png',
+      '/assets/cyber-background.png',
+      '/assets/quantum-background.png',
+      '/assets/neural-background.png'
+    ];
 
-      const symbolImages = await Promise.all(
-        symbolPrompts.map((prompt, index) => 
-          safeGenerateImage(prompt, 128, 128, `slot-${prompt.split(': ')[1].toLowerCase().replace(' ', '-')}.png`)
-        )
-      );
-
-      const backgroundImages = await Promise.all(
-        backgroundPrompts.map((prompt, index) => 
-          safeGenerateImage(prompt, 1920, 1080, `${prompt.toLowerCase().replace(' ', '-')}-background.png`)
-        )
-      );
-
-      setSymbols(symbolImages);
-      setBackgrounds(backgroundImages);
-    };
-
-    generateImages();
+    setSymbols(symbolImages);
+    setBackgrounds(backgroundImages);
 
     // Start tracking time spent
     const interval = setInterval(() => {
@@ -123,7 +108,7 @@ const Index = () => {
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [showStats, setShowStats] = useState(false);
 
-  const symbols = [
+  const [symbols, setSymbols] = useState([
     '/assets/matrix-blue-orb.png',
     '/assets/matrix-green-orb.png',
     '/assets/matrix-red-orb.png',
@@ -134,7 +119,7 @@ const Index = () => {
     '/assets/matrix-computer.png',
     '/assets/matrix-unlock.png',
     '/assets/matrix-hourglass.png'
-  ];
+  ]);
 
   const toggleFullscreen = () => {
     if (!document.fullscreenElement) {
