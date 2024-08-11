@@ -10,86 +10,6 @@ export function formatCurrency(amount) {
 }
 
 // Function for image generation using the provided API
-export async function generateImage(prompt, width = 512, height = 512) {
-  console.log(`Image generation requested for: ${prompt}`);
-  try {
-    const response = await fetch('https://backend.buildpicoapps.com/aero/run/image-generation-api?pk=your_api_key_here', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ prompt }),
-    });
-
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
-
-    const data = await response.json();
-    return data.imageUrl; // Assuming the API returns an imageUrl in the response
-  } catch (error) {
-    console.error('Error generating image:', error);
-    return '/placeholder.svg';
-  }
-}
-
-// Helper function to safely generate images
-export async function safeGenerateImage(prompt, width = 512, height = 512) {
-  try {
-    return await generateImage(prompt, width, height);
-  } catch (error) {
-    console.error('Error generating image:', error);
-    return '/placeholder.svg';
-  }
-}
-
-// Generate slot assets
-export async function generateSlotAssets() {
-  const symbols = ['Blue Orb', 'Green Orb', 'Red Orb', 'Purple Orb', 'Yellow Orb', 'Red Pill', 'Sunglasses', 'Computer', 'Unlock', 'Hourglass'];
-  return await Promise.all(symbols.map(async (symbol) => {
-    const prompt = `Matrix-style slot machine symbol: ${symbol}`;
-    const image = await safeGenerateImage(prompt, 128, 128);
-    return { symbol, image };
-  }));
-}
-
-// Generate promotion images
-export async function generatePromotionImages() {
-  const promotions = [
-    'Welcome Package casino promotion',
-    'Weekly Cashback casino promotion',
-    'Refer a Friend casino promotion',
-    'Daily Drops & Wins casino promotion',
-    'VIP Program casino promotion',
-    'Slot of the Week casino promotion'
-  ];
-  return await Promise.all(promotions.map(prompt => safeGenerateImage(prompt, 512, 256)));
-}
-
-// Generate game background images
-export async function generateGameBackgrounds() {
-  const games = ['Matrix Reloaded', 'Cybernetic Spin', 'Quantum Quandary', 'Neural Network'];
-  return await Promise.all(games.map(async (game) => {
-    const prompt = `${game} game background`;
-    const image = await safeGenerateImage(prompt, 1920, 1080);
-    return { game, image };
-  }));
-}
-
-// Initialize and export pre-generated assets
-export let slotAssets = {};
-export let promotionImages = [];
-export let gameBackgrounds = [];
-
-(async () => {
-  slotAssets = {
-    matrix: await generateSlotAssets(),
-    // Add other game themes here
-  };
-  promotionImages = await generatePromotionImages();
-  gameBackgrounds = await generateGameBackgrounds();
-})();
-
 // Function for image generation using the provided API
 export async function generateImage(prompt, width = 512, height = 512, filename) {
   console.log(`Image generation requested for: ${prompt}`);
@@ -124,7 +44,7 @@ export async function safeGenerateImage(prompt, width = 512, height = 512, filen
   }
 }
 
-// Pre-generate slot assets
+// Generate slot assets
 export function generateSlotAssets() {
   const symbols = ['Blue Orb', 'Green Orb', 'Red Orb', 'Purple Orb', 'Yellow Orb', 'Red Pill', 'Sunglasses', 'Computer', 'Unlock', 'Hourglass'];
   return symbols.map((symbol, index) => {
