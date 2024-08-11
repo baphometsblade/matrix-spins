@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Loader2, Gift, Volume2, VolumeX, Zap, Settings, DollarSign, Sparkles, CreditCard, HelpCircle, Trophy, Star, RefreshCw, Lock, Unlock, Coins, Calendar, Maximize2, Minimize2 } from "lucide-react";
-import { formatCurrency, slotAssets, gameBackgrounds, safeGenerateImage } from '@/lib/utils';
+import { formatCurrency, slotAssets, gameBackgrounds } from '@/lib/utils';
 import { Link } from "react-router-dom";
 import { motion, AnimatePresence, useAnimation } from "framer-motion";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -153,12 +153,20 @@ const Index = () => {
     }
   }, [serverJackpot]);
 
-  const [games, setGames] = useState([
-    { id: 'matrix', name: "Matrix Reloaded", image: '/assets/matrix-reloaded-background.png', assets: slotAssets.matrix },
-    { id: 'cyber', name: "Cybernetic Spin", image: '/assets/cybernetic-spin-background.png', assets: slotAssets.matrix },
-    { id: 'quantum', name: "Quantum Quandary", image: '/assets/quantum-quandary-background.png', assets: slotAssets.matrix },
-    { id: 'neural', name: "Neural Network", image: '/assets/neural-network-background.png', assets: slotAssets.matrix },
-  ]);
+  const [games, setGames] = useState([]);
+
+  useEffect(() => {
+    const initGames = async () => {
+      setGames([
+        { id: 'matrix', name: "Matrix Reloaded", image: gameBackgrounds[0]?.image, assets: slotAssets.matrix },
+        { id: 'cyber', name: "Cybernetic Spin", image: gameBackgrounds[1]?.image, assets: slotAssets.matrix },
+        { id: 'quantum', name: "Quantum Quandary", image: gameBackgrounds[2]?.image, assets: slotAssets.matrix },
+        { id: 'neural', name: "Neural Network", image: gameBackgrounds[3]?.image, assets: slotAssets.matrix },
+      ]);
+    };
+
+    initGames();
+  }, []);
 
   const loyaltyTiers = useMemo(() => [
     { name: 'Bronze', points: 0, color: 'text-amber-600' },

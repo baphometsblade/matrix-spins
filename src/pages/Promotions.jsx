@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Gift, Calendar, Users, Zap, Trophy, Sparkles } from "lucide-react";
-import { generateImage } from '@/lib/utils';
+import { promotionImages } from '@/lib/utils';
 
 const Promotions = () => {
   const [promotions, setPromotions] = useState([
@@ -51,17 +51,15 @@ const Promotions = () => {
   ]);
 
   useEffect(() => {
-    const generatePromotionImages = async () => {
-      const updatedPromotions = await Promise.all(
-        promotions.map(async (promo, index) => {
-          const imageUrl = await generateImage(promo.prompt);
-          return { ...promo, image: imageUrl };
-        })
-      );
+    const updatePromotionsWithImages = () => {
+      const updatedPromotions = promotions.map((promo, index) => ({
+        ...promo,
+        image: promotionImages[index] || '/placeholder.svg'
+      }));
       setPromotions(updatedPromotions);
     };
 
-    generatePromotionImages();
+    updatePromotionsWithImages();
   }, []);
   return (
     <div className="container mx-auto px-4 py-8">
