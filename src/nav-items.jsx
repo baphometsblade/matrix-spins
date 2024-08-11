@@ -1,11 +1,10 @@
-import { Home, Coins, Gift, User } from "lucide-react";
-import Index from "./pages/Index.jsx";
-import Promotions from "./pages/Promotions.jsx";
-import Profile from "./pages/Profile.jsx";
+import React from 'react';
+import { Home, Gift, User, Trophy } from "lucide-react";
+import Index from "./pages/Index";
+import Promotions from "./pages/Promotions";
+import Profile from "./pages/Profile";
+import Tournaments from "./pages/Tournaments";
 
-/**
- * Central place for defining the navigation items. Used for navigation components and routing.
- */
 export const navItems = [
   {
     title: "Home",
@@ -24,5 +23,11 @@ export const navItems = [
     to: "/profile",
     icon: <User className="h-4 w-4" />,
     page: <Profile />,
+  },
+  {
+    title: "Tournaments",
+    to: "/tournaments",
+    icon: <Trophy className="h-4 w-4" />,
+    page: <Tournaments />,
   },
 ];
