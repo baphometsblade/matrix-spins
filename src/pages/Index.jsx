@@ -6,6 +6,7 @@ import { formatCurrency, slotAssets, gameBackgrounds, safeGenerateImage } from '
 import confetti from 'canvas-confetti';
 import { useTheme } from 'next-themes';
 import { Link } from "react-router-dom";
+import { useEffect } from 'react';
 import { motion, AnimatePresence, useAnimation } from "framer-motion";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Progress } from "@/components/ui/progress";
@@ -35,29 +36,40 @@ const Index = () => {
   const [timeSpent, setTimeSpent] = useState(0);
 
   useEffect(() => {
-    // Use placeholder images instead of generating them
-    const symbolImages = [
-      '/assets/matrix-blue-orb.png',
-      '/assets/matrix-green-orb.png',
-      '/assets/matrix-red-orb.png',
-      '/assets/matrix-purple-orb.png',
-      '/assets/matrix-yellow-orb.png',
-      '/assets/matrix-pill.png',
-      '/assets/matrix-sunglasses.png',
-      '/assets/matrix-computer.png',
-      '/assets/matrix-unlock.png',
-      '/assets/matrix-hourglass.png'
-    ];
+    const generateImages = async () => {
+      const symbolPrompts = [
+        "A glowing blue orb with matrix code inside",
+        "A pulsating green orb with digital patterns",
+        "A shimmering red orb with binary numbers",
+        "A mystical purple orb with data streams",
+        "A radiant yellow orb with circuit patterns",
+        "A red and blue pill symbolizing choice",
+        "Futuristic matrix-style sunglasses",
+        "A high-tech computer terminal with green text",
+        "A digital padlock being unlocked",
+        "A matrix-themed hourglass with falling code"
+      ];
 
-    const backgroundImages = [
-      '/assets/matrix-background.png',
-      '/assets/cyber-background.png',
-      '/assets/quantum-background.png',
-      '/assets/neural-background.png'
-    ];
+      const backgroundPrompts = [
+        "A vast matrix of falling green code",
+        "A futuristic cyberpunk cityscape",
+        "A quantum computer visualization",
+        "An abstract neural network representation"
+      ];
 
-    setSymbols(symbolImages);
-    setBackgrounds(backgroundImages);
+      const symbolImages = await Promise.all(symbolPrompts.map(prompt => 
+        safeGenerateImage(prompt, 256, 256)
+      ));
+
+      const backgroundImages = await Promise.all(backgroundPrompts.map(prompt => 
+        safeGenerateImage(prompt, 1920, 1080)
+      ));
+
+      setSymbols(symbolImages);
+      setBackgrounds(backgroundImages);
+    };
+
+    generateImages();
 
     // Start tracking time spent
     const interval = setInterval(() => {
@@ -580,7 +592,7 @@ const Index = () => {
           </motion.div>
         )}
       </AnimatePresence>
-      <img src="/logo.png" alt="Matrix Slots Extravaganza" className="mx-auto mb-8 w-64 h-64 object-cover" />
+      <img src={await safeGenerateImage("Futuristic 3D logo for Matrix Slots Extravaganza, combining slot machine elements with matrix-style digital effects, metallic finish, neon accents", 256, 256)} alt="Matrix Slots Extravaganza" className="mx-auto mb-8 w-64 h-64 object-cover" />
       
       {/* Loyalty Program Display */}
       <Card className="mb-8 bg-gradient-to-r from-green-600 to-blue-600 text-white overflow-hidden relative">
