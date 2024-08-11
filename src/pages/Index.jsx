@@ -119,6 +119,12 @@ const Index = () => {
 
 export default Index;
 
+const Index = () => {
+  const { theme, setTheme } = useTheme();
+  const [showResponsibleGamingInfo, setShowResponsibleGamingInfo] = useState(false);
+  const [timeSpent, setTimeSpent] = useState(0);
+
+  useEffect(() => {
     // Start tracking time spent
     const interval = setInterval(() => {
       setTimeSpent(prevTime => prevTime + 1);
@@ -136,6 +142,7 @@ export default Index;
       setShowResponsibleGamingInfo(true);
     }
   }, [timeSpent]);
+
   const { toast } = useToast();
   const [balance, setBalance] = useLocalStorage('balance', 1000);
   const [bet, setBet] = useLocalStorage('bet', 10);
