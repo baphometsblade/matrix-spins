@@ -1,8 +1,9 @@
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Loader2, Gift, Volume2, VolumeX, Zap, Settings, DollarSign, Sparkles, CreditCard, HelpCircle, Trophy, Star, RefreshCw, Lock, Unlock, Coins, Calendar, Maximize2, Minimize2 } from "lucide-react";
+import { Loader2, Gift, Volume2, VolumeX, Zap, Settings, DollarSign, Sparkles, CreditCard, HelpCircle, Trophy, Star, RefreshCw, Lock, Unlock, Coins, Calendar, Maximize2, Minimize2, AlertTriangle } from "lucide-react";
 import { formatCurrency, slotAssets, gameBackgrounds, safeGenerateImage } from '@/lib/utils';
+import { useTheme } from 'next-themes';
 import { Link } from "react-router-dom";
 import { motion, AnimatePresence, useAnimation } from "framer-motion";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -28,6 +29,10 @@ import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerTrigger } from 
 import { useLocalStorage } from '@/hooks/useLocalStorage';
 
 const Index = () => {
+  const { theme, setTheme } = useTheme();
+  const [showResponsibleGamingInfo, setShowResponsibleGamingInfo] = useState(false);
+  const [timeSpent, setTimeSpent] = useState(0);
+
   useEffect(() => {
     const generateImages = async () => {
       const symbolPrompts = [
@@ -67,7 +72,21 @@ const Index = () => {
     };
 
     generateImages();
+
+    // Start tracking time spent
+    const interval = setInterval(() => {
+      setTimeSpent(prevTime => prevTime + 1);
+    }, 60000); // Update every minute
+
+    return () => clearInterval(interval);
   }, []);
+
+  useEffect(() => {
+    // Check if the player has been playing for more than 2 hours
+    if (timeSpent >= 120) {
+      setShowResponsibleGamingInfo(true);
+    }
+  }, [timeSpent]);
   const { toast } = useToast();
   const [balance, setBalance] = useLocalStorage('balance', 1000);
   const [bet, setBet] = useLocalStorage('bet', 10);
@@ -602,7 +621,20 @@ const Index = () => {
       <div className="flex justify-end space-x-4 mb-4">
         <DepositDialog onDeposit={(amount) => setBalance(prevBalance => prevBalance + amount)} />
         <HelpDialog />
+        <Button onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')} className="bg-gray-600 hover:bg-gray-700">
+          {theme === 'dark' ? 'Light Mode' : 'Dark Mode'}
+        </Button>
       </div>
+
+      {showResponsibleGamingInfo && (
+        <Card className="mb-4 bg-yellow-100 text-yellow-800">
+          <CardContent className="flex items-center p-4">
+            <AlertTriangle className="h-6 w-6 mr-2" />
+            <p>You've been playing for 2 hours. Consider taking a break.</p>
+            <Button className="ml-auto" onClick={() => setShowResponsibleGamingInfo(false)}>Dismiss</Button>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Game Selection Tabs */}
       <Tabs defaultValue={selectedGame} onValueChange={setSelectedGame} className="mb-8">
@@ -692,21 +724,21 @@ const Index = () => {
                 <div className="flex justify-between mb-6">
                   <Button
                     onClick={() => setIsLoggedIn(!isLoggedIn)}
-                    className={`w-1/4 ${isLoggedIn ? 'bg-red-500 hover:bg-red-600' : 'bg-green-500 hover:bg-green-600'}`}
+                    className={`w-1/5 ${isLoggedIn ? 'bg-red-500 hover:bg-red-600' : 'bg-green-500 hover:bg-green-600'}`}
                   >
                     {isLoggedIn ? <Lock className="mr-2 h-5 w-5" /> : <Unlock className="mr-2 h-5 w-5" />}
                     {isLoggedIn ? 'Logout' : 'Login'}
                   </Button>
                   <Button
                     onClick={toggleFullscreen}
-                    className="w-1/4 bg-purple-500 hover:bg-purple-600"
+                    className="w-1/5 bg-purple-500 hover:bg-purple-600"
                   >
                     {isFullscreen ? <Minimize2 className="mr-2 h-5 w-5" /> : <Maximize2 className="mr-2 h-5 w-5" />}
                     {isFullscreen ? 'Exit Fullscreen' : 'Fullscreen'}
                   </Button>
                   <Drawer>
                     <DrawerTrigger asChild>
-                      <Button className="w-1/4 bg-blue-500 hover:bg-blue-600">
+                      <Button className="w-1/5 bg-blue-500 hover:bg-blue-600">
                         <Trophy className="mr-2 h-5 w-5" />
                         Player Stats
                       </Button>
@@ -739,6 +771,19 @@ const Index = () => {
                       </div>
                     </DrawerContent>
                   </Drawer>
+                  <Button
+                    onClick={() => setShowResponsibleGamingInfo(true)}
+                    className="w-1/5 bg-yellow-500 hover:bg-yellow-600"
+                  >
+                    <AlertTriangle className="mr-2 h-5 w-5" />
+                    Responsible Gaming
+                  </Button>
+                  <Link to="/tournaments" className="w-1/5">
+                    <Button className="w-full bg-orange-500 hover:bg-orange-600">
+                      <Trophy className="mr-2 h-5 w-5" />
+                      Tournaments
+                    </Button>
+                  </Link>
                 </div>
                 <div className="flex justify-center mb-6">
                   <Button 
