@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Loader2, Gift, Volume2, VolumeX, Zap, Settings, DollarSign, Sparkles, CreditCard, HelpCircle, Trophy, Star, RefreshCw, Lock, Unlock, Coins, Calendar, Maximize2, Minimize2, AlertTriangle, Info } from "lucide-react";
+import { Loader2, Gift, Volume2, VolumeX, Zap, Settings, DollarSign, Sparkles, CreditCard, HelpCircle, Trophy, Star, RefreshCw, Lock, Unlock, Coins, Calendar, Maximize2, Minimize2, AlertTriangle, Info, ChevronLeft, ChevronRight } from "lucide-react";
 import { formatCurrency, slotAssets, gameBackgrounds, safeGenerateImage } from '@/lib/utils';
 import confetti from 'canvas-confetti';
 import { useTheme } from 'next-themes';
@@ -109,6 +109,7 @@ const Index = () => {
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [showStats, setShowStats] = useState(false);
   const [showRules, setShowRules] = useState(false);
+  const [currentSymbolIndex, setCurrentSymbolIndex] = useState(0);
 
   const [symbols, setSymbols] = useState([
     '/assets/matrix-blue-orb.png',
@@ -243,9 +244,15 @@ const Index = () => {
               origin: { y: 0.6 }
             });
           }
+
+          // Show mini-game option for big wins
+          if (totalWin >= bet * 5) {
+            setShowMiniGame(true);
+          }
         }
         updateBonusProgress();
         updateLoyaltyPoints(bet);
+        checkForFreeSpins(newReels);
       }
     };
 
@@ -511,6 +518,27 @@ const Index = () => {
       scale: [1, 1.2, 1],
       transition: { duration: 0.3, times: [0, 0.5, 1] }
     });
+  };
+
+  const handleMiniGame = (choice) => {
+    const result = Math.random() < 0.5 ? 'heads' : 'tails';
+    if (choice === result) {
+      const doubledWin = lastWin.amount * 2;
+      setBalance(prevBalance => prevBalance + doubledWin);
+      setLastWin({ amount: doubledWin, multiplier: 2, type: 'mini-game' });
+      toast({
+        title: "Mini-Game Win!",
+        description: `You've doubled your win to ${formatCurrency(doubledWin)}!`,
+        variant: "success",
+      });
+    } else {
+      toast({
+        title: "Mini-Game Loss",
+        description: "Better luck next time!",
+        variant: "destructive",
+      });
+    }
+    setShowMiniGame(false);
   };
 
   return (
@@ -879,15 +907,23 @@ const Index = () => {
                 </div>
                 <div className="mt-6">
                   <h3 className="text-xl mb-2">Hot and Cold Symbols</h3>
-                  <div className="flex justify-between">
-                    {symbols.slice(0, 5).map((symbol, index) => (
-                      <div key={index} className="text-center">
-                        <img src={symbol} alt={`Symbol ${index + 1}`} className="w-12 h-12 mx-auto mb-2" />
-                        <Badge variant={index < 2 ? "success" : "destructive"}>
-                          {index < 2 ? 'Hot' : 'Cold'}
-                        </Badge>
-                      </div>
-                    ))}
+                  <div className="flex items-center justify-between">
+                    <Button onClick={() => setCurrentSymbolIndex(prev => Math.max(0, prev - 1))} variant="ghost">
+                      <ChevronLeft className="h-6 w-6" />
+                    </Button>
+                    <div className="flex justify-center space-x-4">
+                      {symbols.slice(currentSymbolIndex, currentSymbolIndex + 5).map((symbol, index) => (
+                        <div key={index} className="text-center">
+                          <img src={symbol} alt={`Symbol ${index + 1}`} className="w-12 h-12 mx-auto mb-2" />
+                          <Badge variant={index < 2 ? "success" : "destructive"}>
+                            {index < 2 ? 'Hot' : 'Cold'}
+                          </Badge>
+                        </div>
+                      ))}
+                    </div>
+                    <Button onClick={() => setCurrentSymbolIndex(prev => Math.min(symbols.length - 5, prev + 1))} variant="ghost">
+                      <ChevronRight className="h-6 w-6" />
+                    </Button>
                   </div>
                 </div>
                 <BonusWheel
@@ -961,10 +997,12 @@ const Index = () => {
       </div>
 
       {/* Mini-Game */}
-      {showMiniGame && (
-        <Card className="mb-8 bg-gradient-to-r from-pink-500 to-purple-500 text-white">
-          <CardContent className="p-6">
-            <h3 className="text-2xl font-bold mb-4">Mini-Game: Double or Nothing</h3>
+      <Dialog open={showMiniGame} onOpenChange={setShowMiniGame}>
+        <DialogContent className="bg-gradient-to-r from-pink-500 to-purple-500 text-white">
+          <DialogHeader>
+            <DialogTitle className="text-2xl font-bold">Mini-Game: Double or Nothing</DialogTitle>
+          </DialogHeader>
+          <div className="p-6">
             <p className="mb-4">Choose Heads or Tails to double your last win of {formatCurrency(lastWin?.amount || 0)}!</p>
             <div className="flex justify-center space-x-4">
               <Button onClick={() => handleMiniGame('heads')} className="bg-yellow-400 text-black hover:bg-yellow-500">
@@ -976,9 +1014,9 @@ const Index = () => {
                 Tails
               </Button>
             </div>
-          </CardContent>
-        </Card>
-      )}
+          </div>
+        </DialogContent>
+      </Dialog>
 
       {/* Leaderboard */}
       <LeaderBoard />
