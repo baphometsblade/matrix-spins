@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Loader2, Gift, Volume2, VolumeX, Zap, Settings, DollarSign, Sparkles, CreditCard, HelpCircle, Trophy, Star, RefreshCw, Lock, Unlock, Coins, Calendar, Maximize2, Minimize2, AlertTriangle, Info, ChevronLeft, ChevronRight } from "lucide-react";
-import { formatCurrency, slotAssets, gameBackgrounds, safeGenerateImage } from '@/lib/utils';
+import { formatCurrency, slotAssets, gameBackgrounds } from '@/lib/utils';
 import confetti from 'canvas-confetti';
 import { useTheme } from 'next-themes';
 import { Link } from "react-router-dom";
@@ -37,41 +37,6 @@ const Index = () => {
   const [backgrounds, setBackgrounds] = useState([]);
 
   useEffect(() => {
-    const generateImages = async () => {
-      const symbolPrompts = [
-        "A glowing blue orb with matrix code inside",
-        "A pulsating green orb with digital patterns",
-        "A shimmering red orb with binary numbers",
-        "A mystical purple orb with data streams",
-        "A radiant yellow orb with circuit patterns",
-        "A red and blue pill symbolizing choice",
-        "Futuristic matrix-style sunglasses",
-        "A high-tech computer terminal with green text",
-        "A digital padlock being unlocked",
-        "A matrix-themed hourglass with falling code"
-      ];
-
-      const backgroundPrompts = [
-        "A vast matrix of falling green code",
-        "A futuristic cyberpunk cityscape",
-        "A quantum computer visualization",
-        "An abstract neural network representation"
-      ];
-
-      const symbolImages = await Promise.all(symbolPrompts.map(prompt => 
-        safeGenerateImage(prompt, 256, 256)
-      ));
-
-      const backgroundImages = await Promise.all(backgroundPrompts.map(prompt => 
-        safeGenerateImage(prompt, 1920, 1080)
-      ));
-
-      setSymbols(symbolImages);
-      setBackgrounds(backgroundImages);
-    };
-
-    generateImages();
-
     // Start tracking time spent
     const interval = setInterval(() => {
       setTimeSpent(prevTime => prevTime + 1);
