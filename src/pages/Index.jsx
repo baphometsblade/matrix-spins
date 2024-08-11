@@ -1,15 +1,16 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Loader2, Gift, Volume2, VolumeX, Zap, Settings, DollarSign, Sparkles, CreditCard, HelpCircle, Trophy, Star, RefreshCw, Lock, Unlock, Coins, Calendar, Maximize2, Minimize2 } from "lucide-react";
+import { Loader2, Gift, Volume2, VolumeX, Zap, Settings, DollarSign, Sparkles, CreditCard, HelpCircle, Trophy, Star, RefreshCw, Lock, Unlock, Coins, Calendar, Maximize2, Minimize2, Fireworks } from "lucide-react";
 import { formatCurrency, slotAssets, gameBackgrounds, safeGenerateImage } from '@/lib/utils';
 import { Link } from "react-router-dom";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence, useAnimation } from "framer-motion";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Progress } from "@/components/ui/progress";
 import DailyBonus from "@/components/DailyBonus";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import SpecialEventBanner from '../components/SpecialEventBanner';
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Slider } from "@/components/ui/slider";
@@ -421,8 +422,47 @@ const Index = () => {
 
   const [backgroundImage, setBackgroundImage] = useState('/assets/matrix-background.png');
   const [specialEvent, setSpecialEvent] = useState(null);
+  const matrixRainRef = useRef(null);
+  const controls = useAnimation();
 
   useEffect(() => {
+    // Matrix rain effect
+    const canvas = matrixRainRef.current;
+    const context = canvas.getContext('2d');
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+
+    const matrix = "ABCDEFGHIJKLMNOPQRSTUVWXYZ123456789@#$%^&*()*&^%";
+    const matrixArray = matrix.split("");
+    const fontSize = 10;
+    const columns = canvas.width / fontSize;
+    const drops = [];
+
+    for (let x = 0; x < columns; x++) {
+      drops[x] = 1;
+    }
+
+    const drawMatrixRain = () => {
+      context.fillStyle = "rgba(0, 0, 0, 0.04)";
+      context.fillRect(0, 0, canvas.width, canvas.height);
+
+      context.fillStyle = "#0F0";
+      context.font = fontSize + "px arial";
+
+      for (let i = 0; i < drops.length; i++) {
+        const text = matrixArray[Math.floor(Math.random() * matrixArray.length)];
+        context.fillText(text, i * fontSize, drops[i] * fontSize);
+
+        if (drops[i] * fontSize > canvas.height && Math.random() > 0.975) {
+          drops[i] = 0;
+        }
+
+        drops[i]++;
+      }
+    };
+
+    const matrixRainInterval = setInterval(drawMatrixRain, 33);
+
     // Check for special events
     const currentDate = new Date();
     if (currentDate.getMonth() === 11 && currentDate.getDate() === 25) {
@@ -432,10 +472,25 @@ const Index = () => {
         icon: <Gift className="h-6 w-6 text-red-500" />
       });
     }
+
+    return () => clearInterval(matrixRainInterval);
   }, []);
+
+  const triggerWinAnimation = async () => {
+    await controls.start({
+      y: [-20, 0],
+      opacity: [0, 1],
+      transition: { duration: 0.5 }
+    });
+    await controls.start({
+      scale: [1, 1.2, 1],
+      transition: { duration: 0.3, times: [0, 0.5, 1] }
+    });
+  };
 
   return (
     <div className="container mx-auto px-4 py-8 relative">
+      <canvas ref={matrixRainRef} className="absolute inset-0 z-0" />
       <div 
         className="absolute inset-0 z-0" 
         style={{
@@ -563,18 +618,23 @@ const Index = () => {
                       <div className="absolute inset-0 flex">
                         {reels.map((reel, i) => (
                           <div key={i} className="flex-1 border-r-2 border-gray-600 last:border-r-0">
-                            <div 
-                              className="relative h-full transition-transform duration-1000 ease-in-out" 
-                              style={{
-                                transform: spinning ? `translateY(${-100 * (reel.length - 3)}%)` : 'translateY(0)',
-                              }}
+                            <motion.div 
+                              className="relative h-full"
+                              animate={spinning ? { y: [`0%`, `-${(reel.length - 3) * 100}%`] } : { y: '0%' }}
+                              transition={{ duration: 2, ease: "easeInOut" }}
                             >
                               {[...reel, ...reel].map((symbolImage, j) => (
-                                <div key={j} className="absolute inset-0" style={{top: `${j * (100 / 3)}%`}}>
+                                <motion.div 
+                                  key={j} 
+                                  className="absolute inset-0" 
+                                  style={{top: `${j * (100 / 3)}%`}}
+                                  whileHover={{ scale: 1.1 }}
+                                  transition={{ type: "spring", stiffness: 300 }}
+                                >
                                   <img src={symbolImage} alt="Slot Symbol" className="w-full h-full object-contain p-2" />
-                                </div>
+                                </motion.div>
                               ))}
-                            </div>
+                            </motion.div>
                           </div>
                         ))}
                       </div>
@@ -583,22 +643,7 @@ const Index = () => {
                   <div className="absolute top-0 left-0 right-0 h-1/6 bg-gradient-to-b from-gray-900 to-transparent"></div>
                   <div className="absolute bottom-0 left-0 right-0 h-1/6 bg-gradient-to-t from-gray-900 to-transparent"></div>
                 </div>
-                {specialEvent && (
-                  <Card className="mb-4 bg-gradient-to-r from-red-500 to-green-500 text-white">
-                    <CardContent className="flex items-center justify-between p-4">
-                      <div className="flex items-center">
-                        {specialEvent.icon}
-                        <div className="ml-4">
-                          <h3 className="text-xl font-bold">{specialEvent.name}</h3>
-                          <p>{specialEvent.description}</p>
-                        </div>
-                      </div>
-                      <Button className="bg-white text-black hover:bg-gray-200">
-                        Claim Now
-                      </Button>
-                    </CardContent>
-                  </Card>
-                )}
+                {specialEvent && <SpecialEventBanner event={specialEvent} />}
                 <div className="flex justify-between items-center mb-6 bg-gradient-to-r from-gray-800 to-gray-900 p-4 rounded-lg shadow-lg">
                   <div className="flex items-center space-x-6">
                     <div className="text-2xl">
@@ -801,9 +846,13 @@ const Index = () => {
                   </div>
                 )}
                 {winAmount > 0 && (
-                  <div className="mt-4 text-center">
-                    <div className="text-3xl text-yellow-400 animate-bounce">
-                      You won ${winAmount}!
+                  <motion.div 
+                    className="mt-4 text-center"
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={controls}
+                  >
+                    <div className="text-3xl text-yellow-400">
+                      You won {formatCurrency(winAmount)}!
                     </div>
                     <div className="mt-2">
                       <Sparkles className="inline-block mr-2 h-6 w-6 text-yellow-400" />
@@ -812,7 +861,14 @@ const Index = () => {
                       </span>
                       <Sparkles className="inline-block ml-2 h-6 w-6 text-yellow-400" />
                     </div>
-                  </div>
+                    <motion.div
+                      initial={{ scale: 0 }}
+                      animate={{ scale: [0, 1.2, 1] }}
+                      transition={{ duration: 0.5, times: [0, 0.5, 1] }}
+                    >
+                      <Fireworks className="h-12 w-12 mx-auto mt-4 text-yellow-400" />
+                    </motion.div>
+                  </motion.div>
                 )}
                 <div className="mt-6">
                   <h3 className="text-xl mb-2">Bonus Progress</h3>
