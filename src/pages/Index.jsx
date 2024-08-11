@@ -55,7 +55,16 @@ const Index = () => {
     }
   }, [timeSpent]);
 
-  // ... rest of your component code ...
+  const { toast } = useToast();
+  const [balance, setBalance] = useLocalStorage('balance', 1000);
+  const [bet, setBet] = useLocalStorage('bet', 10);
+  const [reels, setReels] = useState([
+    ['/assets/matrix-blue-orb.png', '/assets/matrix-green-orb.png', '/assets/matrix-red-orb.png'],
+    ['/assets/matrix-purple-orb.png', '/assets/matrix-yellow-orb.png', '/assets/matrix-pill.png'],
+    ['/assets/matrix-sunglasses.png', '/assets/matrix-computer.png', '/assets/matrix-unlock.png'],
+    ['/assets/matrix-hourglass.png', '/assets/matrix-blue-orb.png', '/assets/matrix-green-orb.png'],
+    ['/assets/matrix-red-orb.png', '/assets/matrix-purple-orb.png', '/assets/matrix-yellow-orb.png']
+  ]);
 
   return (
     <div className="container mx-auto px-4 py-8">
