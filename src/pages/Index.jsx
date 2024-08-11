@@ -1,8 +1,9 @@
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Loader2, Gift, Volume2, VolumeX, Zap, Settings, DollarSign, Sparkles, CreditCard, HelpCircle, Trophy, Star, RefreshCw, Lock, Unlock, Coins, Calendar, Maximize2, Minimize2, AlertTriangle } from "lucide-react";
+import { Loader2, Gift, Volume2, VolumeX, Zap, Settings, DollarSign, Sparkles, CreditCard, HelpCircle, Trophy, Star, RefreshCw, Lock, Unlock, Coins, Calendar, Maximize2, Minimize2, AlertTriangle, Info } from "lucide-react";
 import { formatCurrency, slotAssets, gameBackgrounds, safeGenerateImage } from '@/lib/utils';
+import confetti from 'canvas-confetti';
 import { useTheme } from 'next-themes';
 import { Link } from "react-router-dom";
 import { motion, AnimatePresence, useAnimation } from "framer-motion";
@@ -107,6 +108,7 @@ const Index = () => {
   const [isLoggedIn, setIsLoggedIn] = useLocalStorage('isLoggedIn', false);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [showStats, setShowStats] = useState(false);
+  const [showRules, setShowRules] = useState(false);
 
   const [symbols, setSymbols] = useState([
     '/assets/matrix-blue-orb.png',
@@ -232,6 +234,15 @@ const Index = () => {
         
           // Matrix-style win animation
           animateWin(lines);
+          
+          // Trigger confetti for big wins
+          if (totalWin >= bet * 10) {
+            confetti({
+              particleCount: 100,
+              spread: 70,
+              origin: { y: 0.6 }
+            });
+          }
         }
         updateBonusProgress();
         updateLoyaltyPoints(bet);
@@ -769,6 +780,13 @@ const Index = () => {
                       Tournaments
                     </Button>
                   </Link>
+                  <Button
+                    onClick={() => setShowRules(true)}
+                    className="w-1/5 bg-blue-500 hover:bg-blue-600"
+                  >
+                    <Info className="mr-2 h-5 w-5" />
+                    Game Rules
+                  </Button>
                 </div>
                 <div className="flex justify-center mb-6">
                   <Button 
@@ -988,6 +1006,32 @@ const Index = () => {
         ))}
       </div>
       <DailyBonus />
+
+      {/* Game Rules Dialog */}
+      <Dialog open={showRules} onOpenChange={setShowRules}>
+        <DialogContent className="bg-gray-900 text-white">
+          <DialogHeader>
+            <DialogTitle>Game Rules</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <h3 className="text-lg font-semibold">How to Play</h3>
+            <ul className="list-disc pl-5 space-y-2">
+              <li>Set your bet amount and number of paylines.</li>
+              <li>Click the Spin button to start the game.</li>
+              <li>Match symbols across paylines to win.</li>
+              <li>Special symbols can trigger bonus features.</li>
+              <li>The Jackpot is won by getting 5 Star symbols on a payline.</li>
+            </ul>
+            <h3 className="text-lg font-semibold">Special Features</h3>
+            <ul className="list-disc pl-5 space-y-2">
+              <li>Free Spins: Get 3 or more Scatter symbols to trigger free spins.</li>
+              <li>Multiplier: Increase your potential winnings with the multiplier feature.</li>
+              <li>Bonus Wheel: Fill the bonus progress bar to spin the Bonus Wheel for extra prizes.</li>
+              <li>Side Bet: Place an additional bet for a chance to win instant prizes.</li>
+            </ul>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
     </div>
   );
