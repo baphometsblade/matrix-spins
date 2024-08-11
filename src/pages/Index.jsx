@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Loader2, Gift, Volume2, VolumeX, Zap, Settings, DollarSign, Sparkles, CreditCard, HelpCircle, Trophy, Star, RefreshCw, Lock, Unlock, Coins, Calendar, Maximize2, Minimize2 } from "lucide-react";
-import { formatCurrency, slotAssets, gameBackgrounds } from '@/lib/utils';
+import { formatCurrency, slotAssets, gameBackgrounds, safeGenerateImage } from '@/lib/utils';
 import { Link } from "react-router-dom";
 import { motion, AnimatePresence, useAnimation } from "framer-motion";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -436,52 +436,54 @@ const Index = () => {
   useEffect(() => {
     // Matrix rain effect
     const canvas = matrixRainRef.current;
-    const context = canvas.getContext('2d');
-    canvas.width = window.innerWidth;
-    canvas.height = window.innerHeight;
+    if (canvas) {
+      const context = canvas.getContext('2d');
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
 
-    const matrix = "ABCDEFGHIJKLMNOPQRSTUVWXYZ123456789@#$%^&*()*&^%";
-    const matrixArray = matrix.split("");
-    const fontSize = 10;
-    const columns = canvas.width / fontSize;
-    const drops = [];
+      const matrix = "ABCDEFGHIJKLMNOPQRSTUVWXYZ123456789@#$%^&*()*&^%";
+      const matrixArray = matrix.split("");
+      const fontSize = 10;
+      const columns = canvas.width / fontSize;
+      const drops = [];
 
-    for (let x = 0; x < columns; x++) {
-      drops[x] = 1;
-    }
-
-    const drawMatrixRain = () => {
-      context.fillStyle = "rgba(0, 0, 0, 0.04)";
-      context.fillRect(0, 0, canvas.width, canvas.height);
-
-      context.fillStyle = "#0F0";
-      context.font = fontSize + "px arial";
-
-      for (let i = 0; i < drops.length; i++) {
-        const text = matrixArray[Math.floor(Math.random() * matrixArray.length)];
-        context.fillText(text, i * fontSize, drops[i] * fontSize);
-
-        if (drops[i] * fontSize > canvas.height && Math.random() > 0.975) {
-          drops[i] = 0;
-        }
-
-        drops[i]++;
+      for (let x = 0; x < columns; x++) {
+        drops[x] = 1;
       }
-    };
 
-    const matrixRainInterval = setInterval(drawMatrixRain, 33);
+      const drawMatrixRain = () => {
+        context.fillStyle = "rgba(0, 0, 0, 0.04)";
+        context.fillRect(0, 0, canvas.width, canvas.height);
 
-    // Check for special events
-    const currentDate = new Date();
-    if (currentDate.getMonth() === 11 && currentDate.getDate() === 25) {
-      setSpecialEvent({
-        name: "Christmas Spins",
-        description: "Get 50 free spins on Christmas Day!",
-        icon: <Gift className="h-6 w-6 text-red-500" />
-      });
+        context.fillStyle = "#0F0";
+        context.font = fontSize + "px arial";
+
+        for (let i = 0; i < drops.length; i++) {
+          const text = matrixArray[Math.floor(Math.random() * matrixArray.length)];
+          context.fillText(text, i * fontSize, drops[i] * fontSize);
+
+          if (drops[i] * fontSize > canvas.height && Math.random() > 0.975) {
+            drops[i] = 0;
+          }
+
+          drops[i]++;
+        }
+      };
+
+      const matrixRainInterval = setInterval(drawMatrixRain, 33);
+
+      // Check for special events
+      const currentDate = new Date();
+      if (currentDate.getMonth() === 11 && currentDate.getDate() === 25) {
+        setSpecialEvent({
+          name: "Christmas Spins",
+          description: "Get 50 free spins on Christmas Day!",
+          icon: <Gift className="h-6 w-6 text-red-500" />
+        });
+      }
+
+      return () => clearInterval(matrixRainInterval);
     }
-
-    return () => clearInterval(matrixRainInterval);
   }, []);
 
   const triggerWinAnimation = async () => {
@@ -499,19 +501,21 @@ const Index = () => {
   return (
     <div className="container mx-auto px-4 py-8 relative">
       <canvas ref={matrixRainRef} className="absolute inset-0 z-0" />
-      <div 
-        className="absolute inset-0 z-0" 
-        style={{
-          backgroundImage: `url(${backgroundImage})`,
-          backgroundSize: 'cover',
-          backgroundAttachment: 'fixed',
-          filter: 'blur(5px)',
-          opacity: 0.3
-        }}
-      ></div>
+      {backgroundImage && (
+        <div 
+          className="absolute inset-0 z-0" 
+          style={{
+            backgroundImage: `url(${backgroundImage})`,
+            backgroundSize: 'cover',
+            backgroundAttachment: 'fixed',
+            filter: 'blur(5px)',
+            opacity: 0.3
+          }}
+        ></div>
+      )}
       <div className="relative z-10">
       <AnimatePresence>
-        {lastWin && (
+        {lastWin && lastWin.amount > 0 && (
           <motion.div
             initial={{ opacity: 0, y: -50 }}
             animate={{ opacity: 1, y: 0 }}
@@ -530,7 +534,7 @@ const Index = () => {
           </motion.div>
         )}
       </AnimatePresence>
-      <img src="/logo.png" alt="Matrix Slots Extravaganza" className="mx-auto mb-8 w-64 object-cover" />
+      <img src="/logo.png" alt="Matrix Slots Extravaganza" className="mx-auto mb-8 w-64 h-64 object-cover" />
       
       {/* Loyalty Program Display */}
       <Card className="mb-8 bg-gradient-to-r from-green-600 to-blue-600 text-white overflow-hidden relative">
@@ -651,6 +655,7 @@ const Index = () => {
                   <div className="absolute top-0 left-0 right-0 h-1/6 bg-gradient-to-b from-gray-900 to-transparent"></div>
                   <div className="absolute bottom-0 left-0 right-0 h-1/6 bg-gradient-to-t from-gray-900 to-transparent"></div>
                 </div>
+                {specialEvent && <SpecialEventBanner event={specialEvent} />}
                 {specialEvent && <SpecialEventBanner event={specialEvent} />}
                 <div className="flex justify-between items-center mb-6 bg-gradient-to-r from-gray-800 to-gray-900 p-4 rounded-lg shadow-lg">
                   <div className="flex items-center space-x-6">
@@ -936,13 +941,16 @@ const Index = () => {
         {games.map((game, index) => (
           <Card key={index} className="bg-black/50 text-white overflow-hidden hover:shadow-lg transition-shadow duration-300">
             <div className="relative">
-              <img src="/placeholder.svg" alt={game.name} className="w-full h-40 object-cover" />
+              <img src={game.image || "/placeholder.svg"} alt={game.name} className="w-full h-40 object-cover" />
               <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent flex items-end p-4">
                 <h3 className="text-xl font-bold text-white">{game.name}</h3>
               </div>
             </div>
             <CardContent className="p-4">
-              <Button className="w-full bg-gradient-to-r from-pink-500 to-purple-500 hover:from-pink-600 hover:to-purple-600 text-white">
+              <Button 
+                className="w-full bg-gradient-to-r from-pink-500 to-purple-500 hover:from-pink-600 hover:to-purple-600 text-white"
+                onClick={() => setSelectedGame(game.id)}
+              >
                 Play Now
               </Button>
             </CardContent>

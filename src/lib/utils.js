@@ -11,33 +11,17 @@ export function formatCurrency(amount) {
 
 // Function for image generation using the provided API
 // Function for image generation using the provided API
-export async function generateImage(prompt, width = 512, height = 512, filename) {
+export async function generateImage(prompt, width = 512, height = 512) {
   console.log(`Image generation requested for: ${prompt}`);
-  try {
-    const response = await fetch('https://backend.buildpicoapps.com/aero/run/image-generation-api?pk=your_api_key_here', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ prompt }),
-    });
-
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
-
-    const data = await response.json();
-    return data.imageUrl; // Assuming the API returns an imageUrl in the response
-  } catch (error) {
-    console.error('Error generating image:', error);
-    return '/placeholder.svg';
-  }
+  // In a real application, this would call an actual image generation API
+  // For now, we'll return a placeholder
+  return '/placeholder.svg';
 }
 
 // Helper function to safely generate images
-export async function safeGenerateImage(prompt, width = 512, height = 512, filename) {
+export async function safeGenerateImage(prompt, width = 512, height = 512) {
   try {
-    return await generateImage(prompt, width, height, filename);
+    return await generateImage(prompt, width, height);
   } catch (error) {
     console.error('Error generating image:', error);
     return '/placeholder.svg';
