@@ -24,6 +24,7 @@ import SideBet from '../components/SideBet';
 import { useQuery } from '@tanstack/react-query';
 import { Badge } from "@/components/ui/badge";
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerTrigger } from "@/components/ui/drawer";
+import { useLocalStorage } from '@/hooks/useLocalStorage';
 
 const Index = () => {
   useEffect(() => {
@@ -67,8 +68,8 @@ const Index = () => {
     generateImages();
   }, []);
   const { toast } = useToast();
-  const [balance, setBalance] = useState(1000);
-  const [bet, setBet] = useState(10);
+  const [balance, setBalance] = useLocalStorage('balance', 1000);
+  const [bet, setBet] = useLocalStorage('bet', 10);
   const [reels, setReels] = useState([
     ['/assets/matrix-blue-orb.png', '/assets/matrix-green-orb.png', '/assets/matrix-red-orb.png'],
     ['/assets/matrix-purple-orb.png', '/assets/matrix-yellow-orb.png', '/assets/matrix-pill.png'],
@@ -78,27 +79,27 @@ const Index = () => {
   ]);
   const [spinning, setSpinning] = useState(false);
   const [winAmount, setWinAmount] = useState(0);
-  const [jackpot, setJackpot] = useState(10000);
-  const [jackpotTicker, setJackpotTicker] = useState(10000);
-  const [sound, setSound] = useState(true);
+  const [jackpot, setJackpot] = useLocalStorage('jackpot', 10000);
+  const [jackpotTicker, setJackpotTicker] = useState(jackpot);
+  const [sound, setSound] = useLocalStorage('sound', true);
   const [autoPlay, setAutoPlay] = useState(false);
   const [autoPlayCount, setAutoPlayCount] = useState(0);
-  const [selectedGame, setSelectedGame] = useState('matrix');
-  const [paylines, setPaylines] = useState(20);
-  const [bonusProgress, setBonusProgress] = useState(0);
-  const [turboMode, setTurboMode] = useState(false);
-  const [animationSpeed, setAnimationSpeed] = useState(1);
+  const [selectedGame, setSelectedGame] = useLocalStorage('selectedGame', 'matrix');
+  const [paylines, setPaylines] = useLocalStorage('paylines', 20);
+  const [bonusProgress, setBonusProgress] = useLocalStorage('bonusProgress', 0);
+  const [turboMode, setTurboMode] = useLocalStorage('turboMode', false);
+  const [animationSpeed, setAnimationSpeed] = useLocalStorage('animationSpeed', 1);
   const [showSettings, setShowSettings] = useState(false);
   const [showBonusWheel, setShowBonusWheel] = useState(false);
   const [lastWin, setLastWin] = useState(null);
   const [multiplier, setMultiplier] = useState(1);
-  const [freeSpins, setFreeSpins] = useState(0);
-  const [loyaltyPoints, setLoyaltyPoints] = useState(0);
-  const [progressiveJackpot, setProgressiveJackpot] = useState(100000);
+  const [freeSpins, setFreeSpins] = useLocalStorage('freeSpins', 0);
+  const [loyaltyPoints, setLoyaltyPoints] = useLocalStorage('loyaltyPoints', 0);
+  const [progressiveJackpot, setProgressiveJackpot] = useLocalStorage('progressiveJackpot', 100000);
   const [showMiniGame, setShowMiniGame] = useState(false);
   const [winningLines, setWinningLines] = useState([]);
-  const [recentWins, setRecentWins] = useState([]);
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [recentWins, setRecentWins] = useLocalStorage('recentWins', []);
+  const [isLoggedIn, setIsLoggedIn] = useLocalStorage('isLoggedIn', false);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [showStats, setShowStats] = useState(false);
 
