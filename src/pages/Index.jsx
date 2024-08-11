@@ -67,6 +67,9 @@ const Index = () => {
     return () => clearInterval(interval);
   }, []);
 
+  // For debugging
+  console.log("Index component rendered");
+
   useEffect(() => {
     // Check if the player has been playing for more than 2 hours
     if (timeSpent >= 120) {

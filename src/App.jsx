@@ -27,4 +27,7 @@ const App = () => {
   );
 };
 
+// For debugging
+console.log("App component rendered");
+
 export default App;
