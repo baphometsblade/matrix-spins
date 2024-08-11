@@ -34,8 +34,26 @@ const Index = () => {
   const [showResponsibleGamingInfo, setShowResponsibleGamingInfo] = useState(false);
   const [timeSpent, setTimeSpent] = useState(0);
 
-  useEffect(() => {
-    const generateImages = async () => {
+  // Keep all the existing state and effects
+
+  return (
+    <div className="container mx-auto px-4 py-8">
+      <h1 className="text-4xl font-bold text-white mb-8 text-center">Welcome to Matrix Slots Extravaganza</h1>
+      <Card className="bg-black/50 text-white">
+        <CardHeader>
+          <CardTitle>Get Started</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <p className="mb-4">Experience the thrill of our Matrix-themed slot games!</p>
+          <Button className="bg-green-500 hover:bg-green-600">Play Now</Button>
+        </CardContent>
+      </Card>
+      {/* Uncomment and add back other components as needed */}
+    </div>
+  );
+};
+
+export default Index;
       const symbolPrompts = [
         "A glowing blue orb with matrix code inside",
         "A pulsating green orb with digital patterns",
