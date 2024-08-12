@@ -1,9 +1,31 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
+import { Link } from 'react-router-dom';
+import { motion, useAnimation } from 'framer-motion';
+import { useQuery } from '@tanstack/react-query';
+import { useTheme } from 'next-themes';
+import confetti from 'canvas-confetti';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Loader2, Gift, Zap } from "lucide-react";
-import { formatCurrency } from '@/lib/utils';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerTrigger } from "@/components/ui/drawer";
+import { Progress } from "@/components/ui/progress";
+import { Switch } from "@/components/ui/switch";
+import { Slider } from "@/components/ui/slider";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Badge } from "@/components/ui/badge";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { useToast } from "@/components/ui/use-toast";
+import { Loader2, Gift, Zap, Trophy, Star, Lock, Unlock, Minimize2, Maximize2, AlertTriangle, Info, RefreshCw, DollarSign, Volume2, VolumeX, Settings, ChevronLeft, ChevronRight, Coins, Sparkles } from "lucide-react";
+import { formatCurrency, generateSlotAssets, generateGameBackgrounds, generatePromotionImages } from '@/lib/utils';
 import { useLocalStorage } from '@/hooks/useLocalStorage';
+import DepositDialog from '@/components/DepositDialog';
+import HelpDialog from '@/components/HelpDialog';
+import BonusWheel from '@/components/BonusWheel';
+import SideBet from '@/components/SideBet';
+import LeaderBoard from '@/components/LeaderBoard';
+import SpecialEventBanner from '@/components/SpecialEventBanner';
+import DailyBonus from '@/components/DailyBonus';
+import PayTable from '@/components/PayTable';
 
 const Index = () => {
   console.log("Index component rendering"); // Add this line for debugging
@@ -512,6 +534,7 @@ const Index = () => {
 
   return (
     <div className="container mx-auto px-4 py-8">
+      <canvas ref={matrixRainRef} className="fixed inset-0 pointer-events-none" />
       <Card className="bg-black/70 p-8 rounded-lg">
         <CardHeader>
           <CardTitle className="text-3xl text-center">Matrix Slots Extravaganza</CardTitle>
@@ -532,11 +555,16 @@ const Index = () => {
             </div>
           </div>
           <Button 
-            onClick={() => console.log('Spin clicked')} 
+            onClick={spinReels} 
+            disabled={spinning || autoPlay}
             className="w-full h-20 text-3xl font-bold bg-gradient-to-r from-green-400 to-blue-500 hover:from-green-500 hover:to-blue-600 text-white shadow-lg rounded-full transform hover:scale-105 transition-transform duration-200"
           >
-            <Zap className="mr-2 h-10 w-10" />
-            SPIN
+            {spinning ? (
+              <Loader2 className="mr-2 h-10 w-10 animate-spin" />
+            ) : (
+              <Zap className="mr-2 h-10 w-10" />
+            )}
+            {spinning ? 'Spinning...' : 'SPIN'}
           </Button>
         </CardContent>
       </Card>
