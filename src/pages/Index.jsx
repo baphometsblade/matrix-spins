@@ -26,23 +26,17 @@ import LeaderBoard from '@/components/LeaderBoard';
 import SpecialEventBanner from '@/components/SpecialEventBanner';
 import DailyBonus from '@/components/DailyBonus';
 import PayTable from '@/components/PayTable';
+import { formatCurrency, getSlotAssets, getGameBackgrounds, getPromotionImages } from '@/lib/utils';
 
 const Index = () => {
   console.log("Index component rendering"); // Add this line for debugging
-  const [slotAssets, setSlotAssets] = useState([]);
-  const [gameBackgrounds, setGameBackgrounds] = useState([]);
-  const [promotionImages, setPromotionImages] = useState([]);
+  const [slotAssets, setSlotAssets] = useState(getSlotAssets());
+  const [gameBackgrounds, setGameBackgrounds] = useState(getGameBackgrounds());
+  const [promotionImages, setPromotionImages] = useState(getPromotionImages());
 
   useEffect(() => {
-    const loadAssets = async () => {
-      const assets = await generateSlotAssets();
-      setSlotAssets(assets);
-      const backgrounds = await generateGameBackgrounds();
-      setGameBackgrounds(backgrounds);
-      const promoImages = await generatePromotionImages();
-      setPromotionImages(promoImages);
-    };
-    loadAssets();
+    // No need to load assets asynchronously anymore
+    console.log("Assets loaded:", slotAssets, gameBackgrounds, promotionImages);
   }, []);
   const { theme, setTheme } = useTheme();
   const [showResponsibleGamingInfo, setShowResponsibleGamingInfo] = useState(false);

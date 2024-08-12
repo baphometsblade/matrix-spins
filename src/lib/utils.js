@@ -10,53 +10,44 @@ export function formatCurrency(amount) {
   return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(amount);
 }
 
-export async function generateImage(prompt, width, height) {
-  try {
-    const response = await pico.generate({
-      prompt,
-      width,
-      height,
-      steps: 50,
-      cfg_scale: 7.5,
-      sampler: 'k_euler_ancestral',
-    });
-    return response.image_url;
-  } catch (error) {
-    console.error('Error generating image:', error);
-    return null;
-  }
+// Pre-generated image URLs
+const slotAssets = [
+  { symbol: 'Blue Orb', image: '/assets/matrix-blue-orb.png' },
+  { symbol: 'Green Orb', image: '/assets/matrix-green-orb.png' },
+  { symbol: 'Red Orb', image: '/assets/matrix-red-orb.png' },
+  { symbol: 'Purple Orb', image: '/assets/matrix-purple-orb.png' },
+  { symbol: 'Yellow Orb', image: '/assets/matrix-yellow-orb.png' },
+  { symbol: 'Red Pill', image: '/assets/matrix-pill.png' },
+  { symbol: 'Sunglasses', image: '/assets/matrix-sunglasses.png' },
+  { symbol: 'Computer', image: '/assets/matrix-computer.png' },
+  { symbol: 'Unlock', image: '/assets/matrix-unlock.png' },
+  { symbol: 'Hourglass', image: '/assets/matrix-hourglass.png' }
+];
+
+const gameBackgrounds = [
+  { game: 'Matrix Reloaded', image: '/assets/matrix-background.png' },
+  { game: 'Cybernetic Spin', image: '/assets/cyber-background.png' },
+  { game: 'Quantum Quandary', image: '/assets/quantum-background.png' },
+  { game: 'Neural Network', image: '/assets/neural-background.png' }
+];
+
+const promotionImages = [
+  '/assets/promotion-1.png',
+  '/assets/promotion-2.png',
+  '/assets/promotion-3.png',
+  '/assets/promotion-4.png',
+  '/assets/promotion-5.png',
+  '/assets/promotion-6.png'
+];
+
+export function getSlotAssets() {
+  return slotAssets;
 }
 
-export async function generateSlotAssets() {
-  const symbols = [
-    'Blue Orb', 'Green Orb', 'Red Orb', 'Purple Orb', 'Yellow Orb',
-    'Red Pill', 'Sunglasses', 'Computer', 'Unlock', 'Hourglass'
-  ];
-  const assets = await Promise.all(symbols.map(async (symbol) => {
-    const image = await generateImage(`Futuristic ${symbol} slot machine symbol, matrix style`, 128, 128);
-    return { symbol, image };
-  }));
-  return assets;
+export function getGameBackgrounds() {
+  return gameBackgrounds;
 }
 
-export async function generateGameBackgrounds() {
-  const games = ['Matrix Reloaded', 'Cybernetic Spin', 'Quantum Quandary', 'Neural Network'];
-  const backgrounds = await Promise.all(games.map(async (game) => {
-    const image = await generateImage(`Futuristic ${game} slot machine background, matrix style`, 1280, 720);
-    return { game, image };
-  }));
-  return backgrounds;
-}
-
-export async function generatePromotionImages() {
-  const prompts = [
-    'Casino welcome package with stacks of chips and free spin symbols',
-    'Casino cashback promotion with calendar and money symbols',
-    'Casino refer a friend promotion with people icons and money symbols',
-    'Casino daily tournament promotion with trophy and lightning bolt symbols',
-    'Casino VIP program promotion with crown and exclusive access symbols',
-    'Casino slot of the week promotion with slot machine and sparkle symbols'
-  ];
-  const images = await Promise.all(prompts.map(prompt => generateImage(prompt, 640, 360)));
-  return images;
+export function getPromotionImages() {
+  return promotionImages;
 }
