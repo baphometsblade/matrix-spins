@@ -12,31 +12,32 @@ export function formatCurrency(amount) {
 // Function for image generation using the provided API
 // Function for image generation using the provided API
 // Generate slot assets
-export function generateSlotAssets() {
-  const symbols = ['Blue Orb', 'Green Orb', 'Red Orb', 'Purple Orb', 'Yellow Orb', 'Red Pill', 'Sunglasses', 'Computer', 'Unlock', 'Hourglass'];
-  return symbols.map((symbol) => {
-    const filename = `matrix-${symbol.toLowerCase().replace(' ', '-')}.png`;
-    return { symbol, image: `/assets/${filename}` };
-  });
-}
-
-// Pre-generate game background images
-export function generateGameBackgrounds() {
-  const games = ['Matrix Reloaded', 'Cybernetic Spin', 'Quantum Quandary', 'Neural Network'];
-  return games.map(game => {
-    const filename = `${game.toLowerCase().replace(' ', '-')}-background.png`;
-    return { game, image: `/assets/${filename}` };
-  });
-}
-
-// Initialize and export pre-generated assets
+// Slot assets
 export const slotAssets = {
-  matrix: generateSlotAssets(),
-  // Add other game themes here
+  matrix: [
+    { symbol: 'Blue Orb', image: '/assets/matrix-blue-orb.png' },
+    { symbol: 'Green Orb', image: '/assets/matrix-green-orb.png' },
+    { symbol: 'Red Orb', image: '/assets/matrix-red-orb.png' },
+    { symbol: 'Purple Orb', image: '/assets/matrix-purple-orb.png' },
+    { symbol: 'Yellow Orb', image: '/assets/matrix-yellow-orb.png' },
+    { symbol: 'Red Pill', image: '/assets/matrix-pill.png' },
+    { symbol: 'Sunglasses', image: '/assets/matrix-sunglasses.png' },
+    { symbol: 'Computer', image: '/assets/matrix-computer.png' },
+    { symbol: 'Unlock', image: '/assets/matrix-unlock.png' },
+    { symbol: 'Hourglass', image: '/assets/matrix-hourglass.png' },
+  ],
+  // Add other game themes here if needed
 };
-export const gameBackgrounds = generateGameBackgrounds();
 
-// Generate promotion images
+// Game backgrounds
+export const gameBackgrounds = [
+  { game: 'Matrix Reloaded', image: '/assets/matrix-reloaded-background.png' },
+  { game: 'Cybernetic Spin', image: '/assets/cybernetic-spin-background.png' },
+  { game: 'Quantum Quandary', image: '/assets/quantum-quandary-background.png' },
+  { game: 'Neural Network', image: '/assets/neural-network-background.png' },
+];
+
+// Promotion images
 export const promotionImages = [
   '/assets/promotion-1.png',
   '/assets/promotion-2.png',
