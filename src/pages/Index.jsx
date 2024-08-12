@@ -1033,7 +1033,6 @@ const Index = () => {
         </DialogContent>
       </Dialog>
     </div>
-    </div>
   );
 };
 
