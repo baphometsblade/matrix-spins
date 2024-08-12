@@ -46,8 +46,7 @@ const Index = () => {
   }, [timeSpent]);
 
   const { toast } = useToast();
-  const [balance, setBalance] = useLocalStorage('balance', 1000);
-  const [bet, setBet] = useLocalStorage('bet', 10);
+  // These are already declared above, so we can remove this duplicate declaration
   const [reels, setReels] = useState([]);
 
   useEffect(() => {
@@ -541,7 +540,6 @@ const Index = () => {
           </Button>
         </CardContent>
       </Card>
-    </div>
       
       {/* Loyalty Program Display */}
       <Card className="mb-8 bg-gradient-to-r from-green-600 to-blue-600 text-white overflow-hidden relative">
