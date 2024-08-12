@@ -15,7 +15,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useToast } from "@/components/ui/use-toast";
-import { Loader2, Gift, Zap, Trophy, Star, Lock, Unlock, Minimize2, Maximize2, AlertTriangle, Info, RefreshCw, DollarSign, Volume2, VolumeX, Settings, ChevronLeft, ChevronRight, Coins, Sparkles } from "lucide-react";
+import { Loader2, Gift, Zap, Trophy, Star, Lock, Unlock, Minimize2, Maximize2, AlertTriangle, Info, RefreshCw, DollarSign, Volume2, VolumeX, Settings, ChevronLeft, ChevronRight, Coins, Sparkles, Home, Menu } from "lucide-react";
 import { formatCurrency, getSlotAssets, getGameBackgrounds, getPromotionImages } from '@/lib/utils';
 import { useLocalStorage } from '@/hooks/useLocalStorage';
 import DepositDialog from '@/components/DepositDialog';
@@ -536,7 +536,7 @@ const Index = () => {
           <Button variant="ghost" className="text-white">
             <Home className="h-6 w-6" />
           </Button>
-          <h1 className="text-2xl font-bold text-white">Matrix Megaways</h1>
+          <h1 className="text-2xl font-bold text-white">Matrix Slots Extravaganza</h1>
           <Button variant="ghost" className="text-white">
             <Menu className="h-6 w-6" />
           </Button>
@@ -714,11 +714,11 @@ const Index = () => {
                     </div>
                   </div>
                   <div className="text-center text-white text-sm py-1 bg-purple-800">
-                    Your rank will appear after you will reach a score of 6226
+                    Your rank will appear after you reach a score of 6226
                   </div>
                   <div className="relative aspect-[4/3] bg-gradient-to-b from-blue-900 to-purple-900">
                     <div className="absolute top-0 left-0 right-0 text-center py-2">
-                      <h2 className="text-3xl font-bold text-yellow-400 drop-shadow-lg">Book of Mystic Revelations</h2>
+                      <h2 className="text-3xl font-bold text-yellow-400 drop-shadow-lg">Matrix Code Breaker</h2>
                     </div>
                     <div className="absolute inset-0 flex items-center justify-center">
                       <div className="grid grid-cols-5 gap-1 w-11/12 aspect-[5/3]">
@@ -763,11 +763,10 @@ const Index = () => {
                     </Button>
                   </div>
                   <div className="flex justify-between bg-gray-800 text-white p-2">
-                    <div>Balance: ${balance.toFixed(2)}</div>
-                    <div>Bet: ${bet.toFixed(2)}</div>
+                    <div>Balance: {formatCurrency(balance)}</div>
+                    <div>Bet: {formatCurrency(bet)}</div>
                   </div>
                 </div>
-                {specialEvent && <SpecialEventBanner event={specialEvent} />}
                 {specialEvent && <SpecialEventBanner event={specialEvent} />}
                 <div className="flex justify-between items-center mb-6 bg-gradient-to-r from-gray-800 to-gray-900 p-4 rounded-lg shadow-lg">
                   <div className="flex items-center space-x-6">
@@ -870,6 +869,15 @@ const Index = () => {
                   >
                     <Info className="mr-2 h-5 w-5" />
                     Game Rules
+                  </Button>
+                </div>
+                <div className="mt-4 text-center">
+                  <Button
+                    onClick={() => window.location.href = '/responsible-gaming'}
+                    className="bg-yellow-500 hover:bg-yellow-600 text-black"
+                  >
+                    <AlertTriangle className="mr-2 h-5 w-5" />
+                    Learn More About Responsible Gaming
                   </Button>
                 </div>
                 <div className="flex justify-center mb-6">
