@@ -8,6 +8,8 @@ import Footer from "./components/Footer";
 import Index from "./pages/Index";
 
 const App = () => {
+  console.log("App component rendering"); // Add this line for debugging
+
   return (
     <TooltipProvider>
       <Toaster />
@@ -28,8 +30,5 @@ const App = () => {
     </TooltipProvider>
   );
 };
-
-// For debugging
-console.log("App component rendered");
 
 export default App;

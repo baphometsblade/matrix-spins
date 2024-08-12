@@ -1,35 +1,12 @@
-import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Loader2, Gift, Volume2, VolumeX, Zap, Settings, DollarSign, Sparkles, CreditCard, HelpCircle, Trophy, Star, RefreshCw, Lock, Unlock, Coins, Calendar, Maximize2, Minimize2, AlertTriangle, Info, ChevronLeft, ChevronRight, Code } from "lucide-react";
-import { formatCurrency, generateSlotAssets, generateGameBackgrounds, generatePromotionImages } from '@/lib/utils';
-import confetti from 'canvas-confetti';
-import { useTheme } from 'next-themes';
-import { Link } from "react-router-dom";
-import { motion, AnimatePresence, useAnimation } from "framer-motion";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Progress } from "@/components/ui/progress";
-import DailyBonus from "@/components/DailyBonus";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import SpecialEventBanner from "@/components/SpecialEventBanner";
-import { Label } from "@/components/ui/label";
-import { Switch } from "@/components/ui/switch";
-import { Slider } from "@/components/ui/slider";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { useToast } from "@/components/ui/use-toast";
-import PayTable from '../components/PayTable';
-import LeaderBoard from '../components/LeaderBoard';
-import BonusWheel from '../components/BonusWheel';
-import DepositDialog from '../components/DepositDialog';
-import HelpDialog from '../components/HelpDialog';
-import SideBet from '../components/SideBet';
-import { useQuery } from '@tanstack/react-query';
-import { Badge } from "@/components/ui/badge";
-import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerTrigger } from "@/components/ui/drawer";
+import { Loader2, Gift, Zap } from "lucide-react";
+import { formatCurrency } from '@/lib/utils';
 import { useLocalStorage } from '@/hooks/useLocalStorage';
 
 const Index = () => {
+  console.log("Index component rendering"); // Add this line for debugging
   const [slotAssets, setSlotAssets] = useState([]);
   const [gameBackgrounds, setGameBackgrounds] = useState([]);
   const [promotionImages, setPromotionImages] = useState([]);
@@ -531,43 +508,40 @@ const Index = () => {
     setShowMiniGame(false);
   };
 
+  const [balance, setBalance] = useLocalStorage('balance', 1000);
+  const [bet, setBet] = useState(10);
+
   return (
-    <div className="container mx-auto px-4 py-8 relative">
-      <canvas ref={matrixRainRef} className="absolute inset-0 z-0 opacity-30" />
-      {backgroundImage && (
-        <div 
-          className="absolute inset-0 z-0" 
-          style={{
-            backgroundImage: `url(${backgroundImage})`,
-            backgroundSize: 'cover',
-            backgroundAttachment: 'fixed',
-            filter: 'blur(5px)',
-            opacity: 0.2
-          }}
-        ></div>
-      )}
-      <div className="relative z-10 bg-black/70 p-8 rounded-lg">
-      <AnimatePresence>
-        {lastWin && lastWin.amount > 0 && (
-          <motion.div
-            initial={{ opacity: 0, y: -50 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -50 }}
-            transition={{ duration: 0.5 }}
+    <div className="container mx-auto px-4 py-8">
+      <Card className="bg-black/70 p-8 rounded-lg">
+        <CardHeader>
+          <CardTitle className="text-3xl text-center">Matrix Slots Extravaganza</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="flex justify-between items-center mb-6">
+            <div className="text-2xl">
+              <span className="text-gray-400">Balance:</span> 
+              <span className="text-green-400 font-bold ml-2">{formatCurrency(balance)}</span>
+            </div>
+            <div className="flex items-center bg-gray-700 rounded-lg overflow-hidden">
+              <Button onClick={() => setBet(Math.max(1, bet - 1))} variant="ghost" size="sm" className="text-white hover:bg-gray-600">-</Button>
+              <div className="px-4 py-2 bg-gray-800 text-white">
+                <span className="text-gray-400">Bet:</span> 
+                <span className="font-bold ml-2">{formatCurrency(bet)}</span>
+              </div>
+              <Button onClick={() => setBet(Math.min(100, bet + 1))} variant="ghost" size="sm" className="text-white hover:bg-gray-600">+</Button>
+            </div>
+          </div>
+          <Button 
+            onClick={() => console.log('Spin clicked')} 
+            className="w-full h-20 text-3xl font-bold bg-gradient-to-r from-green-400 to-blue-500 hover:from-green-500 hover:to-blue-600 text-white shadow-lg rounded-full transform hover:scale-105 transition-transform duration-200"
           >
-            <Alert className="mb-4 bg-green-500 text-white">
-              <Sparkles className="h-4 w-4" />
-              <AlertTitle>Big Win!</AlertTitle>
-              <AlertDescription>
-                You won {formatCurrency(lastWin.amount)} {lastWin.multiplier > 1 && `with a ${lastWin.multiplier}x multiplier`}
-                {lastWin.type === 'bonus' && ' in the Bonus Game'}
-                {lastWin.freeSpins && ` and ${lastWin.freeSpins} Free Spins!`}
-              </AlertDescription>
-            </Alert>
-          </motion.div>
-        )}
-      </AnimatePresence>
-      <img src="/logo.png" alt="Matrix Slots Extravaganza" className="mx-auto mb-8 w-64 h-64 object-cover" />
+            <Zap className="mr-2 h-10 w-10" />
+            SPIN
+          </Button>
+        </CardContent>
+      </Card>
+    </div>
       
       {/* Loyalty Program Display */}
       <Card className="mb-8 bg-gradient-to-r from-green-600 to-blue-600 text-white overflow-hidden relative">
