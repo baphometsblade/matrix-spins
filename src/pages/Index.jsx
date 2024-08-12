@@ -32,6 +32,9 @@ const Index = () => {
   const [slotAssets, setSlotAssets] = useState(getSlotAssets());
   const [gameBackgrounds, setGameBackgrounds] = useState(getGameBackgrounds());
   const [promotionImages, setPromotionImages] = useState(getPromotionImages());
+  const [playerRank, setPlayerRank] = useState("3K+");
+  const [playerScore, setPlayerScore] = useState(87.86);
+  const [playerCredits, setPlayerCredits] = useState(8.78);
 
   useEffect(() => {
     // No need to load assets asynchronously anymore
@@ -688,12 +691,29 @@ const Index = () => {
                 <CardTitle className="text-center text-3xl">{game.name}</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="relative w-full aspect-[16/9] mb-6 overflow-hidden rounded-lg bg-gradient-to-b from-gray-800 to-gray-900 shadow-2xl">
-                  <div className="absolute inset-0 flex items-center justify-center">
-                    <div className="relative w-4/5 h-4/5 bg-gradient-to-b from-gray-700 to-gray-800 rounded-xl shadow-inner overflow-hidden">
-                      <div className="absolute inset-0 flex">
+                <div className="relative w-full mb-6 overflow-hidden rounded-lg bg-gradient-to-b from-gray-800 to-gray-900 shadow-2xl">
+                  <div className="bg-purple-900 text-white p-2 flex justify-between items-center">
+                    <div className="flex items-center">
+                      <Trophy className="h-6 w-6 text-yellow-400 mr-2" />
+                      <span>Rank: {playerRank}</span>
+                    </div>
+                    <div>Score: {playerScore.toFixed(2)}</div>
+                    <div className="flex items-center">
+                      <Star className="h-6 w-6 text-yellow-400 mr-2" />
+                      <span>Credits: {playerCredits.toFixed(2)}</span>
+                    </div>
+                  </div>
+                  <div className="text-center text-white text-sm py-1 bg-purple-800">
+                    Your rank will appear after you will reach a score of 6226
+                  </div>
+                  <div className="relative aspect-[4/3] bg-gradient-to-b from-blue-900 to-purple-900">
+                    <div className="absolute top-0 left-0 right-0 text-center py-2">
+                      <h2 className="text-3xl font-bold text-yellow-400 drop-shadow-lg">Book of Mystic Revelations</h2>
+                    </div>
+                    <div className="absolute inset-0 flex items-center justify-center">
+                      <div className="grid grid-cols-5 gap-1 w-11/12 aspect-[5/3]">
                         {reels.map((reel, i) => (
-                          <div key={i} className="flex-1 border-r-2 border-gray-600 last:border-r-0">
+                          <div key={i} className="bg-gray-800 rounded-lg overflow-hidden">
                             <motion.div 
                               className="relative h-full"
                               animate={spinning ? { y: [`0%`, `-${(reel.length - 3) * 100}%`] } : { y: '0%' }}
@@ -707,7 +727,7 @@ const Index = () => {
                                   whileHover={{ scale: 1.1 }}
                                   transition={{ type: "spring", stiffness: 300 }}
                                 >
-                                  <img src={symbolImage} alt="Slot Symbol" className="w-full h-full object-contain p-2" />
+                                  <img src={symbolImage} alt="Slot Symbol" className="w-full h-full object-contain p-1" />
                                 </motion.div>
                               ))}
                             </motion.div>
@@ -716,8 +736,26 @@ const Index = () => {
                       </div>
                     </div>
                   </div>
-                  <div className="absolute top-0 left-0 right-0 h-1/6 bg-gradient-to-b from-gray-900 to-transparent"></div>
-                  <div className="absolute bottom-0 left-0 right-0 h-1/6 bg-gradient-to-t from-gray-900 to-transparent"></div>
+                  <div className="bg-gradient-to-r from-purple-800 to-blue-800 p-2 flex justify-between items-center">
+                    <Button variant="outline" className="bg-gray-700 text-white">
+                      <Settings className="h-5 w-5 mr-2" />
+                      Settings
+                    </Button>
+                    <Button 
+                      onClick={spinReels} 
+                      disabled={spinning || autoPlay}
+                      className="w-20 h-20 rounded-full bg-green-500 hover:bg-green-600 text-white font-bold text-xl"
+                    >
+                      {spinning ? <Loader2 className="h-10 w-10 animate-spin" /> : <RefreshCw className="h-10 w-10" />}
+                    </Button>
+                    <Button variant="outline" className="bg-purple-600 text-white">
+                      Buy Feature
+                    </Button>
+                  </div>
+                  <div className="flex justify-between bg-gray-800 text-white p-2">
+                    <div>Balance: ${balance.toFixed(2)}</div>
+                    <div>Bet: ${bet.toFixed(2)}</div>
+                  </div>
                 </div>
                 {specialEvent && <SpecialEventBanner event={specialEvent} />}
                 {specialEvent && <SpecialEventBanner event={specialEvent} />}
