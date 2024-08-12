@@ -35,3 +35,13 @@ export const slotAssets = {
   // Add other game themes here
 };
 export const gameBackgrounds = generateGameBackgrounds();
+
+// Generate promotion images
+export const promotionImages = [
+  '/assets/promotion-1.png',
+  '/assets/promotion-2.png',
+  '/assets/promotion-3.png',
+  '/assets/promotion-4.png',
+  '/assets/promotion-5.png',
+  '/assets/promotion-6.png',
+];
