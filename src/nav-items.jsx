@@ -1,6 +1,5 @@
 import React from 'react';
 import { Home, Gift, User, Trophy } from "lucide-react";
-import Index from "./pages/Index";
 import Promotions from "./pages/Promotions";
 import Profile from "./pages/Profile";
 import Tournaments from "./pages/Tournaments";
@@ -10,7 +9,6 @@ export const navItems = [
     title: "Home",
     to: "/",
     icon: <Home className="h-4 w-4" />,
-    page: <Index />,
   },
   {
     title: "Promotions",
