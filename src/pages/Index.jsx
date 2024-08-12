@@ -533,7 +533,7 @@ const Index = () => {
 
   return (
     <div className="container mx-auto px-4 py-8 relative">
-      <canvas ref={matrixRainRef} className="absolute inset-0 z-0" />
+      <canvas ref={matrixRainRef} className="absolute inset-0 z-0 opacity-30" />
       {backgroundImage && (
         <div 
           className="absolute inset-0 z-0" 
@@ -542,11 +542,11 @@ const Index = () => {
             backgroundSize: 'cover',
             backgroundAttachment: 'fixed',
             filter: 'blur(5px)',
-            opacity: 0.3
+            opacity: 0.2
           }}
         ></div>
       )}
-      <div className="relative z-10">
+      <div className="relative z-10 bg-black/70 p-8 rounded-lg">
       <AnimatePresence>
         {lastWin && lastWin.amount > 0 && (
           <motion.div
