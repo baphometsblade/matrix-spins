@@ -57,11 +57,11 @@ const Index = () => {
   const [balance, setBalance] = useLocalStorage('balance', 1000);
   const [bet, setBet] = useLocalStorage('bet', 10);
   const [reels, setReels] = useState([
-    ['/assets/matrix-blue-orb.png', '/assets/matrix-green-orb.png', '/assets/matrix-red-orb.png'],
-    ['/assets/matrix-purple-orb.png', '/assets/matrix-yellow-orb.png', '/assets/matrix-pill.png'],
-    ['/assets/matrix-sunglasses.png', '/assets/matrix-computer.png', '/assets/matrix-unlock.png'],
-    ['/assets/matrix-hourglass.png', '/assets/matrix-blue-orb.png', '/assets/matrix-green-orb.png'],
-    ['/assets/matrix-red-orb.png', '/assets/matrix-purple-orb.png', '/assets/matrix-yellow-orb.png']
+    ['/placeholder.svg', '/placeholder.svg', '/placeholder.svg'],
+    ['/placeholder.svg', '/placeholder.svg', '/placeholder.svg'],
+    ['/placeholder.svg', '/placeholder.svg', '/placeholder.svg'],
+    ['/placeholder.svg', '/placeholder.svg', '/placeholder.svg'],
+    ['/placeholder.svg', '/placeholder.svg', '/placeholder.svg']
   ]);
   const [spinning, setSpinning] = useState(false);
   const [winAmount, setWinAmount] = useState(0);
@@ -92,16 +92,16 @@ const Index = () => {
   const [currentSymbolIndex, setCurrentSymbolIndex] = useState(0);
 
   const [symbols, setSymbols] = useState([
-    '/assets/matrix-blue-orb.png',
-    '/assets/matrix-green-orb.png',
-    '/assets/matrix-red-orb.png',
-    '/assets/matrix-purple-orb.png',
-    '/assets/matrix-yellow-orb.png',
-    '/assets/matrix-pill.png',
-    '/assets/matrix-sunglasses.png',
-    '/assets/matrix-computer.png',
-    '/assets/matrix-unlock.png',
-    '/assets/matrix-hourglass.png'
+    '/placeholder.svg',
+    '/placeholder.svg',
+    '/placeholder.svg',
+    '/placeholder.svg',
+    '/placeholder.svg',
+    '/placeholder.svg',
+    '/placeholder.svg',
+    '/placeholder.svg',
+    '/placeholder.svg',
+    '/placeholder.svg'
   ]);
 
   const toggleFullscreen = () => {
@@ -430,7 +430,7 @@ const Index = () => {
     };
   }, [jackpot]);
 
-  const [backgroundImage, setBackgroundImage] = useState('/assets/matrix-background.png');
+  const [backgroundImage, setBackgroundImage] = useState('/placeholder.svg');
   const [specialEvent, setSpecialEvent] = useState(null);
   const matrixRainRef = useRef(null);
   const controls = useAnimation();
