@@ -1010,7 +1010,7 @@ const Index = () => {
         {games.map((game, index) => (
           <Card key={index} className="bg-black/50 text-white overflow-hidden hover:shadow-lg transition-shadow duration-300">
             <div className="relative">
-              <img src={game.image || "/placeholder.svg"} alt={game.name} className="w-full h-40 object-cover" />
+              <img src={game.image} alt={game.name} className="w-full h-40 object-cover" />
               <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent flex items-end p-4">
                 <h3 className="text-xl font-bold text-white">{game.name}</h3>
               </div>

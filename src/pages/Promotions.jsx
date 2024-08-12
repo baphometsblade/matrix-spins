@@ -6,7 +6,7 @@ import { getPromotionImages } from '@/lib/utils';
 
 const Promotions = () => {
   const promotionImages = getPromotionImages();
-  const [promotions, setPromotions] = useState([
+  const [promotions] = useState([
     {
       title: "Welcome Package",
       description: "Get up to $1000 + 200 Free Spins on your first 3 deposits!",
