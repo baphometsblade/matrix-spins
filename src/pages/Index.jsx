@@ -531,35 +531,44 @@ const Index = () => {
   return (
     <div className="container mx-auto px-4 py-8">
       <canvas ref={matrixRainRef} className="fixed inset-0 pointer-events-none" />
-      <div className="relative w-full max-w-md mx-auto bg-gradient-to-b from-purple-900 to-indigo-900 rounded-lg overflow-hidden shadow-2xl">
-        <div className="absolute top-0 left-0 right-0 h-16 bg-gradient-to-r from-pink-500 to-purple-500 flex items-center justify-between px-4">
+      <div className="relative w-full max-w-4xl mx-auto bg-black rounded-lg overflow-hidden shadow-2xl">
+        <div className="absolute top-0 left-0 right-0 h-16 bg-gradient-to-r from-green-600 to-blue-600 flex items-center justify-between px-4">
           <Button variant="ghost" className="text-white">
             <Home className="h-6 w-6" />
           </Button>
-          <h1 className="text-2xl font-bold text-white">Matrix Rush Fever</h1>
+          <h1 className="text-2xl font-bold text-white">Matrix Megaways</h1>
           <Button variant="ghost" className="text-white">
             <Menu className="h-6 w-6" />
           </Button>
         </div>
         <div className="mt-20 p-4">
           <div className="flex justify-between mb-4">
-            {[9, 8, 7, 6, 5].map((num) => (
-              <div key={num} className={`text-center p-2 rounded-lg ${num === 9 ? 'bg-yellow-500' : 'bg-gradient-to-r from-purple-500 to-pink-500'}`}>
-                <div className="text-sm font-bold">{num} Rush Fever</div>
-                <div className="text-lg font-bold">{formatCurrency(num * 1000)}</div>
+            {[5, 4, 3, 2, 1].map((num) => (
+              <div key={num} className="text-center p-2 rounded-lg bg-gradient-to-r from-green-500 to-blue-500">
+                <div className="text-sm font-bold">Level {num}</div>
+                <div className="text-lg font-bold">{formatCurrency(num * 10000)}</div>
               </div>
             ))}
           </div>
-          <div className="grid grid-cols-5 gap-2 mb-4 bg-purple-800 p-2 rounded-lg">
-            {reels.map((reel, i) => (
-              <div key={i} className="flex flex-col">
-                {reel.map((symbol, j) => (
-                  <img key={j} src={symbol} alt="Slot Symbol" className="w-full h-auto" />
-                ))}
+          <div className="relative aspect-[16/9] bg-gradient-to-b from-gray-900 to-black rounded-lg overflow-hidden mb-4">
+            <div className="absolute inset-0 grid grid-cols-6 gap-1 p-2">
+              {reels.map((reel, i) => (
+                <div key={i} className="flex flex-col space-y-1">
+                  {reel.map((symbol, j) => (
+                    <div key={j} className="aspect-square bg-gray-800 rounded-md overflow-hidden">
+                      <img src={symbol} alt="Slot Symbol" className="w-full h-full object-cover" />
+                    </div>
+                  ))}
+                </div>
+              ))}
+            </div>
+            {spinning && (
+              <div className="absolute inset-0 flex items-center justify-center">
+                <div className="text-4xl font-bold text-green-400 animate-pulse">SPINNING...</div>
               </div>
-            ))}
+            )}
           </div>
-          <div className="flex justify-between items-center mb-4">
+          <div className="flex justify-between items-center mb-4 bg-gray-800 p-4 rounded-lg">
             <div className="text-white">
               <div className="text-sm">TOTAL BET</div>
               <div className="text-xl font-bold">{formatCurrency(bet)}</div>
@@ -567,24 +576,25 @@ const Index = () => {
             <Button 
               onClick={spinReels} 
               disabled={spinning || autoPlay}
-              className="w-1/2 h-16 text-2xl font-bold bg-gradient-to-r from-yellow-400 to-orange-500 hover:from-yellow-500 hover:to-orange-600 text-white shadow-lg rounded-full"
+              className="w-1/3 h-16 text-2xl font-bold bg-gradient-to-r from-green-400 to-blue-500 hover:from-green-500 hover:to-blue-600 text-white shadow-lg rounded-full"
             >
-              {spinning ? 'SPINNING...' : 'SPIN'}
+              {spinning ? <Loader2 className="h-8 w-8 animate-spin" /> : 'SPIN'}
             </Button>
             <div className="text-white text-right">
-              <div className="text-sm">CASH</div>
+              <div className="text-sm">BALANCE</div>
               <div className="text-xl font-bold">{formatCurrency(balance)}</div>
             </div>
           </div>
-          <div className="flex justify-between">
-            <Button className="bg-green-500 hover:bg-green-600">
-              BUY FEATURE
+          <div className="grid grid-cols-3 gap-4">
+            <Button className="bg-purple-600 hover:bg-purple-700">
+              BUY BONUS
             </Button>
             <Button variant="outline" className="border-2 border-yellow-400 text-yellow-400 hover:bg-yellow-400 hover:text-black">
-              AUTO SPIN
+              AUTO PLAY
             </Button>
             <Button variant="outline" className="border-2 border-blue-400 text-blue-400 hover:bg-blue-400 hover:text-black">
-              <Settings className="h-6 w-6" />
+              <Settings className="h-6 w-6 mr-2" />
+              SETTINGS
             </Button>
           </div>
         </div>
