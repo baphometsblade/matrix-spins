@@ -2,7 +2,6 @@ import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { motion, useAnimation } from 'framer-motion';
 import { useQuery } from '@tanstack/react-query';
-import { useTheme } from 'next-themes';
 import confetti from 'canvas-confetti';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -40,7 +39,6 @@ const Index = () => {
     // No need to load assets asynchronously anymore
     console.log("Assets loaded:", slotAssets, gameBackgrounds, promotionImages);
   }, []);
-  const { theme, setTheme } = useTheme();
   const [showResponsibleGamingInfo, setShowResponsibleGamingInfo] = useState(false);
   const [timeSpent, setTimeSpent] = useState(0);
 
@@ -666,9 +664,6 @@ const Index = () => {
       <div className="flex justify-end space-x-4 mb-4">
         <DepositDialog onDeposit={(amount) => setBalance(prevBalance => prevBalance + amount)} />
         <HelpDialog />
-        <Button onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')} className="bg-gray-600 hover:bg-gray-700">
-          {theme === 'dark' ? 'Light Mode' : 'Dark Mode'}
-        </Button>
       </div>
 
       {showResponsibleGamingInfo && (
