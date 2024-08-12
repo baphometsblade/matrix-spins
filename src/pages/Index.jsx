@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Loader2, Gift, Volume2, VolumeX, Zap, Settings, DollarSign, Sparkles, CreditCard, HelpCircle, Trophy, Star, RefreshCw, Lock, Unlock, Coins, Calendar, Maximize2, Minimize2, AlertTriangle, Info, ChevronLeft, ChevronRight, Code } from "lucide-react";
-import { formatCurrency, slotAssets, gameBackgrounds } from '@/lib/utils';
+import { formatCurrency, generateSlotAssets, generateGameBackgrounds, generatePromotionImages } from '@/lib/utils';
 import confetti from 'canvas-confetti';
 import { useTheme } from 'next-themes';
 import { Link } from "react-router-dom";
@@ -30,6 +30,21 @@ import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerTrigger } from 
 import { useLocalStorage } from '@/hooks/useLocalStorage';
 
 const Index = () => {
+  const [slotAssets, setSlotAssets] = useState([]);
+  const [gameBackgrounds, setGameBackgrounds] = useState([]);
+  const [promotionImages, setPromotionImages] = useState([]);
+
+  useEffect(() => {
+    const loadAssets = async () => {
+      const assets = await generateSlotAssets();
+      setSlotAssets(assets);
+      const backgrounds = await generateGameBackgrounds();
+      setGameBackgrounds(backgrounds);
+      const promoImages = await generatePromotionImages();
+      setPromotionImages(promoImages);
+    };
+    loadAssets();
+  }, []);
   const { theme, setTheme } = useTheme();
   const [showResponsibleGamingInfo, setShowResponsibleGamingInfo] = useState(false);
   const [timeSpent, setTimeSpent] = useState(0);
@@ -56,13 +71,15 @@ const Index = () => {
   const { toast } = useToast();
   const [balance, setBalance] = useLocalStorage('balance', 1000);
   const [bet, setBet] = useLocalStorage('bet', 10);
-  const [reels, setReels] = useState([
-    ['/placeholder.svg', '/placeholder.svg', '/placeholder.svg'],
-    ['/placeholder.svg', '/placeholder.svg', '/placeholder.svg'],
-    ['/placeholder.svg', '/placeholder.svg', '/placeholder.svg'],
-    ['/placeholder.svg', '/placeholder.svg', '/placeholder.svg'],
-    ['/placeholder.svg', '/placeholder.svg', '/placeholder.svg']
-  ]);
+  const [reels, setReels] = useState([]);
+
+  useEffect(() => {
+    if (slotAssets.length > 0) {
+      setReels(Array(5).fill().map(() => 
+        Array(3).fill().map(() => slotAssets[Math.floor(Math.random() * slotAssets.length)].image)
+      ));
+    }
+  }, [slotAssets]);
   const [spinning, setSpinning] = useState(false);
   const [winAmount, setWinAmount] = useState(0);
   const [jackpot, setJackpot] = useLocalStorage('jackpot', 10000);
@@ -91,18 +108,13 @@ const Index = () => {
   const [showRules, setShowRules] = useState(false);
   const [currentSymbolIndex, setCurrentSymbolIndex] = useState(0);
 
-  const [symbols, setSymbols] = useState([
-    '/placeholder.svg',
-    '/placeholder.svg',
-    '/placeholder.svg',
-    '/placeholder.svg',
-    '/placeholder.svg',
-    '/placeholder.svg',
-    '/placeholder.svg',
-    '/placeholder.svg',
-    '/placeholder.svg',
-    '/placeholder.svg'
-  ]);
+  const [symbols, setSymbols] = useState([]);
+
+  useEffect(() => {
+    if (slotAssets.length > 0) {
+      setSymbols(slotAssets.map(asset => asset.image));
+    }
+  }, [slotAssets]);
 
   const toggleFullscreen = () => {
     if (!document.fullscreenElement) {
@@ -143,17 +155,15 @@ const Index = () => {
   const [games, setGames] = useState([]);
 
   useEffect(() => {
-    const initGames = async () => {
+    if (gameBackgrounds.length > 0 && slotAssets.length > 0) {
       setGames([
-        { id: 'matrix', name: "Matrix Reloaded", image: gameBackgrounds[0]?.image, assets: slotAssets.matrix },
-        { id: 'cyber', name: "Cybernetic Spin", image: gameBackgrounds[1]?.image, assets: slotAssets.matrix },
-        { id: 'quantum', name: "Quantum Quandary", image: gameBackgrounds[2]?.image, assets: slotAssets.matrix },
-        { id: 'neural', name: "Neural Network", image: gameBackgrounds[3]?.image, assets: slotAssets.matrix },
+        { id: 'matrix', name: "Matrix Reloaded", image: gameBackgrounds[0]?.image, assets: slotAssets },
+        { id: 'cyber', name: "Cybernetic Spin", image: gameBackgrounds[1]?.image, assets: slotAssets },
+        { id: 'quantum', name: "Quantum Quandary", image: gameBackgrounds[2]?.image, assets: slotAssets },
+        { id: 'neural', name: "Neural Network", image: gameBackgrounds[3]?.image, assets: slotAssets },
       ]);
-    };
-
-    initGames();
-  }, []);
+    }
+  }, [gameBackgrounds, slotAssets]);
 
   const loyaltyTiers = useMemo(() => [
     { name: 'Bronze', points: 0, color: 'text-amber-600' },
