@@ -16,7 +16,7 @@ import { Badge } from "@/components/ui/badge";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useToast } from "@/components/ui/use-toast";
 import { Loader2, Gift, Zap, Trophy, Star, Lock, Unlock, Minimize2, Maximize2, AlertTriangle, Info, RefreshCw, DollarSign, Volume2, VolumeX, Settings, ChevronLeft, ChevronRight, Coins, Sparkles } from "lucide-react";
-import { formatCurrency, generateSlotAssets, generateGameBackgrounds, generatePromotionImages } from '@/lib/utils';
+import { formatCurrency, getSlotAssets, getGameBackgrounds, getPromotionImages } from '@/lib/utils';
 import { useLocalStorage } from '@/hooks/useLocalStorage';
 import DepositDialog from '@/components/DepositDialog';
 import HelpDialog from '@/components/HelpDialog';
@@ -26,7 +26,6 @@ import LeaderBoard from '@/components/LeaderBoard';
 import SpecialEventBanner from '@/components/SpecialEventBanner';
 import DailyBonus from '@/components/DailyBonus';
 import PayTable from '@/components/PayTable';
-import { formatCurrency, getSlotAssets, getGameBackgrounds, getPromotionImages } from '@/lib/utils';
 
 const Index = () => {
   console.log("Index component rendering"); // Add this line for debugging
