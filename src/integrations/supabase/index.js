@@ -19,53 +19,148 @@ const fromSupabase = async (query) => {
 
 /* supabase integration types
 
-// EXAMPLE TYPES SECTION
-// DO NOT USE TYPESCRIPT
+### generated_images
 
-### foos
+| name       | type                     | format | required |
+|------------|--------------------------|--------|----------|
+| id         | int8                     | number | true     |
+| created_at | timestamp with time zone | string | true     |
 
-| name    | type | format | required |
-|---------|------|--------|----------|
-| id      | int8 | number | true     |
-| title   | text | string | true     |
-| date    | date | string | true     |
+### card_images
 
-### bars
+| name       | type                     | format | required |
+|------------|--------------------------|--------|----------|
+| id         | int8                     | number | true     |
+| created_at | timestamp with time zone | string | true     |
 
-| name    | type | format | required |
-|---------|------|--------|----------|
-| id      | int8 | number | true     |
-| foo_id  | int8 | number | true     |  // foreign key to foos
-	
+### a
+
+| name       | type                     | format | required |
+|------------|--------------------------|--------|----------|
+| id         | int8                     | number | true     |
+| created_at | timestamp with time zone | string | true     |
+
 */
 
-// Example hook for models
+// Hooks for generated_images
+export const useGeneratedImages = () => useQuery({
+    queryKey: ['generated_images'],
+    queryFn: () => fromSupabase(supabase.from('generated_images').select('*')),
+});
 
-export const useFoo = ()=> useQuery({
-    queryKey: ['foos'],
-    queryFn: fromSupabase(supabase.from('foos')),
-})
-export const useAddFoo = () => {
+export const useGeneratedImage = (id) => useQuery({
+    queryKey: ['generated_images', id],
+    queryFn: () => fromSupabase(supabase.from('generated_images').select('*').eq('id', id).single()),
+});
+
+export const useAddGeneratedImage = () => {
     const queryClient = useQueryClient();
     return useMutation({
-        mutationFn: (newFoo)=> fromSupabase(supabase.from('foos').insert([{ title: newFoo.title }])),
-        onSuccess: ()=> {
-            queryClient.invalidateQueries('foos');
+        mutationFn: (newImage) => fromSupabase(supabase.from('generated_images').insert([newImage])),
+        onSuccess: () => {
+            queryClient.invalidateQueries('generated_images');
         },
     });
 };
 
-export const useBar = ()=> useQuery({
-    queryKey: ['bars'],
-    queryFn: fromSupabase(supabase.from('bars')),
-})
-export const useAddBar = () => {
+export const useUpdateGeneratedImage = () => {
     const queryClient = useQueryClient();
     return useMutation({
-        mutationFn: (newBar)=> fromSupabase(supabase.from('bars').insert([{ foo_id: newBar.foo_id }])),
-        onSuccess: ()=> {
-            queryClient.invalidateQueries('bars');
+        mutationFn: ({ id, ...updateData }) => fromSupabase(supabase.from('generated_images').update(updateData).eq('id', id)),
+        onSuccess: () => {
+            queryClient.invalidateQueries('generated_images');
         },
     });
 };
 
+export const useDeleteGeneratedImage = () => {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: (id) => fromSupabase(supabase.from('generated_images').delete().eq('id', id)),
+        onSuccess: () => {
+            queryClient.invalidateQueries('generated_images');
+        },
+    });
+};
+
+// Hooks for card_images
+export const useCardImages = () => useQuery({
+    queryKey: ['card_images'],
+    queryFn: () => fromSupabase(supabase.from('card_images').select('*')),
+});
+
+export const useCardImage = (id) => useQuery({
+    queryKey: ['card_images', id],
+    queryFn: () => fromSupabase(supabase.from('card_images').select('*').eq('id', id).single()),
+});
+
+export const useAddCardImage = () => {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: (newImage) => fromSupabase(supabase.from('card_images').insert([newImage])),
+        onSuccess: () => {
+            queryClient.invalidateQueries('card_images');
+        },
+    });
+};
+
+export const useUpdateCardImage = () => {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: ({ id, ...updateData }) => fromSupabase(supabase.from('card_images').update(updateData).eq('id', id)),
+        onSuccess: () => {
+            queryClient.invalidateQueries('card_images');
+        },
+    });
+};
+
+export const useDeleteCardImage = () => {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: (id) => fromSupabase(supabase.from('card_images').delete().eq('id', id)),
+        onSuccess: () => {
+            queryClient.invalidateQueries('card_images');
+        },
+    });
+};
+
+// Hooks for a
+export const useAs = () => useQuery({
+    queryKey: ['a'],
+    queryFn: () => fromSupabase(supabase.from('a').select('*')),
+});
+
+export const useA = (id) => useQuery({
+    queryKey: ['a', id],
+    queryFn: () => fromSupabase(supabase.from('a').select('*').eq('id', id).single()),
+});
+
+export const useAddA = () => {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: (newA) => fromSupabase(supabase.from('a').insert([newA])),
+        onSuccess: () => {
+            queryClient.invalidateQueries('a');
+        },
+    });
+};
+
+export const useUpdateA = () => {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: ({ id, ...updateData }) => fromSupabase(supabase.from('a').update(updateData).eq('id', id)),
+        onSuccess: () => {
+            queryClient.invalidateQueries('a');
+        },
+    });
+};
+
+export const useDeleteA = () => {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: (id) => fromSupabase(supabase.from('a').delete().eq('id', id)),
+        onSuccess: () => {
+            queryClient.invalidateQueries('a');
+        },
+    });
+};
