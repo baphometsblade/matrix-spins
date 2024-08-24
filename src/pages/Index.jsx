@@ -40,9 +40,35 @@ const Index = () => {
   const [dailyChallenge, setDailyChallenge] = useState(null);
   const [achievements, setAchievements] = useState([]);
   const [showLoyaltyPopup, setShowLoyaltyPopup] = useState(false);
-  // Removed duplicate declaration
   const [nextTier, setNextTier] = useState("Platinum");
   const [tierProgress, setTierProgress] = useState(65);
+
+  const loyaltyTiers = useMemo(() => [
+    { name: 'Bronze', points: 0, color: 'text-amber-600' },
+    { name: 'Silver', points: 1000, color: 'text-gray-400' },
+    { name: 'Gold', points: 5000, color: 'text-yellow-400' },
+    { name: 'Platinum', points: 10000, color: 'text-blue-400' },
+    { name: 'Diamond', points: 25000, color: 'text-purple-400' },
+  ], []);
+
+  const currentTier = useMemo(() => {
+    return loyaltyTiers.reduce((acc, tier) => 
+      loyaltyPoints >= tier.points ? tier : acc
+    , loyaltyTiers[0]);
+  }, [loyaltyPoints, loyaltyTiers]);
+
+  useEffect(() => {
+    const currentTierIndex = loyaltyTiers.findIndex(tier => tier.name === currentTier.name);
+    if (currentTierIndex < loyaltyTiers.length - 1) {
+      setNextTier(loyaltyTiers[currentTierIndex + 1].name);
+      const pointsToNextTier = loyaltyTiers[currentTierIndex + 1].points - currentTier.points;
+      const progress = ((loyaltyPoints - currentTier.points) / pointsToNextTier) * 100;
+      setTierProgress(Math.min(progress, 100));
+    } else {
+      setNextTier("Max Tier");
+      setTierProgress(100);
+    }
+  }, [currentTier, loyaltyPoints, loyaltyTiers]);
 
   useEffect(() => {
     // No need to load assets asynchronously anymore
