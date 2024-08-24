@@ -2,7 +2,8 @@ import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { motion, useAnimation } from 'framer-motion';
 import { useQuery } from '@tanstack/react-query';
-import confetti from 'canvas-confetti';
+import { useSpring, animated } from '@react-spring/web';
+import ReactConfetti from 'react-confetti';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
@@ -25,6 +26,7 @@ import LeaderBoard from '@/components/LeaderBoard';
 import SpecialEventBanner from '@/components/SpecialEventBanner';
 import DailyBonus from '@/components/DailyBonus';
 import PayTable from '@/components/PayTable';
+import LoyaltyProgramPopup from '@/components/LoyaltyProgramPopup';
 
 const Index = () => {
   console.log("Index component rendering"); // Add this line for debugging
@@ -34,6 +36,14 @@ const Index = () => {
   const [playerRank, setPlayerRank] = useState("3K+");
   const [playerScore, setPlayerScore] = useState(87.86);
   const [playerCredits, setPlayerCredits] = useState(8.78);
+  const [showConfetti, setShowConfetti] = useState(false);
+  const [dailyChallenge, setDailyChallenge] = useState(null);
+  const [achievements, setAchievements] = useState([]);
+  const [showLoyaltyPopup, setShowLoyaltyPopup] = useState(false);
+  const [loyaltyPoints, setLoyaltyPoints] = useState(2500);
+  const [currentTier, setCurrentTier] = useState("Gold");
+  const [nextTier, setNextTier] = useState("Platinum");
+  const [tierProgress, setTierProgress] = useState(65);
 
   useEffect(() => {
     // No need to load assets asynchronously anymore
@@ -191,14 +201,14 @@ const Index = () => {
     setLastWin(null);
     setWinningLines([]);
 
-    // Matrix-style reel animation
+    // Enhanced Matrix-style reel animation
     const animateReels = (currentFrame) => {
-      if (currentFrame < 20) { // 20 frames of animation
+      if (currentFrame < 30) { // Increased to 30 frames for smoother animation
         const animatedReels = reels.map(() =>
           Array.from({ length: 3 }, () => symbols[Math.floor(Math.random() * symbols.length)])
         );
         setReels(animatedReels);
-        setTimeout(() => animateReels(currentFrame + 1), 50);
+        requestAnimationFrame(() => animateReels(currentFrame + 1));
       } else {
         // Final reel state
         const newReels = reels.map(() =>
@@ -215,32 +225,64 @@ const Index = () => {
           setWinningLines(lines);
           setRecentWins(prevWins => [{ amount: totalWin, timestamp: Date.now() }, ...prevWins.slice(0, 4)]);
         
-          // Matrix-style win animation
+          // Enhanced Matrix-style win animation
           animateWin(lines);
           
           // Trigger confetti for big wins
           if (totalWin >= bet * 10) {
-            confetti({
-              particleCount: 100,
-              spread: 70,
-              origin: { y: 0.6 }
-            });
+            setShowConfetti(true);
+            setTimeout(() => setShowConfetti(false), 5000);
           }
 
           // Show mini-game option for big wins
           if (totalWin >= bet * 5) {
             setShowMiniGame(true);
           }
+
+          // Check for achievements
+          checkAchievements(totalWin);
         }
         updateBonusProgress();
         updateLoyaltyPoints(bet);
         checkForFreeSpins(newReels);
+        updateDailyChallenge();
       }
     };
 
-    const spinDuration = turboMode ? 500 : 1000 / animationSpeed;
+    const spinDuration = turboMode ? 300 : 600 / animationSpeed; // Adjusted for smoother animation
     setTimeout(() => animateReels(0), spinDuration);
   }, [balance, bet, freeSpins, multiplier, progressiveJackpot, reels, symbols, turboMode, animationSpeed, toast]);
+
+  const checkAchievements = (totalWin) => {
+    const newAchievements = [...achievements];
+    if (totalWin >= 1000 && !achievements.includes('bigWin')) {
+      newAchievements.push('bigWin');
+      toast({
+        title: "Achievement Unlocked!",
+        description: "Big Winner: Win 1000 or more in a single spin",
+        variant: "success",
+      });
+    }
+    // Add more achievement checks here
+    setAchievements(newAchievements);
+  };
+
+  const updateDailyChallenge = () => {
+    if (dailyChallenge) {
+      const updatedProgress = dailyChallenge.progress + 1;
+      if (updatedProgress >= dailyChallenge.target) {
+        toast({
+          title: "Daily Challenge Completed!",
+          description: `You've earned ${dailyChallenge.reward} free spins!`,
+          variant: "success",
+        });
+        setFreeSpins(prevFreeSpins => prevFreeSpins + dailyChallenge.reward);
+        setDailyChallenge(null);
+      } else {
+        setDailyChallenge({...dailyChallenge, progress: updatedProgress});
+      }
+    }
+  };
 
   const animateWin = (lines) => {
     // Implement a Matrix-style "digital rain" animation over winning lines
@@ -526,9 +568,27 @@ const Index = () => {
   const [balance, setBalance] = useLocalStorage('balance', 1000);
   const [bet, setBet] = useState(10);
 
+  const [springProps, setSpringProps] = useSpring(() => ({
+    scale: 1,
+    rotateZ: 0,
+    config: { tension: 300, friction: 10 },
+  }));
+
+  useEffect(() => {
+    if (!dailyChallenge) {
+      setDailyChallenge({
+        description: "Spin the reels 50 times",
+        target: 50,
+        progress: 0,
+        reward: 10,
+      });
+    }
+  }, []);
+
   return (
     <div className="container mx-auto px-4 py-8">
       <canvas ref={matrixRainRef} className="fixed inset-0 pointer-events-none" />
+      {showConfetti && <ReactConfetti />}
       <div className="relative w-full max-w-4xl mx-auto bg-black rounded-lg overflow-hidden shadow-2xl">
         <div className="absolute top-0 left-0 right-0 h-16 bg-gradient-to-r from-green-600 to-blue-600 flex items-center justify-between px-4">
           <Button variant="ghost" className="text-white">
@@ -876,19 +936,40 @@ const Index = () => {
                   </Button>
                 </div>
                 <div className="flex justify-center mb-6">
-                  <Button 
-                    onClick={spinReels} 
-                    disabled={spinning || autoPlay} 
-                    className="w-1/2 h-20 text-3xl font-bold bg-gradient-to-r from-green-400 to-blue-500 hover:from-green-500 hover:to-blue-600 text-white shadow-lg rounded-full transform hover:scale-105 transition-transform duration-200"
+                  <animated.div
+                    style={springProps}
+                    onMouseEnter={() => setSpringProps({ scale: 1.1, rotateZ: 5 })}
+                    onMouseLeave={() => setSpringProps({ scale: 1, rotateZ: 0 })}
                   >
-                    {spinning ? (
-                      <Loader2 className="mr-2 h-10 w-10 animate-spin" />
-                    ) : (
-                      <Zap className="mr-2 h-10 w-10" />
-                    )}
-                    {spinning ? 'Spinning...' : 'SPIN'}
-                  </Button>
+                    <Button 
+                      onClick={() => {
+                        spinReels();
+                        setSpringProps({ scale: 0.9, rotateZ: -5 });
+                        setTimeout(() => setSpringProps({ scale: 1, rotateZ: 0 }), 200);
+                      }}
+                      disabled={spinning || autoPlay} 
+                      className="w-64 h-20 text-3xl font-bold bg-gradient-to-r from-green-400 to-blue-500 hover:from-green-500 hover:to-blue-600 text-white shadow-lg rounded-full"
+                    >
+                      {spinning ? (
+                        <Loader2 className="mr-2 h-10 w-10 animate-spin" />
+                      ) : (
+                        <Zap className="mr-2 h-10 w-10" />
+                      )}
+                      {spinning ? 'Spinning...' : 'SPIN'}
+                    </Button>
+                  </animated.div>
                 </div>
+                {dailyChallenge && (
+                  <Card className="mb-4 bg-gradient-to-r from-purple-500 to-pink-500 text-white">
+                    <CardContent className="p-4">
+                      <h3 className="text-xl font-bold mb-2">Daily Challenge</h3>
+                      <p>{dailyChallenge.description}</p>
+                      <Progress value={(dailyChallenge.progress / dailyChallenge.target) * 100} className="mt-2" />
+                      <p className="mt-2">Progress: {dailyChallenge.progress} / {dailyChallenge.target}</p>
+                      <p>Reward: {dailyChallenge.reward} Free Spins</p>
+                    </CardContent>
+                  </Card>
+                )}
                 <div className="flex justify-between mb-6">
                   <Button 
                     onClick={toggleAutoPlay}
@@ -1103,6 +1184,21 @@ const Index = () => {
         ))}
       </div>
       <DailyBonus />
+      <LoyaltyProgramPopup
+        isOpen={showLoyaltyPopup}
+        onClose={() => setShowLoyaltyPopup(false)}
+        loyaltyPoints={loyaltyPoints}
+        currentTier={currentTier}
+        nextTier={nextTier}
+        tierProgress={tierProgress}
+      />
+      <Button
+        onClick={() => setShowLoyaltyPopup(true)}
+        className="fixed bottom-4 left-4 bg-gradient-to-r from-purple-500 to-indigo-500 text-white"
+      >
+        <Star className="mr-2 h-5 w-5" />
+        Loyalty Program
+      </Button>
 
       {/* Game Rules Dialog */}
       <Dialog open={showRules} onOpenChange={setShowRules}>

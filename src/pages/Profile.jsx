@@ -29,6 +29,8 @@ const Profile = () => {
     { name: "Big Spender", description: "Bet 1,000,000 credits", completed: false },
     { name: "Lucky Streak", description: "Win 10 times in a row", completed: true },
     { name: "Jackpot Hunter", description: "Hit the progressive jackpot", completed: false },
+    { name: "Big Winner", description: "Win 1000 or more in a single spin", completed: true },
+    { name: "Daily Challenger", description: "Complete 10 daily challenges", completed: false },
   ];
 
   return (
