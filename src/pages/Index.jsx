@@ -191,20 +191,6 @@ const Index = () => {
     }
   }, [gameBackgrounds, slotAssets]);
 
-  const loyaltyTiers = useMemo(() => [
-    { name: 'Bronze', points: 0, color: 'text-amber-600' },
-    { name: 'Silver', points: 1000, color: 'text-gray-400' },
-    { name: 'Gold', points: 5000, color: 'text-yellow-400' },
-    { name: 'Platinum', points: 10000, color: 'text-blue-400' },
-    { name: 'Diamond', points: 25000, color: 'text-purple-400' },
-  ], []);
-
-  const currentTier = useMemo(() => {
-    return loyaltyTiers.reduce((acc, tier) => 
-      loyaltyPoints >= tier.points ? tier : acc
-    , loyaltyTiers[0]);
-  }, [loyaltyPoints, loyaltyTiers]);
-
   const spinReels = useCallback(() => {
     if (freeSpins > 0) {
       setFreeSpins(prevFreeSpins => prevFreeSpins - 1);
