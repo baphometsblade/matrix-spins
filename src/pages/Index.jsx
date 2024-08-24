@@ -41,7 +41,6 @@ const Index = () => {
   const [achievements, setAchievements] = useState([]);
   const [showLoyaltyPopup, setShowLoyaltyPopup] = useState(false);
   // Removed duplicate declaration
-  const [currentTier, setCurrentTier] = useState("Gold");
   const [nextTier, setNextTier] = useState("Platinum");
   const [tierProgress, setTierProgress] = useState(65);
 
@@ -72,7 +71,6 @@ const Index = () => {
   }, [timeSpent]);
 
   const { toast } = useToast();
-  // These are already declared above, so we can remove this duplicate declaration
   const [reels, setReels] = useState([]);
 
   useEffect(() => {
