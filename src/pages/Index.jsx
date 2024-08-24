@@ -42,6 +42,7 @@ const Index = () => {
   const [showLoyaltyPopup, setShowLoyaltyPopup] = useState(false);
   const [nextTier, setNextTier] = useState("Platinum");
   const [tierProgress, setTierProgress] = useState(65);
+  const [hotStreak, setHotStreak] = useState(0);
 
   const loyaltyTiers = useMemo(() => [
     { name: 'Bronze', points: 0, color: 'text-amber-600' },
@@ -71,9 +72,16 @@ const Index = () => {
   }, [currentTier, loyaltyPoints, loyaltyTiers]);
 
   useEffect(() => {
-    // No need to load assets asynchronously anymore
     console.log("Assets loaded:", slotAssets, gameBackgrounds, promotionImages);
-  }, []);
+  }, [slotAssets, gameBackgrounds, promotionImages]);
+
+  const updateHotStreak = (isWin) => {
+    if (isWin) {
+      setHotStreak(prev => prev + 1);
+    } else {
+      setHotStreak(0);
+    }
+  };
   const [showResponsibleGamingInfo, setShowResponsibleGamingInfo] = useState(false);
   const [timeSpent, setTimeSpent] = useState(0);
 
@@ -251,6 +259,11 @@ const Index = () => {
 
           // Check for achievements
           checkAchievements(totalWin);
+
+          // Update hot streak
+          updateHotStreak(true);
+        } else {
+          updateHotStreak(false);
         }
         updateBonusProgress();
         updateLoyaltyPoints(bet);
@@ -983,19 +996,25 @@ const Index = () => {
                 <div className="flex justify-between mb-6">
                   <Button 
                     onClick={toggleAutoPlay}
-                    className={`w-1/5 ${autoPlay ? 'bg-red-500 hover:bg-red-600' : 'bg-blue-500 hover:bg-blue-600'}`}
+                    className={`w-1/6 ${autoPlay ? 'bg-red-500 hover:bg-red-600' : 'bg-blue-500 hover:bg-blue-600'}`}
                   >
                     <RefreshCw className="mr-2 h-5 w-5" />
                     {autoPlay ? `Stop (${autoPlayCount})` : 'Auto Play'}
                   </Button>
                   <Button
                     onClick={() => setMultiplier(prevMultiplier => prevMultiplier < 5 ? prevMultiplier + 1 : 1)}
-                    className="w-1/5 bg-purple-500 hover:bg-purple-600"
+                    className="w-1/6 bg-purple-500 hover:bg-purple-600"
                   >
                     <DollarSign className="mr-2 h-5 w-5" />
                     {`Multiplier: ${multiplier}x`}
                   </Button>
                   <PayTable />
+                  <Button
+                    className={`w-1/6 ${hotStreak > 0 ? 'bg-yellow-500 hover:bg-yellow-600' : 'bg-gray-500 hover:bg-gray-600'}`}
+                  >
+                    <Zap className="mr-2 h-5 w-5" />
+                    {`Hot Streak: ${hotStreak}`}
+                  </Button>
                   <TooltipProvider>
                     <Tooltip>
                       <TooltipTrigger asChild>
