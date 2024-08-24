@@ -40,7 +40,7 @@ const Index = () => {
   const [dailyChallenge, setDailyChallenge] = useState(null);
   const [achievements, setAchievements] = useState([]);
   const [showLoyaltyPopup, setShowLoyaltyPopup] = useState(false);
-  const [loyaltyPoints, setLoyaltyPoints] = useState(2500);
+  // Removed duplicate declaration
   const [currentTier, setCurrentTier] = useState("Gold");
   const [nextTier, setNextTier] = useState("Platinum");
   const [tierProgress, setTierProgress] = useState(65);
@@ -99,7 +99,7 @@ const Index = () => {
   const [lastWin, setLastWin] = useState(null);
   const [multiplier, setMultiplier] = useState(1);
   const [freeSpins, setFreeSpins] = useLocalStorage('freeSpins', 0);
-  const [loyaltyPoints, setLoyaltyPoints] = useLocalStorage('loyaltyPoints', 0);
+  const [loyaltyPoints, setLoyaltyPoints] = useLocalStorage('loyaltyPoints', 2500);
   const [progressiveJackpot, setProgressiveJackpot] = useLocalStorage('progressiveJackpot', 100000);
   const [showMiniGame, setShowMiniGame] = useState(false);
   const [winningLines, setWinningLines] = useState([]);
