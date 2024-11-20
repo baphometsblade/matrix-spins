@@ -6,22 +6,43 @@ import { formatCurrency } from '@/lib/utils';
 const WinDisplay = ({ winAmount, bet }) => {
   if (!winAmount) return null;
 
+  const isJackpot = winAmount >= bet * 50;
+  const isBigWin = winAmount >= bet * 10;
+  const isGreatWin = winAmount >= bet * 5;
+
   return (
     <motion.div 
-      className="mt-4 text-center"
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: -20 }}
+      className="mt-8 text-center"
+      initial={{ opacity: 0, scale: 0.5 }}
+      animate={{ opacity: 1, scale: 1 }}
+      exit={{ opacity: 0, scale: 0.5 }}
+      transition={{ duration: 0.5, type: "spring" }}
     >
-      <div className="text-3xl text-yellow-400">
-        You won {formatCurrency(winAmount)}!
-      </div>
-      <div className="mt-2">
-        <Sparkles className="inline-block mr-2 h-6 w-6 text-yellow-400" />
-        <span className="text-xl text-green-400">
-          {winAmount >= bet * 10 ? 'Big Win!' : winAmount >= bet * 5 ? 'Great Win!' : 'Nice Win!'}
+      <motion.div 
+        className={`text-5xl font-bold mb-4 ${
+          isJackpot ? 'text-yellow-400' : 
+          isBigWin ? 'text-green-400' : 
+          'text-white'
+        }`}
+        animate={{ scale: [1, 1.1, 1] }}
+        transition={{ duration: 0.5, repeat: Infinity }}
+      >
+        {formatCurrency(winAmount)}
+      </motion.div>
+      <div className="flex items-center justify-center gap-2">
+        <Sparkles className="h-6 w-6 text-yellow-400" />
+        <span className={`text-2xl font-bold ${
+          isJackpot ? 'text-yellow-400' :
+          isBigWin ? 'text-green-400' :
+          isGreatWin ? 'text-blue-400' :
+          'text-white'
+        }`}>
+          {isJackpot ? 'JACKPOT!' :
+           isBigWin ? 'BIG WIN!' :
+           isGreatWin ? 'GREAT WIN!' :
+           'NICE WIN!'}
         </span>
-        <Sparkles className="inline-block ml-2 h-6 w-6 text-yellow-400" />
+        <Sparkles className="h-6 w-6 text-yellow-400" />
       </div>
     </motion.div>
   );
