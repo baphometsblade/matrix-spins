@@ -4,16 +4,13 @@
     <title>Affiliate Transparency Settings</title>
     <style>
         /* ... existing styles ... */
-        #watched-products-table { width: 100%; border-collapse: collapse; margin-top: 15px; }
-        #watched-products-table th, #watched-products-table td { text-align: left; padding: 8px; border-bottom: 1px solid #ddd; }
+        #price-chart-container { display: none; margin-top: 20px; }
     </style>
+    <!-- Include Chart.js library -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
     <h1>Settings & Rewards</h1>
-
-    <div id="cash-back-ledger" class="section">
-        <!-- ... unchanged ... -->
-    </div>
 
     <div id="price-watch-section" class="section">
         <h2>Your Watched Products</h2>
@@ -21,23 +18,20 @@
             <thead>
                 <tr>
                     <th>Product</th>
-                    <th>Original Price</th>
                     <th>Current Price</th>
+                    <th>Actions</th>
                 </tr>
             </thead>
             <tbody id="watched-products-body">
-                <!-- Watched products will be dynamically inserted here -->
+                <!-- Products will be inserted here -->
             </tbody>
         </table>
+        <div id="price-chart-container">
+            <canvas id="price-chart"></canvas>
+        </div>
     </div>
 
-    <div id="controls" class="section">
-        <!-- ... unchanged ... -->
-    </div>
-
-    <div class="privacy-section section">
-        <!-- ... unchanged ... -->
-    </div>
+    <!-- ... Other sections remain unchanged ... -->
 
     <script src="settings.js"></script>
 </body>
