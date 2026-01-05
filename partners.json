@@ -1,0 +1,24 @@
+{
+  "version": "1.0.1",
+  "affiliate_patterns": [
+    "affiliate.com", "shareasale.com", "cj.com", "rakuten.com",
+    "amazon-adsystem.com", "impact.com", "awin.com"
+  ],
+  "partners": [
+    {
+      "name": "My Profitable Partner",
+      "domain": "my-partner-network.com",
+      "redirect_format": "https://my-partner-network.com/redirect?url={URL}"
+    }
+  ],
+  "product_offers": [
+    {
+      "original_site": "Amazon",
+      "product_title_keywords": ["Example Laptop Model"],
+      "offer": {
+        "text": "Get 10% cash back on this laptop!",
+        "url": "https://my-partner-network.com/special-offer/laptop-deal"
+      }
+    }
+  ]
+}

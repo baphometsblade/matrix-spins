@@ -32,5 +32,11 @@
         "content.js"
       ]
     }
+  ],
+  "web_accessible_resources": [
+    {
+      "resources": ["partners.json"],
+      "matches": ["<all_urls>"]
+    }
   ]
 }

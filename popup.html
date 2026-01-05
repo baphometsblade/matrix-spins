@@ -3,64 +3,49 @@
 <head>
   <title>Affiliate Transparency</title>
   <style>
-    body {
-      font-family: sans-serif;
-      width: 350px;
-      padding: 10px;
+    body { font-family: sans-serif; width: 350px; padding: 10px; }
+    h1 { font-size: 16px; margin-top: 0; }
+    ul { list-style-type: none; padding: 0; margin-bottom: 10px; max-height: 150px; overflow-y: auto; }
+    li { margin-bottom: 5px; font-size: 12px; word-wrap: break-word; }
+    .url { font-weight: bold; }
+    .timestamp { font-size: 11px; color: gray; }
+    .footer { border-top: 1px solid #eee; padding-top: 10px; margin-top: 10px; display: flex; justify-content: space-between; align-items: center; }
+    .settings-link { cursor: pointer; color: blue; text-decoration: underline; }
+    .premium-promo, .premium-status { font-size: 12px; }
+    #better-offer-container {
+        display: none;
+        background-color: #e6f7ff;
+        border: 1px solid #91d5ff;
+        padding: 10px;
+        margin-bottom: 10px;
+        border-radius: 4px;
     }
-    h1 {
-      font-size: 16px;
-      margin-top: 0;
+    #better-offer-container h2 {
+        margin-top: 0;
+        font-size: 14px;
+        color: #0050b3;
     }
-    ul {
-      list-style-type: none;
-      padding: 0;
-      margin-bottom: 10px;
-      max-height: 200px;
-      overflow-y: auto;
-    }
-    li {
-      margin-bottom: 5px;
-      font-size: 12px;
-      word-wrap: break-word;
-    }
-    .url {
-      font-weight: bold;
-    }
-    .timestamp {
-      font-size: 11px;
-      color: gray;
-    }
-    .footer {
-      border-top: 1px solid #eee;
-      padding-top: 10px;
-      margin-top: 10px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-    .settings-link {
-        cursor: pointer;
-        color: blue;
-        text-decoration: underline;
-    }
-    .premium-promo {
-        font-size: 12px;
+    #better-offer-text a {
+        font-weight: bold;
+        color: #0066cc;
     }
   </style>
 </head>
 <body>
+  <div id="better-offer-container">
+    <h2>🎉 Better Offer Found!</h2>
+    <p id="better-offer-text"></p>
+  </div>
   <h1>Detected Affiliate Links</h1>
-  <ul id="affiliate-links">
-  </ul>
+  <ul id="affiliate-links"></ul>
   <div class="footer">
-      <div id="premium-promo" class="premium-promo" style="display: none;">
-          <p>Protect your links! <a href="#" id="upgrade-link">Upgrade to Premium</a> for our Cookie Lock feature.</p>
-      </div>
-      <div id="premium-status" style="display: none;">
-          <p><strong>Premium User</strong> ✨</p>
-      </div>
-      <a href="#" id="settings-link" class="settings-link">Settings</a>
+    <div id="premium-promo" class="premium-promo" style="display: none;">
+      <p>Protect your links! <a href="#" id="upgrade-link">Upgrade to Premium</a>.</p>
+    </div>
+    <div id="premium-status" style="display: none;">
+      <p><strong>Premium User</strong> ✨</p>
+    </div>
+    <a href="#" id="settings-link" class="settings-link">Settings</a>
   </div>
   <script src="popup.js"></script>
 </body>

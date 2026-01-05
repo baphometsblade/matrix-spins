@@ -4,10 +4,18 @@ document.addEventListener('DOMContentLoaded', () => {
   const upgradeLink = document.getElementById('upgrade-link');
   const premiumPromo = document.getElementById('premium-promo');
   const premiumStatus = document.getElementById('premium-status');
+  const betterOfferContainer = document.getElementById('better-offer-container');
+  const betterOfferText = document.getElementById('better-offer-text');
 
-  // Load affiliate links and user status from storage
-  chrome.storage.local.get({ affiliateLinks: [], isPremiumUser: false }, (result) => {
-    const { affiliateLinks, isPremiumUser } = result;
+  // Load data from storage
+  chrome.storage.local.get({ affiliateLinks: [], isPremiumUser: false, betterOffer: null }, (result) => {
+    const { affiliateLinks, isPremiumUser, betterOffer } = result;
+
+    // Display "Better Offer" if available
+    if (betterOffer) {
+      betterOfferText.innerHTML = `<a href="${betterOffer.url}" target="_blank">${betterOffer.text}</a>`;
+      betterOfferContainer.style.display = 'block';
+    }
 
     // Display affiliate links
     affiliateLinks.forEach((link) => {
@@ -31,18 +39,15 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
-  // Open settings page when the link is clicked
+  // Event listeners
   settingsLink.addEventListener('click', (e) => {
     e.preventDefault();
     chrome.runtime.openOptionsPage();
   });
 
-  // Handle upgrade link click
   if (upgradeLink) {
     upgradeLink.addEventListener('click', (e) => {
       e.preventDefault();
-      // In a real extension, this would lead to a payment flow.
-      // For now, we'll simulate the upgrade.
       chrome.storage.local.set({ isPremiumUser: true }, () => {
         premiumPromo.style.display = 'none';
         premiumStatus.style.display = 'block';
@@ -50,4 +55,9 @@ document.addEventListener('DOMContentLoaded', () => {
       });
     });
   }
+
+  // Clear the better offer when the popup is closed so it doesn't persist
+  window.addEventListener('unload', () => {
+      chrome.storage.local.remove('betterOffer');
+  });
 });
