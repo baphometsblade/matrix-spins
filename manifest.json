@@ -1,0 +1,32 @@
+{
+  "manifest_version": 3,
+  "name": "Affiliate Transparency Extension",
+  "version": "1.0",
+  "description": "Monitors affiliate links and alerts users of last-click attribution.",
+  "permissions": [
+    "webRequest",
+    "cookies",
+    "storage",
+    "notifications",
+    "tabs"
+  ],
+  "host_permissions": [
+    "<all_urls>"
+  ],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "action": {
+    "default_popup": "popup.html"
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "<all_urls>"
+      ],
+      "js": [
+        "content.js"
+      ]
+    }
+  ]
+}
