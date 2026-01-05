@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Mock Checkout Page</title>
+    <script>
+        // Simple mock logic to "apply" a coupon
+        function applyCoupon() {
+            const coupon = document.getElementById('coupon-code').value;
+            const priceEl = document.getElementById('total-price');
+            let price = 100.00; // Original price
+            if (coupon === 'SAVE10') {
+                price *= 0.9;
+            } else if (coupon === '20OFF') {
+                price -= 20;
+            } else if (coupon === 'FREESHIP') {
+                price -= 5.99;
+            }
+            priceEl.innerText = `$${price.toFixed(2)}`;
+        }
+    </script>
+</head>
+<body>
+    <h1>Checkout</h1>
+    <div>
+        <p>Total: <span id="total-price">$100.00</span></p>
+        <input type="text" id="coupon-code" placeholder="Enter coupon code">
+        <button onclick="applyCoupon()">Apply</button>
+    </div>
+</body>
+</html>

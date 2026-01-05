@@ -1,9 +1,6 @@
 {
-  "version": "1.1.0",
-  "affiliate_patterns": [
-    "affiliate.com", "shareasale.com", "cj.com", "rakuten.com",
-    "amazon-adsystem.com", "impact.com", "awin.com"
-  ],
+  "version": "1.3.0",
+  "affiliate_patterns": [ "affiliate.com", "shareasale.com", "cj.com" ],
   "partners": [
     {
       "name": "My Profitable Partner",
@@ -31,6 +28,22 @@
         "url": "https://my-partner-network.com/category-deal/gaming-laptops",
         "cash_back_amount": 25.00
       }
+    }
+  ],
+  "scraping_rules": [
+    {
+      "site": "Amazon",
+      "price_selector": ".a-price .a-offscreen"
+    }
+  ],
+  "coupon_codes": [
+    {
+      "retailer_hostname": "mock-checkout.com",
+      "coupons": [
+        { "code": "SAVE10", "discount_value": 10, "type": "percent" },
+        { "code": "20OFF", "discount_value": 20, "type": "fixed" },
+        { "code": "FREESHIP", "discount_value": 5.99, "type": "fixed" }
+      ]
     }
   ]
 }

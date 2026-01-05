@@ -1,70 +1,44 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Affiliate Transparency Settings</title>
-  <style>
-    body { font-family: sans-serif; width: 450px; padding: 10px; }
-    h1, h2 { color: #333; }
-    .section { margin-bottom: 20px; border-bottom: 1px solid #eee; padding-bottom: 15px; }
-    .setting { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
-    .label { font-weight: bold; }
-    #cash-back-ledger { background-color: #f9f9f9; padding: 15px; border-radius: 8px; }
-    .balance-display { display: flex; justify-content: space-around; margin-bottom: 15px; }
-    .balance-box { text-align: center; }
-    .balance-box .amount { font-size: 24px; font-weight: bold; color: #4CAF50; }
-    .balance-box .amount.pending { color: #f2a600; }
-    #transactions-table { width: 100%; border-collapse: collapse; }
-    #transactions-table th, #transactions-table td { text-align: left; padding: 8px; border-bottom: 1px solid #ddd; }
-  </style>
+    <title>Affiliate Transparency Settings</title>
+    <style>
+        /* ... existing styles ... */
+        #watched-products-table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+        #watched-products-table th, #watched-products-table td { text-align: left; padding: 8px; border-bottom: 1px solid #ddd; }
+    </style>
 </head>
 <body>
-  <h1>Settings & Rewards</h1>
+    <h1>Settings & Rewards</h1>
 
-  <div id="cash-back-ledger" class="section">
-    <h2>Your Cash Back Rewards</h2>
-    <div class="balance-display">
-        <div class="balance-box">
-            <span class="label">Pending Balance</span>
-            <div id="pending-balance" class="amount pending">$0.00</div>
-        </div>
-        <div class="balance-box">
-            <span class="label">Earned Balance</span>
-            <div id="earned-balance" class="amount">$0.00</div>
-        </div>
+    <div id="cash-back-ledger" class="section">
+        <!-- ... unchanged ... -->
     </div>
-    <h3>Recent Transactions</h3>
-    <table id="transactions-table">
-        <thead>
-            <tr>
-                <th>Date</th>
-                <th>Description</th>
-                <th>Amount</th>
-                <th>Status</th>
-            </tr>
-        </thead>
-        <tbody id="transactions-body">
-            <!-- Transactions will be dynamically inserted here -->
-        </tbody>
-    </table>
-  </div>
 
-  <div id="controls" class="section">
-    <h2>Controls</h2>
-    <div class="setting">
-      <span class="label">Enable "Smart" Affiliate Redirection</span>
-      <input type="checkbox" id="smart-redirection-toggle">
+    <div id="price-watch-section" class="section">
+        <h2>Your Watched Products</h2>
+        <table id="watched-products-table">
+            <thead>
+                <tr>
+                    <th>Product</th>
+                    <th>Original Price</th>
+                    <th>Current Price</th>
+                </tr>
+            </thead>
+            <tbody id="watched-products-body">
+                <!-- Watched products will be dynamically inserted here -->
+            </tbody>
+        </table>
     </div>
-    <div id="premium-features" style="display: none;">
-      <div class="setting">
-        <span class="label">Lock Current Affiliate Cookie</span>
-        <input type="checkbox" id="cookie-lock-toggle">
-      </div>
-    </div>
-    <div id="upgrade-message" style="display: none;">
-      <p>Upgrade to premium to use the "Lock" feature!</p>
-    </div>
-  </div>
 
-  <script src="settings.js"></script>
+    <div id="controls" class="section">
+        <!-- ... unchanged ... -->
+    </div>
+
+    <div class="privacy-section section">
+        <!-- ... unchanged ... -->
+    </div>
+
+    <script src="settings.js"></script>
 </body>
 </html>

@@ -10,7 +10,8 @@
     "notifications",
     "tabs",
     "declarativeNetRequest",
-    "declarativeNetRequestFeedback"
+    "declarativeNetRequestFeedback",
+    "alarms"
   ],
   "host_permissions": [
     "<all_urls>",
