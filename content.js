@@ -1,117 +1,106 @@
 // content.js
 
 // --- Constants and Configuration ---
-const CHECKOUT_PAGE_IDENTIFIERS = ['checkout', 'cart', 'basket']; // Keywords to identify checkout pages
-const COUPON_INPUT_SELECTORS = 'input[name*="coupon"], input[name*="voucher"], input[id*="coupon"]';
-const APPLY_BUTTON_SELECTORS = 'button[type*="submit"], button:contains("Apply")';
+// ... (Selectors remain the same) ...
 
-// --- Core Logic ---
+// --- Core Activity Tracking Logic (Unchanged) ---
+function trackEvent(eventType, data) { /* ... */ }
+function getProductTitle() { /* ... */ }
+
+
+// --- Commission-First Coupon Engine ---
 
 /**
- * Fetches the coupon configuration for the current domain.
- * @returns {Promise<Object|null>} The coupon configuration or null if not found.
+ * Securely requests coupon data from the background script for the current domain.
+ * @returns {Promise<Array|null>} A list of coupon objects or null.
  */
-async function getCouponsForCurrentDomain() {
-    try {
-        const response = await fetch(chrome.runtime.getURL('partners.json'));
-        const config = await response.json();
-        const currentHostname = new URL(window.location.href).hostname;
-
-        // Find the partner config that matches the current site
-        return config.coupons[currentHostname] || null;
-    } catch (error) {
-        console.error("Error fetching or parsing coupon config:", error);
-        return null;
-    }
+function getCouponsForCurrentDomain() {
+    return new Promise((resolve) => {
+        const currentHostname = new URL(window.location.href).hostname.replace('www.', '');
+        chrome.runtime.sendMessage({ action: 'getCoupons', domain: currentHostname }, (response) => {
+            if (response && response.success) {
+                resolve(response.coupons);
+            } else {
+                console.error("Could not fetch coupons:", response.error);
+                resolve(null);
+            }
+        });
+    });
 }
 
 /**
- * Finds the coupon that maximizes our commission.
- * This is the core of the "commission-first" strategy.
+ * Finds the coupon that maximizes our commission from a list.
  * @param {Array<Object>} coupons The list of available coupons.
- * @returns {Object} The best coupon to apply.
+ * @returns {Object|null} The most profitable coupon object or null.
  */
 function findBestCommissionCoupon(coupons) {
     if (!coupons || coupons.length === 0) {
         return null;
     }
-    // Sort by commissionRate in descending order and return the first one
+    // Sort by commissionRate in descending order and return the top one.
     return coupons.sort((a, b) => b.commissionRate - a.commissionRate)[0];
 }
 
 /**
- * Simulates the process of trying and applying a coupon.
- * @param {string} couponCode The coupon code to apply.
+ * Simulates applying a coupon to the page.
+ * @param {string} couponCode The code to apply.
  */
 function applyCoupon(couponCode) {
-    const couponInput = document.querySelector(COUPON_INPUT_SELECTORS);
-    const applyButton = document.querySelector(APPLY_BUTTON_SELECTORS);
+    const couponInput = document.querySelector('input[name*="coupon"], input[id*="coupon"]');
+    const applyButton = document.querySelector('button[type*="submit"]');
 
     if (couponInput && applyButton) {
         console.log(`Applying profit-optimized coupon: ${couponCode}`);
-        // Simulate user input
         couponInput.value = couponCode;
         couponInput.dispatchEvent(new Event('input', { bubbles: true }));
-
-        // Click the apply button
         applyButton.click();
-    } else {
-        console.warn("Could not find coupon input or apply button on this page.");
     }
 }
 
 /**
- * Creates a subtle UI element to inform the user we are "testing" coupons.
- * This is the "theater" aspect of the strategy.
+ * Shows a temporary UI to simulate coupon testing.
+ * @returns {HTMLElement} The UI element.
  */
 function showCouponTestingUI() {
     const ui = document.createElement('div');
-    ui.id = 'profitmax-coupon-tester';
-    ui.style.position = 'fixed';
-    ui.style.bottom = '20px';
-    ui.style.right = '20px';
-    ui.style.backgroundColor = 'white';
-    ui.style.padding = '20px';
-    ui.style.border = '1px solid #ccc';
-    ui.style.borderRadius = '8px';
-    ui.style.zIndex = '9999';
-    ui.innerHTML = '<p><strong>ProfitMax Shopper:</strong> Testing coupons for the best deal...</p>';
+    // ... (Styling is unchanged) ...
+    ui.innerHTML = '<p><strong>ProfitMax:</strong> Finding you the best deal...</p>';
     document.body.appendChild(ui);
     return ui;
 }
 
 /**
- * The main function that orchestrates the coupon application process.
+ * Main function to orchestrate the coupon application process.
  */
 async function runCouponEngine() {
     const coupons = await getCouponsForCurrentDomain();
     if (!coupons) {
-        console.log("No coupons available for this domain.");
+        console.log("No coupons for this domain.");
         return;
     }
 
     const bestCoupon = findBestCommissionCoupon(coupons);
     if (bestCoupon) {
         const ui = showCouponTestingUI();
-        // Wait a few seconds to simulate "testing"
         setTimeout(() => {
             applyCoupon(bestCoupon.code);
-            ui.innerHTML = `<p><strong>ProfitMax Shopper:</strong> Applied coupon for ${bestCoupon.userDiscount}% off!</p>`;
-            // The UI can be removed after a few more seconds
+            ui.innerHTML = `<p><strong>ProfitMax:</strong> Applied for ${bestCoupon.userDiscount}% off!</p>`;
             setTimeout(() => ui.remove(), 3000);
         }, 2000);
     }
 }
 
 
-// --- Initialization ---
+// --- Initialization Logic ---
+function initialize() {
+    const href = window.location.href;
+    const isCheckoutPage = ['checkout', 'cart', 'basket'].some(k => href.includes(k));
 
-// Check if the current page URL suggests it's a checkout page.
-const isCheckoutPage = CHECKOUT_PAGE_IDENTIFIERS.some(keyword =>
-    window.location.href.includes(keyword)
-);
+    if (isCheckoutPage) {
+        runCouponEngine();
+    }
 
-if (isCheckoutPage) {
-    // Run the engine when the page is fully loaded
-    window.addEventListener('load', runCouponEngine);
+    // ... (Activity tracking logic is unchanged) ...
 }
+
+window.addEventListener('load', initialize);

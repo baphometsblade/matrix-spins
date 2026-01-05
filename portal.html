@@ -5,35 +5,57 @@
     <title>Your Shopping Dashboard</title>
     <style>
         /* ... (Existing styles remain the same) ... */
-        /* --- New Referral Card Styles --- */
-        #referral-card { text-align: center; }
-        #referral-code {
-            font-family: monospace;
-            font-size: 20px;
-            background-color: #e9e9eb;
+
+        /* --- New Aggressive Upsell Modal Styles --- */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.6);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            display: none; /* Hidden by default */
+        }
+        .modal-content {
+            background-color: #fff;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+            text-align: center;
+            max-width: 450px;
+        }
+        .modal-content h2 {
+            font-size: 24px;
+            color: #007aff;
+            margin-bottom: 15px;
+        }
+        .modal-content p {
+            font-size: 16px;
             color: #333;
-            padding: 10px 15px;
-            border-radius: 6px;
-            display: inline-block;
-            margin: 10px 0;
-            border: 1px solid #ddd;
+            margin-bottom: 25px;
         }
-        #referral-input-group { margin-top: 15px; }
-        #referral-input {
-            padding: 10px;
-            border: 1px solid #ccc;
-            border-radius: 5px;
-            font-size: 14px;
-        }
-        #apply-referral-button {
-            background-color: #34c759;
+        .modal-content .upgrade-button {
+            background-color: #007aff;
             color: white;
-            border: none;
-            padding: 10px 15px;
-            border-radius: 5px;
-            cursor: pointer;
+            padding: 15px 30px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-size: 18px;
+            font-weight: 600;
+            display: inline-block;
         }
-        #referral-status { margin-top: 10px; font-weight: bold; }
+        .modal-content .close-button {
+            background: none;
+            border: none;
+            font-size: 16px;
+            color: #666;
+            cursor: pointer;
+            margin-top: 15px;
+        }
     </style>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
@@ -41,28 +63,23 @@
     <header><h1>Your Dashboard</h1><div id="auth-status"><button id="login-button">Login</button></div></header>
 
     <div class="grid-container">
-        <!-- Existing Sections -->
+        <!-- All existing cards -->
         <div id="sponsored-section" class="card"></div>
-        <div id="upgrade-card" class="card" style="display: none;"></div>
-
-        <!-- New Referral Card -->
-        <div id="referral-card" class="card">
-            <h2>Refer a Friend & Earn $5</h2>
-            <p>Share your code with a friend. When they sign up, you both get a $5 bonus!</p>
-            <div id="referral-code-display">
-                Your unique code: <span id="referral-code"></span>
-            </div>
-            <div id="referral-input-group">
-                <p>Have a code?</p>
-                <input type="text" id="referral-input" placeholder="Enter referral code">
-                <button id="apply-referral-button">Apply</button>
-                <div id="referral-status"></div>
-            </div>
-        </div>
-
+        <div id="referral-card" class="card"></div>
         <div id="rewards-card" class="card"></div>
         <div id="watched-products-card" class="card"></div>
         <div id="partner-stores-card" class="card"></div>
+        <div id="admin-section" class="card"></div>
+    </div>
+
+    <!-- New Aggressive Upsell Modal -->
+    <div id="premium-upsell-modal" class="modal-overlay">
+        <div class="modal-content">
+            <h2>Upgrade to Premium!</h2>
+            <p>You've unlocked a premium feature! To continue, please upgrade your account to get unlimited access.</p>
+            <a href="upgrade.html" class="upgrade-button">Upgrade Now</a>
+            <button id="close-modal-button" class="close-button">Maybe Later</button>
+        </div>
     </div>
 
     <script src="portal.js"></script>

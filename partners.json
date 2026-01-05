@@ -1,10 +1,34 @@
 {
-  "affiliateTrackerUrl": "https://your-affiliate-network.com/track",
-  "partnerDomains": [
-    "amazon.com",
-    "bestbuy.com",
-    "macys.com"
-  ],
+  "partners": {
+    "amazon.com": {
+      "affiliateNetworks": [
+        {
+          "name": "VigLink",
+          "trackerUrl": "https://out.viglink.com/track?url=",
+          "baseCommission": 6
+        },
+        {
+          "name": "Skimlinks",
+          "trackerUrl": "https://go.skimresources.com?url=",
+          "baseCommission": 7
+        }
+      ]
+    },
+    "macys.com": {
+      "affiliateNetworks": [
+        {
+          "name": "Rakuten",
+          "trackerUrl": "https://click.linksynergy.com/deeplink?url=",
+          "baseCommission": 11
+        },
+        {
+          "name": "CJ Affiliate",
+          "trackerUrl": "https://www.anrdoezrs.net/click?url=",
+          "baseCommission": 10
+        }
+      ]
+    }
+  },
   "coupons": {
     "amazon.com": [
       {

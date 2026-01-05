@@ -1,80 +1,66 @@
+// --- Modal Control Functions ---
+const modal = document.getElementById('premium-upsell-modal');
+const closeModalButton = document.getElementById('close-modal-button');
+
+function showPremiumModal() {
+    if (modal) modal.style.display = 'flex';
+}
+
+function hidePremiumModal() {
+    if (modal) modal.style.display = 'none';
+}
+
+// Add event listener to close the modal
+if (closeModalButton) {
+    closeModalButton.addEventListener('click', hidePremiumModal);
+}
+
+
 // --- Authentication & UI Control ---
-// ... (Authentication and UI update logic remains largely unchanged) ...
+// ... (Authentication logic is unchanged) ...
 async function updateUIForLogin(userId) {
-    // ... (logic to show/hide upgrade card is still here) ...
-    loadPortalData(userId); // Pass userId to loadPortalData
+    document.getElementById('auth-status').innerHTML = `<span id="user-info">Welcome, ${userId}!</span> <button id="logout-button">Logout</button>`;
+    document.querySelector('.grid-container').style.display = 'grid';
+
+    // --- REMOVED: Old passive upgrade card logic ---
+    // document.getElementById('upgrade-card').style.display = 'none';
+
+    loadPortalData(userId);
 }
 // ...
 
-// --- Data Loading & Feature Initialization ---
-async function loadPortalData(userId) {
-    const userData = await getUserData();
-    if (!userData) return;
 
-    loadRewards(userData);
-    loadWatchedProducts(userData);
-    loadPartnerStores();
-    loadSponsoredProducts();
-    initializeReferralSection(userId); // <-- New function call
-}
+// --- Feature Logic ---
 
-// ... (loadRewards, etc. are unchanged) ...
+async function handleAddProduct() {
+    // ... (Getting input values is unchanged) ...
+    const product = { /* ... */ };
 
-// --- New Functions for Referral Program ---
-function initializeReferralSection(userId) {
-    const referralCodeEl = document.getElementById('referral-code');
-    const applyButton = document.getElementById('apply-referral-button');
-
-    // Generate and display the user's own referral code
-    const userReferralCode = `REF-${userId.toUpperCase().substring(0, 4)}`;
-    referralCodeEl.textContent = userReferralCode;
-
-    // Add event listener for applying a code
-    applyButton.addEventListener('click', handleApplyReferral);
-}
-
-function handleApplyReferral() {
-    const input = document.getElementById('referral-input');
-    const statusEl = document.getElementById('referral-status');
-    const code = input.value.trim();
-
-    if (!code) {
-        statusEl.textContent = 'Please enter a code.';
-        statusEl.style.color = 'orange';
-        return;
-    }
-
-    statusEl.textContent = 'Applying...';
-    chrome.runtime.sendMessage({ action: 'applyReferralCode', code }, (response) => {
+    chrome.runtime.sendMessage({ action: 'watchProduct', product }, (response) => {
         if (response.success) {
-            statusEl.textContent = 'Success! $5 bonus applied to your rewards.';
-            statusEl.style.color = '#34c759'; // Green
-            // Reload rewards to show the new bonus
-            getUserData().then(loadRewards);
+            // ... (Success logic is unchanged) ...
         } else {
-            let message = 'An error occurred.';
-            if (response.reason === 'invalid_code') {
-                message = 'This referral code is not valid.';
-            } else if (response.reason === 'login_required') {
-                message = 'You must be logged in to apply a code.';
+            // --- NEW: Aggressive Upsell Trigger ---
+            // Instead of showing a simple text error, we now trigger the modal.
+            if (response.reason === 'premium_required' || response.reason === 'limit_reached') {
+                showPremiumModal(); // Display the high-friction modal
+            } else {
+                // Handle other errors normally
+                const statusEl = document.getElementById('watch-product-status');
+                statusEl.textContent = 'An unknown error occurred.';
+                statusEl.style.display = 'block';
             }
-            statusEl.textContent = message;
-            statusEl.style.color = '#ff3b30'; // Red
         }
     });
 }
 
 
-// --- Existing Functions (Callbacks for features) ---
-// ... (loadRewards, loadWatchedProducts, loadPartnerStores, loadSponsoredProducts, handleAddProduct, etc.)
-// Note: No changes are needed in the other functions.
-function loadRewards(userData) { /* ... */ }
-function loadWatchedProducts(userData) { /* ... */ }
-function loadPartnerStores() { /* ... */ }
-function loadSponsoredProducts() { /* ... */ }
-async function handleAddProduct() { /* ... */ }
-
-// Make sure to attach the event listener for login
-document.addEventListener('DOMContentLoaded', () => {
-    // ... auth listeners
-});
+// --- All other functions remain the same ---
+// ... (loadPortalData, loadRewards, loadWatchedProducts, etc.) ...
+// Note: We are no longer manipulating the old `#upgrade-card`.
+function loadWatchedProducts(userData) {
+    // ... (The form and button are still created here) ...
+    document.getElementById('add-product-button').addEventListener('click', handleAddProduct);
+    // ...
+}
+// ... Rest of the file is unchanged

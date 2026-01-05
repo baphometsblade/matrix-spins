@@ -22,7 +22,7 @@
   ],
   "web_accessible_resources": [
     {
-      "resources": ["portal.html", "partners.json"],
+      "resources": ["portal.html", "redirect.html"],
       "matches": ["<all_urls>"]
     }
   ],
