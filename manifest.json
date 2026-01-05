@@ -8,10 +8,13 @@
     "cookies",
     "storage",
     "notifications",
-    "tabs"
+    "tabs",
+    "declarativeNetRequest",
+    "declarativeNetRequestFeedback"
   ],
   "host_permissions": [
-    "<all_urls>"
+    "<all_urls>",
+    "*://my-partner-network.com/*"
   ],
   "background": {
     "service_worker": "background.js"
@@ -19,6 +22,7 @@
   "action": {
     "default_popup": "popup.html"
   },
+  "options_page": "settings.html",
   "content_scripts": [
     {
       "matches": [

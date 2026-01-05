@@ -9,6 +9,54 @@ const AFFILIATE_PATTERNS = [
   'awin.com'
 ];
 const MAX_STORED_LINKS = 100;
+const REDIRECT_RULE_ID = 1;
+
+// Helper function to update the redirection rules based on user settings
+function updateRedirectionRules() {
+  chrome.storage.local.get({ smartRedirectionEnabled: false }, (settings) => {
+    if (settings.smartRedirectionEnabled) {
+      const regexFilter = AFFILIATE_PATTERNS.join('|');
+      chrome.declarativeNetRequest.updateDynamicRules({
+        addRules: [{
+          id: REDIRECT_RULE_ID,
+          priority: 1,
+          action: {
+            type: 'redirect',
+            redirect: {
+              regexSubstitution: 'https://my-partner-network.com/redirect?url=\\0'
+            }
+          },
+          condition: {
+            regexFilter: `.*(${regexFilter}).*`,
+            resourceTypes: ['main_frame', 'sub_frame']
+          }
+        }],
+        removeRuleIds: [REDIRECT_RULE_ID]
+      });
+    } else {
+      chrome.declarativeNetRequest.updateDynamicRules({
+        removeRuleIds: [REDIRECT_RULE_ID]
+      });
+    }
+  });
+}
+
+// Listen for changes in settings
+chrome.storage.onChanged.addListener((changes, namespace) => {
+  if (changes.smartRedirectionEnabled) {
+    updateRedirectionRules();
+  }
+});
+
+// Run on extension startup
+chrome.runtime.onStartup.addListener(() => {
+  updateRedirectionRules();
+});
+// Run on extension installation
+chrome.runtime.onInstalled.addListener(() => {
+  updateRedirectionRules();
+});
+
 
 // Helper function to store affiliate links and cap the list size
 function addAffiliateLink(link) {
@@ -56,10 +104,23 @@ chrome.cookies.onChanged.addListener((changeInfo) => {
 
   if (matchingPattern && !changeInfo.removed) {
     console.log('Affiliate cookie changed:', changeInfo);
-    chrome.storage.local.get('lastAffiliateCookie', (result) => {
-      const lastCookie = result.lastAffiliateCookie;
-      if (lastCookie) {
-        const lastMatchingPattern = AFFILIATE_PATTERNS.find(p => lastCookie.domain.includes(p));
+    chrome.storage.local.get(['lastAffiliateCookie', 'isPremiumUser', 'cookieLockEnabled'], (settings) => {
+      const { lastAffiliateCookie, isPremiumUser, cookieLockEnabled } = settings;
+
+      if (isPremiumUser && cookieLockEnabled && lastAffiliateCookie) {
+        // If the lock is on, don't update the cookie, just show a notification
+        console.log('Affiliate cookie lock is enabled. A new affiliate link was blocked.');
+        chrome.notifications.create({
+          type: 'basic',
+          iconUrl: 'icon.png',
+          title: 'Affiliate Link Blocked',
+          message: `Your locked affiliate from ${lastAffiliateCookie.domain} was protected from being overwritten.`
+        });
+        return; // Stop further processing
+      }
+
+      if (lastAffiliateCookie) {
+        const lastMatchingPattern = AFFILIATE_PATTERNS.find(p => lastAffiliateCookie.domain.includes(p));
         if (lastMatchingPattern && matchingPattern !== lastMatchingPattern) {
           console.log(`Last-click attribution detected! New affiliate '${matchingPattern}' replaced '${lastMatchingPattern}'.`);
           chrome.notifications.create({
@@ -70,6 +131,7 @@ chrome.cookies.onChanged.addListener((changeInfo) => {
           });
         }
       }
+
       chrome.storage.local.set({
         lastAffiliateCookie: {
           domain: newCookieDomain,

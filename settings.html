@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Affiliate Transparency Settings</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      width: 400px;
+      padding: 10px;
+    }
+    h1 {
+      font-size: 18px;
+    }
+    .setting {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 15px;
+    }
+    .label {
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+  <h1>Settings</h1>
+  <div class="setting">
+    <span class="label">Enable "Smart" Affiliate Redirection</span>
+    <label class="switch">
+      <input type="checkbox" id="smart-redirection-toggle">
+      <span class="slider round"></span>
+    </label>
+  </div>
+  <div id="premium-features" style="display: none;">
+    <h2>Premium Features</h2>
+    <div class="setting">
+      <span class="label">Lock Current Affiliate Cookie</span>
+      <label class="switch">
+        <input type="checkbox" id="cookie-lock-toggle">
+        <span class="slider round"></span>
+      </label>
+    </div>
+  </div>
+  <div id="upgrade-message" style="display: none;">
+    <p>Upgrade to premium to use the "Lock" feature!</p>
+  </div>
+  <script src="settings.js"></script>
+</body>
+</html>
