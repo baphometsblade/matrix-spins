@@ -1,21 +1,34 @@
 {
-  "version": "1.3.0",
-  "affiliate_patterns": [ /* ... */ ],
-  "partners": [ /* ... */ ],
-  "product_offers": [ /* ... */ ],
-  "category_offers": [ /* ... */ ],
-  "scraping_rules": [ /* ... */ ],
-  "coupon_codes": [ /* ... */ ],
-  "featured_deals": [
-    {
-      "title": "Deal of the Day: 50% off Smart Watches",
-      "description": "Our partner has an exclusive deal on the latest smart watches.",
-      "url": "https://my-partner-network.com/deal-of-the-day"
-    },
-    {
-      "title": "Featured: High-Performance Gaming Laptops",
-      "description": "Get the best prices on top-rated gaming laptops.",
-      "url": "https://my-partner-network.com/featured/gaming-laptops"
-    }
-  ]
+  "affiliateTrackerUrl": "https://your-affiliate-network.com/track",
+  "partnerDomains": [
+    "amazon.com",
+    "bestbuy.com",
+    "macys.com"
+  ],
+  "coupons": {
+    "amazon.com": [
+      {
+        "code": "SAVE10",
+        "userDiscount": 10,
+        "commissionRate": 5
+      },
+      {
+        "code": "AMZPRIME",
+        "userDiscount": 5,
+        "commissionRate": 8
+      }
+    ],
+    "macys.com": [
+      {
+        "code": "VIP",
+        "userDiscount": 25,
+        "commissionRate": 10
+      },
+      {
+        "code": "FRIEND",
+        "userDiscount": 15,
+        "commissionRate": 12
+      }
+    ]
+  }
 }
