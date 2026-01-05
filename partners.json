@@ -1,5 +1,5 @@
 {
-  "version": "1.0.1",
+  "version": "1.1.0",
   "affiliate_patterns": [
     "affiliate.com", "shareasale.com", "cj.com", "rakuten.com",
     "amazon-adsystem.com", "impact.com", "awin.com"
@@ -15,9 +15,21 @@
     {
       "original_site": "Amazon",
       "product_title_keywords": ["Example Laptop Model"],
+      "category": "Gaming Laptops",
       "offer": {
-        "text": "Get 10% cash back on this laptop!",
-        "url": "https://my-partner-network.com/special-offer/laptop-deal"
+        "text": "Get $50 cash back on this laptop!",
+        "url": "https://my-partner-network.com/special-offer/laptop-deal",
+        "cash_back_amount": 50.00
+      }
+    }
+  ],
+  "category_offers": [
+    {
+      "category": "Gaming Laptops",
+      "offer": {
+        "text": "Based on your interest in {category}, check out this deal!",
+        "url": "https://my-partner-network.com/category-deal/gaming-laptops",
+        "cash_back_amount": 25.00
       }
     }
   ]

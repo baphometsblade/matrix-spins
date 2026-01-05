@@ -3,47 +3,68 @@
 <head>
   <title>Affiliate Transparency Settings</title>
   <style>
-    body {
-      font-family: sans-serif;
-      width: 400px;
-      padding: 10px;
-    }
-    h1 {
-      font-size: 18px;
-    }
-    .setting {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 15px;
-    }
-    .label {
-      font-weight: bold;
-    }
+    body { font-family: sans-serif; width: 450px; padding: 10px; }
+    h1, h2 { color: #333; }
+    .section { margin-bottom: 20px; border-bottom: 1px solid #eee; padding-bottom: 15px; }
+    .setting { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
+    .label { font-weight: bold; }
+    #cash-back-ledger { background-color: #f9f9f9; padding: 15px; border-radius: 8px; }
+    .balance-display { display: flex; justify-content: space-around; margin-bottom: 15px; }
+    .balance-box { text-align: center; }
+    .balance-box .amount { font-size: 24px; font-weight: bold; color: #4CAF50; }
+    .balance-box .amount.pending { color: #f2a600; }
+    #transactions-table { width: 100%; border-collapse: collapse; }
+    #transactions-table th, #transactions-table td { text-align: left; padding: 8px; border-bottom: 1px solid #ddd; }
   </style>
 </head>
 <body>
-  <h1>Settings</h1>
-  <div class="setting">
-    <span class="label">Enable "Smart" Affiliate Redirection</span>
-    <label class="switch">
-      <input type="checkbox" id="smart-redirection-toggle">
-      <span class="slider round"></span>
-    </label>
+  <h1>Settings & Rewards</h1>
+
+  <div id="cash-back-ledger" class="section">
+    <h2>Your Cash Back Rewards</h2>
+    <div class="balance-display">
+        <div class="balance-box">
+            <span class="label">Pending Balance</span>
+            <div id="pending-balance" class="amount pending">$0.00</div>
+        </div>
+        <div class="balance-box">
+            <span class="label">Earned Balance</span>
+            <div id="earned-balance" class="amount">$0.00</div>
+        </div>
+    </div>
+    <h3>Recent Transactions</h3>
+    <table id="transactions-table">
+        <thead>
+            <tr>
+                <th>Date</th>
+                <th>Description</th>
+                <th>Amount</th>
+                <th>Status</th>
+            </tr>
+        </thead>
+        <tbody id="transactions-body">
+            <!-- Transactions will be dynamically inserted here -->
+        </tbody>
+    </table>
   </div>
-  <div id="premium-features" style="display: none;">
-    <h2>Premium Features</h2>
+
+  <div id="controls" class="section">
+    <h2>Controls</h2>
     <div class="setting">
-      <span class="label">Lock Current Affiliate Cookie</span>
-      <label class="switch">
+      <span class="label">Enable "Smart" Affiliate Redirection</span>
+      <input type="checkbox" id="smart-redirection-toggle">
+    </div>
+    <div id="premium-features" style="display: none;">
+      <div class="setting">
+        <span class="label">Lock Current Affiliate Cookie</span>
         <input type="checkbox" id="cookie-lock-toggle">
-        <span class="slider round"></span>
-      </label>
+      </div>
+    </div>
+    <div id="upgrade-message" style="display: none;">
+      <p>Upgrade to premium to use the "Lock" feature!</p>
     </div>
   </div>
-  <div id="upgrade-message" style="display: none;">
-    <p>Upgrade to premium to use the "Lock" feature!</p>
-  </div>
+
   <script src="settings.js"></script>
 </body>
 </html>
