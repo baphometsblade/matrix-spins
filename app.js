@@ -68,6 +68,13 @@ document.addEventListener('DOMContentLoaded', () => {
         return response.json();
     }
 
+    async function verifyToken(token) {
+        const response = await fetch(`${API_URL}/verify-token`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        return response.json();
+    }
+
     async function loginUser(username, password) {
         const response = await fetch(`${API_URL}/login`, {
             method: 'POST',
@@ -75,6 +82,21 @@ document.addEventListener('DOMContentLoaded', () => {
             body: JSON.stringify({ username, password })
         });
         return response.json();
+    }
+
+    async function updateBalanceOnServer(amount) {
+        const username = sessionStorage.getItem('casinoUsername');
+        const token = sessionStorage.getItem('casinoToken');
+        if (!username || !token) return;
+
+        await fetch(`${API_URL}/update-balance`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify({ username, amount })
+        });
     }
 
 
@@ -90,7 +112,8 @@ document.addEventListener('DOMContentLoaded', () => {
         updateBalance(amount) {
             this.balance += amount;
             balanceEl.textContent = this.balance.toFixed(2);
-            // In a full implementation, this would also sync with the server
+            // Call the server to persist the change
+            updateBalanceOnServer(amount);
         }
         placeBet(amount) {
             if (amount > this.balance) {
@@ -343,7 +366,11 @@ document.addEventListener('DOMContentLoaded', () => {
         if (winner === 'Player') { payout = currentBlackjackBet * 2; message = `You win $${payout}!`; }
         else if (winner === 'Push') { payout = currentBlackjackBet; message = 'Push!'; }
         else { message = 'Dealer wins.'; }
-        wallet.updateBalance(payout);
+
+        // The bet was already subtracted. We only need to add back winnings.
+        const netAmount = payout - currentBlackjackBet;
+        wallet.updateBalance(payout); // This updates UI and sends delta to server
+
         blackjackMessageEl.textContent = message;
         document.getElementById('betting-area').style.display = 'block';
         document.getElementById('blackjack-actions').style.display = 'none';
@@ -354,7 +381,7 @@ document.addEventListener('DOMContentLoaded', () => {
     spinBtn.addEventListener('click', () => {
         const bet = parseInt(slotsBetInput.value);
         if (isNaN(bet) || bet <= 0) { showMessage("Invalid bet."); return; }
-        if (wallet.placeBet(bet)) {
+        if (wallet.placeBet(bet)) { // placeBet already deducts and syncs
             spinBtn.disabled = true;
             slotsMessageEl.textContent = 'Spinning...';
             reelEls.forEach(r => r.classList.add('spinning'));
@@ -363,7 +390,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 const result = slotsGame.spin();
                 reelEls.forEach((r, i) => r.textContent = result[i]);
                 const payout = slotsGame.calculatePayout(result, bet);
-                if (payout > 0) { wallet.updateBalance(payout); slotsMessageEl.textContent = `You won $${payout.toFixed(2)}!`; }
+                if (payout > 0) {
+                    // We only need to add the net winnings to the server
+                    wallet.updateBalance(payout); // This updates UI and sends delta to server
+                    slotsMessageEl.textContent = `You won $${payout.toFixed(2)}!`;
+                }
                 else { slotsMessageEl.textContent = 'You lose.'; }
                 spinBtn.disabled = false;
             }, 500);
@@ -404,7 +435,11 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
     spinRouletteBtn.addEventListener('click', () => {
-        if (Object.keys(rouletteGame.bets).length === 0) { showMessage("Please place a bet."); return; }
+        const totalBet = Object.values(rouletteGame.bets).reduce((sum, amount) => sum + amount, 0);
+        if (totalBet === 0) { showMessage("Please place a bet."); return; }
+
+        // The bets are already placed and deducted from the wallet.
+        // We just need to spin and add back any winnings.
         spinRouletteBtn.disabled = true; clearBetsBtn.disabled = true;
         rouletteMessageEl.textContent = 'Spinning...';
         const degrees = Math.floor(Math.random() * 360) + 360 * 5;
@@ -415,7 +450,10 @@ document.addEventListener('DOMContentLoaded', () => {
             const payout = rouletteGame.calculatePayouts(winningNumber);
             winningNumberDisplay.textContent = winningNumber.number;
             winningNumberDisplay.style.display = 'block';
-            if (payout > 0) { wallet.updateBalance(payout); rouletteMessageEl.textContent = `Winner: ${winningNumber.number}! You won $${payout.toFixed(2)}!`; }
+            if (payout > 0) {
+                wallet.updateBalance(payout); // This updates UI and sends delta to server
+                rouletteMessageEl.textContent = `Winner: ${winningNumber.number}! You won $${payout.toFixed(2)}!`;
+            }
             else { rouletteMessageEl.textContent = `Winner: ${winningNumber.number}. You lose.`; }
             spinRouletteBtn.disabled = false; clearBetsBtn.disabled = false;
         }, 4000);
@@ -480,17 +518,13 @@ document.addEventListener('DOMContentLoaded', () => {
     createRouletteTable();
     const token = sessionStorage.getItem('casinoToken');
     if (token) {
-        // In a real app, you'd verify the token with the server
-        // For now, we'll just re-login silently to get the balance
-        const username = sessionStorage.getItem('casinoUsername');
-        // This is a simplified flow; ideally you'd have a /me endpoint
-        loginUser(username, 'password123').then(result => {
-             if (result.token) {
+        verifyToken(token).then(result => {
+            if (result.username) {
                 wallet.setBalance(result.balance);
-                showCasino(username);
-             } else {
+                showCasino(result.username);
+            } else {
                 showAuth();
-             }
+            }
         });
     } else {
         showAuth();
