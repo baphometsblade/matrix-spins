@@ -1,0 +1,17 @@
+{
+  "name": "casino-server",
+  "version": "1.0.0",
+  "description": "Backend server for the online casino",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "bcrypt": "^5.0.1",
+    "cors": "^2.8.5",
+    "dotenv": "^17.2.3",
+    "express": "^4.17.1",
+    "jsonwebtoken": "^8.5.1",
+    "proper-lockfile": "^4.1.2"
+  }
+}

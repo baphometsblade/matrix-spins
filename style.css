@@ -1,0 +1,111 @@
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background-color: #1a1a1a;
+    color: #fff;
+    margin: 0;
+    text-align: center;
+}
+
+header {
+    background-color: #333;
+    padding: 1rem;
+    border-bottom: 2px solid #b8860b;
+}
+
+.wallet { font-size: 1.2rem; }
+.wallet button { margin-left: 15px; }
+nav { padding: 1rem; background-color: #222; }
+.nav-btn { background-color: #007aff; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; font-size: 1rem; }
+main { padding: 2rem; }
+
+.game-selection { display: flex; justify-content: center; gap: 2rem; }
+.game-card { background-color: #333; padding: 2rem; border-radius: 10px; border: 1px solid #b8860b; width: 200px; }
+.play-btn { background-color: #b8860b; color: #fff; border: none; padding: 10px 30px; font-size: 1.1rem; border-radius: 5px; cursor: pointer; transition: background-color 0.2s; }
+.play-btn:hover { background-color: #daa520; }
+
+/* --- Blackjack Game Styles --- */
+#blackjack-table { background-color: #006400; border: 5px solid #8B4513; border-radius: 10px; padding: 2rem; max-width: 800px; margin: 0 auto; }
+.hand-area { margin-bottom: 2rem; }
+.card-container { display: flex; justify-content: center; gap: 10px; min-height: 150px; }
+.card { background-color: #fff; color: #000; width: 100px; height: 140px; border-radius: 8px; padding: 10px; font-size: 2rem; border: 1px solid #ccc; display: flex; flex-direction: column; justify-content: space-between; align-items: center; position: relative; }
+.card.red { color: #ff0000; }
+.card .suit { font-size: 1.5rem; }
+.card.hidden { background-color: #b8860b; }
+
+.game-actions { margin-top: 1.5rem; }
+.game-actions button { background-color: #b8860b; color: #fff; border: none; padding: 12px 25px; font-size: 1.1rem; border-radius: 5px; cursor: pointer; margin: 0 5px; }
+.game-actions button:disabled { background-color: #555; cursor: not-allowed; }
+.game-message { font-size: 1.5rem; font-weight: bold; margin-top: 1rem; min-height: 2rem; }
+
+#betting-area input, #poker-betting-area input { width: 100px; padding: 10px; font-size: 1rem; text-align: right; border-radius: 5px; border: 1px solid #ccc; }
+#betting-area button, #poker-betting-area button { background-color: #34c759; color: #fff; border: none; padding: 10px 20px; font-size: 1rem; border-radius: 5px; cursor: pointer; }
+
+/* --- Slot Machine Styles --- */
+#slots-container { display: flex; justify-content: center; gap: 20px; background-color: #222; padding: 30px; border-radius: 10px; border: 3px solid #b8860b; max-width: 500px; margin: 20px auto; }
+.reel { width: 100px; height: 100px; background-color: #fff; color: #000; font-size: 4rem; display: flex; justify-content: center; align-items: center; border-radius: 10px; border: 2px solid #ccc; overflow: hidden; }
+#slots-actions input { width: 80px; padding: 10px; font-size: 1rem; text-align: right; }
+#spin-btn { background-color: #ff3b30; }
+.spinning { animation: spin 0.1s linear infinite; }
+@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+
+/* --- Roulette Game Styles --- */
+#roulette-container { display: flex; justify-content: center; align-items: flex-start; gap: 30px; margin-top: 20px; }
+#roulette-wheel { width: 200px; height: 200px; border: 5px solid #8B4513; border-radius: 50%; background-color: #006400; position: relative; display: flex; justify-content: center; align-items: center; }
+#wheel-inner { width: 180px; height: 180px; border-radius: 50%; background-color: #222; transition: transform 4s cubic-bezier(0.25, 1, 0.5, 1); }
+#ball { width: 10px; height: 10px; background-color: #fff; border-radius: 50%; position: absolute; top: 10px; left: 95px; transition: transform 4s cubic-bezier(0.25, 1, 0.5, 1); }
+#winning-number-display { position: absolute; font-size: 1.5rem; font-weight: bold; color: #fff; background-color: rgba(0,0,0,0.5); padding: 10px; border-radius: 50%; display: none; }
+#roulette-table { display: grid; grid-template-columns: repeat(12, 50px); gap: 2px; background-color: #006400; padding: 10px; border: 2px solid #8B4513; }
+.bet-spot { width: 50px; height: 50px; display: flex; justify-content: center; align-items: center; background-color: #333; cursor: pointer; position: relative; }
+.bet-spot.red { background-color: #ff3b30; }
+.bet-spot.black { background-color: #222; }
+.bet-spot.green { background-color: #34c759; }
+.bet-spot.outside { grid-column: span 6; }
+.bet-spot.zero { grid-column: span 12; }
+.chip { width: 20px; height: 20px; border-radius: 50%; background-color: #007aff; color: white; font-size: 12px; line-height: 20px; position: absolute; display: flex; justify-content: center; align-items: center; }
+
+/* --- Video Poker Styles --- */
+#poker-hand .card { cursor: pointer; transition: transform 0.2s, border-color 0.2s; }
+#poker-hand .card.held { transform: translateY(-10px); border-color: #007aff; border-width: 3px; }
+
+/* --- Auth Styles --- */
+.auth-container {
+    max-width: 400px;
+    margin: 50px auto;
+    padding: 2rem;
+    background-color: #333;
+    border-radius: 10px;
+    border: 1px solid #b8860b;
+}
+.auth-container h2 {
+    margin-top: 0;
+}
+.auth-container input {
+    width: 95%;
+    padding: 10px;
+    margin-bottom: 15px;
+    border-radius: 5px;
+    border: 1px solid #666;
+    background-color: #555;
+    color: #fff;
+}
+.auth-container button {
+    width: 100%;
+    padding: 12px;
+    background-color: #007aff;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 1.1rem;
+}
+#auth-message {
+    margin-top: 15px;
+    font-weight: bold;
+    color: #ff3b30;
+}
+
+
+/* --- Modal Styles --- */
+.modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.7); display: flex; justify-content: center; align-items: center; z-index: 1000; }
+.modal-content { background-color: #333; padding: 30px; border-radius: 10px; border: 1px solid #b8860b; text-align: center; }
+.modal-content button { background-color: #007aff; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; margin-top: 15px; }
