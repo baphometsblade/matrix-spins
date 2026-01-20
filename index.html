@@ -1,7 +1,104 @@
-<!-- ... (Other HTML is unchanged) ... -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Online Casino</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header>
+        <h1>Jules' Palace</h1>
+        <div class="wallet">
+            <span>Balance: $</span><span id="balance">1000</span>
+        </div>
+    </header>
+
+    <nav>
+        <button id="lobby-btn" class="nav-btn">Lobby</button>
+    </nav>
+
+    <main>
+        <!-- Lobby View -->
+        <div id="lobby-view" class="view">
+            <h2>Choose a Game</h2>
+            <div class="game-selection">
+                <div class="game-card">
+                    <h3>Blackjack</h3>
+                    <button class="play-btn" data-game="blackjack">Play</button>
+                </div>
+                <div class="game-card">
+                    <h3>Slot Machine</h3>
+                    <button class="play-btn" data-game="slots">Play</button>
+                </div>
+                <div class="game-card">
+                    <h3>Roulette</h3>
+                    <button class="play-btn" data-game="roulette">Play</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Blackjack View -->
+        <div id="blackjack-view" class="view" style="display: none;">
+            <h2>Blackjack</h2>
+            <div id="betting-area">
+                <input type="number" id="bet-amount" value="10" min="1">
+                <button id="place-bet-btn">Place Bet</button>
+            </div>
+            <div id="blackjack-table">
+                <div class="hand-area">
+                    <h3>Dealer's Hand (<span id="dealer-score">0</span>)</h3>
+                    <div id="dealer-hand" class="card-container"></div>
+                </div>
+                <div class="hand-area">
+                    <h3>Your Hand (<span id="player-score">0</span>)</h3>
+                    <div id="player-hand" class="card-container"></div>
+                </div>
+            </div>
+            <div id="blackjack-actions" class="game-actions" style="display: none;">
+                <button id="hit-btn">Hit</button>
+                <button id="stand-btn">Stand</button>
+            </div>
+            <p id="blackjack-message" class="game-message"></p>
+        </div>
+
+        <!-- Slots View -->
+        <div id="slots-view" class="view" style="display: none;">
+            <h2>Slot Machine</h2>
+            <div id="slots-container">
+                <div class="reel" id="reel1">🍒</div>
+                <div class="reel" id="reel2">🍒</div>
+                <div class="reel" id="reel3">🍒</div>
+            </div>
+            <div id="slots-actions" class="game-actions">
+                <label for="slots-bet">Bet:</label>
+                <input type="number" id="slots-bet" value="5" min="1">
+                <button id="spin-btn">Spin</button>
+            </div>
+            <p id="slots-message" class="game-message"></p>
+        </div>
+
+        <!-- Roulette View -->
+        <div id="roulette-view" class="view" style="display: none;">
+            <h2>Roulette</h2>
+            <div id="roulette-container">
+                <div id="roulette-wheel">
+                    <div id="wheel-inner"></div>
+                    <div id="ball"></div>
+                    <div id="winning-number-display">00</div>
+                </div>
+                <div id="roulette-table"></div>
+            </div>
+            <div id="roulette-actions" class="game-actions">
+                <label for="roulette-bet">Bet Amount:</label>
+                <input type="number" id="roulette-bet" value="10" min="1">
+                <button id="spin-roulette-btn">Spin</button>
+                <button id="clear-bets-btn">Clear Bets</button>
+            </div>
+            <p id="roulette-message" class="game-message"></p>
+        </div>
     </main>
 
-    <!-- New Modal for UI Messages -->
     <div id="message-modal" class="modal-overlay" style="display: none;">
         <div class="modal-content">
             <p id="modal-message"></p>
