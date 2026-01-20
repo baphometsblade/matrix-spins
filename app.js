@@ -56,17 +56,41 @@ document.addEventListener('DOMContentLoaded', () => {
         modal.style.display = 'none';
     });
 
-    // --- Wallet Class ---
+    // --- API Communication ---
+    const API_URL = 'http://localhost:3000';
+
+    async function registerUser(username, password) {
+        const response = await fetch(`${API_URL}/register`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ username, password })
+        });
+        return response.json();
+    }
+
+    async function loginUser(username, password) {
+        const response = await fetch(`${API_URL}/login`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ username, password })
+        });
+        return response.json();
+    }
+
+
+    // --- Wallet Class (Now managed by Auth) ---
     class Wallet {
         constructor() {
-            const savedBalance = localStorage.getItem('casinoBalance');
-            this.balance = savedBalance ? parseFloat(savedBalance) : 1000;
-            this.updateBalance(0);
+            this.balance = 0;
+        }
+        setBalance(newBalance) {
+            this.balance = newBalance;
+            balanceEl.textContent = this.balance.toFixed(2);
         }
         updateBalance(amount) {
             this.balance += amount;
             balanceEl.textContent = this.balance.toFixed(2);
-            localStorage.setItem('casinoBalance', this.balance);
+            // In a full implementation, this would also sync with the server
         }
         placeBet(amount) {
             if (amount > this.balance) {
@@ -403,14 +427,72 @@ document.addEventListener('DOMContentLoaded', () => {
         document.querySelectorAll('.chip').forEach(c => c.remove());
     });
 
-    resetBalanceBtn.addEventListener('click', () => {
-        wallet.balance = 1000;
-        wallet.updateBalance(0);
-        showMessage("Your balance has been reset to $1000.");
+    // --- Auth Flow ---
+    const authView = document.getElementById('auth-view');
+    const casinoView = document.getElementById('casino-view');
+    const loginBtn = document.getElementById('login-btn');
+    const registerBtn = document.getElementById('register-btn');
+    const logoutBtn = document.getElementById('logout-btn');
+    const authMessage = document.getElementById('auth-message');
+
+    loginBtn.addEventListener('click', async () => {
+        const username = document.getElementById('login-username').value;
+        const password = document.getElementById('login-password').value;
+        const result = await loginUser(username, password);
+        if (result.token) {
+            sessionStorage.setItem('casinoToken', result.token);
+            sessionStorage.setItem('casinoUsername', username);
+            wallet.setBalance(result.balance);
+            showCasino(username);
+        } else {
+            authMessage.textContent = result.message;
+        }
     });
 
+    registerBtn.addEventListener('click', async () => {
+        const username = document.getElementById('register-username').value;
+        const password = document.getElementById('register-password').value;
+        const result = await registerUser(username, password);
+        authMessage.textContent = result.message;
+    });
+
+    logoutBtn.addEventListener('click', () => {
+        sessionStorage.removeItem('casinoToken');
+        sessionStorage.removeItem('casinoUsername');
+        showAuth();
+    });
+
+    function showCasino(username) {
+        authView.style.display = 'none';
+        casinoView.style.display = 'block';
+        document.getElementById('user-info').style.display = 'block';
+        document.getElementById('username-display').textContent = `Player: ${username}`;
+        showView('lobby');
+    }
+
+    function showAuth() {
+        casinoView.style.display = 'none';
+        authView.style.display = 'block';
+        document.getElementById('user-info').style.display = 'none';
+    }
+
     // --- Initialization ---
-    balanceEl.textContent = wallet.balance.toFixed(2);
     createRouletteTable();
-    showView('lobby');
+    const token = sessionStorage.getItem('casinoToken');
+    if (token) {
+        // In a real app, you'd verify the token with the server
+        // For now, we'll just re-login silently to get the balance
+        const username = sessionStorage.getItem('casinoUsername');
+        // This is a simplified flow; ideally you'd have a /me endpoint
+        loginUser(username, 'password123').then(result => {
+             if (result.token) {
+                wallet.setBalance(result.balance);
+                showCasino(username);
+             } else {
+                showAuth();
+             }
+        });
+    } else {
+        showAuth();
+    }
 });
