@@ -474,16 +474,27 @@ document.addEventListener('DOMContentLoaded', () => {
     const authMessage = document.getElementById('auth-message');
 
     loginBtn.addEventListener('click', async () => {
+        console.log("Login button clicked.");
         const username = document.getElementById('login-username').value;
         const password = document.getElementById('login-password').value;
-        const result = await loginUser(username, password);
-        if (result.token) {
-            sessionStorage.setItem('casinoToken', result.token);
-            sessionStorage.setItem('casinoUsername', username);
-            wallet.setBalance(result.balance);
-            showCasino(username);
-        } else {
-            authMessage.textContent = result.message;
+
+        try {
+            const result = await loginUser(username, password);
+            console.log("Login API result:", result);
+
+            if (result.token) {
+                console.log("Token received. Storing in session storage and calling showCasino.");
+                sessionStorage.setItem('casinoToken', result.token);
+                sessionStorage.setItem('casinoUsername', username);
+                wallet.setBalance(result.balance);
+                showCasino(username);
+            } else {
+                console.error("Login failed:", result.message);
+                authMessage.textContent = result.message;
+            }
+        } catch (error) {
+            console.error("An error occurred during login:", error);
+            authMessage.textContent = "An unexpected error occurred. Please try again.";
         }
     });
 
