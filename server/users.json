@@ -1,7 +1,7 @@
 {
   "testuser": {
-    "password": "$2b$10$WEXE6Lr74EYb7OCwJCD6n.AQYJsgYVzFQxein1..lTmpCN5RnR3vu",
-    "balance": 1000,
+    "password": "$2b$10$u0MgyD08Oyp7nw0a.kmtvORTg7KplnWRib8dpE7cB.GNXqQzPMvSy",
+    "balance": 990,
     "loyaltyPoints": 1,
     "progressiveJackpot": 100000.1
   }

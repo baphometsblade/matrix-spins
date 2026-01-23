@@ -115,5 +115,7 @@ describe('API Endpoints', () => {
     expect(res.body).toHaveProperty('winAmount');
     expect(res.body).toHaveProperty('loyaltyPoints');
     expect(res.body).toHaveProperty('progressiveJackpot');
+    expect(res.body).toHaveProperty('reels');
+    expect(res.body).toHaveProperty('isJackpotWin');
   });
 });

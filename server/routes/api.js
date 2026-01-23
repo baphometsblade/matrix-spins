@@ -5,6 +5,7 @@ const path = require('path');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const lockfile = require('proper-lockfile');
+const { SYMBOLS, REELS, PAYLINES } = require('../gameData');
 
 const USERS_DB = path.join(__dirname, '..', 'users.json');
 
@@ -146,8 +147,46 @@ router.post('/spin', authenticateToken, async (req, res) => {
 
     // Game Logic
     user.balance -= bet;
-    const winMultiplier = Math.random() < 0.3 ? Math.floor(Math.random() * 10 + 1) : 0;
-    const winAmount = bet * winMultiplier;
+
+    const reelPositions = REELS.map(reel => Math.floor(Math.random() * reel.length));
+    const resultReels = reelPositions.map((pos, i) => [
+      REELS[i][pos],
+      REELS[i][(pos + 1) % REELS[i].length],
+      REELS[i][(pos + 2) % REELS[i].length],
+    ]);
+
+    let winAmount = 0;
+    let isJackpotWin = false;
+
+    for (const payline of PAYLINES) {
+      const symbolsOnPayline = payline.map((row, reel) => resultReels[reel][row]);
+
+      let consecutiveSymbols = 1;
+      const firstSymbol = symbolsOnPayline[0];
+      for (let i = 1; i < symbolsOnPayline.length; i++) {
+        if (symbolsOnPayline[i] === firstSymbol) {
+          consecutiveSymbols++;
+        } else {
+          break;
+        }
+      }
+
+      if (consecutiveSymbols >= 3) {
+        const symbolData = SYMBOLS[firstSymbol];
+        if (symbolData) {
+          if (firstSymbol === 'JACKPOT' && consecutiveSymbols === 5) {
+            winAmount += user.progressiveJackpot;
+            user.progressiveJackpot = 100000; // Reset jackpot
+            isJackpotWin = true;
+          } else {
+            const payout = symbolData.payout[consecutiveSymbols];
+            if (payout > 0) {
+              winAmount += payout * bet;
+            }
+          }
+        }
+      }
+    }
 
     if (winAmount > 0) {
       user.balance += winAmount;
@@ -163,6 +202,8 @@ router.post('/spin', authenticateToken, async (req, res) => {
       balance: user.balance,
       loyaltyPoints: user.loyaltyPoints,
       progressiveJackpot: user.progressiveJackpot,
+      reels: resultReels,
+      isJackpotWin,
     });
 
   } catch (error) {

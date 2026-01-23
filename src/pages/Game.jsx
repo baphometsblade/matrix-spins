@@ -20,11 +20,12 @@ import BonusWheel from '@/components/BonusWheel';
 import SideBet from '@/components/SideBet';
 import DailyBonus from '@/components/DailyBonus';
 import LoyaltyProgramPopup from '@/components/LoyaltyProgramPopup';
+import { SYMBOLS } from '../lib/gameData';
 
 const Game = () => {
-  const [slotAssets, setSlotAssets] = useState(getSlotAssets());
-  const [gameBackgrounds, setGameBackgrounds] = useState(getGameBackgrounds());
-  const [promotionImages, setPromotionImages] = useState(getPromotionImages());
+  const [slotAssets, setSlotAssets] = useState(SYMBOLS);
+  const [gameBackgrounds, setGameBackgrounds] = useState([]);
+  const [promotionImages, setPromotionImages] = useState([]);
   const [playerRank, setPlayerRank] = useState("3K+");
   const [playerScore, setPlayerScore] = useState(87.86);
   const [playerCredits, setPlayerCredits] = useState(8.78);
@@ -150,16 +151,17 @@ const Game = () => {
 
         // Animate the reels
         setTimeout(() => {
-          const newReels = reels.map(() =>
-            Array(3).fill().map(() => symbols[Math.floor(Math.random() * symbols.length)])
-          );
+          const newReels = data.reels.map(reel => reel.map(symbolId => SYMBOLS.find(s => s.id === symbolId)?.image));
           setReels(newReels);
 
           setBalance(data.balance);
           setLoyaltyPoints(data.loyaltyPoints);
           setWinAmount(data.winAmount);
 
-          if (data.winAmount > 0 && data.winAmount >= bet * 10) {
+          if (data.isJackpotWin) {
+            setShowConfetti(true);
+            setTimeout(() => setShowConfetti(false), 10000);
+          } else if (data.winAmount > 0 && data.winAmount >= bet * 10) {
             setShowConfetti(true);
             setTimeout(() => setShowConfetti(false), 5000);
           }
