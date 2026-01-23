@@ -1,12 +1,7 @@
 {
   "testuser": {
-    "password": "$2b$10$crJ.cCxS8IxhStTzHW5qqe18XNIQ5QX6P4OPv7uuNkLSvjGgZHTr2",
-    "balance": 1050,
-    "loyaltyPoints": 1
-  },
-  "testuser3": {
-    "password": "$2b$10$WXxt07gliOFsbfCgWOYx7.KOazw4fKzpy5Joxvy2.9qAMqwOPVQo6",
-    "balance": 1050,
+    "password": "$2b$10$bvILrTmg1hM1PBBtfpb4NOCtk2A8XNGuPaBQpV1Jp3xF3b3gh050G",
+    "balance": 990,
     "loyaltyPoints": 1,
     "progressiveJackpot": 100000.1
   }
