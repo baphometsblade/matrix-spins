@@ -9,6 +9,7 @@ import { Progress } from "@/components/ui/progress";
 import { useToast } from "@/components/ui/use-toast";
 import { Gift, Zap, Trophy, Star, Settings } from "lucide-react";
 import { formatCurrency } from '@/lib/utils';
+import { useAuth } from '../contexts/AuthContext';
 
 import GameHeader from '@/components/GameHeader';
 import GameControls from '@/components/GameControls';
@@ -51,10 +52,10 @@ const Game = () => {
   const matrixRainRef = useRef(null);
   const { toast } = useToast();
   const navigate = useNavigate();
+  const { token, logout } = useAuth();
 
   useEffect(() => {
     const fetchUserData = async () => {
-      const token = localStorage.getItem('token');
       if (!token) {
         navigate('/login');
         return;
@@ -72,7 +73,7 @@ const Game = () => {
           setBalance(data.balance);
           setLoyaltyPoints(data.loyaltyPoints);
         } else {
-          localStorage.removeItem('token');
+          logout();
           navigate('/login');
         }
       } catch (error) {
@@ -81,12 +82,13 @@ const Game = () => {
           description: 'Could not connect to the server.',
           variant: 'destructive',
         });
+        logout();
         navigate('/login');
       }
     };
 
     fetchUserData();
-  }, [navigate, toast]);
+  }, [token, navigate, toast, logout]);
 
   useEffect(() => {
     if (slotAssets.length > 0) {
@@ -116,7 +118,6 @@ const Game = () => {
   }, [jackpot]);
 
   const spinReels = async () => {
-    const token = localStorage.getItem('token');
     if (!token) {
       navigate('/login');
       return;
