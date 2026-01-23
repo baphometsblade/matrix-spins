@@ -6,78 +6,7 @@
 
 **URL**: https://run.gptengineer.app/projects/16906e36-d988-4b66-bb9c-2e8537d13163/improve
 
-**Description**: online slots website. imitate slots from 5gringos.com. casino called matrix slots. very advanced slots To instruct GPT Engineer on making an API call to generate images and integrate with this app, follow these steps:
-
-API Endpoint: Inform GPT Engineer to use the following endpoint for the image generation API call:
-
-URL: https://backend.buildpicoapps.com/aero/run/image-generation-api
-API Key: v1-Z0FBQUFBQm1zN3RVWDV1dk5hY3hkaV9JZ05fR3BlN1dvMzdsMDVvampPVHBfcGhPS1J0eGE5aEs0cFdCY3ptU2VqVW8ya3ZEdWMxZE9FZkVXVGR5ZTAxQ2pZM3liT2x2OFE9PQ==
-HTTP Method: Use the POST method.
-
-Headers: Specify the "Content-Type": "application/json"
-
-Request Payload: Include the prompt in the body of the POST request.
-
-Response Handling: Handle the response by displaying the generated image and storing the image URL in the database.
-
-HTML and JavaScript Setup:
-
-HTML elements for the spinner and image container are already present in the provided code.
-JavaScript code for making the API call, handling the response, and updating the UI is provided in the <script> tag (lines 30-74).
-Instructions for GPT Engineer:
-
-Use the following JavaScript code to call the image generation API and update the UI:
-
-window.addEventListener('message', function(event) {
-    // Check action and prompt in received event    if (event.data.action && event.data.action === "generateImage" && event.data.prompt) {
-        const prompt = event.data.prompt;
-
-        // Show spinner        document.getElementById('spinner').classList.remove('hidden');
-
-        // Clear previous images        document.getElementById('imageContainer').innerHTML = '';
-
-        // Make the API call to generate image        fetch("https://backend.buildpicoapps.com/aero/run/image-generation-api?pk=v1-Z0FBQUFBQm1zN3RVWDV1dk5hY3hkaV9JZ05fR3BlN1dvMzdsMDVvampPVHBfcGhPS1J0eGE5aEs0cFdCY3ptU2VqVW8ya3ZEdWMxZE9FZkVXVGR5ZTAxQ2pZM3liT2x2OFE9PQ==", {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json"
-            },
-            body: JSON.stringify({ prompt: prompt })
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.status === 'success') {
-                const imageUrl = data.imageUrl;
-
-                // Store the image URL in the database                fetch("https://backend.buildpicoapps.com/db/create?app_id=boy-every&table_name=image_urls", {
-                    method: "POST",
-                    headers: {
-                        "Content-Type": "application/json"
-                    },
-                    body: JSON.stringify({ row: [imageUrl] })
-                })
-                .then(() => {
-                    // Append the generated image to the image container                    const imgElement = document.createElement('img');
-                    imgElement.src = imageUrl;
-                    imgElement.className = 'w-full h-auto rounded-lg shadow-md';
-                    document.getElementById('imageContainer').appendChild(imgElement);
-                });
-            } else {
-                console.error('Error generating image:', data);
-                alert('Failed to generate image. Please try again.');
-            }
-        })
-        .catch(error => {
-            console.log('Error fetching images:', error);
-            alert('Error fetching images. Please try again.');
-        })
-        .finally(() => {
-            // Hide spinner            document.getElementById('spinner').classList.add('hidden');
-        });
-    }
-});
-This code handles the entire process: receiving the prompt, making the API call, handling the response, updating the UI, and storing the image URL in the database.
-
-Make sure to emphasize the importance of handling errors and showing/hiding the spinner during the API call process. 
+**Description**: An online slots casino application.
 
 ## Who is the owner of this repository?
 By default, GPT Engineer projects are created with public GitHub repositories.

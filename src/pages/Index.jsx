@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useSpring, animated } from '@react-spring/web';
 import ReactConfetti from 'react-confetti';
 import { Button } from "@/components/ui/button";
@@ -8,7 +9,6 @@ import { Progress } from "@/components/ui/progress";
 import { useToast } from "@/components/ui/use-toast";
 import { Gift, Zap, Trophy, Star, Settings } from "lucide-react";
 import { formatCurrency } from '@/lib/utils';
-import { useLocalStorage } from '@/hooks/useLocalStorage';
 
 import GameHeader from '@/components/GameHeader';
 import GameControls from '@/components/GameControls';
@@ -34,22 +34,59 @@ const Index = () => {
   const [nextTier, setNextTier] = useState("Platinum");
   const [tierProgress, setTierProgress] = useState(65);
   const [hotStreak, setHotStreak] = useState(0);
-  const [balance, setBalance] = useLocalStorage('balance', 1000);
+  const [balance, setBalance] = useState(0);
   const [bet, setBet] = useState(10);
   const [spinning, setSpinning] = useState(false);
   const [winAmount, setWinAmount] = useState(0);
-  const [jackpot, setJackpot] = useLocalStorage('jackpot', 10000);
+  const [jackpot, setJackpot] = useState(10000);
   const [jackpotTicker, setJackpotTicker] = useState(jackpot);
-  const [sound, setSound] = useLocalStorage('sound', true);
+  const [sound, setSound] = useState(true);
   const [autoPlay, setAutoPlay] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   const [showBonusWheel, setShowBonusWheel] = useState(false);
   const [reels, setReels] = useState([]);
   const [symbols, setSymbols] = useState([]);
-  const [progressiveJackpot, setProgressiveJackpot] = useLocalStorage('progressiveJackpot', 100000);
-  const [loyaltyPoints, setLoyaltyPoints] = useLocalStorage('loyaltyPoints', 2500);
+  const [progressiveJackpot, setProgressiveJackpot] = useState(100000);
+  const [loyaltyPoints, setLoyaltyPoints] = useState(0);
   const matrixRainRef = useRef(null);
   const { toast } = useToast();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    const fetchUserData = async () => {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        navigate('/login');
+        return;
+      }
+
+      try {
+        const response = await fetch('http://localhost:3000/api/user/data', {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+          },
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          setBalance(data.balance);
+          setLoyaltyPoints(data.loyaltyPoints);
+        } else {
+          localStorage.removeItem('token');
+          navigate('/login');
+        }
+      } catch (error) {
+        toast({
+          title: 'Error',
+          description: 'Could not connect to the server.',
+          variant: 'destructive',
+        });
+        navigate('/login');
+      }
+    };
+
+    fetchUserData();
+  }, [navigate, toast]);
 
   useEffect(() => {
     if (slotAssets.length > 0) {
@@ -78,7 +115,13 @@ const Index = () => {
     };
   }, [jackpot]);
 
-  const spinReels = () => {
+  const spinReels = async () => {
+    const token = localStorage.getItem('token');
+    if (!token) {
+      navigate('/login');
+      return;
+    }
+
     if (balance < bet) {
       toast({
         title: "Insufficient Balance",
@@ -88,30 +131,58 @@ const Index = () => {
       return;
     }
 
-    setBalance(prevBalance => prevBalance - bet);
     setSpinning(true);
     setWinAmount(0);
 
-    setTimeout(() => {
-      const newReels = reels.map(() =>
-        Array(3).fill().map(() => symbols[Math.floor(Math.random() * symbols.length)])
-      );
-      setReels(newReels);
-      setSpinning(false);
+    try {
+      const response = await fetch('http://localhost:3000/api/spin', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify({ bet }),
+      });
 
-      // Simulate a win
-      const randomWin = Math.random() < 0.3 ? bet * Math.floor(Math.random() * 10 + 1) : 0;
-      if (randomWin > 0) {
-        setBalance(prevBalance => prevBalance + randomWin);
-        setWinAmount(randomWin);
-        if (randomWin >= bet * 10) {
-          setShowConfetti(true);
-          setTimeout(() => setShowConfetti(false), 5000);
-        }
+      if (response.ok) {
+        const data = await response.json();
+
+        // Animate the reels
+        setTimeout(() => {
+          const newReels = reels.map(() =>
+            Array(3).fill().map(() => symbols[Math.floor(Math.random() * symbols.length)])
+          );
+          setReels(newReels);
+
+          setBalance(data.balance);
+          setLoyaltyPoints(data.loyaltyPoints);
+          setWinAmount(data.winAmount);
+
+          if (data.winAmount > 0 && data.winAmount >= bet * 10) {
+            setShowConfetti(true);
+            setTimeout(() => setShowConfetti(false), 5000);
+          }
+
+          setSpinning(false);
+        }, 2000);
+
+      } else {
+        const errorData = await response.json();
+        toast({
+          title: 'Spin Failed',
+          description: errorData.message || 'An error occurred.',
+          variant: 'destructive',
+        });
+        setSpinning(false);
       }
-
-      setProgressiveJackpot(prevJackpot => prevJackpot + bet * 0.01);
-    }, 2000);
+    } catch (error) {
+      toast({
+        title: 'Spin Error',
+        description: 'Could not connect to the server.',
+        variant: 'destructive',
+      });
+      setSpinning(false);
+    }
   };
 
   const handleBonusWheelResult = (result) => {
