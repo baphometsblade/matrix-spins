@@ -6,78 +6,56 @@
 
 **URL**: https://run.gptengineer.app/projects/16906e36-d988-4b66-bb9c-2e8537d13163/improve
 
-**Description**: online slots website. imitate slots from 5gringos.com. casino called matrix slots. very advanced slots To instruct GPT Engineer on making an API call to generate images and integrate with this app, follow these steps:
+**Description**: An online slots casino application.
 
-API Endpoint: Inform GPT Engineer to use the following endpoint for the image generation API call:
+## Getting Started
 
-URL: https://backend.buildpicoapps.com/aero/run/image-generation-api
-API Key: v1-Z0FBQUFBQm1zN3RVWDV1dk5hY3hkaV9JZ05fR3BlN1dvMzdsMDVvampPVHBfcGhPS1J0eGE5aEs0cFdCY3ptU2VqVW8ya3ZEdWMxZE9FZkVXVGR5ZTAxQ2pZM3liT2x2OFE9PQ==
-HTTP Method: Use the POST method.
+### Prerequisites
 
-Headers: Specify the "Content-Type": "application/json"
+*   Node.js and npm (or yarn)
 
-Request Payload: Include the prompt in the body of the POST request.
+### Installation and Setup
 
-Response Handling: Handle the response by displaying the generated image and storing the image URL in the database.
+1.  **Clone the repository:**
+    ```sh
+    git clone https://github.com/GPT-Engineer-App/matrix-spins.git
+    cd matrix-spins
+    ```
 
-HTML and JavaScript Setup:
+2.  **Install frontend dependencies:**
+    ```sh
+    npm install
+    ```
 
-HTML elements for the spinner and image container are already present in the provided code.
-JavaScript code for making the API call, handling the response, and updating the UI is provided in the <script> tag (lines 30-74).
-Instructions for GPT Engineer:
+3.  **Install backend dependencies:**
+    ```sh
+    cd server
+    npm install
+    ```
 
-Use the following JavaScript code to call the image generation API and update the UI:
+4.  **Set up environment variables:**
+    *   Navigate to the `server` directory.
+    *   Create a `.env` file by copying the example:
+        ```sh
+        cp .env.example .env
+        ```
+    *   Open the `.env` file and replace `your_jwt_secret_here` with a secure, randomly generated string.
 
-window.addEventListener('message', function(event) {
-    // Check action and prompt in received event    if (event.data.action && event.data.action === "generateImage" && event.data.prompt) {
-        const prompt = event.data.prompt;
+### Running the Application
 
-        // Show spinner        document.getElementById('spinner').classList.remove('hidden');
+1.  **Start the backend server:**
+    *   From the `server` directory, run:
+        ```sh
+        node server.js
+        ```
+    *   The server will start on `http://localhost:3000`.
 
-        // Clear previous images        document.getElementById('imageContainer').innerHTML = '';
-
-        // Make the API call to generate image        fetch("https://backend.buildpicoapps.com/aero/run/image-generation-api?pk=v1-Z0FBQUFBQm1zN3RVWDV1dk5hY3hkaV9JZ05fR3BlN1dvMzdsMDVvampPVHBfcGhPS1J0eGE5aEs0cFdCY3ptU2VqVW8ya3ZEdWMxZE9FZkVXVGR5ZTAxQ2pZM3liT2x2OFE9PQ==", {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json"
-            },
-            body: JSON.stringify({ prompt: prompt })
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.status === 'success') {
-                const imageUrl = data.imageUrl;
-
-                // Store the image URL in the database                fetch("https://backend.buildpicoapps.com/db/create?app_id=boy-every&table_name=image_urls", {
-                    method: "POST",
-                    headers: {
-                        "Content-Type": "application/json"
-                    },
-                    body: JSON.stringify({ row: [imageUrl] })
-                })
-                .then(() => {
-                    // Append the generated image to the image container                    const imgElement = document.createElement('img');
-                    imgElement.src = imageUrl;
-                    imgElement.className = 'w-full h-auto rounded-lg shadow-md';
-                    document.getElementById('imageContainer').appendChild(imgElement);
-                });
-            } else {
-                console.error('Error generating image:', data);
-                alert('Failed to generate image. Please try again.');
-            }
-        })
-        .catch(error => {
-            console.log('Error fetching images:', error);
-            alert('Error fetching images. Please try again.');
-        })
-        .finally(() => {
-            // Hide spinner            document.getElementById('spinner').classList.add('hidden');
-        });
-    }
-});
-This code handles the entire process: receiving the prompt, making the API call, handling the response, updating the UI, and storing the image URL in the database.
-
-Make sure to emphasize the importance of handling errors and showing/hiding the spinner during the API call process. 
+2.  **Start the frontend development server:**
+    *   From the root project directory, run:
+        ```sh
+        npm run dev
+        ```
+    *   The frontend will be available at `http://localhost:8080`.
 
 ## Who is the owner of this repository?
 By default, GPT Engineer projects are created with public GitHub repositories.
