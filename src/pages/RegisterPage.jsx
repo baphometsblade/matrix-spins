@@ -33,7 +33,7 @@ const RegisterPage = () => {
         const errorData = await response.json();
         toast({
           title: 'Registration Failed',
-          description: errorData.message || 'An error occurred.',
+          description: errorData.message || 'An unexpected error occurred.',
           variant: 'destructive',
         });
       }

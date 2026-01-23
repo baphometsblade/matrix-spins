@@ -8,6 +8,55 @@
 
 **Description**: An online slots casino application.
 
+## Getting Started
+
+### Prerequisites
+
+*   Node.js and npm (or yarn)
+
+### Installation and Setup
+
+1.  **Clone the repository:**
+    ```sh
+    git clone https://github.com/GPT-Engineer-App/matrix-spins.git
+    cd matrix-spins
+    ```
+
+2.  **Install frontend dependencies:**
+    ```sh
+    npm install
+    ```
+
+3.  **Install backend dependencies:**
+    ```sh
+    cd server
+    npm install
+    ```
+
+4.  **Set up environment variables:**
+    *   Navigate to the `server` directory.
+    *   Create a `.env` file by copying the example:
+        ```sh
+        cp .env.example .env
+        ```
+    *   Open the `.env` file and replace `your_jwt_secret_here` with a secure, randomly generated string.
+
+### Running the Application
+
+1.  **Start the backend server:**
+    *   From the `server` directory, run:
+        ```sh
+        node server.js
+        ```
+    *   The server will start on `http://localhost:3000`.
+
+2.  **Start the frontend development server:**
+    *   From the root project directory, run:
+        ```sh
+        npm run dev
+        ```
+    *   The frontend will be available at `http://localhost:8080`.
+
 ## Who is the owner of this repository?
 By default, GPT Engineer projects are created with public GitHub repositories.
 
