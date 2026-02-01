@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { useToast } from "@/components/ui/use-toast";
-import { Gift, Zap, Trophy, Star, Flame, Sparkles } from "lucide-react";
+import { Gift, Zap, Trophy, Star, Flame, Sparkles, Settings } from "lucide-react";
 import { formatCurrency, getGameBackgrounds, getPromotionImages, getSlotAssets } from '@/lib/utils';
 import { useLocalStorage } from '@/hooks/useLocalStorage';
 
@@ -58,7 +58,7 @@ const Index = () => {
   const [autoPlay, setAutoPlay] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   const [showBonusWheel, setShowBonusWheel] = useState(false);
-  const [showMatrixRain, setShowMatrixRain] = useState(true);
+  const [showMatrixRain, setShowMatrixRain] = useLocalStorage('showMatrixRain', true);
   const [reels, setReels] = useState([]);
   const [symbols, setSymbols] = useState([]);
   const [progressiveJackpot, setProgressiveJackpot] = useLocalStorage('progressiveJackpot', 100000);
@@ -355,6 +355,14 @@ const Index = () => {
               <DepositDialog onDeposit={handleDeposit} />
               <PayTable />
               <HelpDialog />
+              <Button
+                variant="outline"
+                className="border-white/30 text-white hover:bg-white/10"
+                onClick={() => setShowSettings(true)}
+              >
+                <Settings className="mr-2 h-4 w-4" />
+                Settings
+              </Button>
               <SettingsDialog
                 open={showSettings}
                 onOpenChange={setShowSettings}
