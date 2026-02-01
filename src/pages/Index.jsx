@@ -359,6 +359,8 @@ const Index = () => {
                 variant="outline"
                 className="border-white/30 text-white hover:bg-white/10"
                 onClick={() => setShowSettings(true)}
+                aria-label="Open settings"
+                data-testid="open-settings"
               >
                 <Settings className="mr-2 h-4 w-4" />
                 Settings
