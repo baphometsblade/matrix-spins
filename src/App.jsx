@@ -8,8 +8,6 @@ import Footer from "./components/Footer";
 import Index from "./pages/Index";
 
 const App = () => {
-  console.log("App component rendering"); // Add this line for debugging
-
   return (
     <TooltipProvider>
       <Toaster />
