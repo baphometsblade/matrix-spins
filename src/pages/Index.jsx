@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useMemo } from 'react';
+import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import ReactConfetti from 'react-confetti';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -22,6 +22,7 @@ import SpecialEventBanner from '@/components/SpecialEventBanner';
 import PayTable from '@/components/PayTable';
 import DepositDialog from '@/components/DepositDialog';
 import HelpDialog from '@/components/HelpDialog';
+import SettingsDialog from '@/components/SettingsDialog';
 
 const Index = () => {
   const slotAssets = useMemo(() => getSlotAssets(), []);
@@ -57,11 +58,13 @@ const Index = () => {
   const [autoPlay, setAutoPlay] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   const [showBonusWheel, setShowBonusWheel] = useState(false);
+  const [showMatrixRain, setShowMatrixRain] = useState(true);
   const [reels, setReels] = useState([]);
   const [symbols, setSymbols] = useState([]);
   const [progressiveJackpot, setProgressiveJackpot] = useLocalStorage('progressiveJackpot', 100000);
   const [loyaltyPoints] = useLocalStorage('loyaltyPoints', 2500);
   const matrixRainRef = useRef(null);
+  const jackpotRef = useRef(jackpot);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -75,7 +78,13 @@ const Index = () => {
 
   useEffect(() => {
     const canvas = matrixRainRef.current;
-    if (!canvas) return;
+    if (!canvas || !showMatrixRain) {
+      if (canvas) {
+        const context = canvas.getContext('2d');
+        context?.clearRect(0, 0, canvas.width, canvas.height);
+      }
+      return;
+    }
     const context = canvas.getContext('2d');
     const letters = 'アァカサタナハマヤラワ0123456789';
     const fontSize = 16;
@@ -112,33 +121,48 @@ const Index = () => {
       window.removeEventListener('resize', resizeCanvas);
       cancelAnimationFrame(animationFrameId);
     };
-  }, []);
+  }, [showMatrixRain]);
+
+  useEffect(() => {
+    jackpotRef.current = jackpot;
+  }, [jackpot]);
 
   useEffect(() => {
     const jackpotInterval = setInterval(() => {
       setJackpot(prevJackpot => prevJackpot + Math.floor(Math.random() * 10) + 1);
     }, 1000);
 
+    return () => {
+      clearInterval(jackpotInterval);
+    };
+  }, [setJackpot]);
+
+  useEffect(() => {
     const tickerInterval = setInterval(() => {
       setJackpotTicker(prevTicker => {
-        const diff = jackpot - prevTicker;
+        const diff = jackpotRef.current - prevTicker;
         return prevTicker + Math.ceil(diff / 10);
       });
     }, 100);
 
     return () => {
-      clearInterval(jackpotInterval);
       clearInterval(tickerInterval);
     };
-  }, [jackpot]);
+  }, []);
 
-  const spinReels = () => {
+  const spinReels = useCallback(() => {
+    if (symbols.length === 0 || reels.length === 0) {
+      return;
+    }
     if (balance < bet) {
       toast({
         title: "Insufficient Balance",
         description: "Please deposit more funds to continue playing.",
         variant: "destructive",
       });
+      if (autoPlay) {
+        setAutoPlay(false);
+      }
       return;
     }
 
@@ -168,7 +192,33 @@ const Index = () => {
 
       setProgressiveJackpot(prevJackpot => prevJackpot + bet * 0.01);
     }, 2000);
-  };
+  }, [
+    autoPlay,
+    balance,
+    bet,
+    reels,
+    symbols,
+    setAutoPlay,
+    setBalance,
+    setHotStreak,
+    setProgressiveJackpot,
+    setReels,
+    setShowConfetti,
+    setSpinning,
+    setWinAmount,
+    toast,
+  ]);
+
+  useEffect(() => {
+    if (!autoPlay || spinning) return;
+    const autoSpinTimeout = setTimeout(() => {
+      spinReels();
+    }, 1200);
+
+    return () => {
+      clearTimeout(autoSpinTimeout);
+    };
+  }, [autoPlay, spinning, spinReels]);
 
   const handleBonusWheelResult = (result) => {
     setBalance(prevBalance => prevBalance + result);
@@ -215,7 +265,9 @@ const Index = () => {
 
   return (
     <div className="container mx-auto px-4 py-8">
-      <canvas ref={matrixRainRef} className="fixed inset-0 pointer-events-none opacity-70" />
+      {showMatrixRain && (
+        <canvas ref={matrixRainRef} className="fixed inset-0 pointer-events-none opacity-70" />
+      )}
       {showConfetti && <ReactConfetti />}
 
       <SpecialEventBanner event={specialEvent} />
@@ -303,6 +355,16 @@ const Index = () => {
               <DepositDialog onDeposit={handleDeposit} />
               <PayTable />
               <HelpDialog />
+              <SettingsDialog
+                open={showSettings}
+                onOpenChange={setShowSettings}
+                sound={sound}
+                setSound={setSound}
+                autoPlay={autoPlay}
+                setAutoPlay={setAutoPlay}
+                showMatrixRain={showMatrixRain}
+                setShowMatrixRain={setShowMatrixRain}
+              />
             </div>
             <Button
               onClick={() => setShowBonusWheel(true)}
