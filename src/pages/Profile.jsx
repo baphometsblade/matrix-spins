@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Trophy, Star, Zap, Coin, Clock } from "lucide-react";
+import { Trophy, Star, Zap, Coin } from "lucide-react";
 import { formatCurrency } from '@/lib/utils';
 
 const Profile = () => {
@@ -96,7 +96,7 @@ const Profile = () => {
                     <span>Total Spins: {playerStats.totalSpins}</span>
                   </div>
                   <div className="flex items-center">
-                    <CoinIcon className="mr-2 h-5 w-5 text-green-400" />
+                    <Coin className="mr-2 h-5 w-5 text-green-400" />
                     <span>Favorite Game: {playerStats.favoriteGame}</span>
                   </div>
                 </div>

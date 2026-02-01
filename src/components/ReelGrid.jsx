@@ -1,11 +1,10 @@
 import React from 'react';
-import { motion } from 'framer-motion';
 import { Loader2 } from "lucide-react";
 
 const ReelGrid = ({ reels, spinning, symbols }) => {
   return (
     <div className="relative aspect-[16/9] bg-gradient-to-b from-gray-900 to-black rounded-lg overflow-hidden mb-4">
-      <div className="absolute inset-0 grid grid-cols-6 gap-1 p-2">
+      <div className="absolute inset-0 grid grid-cols-5 gap-1 p-2">
         {reels.map((reel, i) => (
           <div key={i} className="flex flex-col space-y-1">
             {reel.map((symbol, j) => (
