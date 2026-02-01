@@ -15,7 +15,7 @@ const SettingsDialog = ({
 }) => {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="bg-gray-900 text-white">
+      <DialogContent className="bg-gray-900 text-white" data-testid="settings-dialog">
         <DialogHeader>
           <DialogTitle className="text-2xl">Game Settings</DialogTitle>
         </DialogHeader>
