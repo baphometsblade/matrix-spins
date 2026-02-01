@@ -43,10 +43,10 @@ const Index = () => {
     { name: "Jackpot Hunter", description: "Trigger a progressive jackpot", completed: false },
   ];
   const [showLoyaltyPopup, setShowLoyaltyPopup] = useState(false);
-  const [currentTier] = useState("Gold");
-  const [nextTier] = useState("Platinum");
-  const [tierProgress] = useState(65);
-  const [hotStreak] = useState(0);
+  const currentTier = "Gold";
+  const nextTier = "Platinum";
+  const tierProgress = 65;
+  const [hotStreak, setHotStreak] = useState(0);
   const [balance, setBalance] = useLocalStorage('balance', 1000);
   const [bet, setBet] = useState(10);
   const [spinning, setSpinning] = useState(false);
