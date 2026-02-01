@@ -1,7 +1,7 @@
 import React from 'react';
 import { Loader2 } from "lucide-react";
 
-const ReelGrid = ({ reels, spinning, symbols }) => {
+const ReelGrid = ({ reels, spinning }) => {
   return (
     <div className="relative aspect-[16/9] bg-gradient-to-b from-gray-900 to-black rounded-lg overflow-hidden mb-4">
       <div className="absolute inset-0 grid grid-cols-5 gap-1 p-2">

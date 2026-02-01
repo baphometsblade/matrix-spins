@@ -1,6 +1,5 @@
 import { clsx } from "clsx"
 import { twMerge } from "tailwind-merge"
-import * as pico from '@picojs/pico';
 
 export function cn(...inputs) {
   return twMerge(clsx(inputs))

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import ReactConfetti from 'react-confetti';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -24,15 +24,24 @@ import DepositDialog from '@/components/DepositDialog';
 import HelpDialog from '@/components/HelpDialog';
 
 const Index = () => {
-  const [slotAssets] = useState(getSlotAssets());
-  const [gameBackgrounds] = useState(getGameBackgrounds());
-  const [promotionImages] = useState(getPromotionImages());
-  const [playerRank] = useState("3K+");
-  const [playerScore] = useState(87.86);
-  const [playerCredits] = useState(8.78);
+  const slotAssets = useMemo(() => getSlotAssets(), []);
+  const gameBackgrounds = useMemo(() => getGameBackgrounds(), []);
+  const promotionImages = useMemo(() => getPromotionImages(), []);
+  const playerRank = "3K+";
+  const playerScore = 87.86;
+  const playerCredits = 8.78;
   const [showConfetti, setShowConfetti] = useState(false);
-  const [dailyChallenge, setDailyChallenge] = useState(null);
-  const [achievements, setAchievements] = useState([]);
+  const dailyChallenge = {
+    description: "Spin the reels 50 times",
+    target: 50,
+    progress: 12,
+    reward: 10,
+  };
+  const achievements = [
+    { name: "Matrix Master", description: "Win 1000 times", completed: true },
+    { name: "Lucky Streak", description: "Win 10 spins in a row", completed: true },
+    { name: "Jackpot Hunter", description: "Trigger a progressive jackpot", completed: false },
+  ];
   const [showLoyaltyPopup, setShowLoyaltyPopup] = useState(false);
   const [currentTier] = useState("Gold");
   const [nextTier] = useState("Platinum");
@@ -123,27 +132,6 @@ const Index = () => {
     };
   }, [jackpot]);
 
-  useEffect(() => {
-    if (!dailyChallenge) {
-      setDailyChallenge({
-        description: "Spin the reels 50 times",
-        target: 50,
-        progress: 12,
-        reward: 10,
-      });
-    }
-  }, [dailyChallenge]);
-
-  useEffect(() => {
-    if (achievements.length === 0) {
-      setAchievements([
-        { name: "Matrix Master", description: "Win 1000 times", completed: true },
-        { name: "Lucky Streak", description: "Win 10 spins in a row", completed: true },
-        { name: "Jackpot Hunter", description: "Trigger a progressive jackpot", completed: false },
-      ]);
-    }
-  }, [achievements.length]);
-
   const spinReels = () => {
     if (balance < bet) {
       toast({
@@ -169,10 +157,13 @@ const Index = () => {
       if (randomWin > 0) {
         setBalance(prevBalance => prevBalance + randomWin);
         setWinAmount(randomWin);
+        setHotStreak(prevStreak => prevStreak + 1);
         if (randomWin >= bet * 10) {
           setShowConfetti(true);
           setTimeout(() => setShowConfetti(false), 5000);
         }
+      } else {
+        setHotStreak(0);
       }
 
       setProgressiveJackpot(prevJackpot => prevJackpot + bet * 0.01);
@@ -292,7 +283,7 @@ const Index = () => {
         <GameHeader />
 
         <div className="mt-20 p-4">
-          <ReelGrid reels={reels} spinning={spinning} symbols={symbols} />
+          <ReelGrid reels={reels} spinning={spinning} />
 
           <GameControls 
             balance={balance}
