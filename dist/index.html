@@ -1,0 +1,2140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>Matrix Spins Casino | Free Online Slots & Casino Games</title>
+    <meta name="description" content="Play free online slots at Matrix Spins Casino. Enjoy 30+ slot games, daily bonuses, VIP rewards, and provably fair gameplay. Join now and spin to win!">
+    <meta name="keywords" content="online casino, free slots, slot games, matrix spins, casino games, provably fair, VIP casino">
+    <meta name="theme-color" content="#0a0a1a">
+    <link rel="manifest" href="/manifest.json">
+    <meta name="theme-color" content="#0a0a1a">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Matrix Spins">
+    <meta name="mobile-web-app-capable" content="yes">
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+    <link rel="icon" type="image/png" sizes="192x192" href="/images/logo-192.png">
+    <link rel="apple-touch-icon" href="/images/logo-192.png">
+    <!-- SEO Meta Tags -->
+    <meta name="robots" content="index, follow">
+    <meta name="author" content="Matrix Spins Casino">
+    <link rel="canonical" href="https://msaart.online/">
+
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://msaart.online/">
+    <meta property="og:title" content="Matrix Spins Casino | Free Online Slots & Casino Games">
+    <meta property="og:description" content="Play free online slots at Matrix Spins Casino. Enjoy 30+ slot games, daily bonuses, VIP rewards, and provably fair gameplay. Join now and spin to win!">
+    <meta property="og:image" content="https://msaart.online/img/og-banner.png">
+    <meta property="og:site_name" content="Matrix Spins Casino">
+    <meta property="og:locale" content="en_US">
+
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:url" content="https://msaart.online/">
+    <meta name="twitter:title" content="Matrix Spins Casino | Free Online Slots & Casino Games">
+    <meta name="twitter:description" content="Play free online slots at Matrix Spins Casino. Enjoy 30+ slot games, daily bonuses, VIP rewards, and provably fair gameplay. Join now and spin to win!">
+    <meta name="twitter:image" content="https://msaart.online/img/og-banner.png">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="preload" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@700;800&display=swap" as="style" onload="this.onload=null;this.rel='stylesheet'">
+    <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@700;800&display=swap"></noscript>
+    <link rel="stylesheet" href="popup-nuke.css">
+    
+    
+    
+    <!-- Structured Data -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebSite",
+      "name": "Matrix Spins Casino",
+      "url": "https://msaart.online",
+      "description": "Play 150+ premium online slot games with massive jackpots up to $25,000. Welcome bonus up to $2,500 + 150 Free Spins.",
+      "potentialAction": {
+        "@type": "SearchAction",
+        "target": "https://msaart.online/?search={search_term_string}",
+        "query-input": "required name=search_term_string"
+      }
+    }
+    </script>
+    
+    
+    
+    <link rel="stylesheet" href="provider-chrome.css">
+    <!-- Maintenance Mode Check -->
+    <script src="js/maintenance-check.js"></script>
+    <link rel="stylesheet" href="styles.992088da.css">
+</head>
+<body>
+    <script src="js/error-handler.js"></script>
+    <!-- CSP polyfill: convert onclick= attrs to addEventListener (script-src-attr 'none' blocks inline handlers) -->
+    <script src="js/onclick-polyfill.js"></script>
+    <!-- Auth gate: hide all content instantly if no session token exists -->
+    <script>
+    (function(){
+        if (!localStorage.getItem('casinoToken')) {
+            document.body.classList.add('auth-gate');
+        }
+    })();
+    </script>
+    <!-- Page Transition Overlay -->
+    <div class="page-transition" id="pageTransition">
+        <div class="spinner"></div>
+    </div>
+    <!-- Matrix Rain Background Canvas -->
+    <canvas id="matrixCanvas"></canvas>
+
+    <!-- Promo Bar -->
+    <div class="promo-bar">
+        <div class="promo-marquee">
+            <div class="promo-marquee-inner">
+                <span class="promo-item">WELCOME BONUS: 100% UP TO $2,500 + 150 FREE SPINS</span>
+                <span class="promo-sep">|</span>
+                <span class="promo-item">DAILY CASHBACK UP TO 15%</span>
+                <span class="promo-sep">|</span>
+                <span class="promo-item">165+ PREMIUM SLOT GAMES</span>
+                <span class="promo-sep">|</span>
+                <span class="promo-item">VIP REWARDS PROGRAM</span>
+                <span class="promo-sep">|</span>
+                <span class="promo-item">PROVABLY FAIR ï¿½ CERTIFIED RNG</span>
+                <span class="promo-sep">|</span>
+                <span class="promo-item">INSTANT PLAY ï¿½ NO DOWNLOAD REQUIRED</span>
+                <span class="promo-sep">|</span>
+                <span class="promo-item">12 PREMIUM GAME PROVIDERS</span>
+                <span class="promo-sep">|</span>
+                <span class="promo-item">24/7 LIVE SUPPORT</span>
+                <span class="promo-sep">|</span>
+                <span class="promo-item">WELCOME BONUS: 100% UP TO $2,500 + 150 FREE SPINS</span>
+                <span class="promo-sep">|</span>
+                <span class="promo-item">DAILY CASHBACK UP TO 15%</span>
+                <span class="promo-sep">|</span>
+                <span class="promo-item">165+ PREMIUM SLOT GAMES</span>
+                <span class="promo-sep">|</span>
+                <span class="promo-item">VIP REWARDS PROGRAM</span>
+                <span class="promo-sep">|</span>
+                <span class="promo-item">PROVABLY FAIR ï¿½ CERTIFIED RNG</span>
+                <span class="promo-sep">|</span>
+                <span class="promo-item">INSTANT PLAY ï¿½ NO DOWNLOAD REQUIRED</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Header -->
+    <header>
+        <div class="header-content">
+            <div class="logo-section">
+                <div class="logo-icon">
+                    <div class="matrix-logo-icon">
+                        <span class="mli-char">M</span>
+                        <span class="mli-char">S</span>
+                    </div>
+                </div>
+                <div class="logo-text">
+                    <h1>MATRIX SPINS</h1>
+                    <div class="subtitle">PREMIUM SLOTS</div>
+                </div>
+            </div>
+            <div class="header-search">
+                <svg class="search-icon" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2"><circle cx="8.5" cy="8.5" r="6"/><line x1="13" y1="13" x2="18" y2="18"/></svg>
+                <input type="text" id="headerSearchInput" placeholder="Search games..." oninput="searchGames(this.value)" autocomplete="off" aria-label="Search games">
+                <span class="search-result-count" id="searchResultCount" aria-live="polite" aria-atomic="true"></span>
+            </div>
+            <div class="header-actions">
+                <button class="csb-hamburger-btn" id="csbHamburgerBtn" onclick="toggleSidebar(true)" aria-label="Open navigation menu" title="Menu">
+                    <span class="csb-ham-bar"></span>
+                    <span class="csb-ham-bar"></span>
+                    <span class="csb-ham-bar"></span>
+                </button>
+                <div class="balance-display">
+                    <div class="balance-label">BALANCE</div>
+                    <div class="balance-amount">$<span id="balance">5000.00</span></div>
+                    <div class="wagering-bar-wrap" id="wageringBarWrap" style="display:none">
+                        <div class="wagering-bar-track"><div class="wagering-bar-fill" id="wageringBarFill" style="width:0%"></div></div>
+                        <div class="wagering-bar-label" id="wageringBarLabel">Bonus: $0 (0%)</div>
+                    </div>
+                </div>
+                <!-- XP Display (Pass 3) -->
+                <div class="xp-level-display" id="xpDisplay">
+                    <div class="level-badge" id="levelBadge">1</div>
+                    <div class="xp-info">
+                        <div class="tier-label" id="tierLabel">BRONZE</div>
+                        <div class="xp-bar">
+                            <div class="xp-bar-fill" id="xpBarFill" style="width: 0%"></div>
+                            <div class="xp-bar-text" id="xpBarText">0 / 150 XP</div>
+                        </div>
+                        <div class="vip-mini-bar" id="vipMiniBar" title="VIP Progress">
+                            <div class="vip-mini-fill" id="vipMiniFill" style="width: 0%"></div>
+                            <div class="vip-mini-text" id="vipMiniText"></div>
+                        </div>
+                    </div>
+                </div>
+                <!-- Session Timer Display (Responsible Gambling) -->
+                <div id="sessionTimerDisplay" class="session-timer-display" style="display:none" title="Session time played"></div>
+                <button class="btn btn-deposit" onclick="currentUser ? showWalletModal() : showAuthModal()">
+                    <svg viewBox="0 0 20 20" fill="currentColor" width="14" height="14"><path d="M4 4a2 2 0 00-2 2v1h16V6a2 2 0 00-2-2H4z"/><path fill-rule="evenodd" d="M18 9H2v5a2 2 0 002 2h12a2 2 0 002-2V9zM4 13a1 1 0 011-1h1a1 1 0 110 2H5a1 1 0 01-1-1zm5-1a1 1 0 100 2h1a1 1 0 100-2H9z" clip-rule="evenodd"/></svg>
+                    WALLET</button>
+                <button class="btn btn-user" id="soundToggle" onclick="toggleSound()" title="Toggle sound" aria-label="Toggle sound">
+                    <svg viewBox="0 0 20 20" fill="currentColor" width="16" height="16"><path d="M9.383 3.076A1 1 0 0110 4v12a1 1 0 01-1.707.707L4.586 13H2a1 1 0 01-1-1V8a1 1 0 011-1h2.586l3.707-3.707a1 1 0 011.09-.217zM14.657 2.929a1 1 0 011.414 0A9.972 9.972 0 0119 10a9.972 9.972 0 01-2.929 7.071 1 1 0 01-1.414-1.414A7.971 7.971 0 0017 10c0-2.21-.894-4.208-2.343-5.657a1 1 0 010-1.414zm-2.829 2.828a1 1 0 011.415 0A5.983 5.983 0 0115 10a5.984 5.984 0 01-1.757 4.243 1 1 0 01-1.415-1.415A3.984 3.984 0 0013 10a3.983 3.983 0 00-1.172-2.828 1 1 0 010-1.415z"/></svg>
+                </button>
+                <button class="btn btn-user btn-settings" onclick="openSettingsModal()" title="Settings" aria-label="Settings">
+                    <svg viewBox="0 0 20 20" fill="currentColor" width="16" height="16"><path fill-rule="evenodd" d="M11.49 3.17c-.38-1.56-2.6-1.56-2.98 0a1.532 1.532 0 01-2.286.948c-1.372-.836-2.942.734-2.106 2.106.54.886.061 2.042-.947 2.287-1.561.379-1.561 2.6 0 2.978a1.532 1.532 0 01.947 2.287c-.836 1.372.734 2.942 2.106 2.106a1.532 1.532 0 012.287.947c.379 1.561 2.6 1.561 2.978 0a1.533 1.533 0 012.287-.947c1.372.836 2.942-.734 2.106-2.106a1.533 1.533 0 01.947-2.287c1.561-.379 1.561-2.6 0-2.978a1.532 1.532 0 01-.947-2.287c.836-1.372-.734-2.942-2.106-2.106a1.532 1.532 0 01-2.287-.947zM10 13a3 3 0 100-6 3 3 0 000 6z" clip-rule="evenodd"/></svg>
+                </button>
+                <button class="btn btn-user btn-profile" id="authBtn" onclick="currentUser ? showProfileModal() : showAuthModal()" title="Account">
+                    <span id="userAvatarDisplay" style="display:none;font-size:16px;line-height:1;margin-right:2px"></span>
+                    <svg id="authBtnSvg" viewBox="0 0 20 20" fill="currentColor" width="14" height="14"><path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd"/></svg>
+                    <span id="authBtnLabel">LOGIN</span></button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Casino Sidebar Navigation -->
+    <aside class="casino-sidebar" id="casinoSidebar">
+        <div class="csb-top">
+            <div class="csb-logo">
+                <div class="csb-logo-icon">MS</div>
+                <div class="csb-logo-text"><div>MATRIX</div><div class="csb-logo-sub">SPINS</div></div>
+            </div>
+            <button class="csb-close-btn" id="csbCloseBtn" onclick="toggleSidebar(false)" aria-label="Close menu">&#x2715;</button>
+        </div>
+
+        <div class="csb-nav" id="csbNav">
+            <!-- Lobby -->
+            <div class="csb-section">
+                <button class="csb-item csb-item-lobby" onclick="setFilter('all');closeSidebarMobile()">
+                    <span class="csb-icon">&#x1F3E0;</span><span>Lobby</span>
+                </button>
+                <button class="csb-item" onclick="setFilter('hot');closeSidebarMobile()">
+                    <span class="csb-icon">&#x1F525;</span><span>Hot Games</span>
+                    <span class="csb-badge csb-badge-hot">HOT</span>
+                </button>
+                <button class="csb-item" onclick="setFilter('new');closeSidebarMobile()">
+                    <span class="csb-icon">&#x2728;</span><span>New Games</span>
+                </button>
+                <button class="csb-item" onclick="setFilter('favorites');closeSidebarMobile()">
+                    <span class="csb-icon">&#x2764;&#xFE0F;</span><span>Favourites</span>
+                </button>
+            </div>
+
+
+            <!-- Bonuses -->
+            <div class="csb-section">
+                <div class="csb-section-label">&#x1F381; BONUSES</div>
+                <!-- Removed: Bonus Wheel sidebar button -->
+                    <span class="csb-icon">&#x1F3A1;</span><span>Daily Wheel</span>
+                    <span class="csb-badge csb-badge-new">FREE</span>
+                </button>
+            </div>
+
+            <!-- Account -->
+            <div class="csb-section">
+                <div class="csb-section-label">&#x1F464; MY ACCOUNT</div>
+                <button class="csb-item" onclick="openStatsModal();closeSidebarMobile()">
+                    <span class="csb-icon">&#x1F4CA;</span><span>My Stats</span>
+                </button>
+                <button class="csb-item" onclick="openSettingsModal();closeSidebarMobile()">
+                    <span class="csb-icon">&#x2699;&#xFE0F;</span><span>Settings</span>
+                </button>
+            </div>
+        </div>
+
+        <div class="csb-deposit-cta">
+            <button class="csb-deposit-btn" onclick="typeof showWalletModal==='function'?showWalletModal():null">
+                &#x1F4B3; DEPOSIT NOW
+            </button>
+        </div>
+    </aside>
+    <!-- Sidebar overlay for mobile -->
+    <div class="csb-overlay" id="csbOverlay" onclick="toggleSidebar(false)"></div>
+
+    <!-- Main Content -->
+    <div class="casino-main-wrap" id="casinoMainWrap">
+    <div class="container">
+        <!-- Hero Banner -->
+        <div class="hero-banner">
+            <div class="hero-content">
+                <div class="hero-left">
+                    <div class="hero-tags">
+                        <span class="hero-tag tag-hot">LIMITED OFFER</span>
+                        <span class="hero-tag tag-games">165+ GAMES</span>
+                    </div>
+                    <h2 class="hero-title">
+                        SPIN TO <span class="hero-highlight">WIN BIG</span>
+                    </h2>
+                    <p class="hero-subtitle">
+                        165+ Premium Slot Games ï¿½ Jackpots Up To $25,000 ï¿½ Instant Withdrawals
+                    </p>
+                    <div class="hero-buttons">
+                        <button class="btn btn-play" onclick="playRandomHotGame()">PLAY NOW</button>
+                        <!-- Removed: Bonus Wheel hero button -->
+                        <button class="btn btn-deposit-hero" onclick="typeof showWalletModal==='function'?showWalletModal():null">?? DEPOSIT</button>
+                    </div>
+                </div>
+                <div class="hero-stats">
+                    <div class="stats-label">BIGGEST WIN TODAY</div>
+                    <div class="stats-value">$<span id="biggestWin">0</span></div>
+                    <div class="stats-info"><span id="recentWinsCount">12</span> wins in last hour</div>
+                    <div class="balance-sparkline-wrap" id="balanceSparklineWrap" style="display:none">
+                        <div class="sparkline-label">Balance Trend</div>
+                        <svg id="balanceSparkline" class="balance-sparkline" viewBox="0 0 120 36" preserveAspectRatio="none"></svg>
+                    </div>
+                </div>
+                <div class="hero-jackpot" id="heroJackpotDisplay" style="display:none">
+                    <div class="hero-jackpot-label">?? GRAND JACKPOT</div>
+                    <div class="hero-jackpot-amount" id="heroJackpotAmount">$25,000.00</div>
+                </div>
+            </div>
+        </div>
+
+
+
+        <!-- Live Big Wins Feed -->
+        
+
+        <!-- Win Ticker (Pass 6) -->
+        <div class="win-ticker-bar" id="winTicker">
+            <span class="ticker-live-dot"></span>
+            <div class="ticker-content" id="tickerContent">
+                <span class="ticker-item">Welcome to Matrix Spins!</span>
+            </div>
+        </div>
+
+        <!-- Recently Played Section (hidden until games played) -->
+        <div id="recentlyPlayedSection" style="display:none">
+            <div class="section-header">
+                <h3 class="section-title">
+                    <svg viewBox="0 0 20 20" fill="currentColor" width="18" height="18" style="vertical-align:middle;margin-right:6px"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clip-rule="evenodd"/></svg>
+                    Recently Played
+                </h3>
+            </div>
+            <div class="recently-played-scroll" id="recentlyPlayedGames"></div>
+        </div>
+
+        <!-- Jackpot Ticker -->
+        <div id="jackpotTickerContainer"></div>
+
+        <!-- Top Picks Section -->
+        <div id="featuredSpotlight" class="featured-spotlight"></div>
+        <div class="section-header">
+            <h3 class="section-title">
+                <svg viewBox="0 0 20 20" fill="currentColor" width="16" height="16" style="vertical-align:middle;margin-right:6px;color:var(--rg-yellow-300)"><path d="M10 18c-4.4 0-7-3.1-7-6.8 0-3.3 2.3-5.8 4-7.2.4-.3 1 0 .9.5-.3 1.5.3 3 1.6 3.8.2.1.5 0 .5-.2.2-1.5.9-3.4 2.5-4.8.3-.3.8-.1.9.3.5 1.8 1.8 3.2 2.8 4.4C17.7 10 18 11.6 18 12.5 18 15.5 15.3 18 10 18z"/></svg>
+                Top Picks
+            </h3>
+            <button class="section-see-all" onclick="setFilter('hot');document.getElementById('filterTabs').scrollIntoView({behavior:'smooth'})">See All ?</button>
+        </div>
+        <div class="games-grid" id="hotGames"></div>
+
+        <!-- Search Bar -->
+        <div class="game-search-bar" id="gameSearchBar">
+            <svg class="search-icon" viewBox="0 0 20 20" fill="currentColor" width="18" height="18"><path fill-rule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clip-rule="evenodd"/></svg>
+            <input type="text" class="game-search-input" id="gameSearchInput" placeholder="Search 150+ games..." oninput="filterGamesBySearch(this.value)" aria-label="Search all games">
+            <button class="search-clear-btn" id="searchClearBtn" onclick="clearGameSearch()" style="display:none;">&times;</button>
+            <select class="game-sort-select" id="gameSortSelect" onchange="if(typeof setSortOrder==='function')setSortOrder(this.value)" title="Sort games">
+                <option value="popular">Popular</option>
+                <option value="az">Aï¿½Z</option>
+                <option value="za">Zï¿½A</option>
+                <option value="rtp">Highest RTP</option>
+                <option value="volatile">Most Volatile</option>
+                <option value="chill">Least Volatile</option>
+            </select>
+        </div>
+
+
+
+        
+
+        <!-- Filter Tabs -->
+        <div class="filter-tabs" id="filterTabs">
+            <button class="filter-tab filter-tab-active" data-filter="all" onclick="setFilter('all')">
+                <svg viewBox="0 0 20 20" fill="currentColor" width="16" height="16"><rect x="2" y="2" width="7" height="7" rx="1.5"/><rect x="11" y="2" width="7" height="7" rx="1.5"/><rect x="2" y="11" width="7" height="7" rx="1.5"/><rect x="11" y="11" width="7" height="7" rx="1.5"/></svg>
+                All Games
+            </button>
+            <button class="filter-tab" data-filter="hot" onclick="setFilter('hot')">
+                <svg viewBox="0 0 20 20" fill="currentColor" width="16" height="16"><path d="M10 18c-4.4 0-7-3.1-7-6.8 0-3.3 2.3-5.8 4-7.2.4-.3 1 0 .9.5-.3 1.5.3 3 1.6 3.8.2.1.5 0 .5-.2.2-1.5.9-3.4 2.5-4.8.3-.3.8-.1.9.3.5 1.8 1.8 3.2 2.8 4.4C17.7 10 18 11.6 18 12.5 18 15.5 15.3 18 10 18z"/></svg>
+                Hot
+            </button>
+            <button class="filter-tab" data-filter="new" onclick="setFilter('new')">
+                <svg viewBox="0 0 20 20" fill="currentColor" width="16" height="16"><path d="M10 1l2.5 5.5L18 7.5l-4 4 1 5.5L10 14.5 4.5 17l1-5.5-4-4 5.5-1z"/></svg>
+                New
+            </button>
+            <button class="filter-tab" data-filter="jackpot" onclick="setFilter('jackpot')">
+                <svg viewBox="0 0 20 20" fill="currentColor" width="16" height="16"><path d="M10 1l1.5 3.5h3.7l-3 2.2 1.2 3.5L10 8l-3.4 2.2 1.2-3.5-3-2.2h3.7z"/><path d="M5 13h10v2H5z"/><path d="M6 16h8v2H6z"/></svg>
+                Jackpot
+            </button>
+            <button class="filter-tab" data-filter="adult" onclick="setFilter('adult')" style="color:#ff1744;">
+                <svg viewBox="0 0 20 20" fill="currentColor" width="16" height="16"><circle cx="10" cy="10" r="8" stroke="currentColor" stroke-width="2" fill="none"/><text x="10" y="14" font-size="10" font-weight="bold" text-anchor="middle" fill="currentColor">18</text></svg>
+                18+
+            </button>
+        </div>
+
+        <!-- Provider Filter Chips -->
+        <div class="provider-filter-row" id="providerFilterRow">
+            <button class="provider-chip provider-chip-active" data-provider="all" onclick="setProviderFilter('all')">All Providers</button>
+            <button class="provider-chip" data-provider="NovaSpin Studios" onclick="setProviderFilter('NovaSpin Studios')">NovaSpin</button>
+            <button class="provider-chip" data-provider="Celestial Plays" onclick="setProviderFilter('Celestial Plays')">Celestial</button>
+            <button class="provider-chip" data-provider="IronReel Entertainment" onclick="setProviderFilter('IronReel Entertainment')">IronReel</button>
+            <button class="provider-chip" data-provider="GoldenEdge Gaming" onclick="setProviderFilter('GoldenEdge Gaming')">GoldenEdge</button>
+            <button class="provider-chip" data-provider="VaultX Gaming" onclick="setProviderFilter('VaultX Gaming')">VaultX</button>
+            <button class="provider-chip" data-provider="SolsticeFX" onclick="setProviderFilter('SolsticeFX')">SolsticeFX</button>
+            <button class="provider-chip" data-provider="PhantomWorks" onclick="setProviderFilter('PhantomWorks')">PhantomWorks</button>
+            <button class="provider-chip" data-provider="ArcadeForge" onclick="setProviderFilter('ArcadeForge')">ArcadeForge</button>
+            <button class="provider-chip" data-provider="NeonCore Labs" onclick="setProviderFilter('NeonCore Labs')">NeonCore</button>
+            <button class="provider-chip" data-provider="FrostByte Gaming" onclick="setProviderFilter('FrostByte Gaming')">FrostByte</button>
+            <button class="provider-chip" data-provider="Desert Gold Studios" onclick="setProviderFilter('Desert Gold Studios')">Desert Gold</button>
+            <button class="provider-chip" data-provider="Orient Reels" onclick="setProviderFilter('Orient Reels')">Orient Reels</button>
+        </div>
+
+            <!-- All Slots Section -->
+        <div class="section-header">
+            <h3 class="section-title" id="allSlotsTitle">
+                <svg viewBox="0 0 20 20" fill="currentColor" width="16" height="16" style="vertical-align:middle;margin-right:6px;color:var(--rg-primary-100)"><rect x="2" y="2" width="7" height="7" rx="1.5"/><rect x="11" y="2" width="7" height="7" rx="1.5"/><rect x="2" y="11" width="7" height="7" rx="1.5"/><rect x="11" y="11" width="7" height="7" rx="1.5"/></svg>
+                All Slots
+            </h3>
+            <span class="section-game-count" id="allGamesCount">165 games</span>
+            <span class="games-explored-badge" id="gamesExploredBadge" style="display:none" title="Unique games you've tried"></span>
+            <div class="layout-toggle">
+                <button class="layout-btn layout-btn-active" id="layoutGridBtn" onclick="setLobbyLayout('grid')" title="Grid view">?</button>
+                <button class="layout-btn" id="layoutListBtn" onclick="setLobbyLayout('list')" title="List view">=</button>
+            </div>
+        </div>
+        <div class="games-grid" id="allGames"></div>
+    </div>
+
+    <!-- Casino Footer -->
+    <footer class="casino-footer" id="casinoFooter">
+        <div class="footer-content">
+            <div class="footer-section footer-brand">
+                <div class="footer-logo">MATRIX SPINS</div>
+                <p class="footer-tagline">Premium Online Slots Entertainment</p>
+                <div class="footer-payment-icons">
+                    <span title="Visa">VISA</span>
+                    <span title="Mastercard">MC</span>
+                    <span title="PayID">PayID</span>
+                    <span title="Bank Transfer">Bank</span>
+                    <span title="Bitcoin">BTC</span>
+                    <span title="Ethereum">ETH</span>
+                </div>
+            </div>
+            <div class="footer-section">
+                <h4>Quick Links</h4>
+                <a href="javascript:void(0)" onclick=" showBonusWheelModal()">Bonus Wheel</a>
+                <a href="javascript:void(0)" onclick=" openStatsModal()">My Stats</a>
+                <a href="javascript:void(0)" onclick=" currentUser ? showWalletModal() : showAuthModal()">Deposit</a>
+                <a href="javascript:void(0)" onclick=" if(typeof showVipModal==='function') showVipModal(); else if(typeof showProfileModal==='function'){showProfileModal();setTimeout(function(){if(typeof switchProfileTab==='function')switchProfileTab('loyalty')},300)} else showToast('Log in to view VIP rewards','info')">VIP Club</a>
+            </div>
+            <div class="footer-section">
+                <h4>Support</h4>
+                <a href="javascript:void(0)" onclick=" if(typeof openPlayerChat==='function') openPlayerChat(); else if(typeof PlayerChat!=='undefined'&&typeof PlayerChat.open==='function') PlayerChat.open(); else showToast('Chat loads after login','info')">Live Chat</a>
+                <a href="mailto:support@matrixspins.com">Email Support</a>
+                <a href="javascript:void(0)" onclick=" if(typeof showFaqModal==='function') showFaqModal(); else showHelpFaqInline()">FAQ</a>
+                <a href="javascript:void(0)" onclick=" currentUser ? showProfileModal() : showAuthModal()">My Account</a>
+            </div>
+            <div class="footer-section">
+                <h4>Responsible Gambling</h4>
+                <a href="javascript:void(0)" onclick=" if(currentUser && typeof showProfileModal==='function'){showProfileModal();setTimeout(()=>switchProfileTab('limits'),300)} else showToast('Please log in first','info')">Set Deposit Limits</a>
+                <a href="javascript:void(0)" onclick=" if(currentUser && typeof showProfileModal==='function'){showProfileModal();setTimeout(()=>switchProfileTab('limits'),300)} else showToast('Please log in first','info')">Self-Exclusion</a>
+                <a href="https://www.gambleaware.org" target="_blank" rel="noopener">BeGambleAware.org</a>
+                <a href="https://www.ncpgambling.org" target="_blank" rel="noopener">NCPG Helpline</a>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <div class="footer-legal">
+                <span>18+ | Play Responsibly | Gambling can be addictive</span>
+                <span class="footer-legal-sep">|</span>
+                <a href="javascript:void(0)" onclick=" if(typeof showTermsOfService==='function') showTermsOfService();">Terms of Service</a>
+                <span class="footer-legal-sep">|</span>
+                <a href="javascript:void(0)" onclick=" if(typeof showPrivacyPolicy==='function') showPrivacyPolicy();">Privacy Policy</a>
+                <span class="footer-legal-sep">|</span>
+                <a href="javascript:void(0)" onclick=" if(typeof showMatrixMoneyInfo==='function') showMatrixMoneyInfo();">Matrix Money Info</a>
+            </div>
+            <p class="footer-copyright">&copy; 2024-2026 Matrix Spins Casino. All rights reserved.</p>
+            <p class="footer-disclaimer" style="font-size:10px;color:#475569;max-width:800px;margin:8px auto 0;line-height:1.5;text-align:center;">Matrix Spins is a social casino for entertainment only. No real money gambling. Matrix Money is a virtual currency with no real-world value. All games use a certified provably fair RNG system. Players must be 18+ to play. Need help? Visit <a href="https://www.ncpgambling.org" target="_blank" rel="noopener" style="color:#64748b;">NCPG</a> or <a href="https://www.gamcare.org.uk" target="_blank" rel="noopener" style="color:#64748b;">GamCare</a>.</p>
+        </div>
+    </footer>
+
+    <!-- Mobile Bottom Nav -->
+    <nav class="mobile-bottom-nav" id="mobileBottomNav">
+        <button class="mob-nav-btn" onclick="window.scrollTo({top:0,behavior:'smooth'})">
+            <svg viewBox="0 0 20 20" fill="currentColor" width="20" height="20"><path d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z"/></svg>
+            <span>Home</span>
+        </button>
+        <button class="mob-nav-btn" onclick="setFilter('hot'); document.getElementById('filterTabs').scrollIntoView({behavior:'smooth'})">
+            <svg viewBox="0 0 20 20" fill="currentColor" width="20" height="20"><path d="M10 18c-4.4 0-7-3.1-7-6.8 0-3.3 2.3-5.8 4-7.2.4-.3 1 0 .9.5-.3 1.5.3 3 1.6 3.8.2.1.5 0 .5-.2.2-1.5.9-3.4 2.5-4.8.3-.3.8-.1.9.3.5 1.8 1.8 3.2 2.8 4.4C17.7 10 18 11.6 18 12.5 18 15.5 15.3 18 10 18z"/></svg>
+            <span>Hot</span>
+        </button>
+        <button class="mob-nav-btn mob-nav-play" onclick="playRandomHotGame()">
+            <svg viewBox="0 0 20 20" fill="currentColor" width="22" height="22"><circle cx="10" cy="10" r="9" stroke="rgba(255,255,255,0.3)" stroke-width="1.5" fill="none"/><polygon points="8,6 15,10 8,14"/></svg>
+            <span>Play</span>
+        </button>
+        <button class="mob-nav-btn" onclick="showBonusWheelModal()">
+            <svg viewBox="0 0 20 20" fill="currentColor" width="20" height="20"><path d="M10 1l2.5 5.5L18 7.5l-4 4 1 5.5L10 14.5 4.5 17l1-5.5-4-4 5.5-1z"/></svg>
+            <span>Bonus</span>
+        </button>
+        <button class="mob-nav-btn" onclick="openStatsModal()">
+            <svg viewBox="0 0 20 20" fill="currentColor" width="20" height="20"><path d="M3 3h4v14H3zm5 4h4v10H8zm5-2h4v12h-4z"/></svg>
+            <span>Stats</span>
+        </button>
+    </nav>
+
+    <!-- Slot Machine Modal ï¿½ Pragmatic Play Style -->
+    <div class="modal" id="slotModal">
+        <div class="modal-content slot-modal-fullscreen">
+            <div class="kb-hints" id="kbHints" style="display:none"><kbd>Space</kbd> Spin &nbsp; <kbd>Esc</kbd> Close &nbsp; <kbd>T</kbd> Turbo &nbsp; <kbd>A</kbd> Auto &nbsp; <kbd>?</kbd> Help</div>
+            <div class="cashout-hint" id="cashoutHint" style="display:none">?? You're up! Consider cashing out.</div>
+            <div class="session-summary" id="sessionSummary" style="display:none"></div>
+            <div class="quick-stats-panel" id="quickStatsPanel" style="display:none"></div>
+            <span class="session-rtp-display" id="sessionRtpDisplay" style="display:none">RTP --</span>
+            <span class="session-clock" id="sessionClock" style="display:none">00:00</span>
+            <span class="mega-win-badge" id="megaWinBadge" style="display:none"></span>
+            <span class="last-spin-result" id="lastSpinResult" style="display:none"></span>
+            <span class="provider-badge" id="providerBadge" style="display:none"></span>
+            <div class="spin-rec" id="spinRec" style="display:none"></div>
+            <span class="net-pnl" id="netPnl" style="display:none">+$0.00</span>
+            <span class="session-rating" id="sessionRating" style="display:none"></span>
+            <div class="session-milestone" id="sessionMilestone" style="display:none"></div>
+            <span class="profit-pct-badge" id="profitPctBadge" style="display:none"></span>
+            <div class="payout-log" id="payoutLog" style="display:none"></div>
+            <span class="bonus-trigger-rate" id="bonusTriggerRate" style="display:none"></span>
+            <span class="max-mult-badge" id="maxMultBadge" style="display:none"></span>
+            <span class="win-freq-badge" id="winFreqBadge" style="display:none"></span>
+            <span class="fs-run-summary" id="fsRunSummary" style="display:none"></span>
+            <span class="total-fs-earned" id="totalFsEarned" style="display:none"></span>
+            <span class="total-bet-display" id="totalBetDisplay" style="display:none"></span>
+            <span class="win-breakdown" id="winBreakdown" style="display:none"></span>
+            <span class="lucky-coin-display" id="luckyCoinDisplay" style="display:none"></span>
+            <span class="high-win-badge" id="highWinBadge" style="display:none"></span>
+            <span class="loss-streak-alert" id="lossStreakAlert" style="display:none"></span>
+            <span class="bonus-timer-display" id="bonusTimerDisplay" style="display:none"></span>
+            <span class="peak-balance-display" id="peakBalanceDisplay" style="display:none"></span>
+            <span class="mult-history-display" id="multHistoryDisplay" style="display:none"></span>
+            <span class="bet-efficiency-badge" id="betEfficiencyBadge" style="display:none"></span>
+            <span class="lucky-streak-fire" id="luckyStreakFire" style="display:none"></span>
+            <div class="scatter-hunt-meter" id="scatterHuntMeter" style="display:none"><div class="sht-fill"></div><span class="sht-label">0/3 scatter</span></div>
+            <span class="variance-badge" id="varianceBadge" style="display:none"></span>
+            <span class="spin-cost-total" id="spinCostTotal" style="display:none"></span>
+            <span class="win-trend-badge" id="winTrendBadge" style="display:none"></span>
+            <span class="hot-cold-indicator" id="hotColdIndicator" style="display:none"></span>
+            <span class="win-loss-ratio" id="winLossRatio" style="display:none"></span>
+            <span class="avg-bet-badge" id="avgBetBadge" style="display:none"></span>
+            <span class="session-big-win" id="sessionBigWin" style="display:none"></span>
+            <span class="spin-timer-badge" id="spinTimerBadge" style="display:none"></span>
+            <span class="bal-pct-badge" id="balPctBadge" style="display:none"></span>
+            <span class="session-max-mult" id="sessionMaxMult" style="display:none"></span>
+            <div class="symbol-dist-bar" id="symbolDistBar" style="display:none"></div>
+            <span class="autoplay-pnl-badge" id="autoplayPnlBadge" style="display:none"></span>
+            <span class="feat-freq-badge" id="featFreqBadge" style="display:none"></span>
+            <span class="session-grade" id="sessionGrade" style="display:none"></span>
+            <span class="time-eff-badge" id="timeEffBadge" style="display:none"></span>
+            <span class="outcome-streak-badge" id="outcomeStreakBadge" style="display:none"></span>
+            <span class="rtp-convergence" id="rtpConvergence" style="display:none"></span>
+            <span class="scatter-gap-badge" id="scatterGapBadge" style="display:none"></span>
+            <span class="bonus-round-count" id="bonusRoundCount" style="display:none"></span>
+            <span class="reel-hit-freq" id="reelHitFreq" style="display:none"></span>
+            <span class="sess-start-time" id="sessStartTime" style="display:none"></span>
+            <span class="spin-pace-badge" id="spinPaceBadge" style="display:none"></span>
+            <span class="cumulative-xp-badge" id="cumulativeXpBadge" style="display:none"></span>
+            <div class="result-history-list" id="resultHistoryList" style="display:none"></div>
+            <span class="profit-badge-156" id="profitBadge156" style="display:none"></span>
+            <span class="bet-recommend-badge" id="betRecommendBadge" style="display:none"></span>
+            <span class="near-miss-heat" id="nearMissHeat" style="display:none"></span>
+            <span class="cinematic-count" id="cinematicCount" style="display:none"></span>
+            <span class="sess-compare-badge" id="sessCompareBadge" style="display:none"></span>
+            <span class="spin-dist-badge" id="spinDistBadge" style="display:none"></span>
+            <span class="biggest-loss-badge" id="biggestLossBadge" style="display:none"></span>
+            <span class="win-type-label" id="winTypeLabel" style="display:none"></span>
+            <span class="longest-streak-badge" id="longestStreakBadge" style="display:none"></span>
+            <span class="bet-change-badge" id="betChangeBadge" style="display:none"></span>
+            <span class="lucky-symbol-badge" id="luckySymbolBadge" style="display:none"></span>
+            <span class="return-gap-badge" id="returnGapBadge" style="display:none"></span>
+            <span class="value-ratio-badge" id="valueRatioBadge" style="display:none"></span>
+            <span class="longest-drought-badge" id="longestDroughtBadge" style="display:none"></span>
+            <span class="game-session-count" id="gameSessionCount" style="display:none"></span>
+            <!-- Sprint 171-178 badges -->
+            <span class="spin-speed-badge" id="spinSpeedBadge" style="display:none"></span>
+            <span class="hot-cold-meter" id="hotColdMeter" style="display:none"></span>
+            <span class="profit-per-min-badge" id="profitPerMinBadge" style="display:none"></span>
+            <span class="balance-watermark-badge" id="balanceWatermarkBadge" style="display:none"></span>
+            <span class="near-miss-badge" id="nearMissBadge" style="display:none"></span>
+            <span class="best-mult-badge" id="bestMultBadge" style="display:none"></span>
+            <span class="session-timer-badge" id="sessionTimerBadge" style="display:none">0:00</span>
+            <span class="volatility-badge" id="volatilityBadge" style="display:none"></span>
+            <!-- Sprint 179-186 badges -->
+            <span class="avg-bet-badge" id="avgBetBadge" style="display:none"></span>
+            <span class="win-streak-fire" id="winStreakFire" style="display:none"></span>
+            <span class="cooldown-badge" id="cooldownBadge" style="display:none"></span>
+            <span class="loss-recovery-badge" id="lossRecoveryBadge" style="display:none"></span>
+            <span class="symbol-freq-badge" id="symbolFreqBadge" style="display:none"></span>
+            <span class="bankroll-health-badge" id="bankrollHealthBadge" style="display:none"></span>
+            <span class="risk-score-badge" id="riskScoreBadge" style="display:none"></span>
+            <span class="game-rating-widget" id="gameRatingWidget" style="display:none"></span>
+            <!-- Sprint 187-194 badges -->
+            <span class="lucky-spin-badge" id="luckySpinBadge" style="display:none"></span>
+            <span class="payout-hist-bar" id="payoutHistBar" style="display:none"></span>
+            <span class="pl-sparkline" id="plSparkline" style="display:none"></span>
+            <span class="bet-tier-progress" id="betTierProgress" style="display:none"></span>
+            <span class="auto-spin-badge" id="autoSpinBadge" style="display:none"></span>
+            <span class="win-combo-badge" id="winComboBadge" style="display:none"></span>
+            <span class="bonus-trigger-badge" id="bonusTriggerBadge" style="display:none"></span>
+            <span class="game-switch-badge" id="gameSwitchBadge" style="display:none"></span>
+            <!-- Sprint 195-202 badges -->
+            <span class="wager-milestone-badge" id="wagerMilestoneBadge" style="display:none"></span>
+            <span class="loss-comfort-badge" id="lossComfortBadge" style="display:none"></span>
+            <span class="win-loss-ratio-badge" id="winLossRatioBadge" style="display:none"></span>
+            <span class="time-luck-badge" id="timeLuckBadge" style="display:none"></span>
+            <span class="avg-payout-badge" id="avgPayoutBadge" style="display:none"></span>
+            <span class="balance-traj-badge" id="balanceTrajBadge" style="display:none"></span>
+            <span class="biggest-win-session-badge" id="biggestWinSessionBadge" style="display:none"></span>
+            <span class="spin-budget-badge" id="spinBudgetBadge" style="display:none"></span>
+            <!-- Sprint 203-210 badges -->
+            <span class="double-up-badge" id="doubleUpBadge" style="display:none"></span>
+            <span class="provider-loyalty-badge" id="providerLoyaltyBadge" style="display:none"></span>
+            <span class="scatter-countdown-badge" id="scatterCountdownBadge" style="display:none"></span>
+            <span class="bet-efficiency-badge" id="betEfficiencyBadge" style="display:none"></span>
+            <span class="spin-rhythm-badge" id="spinRhythmBadge" style="display:none"></span>
+            <span class="max-exposure-badge" id="maxExposureBadge" style="display:none"></span>
+            <span class="game-diversity-badge" id="gameDiversityBadge" style="display:none"></span>
+            <!-- Sprint 211-218 badges -->
+            <span class="bet-history-feed" id="betHistoryFeed" style="display:none"></span>
+            <span class="symbol-pay-peek" id="symbolPayPeek" style="display:none"></span>
+            <span class="mini-jackpot-badge" id="miniJackpotBadge" style="display:none"></span>
+            <span class="keyboard-hint-badge" id="keyboardHintBadge" style="display:none"></span>
+            <span class="reel-heat-badge" id="reelHeatBadge" style="display:none"></span>
+            <span class="personal-best-badge" id="personalBestBadge" style="display:none"></span>
+            <span class="grind-meter-badge" id="grindMeterBadge" style="display:none"></span>
+            <span class="lucky-number-badge" id="luckyNumberBadge" style="display:none"></span>
+            <!-- Sprint 219-226 badges -->
+            <span class="momentum-meter" id="momentumMeter" style="display:none"></span>
+            <span class="payline-badge" id="paylineBadge" style="display:none"></span>
+            <span class="bet-ladder-badge" id="betLadderBadge" style="display:none"></span>
+            <span class="cold-game-alert" id="coldGameAlert" style="display:none"></span>
+            <span class="win-dist-badge" id="winDistBadge" style="display:none"></span>
+            <span class="session-roi-badge" id="sessionROIBadge" style="display:none"></span>
+            <span class="endurance-badge" id="enduranceBadge" style="display:none"></span>
+            <span class="autoplay-badge" id="autoplayBadge" style="display:none"></span>
+            <span class="sound-toggle-badge stb-on" id="soundToggleBadge" style="display:none"></span>
+            <span class="turbo-badge" id="turboBadge" style="display:none"></span>
+            <span class="bookmark-badge" id="bookmarkBadge" style="display:none"></span>
+            <span class="spin-countdown-badge" id="spinCountdownBadge" style="display:none"></span>
+            <span class="game-comp-badge" id="gameCompBadge" style="display:none"></span>
+            <div class="bet-preset-container" id="betPresetContainer"></div>
+            <div class="autoplay-controls" id="autoplayControls">
+                <button class="autoplay-btn" id="autoplayBtn" onclick="_toggleAutoplay(10)">Auto</button>
+                <button class="turbo-btn" id="turboBtn" onclick="_toggleTurbo()">Turbo</button>
+                <button class="sound-btn" id="soundBtn" onclick="_toggleSound()">Sound</button>
+                <button class="bookmark-btn" id="bookmarkSaveBtn" onclick="_saveSessionBookmark()">Bookmark</button>
+            </div>
+            <div class="achievement-toast" id="achievementToast" style="display:none"></div>
+            <span class="rtp-display-badge" id="rtpDisplayBadge" style="display:none"></span>
+            <span class="rg-timer-badge" id="rgTimerBadge" style="display:none"></span>
+            <span class="loss-limit-badge" id="lossLimitBadge" style="display:none"></span>
+            <span class="deposit-limit-badge" id="depositLimitBadge" style="display:none"></span>
+            <span class="fair-hash-badge" id="fairHashBadge" style="display:none"></span>
+            <div class="responsible-gambling-controls" id="rgControls">
+                <button class="rg-btn" onclick="_exportBetHistory()">Export History</button>
+                <button class="rg-btn rg-btn-warn" onclick="if(confirm('Activate 24h self-exclusion? You won\'t be able to play for 24 hours.')){_activateSelfExclusion(24)}">Cool-Off 24h</button>
+            </div>
+            <div class="rg-overlay" id="rgOverlay" style="display:none">
+                <div class="rg-popup">
+                    <div class="rg-popup-icon">&#9888;</div>
+                    <p id="rgPopupMessage">Please take a break.</p>
+                    <button class="rg-popup-btn" onclick="_closeRGPopup()">I Understand</button>
+                    <p class="rg-popup-help">If you need help, visit <a href="https://www.begambleaware.org" target="_blank">BeGambleAware.org</a> or call 1-800-522-4700</p>
+                </div>
+            </div>
+            <div class="rg-overlay" id="selfExclusionOverlay" style="display:none">
+                <div class="rg-popup self-exclusion-popup">
+                    <div class="rg-popup-icon">&#128274;</div>
+                    <p id="selfExclusionMessage">Self-exclusion active.</p>
+                    <p class="rg-popup-help">Taking a break is a sign of strength. Visit <a href="https://www.begambleaware.org" target="_blank">BeGambleAware.org</a> for support.</p>
+                </div>
+            </div>
+            <span class="house-edge-badge" id="houseEdgeBadge" style="display:none"></span>
+            <span class="jackpot-badge" id="jackpotBadge" style="display:none"></span>
+            <span class="loyalty-badge" id="loyaltyBadge" style="display:none"></span>
+            <span class="daily-bonus-badge" id="dailyBonusBadge" style="display:none"></span>
+            <span class="referral-badge" id="referralBadge" style="display:none"></span>
+            <span class="vip-badge" id="vipBadge" style="display:none"></span>
+            <div class="analytics-controls">
+                <button class="analytics-btn" onclick="_openAnalyticsDashboard()">Analytics</button>
+                <button class="analytics-btn" onclick="if(_loyalty245.points>=100){_redeemLoyaltyPoints(100)}else{alert('Need 100+ LP to redeem')}">Redeem LP</button>
+            </div>
+            <div class="analytics-dashboard-overlay" id="analyticsDashboard" style="display:none">
+                <div class="analytics-dashboard-popup" id="analyticsDashboardContent"></div>
+            </div>
+            <span class="currency-badge" id="currencyBadge" style="display:none" onclick="var codes=['USD','EUR','GBP'];var i=(codes.indexOf(_currency253.code)+1)%3;_switchCurrency(codes[i])"></span>
+            <span class="player-count-badge" id="playerCountBadge" style="display:none"></span>
+            <div class="big-wins-feed" id="bigWinsFeed" style="display:none"></div>
+            <div class="mult-graph-container">
+                <canvas id="multGraphCanvas" width="160" height="40"></canvas>
+            </div>
+            <div class="game-search-bar" id="gameSearchBar">
+                <input type="text" id="gameSearchInput" placeholder="Search games..." class="game-search-input" />
+                <div class="game-filter-btns">
+                    <button class="filter-btn" onclick="_filterByCategory('all')">All</button>
+                    <button class="filter-btn" onclick="_filterByCategory('favorites')">Favorites</button>
+                    <button class="filter-btn" onclick="_filterByCategory('slots')">Slots</button>
+                    <button class="filter-btn" onclick="_filterByCategory('table')">Table</button>
+                </div>
+            </div>
+            <div class="age-verify-overlay" id="ageVerifyOverlay" style="display:none">
+                <div class="age-verify-popup">
+                    <h2>Age Verification Required</h2>
+                    <p>You must be 18 years or older to access this site. Gambling can be addictive. Please play responsibly.</p>
+                    <div class="age-verify-btns">
+                        <button class="age-btn age-btn-yes" onclick="_confirmAge()">I am 18 or older</button>
+                        <button class="age-btn age-btn-no" onclick="_denyAge()">I am under 18</button>
+                    </div>
+                    <p class="age-verify-help"><a href="https://www.begambleaware.org" target="_blank">BeGambleAware.org</a></p>
+                </div>
+            </div>
+            <div class="terms-overlay" id="termsOverlay" style="display:none">
+                <div class="terms-popup">
+                    <h2>Terms & Conditions</h2>
+                    <div class="terms-content">
+                        <p>By using Matrix Spins, you agree to the following:</p>
+                        <p>1. You are at least 18 years of age.</p>
+                        <p>2. Gambling involves risk. Only wager what you can afford to lose.</p>
+                        <p>3. The house maintains a mathematical edge on all games.</p>
+                        <p>4. Results are determined by a certified random number generator.</p>
+                        <p>5. Self-exclusion and responsible gambling tools are available.</p>
+                        <p>6. We comply with applicable gambling regulations.</p>
+                    </div>
+                    <button class="terms-accept-btn" onclick="_acceptTerms()">I Accept the Terms & Conditions</button>
+                </div>
+            </div>
+            <div class="next-level-xp-bar"
+            <span class="offline-badge" id="offlineBadge" style="display:none"></span>
+            <span class="battery-badge" id="batteryBadge" style="display:none"></span>
+            <button class="pwa-install-btn" id="pwaInstallBtn" style="display:none" onclick="_installPWA()">Install App</button>
+            <div class="mobile-bottom-nav" id="mobileBottomNav" style="display:none">
+                <button class="mob-nav-btn" onclick="document.getElementById('lobbySection').scrollIntoView()">Lobby</button>
+                <button class="mob-nav-btn" onclick="_openAnalyticsDashboard()">Stats</button>
+                <button class="mob-nav-btn" onclick="_exportBetHistory()">History</button>
+                <button class="mob-nav-btn" onclick="_saveSessionBookmark()">Save</button>
+            </div>
+            <div class="preloader-overlay" id="preloaderOverlay">
+                <div class="preloader-spinner"></div>
+                <p class="preloader-text">Loading Matrix Spins...</p>
+            </div>
+            <div class="promo-banner" id="promoBanner" style="display:none"></div>
+            <span class="wagering-badge" id="wageringBadge" style="display:none"></span>
+            <span class="cashback-badge" id="cashbackBadge" style="display:none" onclick="_claimCashback()"></span>
+            <span class="tournament-badge" id="tournamentBadge" style="display:none" onclick="_showLeaderboard()"></span>
+            <div class="revenue-controls">
+                <button class="rev-btn rev-btn-deposit" onclick="_openCashier('deposit')">Deposit</button>
+                <button class="rev-btn rev-btn-withdraw" onclick="_openCashier('withdraw')">Withdraw</button>
+                <button class="rev-btn rev-btn-wheel" id="bonusWheelBtn" style="display:none" onclick="_spinBonusWheel()">Daily Wheel</button>
+                <button class="rev-btn rev-btn-lb" onclick="_showLeaderboard()">Leaderboard</button>
+                <button class="rev-btn rev-btn-cashback" onclick="_claimCashback()">Claim Cashback</button>
+            </div>
+            <div class="cashier-overlay" id="cashierOverlay" style="display:none">
+                <div class="cashier-popup">
+                    <button class="cashier-close" onclick="_closeCashier()">&times;</button>
+                    <h2>Cashier</h2>
+                    <div id="cashierContent"></div>
+                    <div id="cryptoDepositInfo" style="display:none"></div>
+                </div>
+            </div>
+            <div class="leaderboard-overlay" id="leaderboardOverlay" style="display:none">
+                <div class="leaderboard-popup" id="leaderboardContent"></div>
+            </div>
+            <div class="email-optin-overlay" id="emailOptInOverlay" style="display:none">
+                <div class="email-optin-popup">
+                    <h3>Get Exclusive Bonuses!</h3>
+                    <p>Subscribe and get <strong>$25 Free</strong> plus weekly promotions.</p>
+                    <input type="email" id="emailOptInInput" class="email-optin-input" placeholder="your@email.com" />
+                    <button class="email-optin-btn" onclick="_submitEmailOptIn()">Subscribe & Get $25</button>
+                    <button class="email-optin-dismiss" onclick="_dismissEmailOptIn()">No thanks</button>
+                </div>
+            </div>
+            <span class="kyc-badge" id="kycBadge" style="display:none" onclick="_openKYCPanel()"></span>
+            <span class="geo-badge" id="geoBadge" style="display:none"></span>
+            <span class="twofa-badge" id="twofaBadge" style="display:none" onclick="_toggle2FA()"></span>
+            <span class="rate-limit-badge" id="rateLimitBadge" style="display:none"></span>
+            <div id="passwordStrengthMeter" style="display:none"></div>
+            <div class="security-controls">
+                <button class="sec-btn" onclick="_openKYCPanel()">Verify ID</button>
+                <button class="sec-btn" onclick="_toggle2FA()">2FA Setup</button>
+                <button class="sec-btn" onclick="_exportAuditLog()">Audit Log</button>
+            </div>
+            <div class="kyc-overlay"
+            <span class="bonus-buy-badge" id="bonusBuyBadge" style="display:none" onclick="_buyBonus()"></span>
+            <span class="scatter-pay-badge" id="scatterPayBadge" style="display:none"></span>
+            <span class="wild-exp-badge" id="wildExpBadge" style="display:none"></span>
+            <div class="lobby-category-bar" id="lobbyCategoryBar" style="display:none"></div>
+            <div class="game-controls-bar">
+                <button class="gc-btn" onclick="_buyBonus()">Buy Bonus</button>
+                <button class="gc-btn" onclick="_showPaytable()">Paytable</button>
+            </div>
+            <div class="gamble-offer" id="gambleOffer" style="display:none"></div>
+            <div class="celebration-container" id="celebrationContainer" style="display:none"></div>
+            <div class="paytable-overlay" id="paytableOverlay" style="display:none">
+                <div class="paytable-popup" id="paytableContent"></div>
+            </div>
+            <a href="/admin.html" class="admin-panel-link" id="adminPanelLink" style="display:none">Admin Panel</a>
+            <div class="operator-footer">
+                <p class="operator-license">Licensed under Cura\u00E7ao eGaming | License #365/JAZ | \u00A9 2024-2026 Matrix Spins</p>
+                <p class="operator-rng">Games certified by iTech Labs | RNG Certificate #AU-2024-0892</p>
+                <div class="operator-badges">
+                    <span class="op-badge">18+</span>
+                    <span class="op-badge">SSL Secured</span>
+                    <span class="op-badge">PCI DSS</span>
+                    <span class="op-badge">Fair Play</span>
+                    <span class="op-badge">Responsible Gaming</span>
+                </div>
+                <div class="operator-links">
+                    <a href="/responsible-gambling.html">Responsible Gambling</a> |
+                    <a href="/provably-fair.html">Provably Fair</a> |
+                    <a href="#" onclick="_showPaytable();return false">Paytable</a> |
+                    <a href="#" onclick="_openKYCPanel();return false">Verify Account</a>
+                </div>
+            </div> id="kycOverlay" style="display:none">
+                <div class="kyc-popup" id="kycContent"></div>
+            </div> id="nextLevelXpBar" style="display:none"><div class="xp-bar-fill"></div><span class="xp-bar-label"></span></div>
+            <span class="game-play-count" id="gamePlayCount" style="display:none"></span>
+
+            <!-- Feature Popup Overlay -->
+            <div id="slotFeaturePopup" class="feature-popup-overlay" style="display:none;">
+                <div class="feature-popup">
+                    <div class="feature-popup-header">
+                        <div class="feature-popup-logo" id="featurePopupLogo"></div>
+                        <h2 class="feature-popup-title" id="featurePopupTitle">Game Name</h2>
+                        <div class="feature-popup-provider" id="featurePopupProvider">Royal Games</div>
+                    </div>
+                    <div class="feature-popup-image" id="featurePopupImage">
+                        <!-- SDXL background image or fallback gradient -->
+                    </div>
+                    <div class="feature-popup-features" id="featurePopupFeatures">
+                        <!-- Dynamically built feature cards -->
+                    </div>
+                    <div class="feature-popup-stats" id="featurePopupStats">
+                        <div class="feature-stat">
+                            <div class="feature-stat-label">RTP</div>
+                            <div class="feature-stat-value" id="featureStatRTP">96.5%</div>
+                        </div>
+                        <div class="feature-stat">
+                            <div class="feature-stat-label">VOLATILITY</div>
+                            <div class="feature-stat-value" id="featureStatVolatility">High</div>
+                        </div>
+                        <div class="feature-stat">
+                            <div class="feature-stat-label">MAX WIN</div>
+                            <div class="feature-stat-value" id="featureStatMaxWin">150x</div>
+                        </div>
+                    </div>
+                    <button class="feature-popup-play-btn" id="featurePopupPlayBtn" onclick="dismissFeaturePopup()">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="white"><path d="M8 5v14l11-7z"/></svg>
+                        PLAY NOW
+                    </button>
+                </div>
+            </div>
+
+            <!-- Top Bar: Game Info + Close -->
+            <div class="demo-banner" id="demoBanner" style="display:none">
+                ?? DEMO MODE ï¿½ <span id="demoSpinsLeft">3</span> spins remaining
+            </div>
+            <div class="slot-top-bar">
+                <button class="slot-close-btn" onclick="closeSlot()" title="Back to lobby">&times;</button>
+                <div class="slot-top-info">
+                    <h2 class="slot-title" id="slotGameName">Sugar Rush 1000</h2>
+                    <div class="slot-provider" id="slotProvider">Royal Games</div>
+                    <div class="game-tag tag-jackpot" id="slotGameTag" style="display:none;">JACKPOT</div>
+                </div>
+                <div class="slot-top-right">
+                    <button class="buy-bonus-btn" id="buyBonusBtn" onclick="buyBonus()" style="display:none;" title="Buy Free Spins">
+                        <span class="buy-bonus-icon">?</span>
+                        <span class="buy-bonus-text">BUY BONUS</span>
+                        <span class="buy-bonus-cost" id="buyBonusCost">50x</span>
+                    </button>
+                    <button class="slot-info-btn" onclick="togglePaytable()" title="Game Info">
+                        <svg viewBox="0 0 20 20" fill="currentColor" width="18" height="18"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"/></svg>
+                    </button>
+                    <div class="slot-payout">
+                        <div class="payout-label">MAX WIN</div>
+                        <div class="payout-value"><span id="slotMaxPayout">150</span>x</div>
+                    </div>
+                    <div class="session-timer" id="sessionTimer" style="display:none">
+                        <div class="payout-label">SESSION</div>
+                        <div class="payout-value session-timer-val" id="sessionTimerVal">0m</div>
+                    </div>
+                    <button class="slot-budget-btn" id="budgetBtn" onclick="if(typeof openBankrollManager==='function')openBankrollManager()" title="Set session budget">?? Budget</button>
+                    <button class="slot-goal-btn" id="goalBtn" onclick="if(typeof openWinGoal==='function')openWinGoal()" title="Set win goal">?? Goal</button>
+                    <button class="slot-ambient-btn" id="ambientToggleBtn" onclick="if(typeof toggleAmbientSlot==='function')toggleAmbientSlot()" title="Toggle ambient music">??</button>
+                    <div class="vm-meter" id="vmMeter" style="display:none"><span class="vm-seg" id="vmS1"></span><span class="vm-seg" id="vmS2"></span><span class="vm-seg" id="vmS3"></span><span class="vm-seg" id="vmS4"></span><span class="vm-seg" id="vmS5"></span></div>
+                    <div class="rtp-gauge" id="rtpGauge" style="display:none" title="Theoretical RTP"><span id="rtpGaugeLabel">96%</span></div>
+                    <svg class="balance-sparkline" id="balanceSparkline" width="60" height="20" style="display:none"><polyline id="bsLine" points="" fill="none" stroke-width="1.5" stroke-linecap="round"/></svg>
+                    <span class="st-timer" id="stTimer" style="display:none">0:00</span>
+                    <button class="gs-nav-btn" id="gsNavPrev" onclick="if(typeof _gsNavTo==='function')_gsNavTo(-1)" title="Previous game">&lsaquo;</button><button class="gs-nav-btn" id="gsNavNext" onclick="if(typeof _gsNavTo==='function')_gsNavTo(1)" title="Next game">&rsaquo;</button>
+                    <input type="range" class="qv-slider" id="qvSlider" min="0" max="100" value="50" oninput="if(typeof _qvSliderInput==='function')_qvSliderInput(this.value)" title="Volume">
+                    <!-- Cinematic: Stats Report Button -->
+                    <button class="cine-stats-btn" id="statsReportBtn" onclick="if(typeof openStatsPanel==='function')openStatsPanel()" title="Session Stats (S)">&#x1F4CA;</button>
+                </div>
+            </div>
+
+            <div class="quick-stats-tooltip" id="quickStatsTooltip" style="display:none"></div>
+
+            <div class="quick-switch-strip" id="quickSwitchStrip" style="display:none">
+                <div class="quick-switch-pills" id="quickSwitchPills"></div>
+            </div>
+
+            <!-- Paytable / Game Info Panel (slide-in from right) -->
+            <div class="paytable-panel" id="paytablePanel">
+                <div class="paytable-header">
+                    <h3 class="paytable-title">Game Info</h3>
+                    <button class="paytable-close" onclick="togglePaytable()">&times;</button>
+                </div>
+                <div class="paytable-body" id="paytableBody">
+                    <!-- Populated by JS -->
+                </div>
+            </div>
+
+            <!-- Bonus Info Banner -->
+            <div class="slot-bonus-info" id="slotBonusInfo" style="display: none;"></div>
+
+            <!-- Live Jackpot Banner (shown only for jackpot-eligible games) -->
+            <div class="slot-jackpot-banner" id="slotJackpotBanner" style="display:none;">
+                <div class="jackpot-banner-inner">
+                    <svg class="jackpot-banner-icon" viewBox="0 0 16 16" fill="currentColor" width="16" height="16"><path d="M8 1l1.5 3.5h3.5l-2.8 2 1 3.5L8 8.2 4.8 10l1-3.5L3 4.5h3.5z"/></svg>
+                    <span class="jackpot-banner-label">JACKPOT</span>
+                    <span class="jackpot-banner-value" id="slotJackpotValue">$1,247,836</span>
+                    <svg class="jackpot-banner-icon" viewBox="0 0 16 16" fill="currentColor" width="16" height="16"><path d="M8 1l1.5 3.5h3.5l-2.8 2 1 3.5L8 8.2 4.8 10l1-3.5L3 4.5h3.5z"/></svg>
+                </div>
+            </div>
+
+            <!-- Main Reel Area -->
+            <div class="slot-reel-area">
+                <div class="reels-container">
+                    <div class="reels" id="reels">
+                        <!-- Dynamic reel grid built by JS based on game config -->
+                    </div>
+                </div>
+                <div id="winAnimation"></div>
+                <!-- Cinematic: Spin toast feed -->
+                <div id="toastContainer" class="toast-container"></div>
+            </div>
+            <!-- Win/Lose message display ï¿½ lives BELOW reels, not overlaid on them -->
+            <div id="messageDisplay"></div>
+
+            <div class="last-win-preview" id="lastWinPreview" style="display:none">
+                <span class="lwp-label">Last Win:</span>
+                <span class="lwp-symbols" id="lwpSymbols"></span>
+            </div>
+
+            <div class="ls-tracker" id="lsTracker" style="display:none">Lucky: <span id="lsSymbol"></span></div>
+
+            <div class="slot-quickfire-strip" id="slotQuickfireStrip" style="display:none">
+                <div class="streak-indicator" id="streakIndicator">
+                    <span class="streak-dots" id="streakDots"></span>
+                    <span class="streak-label" id="streakLabel"></span>
+                </div>
+                <div class="bet-presets" id="betPresets">
+                    <button class="bet-preset-btn" data-amount="1" onclick="setBetPresetAmount(1)">$1</button>
+                    <button class="bet-preset-btn" data-amount="5" onclick="setBetPresetAmount(5)">$5</button>
+                    <button class="bet-preset-btn" data-amount="25" onclick="setBetPresetAmount(25)">$25</button>
+                    <button class="bet-preset-btn" data-amount="100" onclick="setBetPresetAmount(100)">$100</button>
+                </div>
+            </div>
+
+            <!-- Cinematic: Stats Report Panel (full overlay) -->
+            <div id="statsReportPanel" class="stats-report-panel" style="display:none">
+                <div class="srp-header">
+                    <div class="srp-title">&#x1F4CA; Session Report</div>
+                    <div class="srp-subtitle" id="srpSubtitle">Live Stats</div>
+                    <button class="srp-close-btn" onclick="if(typeof closeStatsPanel==='function')closeStatsPanel()">&#x2715;</button>
+                </div>
+                <div class="srp-body" id="srpBody"></div>
+            </div>
+            <!-- Pragmatic Play Bottom Bar -->
+            <div class="slot-bottom-bar">
+                <!-- Left: Balance -->
+                <div class="slot-bar-section slot-bar-balance">
+                    <div class="slot-bar-label">BALANCE</div>
+                    <div class="slot-bar-value">$<span id="slotBalance">5000.00</span></div>
+                    <span class="slot-net-display" id="slotNetDisplay" style="display:none"></span>
+                    <span class="spin-counter" id="spinCounter" style="display:none"></span>
+                    <div class="recent-outcomes" id="recentOutcomes" style="display:none"></div>
+                    <span class="session-hilo" id="sessionHiLo" style="display:none"></span>
+                    <span class="balance-buffer" id="balBuffer" style="display:none"></span>
+                    <div class="loss-limit-bar" id="lossLimitBar" style="display:none">
+                        <span class="ll-label">Daily Budget:</span>
+                        <span class="ll-remaining" id="llRemaining">$500</span>
+                        <div class="ll-track"><div class="ll-fill" id="llFill" style="width:0%"></div></div>
+                    </div>
+                <div class="profit-target" id="profitTarget" style="display:none"></div>
+                    <div class="symbol-heat" id="symbolHeat" style="display:none"></div>
+                    <span class="loss-recovery" id="lossRecovery" style="display:none"></span>
+                    <span class="scatter-alert" id="scatterAlert" style="display:none"></span>
+                    <span class="scatter-collect" id="scatterCollect" style="display:none"></span>
+                    <span class="near-miss-count" id="nearMissCount" style="display:none"></span>
+                    <div class="bal-alert-display" id="balAlertDisplay" style="display:none"></div>
+                    <span class="session-xp-earned" id="sessionXpEarned" style="display:none"></span>
+                    <span class="hot-symbol" id="hotSymbol" style="display:none"></span>
+                    <span class="spin-rate-display" id="spinRateDisplay" style="display:none"></span>
+                    <span class="cascade-depth" id="cascadeDepth" style="display:none"></span>
+                    <span class="autoplay-countdown" id="autoplayCountdown" style="display:none"></span>
+                    <span class="dead-spin-counter" id="deadSpinCounter" style="display:none"></span>
+                    <span class="turbo-badge" id="turboBadge" style="display:none">&#x26A1; TURBO</span>
+                    <div class="jackpot-progress" id="jackpotProgress" style="display:none"><div class="jp-fill"></div></div>
+                    <span class="auto-speed-badge" id="autoSpeedBadge" style="display:none"></span>
+                    <div class="scatter-progress" id="scatterProgress" style="display:none"></div>
+                    <div class="feature-active-display" id="featureActiveDisplay" style="display:none"></div>
+                    <input type="range" class="volume-slider-micro" id="volumeSliderMicro" min="0" max="100" step="5" oninput="_handleVolumeSliderMicro(this.value)" style="display:none">
+                    <span class="spin-sparkline" id="spinSparkline" style="display:none"></span>
+                    <span class="wr-display" id="wrDisplay" style="display:none"></span>
+                    <svg class="pnl-sparkline" id="pnlSparkline" width="80" height="22" viewBox="0 0 80 22" style="display:none"><polyline id="pnlLine" points="" fill="none" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/></svg>
+                    <div class="win-goal-tracker" id="winGoalTracker" style="display:none">
+                        <div class="wgt-label">GOAL $<span id="wgtTarget">0</span></div>
+                        <div class="wgt-progress-wrap"><div class="wgt-progress-bar" id="wgtProgressBar" style="width:0%"></div></div>
+                        <div class="wgt-pct" id="wgtPct">0%</div>
+                        <button class="wgt-dismiss" onclick="if(typeof dismissWinGoal==='function')dismissWinGoal()">?</button>
+                    </div>
+                </div>
+
+                <!-- Bet Controls -->
+                <div class="slot-bar-section slot-bar-bet">
+                    <button class="slot-bet-btn" id="betDownBtn" onclick="adjustBet(-1)">&#8722;</button>
+                    <div class="slot-bet-display">
+                        <div class="slot-bar-label">BET</div>
+                        <div class="slot-bar-value">$<span id="betAmount">50</span></div>
+                    </div>
+                    <button class="slot-bet-btn" id="betUpBtn" onclick="adjustBet(1)">&#43;</button>
+                    <button class="slot-bet-btn bet-x2-btn" onclick="doubleBet()" title="Double bet">2ï¿½</button>
+                    <button class="slot-bet-btn bet-half-btn" onclick="halveBet()" title="Halve bet">ï¿½</button>
+                </div>
+                <span class="bet-indicator" id="betIndicator" style="display:none">Med</span>
+                <div class="bet-tier-badge" id="betTierBadge" style="display:none">
+                    <span class="bt-emoji" id="btEmoji"></span>
+                    <span class="bt-label" id="btLabel"></span>
+                </div>
+                <svg class="bh-chart" id="bhChart" width="60" height="20" style="display:none"><polyline id="bhLine" points="" fill="none" stroke-width="1.5" stroke-linecap="round"/></svg>
+                <span class="ab-display" id="abDisplay" style="display:none"></span>
+                <div class="bankroll-bar-row" id="bankrollBarRow" style="display:none">
+                    <div class="bankroll-bar-wrap"><div class="bankroll-bar" id="bankrollBar" style="width:0%"></div></div>
+                    <span class="bankroll-bar-label" id="bankrollBarLabel">Budget: $0 remaining</span>
+                    <button class="bankroll-dismiss" onclick="if(typeof dismissBankroll==='function')dismissBankroll()">?</button>
+                </div>
+                <input type="range" class="bet-range" id="betRange" min="50" max="5000" step="50" value="50" style="display:none;">
+                <div class="quick-bet-presets" id="quickBetPresets" style="display:none">
+                    <button onclick="if(typeof _quickBet==='function')_quickBet(0)" title="Minimum bet">Min</button>
+                    <button onclick="if(typeof _quickBet==='function')_quickBet(0.5)" title="Half max bet">ï¿½</button>
+                    <button onclick="if(typeof _quickBet==='function')_quickBet(1)" title="Maximum bet">Max</button>
+                </div>
+                <button class="bet-lock-btn" id="betLockBtn" onclick="if(typeof _toggleBetLock==='function')_toggleBetLock()" title="Lock/unlock bet">&#x1F513;</button>
+                <button class="auto-stop-win-btn" id="autoStopWinBtn" onclick="_toggleAutoStopWin()">&#x1F6D1; Win: OFF</button>
+                <span id="minBet" style="display:none;">50</span>
+                <span class="bet-steps" id="betSteps" style="display:none"></span>
+                <span id="maxBet" style="display:none;">5000</span>
+                <button class="ambient-toggle-btn" id="ambientToggleBtn2" onclick="if(typeof _toggleAmbientInSlot==='function')_toggleAmbientInSlot()" title="Toggle ambient music">&#x1F3B5;</button>
+
+                <button class="fs-toggle-btn" id="fsToggleBtn" onclick="if(typeof toggleFullscreen==='function')toggleFullscreen()" title="Toggle fullscreen">&#x26F6;</button>
+                <!-- Turbo Toggle -->
+                <button class="slot-turbo-btn" id="turboBtn" onclick="toggleTurbo()" title="Turbo Spin">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M13 2L3 14h9l-1 10 10-12h-9l1-10z"/></svg>
+                </button>
+
+                <div class="hc-badge" id="hcBadge" style="display:none"></div>
+
+                <div class="spin-counter-badge" id="spinCounterBadge">0</div>
+                <div class="power-meter" id="powerMeter" style="display:none"><div class="pm-fill"></div></div>
+                <div class="game-tag-chips" id="gameTagChips" style="display:none"></div>
+
+                <div class="ap-progress" id="apProgress" style="display:none"></div>
+                <span class="feature-count-badge" id="featureCountBadge" style="display:none"></span>
+                <span class="fs-remaining-badge" id="fsRemainingBadge" style="display:none"></span>
+
+                <div class="win-streak-badge" id="winStreakBadge" style="display:none">
+                    ?? <span id="winStreakCount">0</span>
+                </div>
+
+                <span class="loss-streak-badge" id="lossStreakBadge" style="display:none"></span>
+
+                <!-- SPIN Button (center, large) ï¿½ Pragmatic Play style -->
+                <button class="slot-spin-btn" id="spinBtn" onclick="spin()">
+                    <svg class="spin-btn-icon" width="24" height="24" viewBox="0 0 24 24" fill="white">
+                        <path d="M8 5v14l11-7z"/>
+                    </svg>
+                    <span class="spin-btn-text" style="display:none;">SPIN</span>
+                </button>
+
+                <!-- Autoplay Button -->
+                <button class="slot-auto-btn" id="autoSpinBtn" onclick="openAutoplayModal()">
+                    <span class="auto-btn-icon">&#x21bb;</span>
+                    <span class="auto-btn-label">AUTO</span>
+                </button>
+
+                <!-- Right: Total Win -->
+                <div class="slot-bar-section slot-bar-win">
+                    <div class="slot-bar-label">WIN</div>
+                    <div class="slot-bar-value slot-win-value" id="slotWinDisplay">$0.00</div>
+                    <span class="max-win-seen" id="maxWinSeen" style="display:none"></span>
+                </div>
+
+                <!-- Gamble Button (shown after wins) -->
+                <button class="slot-gamble-btn" id="gambleBtn" onclick="openGamble()" style="display:none;" title="Gamble your win!">
+                    <span>??</span> GAMBLE
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- --- Gamble Overlay --- -->
+    <div class="gamble-overlay" id="gambleOverlay" style="display:none;">
+        <div class="gamble-modal">
+            <div class="gamble-header">
+                <div class="gamble-title">?? GAMBLE</div>
+                <div class="gamble-subtitle">Double or Nothing ï¿½ Round <span id="gambleRound">1</span>/5</div>
+            </div>
+            <div class="gamble-win-display">
+                <div class="gamble-win-label">CURRENT WIN</div>
+                <div class="gamble-win-amount" id="gambleWinAmount">$0</div>
+            </div>
+            <div class="gamble-card-area">
+                <div class="gamble-card" id="gambleCard">
+                    <div class="gamble-card-inner" id="gambleCardInner">
+                        <div class="gamble-card-back">
+                            <div class="card-back-pattern"></div>
+                        </div>
+                        <div class="gamble-card-front" id="gambleCardFront">
+                            <div class="card-suit" id="gambleCardSuit">?</div>
+                            <div class="card-color-label" id="gambleColorLabel">BLACK</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="gamble-result" id="gambleResult" style="display:none;"></div>
+            <div class="gamble-choices" id="gambleChoices">
+                <button class="gamble-choice-btn gamble-red" onclick="makeGambleChoice('red')">
+                    <span class="choice-suit">?</span>
+                    <span>RED</span>
+                </button>
+                <div class="gamble-or">OR</div>
+                <button class="gamble-choice-btn gamble-black" onclick="makeGambleChoice('black')">
+                    <span class="choice-suit">?</span>
+                    <span>BLACK</span>
+                </button>
+            </div>
+            <div class="gamble-actions">
+                <button class="gamble-collect-btn" onclick="collectGamble()">
+                    ?? COLLECT $<span id="gambleCollectAmt">0</span>
+                </button>
+                <button class="gamble-close-btn" onclick="closeGamble(false)">? CLOSE</button>
+            </div>
+            <div class="gamble-history" id="gambleHistory"></div>
+        </div>
+    </div>
+
+    <!-- --- Big Win Celebration Overlay --- -->
+    <div class="bigwin-overlay" id="bigWinOverlay" style="display:none;">
+        <div class="bigwin-modal">
+            <div class="bigwin-coins" id="bigWinCoins"></div>
+            <div class="bigwin-label" id="bigWinLabel">BIG WIN!</div>
+            <div class="bigwin-amount" id="bigWinAmount">$0</div>
+            <div class="bigwin-multiplier" id="bigWinMultiplier">ï¿½0</div>
+            <button class="bigwin-collect" onclick="closeBigWin()">COLLECT!</button>
+        </div>
+    </div>
+
+    <!-- --- Buy Bonus Confirmation Modal --- -->
+    <div class="buybonus-overlay" id="buyBonusOverlay" style="display:none;">
+        <div class="buybonus-modal">
+            <div class="buybonus-header">
+                <span class="buybonus-icon">?</span>
+                <div class="buybonus-title">BUY FREE SPINS</div>
+            </div>
+            <div class="buybonus-info">
+                <div class="buybonus-game" id="buyBonusGameName">Game Name</div>
+                <div class="buybonus-spins" id="buyBonusSpins">10 FREE SPINS</div>
+                <div class="buybonus-desc" id="buyBonusDesc">Instantly triggers the bonus round!</div>
+            </div>
+            <div class="buybonus-cost-display">
+                <div class="buybonus-cost-label">COST</div>
+                <div class="buybonus-cost-value" id="buyBonusCostValue">$500</div>
+            </div>
+            <div class="buybonus-actions">
+                <button class="buybonus-confirm" onclick="confirmBuyBonus()">? BUY NOW</button>
+                <button class="buybonus-cancel" onclick="closeBuyBonus()">CANCEL</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- --- Enhanced Autoplay Modal --- -->
+    <div class="autoplay-modal-overlay" id="autoplayOverlay" style="display:none;">
+        <div class="autoplay-modal">
+            <div class="autoplay-modal-header">
+                <span>??</span> AUTO PLAY
+                <button class="autoplay-modal-close" onclick="closeAutoplayModal()">&times;</button>
+            </div>
+            <div class="autoplay-modal-body">
+                <div class="autoplay-section">
+                    <div class="autoplay-section-label">Number of Spins</div>
+                    <div class="autoplay-spin-options" id="autoplaySpinOptions">
+                        <button class="autoplay-spin-btn" data-count="10" onclick="selectAutoplayCount(10)">10</button>
+                        <button class="autoplay-spin-btn" data-count="25" onclick="selectAutoplayCount(25)">25</button>
+                        <button class="autoplay-spin-btn autoplay-spin-selected" data-count="50" onclick="selectAutoplayCount(50)">50</button>
+                        <button class="autoplay-spin-btn" data-count="100" onclick="selectAutoplayCount(100)">100</button>
+                        <button class="autoplay-spin-btn" data-count="250" onclick="selectAutoplayCount(250)">250</button>
+                        <button class="autoplay-spin-btn" data-count="999" onclick="selectAutoplayCount(999)">8</button>
+                    </div>
+                </div>
+                <div class="autoplay-section">
+                    <div class="autoplay-section-label">Stop if single win exceeds</div>
+                    <div class="autoplay-limit-row">
+                        <button class="autoplay-limit-btn" onclick="adjustAutoplayLimit('win', -1)">-</button>
+                        <div class="autoplay-limit-value" id="autoplayWinLimit">$0 (No Limit)</div>
+                        <button class="autoplay-limit-btn" onclick="adjustAutoplayLimit('win', 1)">+</button>
+                    </div>
+                </div>
+                <div class="autoplay-section">
+                    <div class="autoplay-section-label">Stop if balance decreases by</div>
+                    <div class="autoplay-limit-row">
+                        <button class="autoplay-limit-btn" onclick="adjustAutoplayLimit('loss', -1)">-</button>
+                        <div class="autoplay-limit-value" id="autoplayLossLimit">$0 (No Limit)</div>
+                        <button class="autoplay-limit-btn" onclick="adjustAutoplayLimit('loss', 1)">+</button>
+                    </div>
+                </div>
+                <div class="autoplay-section">
+                    <div class="autoplay-section-label">Stop on</div>
+                    <div class="autoplay-toggle-row">
+                        <label class="autoplay-toggle">
+                            <input type="checkbox" id="autoplayStopOnBonus" checked>
+                            <span class="toggle-slider"></span>
+                            <span class="toggle-label">Free Spins Triggered</span>
+                        </label>
+                        <label class="autoplay-toggle">
+                            <input type="checkbox" id="autoplayStopOnBigWin">
+                            <span class="toggle-slider"></span>
+                            <span class="toggle-label">Big Win (10x+ bet)</span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+            <button class="autoplay-start-btn" onclick="startEnhancedAutoplay()">
+                START AUTOPLAY
+            </button>
+        </div>
+    </div>
+
+    <!-- Stats Modal -->
+    <div class="modal" id="statsModal">
+        <div class="modal-content">
+            <button class="btn back-btn" onclick="closeStatsModal()">Back</button>
+            <div class="stats-panel">
+                <h3>Player Statistics</h3>
+                <div class="stats-subtitle">Session values are saved in localStorage and restored on reload.</div>
+                <div class="stats-grid">
+                    <div class="stats-card">
+                        <div class="stats-card-label">TOTAL SPINS</div>
+                        <div class="stats-card-value" id="statsTotalSpins">0</div>
+                    </div>
+                    <div class="stats-card">
+                        <div class="stats-card-label">TOTAL WAGERED</div>
+                        <div class="stats-card-value" id="statsTotalWagered">$0.00</div>
+                    </div>
+                    <div class="stats-card">
+                        <div class="stats-card-label">TOTAL WON</div>
+                        <div class="stats-card-value" id="statsTotalWon">$0.00</div>
+                    </div>
+                    <div class="stats-card">
+                        <div class="stats-card-label">BIGGEST WIN</div>
+                        <div class="stats-card-value" id="statsBiggestWin">$0.00</div>
+                    </div>
+                    <div class="stats-card">
+                        <div class="stats-card-label">NET PROFIT</div>
+                        <div class="stats-card-value" id="statsNet">$0.00</div>
+                    </div>
+                </div>
+                <h4 style="margin-bottom: 10px;">Top Played Games</h4>
+                <ul class="stats-games-list" id="statsGamesList">
+                    <li class="stats-empty">No games played yet.</li>
+                </ul>
+
+                <h4 style="margin-bottom: 10px; margin-top: 24px;">Achievements</h4>
+                <div id="achievementsList" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 12px; margin-bottom: 16px;">
+                    <!-- Achievements will be inserted here -->
+                </div>
+
+                <h4 style="margin-bottom: 10px; margin-top: 24px;">Daily Challenges</h4>
+                <div class="ch-tabs" id="challengesTabs">
+                    <button class="ch-tab ch-tab-active" data-tab="daily">Today</button>
+                    <button class="ch-tab" data-tab="weekly">Weekly</button>
+                </div>
+                <div id="dailyChallengesPanel"></div>
+                <div id="weeklyChallengesPanel" style="display:none"></div>
+
+                <div class="qa-tools" id="qaTools" style="display:none">
+                    <div class="qa-tools-header">
+                        <div class="qa-tools-title">QA Tools</div>
+                        <button class="qa-toggle-btn" id="qaToggleBtn" onclick="toggleQaTools()">Show</button>
+                    </div>
+                    <div class="qa-tools-body" id="qaToolsBody">
+                        <div class="qa-row">
+                            <div class="qa-label">Seeded RNG</div>
+                            <div class="qa-row-group">
+                                <input class="qa-input" id="qaSeedInput" type="text" placeholder="e.g. qa-seed-001">
+                                <button class="qa-btn" onclick="applyQaSeed()">Apply Seed</button>
+                                <button class="qa-btn" onclick="clearQaSeed()">Clear Seed</button>
+                            </div>
+                        </div>
+                        <div class="qa-row">
+                            <div class="qa-label">Queue Outcome</div>
+                            <div class="qa-row-group">
+                                <select class="qa-select" id="qaOutcomeType">
+                                    <option value="triple">Triple Win</option>
+                                    <option value="double">Double Win</option>
+                                    <option value="loss">Loss</option>
+                                </select>
+                                <select class="qa-select" id="qaOutcomeSymbol">
+                                    <option value="">Auto Symbol</option>
+                                </select>
+                                <button class="qa-btn" onclick="queueQaOutcome(false)">Queue</button>
+                                <button class="qa-btn qa-btn-primary" onclick="queueQaOutcome(true)">Queue + Spin</button>
+                            </div>
+                        </div>
+                        <div class="qa-row">
+                            <div class="qa-label">Exact Reels (comma-separated)</div>
+                            <div class="qa-row-group">
+                                <input class="qa-input" id="qaExactReels" type="text" placeholder="diamond,cherry,seven">
+                                <button class="qa-btn" onclick="queueQaExactReels(false)">Queue</button>
+                                <button class="qa-btn qa-btn-primary" onclick="queueQaExactReels(true)">Queue + Spin</button>
+                            </div>
+                        </div>
+                        <div class="qa-row-group">
+                            <button class="qa-btn qa-btn-danger" onclick="resetQaSession()">Reset Balance + Stats</button>
+                            <button class="qa-btn" onclick="clearQaQueue()">Clear Queue</button>
+                        </div>
+                        <div class="qa-row-group qa-reset-options">
+                            <label class="qa-check">
+                                <input type="checkbox" id="qaResetClearSeed">
+                                <span>Clear deterministic seed on reset</span>
+                            </label>
+                        </div>
+                        <div class="qa-state-line" id="qaStateLine">seed=off | queued=0</div>
+                        <div class="qa-status" id="qaStatusLine"></div>
+                    </div>
+                </div>
+
+                <div class="shortcut-hint">Shortcuts: press <strong>F</strong> for fullscreen, <strong>Esc</strong> to close active modal.</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Daily Bonus Modal (Pass 4) -->
+    <div class="modal" id="dailyBonusModal" onclick="if(event.target===this)closeDailyBonusModal()">
+        <div class="modal-content">
+            <div class="daily-bonus-panel" style="position:relative;">
+                <button onclick="closeDailyBonusModal()" style="position:absolute;top:10px;right:10px;background:none;border:none;color:#94a3b8;font-size:24px;cursor:pointer;padding:4px 8px;z-index:2;" aria-label="Close">&times;</button>
+                <h3>Daily Bonus</h3>
+                <div class="streak-counter">Current Streak: <span id="streakCount">0</span> days</div>
+                <div class="daily-calendar" id="dailyCalendar"></div>
+                <button class="btn daily-claim-btn" id="dailyClaimBtn" onclick="claimDailyBonus()">CLAIM BONUS</button>
+                <button class="btn daily-skip-btn" onclick="closeDailyBonusModal()">SKIP</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bonus Wheel Modal (Pass 5) -->
+    <div class="modal" id="bonusWheelModal">
+        <div class="modal-content">
+            <div class="wheel-panel">
+                <h3>Bonus Wheel</h3>
+                <div class="wheel-wrapper">
+                    <div class="wheel-pointer"></div>
+                    <canvas id="wheelCanvas" width="300" height="300"></canvas>
+                </div>
+                <button class="btn wheel-spin-btn" id="wheelSpinBtn" onclick="spinBonusWheel()">SPIN THE WHEEL</button>
+                <button class="btn daily-skip-btn" onclick="closeBonusWheelModal()">CLOSE</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scratch Card Modal -->
+    
+
+    <!-- Login Calendar Modal (Sprint 30) -->
+    
+
+    <!-- Promo Code Modal (Sprint 31) -->
+    
+
+    <!-- Player Card Modal (Sprint 32) -->
+    
+
+    <!-- XP Shop Modal (Sprint 27) -->
+    
+
+    <!-- Mystery Box Modal (Sprint 27) -->
+    
+
+    <!-- Level Milestone Reward Modal -->
+    
+
+    <!-- Deposit Modal -->
+    <div class="modal" id="depositModal">
+        <div class="modal-content" style="display:flex; align-items:center; justify-content:center; min-height:60vh; position:relative;">
+            <button class="modal-close-btn" onclick="closeDepositModal()" aria-label="Close" style="position:absolute;top:12px;right:14px;background:none;border:none;color:#888;font-size:24px;cursor:pointer;z-index:2;">&times;</button>
+            <div class="deposit-panel">
+                <h3>Add Funds</h3>
+                <p class="deposit-subtitle">Select an amount to add to your balance</p>
+                <div class="deposit-grid">
+                    <button class="deposit-option" onclick="confirmDeposit(500)">
+                        <span class="deposit-amount">$500</span>
+                        <span class="deposit-label">Starter</span>
+                    </button>
+                    <button class="deposit-option" onclick="confirmDeposit(1000)">
+                        <span class="deposit-amount">$1,000</span>
+                        <span class="deposit-label">Popular</span>
+                    </button>
+                    <button class="deposit-option deposit-option-featured" onclick="confirmDeposit(2500)">
+                        <span class="deposit-badge">BEST VALUE</span>
+                        <span class="deposit-amount">$2,500</span>
+                        <span class="deposit-label">High Roller</span>
+                    </button>
+                    <button class="deposit-option" onclick="confirmDeposit(5000)">
+                        <span class="deposit-amount">$5,000</span>
+                        <span class="deposit-label">VIP</span>
+                    </button>
+                </div>
+                <button class="btn daily-skip-btn" onclick="closeDepositModal()">CANCEL</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Settings Modal -->
+    <div class="modal" id="settingsModal">
+        <div class="modal-content" style="display:flex; align-items:center; justify-content:center; min-height:60vh;">
+            <div class="settings-panel">
+                <button class="auth-close-btn" onclick="closeSettingsModal()" title="Close">&times;</button>
+                <h3 class="settings-title">
+                    <svg viewBox="0 0 20 20" fill="currentColor" width="20" height="20" style="vertical-align:middle;margin-right:8px">
+                        <path fill-rule="evenodd" d="M11.49 3.17c-.38-1.56-2.6-1.56-2.98 0a1.532 1.532 0 01-2.286.948c-1.372-.836-2.942.734-2.106 2.106.54.886.061 2.042-.947 2.287-1.561.379-1.561 2.6 0 2.978a1.532 1.532 0 01.947 2.287c-.836 1.372.734 2.942 2.106 2.106a1.532 1.532 0 012.287.947c.379 1.561 2.6 1.561 2.978 0a1.533 1.533 0 012.287-.947c1.372.836 2.942-.734 2.106-2.106a1.533 1.533 0 01.947-2.287c1.561-.379 1.561-2.6 0-2.978a1.532 1.532 0 01-.947-2.287c.836-1.372-.734-2.942-2.106-2.106a1.532 1.532 0 01-2.287-.947zM10 13a3 3 0 100-6 3 3 0 000 6z" clip-rule="evenodd"/>
+                    </svg>
+                    Settings
+                </h3>
+
+                <!-- Sound Settings -->
+                <div class="settings-section">
+                    <div class="settings-section-title">
+                        <svg viewBox="0 0 20 20" fill="currentColor" width="16" height="16"><path fill-rule="evenodd" d="M9.383 3.076A1 1 0 0110 4v12a1 1 0 01-1.707.707L4.586 13H2a1 1 0 01-1-1V8a1 1 0 011-1h2.586l3.707-3.707a1 1 0 011.09-.217zM14.657 2.929a1 1 0 011.414 0A9.972 9.972 0 0119 10a9.972 9.972 0 01-2.929 7.071 1 1 0 01-1.414-1.414A7.971 7.971 0 0017 10c0-2.21-.894-4.208-2.343-5.657a1 1 0 010-1.414zm-2.829 2.828a1 1 0 011.415 0A5.983 5.983 0 0115 10a5.984 5.984 0 01-1.757 4.243 1 1 0 01-1.415-1.415A3.984 3.984 0 0013 10a3.983 3.983 0 00-1.172-2.828 1 1 0 010-1.415z" clip-rule="evenodd"/></svg>
+                        Audio
+                    </div>
+                    <div class="settings-row">
+                        <label class="settings-label">Sound Effects</label>
+                        <label class="settings-toggle">
+                            <input type="checkbox" id="settingSoundEnabled" onchange="settingsToggleSound(this.checked)">
+                            <span class="settings-toggle-slider"></span>
+                        </label>
+                    </div>
+                    <div class="settings-row">
+                        <label class="settings-label">Volume</label>
+                        <div class="settings-slider-wrap">
+                            <input type="range" class="settings-slider" id="settingVolume" min="0" max="100" step="5" value="50" oninput="settingsSetVolume(this.value)">
+                            <span class="settings-slider-value" id="settingVolumeLabel">50%</span>
+                        </div>
+                    </div>
+                    <div class="settings-row">
+                        <label class="settings-label">Ambient Music</label>
+                        <label class="settings-toggle">
+                            <input type="checkbox" id="settingAmbientMusic" checked onchange="settingsToggleAmbientMusic(this.checked)">
+                            <span class="settings-toggle-slider"></span>
+                        </label>
+                    </div>
+                    <div class="settings-row">
+                        <label class="settings-label">Win Sounds</label>
+                        <label class="settings-toggle">
+                            <input type="checkbox" id="settingWinSounds" checked onchange="settingsToggleWinSounds(this.checked)">
+                            <span class="settings-toggle-slider"></span>
+                        </label>
+                    </div>
+                    <div class="settings-row">
+                        <label class="settings-label">UI Sounds</label>
+                        <label class="settings-toggle">
+                            <input type="checkbox" id="settingUiSounds" checked onchange="settingsToggleUiSounds(this.checked)">
+                            <span class="settings-toggle-slider"></span>
+                        </label>
+                    </div>
+                    <div class="settings-row">
+                        <label class="settings-label">Sound Theme</label>
+                        <select class="settings-select" id="settingSoundTheme" onchange="settingsSetSoundTheme(this.value)">
+                            <option value="auto">Auto (Provider)</option>
+                            <option value="classic">Classic Casino</option>
+                            <option value="tropical">Tropical</option>
+                            <option value="cyberpunk">Cyberpunk</option>
+                            <option value="zen">Zen</option>
+                            <option value="off">Off</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Animation Quality -->
+                <div class="settings-section">
+                    <div class="settings-section-title">
+                        <svg viewBox="0 0 20 20" fill="currentColor" width="16" height="16"><path d="M5 2a1 1 0 011 1v1h1a1 1 0 010 2H6v1a1 1 0 01-2 0V6H3a1 1 0 010-2h1V3a1 1 0 011-1zm0 10a1 1 0 011 1v1h1a1 1 0 110 2H6v1a1 1 0 11-2 0v-1H3a1 1 0 110-2h1v-1a1 1 0 011-1zm7-2a1 1 0 01.707.293l.707.707.707-.707a1 1 0 111.414 1.414l-.707.707.707.707a1 1 0 01-1.414 1.414L13 13.414l-.707.707a1 1 0 01-1.414-1.414l.707-.707-.707-.707A1 1 0 0112 10z"/></svg>
+                        Animation Quality
+                    </div>
+                    <div class="settings-row">
+                        <label class="settings-label">Quality Preset</label>
+                        <select id="settingAnimationQuality" class="settings-select" onchange="settingsSetAnimationQuality(this.value)">
+                            <option value="ultra">Ultra (All Effects)</option>
+                            <option value="high">High (Reduced Particles)</option>
+                            <option value="medium">Medium (No 3D/Shake)</option>
+                            <option value="low">Low (Static Only)</option>
+                            <option value="off">Off (Accessibility)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Visual Settings -->
+                <div class="settings-section">
+                    <div class="settings-section-title">
+                        <svg viewBox="0 0 20 20" fill="currentColor" width="16" height="16"><path d="M10 12a2 2 0 100-4 2 2 0 000 4z"/><path fill-rule="evenodd" d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clip-rule="evenodd"/></svg>
+                        Visuals
+                    </div>
+                    <div class="settings-row">
+                        <label class="settings-label">Particle Effects</label>
+                        <label class="settings-toggle">
+                            <input type="checkbox" id="settingParticles" checked onchange="settingsToggleParticles(this.checked)">
+                            <span class="settings-toggle-slider"></span>
+                        </label>
+                    </div>
+                    <div class="settings-row">
+                        <label class="settings-label">Win Animations</label>
+                        <label class="settings-toggle">
+                            <input type="checkbox" id="settingAnimations" checked onchange="settingsToggleAnimations(this.checked)">
+                            <span class="settings-toggle-slider"></span>
+                        </label>
+                    </div>
+                    <div class="settings-row">
+                        <label class="settings-label">Confetti on Big Wins</label>
+                        <label class="settings-toggle">
+                            <input type="checkbox" id="settingConfetti" checked onchange="settingsToggleConfetti(this.checked)">
+                            <span class="settings-toggle-slider"></span>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Gameplay Settings -->
+                <div class="settings-section">
+                    <div class="settings-section-title">
+                        <svg viewBox="0 0 20 20" fill="currentColor" width="16" height="16"><path d="M6 6V5a3 3 0 013-3h2a3 3 0 013 3v1h2a2 2 0 012 2v3.57A22.952 22.952 0 0110 13a22.95 22.95 0 01-8-1.43V8a2 2 0 012-2h2zm2-1a1 1 0 011-1h2a1 1 0 011 1v1H8V5zm1 5a1 1 0 011-1h.01a1 1 0 110 2H10a1 1 0 01-1-1z"/><path d="M2 13.692V16a2 2 0 002 2h12a2 2 0 002-2v-2.308A24.974 24.974 0 0110 15c-2.796 0-5.487-.46-8-1.308z"/></svg>
+                        Gameplay
+                    </div>
+                    <div class="settings-row">
+                        <label class="settings-label">Turbo Mode Default</label>
+                        <label class="settings-toggle">
+                            <input type="checkbox" id="settingTurbo" onchange="settingsToggleTurbo(this.checked)">
+                            <span class="settings-toggle-slider"></span>
+                        </label>
+                    </div>
+                    <div class="settings-row">
+                        <label class="settings-label">Auto-Spin Speed</label>
+                        <div class="settings-slider-wrap">
+                            <input type="range" class="settings-slider" id="settingAutoSpeed" min="500" max="3000" step="250" value="1500" oninput="settingsSetAutoSpeed(this.value)">
+                            <span class="settings-slider-value" id="settingAutoSpeedLabel">1.5s</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Responsible Gambling -->
+                <div class="settings-section">
+                    <div class="settings-section-title">
+                        <svg viewBox="0 0 20 20" fill="currentColor" width="16" height="16"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clip-rule="evenodd"/></svg>
+                        Responsible Gambling
+                    </div>
+                    <div class="settings-row">
+                        <label class="settings-label" for="settingSessionLimit">Session Time Limit</label>
+                        <select class="settings-select" id="settingSessionLimit" onchange="settingsSetSessionLimit(this.value)">
+                            <option value="0">None</option>
+                            <option value="30">30 minutes</option>
+                            <option value="60">1 hour</option>
+                            <option value="120">2 hours</option>
+                            <option value="240">4 hours</option>
+                        </select>
+                    </div>
+                    <div class="settings-row">
+                        <span class="settings-label" id="settingSessionStatus" style="font-size:0.78em;color:#94a3b8"></span>
+                    </div>
+                </div>
+
+                <!-- Data Management -->
+                <div class="settings-section settings-section-danger">
+                    <div class="settings-section-title">
+                        <svg viewBox="0 0 20 20" fill="currentColor" width="16" height="16"><path fill-rule="evenodd" d="M4 4a2 2 0 00-2 2v4a2 2 0 002 2V6h10a2 2 0 00-2-2H4zm2 6a2 2 0 012-2h8a2 2 0 012 2v4a2 2 0 01-2 2H8a2 2 0 01-2-2v-4zm6 4a2 2 0 100-4 2 2 0 000 4z" clip-rule="evenodd"/></svg>
+                        Data
+                    </div>
+                    <div class="settings-row">
+                        <label class="settings-label">Reset all settings to defaults</label>
+                        <button class="settings-reset-btn" onclick="settingsResetAll()">RESET</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Container (Pass 1) -->
+    <div id="toastContainer" class="toast-container"></div>
+
+    <!-- Wallet / Cashier Modal -->
+    <div class="modal" id="walletModal">
+        <div class="modal-content wallet-modal-content">
+            <div class="wallet-modal">
+                <button class="modal-close-btn" onclick="hideWalletModal()" title="Close">&times;</button>
+                <div class="wallet-header">
+                    <h2 class="wallet-title">
+                        <svg viewBox="0 0 24 24" fill="currentColor" width="24" height="24"><path d="M21 18v1c0 1.1-.9 2-2 2H5c-1.11 0-2-.9-2-2V5c0-1.1.89-2 2-2h14c1.1 0 2 .9 2 2v1h-9c-1.11 0-2 .9-2 2v8c0 1.1.89 2 2 2h9zm-9-2h10V8H12v8zm4-2.5c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5z"/></svg>
+                        CASHIER
+                    </h2>
+                    <div class="wallet-balance-display">
+                        <span class="wallet-balance-label">Available Balance</span>
+                        <span class="wallet-balance-amount">$<span id="walletBalance">0.00</span></span>
+                    </div>
+                    <div class="wallet-bonus-display" id="walletBonusDisplay" style="display:none">
+                        <span class="wallet-bonus-label">Bonus Balance</span>
+                        <span class="wallet-bonus-amount">$<span id="walletBonusBalance">0.00</span></span>
+                        <div class="wallet-wagering-info" id="walletWageringInfo"></div>
+                    </div>
+                </div>
+                <div class="wallet-tabs">
+                    <button class="wallet-tab active" onclick="switchWalletTab('deposit')">DEPOSIT</button>
+                    <button class="wallet-tab" onclick="switchWalletTab('withdraw')">WITHDRAW</button>
+                    <button class="wallet-tab" onclick="switchWalletTab('methods')">METHODS</button>
+                    <button class="wallet-tab" onclick="switchWalletTab('history')">HISTORY</button>
+                </div>
+                <div id="walletContent" class="wallet-content">
+                    <!-- Dynamic content rendered by ui-wallet.js -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Profile modal injected dynamically by js/ui-profile.js -->
+
+    <!-- Auth Modal -->
+    <div class="modal" id="authModal">
+        <div class="modal-content" style="display:flex; align-items:center; justify-content:center; min-height:60vh;">
+            <div class="auth-modal">
+                <button class="auth-close-btn" onclick="hideAuthModal()" title="Close">&times;</button>
+                <div class="auth-modal-header">
+                    <div class="auth-logo">
+                        <span class="auth-logo-crown" style="font-family:monospace;color:#00ff41;font-size:1.4rem;letter-spacing:-1px">&#x5B;M&#x5D;</span>
+                        <span>MATRIX SPINS</span>
+                    </div>
+                    <div class="auth-tabs">
+                        <button class="auth-tab active" id="tabLogin" onclick="switchAuthTab('login')">LOGIN</button>
+                        <button class="auth-tab" id="tabRegister" onclick="switchAuthTab('register')">REGISTER</button>
+                    </div>
+                </div>
+
+                <div id="authError" class="auth-error" role="alert" aria-live="assertive"></div>
+
+                <!-- Login Form -->
+                <div id="loginForm" class="auth-form">
+                    <div class="auth-field">
+                        <label>Username or Email</label>
+                        <input type="text" id="loginUsername" placeholder="Enter username or email" autocomplete="username">
+                    </div>
+                    <div class="auth-field">
+                        <label>Password</label>
+                        <input type="password" id="loginPassword" placeholder="Enter password" autocomplete="current-password">
+                    </div>
+                    <button class="auth-submit" id="loginBtn" onclick="handleLogin()">SIGN IN</button>
+                    <div class="auth-forgot-link">
+                        <a href="javascript:void(0)" onclick=" showForgotPassword()">Forgot password?</a>
+                    </div>
+                </div>
+
+                <!-- Forgot Password Form -->
+                <div id="forgotPasswordForm" class="auth-form" style="display:none;">
+                    <p class="auth-forgot-desc">Enter your email and we'll send you a reset link.</p>
+                    <div class="auth-field">
+                        <label>Email Address</label>
+                        <input type="email" id="forgotEmail" placeholder="Enter your registered email" autocomplete="email">
+                    </div>
+                    <button class="auth-submit" onclick="handleForgotPassword()">SEND RESET LINK</button>
+                    <div class="auth-forgot-link">
+                        <a href="javascript:void(0)" onclick=" showForgotPassword(false)">Back to login</a>
+                    </div>
+                </div>
+
+                <!-- Reset Password Form (shown when ?resetToken= is in URL) -->
+                <div id="resetPasswordForm" class="auth-form" style="display:none;">
+                    <p class="auth-forgot-desc">Enter your new password below.</p>
+                    <div class="auth-field">
+                        <label>New Password</label>
+                        <input type="password" id="resetNewPassword" placeholder="Min 6 characters" autocomplete="new-password">
+                    </div>
+                    <div class="auth-field">
+                        <label>Confirm New Password</label>
+                        <input type="password" id="resetConfirmPassword" placeholder="Confirm new password" autocomplete="new-password">
+                    </div>
+                    <button class="auth-submit" onclick="handleResetPassword()">RESET PASSWORD</button>
+                    <div class="auth-forgot-link">
+                        <a href="javascript:void(0)" onclick=" showResetPassword(false)">Back to login</a>
+                    </div>
+                </div>
+
+                <!-- Register Form -->
+                <div id="registerForm" class="auth-form" style="display:none;">
+                    <div style="background:linear-gradient(135deg,rgba(251,191,36,0.15),rgba(255,215,0,0.08));border:1px solid rgba(251,191,36,0.4);border-radius:10px;padding:12px 14px;margin-bottom:16px;text-align:center;">
+                        <div style="font-size:15px;font-weight:800;color:#fbbf24;margin-bottom:4px;letter-spacing:0.5px;">JOIN & GET UP TO $2,500 BONUS</div>
+                        <div style="font-size:12px;color:rgba(255,255,255,0.7);line-height:1.4;">150 Free Spins + Daily Cashback + VIP Rewards</div>
+                    </div>
+                    <div class="auth-field">
+                        <label>Username</label>
+                        <input type="text" id="regUsername" placeholder="Choose a username (3-20 chars)" autocomplete="username">
+                    </div>
+                    <div class="auth-field">
+                        <label>Email</label>
+                        <input type="email" id="regEmail" placeholder="Enter your email" autocomplete="email">
+                    </div>
+                    <div class="auth-field">
+                        <label>Password</label>
+                        <input type="password" id="regPassword" placeholder="Min 6 characters" autocomplete="new-password">
+                    </div>
+                    <div class="auth-field">
+                        <label>Confirm Password</label>
+                        <input type="password" id="regConfirm" placeholder="Confirm password" autocomplete="new-password">
+                    </div>
+                    <div class="auth-field" id="referralField">
+                        <label>Referral Code <span style="color:#64748b;font-weight:400">(optional)</span></label>
+                        <input type="text" id="regReferral" placeholder="Enter friend's code for bonus" autocomplete="off" maxlength="8" style="text-transform:uppercase">
+                    </div>
+                    <button class="auth-submit" id="registerBtn" onclick="handleRegister()">CREATE ACCOUNT</button>
+                </div>
+
+                <div class="auth-divider"><span>OR</span></div>
+                <button class="auth-guest-btn" onclick="loginAsGuest()">PLAY AS GUEST ï¿½ $1,000 FREE</button>
+
+                <div class="auth-footer">
+                    <p>Play responsibly. 18+ only.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+
+    <!-- Matrix Rain Canvas Animation -->
+    <script>
+    (function() {
+        const canvas = document.getElementById('matrixCanvas');
+        const ctx    = canvas.getContext('2d');
+
+        // Katakana + Latin + digits ï¿½ classic Matrix alphabet
+        const CHARS = '??????????????????????????????????????????????0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ@#$%&*+=?/\\|<>';
+        const FONT_SIZE = 14;
+        let columns, drops, speeds, brightness;
+
+        function resize() {
+            canvas.width  = window.innerWidth;
+            canvas.height = window.innerHeight;
+            columns    = Math.floor(canvas.width / FONT_SIZE);
+            drops      = Array.from({ length: columns }, () => Math.random() * -50);
+            speeds     = Array.from({ length: columns }, () => 0.3 + Math.random() * 0.7);
+            brightness = Array.from({ length: columns }, () => Math.floor(Math.random() * 100 + 100));
+        }
+        resize();
+        window.addEventListener('resize', resize);
+
+        function draw() {
+            // Semi-transparent black wipe creates the fade trail
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.055)';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            ctx.font = FONT_SIZE + 'px "Courier New", monospace';
+
+            for (let i = 0; i < columns; i++) {
+                const ch   = CHARS[Math.floor(Math.random() * CHARS.length)];
+                const y    = drops[i] * FONT_SIZE;
+                const x    = i * FONT_SIZE;
+
+                // Leading character: bright white/pale-green flash
+                if (drops[i] > 0 && Math.random() < 0.04) {
+                    ctx.fillStyle = '#e0ffe0';
+                } else {
+                    // Main column colour ï¿½ varying shades of matrix green
+                    const g = brightness[i];
+                    ctx.fillStyle = `rgba(0, ${g}, 20, 0.85)`;
+                }
+
+                if (y > 0 && y < canvas.height) {
+                    ctx.fillText(ch, x, y);
+                }
+
+                drops[i] += speeds[i];
+
+                // Randomly reset column to top
+                if (y > canvas.height && Math.random() > 0.975) {
+                    drops[i]      = 0;
+                    speeds[i]     = 0.3 + Math.random() * 0.7;
+                    brightness[i] = Math.floor(Math.random() * 100 + 100);
+                }
+            }
+        }
+
+        // ~24 fps ï¿½ subtle enough not to distract
+        setInterval(draw, 42);
+    })();
+    </script>
+
+    <script>
+        // -- Casino Sidebar ------------------------------------------------------
+        (function() {
+          var _sidebarOpen = false;
+          window.toggleSidebar = function(open) {
+            var sb  = document.getElementById('casinoSidebar');
+            var ov  = document.getElementById('csbOverlay');
+            var mw  = document.getElementById('casinoMainWrap');
+            if (!sb) return;
+            _sidebarOpen = (open !== undefined) ? !!open : !_sidebarOpen;
+            sb.classList.toggle('csb-open', _sidebarOpen);
+            if (ov) ov.classList.toggle('csb-ov-open', _sidebarOpen);
+            if (mw) mw.classList.toggle('csb-pushed', _sidebarOpen);
+            document.body.classList.toggle('csb-sidebar-open', _sidebarOpen);
+          };
+          window.closeSidebarMobile = function() {
+            if (window.innerWidth < 1100) window.toggleSidebar(false);
+          };
+          window.toggleCsbDD = function(btn) {
+            var section = btn ? btn.closest('.csb-dd') : null;
+            if (!section) return;
+            section.classList.toggle('csb-dd-open');
+          };
+          // ESC key closes sidebar
+          document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape' && _sidebarOpen) window.toggleSidebar(false);
+          });
+          // Auto-open on desktop on load
+          document.addEventListener('DOMContentLoaded', function() {
+            if (window.innerWidth >= 1100) window.toggleSidebar(true);
+          });
+        }());
+
+        // Auth modal tab switching
+        function switchAuthTab(tab) {
+            document.getElementById('authError').textContent = '';
+            document.getElementById('tabLogin').classList.toggle('active', tab === 'login');
+            document.getElementById('tabRegister').classList.toggle('active', tab === 'register');
+            document.getElementById('loginForm').style.display = tab === 'login' ? 'block' : 'none';
+            document.getElementById('registerForm').style.display = tab === 'register' ? 'block' : 'none';
+        }
+
+        async function handleLogin() {
+            const btn = document.getElementById('loginBtn');
+            const username = document.getElementById('loginUsername').value.trim();
+            const password = document.getElementById('loginPassword').value;
+            const errEl = document.getElementById('authError');
+            errEl.textContent = '';
+            if (!username || !password) { errEl.textContent = 'Please enter username and password'; return; }
+            btn.disabled = true; btn.textContent = 'SIGNING IN...';
+            try {
+                await login(username, password);
+                document.getElementById('authBtn').textContent = currentUser.username.toUpperCase();
+            } catch (e) { errEl.textContent = e.message; }
+            btn.disabled = false; btn.textContent = 'SIGN IN';
+        }
+
+        async function handleRegister() {
+            const btn = document.getElementById('registerBtn');
+            const username = document.getElementById('regUsername').value.trim();
+            const email = document.getElementById('regEmail').value.trim();
+            const password = document.getElementById('regPassword').value;
+            const confirm = document.getElementById('regConfirm').value;
+            const refCode = (document.getElementById('regReferral')?.value || '').trim().toUpperCase();
+            const errEl = document.getElementById('authError');
+            errEl.textContent = '';
+            if (!username || !email || !password) { errEl.textContent = 'All fields are required'; return; }
+            if (password !== confirm) { errEl.textContent = 'Passwords do not match'; return; }
+            if (password.length < 6) { errEl.textContent = 'Password must be at least 6 characters'; return; }
+            btn.disabled = true; btn.textContent = 'CREATING ACCOUNT...';
+            try {
+                await register(username, email, password, refCode || null);
+                document.getElementById('authBtn').textContent = currentUser.username.toUpperCase();
+            } catch (e) { errEl.textContent = e.message; }
+            btn.disabled = false; btn.textContent = 'CREATE ACCOUNT';
+        }
+
+        // Enter key support
+        document.getElementById('loginPassword').addEventListener('keydown', e => { if (e.key === 'Enter') handleLogin(); });
+        document.getElementById('regConfirm').addEventListener('keydown', e => { if (e.key === 'Enter') handleRegister(); });
+
+        // Update auth button on load if already logged in
+        if (typeof currentUser !== 'undefined' && currentUser) {
+            document.getElementById('authBtn').textContent = currentUser.username.toUpperCase();
+        }
+    </script>
+
+    <!-- Leaderboard + 3-tier jackpot ticker styles -->
+    
+
+    <!-- Auth gate: hide close button when login is required -->
+    <style>
+        body.auth-gate #authModal .auth-close-btn { display: none !important; }
+        /* Hide all page content while auth gate is active ï¿½ show only the auth modal */
+        body.auth-gate > *:not(#authModal):not(.toast-container) {
+            visibility: hidden !important;
+            pointer-events: none !important;
+        }
+        /* Ensure auth modal is visible even when nested inside a hidden wrapper */
+        body.auth-gate #authModal {
+            visibility: visible !important;
+            pointer-events: auto !important;
+        }
+        body.auth-gate #casinoMainWrap {
+            pointer-events: auto !important;
+        }
+    </style>
+
+    <!-- Slot intro splash overlay -->
+    <style>
+        /* Ensure the fullscreen slot modal is a positioning context for the overlay */
+        .slot-modal-fullscreen {
+            position: relative;
+        }
+
+        @keyframes introFadeOut {
+            0%   { opacity: 1; }
+            70%  { opacity: 1; }
+            100% { opacity: 0; }
+        }
+
+        #slotIntroOverlay {
+            position: absolute;
+            inset: 0;
+            z-index: 20;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            pointer-events: auto;
+        }
+
+        @keyframes nearMissNudge {
+            0%   { transform: translateX(0); }
+            20%  { transform: translateX(-4px); }
+            40%  { transform: translateX(4px); }
+            60%  { transform: translateX(-3px); }
+            80%  { transform: translateX(2px); }
+            100% { transform: translateX(0); }
+        }
+        .reel-near-miss-nudge {
+            animation: nearMissNudge 0.4s ease-out;
+        }
+    </style>
+
+<!-- Jackpot Win Overlay -->
+<div id="jackpotWinOverlay" class="jackpot-win-overlay">
+    <div class="jackpot-win-modal">
+        <div class="jackpot-win-burst"></div>
+        <div class="jackpot-win-icon">??</div>
+        <div class="jackpot-win-tier">JACKPOT!</div>
+        <div class="jackpot-win-amount">+$0.00</div>
+        <div class="jackpot-win-sub">Added to your balance!</div>
+        <button class="jackpot-win-close" onclick="closeJackpotWinModal()">COLLECT!</button>
+    </div>
+</div>
+
+<!-- Bundle Shop Modal -->
+
+
+<!-- Gift Modal -->
+
+
+<!-- Contest Modal -->
+
+
+<!-- Achievement Toast -->
+
+
+</div><!-- /.casino-main-wrap -->
+
+<!-- Low-balance deposit nudge -->
+
+    <!-- Responsible Gambling Footer -->
+    <footer id="responsibleGamblingFooter" style="
+        position: sticky;
+        bottom: 0;
+        background: #0a0e1a;
+        border-top: 2px solid rgba(212, 175, 55, 0.3);
+        padding: 16px 12px;
+        text-align: center;
+        font-size: 11px;
+        color: rgba(255, 255, 255, 0.5);
+        line-height: 1.6;
+        z-index: 10;
+        box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.5);
+    ">
+        <!-- Navigation Links -->
+        <div style="margin-bottom: 10px; font-size: 10px; letter-spacing: 0.5px">
+            <a href="/" style="color: rgba(212, 175, 55, 0.8); text-decoration: none; margin: 0 6px">Home</a>
+            <span style="color: rgba(255, 255, 255, 0.2)">|</span>
+            <a href="#games" style="color: rgba(212, 175, 55, 0.8); text-decoration: none; margin: 0 6px">Games</a>
+            <span style="color: rgba(255, 255, 255, 0.2)">|</span>
+            <a href="#provably-fair" style="color: rgba(212, 175, 55, 0.8); text-decoration: none; margin: 0 6px">Provably Fair</a>
+            <span style="color: rgba(255, 255, 255, 0.2)">|</span>
+            <a href="#responsible-gambling" style="color: rgba(212, 175, 55, 0.8); text-decoration: none; margin: 0 6px">Responsible Gambling</a>
+            <span style="color: rgba(255, 255, 255, 0.2)">|</span>
+            <a href="#terms" style="color: rgba(212, 175, 55, 0.8); text-decoration: none; margin: 0 6px">Terms</a>
+            <span style="color: rgba(255, 255, 255, 0.2)">|</span>
+            <a href="#privacy" style="color: rgba(212, 175, 55, 0.8); text-decoration: none; margin: 0 6px">Privacy</a>
+        </div>
+
+        <!-- Age Badge & Responsible Gaming Message -->
+        <div style="margin-bottom: 8px">
+            <span style="display: inline-block; background: rgba(212, 175, 55, 0.2); border: 1px solid rgba(212, 175, 55, 0.5); border-radius: 4px; padding: 2px 8px; margin: 0 8px; font-weight: bold; font-size: 11px">18+</span>
+        </div>
+
+        <!-- Primary Responsible Gambling Message -->
+        <div style="margin-bottom: 8px; font-style: italic; color: rgba(255, 255, 255, 0.6)">
+            Play responsibly. Set limits, take breaks.
+        </div>
+
+        <!-- Support Organization Links -->
+        <div style="margin-bottom: 8px; font-size: 10px">
+            Need help? Visit:
+            <a href="https://www.ncpg.org" target="_blank" rel="noopener" style="color: rgba(212, 175, 55, 0.8); text-decoration: none; margin: 0 4px">NCPG</a>
+            <span style="color: rgba(255, 255, 255, 0.2)">ï¿½</span>
+            <a href="https://www.gamcare.org.uk" target="_blank" rel="noopener" style="color: rgba(212, 175, 55, 0.8); text-decoration: none; margin: 0 4px">GamCare</a>
+            <span style="color: rgba(255, 255, 255, 0.2)">ï¿½</span>
+            <a href="https://www.begambleaware.org" target="_blank" rel="noopener" style="color: rgba(212, 175, 55, 0.8); text-decoration: none; margin: 0 4px">BeGambleAware</a>
+        </div>
+
+        <!-- Copyright -->
+        <div style="margin-bottom: 6px; color: rgba(255, 255, 255, 0.4)">
+            ï¿½ 2024-2026 Matrix Spins Casino. All rights reserved.
+        </div>
+
+        <!-- Social Casino Disclaimer -->
+        <div style="font-size: 10px; color: rgba(255, 255, 255, 0.4); line-height: 1.4">
+            This is a social casino for entertainment only. No real money gambling. Matrix Money is a virtual currency with no real-world value.
+        </div>
+    </footer>
+
+
+
+
+<script>
+if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/sw.js')
+            .then(reg => console.log('[SW] Registered:', reg.scope))
+            .catch(err => console.warn('[SW] Registration failed:', err));
+    });
+}
+</script>
+    
+    
+    
+    
+    
+    <script src="bundle.b1cfd525.js"></script>
+</body>
+</html>
+
