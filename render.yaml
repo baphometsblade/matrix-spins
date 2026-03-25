@@ -1,0 +1,15 @@
+# render.yaml - Matrix Spins Casino static site
+services:
+  - type: web
+    name: matrix-spins
+    runtime: static
+    buildCommand: echo "Using pre-built dist"
+    staticPublishPath: ./dist
+    headers:
+      - path: /*
+        name: Cache-Control
+        value: public, max-age=3600
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
