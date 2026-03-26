@@ -13,6 +13,52 @@
   var _activeContainer = null;
   var _reelCount = 5;
   var _scattersLanded = 0;
+  /* ---- reel animation styles ---------------------------------- */
+  var REEL_ANIMS = {
+    cascade:      'upx-reel-cascade 0.4s ease-in',
+    bounce:       'upx-reel-bounce 0.5s cubic-bezier(0.34,1.56,0.64,1)',
+    slam:         'upx-reel-slam 0.3s ease-in',
+    smooth:       'upx-reel-smooth 0.6s ease-in-out',
+    turbo:        'upx-reel-slam 0.15s linear',
+    elastic:      'upx-reel-bounce 0.6s cubic-bezier(0.68,-0.55,0.265,1.55)',
+    wave:         'upx-reel-wave 0.5s ease-in-out',
+    gravity:      'upx-reel-cascade 0.5s cubic-bezier(0.55,0,1,0.45)',
+    magnetic:     'upx-reel-smooth 0.4s cubic-bezier(0.25,0.46,0.45,0.94)',
+    spiral:       'upx-reel-spiral 0.5s ease-out',
+    jelly:        'upx-reel-bounce 0.7s cubic-bezier(0.34,1.56,0.64,1)',
+    glitch:       'upx-reel-glitch 0.3s steps(4)',
+    flutter:      'upx-reel-wave 0.6s ease-in-out',
+    thunder_drop: 'upx-reel-slam 0.2s cubic-bezier(0.55,0,1,0.45)',
+    feather_fall: 'upx-reel-smooth 0.8s ease-out'
+  };
+
+  function animateReelStop(reelIdx) {
+    if (!_activeContainer || !_activeProfile) return;
+    var style = (_activeProfile.reelStyle) || 'smooth';
+    var anim = REEL_ANIMS[style] || REEL_ANIMS.smooth;
+    
+    /* Find reel columns - try several common selector patterns */
+    var reels = _activeContainer.querySelectorAll('.reel-column, .slot-reel, [class*="reel-col"], .reel');
+    if (!reels.length) reels = _activeContainer.querySelectorAll('.slot-reels > div, .reels-container > div');
+    
+    if (reels.length > reelIdx) {
+      var reel = reels[reelIdx];
+      /* Reset and re-trigger animation */
+      reel.style.animation = 'none';
+      reel.offsetHeight; /* force reflow */
+      reel.style.animation = anim;
+      
+      /* Stagger delay for cascading feel */
+      var delay = reelIdx * 0.08;
+      reel.style.animationDelay = delay + 's';
+      
+      /* Clean up after animation completes */
+      setTimeout(function() {
+        reel.style.animation = '';
+        reel.style.animationDelay = '';
+      }, 1200);
+    }
+  }
 
   /* ---- helpers ------------------------------------------------ */
   function getSlotContainer() {
@@ -39,12 +85,12 @@
 
     /* Start animated canvas background */
     if (UPX.startBg && _activeProfile) {
-      if(UPX.startAmbient) UPX.startAmbient(container, profile); UPX.startBg(container, _activeProfile.bgType || 'stars');
+      if(UPX.startAmbient) UPX.startAmbient(container, _activeProfile); UPX.startBg(container, _activeProfile.bgType || 'stars');
     }
 
     /* Apply provider-distinct reel chrome */
     if (UPX.applyChrome && _activeProfile) {
-      if(UPX.applyReelStyle) UPX.applyReelStyle(container, profile); UPX.applyChrome(container, _activeProfile.chromeStyle || 'default');
+      if(UPX.applyReelStyle) UPX.applyReelStyle(container, _activeProfile); UPX.applyChrome(container, _activeProfile.chrome || 'default');
     }
 
     /* Initialize the win-FX particle canvas layer */
@@ -57,7 +103,7 @@
      HOOK 2: GAME CLOSE → stop background
      ================================================================ */
   function onGameClose() {
-    if (UPX.stopBg) if(UPX.stopAmbient) UPX.stopAmbient(); UPX.stopBg();
+    if (UPX.stopAmbient) UPX.stopAmbient(); if (UPX.stopBg) UPX.stopBg();
     _activeProfile = null;
     _activeContainer = null;
   }
@@ -67,6 +113,15 @@
      ================================================================ */
   function onSpinStart() {
     _scattersLanded = 0;
+    
+    /* Apply spin-start animation to all reels */
+    if (_activeContainer && _activeProfile) {
+      var reels = _activeContainer.querySelectorAll('.reel-column, .slot-reel, [class*="reel-col"], .reel');
+      if (!reels.length) reels = _activeContainer.querySelectorAll('.slot-reels > div, .reels-container > div');
+      for (var i = 0; i < reels.length; i++) {
+        reels[i].style.animation = 'none';
+      }
+    }
   }
 
   /* ================================================================
@@ -75,6 +130,9 @@
   function onReelStop(reelIdx, totalReels) {
     if (!_activeContainer || !_activeProfile) return;
     _reelCount = totalReels || 5;
+
+    /* Apply reel-style animation to this reel column */
+    animateReelStop(reelIdx);
 
     /* Trigger anticipation on reel 3+ if 2+ scatters already landed */
     if (reelIdx >= 2 && _scattersLanded >= 2) {
