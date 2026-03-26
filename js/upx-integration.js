@@ -1,4 +1,4 @@
-/* ================================================================
+﻿/* ================================================================
    UPX Integration Layer  v1.0
    Wires ultra-premium-slot.js (UPX) into the casino game flow.
    Hooks: openSlot, spin, reelStop, bigWin, freeSpins
@@ -39,12 +39,12 @@
 
     /* Start animated canvas background */
     if (UPX.startBg && _activeProfile) {
-      UPX.startBg(container, _activeProfile.bgType || 'stars');
+      if(UPX.startAmbient) UPX.startAmbient(container, profile); UPX.startBg(container, _activeProfile.bgType || 'stars');
     }
 
     /* Apply provider-distinct reel chrome */
     if (UPX.applyChrome && _activeProfile) {
-      UPX.applyChrome(container, _activeProfile.chromeStyle || 'default');
+      if(UPX.applyReelStyle) UPX.applyReelStyle(container, profile); UPX.applyChrome(container, _activeProfile.chromeStyle || 'default');
     }
 
     /* Initialize the win-FX particle canvas layer */
@@ -57,7 +57,7 @@
      HOOK 2: GAME CLOSE → stop background
      ================================================================ */
   function onGameClose() {
-    if (UPX.stopBg) UPX.stopBg();
+    if (UPX.stopBg) if(UPX.stopAmbient) UPX.stopAmbient(); UPX.stopBg();
     _activeProfile = null;
     _activeContainer = null;
   }

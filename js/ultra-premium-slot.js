@@ -27,222 +27,222 @@
      intro: free spins intro style
      ============================================================= */
   var PROFILES = {
-    sugar_rush:{ bgType:"candy",chrome:"kawaii_pink",winFX:"candy_burst",  coins:["\uD83C\uDF6C","\uD83C\uDF6B","\uD83C\uDF69","\uD83D\uDCB0"], anticipation:"pulse_pink",  intro:"sweet" },
-    lucky_777:           { bgType:"rainbow",   chrome:"chrome_round", winFX:"fruit_pop",    coins:["\uD83C\uDF4A","\uD83C\uDF47","\uD83C\uDF53","\u2764"], anticipation:"pulse_red",   intro:"flash" },
-    gates_olympus:       { bgType:"olympus",   chrome:"golden_gods",  winFX:"lightning_strike",coins:["\u26A1","\uD83D\uDC8E","\u2728","\uD83D\uDCB0"], anticipation:"thunder",     intro:"epic" },
-    black_bull:          { bgType:"arena",     chrome:"dark_iron",    winFX:"dust_cloud",   coins:["\uD83D\uDC02","\uD83D\uDCAB","\u2728","\uD83D\uDCB0"], anticipation:"rumble",      intro:"dramatic" },
-    hot_chillies:{ bgType:"flames",chrome:"fiesta",winFX:"firework_pop",  coins:["\uD83C\uDF36","\uD83D\uDD25","\u2B50","\uD83D\uDCB0"], anticipation:"heat",        intro:"flash" },
-    super_hot:{ bgType:"retro_glow",chrome:"chrome_round",winFX:"firework_pop",     coins:["\uD83C\uDF4A","\uD83D\uDD25","\u2B50","\u26A1"],       anticipation:"electric",    intro:"flash" },
-    wolf_gold:{ bgType:"moonlit",chrome:"dark_iron",winFX:"moon_burst",    coins:["\uD83D\uDC3A","\uD83C\uDF15","\u2B50","\uD83D\uDCB0"], anticipation:"moon_glow",   intro:"dramatic" },
-    big_bass:{ bgType:"deep_sea",chrome:"fishing",winFX:"splash",       coins:["\uD83D\uDC1F","\uD83D\uDC20","\u2B50","\uD83D\uDCB0"], anticipation:"pulse_blue",  intro:"watery" },
-    fire_joker:{ bgType:"circus_fire",chrome:"jester",winFX:"ember_burst", coins:["\uD83C\uDCA1","\uD83C\uDCA0","\uD83D\uDD25","\uD83D\uDCB0"], anticipation:"spin_joker",intro:"flash" },
-    book_dead:           { bgType:"egypt_tomb",chrome:"ancient_stone",winFX:"sand_burst",   coins:["\uD83D\uDCDA","\u2620","\uD83C\uDFFA","\uD83D\uDCB0"], anticipation:"sand_storm",  intro:"epic" },
-    starburst_xxl:       { bgType:"starfield", chrome:"gem_frame",    winFX:"starburst",    coins:["\uD83C\uDF1F","\u2728","\uD83D\uDC8E","\uD83D\uDCB0"], anticipation:"star_glow",   intro:"cosmic" },
-    gonzos_quest:        { bgType:"jungle_ruins",chrome:"stone_aztec",winFX:"avalanche",    coins:["\uD83E\uDEBF","\uD83C\uDF0E","\u2728","\uD83D\uDCB0"], anticipation:"rumble",      intro:"dramatic" },
-    starlight_princess:{ bgType:"cosmos",chrome:"kawaii_pink",winFX:"sakura_burst", coins:["\uD83C\uDF38","\u2B50","\uD83D\uDC8E","\uD83D\uDCB0"], anticipation:"sparkle",     intro:"sweet" },
-    olympus_rising:{ bgType:"olympus",chrome:"golden_gods",winFX:"solar_burst",coins:["\u26A1","\uD83D\uDC8E","\uD83D\uDCB0","\u2728"], anticipation:"thunder",     intro:"epic" },
-    buffalo_stampede:{ bgType:"stormy_sky",chrome:"rustic_wood",winFX:"dust_cloud",   coins:["\uD83E\uDDB3","\uD83D\uDCAB","\u2B50","\uD83D\uDCB0"], anticipation:"rumble",      intro:"wild" ,accentColor:"#CD853F"},
-    puppy_palace:{ bgType:"rainbow",chrome:"chrome_round",winFX:"heart_pop",    coins:["\uD83D\uDC36","\u2764","\u2B50","\uD83D\uDCB0"],      anticipation:"sparkle",     intro:"sweet" ,accentColor:"#FFB6C1"},
-    crimson_fang:{ bgType:"haunted",chrome:"dark_iron",winFX:"blood_burst",  coins:["\uD83E\uDDB7","\uD83D\uDD0E","\u2B50","\uD83D\uDCB0"], anticipation:"dark_pulse",  intro:"dramatic" },
-    pirate_fortune:      { bgType:"ocean_wave",chrome:"pirate_wood",  winFX:"treasure_pop", coins:["\u2620","\uD83D\uDCB0","\u2693","\uD83D\uDC8E"],       anticipation:"pirate_warn",  intro:"pirate" ,accentColor:"#DEB887"},
-    lucky_dragon:{ bgType:"chinese_sky",chrome:"gold_ornate",winFX:"lightning_strike", coins:["\uD83D\uDC09","\uD83C\uDF81","\u2728","\uD83D\uDCB0"], anticipation:"dragon_glow", intro:"epic" ,accentColor:"#FF6347"},
-    pharaoh_legacy:{ bgType:"egypt_dusk",chrome:"gold_ornate",winFX:"gold_shower",   coins:["\uD83C\uDFFA","\u2728","\uD83D\uDCB0","\uD83D\uDC8E"], anticipation:"sand_storm",  intro:"epic" },
-    quantum_burst:{ bgType:"cosmos",chrome:"tech_hud",winFX:"energy_pulse", coins:["\u26A1","\uD83D\uDD2C","\uD83D\uDCB0","\u2728"],       anticipation:"cosmic_hum",    intro:"cosmic" ,accentColor:"#7B68EE"},
-    olympian_gods:{ bgType:"olympus",chrome:"gold_ornate",winFX:"thunder_burst",coins:["\u26A1","\uD83D\uDC8E","\u2728","\uD83D\uDCB0"], anticipation:"thunder",     intro:"epic" },
-    twin_helix:          { bgType:"cyber_grid",chrome:"tech_hud",     winFX:"dna_spiral",   coins:["\uD83E\uDDEC","\u26A1","\u2728","\uD83D\uDCB0"],       anticipation:"neon_flash",    intro:"cosmic" ,accentColor:"#00FF00"},
-    golden_fortune:{ bgType:"chinese_sky",chrome:"jade_frame",winFX:"confetti_pop",  coins:["\uD83D\uDCB0","\u2728","\uD83D\uDC8E","\uD83C\uDF81"], anticipation:"dragon_glow", intro:"epic" },
-    island_tiki:         { bgType:"tropical",  chrome:"bamboo",       winFX:"tropical_pop", coins:["\uD83C\uDF34","\uD83C\uDF3A","\uD83D\uDCB0","\u2728"], anticipation:"wave_crash",  intro:"watery" },
-    sakura_princess:     { bgType:"sakura_sky",chrome:"kawaii_pink",  winFX:"sakura_burst", coins:["\uD83C\uDF38","\u2B50","\uD83D\uDC8E","\uD83D\uDCB0"], anticipation:"sparkle",     intro:"sweet" },
-    ares_blade:          { bgType:"arena",     chrome:"dark_iron",    winFX:"sword_clash",  coins:["\u2694","\uD83D\uDC80","\u2728","\uD83D\uDCB0"],        anticipation:"dark_pulse",  intro:"dramatic" },
-    neon_nights:         { bgType:"neon_city", chrome:"arcade_neon",  winFX:"neon_pop",     coins:["\uD83C\uDF06","\u26A1","\uD83D\uDCB0","\u2728"],       anticipation:"electric",    intro:"neon" ,accentColor:"#FF1493"},
-    viking_voyage:       { bgType:"northern_sea",chrome:"viking_shield",winFX:"thunder_burst",coins:["\u2694","\uD83D\uDEE1","\u2B50","\uD83D\uDCB0"], anticipation:"thunder",     intro:"epic" },
-    diamond_vault:       { bgType:"crystal_cave",chrome:"gem_frame",  winFX:"diamond_shatter",coins:["\uD83D\uDC8E","\uD83D\uDCAF","\u2728","\uD83D\uDCB0"], anticipation:"gem_glow", intro:"cosmic" },
-    madame_destiny:{ bgType:"mystic_mist",chrome:"gold_ornate",winFX:"mystic_burst", coins:["\uD83D\uDD2E","\u2728","\uD83D\uDC8E","\uD83D\uDCB0"], anticipation:"sparkle",     intro:"mystic" },
-    great_rhino:         { bgType:"savanna",   chrome:"rustic_wood",  winFX:"dust_cloud",   coins:["\uD83E\uDD8F","\uD83D\uDCAB","\u2B50","\uD83D\uDCB0"], anticipation:"rumble",      intro:"dramatic" },
-    bass_splash:{ bgType:"ocean_ripple",chrome:"fishing",winFX:"bubble_burst",       coins:["\uD83D\uDC1F","\uD83D\uDC20","\u2B50","\uD83D\uDCB0"], anticipation:"wave_crash",  intro:"watery" ,accentColor:"#87CEEB"},
-    dragon_megafire:{ bgType:"flames",chrome:"fire_border",winFX:"dragon_burst", coins:["\uD83D\uDC09","\uD83D\uDD25","\uD83D\uDCAB","\uD83D\uDCB0"], anticipation:"heat",    intro:"epic" },
-    esqueleto_fiesta:    { bgType:"day_dead",  chrome:"fiesta",       winFX:"confetti_pop", coins:["\uD83D\uDC80","\uD83C\uDF8A","\u2B50","\uD83D\uDCB0"], anticipation:"spin_joker",  intro:"sweet" },
-    wildfire_gold:       { bgType:"wildfire",  chrome:"fire_border",  winFX:"ember_burst",  coins:["\uD83D\uDD25","\uD83D\uDCAB","\u2B50","\uD83D\uDCB0"], anticipation:"heat",        intro:"flash" },
-    five_lions:{ bgType:"chinese_sky",chrome:"gold_ornate",winFX:"gold_shower", coins:["\uD83E\uDD81","\uD83C\uDF81","\u2728","\uD83D\uDCB0"], anticipation:"dragon_glow", intro:"epic" ,accentColor:"#FFD700"},
-    chilli_heat:         { bgType:"flames",    chrome:"fire_border",  winFX:"ember_burst",  coins:["\uD83C\uDF36","\uD83D\uDD25","\u2B50","\uD83D\uDCB0"], anticipation:"heat",        intro:"flash" },
-    tombstone_reload:    { bgType:"wild_west", chrome:"rustic_wood",  winFX:"gunshot_pop",  coins:["\uD83E\uDD20","\u2B50","\uD83D\uDCB0","\uD83D\uDC80"], anticipation:"rumble",      intro:"dramatic" },
-    mental_meltdown:     { bgType:"cyber_grid",chrome:"tech_hud",     winFX:"glitch_burst", coins:["\uD83E\uDDE0","\u26A1","\u2728","\uD83D\uDCB0"],       anticipation:"neon_flash",    intro:"cyber" ,accentColor:"#FF0000"}
+    sugar_rush:{ bgType:"candy",chrome:"kawaii_pink",winFX:"candy_burst",  coins:["\uD83C\uDF6C","\uD83C\uDF6B","\uD83C\uDF69","\uD83D\uDCB0"], anticipation:"candy_pulse",  intro:"sweet" ,accentColor:"#FF69B4",reelStyle:"cascade",ambientFx:"sparkles"},
+    lucky_777:           { bgType:"rainbow",   chrome:"chrome_round", winFX:"fruit_pop",    coins:["\uD83C\uDF4A","\uD83C\uDF47","\uD83C\uDF53","\u2764"], anticipation:"sparkle",   intro:"flash" ,accentColor:"#FF0000",reelStyle:"bounce",ambientFx:"embers"},
+    gates_olympus:       { bgType:"olympus",   chrome:"golden_gods",  winFX:"lightning_strike",coins:["\u26A1","\uD83D\uDC8E","\u2728","\uD83D\uDCB0"], anticipation:"thunder",     intro:"epic" ,accentColor:"#FFD700",reelStyle:"slam",ambientFx:"snow"},
+    black_bull:          { bgType:"arena",     chrome:"dark_iron",    winFX:"dust_cloud",   coins:["\uD83D\uDC02","\uD83D\uDCAB","\u2728","\uD83D\uDCB0"], anticipation:"rumble",      intro:"dramatic" ,accentColor:"#8B4513",reelStyle:"smooth",ambientFx:"bubbles"},
+    hot_chillies:{ bgType:"flames",chrome:"fiesta",winFX:"firework_pop",  coins:["\uD83C\uDF36","\uD83D\uDD25","\u2B50","\uD83D\uDCB0"], anticipation:"heat",        intro:"inferno" ,accentColor:"#FF4500",reelStyle:"turbo",ambientFx:"petals"},
+    super_hot:{ bgType:"retro_glow",chrome:"chrome_round",winFX:"firework_pop",     coins:["\uD83C\uDF4A","\uD83D\uDD25","\u2B50","\u26A1"],       anticipation:"neon_flash",    intro:"neon" ,accentColor:"#FF00FF",reelStyle:"elastic",ambientFx:"dust"},
+    wolf_gold:{ bgType:"moonlit",chrome:"dark_iron",winFX:"moon_burst",    coins:["\uD83D\uDC3A","\uD83C\uDF15","\u2B50","\uD83D\uDCB0"], anticipation:"moon_glow",   intro:"dark" ,accentColor:"#C0C0C0",reelStyle:"wave",ambientFx:"fireflies"},
+    big_bass:{ bgType:"deep_sea",chrome:"fishing",winFX:"splash",       coins:["\uD83D\uDC1F","\uD83D\uDC20","\u2B50","\uD83D\uDCB0"], anticipation:"wave_crash",  intro:"watery" ,accentColor:"#0077BE",reelStyle:"gravity",ambientFx:"stars"},
+    fire_joker:{ bgType:"circus_fire",chrome:"jester",winFX:"ember_burst", coins:["\uD83C\uDCA1","\uD83C\uDCA0","\uD83D\uDD25","\uD83D\uDCB0"], anticipation:"spin_joker",intro:"carnival" ,accentColor:"#FF6B00",reelStyle:"magnetic",ambientFx:"rain"},
+    book_dead:           { bgType:"egypt_tomb",chrome:"ancient_stone",winFX:"sand_burst",   coins:["\uD83D\uDCDA","\u2620","\uD83C\uDFFA","\uD83D\uDCB0"], anticipation:"sand_storm",  intro:"ancient" ,accentColor:"#C9A96E",reelStyle:"spiral",ambientFx:"ash"},
+    starburst_xxl:       { bgType:"starfield", chrome:"gem_frame",    winFX:"starburst",    coins:["\uD83C\uDF1F","\u2728","\uD83D\uDC8E","\uD83D\uDCB0"], anticipation:"star_glow",   intro:"cosmic" ,accentColor:"#FFEE88",reelStyle:"jelly",ambientFx:"confetti"},
+    gonzos_quest:        { bgType:"jungle_ruins",chrome:"stone_aztec",winFX:"avalanche",    coins:["\uD83E\uDEBF","\uD83C\uDF0E","\u2728","\uD83D\uDCB0"], anticipation:"rumble",      intro:"epic" ,accentColor:"#FFD700",reelStyle:"glitch",ambientFx:"smoke"},
+    starlight_princess:{ bgType:"cosmos",chrome:"kawaii_pink",winFX:"sakura_burst", coins:["\uD83C\uDF38","\u2B50","\uD83D\uDC8E","\uD83D\uDCB0"], anticipation:"pulse_pink",     intro:"cosmic" ,accentColor:"#FFB6D9",reelStyle:"flutter",ambientFx:"crystals"},
+    olympus_rising:{ bgType:"olympus",chrome:"golden_gods",winFX:"solar_burst",coins:["\u26A1","\uD83D\uDC8E","\uD83D\uDCB0","\u2728"], anticipation:"star_glow",     intro:"epic" ,accentColor:"#FFC125",reelStyle:"thunder_drop",ambientFx:"leaves"},
+    buffalo_stampede:{ bgType:"stormy_sky",chrome:"rustic_wood",winFX:"dust_cloud",   coins:["\uD83E\uDDB3","\uD83D\uDCAB","\u2B50","\uD83D\uDCB0"], anticipation:"rumble",      intro:"wild" ,accentColor:"#CD853F",reelStyle:"feather_fall",ambientFx:"lightning"},
+    puppy_palace:{ bgType:"rainbow",chrome:"chrome_round",winFX:"heart_pop",    coins:["\uD83D\uDC36","\u2764","\u2B50","\uD83D\uDCB0"],      anticipation:"sparkle",     intro:"sweet" ,accentColor:"#FFB6C1",reelStyle:"cascade",ambientFx:"coins_float"},
+    crimson_fang:{ bgType:"haunted",chrome:"dark_iron",winFX:"blood_burst",  coins:["\uD83E\uDDB7","\uD83D\uDD0E","\u2B50","\uD83D\uDCB0"], anticipation:"blood_pulse",  intro:"dark" ,accentColor:"#990000",reelStyle:"bounce",ambientFx:"mist"},
+    pirate_fortune:      { bgType:"ocean_wave",chrome:"pirate_wood",  winFX:"treasure_pop", coins:["\u2620","\uD83D\uDCB0","\u2693","\uD83D\uDC8E"],       anticipation:"pirate_warn",  intro:"pirate" ,accentColor:"#DEB887",reelStyle:"slam",ambientFx:"aurora"},
+    lucky_dragon:{ bgType:"chinese_sky",chrome:"gold_ornate",winFX:"lightning_strike", coins:["\uD83D\uDC09","\uD83C\uDF81","\u2728","\uD83D\uDCB0"], anticipation:"dragon_glow", intro:"epic" ,accentColor:"#FF6347",reelStyle:"smooth",ambientFx:"sand"},
+    pharaoh_legacy:{ bgType:"egypt_dusk",chrome:"gold_ornate",winFX:"gold_shower",   coins:["\uD83C\uDFFA","\u2728","\uD83D\uDCB0","\uD83D\uDC8E"], anticipation:"sand_storm",  intro:"ancient" ,accentColor:"#FFD700",reelStyle:"turbo",ambientFx:"blood_drip"},
+    quantum_burst:{ bgType:"cosmos",chrome:"tech_hud",winFX:"energy_pulse", coins:["\u26A1","\uD83D\uDD2C","\uD83D\uDCB0","\u2728"],       anticipation:"cosmic_hum",    intro:"cosmic" ,accentColor:"#7B68EE",reelStyle:"elastic",ambientFx:"sparkles"},
+    olympian_gods:{ bgType:"olympus",chrome:"gold_ornate",winFX:"thunder_burst",coins:["\u26A1","\uD83D\uDD31","\u2728","\uD83D\uDCB0"], anticipation:"thunder",     intro:"epic" ,accentColor:"#FFA500",reelStyle:"wave",ambientFx:"embers"},
+    twin_helix:          { bgType:"cyber_grid",chrome:"tech_hud",     winFX:"dna_spiral",   coins:["\uD83E\uDDEC","\u26A1","\u2728","\uD83D\uDCB0"],       anticipation:"neon_flash",    intro:"cosmic" ,accentColor:"#00FF00",reelStyle:"gravity",ambientFx:"snow"},
+    golden_fortune:{ bgType:"chinese_sky",chrome:"jade_frame",winFX:"confetti_pop",  coins:["\uD83D\uDCB0","\u2728","\uD83D\uDC8E","\uD83C\uDF81"], anticipation:"golden_aura", intro:"epic" ,accentColor:"#FFA500",reelStyle:"magnetic",ambientFx:"bubbles"},
+    island_tiki:         { bgType:"tropical",  chrome:"bamboo",       winFX:"tropical_pop", coins:["\uD83C\uDF34","\uD83C\uDF3A","\uD83D\uDCB0","\u2728"], anticipation:"jungle_drum",  intro:"jungle" ,accentColor:"#FF8C00",reelStyle:"spiral",ambientFx:"petals"},
+    sakura_princess:     { bgType:"sakura_sky",chrome:"kawaii_pink",  winFX:"sakura_burst", coins:["\uD83C\uDF38","\u2B50","\uD83C\uDF1F","\uD83D\uDCB0"], anticipation:"pulse_pink",     intro:"mystic" ,accentColor:"#FF69B4",reelStyle:"jelly",ambientFx:"dust"},
+    ares_blade:          { bgType:"arena",     chrome:"dark_iron",    winFX:"sword_clash",  coins:["\u2694","\uD83D\uDC80","\u2728","\uD83D\uDCB0"],        anticipation:"pulse_red",  intro:"dramatic" ,accentColor:"#DC143C",reelStyle:"glitch",ambientFx:"fireflies"},
+    neon_nights:         { bgType:"neon_city", chrome:"arcade_neon",  winFX:"neon_pop",     coins:["\uD83C\uDF06","\u26A1","\uD83D\uDCB0","\u2728"],       anticipation:"electric",    intro:"neon" ,accentColor:"#FF1493",reelStyle:"flutter",ambientFx:"stars"},
+    viking_voyage:       { bgType:"northern_sea",chrome:"viking_shield",winFX:"thunder_burst",coins:["\u2694","\uD83D\uDEE1","\u2B50","\uD83D\uDCB0"], anticipation:"rumble",     intro:"epic" ,accentColor:"#4682B4",reelStyle:"thunder_drop",ambientFx:"rain"},
+    diamond_vault:       { bgType:"crystal_cave",chrome:"gem_frame",  winFX:"diamond_shatter",coins:["\uD83D\uDC8E","\uD83D\uDCAF","\u2728","\uD83D\uDCB0"], anticipation:"crystal_ring", intro:"flash" ,accentColor:"#E0E0FF",reelStyle:"feather_fall",ambientFx:"ash"},
+    madame_destiny:{ bgType:"mystic_mist",chrome:"gold_ornate",winFX:"mystic_burst", coins:["\uD83D\uDD2E","\u2728","\uD83D\uDC8E","\uD83D\uDCB0"], anticipation:"cosmic_hum",     intro:"mystic" ,accentColor:"#9370DB",reelStyle:"cascade",ambientFx:"confetti"},
+    great_rhino:         { bgType:"savanna",   chrome:"rustic_wood",  winFX:"dust_cloud",   coins:["\uD83E\uDD8F","\uD83D\uDCAB","\u2B50","\uD83D\uDCB0"], anticipation:"rumble",      intro:"dramatic" ,accentColor:"#708090",reelStyle:"bounce",ambientFx:"smoke"},
+    bass_splash:{ bgType:"ocean_ripple",chrome:"fishing",winFX:"bubble_burst",       coins:["\uD83D\uDC1F","\uD83C\uDF0A","\u2B50","\uD83D\uDCB0"], anticipation:"wave_crash",  intro:"watery" ,accentColor:"#87CEEB",reelStyle:"slam",ambientFx:"crystals"},
+    dragon_megafire:{ bgType:"flames",chrome:"fire_border",winFX:"dragon_burst", coins:["\uD83D\uDC09","\uD83D\uDD25","\uD83D\uDCAB","\uD83D\uDCB0"], anticipation:"dragon_glow",    intro:"inferno" ,accentColor:"#FF6347",reelStyle:"smooth",ambientFx:"leaves"},
+    esqueleto_fiesta:    { bgType:"day_dead",  chrome:"fiesta",       winFX:"confetti_pop", coins:["\uD83D\uDC80","\uD83C\uDF8A","\u2B50","\uD83D\uDCB0"], anticipation:"rumble",  intro:"carnival" ,accentColor:"#FFD700",reelStyle:"turbo",ambientFx:"lightning"},
+    wildfire_gold:       { bgType:"wildfire",  chrome:"fire_border",  winFX:"ember_burst",  coins:["\uD83D\uDD25","\uD83D\uDCAB","\u2B50","\uD83D\uDCB0"], anticipation:"heat",        intro:"inferno" ,accentColor:"#FFD700",reelStyle:"elastic",ambientFx:"coins_float"},
+    five_lions:{ bgType:"chinese_sky",chrome:"gold_ornate",winFX:"gold_shower", coins:["\uD83E\uDD81","\uD83C\uDF81","\u2728","\uD83D\uDCB0"], anticipation:"dragon_glow", intro:"epic" ,accentColor:"#FFD700",reelStyle:"wave",ambientFx:"mist"},
+    chilli_heat:         { bgType:"flames",    chrome:"fire_border",  winFX:"ember_burst",  coins:["\uD83C\uDF36","\uD83D\uDD25","\uD83C\uDF1F","\uD83D\uDCB0"], anticipation:"heat",        intro:"inferno" ,accentColor:"#FF0000",reelStyle:"gravity",ambientFx:"aurora"},
+    tombstone_reload:    { bgType:"wild_west", chrome:"rustic_wood",  winFX:"gunshot_pop",  coins:["\uD83E\uDD20","\u2B50","\uD83D\uDCB0","\uD83D\uDC80"], anticipation:"rumble",      intro:"wild" ,accentColor:"#696969",reelStyle:"magnetic",ambientFx:"sand"},
+    mental_meltdown:     { bgType:"cyber_grid",chrome:"tech_hud",     winFX:"glitch_burst", coins:["\uD83E\uDDE0","\u26A1","\u2728","\uD83D\uDCB0"],       anticipation:"neon_flash",    intro:"cyber" ,accentColor:"#FF0000",reelStyle:"spiral",ambientFx:"blood_drip"}
   };
 
   // Continue remaining 125 games
   var PROFILES2 = {
-    street_rider:        { bgType:"city_rain",  chrome:"arcade_neon", winFX:"neon_pop",     coins:["\uD83D\uDEF4","\u26A1","\uD83D\uDCB0","\u2728"],       anticipation:"electric",    intro:"flash" },
-    spartan_glory:{ bgType:"arena",chrome:"chrome_round",winFX:"sword_clash",  coins:["\uD83D\uDEE1","\u2694","\u2B50","\uD83D\uDCB0"],        anticipation:"thunder",     intro:"epic" },
-    jungle_spirit:{ bgType:"deep_jungle",chrome:"bamboo",winFX:"magic_swirl",   coins:["\uD83C\uDF43","\uD83C\uDF40","\u2728","\uD83D\uDCB0"], anticipation:"sparkle",     intro:"dramatic" },
-    wild_west:{ bgType:"wild_west",chrome:"rustic_wood",winFX:"dust_cloud",  coins:["\uD83E\uDD20","\u2B50","\uD83D\uDCB0","\uD83D\uDC04"], anticipation:"rumble",      intro:"dramatic" },
-    mystic_gems:         { bgType:"crystal_cave",chrome:"gem_frame",  winFX:"gem_shatter",  coins:["\uD83D\uDC8E","\u2728","\uD83D\uDCAF","\uD83D\uDCB0"], anticipation:"gem_glow",    intro:"cosmic" },
-    thunder_crash:       { bgType:"stormy_sky", chrome:"tech_hud",    winFX:"thunder_burst",coins:["\u26A1","\u2728","\uD83D\uDCB0","\uD83D\uDC8E"],        anticipation:"thunder",     intro:"epic" },
-    solar_blast:         { bgType:"space_nova", chrome:"tech_hud",    winFX:"solar_burst",  coins:["\u2600","\u26A1","\u2728","\uD83D\uDCB0"],              anticipation:"electric",    intro:"cosmic" },
-    sweet_bonanza:{ bgType:"candy",chrome:"chrome_round",winFX:"fruit_pop",  coins:["\uD83C\uDF6C","\uD83C\uDF6B","\uD83C\uDF69","\uD83D\uDCB0"], anticipation:"sparkle",intro:"sweet" },
-    amazon_wild:         { bgType:"deep_jungle",chrome:"bamboo",      winFX:"leaf_burst",   coins:["\uD83C\uDF3F","\uD83C\uDF43","\u2728","\uD83D\uDCB0"], anticipation:"sparkle",     intro:"dramatic" },
-    treasure_hunt:{ bgType:"ocean_wave",chrome:"gold_ornate",winFX:"treasure_pop", coins:["\uD83D\uDCB0","\u2693","\u2620","\u2728"],              anticipation:"wave_crash",  intro:"dramatic" },
-    lucky_shamrock:      { bgType:"irish_green",chrome:"chrome_round",winFX:"shamrock_pop", coins:["\uD83C\uDF40","\u2618","\uD83D\uDCB0","\u2728"],       anticipation:"sparkle",     intro:"sweet" },
-    ice_queen:{ bgType:"blizzard",chrome:"crystal_ball",winFX:"ice_shatter",  coins:["\u2744","\u2745","\uD83D\uDC8E","\uD83D\uDCB0"],       anticipation:"freeze",      intro:"mystic" },
-    lava_gold:           { bgType:"volcano",    chrome:"fire_border", winFX:"lava_pop",     coins:["\uD83D\uDD25","\uD83E\uDEA8","\uD83D\uDCB0","\u2B50"], anticipation:"heat",        intro:"dramatic" },
-    moon_princess:       { bgType:"moonlit",    chrome:"kawaii_pink", winFX:"moon_burst",   coins:["\uD83C\uDF19","\u2B50","\uD83D\uDC8E","\uD83D\uDCB0"], anticipation:"moon_glow",   intro:"cosmic" },
-    wild_amazon:{ bgType:"bamboo_forest",chrome:"bamboo",winFX:"leaf_burst",   coins:["\uD83C\uDF3F","\uD83C\uDF43","\u2B50","\uD83D\uDCB0"], anticipation:"sparkle",     intro:"dramatic" },
-    aztec_gold:          { bgType:"aztec_temple",chrome:"stone_aztec",winFX:"gold_shower",  coins:["\uD83D\uDCB0","\uD83C\uDF1E","\u2728","\uD83D\uDC8E"], anticipation:"rumble",      intro:"epic" },
-    monster_match:       { bgType:"haunted",    chrome:"dark_iron",   winFX:"slime_burst",  coins:["\uD83D\uDC7B","\uD83C\uDF83","\u2B50","\uD83D\uDCB0"], anticipation:"dark_pulse",  intro:"dramatic" },
-    golden_tiger:{ bgType:"chinese_sky",chrome:"jade_frame",winFX:"gold_shower", coins:["\uD83D\uDC2F","\u2B50","\uD83D\uDCB0","\uD83D\uDC8E"], anticipation:"dragon_glow", intro:"epic" },
-    neon_future:         { bgType:"cyber_grid", chrome:"tech_hud",    winFX:"laser_pop",    coins:["\u26A1","\uD83D\uDD2C","\u2728","\uD83D\uDCB0"],        anticipation:"electric",    intro:"cyber" ,accentColor:"#00FFFF"},
-    dark_knight:         { bgType:"gothic_city",chrome:"dark_iron",   winFX:"bat_burst",    coins:["\uD83E\uDDB7","\uD83C\uDF03","\u2728","\uD83D\uDCB0"], anticipation:"dark_pulse",  intro:"dramatic" },
-    reef_riches:         { bgType:"coral_sea",  chrome:"fishing",     winFX:"bubble_burst", coins:["\uD83D\uDC1F","\uD83D\uDC20","\uD83D\uDC22","\uD83D\uDCB0"], anticipation:"pulse_blue",intro:"watery" },
-    ninja_master:        { bgType:"ninja_dojo",  chrome:"dark_iron",  winFX:"shuriken_pop", coins:["\uD83E\uDD44","\u2694","\u2B50","\uD83D\uDCB0"],        anticipation:"dark_pulse",  intro:"dramatic" },
-    fortune_tiger:{ bgType:"chinese_sky",chrome:"fire_border",winFX:"dragon_burst", coins:["\uD83D\uDC2F","\uD83C\uDF81","\u2728","\uD83D\uDCB0"], anticipation:"heat", intro:"epic" ,accentColor:"#FF4500"},
-    rainbow_gold:        { bgType:"rainbow",    chrome:"chrome_round",winFX:"rainbow_burst",coins:["\uD83C\uDF08","\uD83D\uDCB0","\u2728","\uD83D\uDC8E"], anticipation:"sparkle",     intro:"sweet" },
-    wolf_moon:{ bgType:"moonlit",chrome:"ice_crystal",winFX:"moon_howl",    coins:["\uD83D\uDC3A","\uD83C\uDF15","\u2B50","\uD83D\uDCB0"], anticipation:"moon_glow",   intro:"dramatic" },
-    crystal_cavern:      { bgType:"crystal_cave",chrome:"ice_crystal",winFX:"crystal_pop",  coins:["\uD83D\uDC8E","\u2745","\u2728","\uD83D\uDCB0"],       anticipation:"gem_glow",    intro:"cosmic" },
-    royal_flush:         { bgType:"velvet_casino",chrome:"gold_ornate",winFX:"card_shuffle", coins:["\u2660","\u2665","\uD83D\uDCB0","\u2728"],             anticipation:"pulse_red",   intro:"flash" },
-    phoenix_blaze:       { bgType:"phoenix_fire",chrome:"fire_border",winFX:"phoenix_burst",coins:["\uD83D\uDD25","\uD83D\uDCAB","\uD83D\uDCB0","\u2B50"], anticipation:"heat",        intro:"epic" },
-    deep_sea_diver:      { bgType:"deep_sea",   chrome:"fishing",     winFX:"bubble_burst", coins:["\uD83D\uDC22","\uD83D\uDC1F","\uD83D\uDC8E","\uD83D\uDCB0"], anticipation:"pulse_blue",intro:"watery" },
-    samurai_sword:{ bgType:"ninja_dojo",chrome:"jade_frame",winFX:"sword_clash",  coins:["\u2694","\uD83E\uDD44","\u2B50","\uD83D\uDCB0"],        anticipation:"dark_pulse",  intro:"dramatic" }
+    street_rider:        { bgType:"city_rain",  chrome:"arcade_neon", winFX:"neon_pop",     coins:["\uD83D\uDEF4","\u26A1","\uD83D\uDCB0","\u2728"],       anticipation:"electric",    intro:"neon" ,accentColor:"#00FFFF",reelStyle:"jelly",ambientFx:"sparkles"},
+    spartan_glory:{ bgType:"arena",chrome:"chrome_round",winFX:"sword_clash",  coins:["\uD83D\uDEE1","\u2694","\u2B50","\uD83D\uDCB0"],        anticipation:"rumble",     intro:"dramatic" ,accentColor:"#B8860B",reelStyle:"glitch",ambientFx:"embers"},
+    jungle_spirit:{ bgType:"deep_jungle",chrome:"bamboo",winFX:"magic_swirl",   coins:["\uD83C\uDF43","\uD83C\uDF40","\u2728","\uD83D\uDCB0"], anticipation:"jungle_drum",     intro:"jungle" ,accentColor:"#00AA00",reelStyle:"flutter",ambientFx:"snow"},
+    wild_west:{ bgType:"wild_west",chrome:"rustic_wood",winFX:"dust_cloud",  coins:["\uD83E\uDD20","\u2B50","\uD83D\uDCB0","\uD83D\uDC04"], anticipation:"rumble",      intro:"wild" ,accentColor:"#CD853F",reelStyle:"thunder_drop",ambientFx:"bubbles"},
+    mystic_gems:         { bgType:"crystal_cave",chrome:"gem_frame",  winFX:"gem_shatter",  coins:["\uD83D\uDC8E","\u2728","\uD83D\uDCAF","\uD83D\uDCB0"], anticipation:"gem_glow",    intro:"mystic" ,accentColor:"#BA55D3",reelStyle:"feather_fall",ambientFx:"petals"},
+    thunder_crash:       { bgType:"stormy_sky", chrome:"tech_hud",    winFX:"thunder_burst",coins:["\u26A1","\u2728","\uD83D\uDCB0","\uD83D\uDC8E"],        anticipation:"thunder",     intro:"dramatic" ,accentColor:"#FFFF00",reelStyle:"cascade",ambientFx:"dust"},
+    solar_blast:         { bgType:"space_nova", chrome:"tech_hud",    winFX:"solar_burst",  coins:["\u2600","\u26A1","\u2728","\uD83D\uDCB0"],              anticipation:"heat",    intro:"cosmic" ,accentColor:"#FFFF00",reelStyle:"bounce",ambientFx:"fireflies"},
+    sweet_bonanza:{ bgType:"candy",chrome:"chrome_round",winFX:"fruit_pop",  coins:["\uD83C\uDF6C","\uD83C\uDF53","\uD83C\uDF69","\uD83D\uDCB0"], anticipation:"candy_pulse",intro:"sweet" ,accentColor:"#FF1493",reelStyle:"slam",ambientFx:"stars"},
+    amazon_wild:         { bgType:"deep_jungle",chrome:"bamboo",      winFX:"leaf_burst",   coins:["\uD83C\uDF3F","\uD83C\uDF43","\u2728","\uD83D\uDCB0"], anticipation:"jungle_drum",     intro:"jungle" ,accentColor:"#228B22",reelStyle:"smooth",ambientFx:"rain"},
+    treasure_hunt:{ bgType:"ocean_wave",chrome:"gold_ornate",winFX:"treasure_pop", coins:["\uD83D\uDCB0","\u2693","\u2620","\u2728"],              anticipation:"pirate_warn",  intro:"pirate" ,accentColor:"#DAA520",reelStyle:"turbo",ambientFx:"ash"},
+    lucky_shamrock:      { bgType:"irish_green",chrome:"chrome_round",winFX:"shamrock_pop", coins:["\uD83C\uDF40","\u2618","\uD83D\uDCB0","\u2728"],       anticipation:"pulse_green",     intro:"flash" ,accentColor:"#00AA00",reelStyle:"elastic",ambientFx:"confetti"},
+    ice_queen:{ bgType:"blizzard",chrome:"crystal_ball",winFX:"ice_shatter",  coins:["\u2744","\u2745","\uD83D\uDC8E","\uD83D\uDCB0"],       anticipation:"frost_glow",      intro:"frozen" ,accentColor:"#B0E0E6",reelStyle:"wave",ambientFx:"smoke"},
+    lava_gold:           { bgType:"volcano",    chrome:"fire_border", winFX:"lava_pop",     coins:["\uD83D\uDD25","\uD83E\uDEA8","\uD83D\uDCB0","\u2B50"], anticipation:"lava_glow",        intro:"inferno" ,accentColor:"#FF8C00",reelStyle:"gravity",ambientFx:"crystals"},
+    moon_princess:       { bgType:"moonlit",    chrome:"kawaii_pink", winFX:"moon_burst",   coins:["\uD83C\uDF19","\u2B50","\uD83D\uDC8E","\uD83D\uDCB0"], anticipation:"moon_glow",   intro:"mystic" ,accentColor:"#FFB6D9",reelStyle:"magnetic",ambientFx:"leaves"},
+    wild_amazon:{ bgType:"bamboo_forest",chrome:"bamboo",winFX:"leaf_burst",   coins:["\uD83C\uDF3F","\uD83C\uDF43","\u2B50","\uD83D\uDCB0"], anticipation:"jungle_drum",     intro:"jungle" ,accentColor:"#32CD32",reelStyle:"spiral",ambientFx:"lightning"},
+    aztec_gold:          { bgType:"aztec_temple",chrome:"stone_aztec",winFX:"gold_shower",  coins:["\uD83D\uDCB0","\uD83C\uDF1E","\u2728","\uD83D\uDC8E"], anticipation:"sand_storm",      intro:"ancient" ,accentColor:"#C9A96E",reelStyle:"jelly",ambientFx:"coins_float"},
+    monster_match:       { bgType:"haunted",    chrome:"dark_iron",   winFX:"slime_burst",  coins:["\uD83D\uDC7B","\uD83C\uDF83","\u2B50","\uD83D\uDCB0"], anticipation:"sparkle",  intro:"carnival" ,accentColor:"#FF6B00",reelStyle:"glitch",ambientFx:"mist"},
+    golden_tiger:{ bgType:"chinese_sky",chrome:"jade_frame",winFX:"gold_shower", coins:["\uD83D\uDC2F","\u2B50","\uD83D\uDCB0","\uD83D\uDC8E"], anticipation:"dragon_glow", intro:"epic" ,accentColor:"#FFB300",reelStyle:"flutter",ambientFx:"aurora"},
+    neon_future:         { bgType:"cyber_grid", chrome:"tech_hud",    winFX:"laser_pop",    coins:["\u26A1","\uD83D\uDD2C","\u2728","\uD83D\uDCB0"],        anticipation:"electric",    intro:"cyber" ,accentColor:"#00FFFF",reelStyle:"thunder_drop",ambientFx:"sand"},
+    dark_knight:         { bgType:"gothic_city",chrome:"dark_iron",   winFX:"bat_burst",    coins:["\uD83E\uDDB7","\uD83C\uDF03","\u2728","\uD83D\uDCB0"], anticipation:"dark_pulse",  intro:"dark" ,accentColor:"#2F4F4F",reelStyle:"feather_fall",ambientFx:"blood_drip"},
+    reef_riches:         { bgType:"coral_sea",  chrome:"fishing",     winFX:"bubble_burst", coins:["\uD83D\uDC1F","\uD83D\uDC20","\uD83D\uDC22","\uD83D\uDCB0"], anticipation:"wave_crash",intro:"watery" ,accentColor:"#00CED1",reelStyle:"cascade",ambientFx:"sparkles"},
+    ninja_master:        { bgType:"ninja_dojo",  chrome:"dark_iron",  winFX:"shuriken_pop", coins:["\uD83E\uDD44","\u2694","\u2B50","\uD83D\uDCB0"],        anticipation:"pulse_red",  intro:"samurai" ,accentColor:"#2F4F4F",reelStyle:"bounce",ambientFx:"embers"},
+    fortune_tiger:{ bgType:"chinese_sky",chrome:"fire_border",winFX:"dragon_burst", coins:["\uD83D\uDC2F","\uD83C\uDF81","\u2728","\uD83D\uDCB0"], anticipation:"heat", intro:"epic" ,accentColor:"#FF4500",reelStyle:"slam",ambientFx:"snow"},
+    rainbow_gold:        { bgType:"rainbow",    chrome:"chrome_round",winFX:"rainbow_burst",coins:["\uD83C\uDF08","\uD83D\uDCB0","\u2728","\uD83D\uDC8E"], anticipation:"pulse_green",     intro:"flash" ,accentColor:"#FFD700",reelStyle:"smooth",ambientFx:"bubbles"},
+    wolf_moon:{ bgType:"moonlit",chrome:"ice_crystal",winFX:"moon_howl",    coins:["\uD83D\uDC3A","\uD83C\uDF19","\u2B50","\uD83D\uDCB0"], anticipation:"moon_glow",   intro:"dark" ,accentColor:"#E0E0FF",reelStyle:"turbo",ambientFx:"petals"},
+    crystal_cavern:      { bgType:"crystal_cave",chrome:"ice_crystal",winFX:"crystal_pop",  coins:["\uD83D\uDC8E","\u2745","\u2728","\uD83D\uDCB0"],       anticipation:"crystal_ring",    intro:"mystic" ,accentColor:"#4DD0E1",reelStyle:"elastic",ambientFx:"dust"},
+    royal_flush:         { bgType:"velvet_casino",chrome:"gold_ornate",winFX:"card_shuffle", coins:["\u2660","\u2665","\uD83D\uDCB0","\u2728"],             anticipation:"royal_glow",   intro:"royal" ,accentColor:"#9400D3",reelStyle:"wave",ambientFx:"fireflies"},
+    phoenix_blaze:       { bgType:"phoenix_fire",chrome:"fire_border",winFX:"phoenix_burst",coins:["\uD83D\uDD25","\uD83D\uDCAB","\uD83D\uDCB0","\u2B50"], anticipation:"dragon_glow",        intro:"inferno" ,accentColor:"#FF4500",reelStyle:"gravity",ambientFx:"stars"},
+    deep_sea_diver:      { bgType:"deep_sea",   chrome:"fishing",     winFX:"bubble_burst", coins:["\uD83D\uDC22","\uD83D\uDC1F","\uD83D\uDC8E","\uD83D\uDCB0"], anticipation:"pulse_blue",intro:"watery" ,accentColor:"#00688B",reelStyle:"magnetic",ambientFx:"rain"},
+    samurai_sword:{ bgType:"ninja_dojo",chrome:"jade_frame",winFX:"sword_clash",  coins:["\u2694","\uD83E\uDD44","\u2B50","\uD83D\uDCB0"],        anticipation:"pulse_red",  intro:"samurai" ,accentColor:"#DC143C",reelStyle:"spiral",ambientFx:"ash"}
   };
   Object.assign(PROFILES, PROFILES2);
 
   // Remaining games + adult/noir themes
   var PROFILES3 = {
-    cleopatra_gold:      { bgType:"egypt_dusk",  chrome:"ancient_stone", winFX:"sand_burst",  coins:["\uD83D\uDCB0","\uD83C\uDFFA","\u2728","\uD83D\uDC8E"], anticipation:"sand_storm",  intro:"epic" },
-    lucky_panda:         { bgType:"bamboo_forest",chrome:"jade_frame",   winFX:"panda_pop",   coins:["\uD83D\uDC3C","\uD83C\uDF81","\u2728","\uD83D\uDCB0"], anticipation:"sparkle",     intro:"sweet" },
-    big_bad_wolf:        { bgType:"moonlit",     chrome:"rustic_wood",   winFX:"moon_howl",   coins:["\uD83D\uDC3A","\uD83C\uDF15","\u2B50","\uD83D\uDCB0"], anticipation:"moon_glow",   intro:"dramatic" },
-    red_tiger:{ bgType:"chinese_sky",chrome:"fire_border",winFX:"ember_burst",coins:["\uD83D\uDC2F","\u2728","\uD83D\uDCB0","\u2B50"],       anticipation:"dragon_glow", intro:"inferno" ,accentColor:"#CC0000"},
-    super_diamond:{ bgType:"crystal_cave",chrome:"chrome_round",winFX:"diamond_shatter",coins:["\uD83D\uDC8E","\uD83D\uDCAF","\u2728","\uD83D\uDCB0"], anticipation:"gem_glow", intro:"cosmic" },
-    gold_rush:           { bgType:"wild_west",   chrome:"rustic_wood",   winFX:"gold_shower", coins:["\uD83E\uDD20","\uD83D\uDCB0","\u2728","\uD83D\uDC8E"], anticipation:"rumble",      intro:"dramatic" },
-    star_of_egypt:{ bgType:"egypt_dusk",chrome:"ancient_stone",winFX:"starburst",  coins:["\uD83C\uDF1F","\uD83C\uDFFA","\u2728","\uD83D\uDCB0"], anticipation:"sand_storm",  intro:"epic" },
-    sparta_warriors:{ bgType:"arena",chrome:"ancient_stone",winFX:"sword_clash", coins:["\uD83D\uDEE1","\u2694","\u2B50","\uD83D\uDCB0"],        anticipation:"thunder",     intro:"epic" },
-    buffalo_hold:{ bgType:"savanna",chrome:"rustic_wood",winFX:"thunder_burst",  coins:["\uD83E\uDD8C","\uD83D\uDCAB","\u2B50","\uD83D\uDCB0"], anticipation:"rumble",      intro:"wild" ,accentColor:"#A0522D"},
-    mystic_wolf:{ bgType:"moonlit",chrome:"dark_iron",winFX:"moon_howl",   coins:["\uD83D\uDC3A","\uD83C\uDF15","\u2B50","\uD83D\uDCB0"], anticipation:"moon_glow",   intro:"dramatic" },
-    ancient_alchemist:   { bgType:"mystic_mist", chrome:"crystal_ball",  winFX:"mystic_burst",coins:["\u2697","\u2728","\uD83D\uDCB0","\uD83D\uDD2E"],        anticipation:"sparkle",     intro:"mystic" },
-    thunder_titan:       { bgType:"stormy_sky",  chrome:"golden_gods",   winFX:"lightning_strike",coins:["\u26A1","\uD83D\uDC8E","\u2728","\uD83D\uDCB0"], anticipation:"thunder",     intro:"epic" },
-    carnival_chaos:{ bgType:"carnival",chrome:"fiesta",winFX:"confetti_pop",coins:["\uD83C\uDF86","\uD83C\uDF89","\u2728","\uD83D\uDCB0"], anticipation:"spin_joker",  intro:"sweet" },
-    safari_king:{ bgType:"savanna",chrome:"gold_ornate",winFX:"dust_cloud",  coins:["\uD83E\uDD81","\uD83D\uDCAB","\u2B50","\uD83D\uDCB0"], anticipation:"rumble",      intro:"dramatic" },
-    crystal_royals:      { bgType:"crystal_cave",chrome:"gem_frame",     winFX:"crystal_pop", coins:["\uD83D\uDC8E","\u2728","\uD83D\uDCAF","\uD83D\uDCB0"], anticipation:"gem_glow",    intro:"mystic" ,accentColor:"#BA55D3"},
-    infernal_depths:     { bgType:"hell_fire",   chrome:"dark_iron",     winFX:"lava_pop",    coins:["\uD83D\uDC80","\uD83D\uDD25","\uD83D\uDCAB","\uD83D\uDCB0"], anticipation:"heat",  intro:"dramatic" },
-    rainbow_riches_quest:{ bgType:"rainbow",chrome:"chrome_round",winFX:"shamrock_pop",coins:["\uD83C\uDF40","\u2618","\uD83D\uDCB0","\u2728"],       anticipation:"pulse_green",     intro:"flash" ,accentColor:"#00FF00"},
-    steampunk_gears:     { bgType:"steam_factory",chrome:"tech_hud",     winFX:"gear_burst",  coins:["\u2699","\uD83D\uDD27","\u2728","\uD83D\uDCB0"],        anticipation:"electric",    intro:"flash" },
-    phoenix_rising:{ bgType:"phoenix_fire",chrome:"gold_ornate",winFX:"phoenix_burst",coins:["\uD83D\uDD25","\uD83D\uDCAB","\uD83D\uDCB0","\u2B50"], anticipation:"heat",        intro:"epic" },
-    arctic_frost:        { bgType:"blizzard",    chrome:"ice_crystal",   winFX:"ice_shatter", coins:["\u2744","\u2745","\uD83D\uDC8E","\uD83D\uDCB0"],       anticipation:"freeze",      intro:"frozen" ,accentColor:"#87CEEB"},
-    urban_rooftop:{ bgType:"city_rain",chrome:"chrome_round",winFX:"neon_pop",    coins:["\uD83C\uDF06","\u26A1","\uD83D\uDCB0","\u2728"],       anticipation:"neon_flash",    intro:"cyber" ,accentColor:"#00FFFF"},
-    enchanted_maze:      { bgType:"fairy_forest",chrome:"kawaii_pink",   winFX:"fairy_pop",   coins:["\u2728","\uD83E\uDDDA","\uD83D\uDC8E","\uD83D\uDCB0"], anticipation:"sparkle",     intro:"mystic" },
-    samurai_honor:       { bgType:"ninja_dojo",  chrome:"dark_iron",     winFX:"sword_clash", coins:["\u2694","\uD83E\uDD44","\u2B50","\uD83D\uDCB0"],        anticipation:"pulse_red",  intro:"samurai" ,accentColor:"#DC143C"},
-    mega_diamond_rush:{ bgType:"crystal_cave",chrome:"gold_ornate",winFX:"diamond_shatter",coins:["\uD83D\uDC8E","\uD83D\uDCAF","\u2728","\uD83D\uDCB0"], anticipation:"gem_glow", intro:"cosmic" },
-    sinners_paradise:{ bgType:"hell_fire",chrome:"fire_border",winFX:"lava_pop",    coins:["\uD83D\uDD25","\uD83D\uDC80","\uD83D\uDCB0","\u2728"], anticipation:"dark_pulse",  intro:"dramatic" },
-    midnight_burlesque:  { bgType:"velvet_club", chrome:"gold_ornate",   winFX:"feather_pop", coins:["\uD83E\uDE78","\uD83D\uDC83","\u2728","\uD83D\uDCB0"], anticipation:"pulse_red",   intro:"mystic" },
-    absinthe_nights:     { bgType:"absinth_dream",chrome:"gold_ornate",  winFX:"smoke_burst", coins:["\uD83D\uDC80","\u2726","\u2728","\uD83D\uDCB0"],        anticipation:"dark_pulse",  intro:"mystic" },
-    velvet_lounge:{ bgType:"velvet_club",chrome:"gold_ornate",winFX:"card_shuffle",coins:["\uD83C\uDCCF","\u2665","\uD83D\uDCB0","\u2728"],       anticipation:"royal_glow",   intro:"royal" ,accentColor:"#9400D3"},
-    dark_desire:{ bgType:"city_rain",chrome:"dark_iron",winFX:"dark_burst",  coins:["\uD83D\uDC80","\uD83D\uDD25","\u2728","\uD83D\uDCB0"], anticipation:"dark_pulse",  intro:"dramatic" },
-    vice_city_jackpot:{ bgType:"neon_city",chrome:"neon_round",winFX:"confetti_pop",    coins:["\uD83C\uDF06","\uD83D\uDCB0","\u26A1","\u2728"],       anticipation:"electric",    intro:"flash" },
-    whiskey_barrel:{ bgType:"wild_west",chrome:"chrome_round",winFX:"gunshot_pop", coins:["\uD83C\uDF7A","\uD83E\uDD20","\uD83D\uDCB0","\u2728"], anticipation:"rumble",      intro:"dramatic" },
-    black_market:        { bgType:"gothic_city", chrome:"dark_iron",     winFX:"dark_burst",  coins:["\uD83D\uDCB0","\uD83D\uDC80","\u2728","\u26A1"],       anticipation:"dark_pulse",  intro:"dramatic" },
-    serpent_temptation:  { bgType:"mystic_mist", chrome:"crystal_ball",  winFX:"smoke_burst", coins:["\uD83D\uDC0D","\u2728","\uD83D\uDCB0","\uD83D\uDC80"], anticipation:"dark_pulse",  intro:"mystic" },
-    neon_underworld:     { bgType:"neon_city",   chrome:"arcade_neon",   winFX:"laser_pop",   coins:["\u26A1","\uD83D\uDCB0","\uD83C\uDF06","\u2728"],       anticipation:"electric",    intro:"flash" },
-    blood_ritual:        { bgType:"blood_moon",  chrome:"dark_iron",     winFX:"blood_burst", coins:["\uD83D\uDD25","\uD83D\uDC80","\u2728","\uD83D\uDCB0"], anticipation:"dark_pulse",  intro:"dramatic" },
-    crypt_of_sins:       { bgType:"haunted",     chrome:"dark_iron",     winFX:"dark_burst",  coins:["\uD83D\uDC80","\uD83C\uDF83","\u2728","\uD83D\uDCB0"], anticipation:"dark_pulse",  intro:"dramatic" },
-    flesh_and_gold:      { bgType:"velvet_club", chrome:"gold_ornate",   winFX:"gold_shower", coins:["\uD83D\uDCB0","\u2728","\uD83D\uDC8E","\uD83D\uDC80"], anticipation:"pulse_red",   intro:"mystic" },
-    opium_den:{ bgType:"absinth_dream",chrome:"crystal_ball",winFX:"smoke_burst", coins:["\uD83D\uDCB0","\uD83D\uDD2E","\u2728","\uD83D\uDC80"], anticipation:"dark_pulse",  intro:"mystic" },
-    torture_chamber:     { bgType:"hell_fire",   chrome:"dark_iron",     winFX:"dark_burst",  coins:["\uD83D\uDC80","\uD83D\uDD25","\u2728","\uD83D\uDCB0"], anticipation:"dark_pulse",  intro:"dramatic" }
+    cleopatra_gold:      { bgType:"egypt_dusk",  chrome:"ancient_stone", winFX:"sand_burst",  coins:["\uD83D\uDCB0","\uD83C\uDFFA","\u2728","\uD83D\uDC8E"], anticipation:"sand_storm",  intro:"ancient" ,accentColor:"#DAA520",reelStyle:"jelly",ambientFx:"confetti"},
+    lucky_panda:         { bgType:"bamboo_forest",chrome:"jade_frame",   winFX:"panda_pop",   coins:["\uD83D\uDC3C","\uD83C\uDF81","\u2728","\uD83D\uDCB0"], anticipation:"sparkle",     intro:"mystic" ,accentColor:"#FF4500",reelStyle:"glitch",ambientFx:"smoke"},
+    big_bad_wolf:        { bgType:"moonlit",     chrome:"rustic_wood",   winFX:"moon_howl",   coins:["\uD83D\uDC3A","\uD83C\uDF15","\uD83C\uDF32","\uD83D\uDCB0"], anticipation:"moon_glow",   intro:"dramatic" ,accentColor:"#708090",reelStyle:"flutter",ambientFx:"crystals"},
+    red_tiger:{ bgType:"chinese_sky",chrome:"fire_border",winFX:"ember_burst",coins:["\uD83D\uDC2F","\u2728","\uD83D\uDCB0","\u2B50"],       anticipation:"dragon_glow", intro:"inferno" ,accentColor:"#CC0000",reelStyle:"thunder_drop",ambientFx:"leaves"},
+    super_diamond:{ bgType:"crystal_cave",chrome:"chrome_round",winFX:"diamond_shatter",coins:["\uD83D\uDC8E","\uD83C\uDF1F","\u2728","\uD83D\uDCB0"], anticipation:"gem_glow", intro:"flash" ,accentColor:"#B0E0E6",reelStyle:"feather_fall",ambientFx:"lightning"},
+    gold_rush:           { bgType:"wild_west",   chrome:"rustic_wood",   winFX:"gold_shower", coins:["\uD83E\uDD20","\uD83D\uDCB0","\u2728","\uD83D\uDC8E"], anticipation:"golden_aura",      intro:"flash" ,accentColor:"#FFD700",reelStyle:"cascade",ambientFx:"coins_float"},
+    star_of_egypt:{ bgType:"egypt_dusk",chrome:"ancient_stone",winFX:"starburst",  coins:["\uD83C\uDF1F","\uD83C\uDFFA","\u2728","\uD83D\uDCB0"], anticipation:"star_glow",  intro:"ancient" ,accentColor:"#FFD700",reelStyle:"bounce",ambientFx:"mist"},
+    sparta_warriors:{ bgType:"arena",chrome:"ancient_stone",winFX:"sword_clash", coins:["\uD83D\uDEE1","\u2694","\uD83D\uDC51","\uD83D\uDCB0"],        anticipation:"rumble",     intro:"dramatic" ,accentColor:"#CD853F",reelStyle:"slam",ambientFx:"aurora"},
+    buffalo_hold:{ bgType:"savanna",chrome:"rustic_wood",winFX:"thunder_burst",  coins:["\uD83E\uDD8C","\uD83D\uDCAB","\u2B50","\uD83D\uDCB0"], anticipation:"rumble",      intro:"wild" ,accentColor:"#A0522D",reelStyle:"smooth",ambientFx:"sand"},
+    mystic_wolf:{ bgType:"moonlit",chrome:"dark_iron",winFX:"moon_howl",   coins:["\uD83D\uDC3A","\uD83C\uDF0C","\u2728","\uD83D\uDCB0"], anticipation:"moon_glow",   intro:"mystic" ,accentColor:"#9370DB",reelStyle:"turbo",ambientFx:"blood_drip"},
+    ancient_alchemist:   { bgType:"mystic_mist", chrome:"crystal_ball",  winFX:"mystic_burst",coins:["\u2697","\u2728","\uD83D\uDCB0","\uD83D\uDD2E"],        anticipation:"cosmic_hum",     intro:"mystic" ,accentColor:"#7FFF00",reelStyle:"elastic",ambientFx:"sparkles"},
+    thunder_titan:       { bgType:"stormy_sky",  chrome:"golden_gods",   winFX:"lightning_strike",coins:["\u26A1","\uD83D\uDCA5","\u2B50","\uD83D\uDCB0"], anticipation:"thunder",     intro:"dramatic" ,accentColor:"#FFFF00",reelStyle:"wave",ambientFx:"embers"},
+    carnival_chaos:{ bgType:"carnival",chrome:"fiesta",winFX:"confetti_pop",coins:["\uD83C\uDF86","\uD83C\uDF89","\u2728","\uD83D\uDCB0"], anticipation:"spin_joker",  intro:"carnival" ,accentColor:"#FF4500",reelStyle:"gravity",ambientFx:"snow"},
+    safari_king:{ bgType:"savanna",chrome:"gold_ornate",winFX:"dust_cloud",  coins:["\uD83E\uDD81","\uD83D\uDCAB","\u2B50","\uD83D\uDCB0"], anticipation:"rumble",      intro:"jungle" ,accentColor:"#DEB887",reelStyle:"magnetic",ambientFx:"bubbles"},
+    crystal_royals:      { bgType:"crystal_cave",chrome:"gem_frame",     winFX:"crystal_pop", coins:["\uD83D\uDC8E","\u2728","\uD83D\uDC51","\uD83D\uDCB0"], anticipation:"gem_glow",    intro:"mystic" ,accentColor:"#BA55D3",reelStyle:"spiral",ambientFx:"petals"},
+    infernal_depths:     { bgType:"hell_fire",   chrome:"dark_iron",     winFX:"lava_pop",    coins:["\uD83D\uDC80","\uD83D\uDD25","\uD83D\uDCAB","\uD83D\uDCB0"], anticipation:"lava_glow",  intro:"dark" ,accentColor:"#FF4500",reelStyle:"jelly",ambientFx:"dust"},
+    rainbow_riches_quest:{ bgType:"rainbow",chrome:"chrome_round",winFX:"shamrock_pop",coins:["\uD83C\uDF40","\uD83C\uDF08","\uD83D\uDCB0","\u2728"],       anticipation:"pulse_green",     intro:"flash" ,accentColor:"#00FF00",reelStyle:"glitch",ambientFx:"fireflies"},
+    steampunk_gears:     { bgType:"steam_factory",chrome:"tech_hud",     winFX:"gear_burst",  coins:["\u2699","\uD83D\uDD27","\u2728","\uD83D\uDCB0"],        anticipation:"electric",    intro:"flash" ,accentColor:"#B8860B",reelStyle:"flutter",ambientFx:"stars"},
+    phoenix_rising:{ bgType:"phoenix_fire",chrome:"gold_ornate",winFX:"phoenix_burst",coins:["\uD83D\uDD25","\u2B50","\uD83D\uDCB0","\u2728"], anticipation:"dragon_glow",        intro:"inferno" ,accentColor:"#FF8C00",reelStyle:"thunder_drop",ambientFx:"rain"},
+    arctic_frost:        { bgType:"blizzard",    chrome:"ice_crystal",   winFX:"ice_shatter", coins:["\u2744","\u2745","\u2B50","\uD83D\uDCB0"],       anticipation:"freeze",      intro:"frozen" ,accentColor:"#87CEEB",reelStyle:"feather_fall",ambientFx:"ash"},
+    urban_rooftop:{ bgType:"city_rain",chrome:"chrome_round",winFX:"neon_pop",    coins:["\uD83C\uDF06","\u26A1","\uD83C\uDF03","\uD83D\uDCB0"],       anticipation:"neon_flash",    intro:"cyber" ,accentColor:"#00FFFF",reelStyle:"cascade",ambientFx:"confetti"},
+    enchanted_maze:      { bgType:"fairy_forest",chrome:"kawaii_pink",   winFX:"fairy_pop",   coins:["\u2728","\uD83E\uDDDA","\uD83D\uDC8E","\uD83D\uDCB0"], anticipation:"sparkle",     intro:"mystic" ,accentColor:"#9370DB",reelStyle:"bounce",ambientFx:"smoke"},
+    samurai_honor:       { bgType:"ninja_dojo",  chrome:"dark_iron",     winFX:"sword_clash", coins:["\u2694","\uD83C\uDF38","\u2B50","\uD83D\uDCB0"],        anticipation:"pulse_red",  intro:"samurai" ,accentColor:"#DC143C",reelStyle:"slam",ambientFx:"crystals"},
+    mega_diamond_rush:{ bgType:"crystal_cave",chrome:"gold_ornate",winFX:"diamond_shatter",coins:["\uD83D\uDC8E","\uD83D\uDCAF","\uD83D\uDCAB","\uD83D\uDCB0"], anticipation:"crystal_ring", intro:"flash" ,accentColor:"#FFFFFF",reelStyle:"smooth",ambientFx:"leaves"},
+    sinners_paradise:{ bgType:"hell_fire",chrome:"fire_border",winFX:"lava_pop",    coins:["\uD83D\uDD25","\uD83D\uDC80","\uD83D\uDCB0","\u2728"], anticipation:"dark_pulse",  intro:"dark" ,accentColor:"#DC143C",reelStyle:"turbo",ambientFx:"lightning"},
+    midnight_burlesque:  { bgType:"velvet_club", chrome:"gold_ornate",   winFX:"feather_pop", coins:["\uD83E\uDE78","\uD83D\uDC83","\u2728","\uD83D\uDCB0"], anticipation:"dark_pulse",   intro:"dark" ,accentColor:"#FF1493",reelStyle:"elastic",ambientFx:"coins_float"},
+    absinthe_nights:     { bgType:"absinth_dream",chrome:"gold_ornate",  winFX:"smoke_burst", coins:["\uD83D\uDC80","\u2726","\u2728","\uD83D\uDCB0"],        anticipation:"cosmic_hum",  intro:"mystic" ,accentColor:"#7FFF00",reelStyle:"wave",ambientFx:"mist"},
+    velvet_lounge:{ bgType:"velvet_club",chrome:"gold_ornate",winFX:"card_shuffle",coins:["\uD83C\uDCCF","\u2665","\uD83D\uDCB0","\u2728"],       anticipation:"royal_glow",   intro:"royal" ,accentColor:"#9400D3",reelStyle:"gravity",ambientFx:"aurora"},
+    dark_desire:{ bgType:"city_rain",chrome:"dark_iron",winFX:"dark_burst",  coins:["\uD83D\uDC80","\uD83D\uDD25","\u2728","\uD83D\uDCB0"], anticipation:"dark_pulse",  intro:"dark" ,accentColor:"#8B008B",reelStyle:"magnetic",ambientFx:"sand"},
+    vice_city_jackpot:{ bgType:"neon_city",chrome:"neon_round",winFX:"confetti_pop",    coins:["\uD83C\uDF06","\uD83D\uDCB0","\u26A1","\u2728"],       anticipation:"neon_flash",    intro:"neon" ,accentColor:"#FF1493",reelStyle:"spiral",ambientFx:"blood_drip"},
+    whiskey_barrel:{ bgType:"wild_west",chrome:"chrome_round",winFX:"gunshot_pop", coins:["\uD83C\uDF7A","\uD83E\uDD20","\uD83D\uDCB0","\u2728"], anticipation:"wild_pulse",      intro:"wild" ,accentColor:"#CD853F",reelStyle:"jelly",ambientFx:"sparkles"},
+    black_market:        { bgType:"gothic_city", chrome:"dark_iron",     winFX:"dark_burst",  coins:["\uD83D\uDCB0","\uD83D\uDC80","\u2728","\u26A1"],       anticipation:"dark_pulse",  intro:"dark" ,accentColor:"#2F4F4F",reelStyle:"glitch",ambientFx:"embers"},
+    serpent_temptation:  { bgType:"mystic_mist", chrome:"crystal_ball",  winFX:"smoke_burst", coins:["\uD83D\uDC0D","\u2728","\uD83D\uDCB0","\uD83D\uDC80"], anticipation:"dark_pulse",  intro:"mystic" ,accentColor:"#228B22",reelStyle:"flutter",ambientFx:"snow"},
+    neon_underworld:     { bgType:"neon_city",   chrome:"arcade_neon",   winFX:"laser_pop",   coins:["\u26A1","\uD83D\uDCB0","\uD83C\uDF06","\u2728"],       anticipation:"neon_flash",    intro:"dark" ,accentColor:"#FF00FF",reelStyle:"thunder_drop",ambientFx:"bubbles"},
+    blood_ritual:        { bgType:"blood_moon",  chrome:"dark_iron",     winFX:"blood_burst", coins:["\uD83D\uDD25","\uD83D\uDC80","\u2728","\uD83D\uDCB0"], anticipation:"blood_pulse",  intro:"dark" ,accentColor:"#8B0000",reelStyle:"feather_fall",ambientFx:"petals"},
+    crypt_of_sins:       { bgType:"haunted",     chrome:"dark_iron",     winFX:"dark_burst",  coins:["\uD83D\uDC80","\uD83C\uDF83","\u2728","\uD83D\uDCB0"], anticipation:"blood_pulse",  intro:"dark" ,accentColor:"#660000",reelStyle:"cascade",ambientFx:"dust"},
+    flesh_and_gold:      { bgType:"velvet_club", chrome:"gold_ornate",   winFX:"gold_shower", coins:["\uD83D\uDCB0","\u2728","\uD83D\uDC8E","\uD83D\uDC80"], anticipation:"dark_pulse",   intro:"dark" ,accentColor:"#DAA520",reelStyle:"bounce",ambientFx:"fireflies"},
+    opium_den:{ bgType:"absinth_dream",chrome:"crystal_ball",winFX:"smoke_burst", coins:["\uD83D\uDCB0","\uD83D\uDD2E","\u2728","\uD83D\uDC80"], anticipation:"dark_pulse",  intro:"mystic" ,accentColor:"#9370DB",reelStyle:"slam",ambientFx:"stars"},
+    torture_chamber:     { bgType:"hell_fire",   chrome:"dark_iron",     winFX:"dark_burst",  coins:["\uD83D\uDC80","\u26D3","\u2728","\uD83D\uDCB0"], anticipation:"dark_pulse",  intro:"dark" ,accentColor:"#4A0000",reelStyle:"smooth",ambientFx:"rain"}
   };
   Object.assign(PROFILES, PROFILES3);
 
   // 93 additional unique game profiles — PROFILES4
   var PROFILES4 = {
-    san_quentin:         { bgType:"dark_vignette",chrome:"dark_iron",    winFX:"lightning_strike",coins:["\uD83D\uDD12","\u26A1","\u2728","\uD83D\uDCB0"], anticipation:"dark_pulse",  intro:"dramatic" },
-    nitro_street:{ bgType:"neon_city",chrome:"chrome_round",winFX:"energy_pulse",     coins:["\uD83C\uDFCE","\uD83D\uDCA8","\u26A1","\uD83D\uDCB0"],       anticipation:"electric",    intro:"flash" },
-    wild_toro:           { bgType:"arena",        chrome:"fire_border",  winFX:"dust_cloud",   coins:["\uD83D\uDC02","\uD83C\uDF39","\u2728","\uD83D\uDCB0"],       anticipation:"rumble",      intro:"dramatic" },
-    jammin_fruits:{ bgType:"tropical",chrome:"chrome_round",winFX:"tropical_pop", coins:["\uD83C\uDF4D","\uD83C\uDF4E","\uD83C\uDF53","\uD83D\uDCB0"], anticipation:"pulse_green", intro:"sweet" },
-    big_bamboo:          { bgType:"deep_jungle",  chrome:"bamboo",       winFX:"tropical_pop", coins:["\uD83C\uDF8B","\uD83C\uDF3F","\u2728","\uD83D\uDCB0"],       anticipation:"pulse_green", intro:"dramatic" },
-    fat_rabbit:{ bgType:"sunshine",chrome:"kawaii_pink",winFX:"heart_pop",    coins:["\uD83D\uDC30","\uD83E\uDD55","\u2728","\uD83D\uDCB0"],       anticipation:"pulse_pink",     intro:"sweet" ,accentColor:"#FF69B4"},
-    immortal_blood:{ bgType:"gothic_city",chrome:"dark_iron",winFX:"blood_burst",  coins:["\uD83E\uDDB7","\u2620","\uD83D\uDD2E","\uD83D\uDCB0"],       anticipation:"dark_pulse",  intro:"dramatic" },
-    mega_safari:{ bgType:"savanna",chrome:"bamboo",winFX:"dust_cloud",   coins:["\uD83E\uDD81","\uD83D\uDC18","\u2728","\uD83D\uDCB0"],       anticipation:"rumble",      intro:"dramatic" },
-    lucha_mania:{ bgType:"circus_fire",chrome:"fiesta",winFX:"firework_pop", coins:["\uD83E\uDD3C","\uD83C\uDF1F","\u26A1","\uD83D\uDCB0"],       anticipation:"heat",        intro:"flash" },
-    extra_chilli:{ bgType:"volcano",chrome:"fiesta",winFX:"ember_burst",  coins:["\uD83C\uDF36","\uD83D\uDD25","\u2728","\uD83D\uDCB0"],       anticipation:"heat",        intro:"flash" },
-    wanted_dead:{ bgType:"wild_west",chrome:"dark_iron",winFX:"gunshot_pop",   coins:["\uD83E\uDD20","\uD83D\uDCA3","\u2B50","\uD83D\uDCB0"],       anticipation:"wild_pulse",      intro:"wild" ,accentColor:"#696969"},
-    chaos_crew:          { bgType:"neon_city",    chrome:"neon_round",   winFX:"neon_pop",     coins:["\uD83E\uDD21","\uD83D\uDCA3","\u26A1","\uD83D\uDCB0"],       anticipation:"neon_flash",    intro:"neon" ,accentColor:"#FF00FF"},
-    le_bandit:           { bgType:"dark_vignette",chrome:"dark_iron",    winFX:"gold_shower",  coins:["\uD83C\uDFA9","\uD83D\uDCB0","\uD83D\uDC8E","\u2728"],       anticipation:"dark_pulse",  intro:"dramatic" },
-    dead_alive:{ bgType:"blood_moon",chrome:"dark_iron",winFX:"dark_burst",  coins:["\u2620","\uD83E\uDDB4","\u2728","\uD83D\uDCB0"],             anticipation:"dark_pulse",  intro:"dramatic" },
-    mega_joker:{ bgType:"carnival",chrome:"jester",winFX:"confetti_pop", coins:["\uD83C\uDCA0","\uD83C\uDCA1","\u2B50","\uD83D\uDCB0"],       anticipation:"spin_joker",  intro:"flash" },
-    crown_fire:          { bgType:"flames",       chrome:"golden_gods",  winFX:"ember_burst",  coins:["\uD83D\uDC51","\uD83D\uDD25","\uD83D\uDCB0","\u2728"],       anticipation:"heat",        intro:"epic" },
-    olympus_dream:{ bgType:"olympus",chrome:"chrome_round",winFX:"lightning_strike",coins:["\u26A1","\uD83C\uDFDB","\uD83D\uDC8E","\uD83D\uDCB0"], anticipation:"thunder",     intro:"epic" },
-    goldstorm_ultra:{ bgType:"golden_sky",chrome:"gold_ornate",winFX:"gold_shower",  coins:["\uD83D\uDCB0","\uD83C\uDF1F","\u2728","\uD83D\uDC8E"],       anticipation:"star_glow",   intro:"epic" },
-    fire_hole:           { bgType:"volcano",      chrome:"fire_border",  winFX:"ember_burst",  coins:["\uD83C\uDF0B","\uD83D\uDD25","\u26A1","\uD83D\uDCB0"],       anticipation:"heat",        intro:"flash" },
-    merlin_power:        { bgType:"enchanted",    chrome:"stone_aztec",  winFX:"magic_swirl",  coins:["\uD83E\uDDD9","\u2728","\uD83D\uDD2E","\uD83D\uDCB0"],       anticipation:"sparkle",     intro:"epic" },
-    coin_strike:         { bgType:"golden_sky",   chrome:"chrome_round", winFX:"gold_shower",  coins:["\uD83D\uDCB0","\uD83C\uDF1F","\u2728","\uD83D\uDC8E"],       anticipation:"star_glow",   intro:"flash" },
-    gold_rush_frog:      { bgType:"tropical",     chrome:"jade_frame",   winFX:"gold_shower",  coins:["\uD83D\uDC38","\uD83D\uDCB0","\u2728","\uD83D\uDC8E"],       anticipation:"pulse_green", intro:"sweet" },
-    snoop_dollars:       { bgType:"neon_city",    chrome:"tech_hud",     winFX:"gold_shower",  coins:["\uD83D\uDCB5","\uD83D\uDCB0","\u2728","\uD83C\uDF1F"],       anticipation:"electric",    intro:"flash" },
-    gemhalla:            { bgType:"olympus",      chrome:"gem_frame",    winFX:"starburst",    coins:["\uD83D\uDC8E","\u2728","\u2B50","\uD83D\uDCB0"],             anticipation:"thunder",     intro:"epic" },
-    loki_loot:           { bgType:"enchanted",    chrome:"dark_iron",    winFX:"magic_swirl",  coins:["\uD83D\uDE08","\u2728","\u26A1","\uD83D\uDCB0"],             anticipation:"dark_pulse",  intro:"dramatic" },
-    buffalo_extreme:     { bgType:"prairie",      chrome:"rustic_wood",  winFX:"dust_cloud",   coins:["\uD83E\uDDB3","\uD83C\uDF1E","\u2B50","\uD83D\uDCB0"],       anticipation:"rumble",      intro:"dramatic" },
-    pots_olympus:{ bgType:"olympus",chrome:"golden_gods",winFX:"gold_shower",coins:["\uD83C\uDFFA","\u26A1","\uD83D\uDCB0","\u2728"],       anticipation:"thunder",     intro:"epic" },
-    dog_house_mega:      { bgType:"sunshine",     chrome:"chrome_round", winFX:"heart_pop",    coins:["\uD83D\uDC36","\uD83C\uDF56","\u2764","\uD83D\uDCB0"],       anticipation:"wild_pulse",     intro:"flash" ,accentColor:"#FF8C00"},
-    fruit_party:         { bgType:"candy",        chrome:"neon_round",   winFX:"candy_burst",  coins:["\uD83C\uDF4E","\uD83C\uDF47","\uD83C\uDF4A","\uD83D\uDCB0"], anticipation:"pulse_pink",  intro:"sweet" },
-    reactoonz:{ bgType:"arcade_neon",chrome:"tech_hud",winFX:"glitch_burst", coins:["\uD83D\uDC7E","\u26A1","\u2728","\uD83D\uDCB0"],             anticipation:"electric",    intro:"flash" },
-    money_train:         { bgType:"prairie",      chrome:"rustic_wood",  winFX:"gold_shower",  coins:["\uD83D\uDE82","\uD83D\uDCB0","\u2B50","\u2728"],             anticipation:"electric",      intro:"flash" ,accentColor:"#FFD700"},
-    razor_shark:{ bgType:"northern_sea",chrome:"dark_iron",winFX:"splash",       coins:["\uD83E\uDD88","\uD83D\uDC1F","\u2728","\uD83D\uDCB0"],       anticipation:"pulse_blue",  intro:"watery" },
-    elvis_frog:{ bgType:"retro_glow",chrome:"neon_round",winFX:"neon_pop",     coins:["\uD83D\uDC38","\uD83C\uDFA4","\u2728","\uD83D\uDCB0"],       anticipation:"electric",    intro:"neon" ,accentColor:"#00FF00"},
-    gems_bonanza:{ bgType:"crystal_cave",chrome:"gold_ornate",winFX:"gem_shatter",    coins:["\uD83D\uDC8E","\u2728","\uD83C\uDF1F","\uD83D\uDCB0"],       anticipation:"star_glow",   intro:"cosmic" },
-    buffalo_mega:{ bgType:"prairie",chrome:"chrome_round",winFX:"dust_cloud",   coins:["\uD83E\uDDB3","\uD83D\uDCAB","\u2B50","\uD83D\uDCB0"],       anticipation:"wild_pulse",      intro:"dramatic" ,accentColor:"#8B7355"},
-    tome_madness:{ bgType:"enchanted",chrome:"stone_aztec",winFX:"mystic_burst",  coins:["\uD83D\uDCD6","\uD83D\uDD2E","\u2728","\uD83D\uDCB0"],       anticipation:"sparkle",     intro:"epic" },
-    eternal_romance:{ bgType:"blood_moon",chrome:"crystal_ball",winFX:"mystic_burst",  coins:["\u2764","\uD83E\uDDB7","\uD83C\uDF39","\uD83D\uDCB0"],       anticipation:"dark_pulse",  intro:"dramatic" },
-    coin_volcano:        { bgType:"volcano",      chrome:"fire_border",  winFX:"gold_shower",  coins:["\uD83C\uDF0B","\uD83D\uDCB0","\u2728","\uD83D\uDC8E"],       anticipation:"lava_glow",        intro:"inferno" ,accentColor:"#FFA500"},
-    power_crown:{ bgType:"golden_sky",chrome:"gold_ornate",winFX:"starburst",  coins:["\uD83D\uDC51","\uD83D\uDCB0","\u2B50","\u2728"],             anticipation:"golden_aura",   intro:"royal" ,accentColor:"#FFD700"},
-    wild_safari:{ bgType:"savanna",chrome:"chrome_round",winFX:"feather_pop",   coins:["\uD83E\uDD81","\uD83E\uDD92","\u2728","\uD83D\uDCB0"],       anticipation:"rumble",      intro:"dramatic" },
-    wild_deep:{ bgType:"northern_sea",chrome:"fishing",winFX:"splash",       coins:["\uD83D\uDC19","\uD83D\uDC20","\u2728","\uD83D\uDCB0"],       anticipation:"pulse_blue",  intro:"watery" ,accentColor:"#00688B"},
-    wild_west_rush:{ bgType:"prairie",chrome:"rustic_wood",winFX:"gunshot_pop",   coins:["\uD83E\uDD20","\uD83D\uDCA3","\u2B50","\uD83D\uDCB0"],       anticipation:"rumble",      intro:"wild" ,accentColor:"#DEB887"},
-    golden_pharaoh:{ bgType:"egypt_dusk",chrome:"ancient_stone",winFX:"gold_shower",   coins:["\uD83C\uDFFA","\uD83D\uDCB0","\u2728","\uD83D\uDC8E"],       anticipation:"sand_storm",  intro:"epic" },
-    mystic_cauldron:{ bgType:"enchanted",chrome:"crystal_ball",winFX:"magic_swirl",  coins:["\uD83E\uDDE4","\uD83D\uDD2E","\u2728","\uD83D\uDCB0"],       anticipation:"sparkle",     intro:"epic" },
-    crystal_shrine:{ bgType:"mystic_mist",chrome:"gem_frame",winFX:"crystal_pop",    coins:["\uD83D\uDC8E","\u2728","\uD83C\uDF1F","\uD83D\uDCB0"],       anticipation:"star_glow",   intro:"cosmic" },
-    dragon_coins:        { bgType:"chinese_sky",  chrome:"jade_frame",   winFX:"dragon_burst", coins:["\uD83D\uDC09","\uD83D\uDCB0","\u2728","\uD83C\uDF1F"],       anticipation:"dragon_glow", intro:"epic" },
-    mine_coins:          { bgType:"dark_vignette",chrome:"stone_aztec",  winFX:"gold_shower",  coins:["\u26CF","\uD83D\uDCB0","\uD83D\uDC8E","\u2728"],             anticipation:"rumble",      intro:"dramatic" },
-    vault_coins:{ bgType:"dark_vignette",chrome:"gold_ornate",winFX:"gold_shower",  coins:["\uD83D\uDD12","\uD83D\uDCB0","\uD83D\uDC8E","\u2728"],       anticipation:"dark_pulse",  intro:"dramatic" },
-    demon_chambers:{ bgType:"hell_fire",chrome:"dark_iron",winFX:"blood_burst",  coins:["\uD83D\uDE08","\uD83D\uDD25","\u2620","\uD83D\uDCB0"],       anticipation:"dark_pulse",  intro:"dramatic" },
-    norse_vaults:        { bgType:"blizzard",     chrome:"dark_iron",    winFX:"lightning_strike",coins:["\u2694","\u26A1","\uD83D\uDC8E","\uD83D\uDCB0"],       anticipation:"thunder",     intro:"epic" },
-    crystal_chambers:    { bgType:"crystal_cave", chrome:"gem_frame",    winFX:"starburst",    coins:["\uD83D\uDC8E","\u2728","\uD83C\uDF1F","\uD83D\uDCB0"],       anticipation:"star_glow",   intro:"cosmic" },
-    jade_temple:{ bgType:"chinese_sky",chrome:"ancient_stone",winFX:"dragon_burst", coins:["\uD83C\uDFEF","\uD83D\uDC09","\u2728","\uD83D\uDCB0"],       anticipation:"dragon_glow", intro:"epic" },
-    arctic_foxes:        { bgType:"blizzard",     chrome:"chrome_round", winFX:"frost_burst",  coins:["\uD83E\uDD8A","\u2744","\u2728","\uD83D\uDCB0"],             anticipation:"frost_glow",  intro:"cosmic" },
-    neon_viper:{ bgType:"neon_city",chrome:"neon_round",winFX:"laser_pop",     coins:["\uD83D\uDC0D","\u26A1","\u2728","\uD83D\uDCB0"],             anticipation:"electric",    intro:"flash" },
-    midnight_drifter:{ bgType:"city_rain",chrome:"tech_hud",winFX:"neon_pop",     coins:["\uD83C\uDFCE","\uD83C\uDF03","\u2728","\uD83D\uDCB0"],       anticipation:"electric",    intro:"flash" },
-    pharaoh_march:{ bgType:"egypt_tomb",chrome:"stone_aztec",winFX:"sand_burst",   coins:["\uD83C\uDFFA","\u2620","\u2728","\uD83D\uDCB0"],             anticipation:"sand_storm",  intro:"epic" },
-    iron_stampede:       { bgType:"prairie",      chrome:"dark_iron",    winFX:"dust_cloud",   coins:["\uD83D\uDC0E","\u2694","\u2728","\uD83D\uDCB0"],             anticipation:"rumble",      intro:"dramatic" },
-    golden_jaguar:       { bgType:"deep_jungle",  chrome:"jade_frame",   winFX:"tropical_pop", coins:["\uD83D\uDC06","\uD83D\uDCB0","\u2728","\uD83D\uDC8E"],       anticipation:"pulse_green", intro:"dramatic" },
-    lightning_pearl:     { bgType:"ocean_ripple", chrome:"gem_frame",    winFX:"energy_pulse", coins:["\u26A1","\uD83D\uDC1A","\u2728","\uD83D\uDCB0"],             anticipation:"electric",    intro:"cosmic" },
-    galactic_raiders:{ bgType:"cosmos",chrome:"dark_iron",winFX:"laser_pop", coins:["\uD83D\uDE80","\uD83C\uDF1F","\u26A1","\uD83D\uDCB0"],       anticipation:"cosmic_hum",    intro:"cosmic" ,accentColor:"#6A5ACD"},
-    nova_blackhole:{ bgType:"starfield",chrome:"tech_hud",winFX:"energy_pulse", coins:["\uD83C\uDF0C","\u26A1","\u2728","\uD83D\uDCB0"],             anticipation:"electric",    intro:"cosmic" },
-    agent_zero:          { bgType:"cyber_grid",   chrome:"tech_hud",     winFX:"neon_pop",     coins:["\uD83D\uDD75","\uD83D\uDD2B","\u26A1","\uD83D\uDCB0"],       anticipation:"electric",    intro:"flash" },
-    black_ops_heist:     { bgType:"dark_vignette",chrome:"dark_iron",    winFX:"neon_pop",     coins:["\uD83D\uDD12","\uD83D\uDCB0","\uD83D\uDCA3","\u2728"],       anticipation:"dark_pulse",  intro:"dramatic" },
-    dragon_forge:        { bgType:"volcano",      chrome:"fire_border",  winFX:"dragon_burst", coins:["\uD83D\uDC09","\uD83D\uDD25","\u2728","\uD83D\uDCB0"],       anticipation:"heat",        intro:"epic" },
-    castle_siege:        { bgType:"dark_vignette",chrome:"stone_aztec",  winFX:"dust_cloud",   coins:["\uD83C\uDFF0","\u2694","\u2728","\uD83D\uDCB0"],             anticipation:"rumble",      intro:"dramatic" },
-    world_cup_glory:     { bgType:"sunshine",     chrome:"chrome_round", winFX:"firework_pop", coins:["\u26BD","\uD83C\uDFC6","\u2728","\uD83D\uDCB0"],             anticipation:"sparkle",     intro:"flash" },
-    grand_prix_rush:     { bgType:"neon_city",    chrome:"tech_hud",     winFX:"neon_pop",     coins:["\uD83C\uDFCE","\uD83C\uDFC1","\u26A1","\uD83D\uDCB0"],       anticipation:"electric",    intro:"flash" },
-    gold_crown_club:     { bgType:"golden_sky",   chrome:"golden_gods",  winFX:"gold_shower",  coins:["\uD83D\uDC51","\uD83D\uDCB0","\uD83C\uDF1F","\uD83D\uDC8E"], anticipation:"star_glow",   intro:"epic" },
-    monaco_million:      { bgType:"neon_city",    chrome:"golden_gods",  winFX:"gold_shower",  coins:["\uD83C\uDFB0","\uD83D\uDCB0","\uD83D\uDC8E","\u2728"],       anticipation:"star_glow",   intro:"epic" },
-    rome_eternal:        { bgType:"olympus",      chrome:"stone_aztec",  winFX:"dust_cloud",   coins:["\uD83C\uDFDB","\u2694","\uD83C\uDF1F","\uD83D\uDCB0"],       anticipation:"thunder",     intro:"epic" },
-    pixel_rewind:        { bgType:"retro_glow",   chrome:"arcade_neon",  winFX:"neon_pop",     coins:["\uD83D\uDC7E","\uD83C\uDFAE","\u2B50","\uD83D\uDCB0"],       anticipation:"electric",    intro:"flash" },
-    thunder_hero:        { bgType:"cosmos",       chrome:"tech_hud",     winFX:"lightning_strike",coins:["\u26A1","\uD83E\uDDB8","\u2728","\uD83D\uDCB0"],       anticipation:"thunder",     intro:"epic" },
-    solar_fist:{ bgType:"flames",chrome:"gold_ornate",winFX:"solar_burst",  coins:["\u2600","\uD83E\uDD1C","\u26A1","\uD83D\uDCB0"],             anticipation:"heat",        intro:"flash" },
-    big_top_bonanza:     { bgType:"circus_fire",  chrome:"jester",       winFX:"firework_pop", coins:["\uD83C\uDFAA","\uD83E\uDD21","\u2B50","\uD83D\uDCB0"],       anticipation:"spin_joker",  intro:"sweet" },
-    clockwork_realm:     { bgType:"cyber_grid",   chrome:"tech_hud",     winFX:"energy_pulse", coins:["\u2699","\uD83D\uDD70","\u2728","\uD83D\uDCB0"],             anticipation:"electric",    intro:"cyber" ,accentColor:"#B8860B"},
-    rockstar_wild:       { bgType:"neon_city",    chrome:"neon_round",   winFX:"firework_pop", coins:["\uD83C\uDFB8","\uD83C\uDFA4","\u2728","\uD83D\uDCB0"],       anticipation:"electric",    intro:"flash" },
-    snow_queen_riches:   { bgType:"blizzard",     chrome:"gem_frame",    winFX:"frost_burst",  coins:["\u2744","\uD83D\uDC51","\uD83D\uDC8E","\uD83D\uDCB0"],       anticipation:"frost_glow",  intro:"cosmic" },
-    jungle_fury:{ bgType:"deep_jungle",chrome:"stone_aztec",winFX:"leaf_burst", coins:["\uD83D\uDC05","\uD83C\uDF3F","\u2728","\uD83D\uDCB0"],       anticipation:"pulse_green", intro:"dramatic" },
-    golden_vault_pharaoh:{ bgType:"egypt_dusk",chrome:"gold_ornate",winFX:"sand_burst",   coins:["\uD83C\uDFFA","\uD83D\uDCB0","\uD83D\uDC8E","\u2728"],       anticipation:"sand_storm",  intro:"epic" },
-    mythic_olympiad:{ bgType:"olympus",chrome:"ancient_stone",winFX:"lightning_strike",coins:["\uD83C\uDFDB","\u26A1","\uD83D\uDC8E","\uD83D\uDCB0"], anticipation:"thunder",     intro:"epic" },
-    neon_nexus:{ bgType:"neon_city",chrome:"arcade_neon",winFX:"energy_pulse", coins:["\uD83D\uDCBB","\u26A1","\u2728","\uD83D\uDCB0"],             anticipation:"neon_flash",    intro:"neon" ,accentColor:"#FF00FF"},
-    anglers_fortune:     { bgType:"ocean_ripple", chrome:"fishing",      winFX:"splash",       coins:["\uD83D\uDC1F","\uD83C\uDFA3","\u2728","\uD83D\uDCB0"],       anticipation:"pulse_blue",  intro:"watery" },
-    mecha_warriors:{ bgType:"cyber_grid",chrome:"dark_iron",winFX:"gear_burst", coins:["\uD83E\uDD16","\u26A1","\uD83D\uDD25","\uD83D\uDCB0"],       anticipation:"electric",    intro:"cyber" ,accentColor:"#00FF88"},
-    enchanted_grove:     { bgType:"enchanted",    chrome:"bamboo",       winFX:"magic_swirl",  coins:["\uD83C\uDF3F","\uD83E\uDDA5","\u2728","\uD83D\uDCB0"],       anticipation:"sparkle",     intro:"sweet" },
-    dragons_hoard:{ bgType:"volcano",chrome:"gold_ornate",winFX:"dragon_burst", coins:["\uD83D\uDC09","\uD83D\uDCB0","\uD83D\uDC8E","\u2728"],       anticipation:"heat",        intro:"epic" },
-    time_keepers_book:{ bgType:"enchanted",chrome:"gold_ornate",winFX:"magic_swirl",  coins:["\uD83D\uDD70","\uD83D\uDCD6","\u2728","\uD83D\uDCB0"],       anticipation:"sparkle",     intro:"epic" },
-    cyber_rebellion:{ bgType:"neon_city",chrome:"tech_hud",winFX:"glitch_burst", coins:["\uD83E\uDD16","\uD83D\uDCA5","\u26A1","\uD83D\uDCB0"],       anticipation:"electric",    intro:"cyber" ,accentColor:"#39FF14"},
-    volcano_riches:{ bgType:"volcano",chrome:"gold_ornate",winFX:"lava_pop",  coins:["\uD83C\uDF0B","\uD83D\uDD25","\uD83D\uDCB0","\u2728"],       anticipation:"lava_glow",        intro:"inferno" ,accentColor:"#FF4500"},
-    sunken_treasure:{ bgType:"ocean_ripple",chrome:"pirate_wood",winFX:"treasure_pop",       coins:["\uD83D\uDC1A","\uD83D\uDCB0","\u2693","\u2728"],             anticipation:"wave_crash",  intro:"watery" ,accentColor:"#20B2AA"},
-    wild_stallion:{ bgType:"prairie",chrome:"dark_iron",winFX:"thunder_burst",   coins:["\uD83D\uDC0E","\uD83C\uDF1E","\u2B50","\uD83D\uDCB0"],       anticipation:"rumble",      intro:"dramatic" ,accentColor:"#8B4513"},
-    celestial_cosmos:    { bgType:"cosmos",       chrome:"gem_frame",    winFX:"starburst",    coins:["\uD83C\uDF0C","\u2728","\uD83C\uDF1F","\uD83D\uDCB0"],       anticipation:"star_glow",   intro:"cosmic" },
-    jade_prosperity:{ bgType:"chinese_sky",chrome:"jade_frame",winFX:"starburst", coins:["\uD83C\uDFEF","\uD83D\uDCB0","\uD83D\uDC8E","\u2728"],       anticipation:"golden_aura", intro:"mystic" ,accentColor:"#50C878"},
-    inferno_fiesta:      { bgType:"flames",       chrome:"fire_border",  winFX:"firework_pop", coins:["\uD83D\uDD25","\uD83C\uDF89","\u2728","\uD83D\uDCB0"],       anticipation:"heat",        intro:"flash" }
+    san_quentin:         { bgType:"dark_vignette",chrome:"dark_iron",    winFX:"lightning_strike",coins:["\uD83D\uDD12","\u26A1","\u2728","\uD83D\uDCB0"], anticipation:"dark_pulse",  intro:"dark" ,accentColor:"#696969",reelStyle:"turbo",ambientFx:"ash"},
+    nitro_street:{ bgType:"neon_city",chrome:"chrome_round",winFX:"energy_pulse",     coins:["\uD83C\uDFCE","\uD83D\uDCA8","\u26A1","\uD83D\uDCB0"],       anticipation:"electric",    intro:"flash" ,accentColor:"#FF4500",reelStyle:"elastic",ambientFx:"confetti"},
+    wild_toro:           { bgType:"arena",        chrome:"fire_border",  winFX:"dust_cloud",   coins:["\uD83D\uDC02","\uD83C\uDF39","\u2728","\uD83D\uDCB0"],       anticipation:"rumble",      intro:"dramatic" ,accentColor:"#CC0000",reelStyle:"wave",ambientFx:"smoke"},
+    jammin_fruits:{ bgType:"tropical",chrome:"chrome_round",winFX:"tropical_pop", coins:["\uD83C\uDF4D","\uD83C\uDF4E","\uD83C\uDF53","\uD83D\uDCB0"], anticipation:"sparkle", intro:"sweet" ,accentColor:"#FFA500",reelStyle:"gravity",ambientFx:"crystals"},
+    big_bamboo:          { bgType:"deep_jungle",  chrome:"bamboo",       winFX:"tropical_pop", coins:["\uD83C\uDF8B","\uD83C\uDF3F","\u2728","\uD83D\uDCB0"],       anticipation:"jungle_drum", intro:"jungle" ,accentColor:"#7CB342",reelStyle:"magnetic",ambientFx:"leaves"},
+    fat_rabbit:{ bgType:"sunshine",chrome:"kawaii_pink",winFX:"heart_pop",    coins:["\uD83D\uDC30","\uD83E\uDD55","\u2728","\uD83D\uDCB0"],       anticipation:"pulse_pink",     intro:"sweet" ,accentColor:"#FF69B4",reelStyle:"spiral",ambientFx:"lightning"},
+    immortal_blood:{ bgType:"gothic_city",chrome:"dark_iron",winFX:"blood_burst",  coins:["\uD83E\uDDB7","\u2620","\uD83D\uDD2E","\uD83D\uDCB0"],       anticipation:"dark_pulse",  intro:"dark" ,accentColor:"#800000",reelStyle:"jelly",ambientFx:"coins_float"},
+    mega_safari:{ bgType:"savanna",chrome:"bamboo",winFX:"dust_cloud",   coins:["\uD83E\uDD81","\uD83D\uDC18","\u2728","\uD83D\uDCB0"],       anticipation:"wild_pulse",      intro:"jungle" ,accentColor:"#CD853F",reelStyle:"glitch",ambientFx:"mist"},
+    lucha_mania:{ bgType:"circus_fire",chrome:"fiesta",winFX:"firework_pop", coins:["\uD83E\uDD3C","\uD83C\uDF1F","\u26A1","\uD83D\uDCB0"],       anticipation:"rumble",        intro:"carnival" ,accentColor:"#FF6B00",reelStyle:"flutter",ambientFx:"aurora"},
+    extra_chilli:{ bgType:"volcano",chrome:"fiesta",winFX:"ember_burst",  coins:["\uD83C\uDF36","\uD83D\uDD25","\u2728","\uD83D\uDCB0"],       anticipation:"heat",        intro:"inferno" ,accentColor:"#FF6347",reelStyle:"thunder_drop",ambientFx:"sand"},
+    wanted_dead:{ bgType:"wild_west",chrome:"dark_iron",winFX:"gunshot_pop",   coins:["\uD83E\uDD20","\uD83D\uDCA3","\u2B50","\uD83D\uDCB0"],       anticipation:"wild_pulse",      intro:"wild" ,accentColor:"#696969",reelStyle:"feather_fall",ambientFx:"blood_drip"},
+    chaos_crew:          { bgType:"neon_city",    chrome:"neon_round",   winFX:"neon_pop",     coins:["\uD83E\uDD21","\uD83D\uDCA3","\u26A1","\uD83D\uDCB0"],       anticipation:"neon_flash",    intro:"neon" ,accentColor:"#FF00FF",reelStyle:"cascade",ambientFx:"sparkles"},
+    le_bandit:           { bgType:"dark_vignette",chrome:"dark_iron",    winFX:"gold_shower",  coins:["\uD83C\uDFA9","\uD83D\uDCB0","\uD83D\uDC8E","\u2728"],       anticipation:"rumble",  intro:"dark" ,accentColor:"#FFD700",reelStyle:"bounce",ambientFx:"embers"},
+    dead_alive:{ bgType:"blood_moon",chrome:"dark_iron",winFX:"dark_burst",  coins:["\u2620","\uD83E\uDDB4","\u2728","\uD83D\uDCB0"],             anticipation:"blood_pulse",  intro:"dark" ,accentColor:"#CC0000",reelStyle:"slam",ambientFx:"snow"},
+    mega_joker:{ bgType:"carnival",chrome:"jester",winFX:"confetti_pop", coins:["\uD83C\uDCA0","\uD83C\uDCA1","\u2B50","\uD83D\uDCB0"],       anticipation:"spin_joker",  intro:"carnival" ,accentColor:"#9C27B0",reelStyle:"smooth",ambientFx:"bubbles"},
+    crown_fire:          { bgType:"flames",       chrome:"golden_gods",  winFX:"ember_burst",  coins:["\uD83D\uDC51","\uD83D\uDD25","\uD83D\uDCB0","\u2728"],       anticipation:"heat",        intro:"dramatic" ,accentColor:"#FF8C00",reelStyle:"turbo",ambientFx:"petals"},
+    olympus_dream:{ bgType:"olympus",chrome:"chrome_round",winFX:"lightning_strike",coins:["\u26A1","\uD83C\uDFDB","\uD83D\uDC8E","\uD83D\uDCB0"], anticipation:"golden_aura",     intro:"epic" ,accentColor:"#FFD700",reelStyle:"elastic",ambientFx:"dust"},
+    goldstorm_ultra:{ bgType:"golden_sky",chrome:"gold_ornate",winFX:"gold_shower",  coins:["\uD83D\uDCB0","\uD83C\uDF1F","\u2728","\uD83D\uDC8E"],       anticipation:"golden_aura",   intro:"epic" ,accentColor:"#FFC125",reelStyle:"wave",ambientFx:"fireflies"},
+    fire_hole:           { bgType:"volcano",      chrome:"fire_border",  winFX:"ember_burst",  coins:["\uD83C\uDF0B","\uD83D\uDD25","\u26A1","\uD83D\uDCB0"],       anticipation:"lava_glow",        intro:"inferno" ,accentColor:"#FF4500",reelStyle:"gravity",ambientFx:"stars"},
+    merlin_power:        { bgType:"enchanted",    chrome:"stone_aztec",  winFX:"magic_swirl",  coins:["\uD83E\uDDD9","\u2728","\uD83D\uDD2E","\uD83D\uDCB0"],       anticipation:"star_glow",     intro:"mystic" ,accentColor:"#FFD700",reelStyle:"magnetic",ambientFx:"rain"},
+    coin_strike:         { bgType:"golden_sky",   chrome:"chrome_round", winFX:"gold_shower",  coins:["\uD83D\uDCB0","\u2728","\uD83C\uDF1F","\uD83D\uDC8E"],       anticipation:"golden_aura",   intro:"flash" ,accentColor:"#FFD700",reelStyle:"spiral",ambientFx:"ash"},
+    gold_rush_frog:      { bgType:"tropical",     chrome:"jade_frame",   winFX:"gold_shower",  coins:["\uD83D\uDC38","\uD83D\uDCB0","\u2728","\uD83D\uDC8E"],       anticipation:"sparkle", intro:"flash" ,accentColor:"#FFD700",reelStyle:"jelly",ambientFx:"confetti"},
+    snoop_dollars:       { bgType:"neon_city",    chrome:"tech_hud",     winFX:"gold_shower",  coins:["\uD83D\uDCB5","\uD83D\uDCB0","\u2728","\uD83C\uDF1F"],       anticipation:"sparkle",    intro:"neon" ,accentColor:"#FFD700",reelStyle:"glitch",ambientFx:"smoke"},
+    gemhalla:            { bgType:"olympus",      chrome:"gem_frame",    winFX:"starburst",    coins:["\uD83D\uDC8E","\u2728","\u2B50","\uD83D\uDCB0"],             anticipation:"gem_glow",     intro:"epic" ,accentColor:"#BA55D3",reelStyle:"flutter",ambientFx:"crystals"},
+    loki_loot:           { bgType:"enchanted",    chrome:"dark_iron",    winFX:"magic_swirl",  coins:["\uD83D\uDE08","\u2728","\u26A1","\uD83D\uDCB0"],             anticipation:"sparkle",  intro:"epic" ,accentColor:"#FFD700",reelStyle:"thunder_drop",ambientFx:"leaves"},
+    buffalo_extreme:     { bgType:"prairie",      chrome:"rustic_wood",  winFX:"dust_cloud",   coins:["\uD83E\uDDB3","\uD83C\uDF1E","\u2B50","\uD83D\uDCB0"],       anticipation:"rumble",      intro:"wild" ,accentColor:"#8B6914",reelStyle:"feather_fall",ambientFx:"lightning"},
+    pots_olympus:{ bgType:"olympus",chrome:"golden_gods",winFX:"gold_shower",coins:["\uD83C\uDFFA","\u26A1","\uD83D\uDCB0","\u2728"],       anticipation:"golden_aura",     intro:"epic" ,accentColor:"#FFB300",reelStyle:"cascade",ambientFx:"coins_float"},
+    dog_house_mega:      { bgType:"sunshine",     chrome:"chrome_round", winFX:"heart_pop",    coins:["\uD83D\uDC36","\uD83C\uDF56","\u2764","\uD83D\uDCB0"],       anticipation:"wild_pulse",     intro:"flash" ,accentColor:"#FF8C00",reelStyle:"bounce",ambientFx:"mist"},
+    fruit_party:         { bgType:"candy",        chrome:"neon_round",   winFX:"candy_burst",  coins:["\uD83C\uDF4E","\uD83C\uDF47","\uD83C\uDF4A","\uD83D\uDCB0"], anticipation:"sparkle",  intro:"sweet" ,accentColor:"#FF6347",reelStyle:"slam",ambientFx:"aurora"},
+    reactoonz:{ bgType:"arcade_neon",chrome:"tech_hud",winFX:"glitch_burst", coins:["\uD83D\uDC7E","\u26A1","\u2728","\uD83D\uDCB0"],             anticipation:"neon_flash",    intro:"cyber" ,accentColor:"#00FFFF",reelStyle:"smooth",ambientFx:"sand"},
+    money_train:         { bgType:"prairie",      chrome:"rustic_wood",  winFX:"gold_shower",  coins:["\uD83D\uDE82","\uD83D\uDCB0","\u2B50","\u2728"],             anticipation:"electric",      intro:"flash" ,accentColor:"#FFD700",reelStyle:"turbo",ambientFx:"blood_drip"},
+    razor_shark:{ bgType:"northern_sea",chrome:"dark_iron",winFX:"splash",       coins:["\uD83E\uDD88","\uD83D\uDC1F","\u2728","\uD83D\uDCB0"],       anticipation:"freeze",  intro:"watery" ,accentColor:"#00BFFF",reelStyle:"elastic",ambientFx:"sparkles"},
+    elvis_frog:{ bgType:"retro_glow",chrome:"neon_round",winFX:"neon_pop",     coins:["\uD83D\uDC38","\uD83C\uDFA4","\u2728","\uD83D\uDCB0"],       anticipation:"electric",    intro:"neon" ,accentColor:"#00FF00",reelStyle:"wave",ambientFx:"embers"},
+    gems_bonanza:{ bgType:"crystal_cave",chrome:"gold_ornate",winFX:"gem_shatter",    coins:["\uD83D\uDC8E","\u2728","\uD83C\uDF1F","\uD83D\uDCB0"],       anticipation:"gem_glow",   intro:"epic" ,accentColor:"#9370DB",reelStyle:"gravity",ambientFx:"snow"},
+    buffalo_mega:{ bgType:"prairie",chrome:"chrome_round",winFX:"dust_cloud",   coins:["\uD83E\uDDB3","\uD83D\uDCAB","\uD83D\uDCAF","\uD83D\uDCB0"],       anticipation:"wild_pulse",      intro:"dramatic" ,accentColor:"#8B7355",reelStyle:"magnetic",ambientFx:"bubbles"},
+    tome_madness:{ bgType:"enchanted",chrome:"stone_aztec",winFX:"mystic_burst",  coins:["\uD83D\uDCD6","\uD83D\uDD2E","\u2728","\uD83D\uDCB0"],       anticipation:"dark_pulse",     intro:"mystic" ,accentColor:"#6A0DAD",reelStyle:"spiral",ambientFx:"petals"},
+    eternal_romance:{ bgType:"blood_moon",chrome:"crystal_ball",winFX:"mystic_burst",  coins:["\u2764","\uD83E\uDDB7","\uD83C\uDF39","\uD83D\uDCB0"],       anticipation:"blood_pulse",  intro:"dark" ,accentColor:"#8B0000",reelStyle:"jelly",ambientFx:"dust"},
+    coin_volcano:        { bgType:"volcano",      chrome:"fire_border",  winFX:"gold_shower",  coins:["\uD83C\uDF0B","\uD83D\uDCB0","\u2728","\uD83D\uDC8E"],       anticipation:"lava_glow",        intro:"inferno" ,accentColor:"#FFA500",reelStyle:"glitch",ambientFx:"fireflies"},
+    power_crown:{ bgType:"golden_sky",chrome:"gold_ornate",winFX:"starburst",  coins:["\uD83D\uDC51","\uD83D\uDCB0","\u2B50","\u2728"],             anticipation:"golden_aura",   intro:"royal" ,accentColor:"#FFD700",reelStyle:"flutter",ambientFx:"stars"},
+    wild_safari:{ bgType:"savanna",chrome:"chrome_round",winFX:"feather_pop",   coins:["\uD83E\uDD81","\uD83E\uDD92","\u2728","\uD83D\uDCB0"],       anticipation:"rumble",      intro:"wild" ,accentColor:"#DEB887",reelStyle:"thunder_drop",ambientFx:"rain"},
+    wild_deep:{ bgType:"northern_sea",chrome:"fishing",winFX:"splash",       coins:["\uD83D\uDC19","\uD83D\uDC20","\u2728","\uD83D\uDCB0"],       anticipation:"pulse_blue",  intro:"watery" ,accentColor:"#00688B",reelStyle:"feather_fall",ambientFx:"ash"},
+    wild_west_rush:{ bgType:"prairie",chrome:"rustic_wood",winFX:"gunshot_pop",   coins:["\uD83E\uDD20","\uD83D\uDCA3","\uD83C\uDF1F","\uD83D\uDCB0"],       anticipation:"rumble",      intro:"wild" ,accentColor:"#DEB887",reelStyle:"cascade",ambientFx:"confetti"},
+    golden_pharaoh:{ bgType:"egypt_dusk",chrome:"ancient_stone",winFX:"gold_shower",   coins:["\uD83C\uDFFA","\uD83D\uDCB0","\u2728","\uD83D\uDC8E"],       anticipation:"golden_aura",  intro:"ancient" ,accentColor:"#DAA520",reelStyle:"bounce",ambientFx:"smoke"},
+    mystic_cauldron:{ bgType:"enchanted",chrome:"crystal_ball",winFX:"magic_swirl",  coins:["\uD83E\uDDE4","\uD83D\uDD2E","\u2728","\uD83D\uDCB0"],       anticipation:"cosmic_hum",     intro:"mystic" ,accentColor:"#6A0DAD",reelStyle:"slam",ambientFx:"crystals"},
+    crystal_shrine:{ bgType:"mystic_mist",chrome:"gem_frame",winFX:"crystal_pop",    coins:["\uD83D\uDD25","\uD83D\uDCAB","\uD83C\uDF1F","\uD83D\uDCB0"],       anticipation:"sparkle",   intro:"mystic" ,accentColor:"#4DD0E1",reelStyle:"smooth",ambientFx:"leaves"},
+    dragon_coins:        { bgType:"chinese_sky",  chrome:"jade_frame",   winFX:"dragon_burst", coins:["\uD83D\uDC09","\uD83D\uDCB0","\u2728","\uD83C\uDF1F"],       anticipation:"dragon_glow", intro:"epic" ,accentColor:"#FF4500",reelStyle:"turbo",ambientFx:"lightning"},
+    mine_coins:          { bgType:"dark_vignette",chrome:"stone_aztec",  winFX:"gold_shower",  coins:["\u26CF","\uD83D\uDCB0","\uD83D\uDC8E","\u2728"],             anticipation:"sparkle",      intro:"flash" ,accentColor:"#FFD700",reelStyle:"elastic",ambientFx:"coins_float"},
+    vault_coins:{ bgType:"dark_vignette",chrome:"gold_ornate",winFX:"gold_shower",  coins:["\uD83D\uDD12","\uD83D\uDCB0","\uD83D\uDC8E","\u2728"],       anticipation:"golden_aura",  intro:"dark" ,accentColor:"#FFD700",reelStyle:"wave",ambientFx:"mist"},
+    demon_chambers:{ bgType:"hell_fire",chrome:"dark_iron",winFX:"blood_burst",  coins:["\uD83D\uDE08","\uD83D\uDD25","\u2620","\uD83D\uDCB0"],       anticipation:"blood_pulse",  intro:"dark" ,accentColor:"#990000",reelStyle:"gravity",ambientFx:"aurora"},
+    norse_vaults:        { bgType:"blizzard",     chrome:"dark_iron",    winFX:"lightning_strike",coins:["\u2694","\u26A1","\uD83D\uDC8E","\uD83D\uDCB0"],       anticipation:"frost_glow",     intro:"epic" ,accentColor:"#4682B4",reelStyle:"magnetic",ambientFx:"sand"},
+    crystal_chambers:    { bgType:"crystal_cave", chrome:"gem_frame",    winFX:"starburst",    coins:["\uD83D\uDC8E","\u2728","\uD83D\uDCA0","\uD83D\uDCB0"],       anticipation:"crystal_ring",   intro:"mystic" ,accentColor:"#B0E0E6",reelStyle:"spiral",ambientFx:"blood_drip"},
+    jade_temple:{ bgType:"chinese_sky",chrome:"ancient_stone",winFX:"dragon_burst", coins:["\uD83C\uDFEF","\uD83D\uDC09","\u2728","\uD83D\uDCB0"],       anticipation:"dragon_glow", intro:"ancient" ,accentColor:"#50C878",reelStyle:"jelly",ambientFx:"sparkles"},
+    arctic_foxes:        { bgType:"blizzard",     chrome:"chrome_round", winFX:"frost_burst",  coins:["\uD83E\uDD8A","\u2744","\u2728","\uD83D\uDCB0"],             anticipation:"frost_glow",  intro:"frozen" ,accentColor:"#87CEEB",reelStyle:"glitch",ambientFx:"embers"},
+    neon_viper:{ bgType:"neon_city",chrome:"neon_round",winFX:"laser_pop",     coins:["\uD83D\uDC0D","\u26A1","\u2728","\uD83D\uDCB0"],             anticipation:"neon_flash",    intro:"neon" ,accentColor:"#39FF14",reelStyle:"flutter",ambientFx:"snow"},
+    midnight_drifter:{ bgType:"city_rain",chrome:"tech_hud",winFX:"neon_pop",     coins:["\uD83C\uDFCE","\uD83C\uDF03","\u2728","\uD83D\uDCB0"],       anticipation:"electric",    intro:"neon" ,accentColor:"#0088FF",reelStyle:"thunder_drop",ambientFx:"bubbles"},
+    pharaoh_march:{ bgType:"egypt_tomb",chrome:"stone_aztec",winFX:"sand_burst",   coins:["\uD83C\uDFFA","\u2620","\u2728","\uD83D\uDCB0"],             anticipation:"sand_storm",  intro:"ancient" ,accentColor:"#DEB887",reelStyle:"feather_fall",ambientFx:"petals"},
+    iron_stampede:       { bgType:"prairie",      chrome:"dark_iron",    winFX:"dust_cloud",   coins:["\uD83D\uDC0E","\u2694","\u2728","\uD83D\uDCB0"],             anticipation:"rumble",      intro:"dramatic" ,accentColor:"#808080",reelStyle:"cascade",ambientFx:"dust"},
+    golden_jaguar:       { bgType:"deep_jungle",  chrome:"jade_frame",   winFX:"tropical_pop", coins:["\uD83D\uDC06","\uD83D\uDCB0","\u2728","\uD83D\uDC8E"],       anticipation:"golden_aura", intro:"epic" ,accentColor:"#DAA520",reelStyle:"bounce",ambientFx:"fireflies"},
+    lightning_pearl:     { bgType:"ocean_ripple", chrome:"gem_frame",    winFX:"energy_pulse", coins:["\u26A1","\uD83D\uDC1A","\u2728","\uD83D\uDCB0"],             anticipation:"electric",    intro:"epic" ,accentColor:"#FFD700",reelStyle:"slam",ambientFx:"stars"},
+    galactic_raiders:{ bgType:"cosmos",chrome:"dark_iron",winFX:"laser_pop", coins:["\uD83D\uDE80","\uD83C\uDF1F","\u26A1","\uD83D\uDCB0"],       anticipation:"cosmic_hum",    intro:"cosmic" ,accentColor:"#6A5ACD",reelStyle:"smooth",ambientFx:"rain"},
+    nova_blackhole:{ bgType:"starfield",chrome:"tech_hud",winFX:"energy_pulse", coins:["\uD83C\uDF0C","\u26A1","\u2728","\uD83D\uDCB0"],             anticipation:"cosmic_hum",    intro:"cosmic" ,accentColor:"#483D8B",reelStyle:"turbo",ambientFx:"ash"},
+    agent_zero:          { bgType:"cyber_grid",   chrome:"tech_hud",     winFX:"neon_pop",     coins:["\uD83D\uDD75","\uD83D\uDD2B","\u26A1","\uD83D\uDCB0"],       anticipation:"electric",    intro:"cyber" ,accentColor:"#00FF88",reelStyle:"elastic",ambientFx:"confetti"},
+    black_ops_heist:     { bgType:"dark_vignette",chrome:"dark_iron",    winFX:"neon_pop",     coins:["\uD83D\uDD12","\uD83D\uDCB0","\uD83D\uDCA3","\u2728"],       anticipation:"electric",  intro:"dark" ,accentColor:"#00FF00",reelStyle:"wave",ambientFx:"smoke"},
+    dragon_forge:        { bgType:"volcano",      chrome:"fire_border",  winFX:"dragon_burst", coins:["\uD83D\uDC09","\uD83D\uDD25","\u2728","\uD83D\uDCB0"],       anticipation:"dragon_glow",        intro:"epic" ,accentColor:"#CC5500",reelStyle:"gravity",ambientFx:"crystals"},
+    castle_siege:        { bgType:"dark_vignette",chrome:"stone_aztec",  winFX:"dust_cloud",   coins:["\uD83C\uDFF0","\u2694","\u2728","\uD83D\uDCB0"],             anticipation:"rumble",      intro:"dramatic" ,accentColor:"#808080",reelStyle:"magnetic",ambientFx:"leaves"},
+    world_cup_glory:     { bgType:"sunshine",     chrome:"chrome_round", winFX:"firework_pop", coins:["\u26BD","\uD83C\uDFC6","\u2728","\uD83D\uDCB0"],             anticipation:"sparkle",     intro:"epic" ,accentColor:"#FFD700",reelStyle:"spiral",ambientFx:"lightning"},
+    grand_prix_rush:     { bgType:"neon_city",    chrome:"tech_hud",     winFX:"neon_pop",     coins:["\uD83C\uDFCE","\uD83C\uDFC1","\u26A1","\uD83D\uDCB0"],       anticipation:"electric",    intro:"flash" ,accentColor:"#FF0000",reelStyle:"jelly",ambientFx:"coins_float"},
+    gold_crown_club:     { bgType:"golden_sky",   chrome:"golden_gods",  winFX:"gold_shower",  coins:["\uD83D\uDC51","\uD83D\uDCB0","\uD83C\uDF1F","\uD83D\uDC8E"], anticipation:"golden_aura",   intro:"royal" ,accentColor:"#FFD700",reelStyle:"glitch",ambientFx:"mist"},
+    monaco_million:      { bgType:"neon_city",    chrome:"golden_gods",  winFX:"gold_shower",  coins:["\uD83C\uDFB0","\uD83D\uDCB0","\uD83D\uDC8E","\u2728"],       anticipation:"royal_glow",   intro:"royal" ,accentColor:"#FFD700",reelStyle:"flutter",ambientFx:"aurora"},
+    rome_eternal:        { bgType:"olympus",      chrome:"stone_aztec",  winFX:"dust_cloud",   coins:["\uD83C\uDFDB","\u2694","\uD83C\uDF1F","\uD83D\uDCB0"],       anticipation:"rumble",     intro:"ancient" ,accentColor:"#B8860B",reelStyle:"thunder_drop",ambientFx:"sand"},
+    pixel_rewind:        { bgType:"retro_glow",   chrome:"arcade_neon",  winFX:"neon_pop",     coins:["\uD83D\uDC7E","\uD83C\uDFAE","\u2B50","\uD83D\uDCB0"],       anticipation:"neon_flash",    intro:"neon" ,accentColor:"#00FF00",reelStyle:"feather_fall",ambientFx:"blood_drip"},
+    thunder_hero:        { bgType:"cosmos",       chrome:"tech_hud",     winFX:"lightning_strike",coins:["\u26A1","\uD83E\uDDB8","\u2728","\uD83D\uDCB0"],       anticipation:"electric",     intro:"epic" ,accentColor:"#FFFF00",reelStyle:"cascade",ambientFx:"sparkles"},
+    solar_fist:{ bgType:"flames",chrome:"gold_ornate",winFX:"solar_burst",  coins:["\u2600","\uD83E\uDD1C","\u26A1","\uD83D\uDCB0"],             anticipation:"heat",        intro:"epic" ,accentColor:"#FFA500",reelStyle:"bounce",ambientFx:"embers"},
+    big_top_bonanza:     { bgType:"circus_fire",  chrome:"jester",       winFX:"firework_pop", coins:["\uD83C\uDFAA","\uD83E\uDD21","\u2B50","\uD83D\uDCB0"],       anticipation:"spin_joker",  intro:"carnival" ,accentColor:"#FF6B00",reelStyle:"slam",ambientFx:"snow"},
+    clockwork_realm:     { bgType:"cyber_grid",   chrome:"tech_hud",     winFX:"energy_pulse", coins:["\u2699","\uD83D\uDD70","\u2728","\uD83D\uDCB0"],             anticipation:"electric",    intro:"cyber" ,accentColor:"#B8860B",reelStyle:"smooth",ambientFx:"bubbles"},
+    rockstar_wild:       { bgType:"neon_city",    chrome:"neon_round",   winFX:"firework_pop", coins:["\uD83C\uDFB8","\uD83C\uDFA4","\u2728","\uD83D\uDCB0"],       anticipation:"electric",    intro:"flash" ,accentColor:"#FF0000",reelStyle:"turbo",ambientFx:"petals"},
+    snow_queen_riches:   { bgType:"blizzard",     chrome:"gem_frame",    winFX:"frost_burst",  coins:["\u2744","\uD83D\uDC51","\uD83D\uDC8E","\uD83D\uDCB0"],       anticipation:"frost_glow",  intro:"frozen" ,accentColor:"#E0FFFF",reelStyle:"elastic",ambientFx:"dust"},
+    jungle_fury:{ bgType:"deep_jungle",chrome:"stone_aztec",winFX:"leaf_burst", coins:["\uD83D\uDC05","\uD83C\uDF3F","\u2728","\uD83D\uDCB0"],       anticipation:"wild_pulse", intro:"jungle" ,accentColor:"#7CB342",reelStyle:"wave",ambientFx:"fireflies"},
+    golden_vault_pharaoh:{ bgType:"egypt_dusk",chrome:"gold_ornate",winFX:"sand_burst",   coins:["\uD83C\uDFFA","\uD83D\uDCB0","\uD83D\uDC8E","\u2728"],       anticipation:"sand_storm",  intro:"ancient" ,accentColor:"#B8860B",reelStyle:"gravity",ambientFx:"stars"},
+    mythic_olympiad:{ bgType:"olympus",chrome:"ancient_stone",winFX:"lightning_strike",coins:["\uD83C\uDFDB","\u26A1","\uD83D\uDC8E","\uD83D\uDCB0"], anticipation:"thunder",     intro:"ancient" ,accentColor:"#DAA520",reelStyle:"magnetic",ambientFx:"rain"},
+    neon_nexus:{ bgType:"neon_city",chrome:"arcade_neon",winFX:"energy_pulse", coins:["\uD83D\uDCBB","\u26A1","\u2728","\uD83D\uDCB0"],             anticipation:"neon_flash",    intro:"neon" ,accentColor:"#FF00FF",reelStyle:"spiral",ambientFx:"ash"},
+    anglers_fortune:     { bgType:"ocean_ripple", chrome:"fishing",      winFX:"splash",       coins:["\uD83D\uDC1F","\uD83C\uDFA3","\u2728","\uD83D\uDCB0"],       anticipation:"wave_crash",  intro:"watery" ,accentColor:"#4682B4",reelStyle:"jelly",ambientFx:"confetti"},
+    mecha_warriors:{ bgType:"cyber_grid",chrome:"dark_iron",winFX:"gear_burst", coins:["\uD83E\uDD16","\u26A1","\uD83D\uDD25","\uD83D\uDCB0"],       anticipation:"electric",    intro:"cyber" ,accentColor:"#00FF88",reelStyle:"glitch",ambientFx:"smoke"},
+    enchanted_grove:     { bgType:"enchanted",    chrome:"bamboo",       winFX:"magic_swirl",  coins:["\uD83C\uDF3F","\uD83E\uDDA5","\u2728","\uD83D\uDCB0"],       anticipation:"sparkle",     intro:"mystic" ,accentColor:"#50C878",reelStyle:"flutter",ambientFx:"crystals"},
+    dragons_hoard:{ bgType:"volcano",chrome:"gold_ornate",winFX:"dragon_burst", coins:["\uD83D\uDC09","\uD83D\uDCB0","\uD83D\uDC8E","\u2728"],       anticipation:"dragon_glow",        intro:"epic" ,accentColor:"#FF8C00",reelStyle:"thunder_drop",ambientFx:"leaves"},
+    time_keepers_book:{ bgType:"enchanted",chrome:"gold_ornate",winFX:"magic_swirl",  coins:["\uD83D\uDD70","\uD83D\uDCD6","\u2728","\uD83D\uDCB0"],       anticipation:"cosmic_hum",     intro:"mystic" ,accentColor:"#4169E1",reelStyle:"feather_fall",ambientFx:"lightning"},
+    cyber_rebellion:{ bgType:"neon_city",chrome:"tech_hud",winFX:"glitch_burst", coins:["\uD83E\uDD16","\uD83D\uDCA5","\u26A1","\uD83D\uDCB0"],       anticipation:"electric",    intro:"cyber" ,accentColor:"#39FF14",reelStyle:"cascade",ambientFx:"coins_float"},
+    volcano_riches:{ bgType:"volcano",chrome:"gold_ornate",winFX:"lava_pop",  coins:["\uD83C\uDF0B","\uD83D\uDD25","\uD83D\uDCB0","\u2728"],       anticipation:"lava_glow",        intro:"inferno" ,accentColor:"#FF4500",reelStyle:"bounce",ambientFx:"mist"},
+    sunken_treasure:{ bgType:"ocean_ripple",chrome:"pirate_wood",winFX:"treasure_pop",       coins:["\uD83D\uDC1A","\uD83D\uDCB0","\u2693","\u2728"],             anticipation:"wave_crash",  intro:"watery" ,accentColor:"#20B2AA",reelStyle:"slam",ambientFx:"aurora"},
+    wild_stallion:{ bgType:"prairie",chrome:"dark_iron",winFX:"thunder_burst",   coins:["\uD83D\uDC0E","\uD83C\uDF1E","\u2B50","\uD83D\uDCB0"],       anticipation:"rumble",      intro:"dramatic" ,accentColor:"#8B4513",reelStyle:"smooth",ambientFx:"sand"},
+    celestial_cosmos:    { bgType:"cosmos",       chrome:"gem_frame",    winFX:"starburst",    coins:["\uD83C\uDF0C","\u2728","\uD83C\uDF1F","\uD83D\uDCB0"],       anticipation:"cosmic_hum",   intro:"cosmic" ,accentColor:"#6A5ACD",reelStyle:"turbo",ambientFx:"blood_drip"},
+    jade_prosperity:{ bgType:"chinese_sky",chrome:"jade_frame",winFX:"starburst", coins:["\uD83C\uDFEF","\uD83D\uDCB0","\uD83D\uDC8E","\u2728"],       anticipation:"golden_aura", intro:"mystic" ,accentColor:"#50C878",reelStyle:"elastic",ambientFx:"sparkles"},
+    inferno_fiesta:      { bgType:"flames",       chrome:"fire_border",  winFX:"firework_pop", coins:["\uD83D\uDD25","\uD83C\uDF89","\u2728","\uD83D\uDCB0"],       anticipation:"heat",        intro:"carnival" ,accentColor:"#FF6B00",reelStyle:"wave",ambientFx:"embers"}
   };
   Object.assign(PROFILES, PROFILES4);
 
@@ -839,6 +839,13 @@ var fn = BG_RENDERERS[bgType] || BG_RENDERERS.shine;
       '@keyframes upx-fsi-spin{from{transform:rotate(-180deg) scale(0);opacity:0}to{transform:rotate(0) scale(1);opacity:1}}',
       '@keyframes upx-fsi-glitch{0%{transform:translate(0);filter:hue-rotate(0)}25%{transform:translate(-5px,3px);filter:hue-rotate(90deg)}50%{transform:translate(3px,-2px);filter:hue-rotate(180deg)}75%{transform:translate(-2px,-3px);filter:hue-rotate(270deg)}100%{transform:translate(0);filter:hue-rotate(360deg)}}',
       '.upx-shake{animation:upx-shake 0.5s ease-in-out}',
+      '@keyframes upx-reel-cascade{from{transform:translateY(-100%)}to{transform:translateY(0)}}',
+      '@keyframes upx-reel-bounce{0%{transform:translateY(-80%)}70%{transform:translateY(5%)}100%{transform:translateY(0)}}',
+      '@keyframes upx-reel-slam{0%{transform:translateY(-100%)}90%{transform:translateY(2%)}100%{transform:translateY(0)}}',
+      '@keyframes upx-reel-smooth{from{transform:translateY(-60%);opacity:0.5}to{transform:translateY(0);opacity:1}}',
+      '@keyframes upx-reel-wave{0%{transform:translateY(-80%) rotate(-2deg)}50%{transform:translateY(-10%) rotate(1deg)}100%{transform:translateY(0) rotate(0)}}',
+      '@keyframes upx-reel-spiral{from{transform:translateY(-80%) rotate(-180deg);opacity:0}to{transform:translateY(0) rotate(0);opacity:1}}',
+      '@keyframes upx-reel-glitch{0%{transform:translate(-3px,-80%)}33%{transform:translate(3px,-40%)}66%{transform:translate(-1px,-10%)}100%{transform:translate(0,0)}}',
       '.upx-anticipation{transition:all 0.3s}',
       '.upx-anticipation-electric{filter:brightness(1.6) drop-shadow(0 0 15px #00aaff) drop-shadow(0 0 8px #ffffff);animation:upx-antic-pulse 0.4s ease-in-out infinite alternate}',
       '.upx-anticipation-dark_pulse{filter:brightness(0.7) drop-shadow(0 0 20px #6a0dad) drop-shadow(0 0 10px #330066);animation:upx-antic-pulse 0.5s ease-in-out infinite alternate}',
@@ -874,6 +881,114 @@ var fn = BG_RENDERERS[bgType] || BG_RENDERERS.shine;
     document.head.appendChild(s);
   })();
 
+  
+  /* =============================================================
+     AMBIENT PARTICLE SYSTEM — continuous low-intensity particles
+     ============================================================= */
+  var _ambientParticles = [];
+  var _ambientCanvas = null;
+  var _ambientCtx = null;
+  var _ambientRaf = null;
+  var AMBIENT_CONFIGS = {
+    sparkles:   {color:'#FFD700',count:15,speed:0.5,size:2,shape:'star'},
+    embers:     {color:'#FF4500',count:12,speed:0.8,size:1.5,shape:'dot'},
+    snow:       {color:'#FFFFFF',count:20,speed:0.3,size:2.5,shape:'dot'},
+    bubbles:    {color:'#87CEEB',count:10,speed:0.4,size:3,shape:'dot'},
+    petals:     {color:'#FF69B4',count:12,speed:0.35,size:2,shape:'dot'},
+    dust:       {color:'#D2B48C',count:8,speed:0.2,size:1.5,shape:'dot'},
+    fireflies:  {color:'#ADFF2F',count:10,speed:0.6,size:1.5,shape:'star'},
+    stars:      {color:'#FFFFFF',count:15,speed:0.15,size:1.5,shape:'star'},
+    rain:       {color:'#4682B4',count:25,speed:2,size:1,shape:'dot'},
+    ash:        {color:'#808080',count:10,speed:0.25,size:1.5,shape:'dot'},
+    confetti:   {color:'#FF6B6B',count:15,speed:0.5,size:2,shape:'star'},
+    smoke:      {color:'#696969',count:8,speed:0.3,size:3,shape:'dot'},
+    crystals:   {color:'#4DD0E1',count:10,speed:0.4,size:2,shape:'star'},
+    leaves:     {color:'#228B22',count:10,speed:0.35,size:2,shape:'dot'},
+    lightning:  {color:'#FFFF00',count:5,speed:1.5,size:1,shape:'star'},
+    coins_float:{color:'#FFD700',count:8,speed:0.3,size:2.5,shape:'dot'},
+    mist:       {color:'#C0C0FF',count:6,speed:0.15,size:4,shape:'dot'},
+    aurora:     {color:'#00FF88',count:8,speed:0.2,size:3,shape:'dot'},
+    sand:       {color:'#C9A96E',count:12,speed:0.4,size:1.5,shape:'dot'},
+    blood_drip: {color:'#CC0000',count:6,speed:0.6,size:2,shape:'dot'}
+  };
+
+  function startAmbient(container, profile) {
+    stopAmbient();
+    var type = (profile && profile.ambientFx) || 'sparkles';
+    var cfg = AMBIENT_CONFIGS[type] || AMBIENT_CONFIGS.sparkles;
+    var c = document.createElement('canvas');
+    c.className = 'upx-ambient-canvas';
+    c.style.cssText = 'position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:5;opacity:0.6;';
+    container.style.position = container.style.position || 'relative';
+    container.appendChild(c);
+    _ambientCanvas = c;
+    _ambientCtx = c.getContext('2d');
+    c.width = container.offsetWidth || 800;
+    c.height = container.offsetHeight || 600;
+    _ambientParticles = [];
+    for(var i=0;i<cfg.count;i++){
+      _ambientParticles.push({
+        x:Math.random()*c.width, y:Math.random()*c.height,
+        vx:(Math.random()-0.5)*cfg.speed, vy:-Math.random()*cfg.speed-0.1,
+        size:cfg.size*(0.5+Math.random()), alpha:0.3+Math.random()*0.5,
+        color:cfg.color, shape:cfg.shape
+      });
+    }
+    function loop(){
+      if(!_ambientCanvas) return;
+      var ctx=_ambientCtx, w=_ambientCanvas.width, h=_ambientCanvas.height;
+      ctx.clearRect(0,0,w,h);
+      for(var i=0;i<_ambientParticles.length;i++){
+        var p=_ambientParticles[i];
+        p.x+=p.vx; p.y+=p.vy;
+        if(p.y<-10){p.y=h+10;p.x=Math.random()*w;}
+        if(p.x<-10)p.x=w+10; if(p.x>w+10)p.x=-10;
+        ctx.globalAlpha=p.alpha*(0.5+0.5*Math.sin(Date.now()*0.002+i));
+        ctx.fillStyle=p.color;
+        if(p.shape==='star'){
+          ctx.beginPath();
+          for(var s=0;s<5;s++){var a=s*1.2566-1.5708;ctx.lineTo(p.x+Math.cos(a)*p.size,p.y+Math.sin(a)*p.size);a+=0.6283;ctx.lineTo(p.x+Math.cos(a)*p.size*0.4,p.y+Math.sin(a)*p.size*0.4);}
+          ctx.closePath();ctx.fill();
+        } else {
+          ctx.beginPath();ctx.arc(p.x,p.y,p.size,0,6.28);ctx.fill();
+        }
+      }
+      _ambientRaf=requestAnimationFrame(loop);
+    }
+    loop();
+  }
+  function stopAmbient(){
+    if(_ambientRaf) cancelAnimationFrame(_ambientRaf);
+    if(_ambientCanvas&&_ambientCanvas.parentNode) _ambientCanvas.parentNode.removeChild(_ambientCanvas);
+    _ambientCanvas=null;_ambientCtx=null;_ambientParticles=[];_ambientRaf=null;
+  }
+
+  /* =============================================================
+     REEL STYLE — applies unique spin animation CSS per profile
+     ============================================================= */
+  var REEL_STYLE_CSS = {
+    cascade:      'animation:upx-reel-cascade 0.4s ease-in',
+    bounce:       'animation:upx-reel-bounce 0.5s cubic-bezier(0.34,1.56,0.64,1)',
+    slam:         'animation:upx-reel-slam 0.3s ease-in',
+    smooth:       'animation:upx-reel-smooth 0.6s ease-in-out',
+    turbo:        'animation:upx-reel-slam 0.15s linear',
+    elastic:      'animation:upx-reel-bounce 0.6s cubic-bezier(0.68,-0.55,0.265,1.55)',
+    wave:         'animation:upx-reel-wave 0.5s ease-in-out',
+    gravity:      'animation:upx-reel-cascade 0.5s cubic-bezier(0.55,0,1,0.45)',
+    magnetic:     'animation:upx-reel-smooth 0.4s cubic-bezier(0.25,0.46,0.45,0.94)',
+    spiral:       'animation:upx-reel-spiral 0.5s ease-out',
+    jelly:        'animation:upx-reel-bounce 0.7s cubic-bezier(0.34,1.56,0.64,1)',
+    glitch:       'animation:upx-reel-glitch 0.3s steps(4)',
+    flutter:      'animation:upx-reel-wave 0.6s ease-in-out',
+    thunder_drop: 'animation:upx-reel-slam 0.2s cubic-bezier(0.55,0,1,0.45)',
+    feather_fall: 'animation:upx-reel-smooth 0.8s ease-out'
+  };
+
+  function applyReelStyle(container, profile) {
+    var style = (profile && profile.reelStyle) || 'smooth';
+    container.setAttribute('data-reel-style', style);
+  }
+
   /* =============================================================
      PUBLIC API
      ============================================================= */
@@ -886,6 +1001,9 @@ var fn = BG_RENDERERS[bgType] || BG_RENDERERS.shine;
   UPX.triggerAnticipation = triggerAnticipation;
   UPX.showFreeSpinsIntro  = showFreeSpinsIntro;
   UPX.screenShake       = screenShake;
+  UPX.startAmbient      = startAmbient;
+  UPX.stopAmbient       = stopAmbient;
+  UPX.applyReelStyle    = applyReelStyle;
   UPX.showBigWin        = showBigWin;
 
 })();
