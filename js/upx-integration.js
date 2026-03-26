@@ -1,4 +1,4 @@
-﻿/* ================================================================
+/* ================================================================
    UPX Integration Layer  v1.0
    Wires ultra-premium-slot.js (UPX) into the casino game flow.
    Hooks: openSlot, spin, reelStop, bigWin, freeSpins
@@ -72,7 +72,7 @@
   }
 
   /* ================================================================
-     HOOK 1: GAME OPEN  → start background + apply chrome
+     HOOK 1: GAME OPEN  ? start background + apply chrome
      ================================================================ */
   function onGameOpen(gameId) {
     var container = getSlotContainer();
@@ -82,6 +82,11 @@
     /* Fetch the UPX profile for this game */
     _activeProfile = UPX.getProfile ? UPX.getProfile(gameId) : null;
     if (!_activeProfile) _activeProfile = UPX.getDefaultProfile ? UPX.getDefaultProfile() : null;
+
+    /* Show loading shimmer before background */
+    if (UPX.showLoadShimmer && _activeProfile) {
+      UPX.showLoadShimmer(container, _activeProfile);
+    }
 
     /* Start animated canvas background */
     if (UPX.startBg && _activeProfile) {
@@ -100,7 +105,7 @@
   }
 
   /* ================================================================
-     HOOK 2: GAME CLOSE → stop background
+     HOOK 2: GAME CLOSE ? stop background
      ================================================================ */
   function onGameClose() {
     if (UPX.stopAmbient) UPX.stopAmbient(); if (UPX.stopBg) UPX.stopBg();
@@ -109,7 +114,7 @@
   }
 
   /* ================================================================
-     HOOK 3: SPIN START → reset scatter counter
+     HOOK 3: SPIN START ? reset scatter counter
      ================================================================ */
   function onSpinStart() {
     _scattersLanded = 0;
@@ -125,7 +130,7 @@
   }
 
   /* ================================================================
-     HOOK 4: REEL STOP → anticipation on later reels
+     HOOK 4: REEL STOP ? anticipation on later reels
      ================================================================ */
   function onReelStop(reelIdx, totalReels) {
     if (!_activeContainer || !_activeProfile) return;
@@ -155,7 +160,7 @@
   }
 
   /* ================================================================
-     HOOK 5: WIN DISPLAY → fire particle FX
+     HOOK 5: WIN DISPLAY ? fire particle FX
      ================================================================ */
   function onWin(amount, bet) {
     if (!_activeContainer || !_activeProfile) return;
@@ -165,7 +170,12 @@
     var fxType = (_activeProfile && _activeProfile.winFX) || 'coins';
 
     /* Small wins: subtle particle burst */
-    if (multiplier >= 2 && multiplier < 10) {
+          /* Apply winning symbol animations */
+      if (UPX.animateWinSymbols && _activeProfile) {
+        UPX.animateWinSymbols(_activeContainer, _activeProfile);
+      }
+      
+      if (multiplier >= 2 && multiplier < 10) {
       if (UPX.winFx && UPX.winFx[fxType]) {
         UPX.winFx[fxType]();
       }
@@ -181,7 +191,7 @@
   }
 
   /* ================================================================
-     HOOK 6: BIG WIN → enhanced overlay + particles + shake
+     HOOK 6: BIG WIN ? enhanced overlay + particles + shake
      ================================================================ */
   function onBigWin(amount, bet) {
     if (!_activeContainer) return;
@@ -193,7 +203,7 @@
   }
 
   /* ================================================================
-     HOOK 7: FREE SPINS TRIGGERED → cinematic intro
+     HOOK 7: FREE SPINS TRIGGERED ? cinematic intro
      ================================================================ */
   function onFreeSpinsTrigger(count) {
     if (!_activeContainer || !_activeProfile) return;
@@ -314,5 +324,5 @@
     getContainer: function(){ return _activeContainer; }
   };
 
-  console.log('[UPX-Integration] v1.0 loaded — hooks active');
+  console.log('[UPX-Integration] v1.0 loaded � hooks active');
 })();
