@@ -435,7 +435,25 @@
     var ctx = _bg.ctx, w = _bg.canvas.width, h = _bg.canvas.height;
     var t = _bg.tick * 0.016;
     ctx.clearRect(0, 0, w, h);
-    var fn = BG_RENDERERS[bgType] || BG_RENDERERS.shine;
+    
+  BG_RENDERERS.dark_vignette = function(ctx,w,h,t,acc){
+    var g=ctx.createRadialGradient(w/2,h/2,0,w/2,h/2,w/1.5);g.addColorStop(0,'#2a2a2a');g.addColorStop(1,'#000');ctx.fillStyle=g;ctx.fillRect(0,0,w,h);
+    for(var i=0;i<15;i++){var x=Math.random()*w,y=Math.random()*h,r=Math.random()*1.5,o=0.2+Math.sin(t*0.5+i)*0.15;ctx.fillStyle='rgba(255,255,255,'+o+')';ctx.beginPath();ctx.arc(x,y,r,0,6.28);ctx.fill();}
+    ctx.fillStyle='rgba(0,0,0,'+(0.3+Math.sin(t)*0.1)+')';ctx.fillRect(0,0,w,h);
+  };
+  BG_RENDERERS.enchanted = function(ctx,w,h,t,acc){
+    var g=ctx.createLinearGradient(0,0,0,h);g.addColorStop(0,'#1a0f3a');g.addColorStop(0.5,'#2d1b4e');g.addColorStop(1,'#0f0620');ctx.fillStyle=g;ctx.fillRect(0,0,w,h);
+    for(var i=0;i<25;i++){var x=(i*w/25+Math.sin(t*0.3+i)*w*0.1)%w,y=(h*0.4+Math.cos(t*0.25+i)*h*0.2),r=2+Math.sin(t*0.5+i)*1;ctx.fillStyle='rgba(150,100,200,'+(0.4+Math.sin(t+i*0.5)*0.3)+')';ctx.beginPath();ctx.arc(x,y,r,0,6.28);ctx.fill();}
+  };
+  BG_RENDERERS.golden_sky = function(ctx,w,h,t,acc){
+    var g=ctx.createLinearGradient(0,0,0,h);g.addColorStop(0,'#3a2a00');g.addColorStop(0.5,'#2a1a00');g.addColorStop(1,'#1a0f00');ctx.fillStyle=g;ctx.fillRect(0,0,w,h);
+    for(var i=0;i<12;i++){var cx=w*(0.15+i*0.07)+Math.sin(t*0.1+i)*w*0.03,cy=h*(0.3+Math.cos(t*0.08+i)*0.15),r=w*0.06+Math.sin(t*0.12+i)*w*0.02;ctx.fillStyle='rgba(255,215,0,'+(0.15+Math.sin(t*0.2+i)*0.1)+')';ctx.beginPath();ctx.arc(cx,cy,r,0,6.28);ctx.fill();}
+  };
+  BG_RENDERERS.jungle_ruins = function(ctx,w,h,t,acc){
+    var g=ctx.createLinearGradient(0,0,0,h);g.addColorStop(0,'#1a3a1a');g.addColorStop(1,'#0d1f0d');ctx.fillStyle=g;ctx.fillRect(0,0,w,h);
+    for(var i=0;i<20;i++){var x=(i*w/20+Math.sin(t*0.4+i)*w*0.08)%w,y=Math.random()*h*0.8,r=1.5+Math.sin(t*0.6+i)*0.8;ctx.fillStyle='rgba(255,200,100,'+(0.5+Math.sin(t*0.5+i)*0.3)+')';ctx.beginPath();ctx.arc(x,y,r,0,6.28);ctx.fill();}
+  };
+var fn = BG_RENDERERS[bgType] || BG_RENDERERS.shine;
     fn(_bg.canvas, ctx, w, h, accentColor, t);
   }
   /* RENDERERS */
@@ -531,23 +549,34 @@
      REEL CHROME CSS INJECTION  (12 provider-distinct styles)
      ============================================================= */
   var CHROME_STYLES = {
-    pragmatic:  {border:'3px solid #C8A800',shadow:'0 0 18px #FFD700,0 0 6px #C8A800',bg:'linear-gradient(180deg,#1a0a00 0%,#0d0500 100%)'},
-    netent:     {border:'2px solid #0088FF',shadow:'0 0 16px #00AAFF,0 0 5px #0066FF',bg:'linear-gradient(180deg,#000820 0%,#000510 100%)'},
-    playngo:    {border:'2px solid #AA0000',shadow:'0 0 16px #FF2200,0 0 5px #880000',bg:'linear-gradient(180deg,#150000 0%,#0a0000 100%)'},
-    microgaming:{border:'3px solid #8800CC',shadow:'0 0 18px #BB00FF,0 0 7px #6600AA',bg:'linear-gradient(180deg,#0d0020 0%,#080015 100%)'},
-    novomatic:  {border:'2px solid #007700',shadow:'0 0 14px #00CC00,0 0 5px #005500',bg:'linear-gradient(180deg,#001500 0%,#000a00 100%)'},
-    igt:        {border:'3px solid #CC7700',shadow:'0 0 18px #FF9900,0 0 6px #AA5500',bg:'linear-gradient(180deg,#100800 0%,#0a0400 100%)'},
-    yggdrasil:  {border:'2px solid #00BBCC',shadow:'0 0 16px #00EEFF,0 0 5px #008899',bg:'linear-gradient(180deg,#001520 0%,#000c15 100%)'},
-    elk:        {border:'2px solid #FF6600',shadow:'0 0 15px #FF8800,0 0 5px #CC4400',bg:'linear-gradient(180deg,#150800 0%,#0a0400 100%)'},
-    hacksaw:    {border:'2px solid #FF0066',shadow:'0 0 16px #FF3388,0 0 5px #CC0044',bg:'linear-gradient(180deg,#150010 0%,#0a000a 100%)'},
-    push_gaming:{border:'2px solid #FFDD00',shadow:'0 0 16px #FFEE44,0 0 5px #CCAA00',bg:'linear-gradient(180deg,#141000 0%,#0a0800 100%)'},
-    blueprint:  {border:'2px solid #00CC88',shadow:'0 0 15px #00FF99,0 0 5px #009966',bg:'linear-gradient(180deg,#001510 0%,#000c08 100%)'},
-    default:    {border:'2px solid #555555',shadow:'0 0 10px #888888',bg:'linear-gradient(180deg,#111111 0%,#080808 100%)'}
+    'default':      {border:'2px solid #555',shadow:'0 0 10px rgba(200,200,200,0.4)',bg:'linear-gradient(180deg,#111 0%,#080808 100%)'},
+    'ancient_stone': {border:'3px solid #c9a96e',shadow:'0 0 15px rgba(150,120,80,0.6)',bg:'linear-gradient(180deg,#2a2218 0%,#15120c 100%)'},
+    'arcade_neon':  {border:'3px solid #ff00ff',shadow:'0 0 20px #ff00ff,0 0 10px #00ffff',bg:'linear-gradient(180deg,#1a0033 0%,#0a0015 100%)'},
+    'bamboo':       {border:'2px solid #7cb342',shadow:'0 0 12px rgba(100,140,50,0.5)',bg:'linear-gradient(180deg,#1a2a0a 0%,#0d150a 100%)'},
+    'chrome_round': {border:'3px solid #c0c0c0',shadow:'0 0 15px rgba(200,200,200,0.5)',bg:'linear-gradient(180deg,#1a1a1a 0%,#0d0d0d 100%)'},
+    'crystal_ball': {border:'3px solid #9370db',shadow:'0 0 20px rgba(147,112,219,0.7)',bg:'linear-gradient(180deg,#1a0040 0%,#0d0020 100%)'},
+    'dark_iron':    {border:'3px solid #2c3e50',shadow:'0 0 15px rgba(0,150,200,0.4)',bg:'linear-gradient(180deg,#1a2530 0%,#0d1318 100%)'},
+    'fiesta':       {border:'3px solid #ff6b00',shadow:'0 0 15px rgba(255,107,0,0.6)',bg:'linear-gradient(180deg,#2a1500 0%,#150a00 100%)'},
+    'fire_border':  {border:'3px solid #ff4500',shadow:'0 0 20px rgba(255,69,0,0.7),0 0 10px rgba(255,140,0,0.5)',bg:'linear-gradient(180deg,#1a0500 0%,#0d0300 100%)'},
+    'fishing':      {border:'2px solid #0077be',shadow:'0 0 12px rgba(0,119,190,0.5)',bg:'linear-gradient(180deg,#001a2a 0%,#000d15 100%)'},
+    'gem_frame':    {border:'3px solid #4169e1',shadow:'0 0 20px rgba(65,105,225,0.6)',bg:'linear-gradient(180deg,#0d1a3a 0%,#060d1f 100%)'},
+    'gold_ornate':  {border:'3px solid #ffd700',shadow:'0 0 20px rgba(255,215,0,0.7)',bg:'linear-gradient(180deg,#2a2000 0%,#151000 100%)'},
+    'golden_gods':  {border:'3px solid #ffa500',shadow:'0 0 20px rgba(255,165,0,0.7),0 0 10px rgba(255,215,0,0.5)',bg:'linear-gradient(180deg,#1a0f00 0%,#0d0800 100%)'},
+    'ice_crystal':  {border:'3px solid #4dd0e1',shadow:'0 0 20px rgba(77,208,225,0.6)',bg:'linear-gradient(180deg,#001a20 0%,#000d10 100%)'},
+    'jade_frame':   {border:'3px solid #50c878',shadow:'0 0 15px rgba(80,200,120,0.5)',bg:'linear-gradient(180deg,#0a2a1a 0%,#051510 100%)'},
+    'jester':       {border:'3px solid #9c27b0',shadow:'0 0 15px rgba(156,39,176,0.6),0 0 8px rgba(255,215,0,0.3)',bg:'linear-gradient(180deg,#1a0020 0%,#0d0010 100%)'},
+    'kawaii_pink':  {border:'3px solid #ff69b4',shadow:'0 0 15px rgba(255,105,180,0.5)',bg:'linear-gradient(180deg,#2a0a1a 0%,#15050d 100%)'},
+    'neon_round':   {border:'3px solid #00ff66',shadow:'0 0 20px #00ff66,0 0 10px #ff00ff',bg:'linear-gradient(180deg,#0a0a0a 0%,#050505 100%)'},
+    'pirate_wood':  {border:'3px solid #8b4513',shadow:'0 0 12px rgba(139,69,19,0.6),0 0 6px rgba(255,215,0,0.2)',bg:'linear-gradient(180deg,#1a0f08 0%,#0d0804 100%)'},
+    'rustic_wood':  {border:'2px solid #8b6f47',shadow:'0 0 12px rgba(139,111,71,0.5)',bg:'linear-gradient(180deg,#1a150d 0%,#0d0a06 100%)'},
+    'stone_aztec':  {border:'3px solid #b8860b',shadow:'0 0 15px rgba(184,134,11,0.6)',bg:'linear-gradient(180deg,#1a1508 0%,#0d0a04 100%)'},
+    'tech_hud':     {border:'2px solid #00ff88',shadow:'0 0 15px rgba(0,255,136,0.5),0 0 8px rgba(0,150,150,0.3)',bg:'linear-gradient(180deg,#001a1a 0%,#000d0d 100%)'},
+    'viking_shield':{border:'3px solid #3a5a7a',shadow:'0 0 18px rgba(65,105,225,0.5)',bg:'linear-gradient(180deg,#0f1a2a 0%,#080d15 100%)'}
   };
 
   function applyChrome(container, profile) {
-    var prov = (profile && profile.provider) || 'default';
-    var style = CHROME_STYLES[prov] || CHROME_STYLES.default;
+    var chromeKey = (profile && profile.chrome) || 'default';
+    var style = CHROME_STYLES[chromeKey] || CHROME_STYLES['default'];
     var wrap = container.querySelector('.slot-machine-wrapper,.slot-wrapper,.reels-wrapper') || container;
     wrap.style.border = style.border;
     wrap.style.boxShadow = style.shadow;
@@ -607,21 +636,58 @@
   }
 
   var WIN_FX = {
-    coins:    function(x,y){burstParticles('coin',x,y,40,'#FFD700');},
-    stars:    function(x,y){burstParticles('star',x,y,50,'#FFFFFF');},
-    fire:     function(x,y){burstParticles('dot',x,y,35,'#FF6600');},
-    ice:      function(x,y){burstParticles('star',x,y,40,'#AAEEFF');},
-    magic:    function(x,y){burstParticles('star',x,y,45,'#DD88FF');},
-    leaves:   function(x,y){burstParticles('dot',x,y,35,'#44FF88');},
-    sakura:   function(x,y){burstParticles('dot',x,y,40,'#FF88AA');},
-    hearts:   function(x,y){burstParticles('dot',x,y,30,'#FF4466');},
-    lightning:function(x,y){burstParticles('star',x,y,55,'#FFEE00');},
-    diamond:  function(x,y){burstParticles('coin',x,y,35,'#00EEFF');},
-    rainbow:  function(x,y){['#FF4444','#FF8800','#FFEE00','#44FF44','#4488FF','#AA44FF'].forEach(function(c,i){setTimeout(function(){burstParticles('dot',x,y,12,c);},i*60);});},
-    cash:     function(x,y){burstParticles('coin',x,y,50,'#00CC44');},
-    jewels:   function(x,y){burstParticles('star',x,y,40,'#FF44AA');},
-    smoke:    function(x,y){burstParticles('dot',x,y,20,'#AAAAAA');},
-    mythic:   function(x,y){burstParticles('star',x,y,60,'#FFD700');burstParticles('dot',x,y,30,'#FFFFFF');}
+    avalanche:        function(x,y){ burstParticles('dot',x,y,50,'#b0c4de'); burstParticles('dot',x,y,20,'#ffffff'); },
+    bat_burst:        function(x,y){ burstParticles('star',x,y,35,'#4a0080'); burstParticles('dot',x,y,15,'#8b008b'); },
+    blood_burst:      function(x,y){ burstParticles('dot',x,y,40,'#cc0000'); burstParticles('dot',x,y,15,'#880000'); },
+    bubble_burst:     function(x,y){ burstParticles('dot',x,y,30,'#87ceeb'); burstParticles('dot',x,y,20,'#b0e0e6'); },
+    candy_burst:      function(x,y){ burstParticles('star',x,y,40,'#ff1493'); burstParticles('star',x,y,20,'#ffb6c1'); },
+    card_shuffle:     function(x,y){ burstParticles('dot',x,y,25,'#cc0000'); burstParticles('dot',x,y,25,'#222222'); },
+    confetti_pop:     function(x,y){ burstParticles('star',x,y,50,'#ff6b6b'); burstParticles('star',x,y,30,'#ffd700'); burstParticles('star',x,y,20,'#4169e1'); },
+    crystal_pop:      function(x,y){ burstParticles('star',x,y,45,'#4dd0e1'); burstParticles('star',x,y,15,'#ffffff'); },
+    dark_burst:       function(x,y){ burstParticles('dot',x,y,35,'#2c3e50'); burstParticles('dot',x,y,15,'#111111'); },
+    diamond_shatter:  function(x,y){ burstParticles('star',x,y,50,'#ffffff'); burstParticles('star',x,y,25,'#b0e0e6'); },
+    dna_spiral:       function(x,y){ burstParticles('dot',x,y,30,'#00ff00'); burstParticles('dot',x,y,20,'#0088ff'); },
+    dragon_burst:     function(x,y){ burstParticles('star',x,y,50,'#ff4500'); burstParticles('star',x,y,30,'#ffa500'); setTimeout(function(){burstParticles('dot',x,y,20,'#ff6347');},100); },
+    dust_cloud:       function(x,y){ burstParticles('dot',x,y,40,'#d3d3d3'); burstParticles('dot',x,y,20,'#a9a9a9'); },
+    ember_burst:      function(x,y){ burstParticles('dot',x,y,35,'#ff4500'); burstParticles('dot',x,y,20,'#ffa500'); },
+    energy_pulse:     function(x,y){ burstParticles('star',x,y,45,'#00ff00'); burstParticles('dot',x,y,25,'#00dd00'); },
+    fairy_pop:        function(x,y){ burstParticles('star',x,y,40,'#ff69b4'); burstParticles('star',x,y,20,'#ffb6d9'); },
+    feather_pop:      function(x,y){ burstParticles('dot',x,y,30,'#f5deb3'); burstParticles('dot',x,y,15,'#daa520'); },
+    firework_pop:     function(x,y){ burstParticles('star',x,y,55,'#ff0000'); burstParticles('star',x,y,30,'#ffff00'); burstParticles('star',x,y,20,'#0000ff'); },
+    frost_burst:      function(x,y){ burstParticles('star',x,y,40,'#b0e0e6'); burstParticles('star',x,y,20,'#f0ffff'); },
+    fruit_pop:        function(x,y){ burstParticles('dot',x,y,35,'#ff6347'); burstParticles('dot',x,y,20,'#ffd700'); },
+    gear_burst:       function(x,y){ burstParticles('dot',x,y,40,'#808080'); burstParticles('dot',x,y,15,'#c0c0c0'); },
+    gem_shatter:      function(x,y){ burstParticles('star',x,y,50,'#9370db'); burstParticles('star',x,y,25,'#ba55d3'); },
+    glitch_burst:     function(x,y){ burstParticles('dot',x,y,45,'#00ff00'); burstParticles('dot',x,y,20,'#ff0000'); },
+    gold_shower:      function(x,y){ burstParticles('coin',x,y,50,'#ffd700'); burstParticles('star',x,y,20,'#ffee88'); },
+    gunshot_pop:      function(x,y){ burstParticles('dot',x,y,30,'#696969'); burstParticles('dot',x,y,15,'#2f4f4f'); },
+    heart_pop:        function(x,y){ burstParticles('star',x,y,40,'#ff1493'); burstParticles('star',x,y,20,'#ff69b4'); },
+    ice_shatter:      function(x,y){ burstParticles('star',x,y,45,'#00bfff'); burstParticles('star',x,y,20,'#ffffff'); },
+    laser_pop:        function(x,y){ burstParticles('dot',x,y,35,'#00ff00'); burstParticles('dot',x,y,15,'#ffff00'); },
+    lava_pop:         function(x,y){ burstParticles('dot',x,y,40,'#ff4500'); burstParticles('dot',x,y,20,'#ff6347'); },
+    leaf_burst:       function(x,y){ burstParticles('dot',x,y,35,'#228b22'); burstParticles('dot',x,y,20,'#7cb342'); },
+    lightning_strike: function(x,y){ burstParticles('star',x,y,40,'#ffff00'); burstParticles('dot',x,y,25,'#ffffff'); setTimeout(function(){burstParticles('dot',x,y,15,'#0088ff');},80); },
+    magic_swirl:      function(x,y){ burstParticles('star',x,y,45,'#9370db'); burstParticles('star',x,y,25,'#ba55d3'); },
+    moon_burst:       function(x,y){ burstParticles('dot',x,y,30,'#ffffff'); burstParticles('dot',x,y,15,'#f0f8ff'); },
+    moon_howl:        function(x,y){ burstParticles('star',x,y,35,'#ffffff'); burstParticles('dot',x,y,20,'#dda0dd'); },
+    mystic_burst:     function(x,y){ burstParticles('star',x,y,40,'#6a0dad'); burstParticles('star',x,y,20,'#9370db'); },
+    neon_pop:         function(x,y){ burstParticles('star',x,y,45,'#ff00ff'); burstParticles('star',x,y,20,'#00ffff'); },
+    panda_pop:        function(x,y){ burstParticles('dot',x,y,35,'#222222'); burstParticles('dot',x,y,20,'#ffffff'); },
+    phoenix_burst:    function(x,y){ burstParticles('star',x,y,50,'#ff4500'); burstParticles('star',x,y,30,'#ffa500'); setTimeout(function(){burstParticles('dot',x,y,25,'#ff6347');},120); },
+    rainbow_burst:    function(x,y){ burstParticles('star',x,y,35,'#ff0000'); burstParticles('star',x,y,25,'#ffff00'); setTimeout(function(){burstParticles('star',x,y,20,'#00ff00');burstParticles('star',x,y,20,'#0000ff');},100); },
+    sakura_burst:     function(x,y){ burstParticles('dot',x,y,40,'#ff69b4'); burstParticles('dot',x,y,20,'#ffb6d9'); },
+    sand_burst:       function(x,y){ burstParticles('dot',x,y,45,'#d2b48c'); burstParticles('dot',x,y,20,'#c9a96e'); },
+    shamrock_pop:     function(x,y){ burstParticles('star',x,y,35,'#00aa00'); burstParticles('dot',x,y,20,'#00ff00'); },
+    shuriken_pop:     function(x,y){ burstParticles('dot',x,y,40,'#696969'); burstParticles('dot',x,y,15,'#ff6347'); },
+    slime_burst:      function(x,y){ burstParticles('dot',x,y,40,'#7cb342'); burstParticles('dot',x,y,20,'#9ccc65'); },
+    smoke_burst:      function(x,y){ burstParticles('dot',x,y,45,'#808080'); burstParticles('dot',x,y,25,'#a9a9a9'); },
+    solar_burst:      function(x,y){ burstParticles('star',x,y,50,'#ffff00'); burstParticles('star',x,y,25,'#ffa500'); },
+    splash:           function(x,y){ burstParticles('dot',x,y,40,'#0077be'); burstParticles('dot',x,y,20,'#00bfff'); },
+    starburst:        function(x,y){ burstParticles('star',x,y,55,'#ffd700'); burstParticles('star',x,y,30,'#ffee88'); },
+    sword_clash:      function(x,y){ burstParticles('dot',x,y,35,'#c0c0c0'); burstParticles('dot',x,y,20,'#ff6347'); },
+    thunder_burst:    function(x,y){ burstParticles('star',x,y,40,'#ffff00'); burstParticles('dot',x,y,25,'#4169e1'); },
+    treasure_pop:     function(x,y){ burstParticles('coin',x,y,45,'#ffd700'); burstParticles('star',x,y,25,'#ffee88'); },
+    tropical_pop:     function(x,y){ burstParticles('dot',x,y,40,'#ff6347'); burstParticles('dot',x,y,20,'#ffa500'); }
   };
 
   /* =============================================================
