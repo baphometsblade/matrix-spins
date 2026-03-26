@@ -591,7 +591,7 @@ var fn = BG_RENDERERS[bgType] || BG_RENDERERS.shine;
     wrap.style.boxShadow = style.shadow;
     var reelArea = container.querySelector('.reels-container,.reel-area') || wrap;
     reelArea.style.background = style.bg;
-    container.setAttribute('data-provider', prov);
+    container.setAttribute('data-chrome', chromeKey);
   }
 
   /* =============================================================
@@ -770,6 +770,16 @@ var fn = BG_RENDERERS[bgType] || BG_RENDERERS.shine;
       +'<div class="upx-fsi-count" style="font-size:5em;font-weight:900;color:#fff;text-shadow:0 0 20px '+acc+',0 0 40px '+acc+';animation:'+anim+'">'+count+'</div>';
     container.style.position = container.style.position || 'relative';
     container.appendChild(ov);
+    /* Add game-specific coin emojis */
+    var coinDiv = document.createElement('div');
+    coinDiv.style.cssText = 'position:absolute;top:8%;left:50%;transform:translateX(-50%);font-size:2.5em;animation:upx-bw-coins 1s ease-in-out infinite alternate;z-index:81';
+    coinDiv.textContent = (profile && profile.coins) ? profile.coins.join(' ') : '';
+    if(coinDiv.textContent) ov.insertBefore(coinDiv, ov.firstChild);
+    /* Add accent border glow */
+    var borderDiv = document.createElement('div');
+    borderDiv.style.cssText = 'position:absolute;top:0;left:0;width:100%;height:100%;border:2px solid '+acc+';border-radius:8px;box-shadow:inset 0 0 40px '+acc+'33;pointer-events:none';
+    ov.appendChild(borderDiv);
+    
     setTimeout(function(){
       ov.style.opacity='0'; ov.style.transition='opacity 0.5s';
       setTimeout(function(){if(ov.parentNode)ov.parentNode.removeChild(ov); if(cb)cb();},500);
@@ -800,19 +810,23 @@ var fn = BG_RENDERERS[bgType] || BG_RENDERERS.shine;
   function showBigWin(container, multiplier, profile) {
     var tier = BW_TIERS[0];
     for(var i=BW_TIERS.length-1;i>=0;i--){if(multiplier>=BW_TIERS[i].min){tier=BW_TIERS[i];break;}}
+    var accent = (profile && profile.accentColor) || tier.col;
+    var coins = (profile && profile.coins) || [];
+    var coinStr = coins.length ? coins.join(' ') : tier.emoji;
     var ov = document.createElement('div');
     ov.className = 'upx-bigwin-overlay '+tier.cls;
-    ov.style.cssText = 'position:absolute;top:0;left:0;width:100%;height:100%;z-index:90;display:flex;align-items:center;justify-content:center;flex-direction:column;background:rgba(0,0,0,0.75);animation:upx-bw-in 0.4s ease-out';
-    ov.innerHTML = '<div class="upx-bw-emoji" style="font-size:4em;line-height:1.2">'+tier.emoji+'</div>'
-      +'<div class="upx-bw-label" style="font-size:3.5em;font-weight:900;color:'+tier.col+';text-shadow:0 0 40px '+tier.col+',0 0 10px #fff;letter-spacing:0.05em">'+tier.label+'</div>'
-      +'<div class="upx-bw-mult" style="font-size:2em;color:#fff;font-weight:700;margin-top:10px">'+multiplier+'x</div>';
+    ov.style.cssText = 'position:absolute;top:0;left:0;width:100%;height:100%;z-index:90;display:flex;align-items:center;justify-content:center;flex-direction:column;background:radial-gradient(ellipse at center,rgba(0,0,0,0.6) 0%,rgba(0,0,0,0.85) 100%);animation:upx-bw-in 0.4s ease-out';
+    ov.innerHTML = '<div class="upx-bw-coins" style="font-size:3em;line-height:1.2;animation:upx-bw-coins 1s ease-in-out infinite alternate">'+coinStr+'</div>'
+      +'<div class="upx-bw-label" style="font-size:3.5em;font-weight:900;color:'+tier.col+';text-shadow:0 0 40px '+accent+',0 0 20px '+tier.col+',0 0 10px #fff;letter-spacing:0.05em;animation:upx-bw-pulse 0.8s ease-in-out infinite alternate">'+tier.label+'</div>'
+      +'<div class="upx-bw-mult" style="font-size:2.2em;color:#fff;font-weight:700;margin-top:10px;text-shadow:0 0 15px '+accent+'">'+multiplier+'x</div>'
+      +'<div class="upx-bw-border" style="position:absolute;top:0;left:0;width:100%;height:100%;border:3px solid '+accent+';border-radius:8px;box-shadow:inset 0 0 60px '+accent+'44,0 0 30px '+accent+'66;pointer-events:none"></div>';
     container.style.position = container.style.position || 'relative';
     container.appendChild(ov);
     screenShake(container, Math.min(tier.min/50,3));
-    if (WIN_FX[profile && profile.winFx] || WIN_FX.coins) {
-      (WIN_FX[profile && profile.winFx] || WIN_FX.coins)();
-    }
-    var dur = Math.min(2000+multiplier*5, 6000);
+    var fxKey = (profile && profile.winFX) || 'gold_shower';
+    var fx = WIN_FX[fxKey] || WIN_FX.gold_shower;
+    if(fx) { fx(); setTimeout(function(){ fx(); }, 400); if(multiplier>=200) setTimeout(function(){ fx(); }, 800); }
+    var dur = Math.min(2500+multiplier*8, 8000);
     setTimeout(function(){
       ov.style.opacity='0'; ov.style.transition='opacity 0.6s';
       setTimeout(function(){if(ov.parentNode)ov.parentNode.removeChild(ov);},600);
@@ -826,7 +840,7 @@ var fn = BG_RENDERERS[bgType] || BG_RENDERERS.shine;
     if(document.getElementById('upx-anim-css')) return;
     var s=document.createElement('style'); s.id='upx-anim-css';
     s.textContent = [
-      '@keyframes upx-bw-in{from{transform:scale(0.5);opacity:0}to{transform:scale(1);opacity:1}}',
+      '@keyframes upx-bw-in{from{transform:scale(0.5);opacity:0}to{transform:scale(1);opacity:1}}','@keyframes upx-bw-pulse{from{transform:scale(1);filter:brightness(1)}to{transform:scale(1.05);filter:brightness(1.3)}}','@keyframes upx-bw-coins{from{transform:translateY(0) scale(1)}to{transform:translateY(-8px) scale(1.1)}}',
       '@keyframes upx-fsi-pop{from{transform:scale(0.3) rotate(-10deg);opacity:0}to{transform:scale(1) rotate(0);opacity:1}}',
       '@keyframes upx-shake{0%,100%{transform:translate(0,0)}20%{transform:translate(var(--upx-shake-mag),0)}40%{transform:translate(calc(-1*var(--upx-shake-mag)),0)}60%{transform:translate(0,var(--upx-shake-mag))}80%{transform:translate(0,calc(-1*var(--upx-shake-mag)))}}',
       '@keyframes upx-antic-pulse{from{opacity:0.7}to{opacity:1}}',

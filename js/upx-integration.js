@@ -162,7 +162,7 @@
     if (!amount || amount <= 0) return;
 
     var multiplier = bet > 0 ? Math.round(amount / bet) : 0;
-    var fxType = (_activeProfile && _activeProfile.winFx) || 'coins';
+    var fxType = (_activeProfile && _activeProfile.winFX) || 'coins';
 
     /* Small wins: subtle particle burst */
     if (multiplier >= 2 && multiplier < 10) {
