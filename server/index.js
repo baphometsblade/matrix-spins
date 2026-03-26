@@ -1,4 +1,4 @@
-const express = require('express');
+﻿const express = require('express');
 const path = require('path');
 const helmet = require('helmet');
 const cors = require('cors');
@@ -8,12 +8,12 @@ const config = require('./config');
 // -- Security: warn if critical env vars are missing --
 (function checkSecurityConfig() {
     const warnings = [];
-    if (!process.env.JWT_SECRET) warnings.push('JWT_SECRET not set � using random key (sessions will not persist across restarts)');
-    if (!process.env.ADMIN_PASSWORD) warnings.push('ADMIN_PASSWORD not set � using random password (check server logs)');
-    if (!process.env.STRIPE_WEBHOOK_SECRET && process.env.STRIPE_SECRET_KEY) warnings.push('STRIPE_WEBHOOK_SECRET not set � webhook verification disabled');
+    if (!process.env.JWT_SECRET) warnings.push('JWT_SECRET not set � using random key (sessions will not persist across restarts)');
+    if (!process.env.ADMIN_PASSWORD) warnings.push('ADMIN_PASSWORD not set � using random password (check server logs)');
+    if (!process.env.STRIPE_WEBHOOK_SECRET && process.env.STRIPE_SECRET_KEY) warnings.push('STRIPE_WEBHOOK_SECRET not set � webhook verification disabled');
     if (warnings.length > 0) {
         console.warn('\n??  SECURITY CONFIGURATION WARNINGS:');
-        warnings.forEach(w => console.warn('   � ' + w));
+        warnings.forEach(w => console.warn('   � ' + w));
         console.warn('   Set these in your .env file or Render environment variables.\n');
     }
     // Log generated admin password so operator can use it
@@ -101,7 +101,9 @@ app.use(maintenanceMiddleware);
 // Global rate limiter
 const globalLimiter = rateLimit({
     windowMs: 60 * 1000,
-    max: 200, // 200 requests per minute
+    max: 1000, // 1000 requests per minute
+    standardHeaders: true,
+    legacyHeaders: false,
     message: { error: 'Too many requests. Please slow down.' },
 });
 app.use('/api/', globalLimiter);
@@ -109,20 +111,24 @@ app.use('/api/', globalLimiter);
 // Stricter rate limit for auth endpoints
 const authLimiter = rateLimit({
     windowMs: 15 * 60 * 1000, // 15 minutes
-    max: 20, // 20 attempts per 15 min
+    max: 50, // 50 attempts per 15 min
+    standardHeaders: true,
+    legacyHeaders: false,
     message: { error: 'Too many auth attempts. Try again later.' },
 });
 app.use('/api/auth/register', authLimiter);
 app.use('/api/auth/login', authLimiter);
 
 // Per-user auth limit: 20 requests per minute per authenticated user
-const userAuthLimit = userRateLimit({ maxRequests: 20, windowMs: 60000 });
+const userAuthLimit = userRateLimit({ maxRequests: 60, windowMs: 60000 });
 app.use('/api/auth/', userAuthLimit);
 
 // Strict rate limit for bonus/reward endpoints (prevent rapid-fire exploitation)
 const bonusLimiter = rateLimit({
     windowMs: 60 * 1000,
-    max: 5, // 5 attempts per minute per IP
+    max: 30, // 30 attempts per minute per IP
+    standardHeaders: true,
+    legacyHeaders: false,
     message: { error: 'Too many bonus requests. Please wait.' },
 });
 app.use('/api/user/claim-daily-bonus', bonusLimiter);
@@ -134,7 +140,9 @@ app.use('/api/user/claim-comeback-bonus', bonusLimiter);
 // Strict rate limit for password/account-sensitive endpoints
 const sensitiveAuthLimiter = rateLimit({
     windowMs: 15 * 60 * 1000, // 15 minutes
-    max: 5, // 5 attempts per 15 min
+    max: 15, // 15 attempts per 15 min
+    standardHeaders: true,
+    legacyHeaders: false,
     message: { error: 'Too many requests. Try again later.' },
 });
 app.use('/api/auth/forgot-password', sensitiveAuthLimiter);
@@ -144,7 +152,9 @@ app.use('/api/user/change-password', sensitiveAuthLimiter);
 // Strict rate limit for deposit/withdrawal endpoints
 const paymentLimiter = rateLimit({
     windowMs: 60 * 1000,
-    max: 3, // 3 per minute per IP
+    max: 15, // 15 per minute per IP
+    standardHeaders: true,
+    legacyHeaders: false,
     message: { error: 'Too many payment requests. Please wait.' },
 });
 app.use('/api/payment/deposit', paymentLimiter);
@@ -157,7 +167,7 @@ app.use('/api/matrix-money/withdraw', paymentLimiter);
 app.use('/api/gifts/send', paymentLimiter);
 
 // Per-user payment limit: 5 requests per minute per authenticated user
-const userPaymentLimit = userRateLimit({ maxRequests: 5, windowMs: 60000 });
+const userPaymentLimit = userRateLimit({ maxRequests: 20, windowMs: 60000 });
 app.use('/api/payment/deposit', userPaymentLimit);
 app.use('/api/payment/withdraw', userPaymentLimit);
 app.use('/api/crypto/verify-deposit', userPaymentLimit);
@@ -169,7 +179,9 @@ app.use('/api/matrix-money/withdraw', userPaymentLimit);
 // Admin endpoint rate limit — prevent brute-force admin access
 const adminLimiter = rateLimit({
     windowMs: 60 * 1000,
-    max: 30, // 30 per minute
+    max: 100, // 100 per minute
+    standardHeaders: true,
+    legacyHeaders: false,
     message: { error: 'Too many admin requests.' },
 });
 app.use('/api/admin', adminLimiter);
@@ -178,12 +190,14 @@ app.use('/api/admin', adminLimiter);
 // (in addition to the per-user in-memory check in spin.routes.js)
 const spinLimiter = rateLimit({
     windowMs: 60 * 1000,
-    max: 120, // 2 spins/sec sustained — matches MAX_SPINS_PER_SECOND=2
+    max: 300, // 5 spins/sec sustained
+    standardHeaders: true,
+    legacyHeaders: false,
     message: { error: 'Spinning too fast. Please slow down.' },
 });
 app.use('/api/spin', spinLimiter);
 // Per-user spin limit: 60 spins per minute per authenticated user
-app.use('/api/spin', userRateLimit({ maxRequests: 60, windowMs: 60000 }));
+app.use('/api/spin', userRateLimit({ maxRequests: 180, windowMs: 60000 }));
 
 // ─── Health Check Routes (used by Render / load balancers) ───
 // Register BEFORE static middleware so health checks are always fast & accessible
