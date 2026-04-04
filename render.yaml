@@ -12,8 +12,7 @@ services:
         value: production
       - key: JWT_SECRET
         generateValue: true
-      - key: ADMIN_PASSWORD
-        sync: false  # Set manually in Render dashboard — NEVER commit passwords to repo
+      # ADMIN_PASSWORD: set manually in Render dashboard
       - key: ALLOWED_ORIGIN
         value: https://msaart.online
       - key: CRYPTO_WALLET_ADDRESS

@@ -396,8 +396,7 @@ app.use('/api', require('./routes/stripe-checkout.routes')); // Sprint 379-386
 const { router: nftDepositRoutes, ensureNFTTables } = require('./routes/nft-deposit.routes');
 app.use('/api', nftDepositRoutes);
 app.use('/api/admin', require('./routes/admin-withdrawals.routes'));
-// Initialize NFT tables on startup
-ensureNFTTables().catch(err => console.warn('[NFT] Table init deferred:', err.message));
+// NFT table init moved to start() — runs after initDatabase()
 app.use('/api/health', healthRoutes);
 
 // IMPROVEMENT 29: Promotional popups API
@@ -1031,6 +1030,9 @@ async function start() {
     await rentalService.initSchema();
     const megawheelService = require('./services/megawheel.service');
     await megawheelService.initSchema();
+
+    // Initialize NFT tables (must run after initDatabase)
+    await ensureNFTTables().catch(err => console.warn('[NFT] Table init deferred:', err.message));
 
     // Feedback tables auto-initialize on module load
 
