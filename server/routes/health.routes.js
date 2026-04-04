@@ -69,6 +69,36 @@ router.get('/', async (req, res) => {
 });
 
 /**
+ * GET /api/health/assets — Debug: check asset directories on disk
+ */
+router.get('/assets', (req, res) => {
+    const path = require('path');
+    const fs = require('fs');
+    const assetsDir = path.join(__dirname, '..', '..', 'assets');
+    const gsDir = path.join(assetsDir, 'game_symbols');
+    const result = { assetsExists: fs.existsSync(assetsDir), gameSymbolsExists: fs.existsSync(gsDir) };
+    if (result.gameSymbolsExists) {
+        try {
+            const dirs = fs.readdirSync(gsDir).slice(0, 20);
+            result.gameSymbolDirs = dirs;
+            result.totalDirs = fs.readdirSync(gsDir).length;
+            // Check first dir contents
+            if (dirs.length > 0) {
+                const firstDir = path.join(gsDir, dirs[0]);
+                result.firstDirFiles = fs.readdirSync(firstDir);
+            }
+            // Check ancient_tombs specifically
+            const atDir = path.join(gsDir, 'ancient_tombs');
+            result.ancientTombsExists = fs.existsSync(atDir);
+            if (result.ancientTombsExists) {
+                result.ancientTombsFiles = fs.readdirSync(atDir);
+            }
+        } catch(e) { result.error = e.message; }
+    }
+    res.json(result);
+});
+
+/**
  * GET /api/health/detailed — Detailed health check (admin only)
  * Returns system info including memory, database status, user counts
  */
