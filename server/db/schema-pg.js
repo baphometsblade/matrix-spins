@@ -766,6 +766,16 @@ const TABLES = [
         created_at TIMESTAMPTZ DEFAULT NOW(),
         confirmed_at TIMESTAMPTZ
     )`,
+    `CREATE TABLE IF NOT EXISTS daily_mission_progress (
+        id SERIAL PRIMARY KEY,
+        user_id INTEGER NOT NULL,
+        mission_date TEXT NOT NULL,
+        slot INTEGER NOT NULL,
+        progress REAL DEFAULT 0,
+        completed INTEGER DEFAULT 0,
+        claimed INTEGER DEFAULT 0,
+        UNIQUE(user_id, mission_date, slot)
+    )`,
 ];
 
 const INDEXES = [

@@ -747,6 +747,16 @@ const TABLES = [
         stock INTEGER DEFAULT -1,
         active INTEGER DEFAULT 1,
         created_at TEXT DEFAULT (datetime('now'))
+    )`,
+    `CREATE TABLE IF NOT EXISTS daily_mission_progress (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        user_id INTEGER NOT NULL,
+        mission_date TEXT NOT NULL,
+        slot INTEGER NOT NULL,
+        progress REAL DEFAULT 0,
+        completed INTEGER DEFAULT 0,
+        claimed INTEGER DEFAULT 0,
+        UNIQUE(user_id, mission_date, slot)
     )`
 ];
 
