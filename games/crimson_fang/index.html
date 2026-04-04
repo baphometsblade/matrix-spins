@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Crimson Fang | Matrix Spins Casino</title>
+  <link rel="stylesheet" href="../_shared/game-runtime.css">
+  <link rel="preload" href="/assets/game_symbols/crimson_fang/s1_coffin.png" as="image">
+  <link rel="preload" href="/assets/game_symbols/crimson_fang/s2_blood_vial.png" as="image">
+  <link rel="preload" href="/assets/game_symbols/crimson_fang/s3_bat_swarm.png" as="image">
+  <link rel="preload" href="/assets/game_symbols/crimson_fang/s4_castle.png" as="image">
+  <link rel="preload" href="/assets/game_symbols/crimson_fang/s5_crimson_eye.png" as="image">
+  <link rel="preload" href="/assets/game_symbols/crimson_fang/wild_vampire.png" as="image">
+  <style>
+    :root {
+      --studio-primary: #69f0ae;
+      --studio-secondary: #1b5e20;
+      --studio-bg: #0a0a0a;
+      --studio-surface: #151515;
+      --studio-font: 'Share Tech Mono', 'Courier New', monospace;
+      --studio-glow: #69f0ae40;
+      --reel-border: #69f0ae;
+      --reel-cell-size: 68px;
+    }
+    body { background-image: url('/assets/backgrounds/slots/crimson_fang_bg.webp'); background-size: cover; background-position: center; background-attachment: fixed; }
+  </style>
+</head>
+<body>
+
+  <!-- Symbol SVG Definitions (fallback for missing HD assets) -->
+  <div style="display:none">
+  <svg id="svg_s1_coffin" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" style="display:none">
+    <defs><linearGradient id="sg860" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#69f0ae"/><stop offset="100%" stop-color="#1b5e20"/>
+    </linearGradient></defs>
+    <rect width="100" height="100" rx="10" fill="#0d0d1a"/>
+    <path d="M50,5 L90,20 L90,65 L50,95 L10,65 L10,20 Z" fill="url(#sg860)" stroke="#69f0ae" stroke-width="1.5"/>
+    
+    <text x="50" y="56" text-anchor="middle" font-family="Arial,sans-serif" font-weight="700" font-size="11" fill="white">COFFIN</text>
+  </svg>
+  <svg id="svg_s2_blood_vial" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" style="display:none">
+    <defs><linearGradient id="sg861" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#69f0ae"/><stop offset="100%" stop-color="#1b5e20"/>
+    </linearGradient></defs>
+    <rect width="100" height="100" rx="10" fill="#0d0d1a"/>
+    <polygon points="50,8 61,38 95,38 67,58 78,90 50,70 22,90 33,58 5,38 39,38" fill="url(#sg861)" stroke="#69f0ae" stroke-width="1"/>
+    
+    <text x="50" y="56" text-anchor="middle" font-family="Arial,sans-serif" font-weight="700" font-size="11" fill="white">BLOOD </text>
+  </svg>
+  <svg id="svg_s3_bat_swarm" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" style="display:none">
+    <defs><linearGradient id="sg862" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#69f0ae"/><stop offset="100%" stop-color="#1b5e20"/>
+    </linearGradient></defs>
+    <rect width="100" height="100" rx="10" fill="#0d0d1a"/>
+    <polygon points="50,8 61,38 95,38 67,58 78,90 50,70 22,90 33,58 5,38 39,38" fill="url(#sg862)" stroke="#69f0ae" stroke-width="1"/>
+    
+    <text x="50" y="56" text-anchor="middle" font-family="Arial,sans-serif" font-weight="700" font-size="11" fill="white">BAT SW</text>
+  </svg>
+  <svg id="svg_s4_castle" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" style="display:none">
+    <defs><linearGradient id="sg863" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#69f0ae"/><stop offset="100%" stop-color="#1b5e20"/>
+    </linearGradient></defs>
+    <rect width="100" height="100" rx="10" fill="#0d0d1a"/>
+    <path d="M50,5 L90,20 L90,65 L50,95 L10,65 L10,20 Z" fill="url(#sg863)" stroke="#69f0ae" stroke-width="1.5"/>
+    
+    <text x="50" y="56" text-anchor="middle" font-family="Arial,sans-serif" font-weight="700" font-size="11" fill="white">CASTLE</text>
+  </svg>
+  <svg id="svg_s5_crimson_eye" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" style="display:none">
+    <defs><linearGradient id="sg864" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#69f0ae"/><stop offset="100%" stop-color="#1b5e20"/>
+    </linearGradient></defs>
+    <rect width="100" height="100" rx="10" fill="#0d0d1a"/>
+    <path d="M50,5 L90,20 L90,65 L50,95 L10,65 L10,20 Z" fill="url(#sg864)" stroke="#69f0ae" stroke-width="1.5"/>
+    
+    <text x="50" y="56" text-anchor="middle" font-family="Arial,sans-serif" font-weight="700" font-size="11" fill="white">CRIMSO</text>
+  </svg>
+  <svg id="svg_wild_vampire" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" style="display:none">
+    <defs><linearGradient id="sg865" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#ffd700"/><stop offset="100%" stop-color="#ff8f00"/>
+    </linearGradient></defs>
+    <rect width="100" height="100" rx="10" fill="#2a1a00"/>
+    <ellipse cx="50" cy="50" rx="42" ry="35" fill="url(#sg865)" stroke="#ffd700" stroke-width="1.5"/>
+    <text x="50" y="28" text-anchor="middle" font-size="10" font-weight="900" fill="#ffd700">WILD</text>
+    <text x="50" y="62" text-anchor="middle" font-family="Arial,sans-serif" font-weight="700" font-size="11" fill="white">VAMPIRE</text>
+  </svg>
+  </div>
+
+  <!-- Top Bar -->
+  <div class="game-topbar">
+    <button class="back-btn" id="backBtn">&#8592; Lobby</button>
+    <div class="game-title">Crimson Fang</div>
+    <div class="studio-badge">
+      <span>Shadow Works</span>
+    </div>
+  </div>
+
+  <!-- Balance Bar -->
+  <div class="balance-bar">
+    <div class="balance-item"><div class="label">Balance</div><div class="value" id="balanceValue">$1,000.00</div></div>
+    <div class="balance-item"><div class="label">Bet</div><div class="value" id="betValue">$1.00</div></div>
+    <div class="balance-item"><div class="label">Win</div><div class="value" id="winValue">$0.00</div></div>
+  </div>
+
+  <!-- Game Area -->
+  <div class="game-area">
+    <div class="free-spins-banner" id="freeSpinsBanner">FREE SPINS</div>
+    <div class="reels-frame">
+      <div class="reels-grid" id="reelsGrid"></div>
+    </div>
+    <div class="mechanic-overlay" id="mechanicOverlay">
+      <div><div class="mechanic-text"></div><div class="mechanic-sub"></div></div>
+    </div>
+  </div>
+
+  <!-- Controls -->
+  <div class="controls-bar">
+    <button class="autoplay-btn" id="autoplayBtn">Auto</button>
+    <div class="bet-control">
+      <button id="betDown">-</button>
+      <div class="bet-display" id="betDisplay">$1.00</div>
+      <button id="betUp">+</button>
+    </div>
+    <button class="spin-btn" id="spinBtn">SPIN</button>
+    <button class="maxbet-btn" id="maxBet">MAX</button>
+  </div>
+
+  <!-- Info Bar -->
+  <div class="info-bar">
+    <span>RTP: 90.6%</span>
+    <span>PAYLINE | 5x4</span>
+    <span>HIGH</span>
+  </div>
+
+  <!-- Scripts -->
+  <script src="../../js/casino-engine.js?v=3.1.0"></script>
+  <script>
+    window.GAME_CONFIG = {
+  "id": "crimson_fang",
+  "name": "Crimson Fang",
+  "provider": "shadow-works",
+  "studioId": "shadow-works",
+  "symbols": [
+    "s1_coffin",
+    "s2_blood_vial",
+    "s3_bat_swarm",
+    "s4_castle",
+    "s5_crimson_eye",
+    "wild_vampire"
+  ],
+  "gridCols": 5,
+  "gridRows": 4,
+  "winType": "payline",
+  "wildSymbol": "wild_vampire",
+  "scatterSymbol": "s5_crimson_eye",
+  "rtp": 90.6,
+  "volatility": "high",
+  "bonusType": "sticky_wilds",
+  "freeSpinsCount": 10,
+  "freeSpinsTrigger": 3,
+  "clusterMin": 5,
+  "minBet": 0.2,
+  "maxBet": 3000
+};
+    window.GAME_MECHANIC = {
+            _gameIdx: 86,
+            _stuckPositions: [],
+            _stickyDuration: 3,
+            onResult: function(grid, cfg, st, baseWin) {
+                // Track wild positions
+                for (var c = 0; c < grid.length; c++) for (var r = 0; r < grid[c].length; r++) {
+                    if (window.CasinoEngine.isWild(grid[c][r], cfg)) {
+                        var exists = this._stuckPositions.some(function(p) { return p.c === c && p.r === r; });
+                        if (!exists) this._stuckPositions.push({ c: c, r: r, life: this._stickyDuration });
+                    }
+                }
+                // Apply sticky wilds to grid
+                var extraWin = 0;
+                this._stuckPositions.forEach(function(p) {
+                    if (grid[p.c]) grid[p.c][p.r] = cfg.wildSymbol;
+                    window.GameRuntime.highlightCell(p.c, p.r, 'wild-glow');
+                    p.life--;
+                });
+                this._stuckPositions = this._stuckPositions.filter(function(p) { return p.life > 0; });
+                if (this._stuckPositions.length > 0) {
+                    return { message: this._stuckPositions.length + ' STICKY WILDS!', sub: '' };
+                }
+                return null;
+            }
+        };
+  </script>
+  <script src="../_shared/game-runtime.js"></script>
+</body>
+</html>

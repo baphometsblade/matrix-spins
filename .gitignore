@@ -1,0 +1,56 @@
+# Dependencies
+node_modules/
+__pycache__/
+*.pyc
+*.pyo
+
+# Environment & secrets
+.env
+.env.*
+.env.local
+.env.production
+.env.development
+
+# Database
+*.db
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+generate_sdxl_log.txt
+generation_log.txt
+
+# Temp/build artifacts
+_*.bat
+_*.js
+_*_log.txt
+nul
+output/
+test-results/
+screenshots/
+
+# IDE & tool config
+.claude/settings.local.json
+.serena/
+.playwright-mcp/
+
+# Dev screenshots at root
+/*.png
+
+# Large generated assets
+assets/gui/
+assets/ui/
+assets/game_symbols_animated/
+
+# HD assets: track PNGs and WebPs for game symbols + thumbnails
+# Exclude gradient SVGs (replaced by HD images)
+assets/game_symbols/**/*.svg
+assets/backgrounds/**/*.svg
+
+# Background PNGs are too large (~191MB); only keep WebP
+assets/backgrounds/**/*.png
+assets/backgrounds/**/*_portrait*
+
+# Build output (generated at deploy time)
+dist/

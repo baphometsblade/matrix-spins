@@ -1,0 +1,436 @@
+/* ═══════════════════════════════════════════════════════════════════
+   STUDIO CHROME — Per-provider visual identity system
+   8 fictional studios × unique fonts, palettes, chrome frames
+   Spec §7 compliant
+   ═══════════════════════════════════════════════════════════════════ */
+
+/* ── Font imports (lazy-loaded by provider-chrome.js) ─────────────── */
+/* Fonts: Playfair Display, Orbitron, Cinzel Decorative, Oswald,
+          Share Tech Mono, Press Start 2P, Rajdhani, Space Mono,
+          Quicksand, Noto Serif, Lora */
+
+/* ═══════════════════════════════════════════════════════════════════
+   1. NOVAPLAY STUDIOS
+   Theme: Futuristic / cosmic
+   Fonts: Orbitron (headings) + Space Mono (body)
+   Palette: #00e5ff cyan, #7c4dff purple, #0a0e27 dark
+   ═══════════════════════════════════════════════════════════════════ */
+[data-studio="nebula-gaming"] {
+    --studio-primary: #00e5ff;
+    --studio-secondary: #7c4dff;
+    --studio-bg: #0a0e27;
+    --studio-surface: #141830;
+    --studio-text: #c8d6e5;
+    --studio-heading-font: 'Orbitron', sans-serif;
+    --studio-body-font: 'Space Mono', monospace;
+    --studio-glow: 0 0 20px rgba(0,229,255,0.3);
+    --studio-border: 1px solid rgba(0,229,255,0.25);
+}
+[data-studio="nebula-gaming"] .studio-badge {
+    background: linear-gradient(135deg, #00e5ff, #7c4dff);
+    font-family: 'Orbitron', sans-serif;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+}
+[data-studio="nebula-gaming"] .studio-frame {
+    border-image: linear-gradient(135deg, #00e5ff44, #7c4dff44) 1;
+    box-shadow: inset 0 0 30px rgba(0,229,255,0.08), 0 0 20px rgba(124,77,255,0.1);
+}
+[data-studio="nebula-gaming"] .studio-frame::before,
+[data-studio="nebula-gaming"] .studio-frame::after {
+    content: '';
+    position: absolute;
+    width: 24px;
+    height: 24px;
+    border-color: #00e5ff;
+    border-style: solid;
+}
+[data-studio="nebula-gaming"] .studio-frame::before {
+    top: 8px; left: 8px;
+    border-width: 2px 0 0 2px;
+}
+[data-studio="nebula-gaming"] .studio-frame::after {
+    bottom: 8px; right: 8px;
+    border-width: 0 2px 2px 0;
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   2. GOLDENEDGE GAMING
+   Theme: Luxury / gold
+   Fonts: Playfair Display (headings) + Lora (body)
+   Palette: #ffd700 gold, #b8860b dark gold, #1a0f00 dark
+   ═══════════════════════════════════════════════════════════════════ */
+[data-studio="golden-reels"] {
+    --studio-primary: #ffd700;
+    --studio-secondary: #b8860b;
+    --studio-bg: #1a0f00;
+    --studio-surface: #2a1a08;
+    --studio-text: #d4c5a9;
+    --studio-heading-font: 'Playfair Display', serif;
+    --studio-body-font: 'Lora', serif;
+    --studio-glow: 0 0 20px rgba(255,215,0,0.25);
+    --studio-border: 1px solid rgba(255,215,0,0.3);
+}
+[data-studio="golden-reels"] .studio-badge {
+    background: linear-gradient(135deg, #ffd700, #b8860b);
+    color: #1a0f00;
+    font-family: 'Playfair Display', serif;
+    font-weight: 700;
+    letter-spacing: 1px;
+}
+[data-studio="golden-reels"] .studio-frame {
+    border: 2px solid #ffd70033;
+    box-shadow: inset 0 0 40px rgba(255,215,0,0.06), 0 0 15px rgba(184,134,11,0.15);
+}
+[data-studio="golden-reels"] .studio-frame::before {
+    content: '';
+    position: absolute;
+    top: 4px; left: 4px; right: 4px; bottom: 4px;
+    border: 1px solid #ffd70018;
+    pointer-events: none;
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   3. CELESTIAL PLAYS
+   Theme: Mystical / ethereal
+   Fonts: Cinzel Decorative (headings) + Quicksand (body)
+   Palette: #e040fb magenta, #7c4dff violet, #0d0221 dark
+   ═══════════════════════════════════════════════════════════════════ */
+[data-studio="mythic-forge"] {
+    --studio-primary: #e040fb;
+    --studio-secondary: #7c4dff;
+    --studio-bg: #0d0221;
+    --studio-surface: #1a0a30;
+    --studio-text: #c8b8e8;
+    --studio-heading-font: 'Cinzel Decorative', serif;
+    --studio-body-font: 'Quicksand', sans-serif;
+    --studio-glow: 0 0 20px rgba(224,64,251,0.3);
+    --studio-border: 1px solid rgba(224,64,251,0.2);
+}
+[data-studio="mythic-forge"] .studio-badge {
+    background: linear-gradient(135deg, #e040fb, #7c4dff);
+    font-family: 'Cinzel Decorative', serif;
+    letter-spacing: 1.5px;
+}
+[data-studio="mythic-forge"] .studio-frame {
+    border: 1px solid #e040fb22;
+    box-shadow: inset 0 0 50px rgba(224,64,251,0.06), 0 0 25px rgba(124,77,255,0.1);
+    border-radius: 4px;
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   4. IRONREEL ENTERTAINMENT
+   Theme: Industrial / steampunk
+   Fonts: Oswald (headings) + Rajdhani (body)
+   Palette: #ff6d00 orange, #8d6e63 bronze, #1a1209 dark
+   ═══════════════════════════════════════════════════════════════════ */
+[data-studio="ironclad"] {
+    --studio-primary: #ff6d00;
+    --studio-secondary: #8d6e63;
+    --studio-bg: #1a1209;
+    --studio-surface: #2a1e12;
+    --studio-text: #c9b99a;
+    --studio-heading-font: 'Oswald', sans-serif;
+    --studio-body-font: 'Rajdhani', sans-serif;
+    --studio-glow: 0 0 15px rgba(255,109,0,0.25);
+    --studio-border: 1px solid rgba(255,109,0,0.25);
+}
+[data-studio="ironclad"] .studio-badge {
+    background: linear-gradient(135deg, #ff6d00, #8d6e63);
+    font-family: 'Oswald', sans-serif;
+    text-transform: uppercase;
+    letter-spacing: 3px;
+}
+[data-studio="ironclad"] .studio-frame {
+    border: 2px solid #ff6d0022;
+    box-shadow: inset 0 0 30px rgba(255,109,0,0.05);
+}
+[data-studio="ironclad"] .studio-frame .bolt-deco {
+    position: absolute;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: radial-gradient(circle, #ff6d00, #8d6e63);
+    box-shadow: 0 0 6px rgba(255,109,0,0.5);
+}
+[data-studio="ironclad"] .studio-frame .bolt-deco.tl { top: 6px; left: 6px; }
+[data-studio="ironclad"] .studio-frame .bolt-deco.tr { top: 6px; right: 6px; }
+[data-studio="ironclad"] .studio-frame .bolt-deco.bl { bottom: 6px; left: 6px; }
+[data-studio="ironclad"] .studio-frame .bolt-deco.br { bottom: 6px; right: 6px; }
+
+/* ═══════════════════════════════════════════════════════════════════
+   5. PHANTOMWORKS
+   Theme: Gothic / dark mystery
+   Fonts: Cinzel (headings) + Noto Serif (body)
+   Palette: #b388ff lavender, #4a148c purple, #0a0012 dark
+   ═══════════════════════════════════════════════════════════════════ */
+[data-studio="shadow-works"] {
+    --studio-primary: #b388ff;
+    --studio-secondary: #4a148c;
+    --studio-bg: #0a0012;
+    --studio-surface: #180028;
+    --studio-text: #c4b0d9;
+    --studio-heading-font: 'Cinzel', serif;
+    --studio-body-font: 'Noto Serif', serif;
+    --studio-glow: 0 0 20px rgba(179,136,255,0.25);
+    --studio-border: 1px solid rgba(179,136,255,0.2);
+}
+[data-studio="shadow-works"] .studio-badge {
+    background: linear-gradient(135deg, #b388ff, #4a148c);
+    font-family: 'Cinzel', serif;
+    letter-spacing: 2px;
+}
+[data-studio="shadow-works"] .studio-frame {
+    border: 1px solid #b388ff1a;
+    box-shadow: inset 0 0 60px rgba(74,20,140,0.15), 0 0 30px rgba(179,136,255,0.08);
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   6. ARCADEFORGE
+   Theme: Retro arcade / pixel
+   Fonts: Press Start 2P (headings) + Share Tech Mono (body)
+   Palette: #76ff03 neon green, #00e676 green, #0a1a00 dark
+   ═══════════════════════════════════════════════════════════════════ */
+[data-studio="wild-frontier"] {
+    --studio-primary: #76ff03;
+    --studio-secondary: #00e676;
+    --studio-bg: #0a1a00;
+    --studio-surface: #142800;
+    --studio-text: #b0d890;
+    --studio-heading-font: 'Press Start 2P', monospace;
+    --studio-body-font: 'Share Tech Mono', monospace;
+    --studio-glow: 0 0 20px rgba(118,255,3,0.3);
+    --studio-border: 1px solid rgba(118,255,3,0.2);
+}
+[data-studio="wild-frontier"] .studio-badge {
+    background: #76ff03;
+    color: #0a1a00;
+    font-family: 'Press Start 2P', monospace;
+    font-size: 8px;
+    letter-spacing: 1px;
+    padding: 4px 8px;
+}
+[data-studio="wild-frontier"] .studio-frame {
+    border: 2px solid #76ff0333;
+    image-rendering: pixelated;
+    box-shadow: inset 0 0 20px rgba(118,255,3,0.06),
+                0 0 1px #76ff03, 0 0 4px #76ff0344;
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   7. THUNDERBOLT GAMES
+   Theme: Electric / storm
+   Fonts: Rajdhani (headings) + Oswald (body)
+   Palette: #ffea00 yellow, #ff6d00 orange, #1a1400 dark
+   ═══════════════════════════════════════════════════════════════════ */
+[data-studio="cascade-labs"] {
+    --studio-primary: #ffea00;
+    --studio-secondary: #ff6d00;
+    --studio-bg: #1a1400;
+    --studio-surface: #2a2000;
+    --studio-text: #d4c890;
+    --studio-heading-font: 'Rajdhani', sans-serif;
+    --studio-body-font: 'Oswald', sans-serif;
+    --studio-glow: 0 0 20px rgba(255,234,0,0.3);
+    --studio-border: 1px solid rgba(255,234,0,0.25);
+}
+[data-studio="cascade-labs"] .studio-badge {
+    background: linear-gradient(135deg, #ffea00, #ff6d00);
+    color: #1a1400;
+    font-family: 'Rajdhani', sans-serif;
+    font-weight: 700;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+}
+[data-studio="cascade-labs"] .studio-frame {
+    border: 2px solid #ffea0022;
+    box-shadow: inset 0 0 30px rgba(255,234,0,0.05);
+}
+[data-studio="cascade-labs"] .studio-frame::before {
+    content: '⚡';
+    position: absolute;
+    top: 8px;
+    right: 12px;
+    font-size: 16px;
+    opacity: 0.4;
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   8. VORTEXSPIN
+   Theme: Hypnotic / abstract
+   Fonts: Quicksand (headings) + Share Tech Mono (body)
+   Palette: #00bcd4 teal, #ff4081 pink, #001518 dark
+   ═══════════════════════════════════════════════════════════════════ */
+[data-studio="dragon-pearl"] {
+    --studio-primary: #00bcd4;
+    --studio-secondary: #ff4081;
+    --studio-bg: #001518;
+    --studio-surface: #002228;
+    --studio-text: #a0d4dc;
+    --studio-heading-font: 'Quicksand', sans-serif;
+    --studio-body-font: 'Share Tech Mono', monospace;
+    --studio-glow: 0 0 20px rgba(0,188,212,0.3);
+    --studio-border: 1px solid rgba(0,188,212,0.25);
+}
+[data-studio="dragon-pearl"] .studio-badge {
+    background: linear-gradient(135deg, #00bcd4, #ff4081);
+    font-family: 'Quicksand', sans-serif;
+    font-weight: 700;
+    letter-spacing: 1px;
+}
+[data-studio="dragon-pearl"] .studio-frame {
+    border: 1px solid #00bcd422;
+    box-shadow: inset 0 0 40px rgba(0,188,212,0.06), 0 0 20px rgba(255,64,129,0.08);
+    border-radius: 8px;
+}
+
+
+/* ═══════════════════════════════════════════════════════════════════
+   SHARED STUDIO CHROME COMPONENTS
+   ═══════════════════════════════════════════════════════════════════ */
+
+.studio-frame {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    z-index: 5;
+    transition: border-color 0.3s, box-shadow 0.3s;
+}
+
+.studio-badge {
+    position: absolute;
+    top: 12px;
+    left: 12px;
+    z-index: 10;
+    color: #fff;
+    font-size: 10px;
+    font-weight: 700;
+    padding: 4px 10px;
+    border-radius: 4px;
+    pointer-events: none;
+    text-shadow: 0 1px 2px rgba(0,0,0,0.5);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+}
+
+.studio-watermark {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 120px;
+    font-weight: 900;
+    opacity: 0.03;
+    pointer-events: none;
+    z-index: 1;
+    font-family: var(--studio-heading-font, sans-serif);
+    color: var(--studio-primary, #fff);
+    user-select: none;
+}
+
+/* ── Game page layout ─────────────────────────────────────────────── */
+.game-page {
+    min-height: 100vh;
+    background: var(--studio-bg, #0a0a1a);
+    color: var(--studio-text, #d0d0d0);
+    font-family: var(--studio-body-font, 'Inter', sans-serif);
+}
+
+.game-page h1,
+.game-page h2,
+.game-page h3 {
+    font-family: var(--studio-heading-font, 'Inter', sans-serif);
+    color: var(--studio-primary, #00ff41);
+}
+
+.game-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 24px;
+    background: var(--studio-surface, #0a1a0a);
+    border-bottom: var(--studio-border, 1px solid rgba(0,255,65,0.15));
+}
+.game-header-left {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+.game-header .back-btn {
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.1);
+    color: var(--studio-primary, #fff);
+    border-radius: 8px;
+    padding: 8px 16px;
+    cursor: pointer;
+    font-family: inherit;
+    font-size: 14px;
+    text-decoration: none;
+    transition: background 0.2s;
+}
+.game-header .back-btn:hover {
+    background: rgba(255,255,255,0.1);
+}
+.game-header h1 {
+    font-size: 20px;
+    margin: 0;
+}
+.game-header .provider-tag {
+    font-size: 11px;
+    opacity: 0.6;
+    font-family: var(--studio-body-font, sans-serif);
+}
+
+/* ── Game viewport (where the slot renders) ───────────────────────── */
+.game-viewport {
+    position: relative;
+    width: 100%;
+    max-width: 1000px;
+    margin: 24px auto;
+    aspect-ratio: 16/10;
+    background: var(--studio-surface, #111);
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: var(--studio-glow, none);
+}
+
+/* ── Game info panel ──────────────────────────────────────────────── */
+.game-info-panel {
+    max-width: 1000px;
+    margin: 0 auto 40px;
+    padding: 24px;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 16px;
+}
+.game-info-card {
+    background: var(--studio-surface, #111);
+    border: var(--studio-border, 1px solid rgba(255,255,255,0.08));
+    border-radius: 10px;
+    padding: 16px;
+}
+.game-info-card .label {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    opacity: 0.5;
+    margin-bottom: 6px;
+    font-family: var(--studio-body-font, sans-serif);
+}
+.game-info-card .value {
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--studio-primary, #fff);
+    font-family: var(--studio-heading-font, sans-serif);
+}
+
+/* ── Footer ───────────────────────────────────────────────────────── */
+.game-footer {
+    text-align: center;
+    padding: 24px;
+    font-size: 12px;
+    opacity: 0.5;
+    border-top: var(--studio-border, 1px solid rgba(255,255,255,0.08));
+}
+.game-footer a {
+    color: var(--studio-primary, #00ff41);
+}

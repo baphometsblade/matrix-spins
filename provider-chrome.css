@@ -1,0 +1,1243 @@
+/* ═══════════════════════════════════════════════════════════════════
+   PROVIDER CHROME — Distinct visual identity per provider brand
+   Each provider gets unique: frame, spin button, control panel,
+   reel presentation, logo treatment, and ambient effects
+   ═══════════════════════════════════════════════════════════════════ */
+
+/* ─────────────────────────────────────────────────────────────────
+   BASE: Provider chrome layer (injected around .slot-machine)
+   ───────────────────────────────────────────────────────────────── */
+
+.provider-chrome-frame {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    z-index: 1;
+    border-radius: 16px;
+    transition: all 0.6s cubic-bezier(0.23, 1, 0.32, 1);
+}
+
+/* Provider logo badge in slot view */
+.provider-logo-badge {
+    position: absolute;
+    top: 8px;
+    left: 12px;
+    z-index: 50;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    padding: 4px 10px;
+    border-radius: 4px;
+    opacity: 0.7;
+    transition: opacity 0.3s;
+    pointer-events: none;
+}
+.provider-logo-badge:hover { opacity: 1; }
+
+/* Provider watermark behind reels */
+.provider-watermark {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 120px;
+    font-weight: 900;
+    letter-spacing: 8px;
+    text-transform: uppercase;
+    opacity: 0.018;
+    pointer-events: none;
+    z-index: 0;
+    white-space: nowrap;
+    user-select: none;
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   NOVASPIN STUDIOS — Sci-fi, electric cyan, sleek futuristic
+   ═══════════════════════════════════════════════════════════════════ */
+
+.slot-chrome-novaspin {
+    border: 2px solid rgba(0, 229, 255, 0.5);
+    border-radius: 12px;
+    box-shadow:
+        0 0 20px rgba(0, 229, 255, 0.15),
+        inset 0 0 30px rgba(0, 229, 255, 0.05);
+}
+
+.slot-chrome-novaspin .provider-chrome-frame {
+    border: 1px solid rgba(0, 229, 255, 0.2);
+    border-radius: 12px;
+    background: linear-gradient(180deg, rgba(0, 229, 255, 0.08) 0%, transparent 30%, transparent 70%, rgba(0, 229, 255, 0.08) 100%);
+}
+
+.slot-chrome-novaspin .provider-chrome-frame::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, #00e5ff, transparent);
+    animation: novaspin-scanline 3s linear infinite;
+}
+
+.slot-chrome-novaspin .provider-chrome-frame::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(0, 229, 255, 0.5), transparent);
+}
+
+@keyframes novaspin-scanline {
+    0% { transform: translateY(0); opacity: 1; }
+    50% { opacity: 0.3; }
+    100% { transform: translateY(calc(100vh - 4px)); opacity: 0; }
+}
+
+.slot-chrome-novaspin .provider-logo-badge {
+    background: rgba(0, 229, 255, 0.15);
+    color: #00e5ff;
+    border: 1px solid rgba(0, 229, 255, 0.3);
+    font-family: 'Orbitron', 'Rajdhani', monospace;
+}
+
+.slot-chrome-novaspin .provider-watermark { color: #00e5ff; }
+
+/* NovaSpin reel area — dark void with cyan grid lines */
+.modal.slot-chrome-novaspin .slot-reel-area {
+    border: 1px solid rgba(0, 229, 255, 0.25);
+    border-radius: 8px;
+    background-image:
+        linear-gradient(rgba(0, 229, 255, 0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0, 229, 255, 0.03) 1px, transparent 1px);
+    background-size: 60px 60px;
+}
+
+/* NovaSpin spin button — glowing cyan ring */
+.modal.slot-chrome-novaspin #spinBtn,
+.slot-chrome-novaspin .slot-spin-btn {
+    border: 2px solid #00e5ff !important;
+    box-shadow: 0 0 15px rgba(0, 229, 255, 0.4), inset 0 0 10px rgba(0, 229, 255, 0.1) !important;
+    text-shadow: 0 0 8px rgba(0, 229, 255, 0.6);
+}
+
+/* NovaSpin controls panel — sleek dark with cyan accents */
+.modal.slot-chrome-novaspin .slot-bottom-bar,
+.modal.slot-chrome-novaspin .bet-slider-wrap {
+    border-top: 1px solid rgba(0, 229, 255, 0.2);
+    background: linear-gradient(180deg, rgba(0, 229, 255, 0.03), transparent) !important;
+}
+
+/* NovaSpin corner decorations */
+.slot-chrome-novaspin .provider-chrome-frame .corner-deco {
+    position: absolute;
+    width: 24px;
+    height: 24px;
+    border-color: rgba(0, 229, 255, 0.6);
+}
+.slot-chrome-novaspin .provider-chrome-frame .corner-deco.tl { top: 4px; left: 4px; border-top: 2px solid; border-left: 2px solid; }
+.slot-chrome-novaspin .provider-chrome-frame .corner-deco.tr { top: 4px; right: 4px; border-top: 2px solid; border-right: 2px solid; }
+.slot-chrome-novaspin .provider-chrome-frame .corner-deco.bl { bottom: 4px; left: 4px; border-bottom: 2px solid; border-left: 2px solid; }
+.slot-chrome-novaspin .provider-chrome-frame .corner-deco.br { bottom: 4px; right: 4px; border-bottom: 2px solid; border-right: 2px solid; }
+
+
+/* ═══════════════════════════════════════════════════════════════════
+   CELESTIAL PLAYS — Greek mythology, gold columns, imperial azure
+   ═══════════════════════════════════════════════════════════════════ */
+
+.slot-chrome-mythic-forge {
+    border: 3px solid rgba(255, 215, 0, 0.4);
+    border-radius: 16px;
+    box-shadow:
+        0 0 25px rgba(255, 215, 0, 0.12),
+        inset 0 0 20px rgba(255, 215, 0, 0.04);
+}
+
+.slot-chrome-mythic-forge .provider-chrome-frame {
+    border: 1px solid rgba(255, 215, 0, 0.15);
+    border-radius: 16px;
+    background: linear-gradient(180deg, rgba(255, 215, 0, 0.06) 0%, transparent 20%, transparent 80%, rgba(255, 215, 0, 0.06) 100%);
+}
+
+/* Celestial — ornate Greek key pattern top border */
+.slot-chrome-mythic-forge .provider-chrome-frame::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 20px;
+    right: 20px;
+    height: 4px;
+    background: repeating-linear-gradient(
+        90deg,
+        #ffd700 0px, #ffd700 8px,
+        transparent 8px, transparent 12px,
+        #ffd700 12px, #ffd700 14px,
+        transparent 14px, transparent 18px
+    );
+    opacity: 0.4;
+}
+
+/* Celestial — column pillars on sides */
+.slot-chrome-mythic-forge .provider-chrome-frame::after {
+    content: '';
+    position: absolute;
+    top: 20px;
+    bottom: 20px;
+    left: 0;
+    width: 6px;
+    background: linear-gradient(180deg, #ffd700 0%, rgba(255, 215, 0, 0.3) 50%, #ffd700 100%);
+    opacity: 0.2;
+    border-radius: 3px;
+    box-shadow: calc(100% - 6px) 0 0 0 rgba(255, 215, 0, 0.2);
+}
+
+.slot-chrome-mythic-forge .provider-logo-badge {
+    background: linear-gradient(135deg, rgba(255, 215, 0, 0.2), rgba(255, 143, 0, 0.15));
+    color: #ffd700;
+    border: 1px solid rgba(255, 215, 0, 0.35);
+    font-family: 'Cinzel', 'Playfair Display', serif;
+}
+
+.slot-chrome-mythic-forge .provider-watermark { color: #ffd700; }
+
+.modal.slot-chrome-mythic-forge .slot-reel-area {
+    border: 2px solid rgba(255, 215, 0, 0.2);
+    border-radius: 10px;
+    box-shadow: inset 0 0 40px rgba(13, 27, 62, 0.5);
+}
+
+.modal.slot-chrome-mythic-forge #spinBtn,
+.slot-chrome-mythic-forge .slot-spin-btn {
+    border: 2px solid #ffd700 !important;
+    box-shadow: 0 0 20px rgba(255, 215, 0, 0.3), inset 0 0 8px rgba(255, 215, 0, 0.1) !important;
+    background: linear-gradient(135deg, rgba(255, 215, 0, 0.2), rgba(255, 143, 0, 0.15)) !important;
+}
+
+.modal.slot-chrome-mythic-forge .slot-bottom-bar,
+.modal.slot-chrome-mythic-forge .bet-slider-wrap {
+    border-top: 2px solid rgba(255, 215, 0, 0.15);
+    background: linear-gradient(180deg, rgba(13, 27, 62, 0.4), rgba(13, 27, 62, 0.6)) !important;
+}
+
+
+/* ═══════════════════════════════════════════════════════════════════
+   IRONREEL ENTERTAINMENT — Earthy, rugged, copper/stone, nature
+   ═══════════════════════════════════════════════════════════════════ */
+
+.slot-chrome-ironclad {
+    border: 3px solid rgba(255, 109, 0, 0.35);
+    border-radius: 10px;
+    box-shadow:
+        0 0 15px rgba(255, 109, 0, 0.08),
+        inset 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.slot-chrome-ironclad .provider-chrome-frame {
+    border-radius: 10px;
+    background:
+        linear-gradient(180deg, rgba(139, 90, 43, 0.1) 0%, transparent 15%, transparent 85%, rgba(139, 90, 43, 0.1) 100%);
+    /* Riveted metal look */
+    border: 1px solid rgba(139, 90, 43, 0.2);
+}
+
+/* IronReel — rivet dots along frame */
+.slot-chrome-ironclad .provider-chrome-frame::before {
+    content: '';
+    position: absolute;
+    top: 8px;
+    left: 8px;
+    right: 8px;
+    bottom: 8px;
+    border: 1px dashed rgba(255, 171, 0, 0.15);
+    border-radius: 8px;
+    pointer-events: none;
+}
+
+.slot-chrome-ironclad .provider-logo-badge {
+    background: rgba(139, 90, 43, 0.3);
+    color: #ffab00;
+    border: 1px solid rgba(255, 171, 0, 0.3);
+    font-family: 'Oswald', 'Impact', sans-serif;
+}
+
+.slot-chrome-ironclad .provider-watermark { color: #ff6d00; }
+
+.modal.slot-chrome-ironclad .slot-reel-area {
+    border: 2px solid rgba(139, 90, 43, 0.3);
+    border-radius: 6px;
+    box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.4), inset 0 -2px 8px rgba(0, 0, 0, 0.2);
+}
+
+.modal.slot-chrome-ironclad #spinBtn,
+.slot-chrome-ironclad .slot-spin-btn {
+    border: 2px solid #ff6d00 !important;
+    box-shadow: 0 4px 12px rgba(255, 109, 0, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.1) !important;
+    background: linear-gradient(180deg, rgba(255, 109, 0, 0.3), rgba(139, 90, 43, 0.4)) !important;
+}
+
+.modal.slot-chrome-ironclad .slot-bottom-bar,
+.modal.slot-chrome-ironclad .bet-slider-wrap {
+    border-top: 2px solid rgba(139, 90, 43, 0.25);
+    background: linear-gradient(180deg, rgba(26, 18, 9, 0.5), rgba(26, 18, 9, 0.7)) !important;
+}
+
+
+/* ═══════════════════════════════════════════════════════════════════
+   GOLDENEDGE GAMING — Candy, pastel, playful pink/amber
+   ═══════════════════════════════════════════════════════════════════ */
+
+.slot-chrome-golden-reels {
+    border: 3px solid rgba(240, 98, 146, 0.4);
+    border-radius: 20px;
+    box-shadow:
+        0 0 30px rgba(240, 98, 146, 0.1),
+        0 0 60px rgba(186, 104, 200, 0.05);
+}
+
+.slot-chrome-golden-reels .provider-chrome-frame {
+    border-radius: 20px;
+    background: linear-gradient(135deg, rgba(240, 98, 146, 0.06), rgba(186, 104, 200, 0.04), rgba(255, 171, 0, 0.06));
+    border: 1px solid rgba(240, 98, 146, 0.15);
+}
+
+/* GoldenEdge — sparkle dots */
+.slot-chrome-golden-reels .provider-chrome-frame::before {
+    content: '✦';
+    position: absolute;
+    top: 10px;
+    right: 14px;
+    font-size: 14px;
+    color: rgba(255, 171, 0, 0.4);
+    animation: golden-reels-twinkle 2s ease-in-out infinite;
+}
+.slot-chrome-golden-reels .provider-chrome-frame::after {
+    content: '✦';
+    position: absolute;
+    bottom: 10px;
+    left: 14px;
+    font-size: 10px;
+    color: rgba(240, 98, 146, 0.4);
+    animation: golden-reels-twinkle 2s ease-in-out infinite 1s;
+}
+
+@keyframes golden-reels-twinkle {
+    0%, 100% { opacity: 0.3; transform: scale(1); }
+    50% { opacity: 0.8; transform: scale(1.3); }
+}
+
+.slot-chrome-golden-reels .provider-logo-badge {
+    background: linear-gradient(135deg, rgba(240, 98, 146, 0.2), rgba(186, 104, 200, 0.15));
+    color: #f06292;
+    border: 1px solid rgba(240, 98, 146, 0.3);
+    font-family: 'Quicksand', 'Nunito', sans-serif;
+    border-radius: 12px;
+}
+
+.slot-chrome-golden-reels .provider-watermark { color: #f06292; }
+
+.modal.slot-chrome-golden-reels .slot-reel-area {
+    border: 2px solid rgba(240, 98, 146, 0.2);
+    border-radius: 14px;
+    box-shadow: inset 0 0 30px rgba(186, 104, 200, 0.08);
+}
+
+.modal.slot-chrome-golden-reels #spinBtn,
+.slot-chrome-golden-reels .slot-spin-btn {
+    border: 2px solid #f06292 !important;
+    border-radius: 50% !important;
+    box-shadow: 0 0 20px rgba(240, 98, 146, 0.3) !important;
+    background: linear-gradient(135deg, rgba(240, 98, 146, 0.3), rgba(186, 104, 200, 0.2)) !important;
+}
+
+.modal.slot-chrome-golden-reels .slot-bottom-bar,
+.modal.slot-chrome-golden-reels .bet-slider-wrap {
+    border-top: 2px solid rgba(240, 98, 146, 0.15);
+    border-radius: 0 0 18px 18px;
+    background: linear-gradient(180deg, rgba(240, 98, 146, 0.04), rgba(186, 104, 200, 0.06)) !important;
+}
+
+
+/* ═══════════════════════════════════════════════════════════════════
+   VAULTX GAMING — Dark steel, heist/western, vault door aesthetic
+   ═══════════════════════════════════════════════════════════════════ */
+
+.slot-chrome-vaultx {
+    border: 2px solid rgba(0, 230, 118, 0.3);
+    border-radius: 6px;
+    box-shadow:
+        0 0 15px rgba(0, 230, 118, 0.08),
+        inset 0 0 2px rgba(0, 0, 0, 0.8);
+}
+
+.slot-chrome-vaultx .provider-chrome-frame {
+    border-radius: 6px;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.02) 0%, transparent 30%, transparent 70%, rgba(0, 0, 0, 0.2) 100%);
+}
+
+/* VaultX — mechanical bolts in corners */
+.slot-chrome-vaultx .provider-chrome-frame .bolt-deco {
+    position: absolute;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(0, 230, 118, 0.3) 30%, rgba(0, 230, 118, 0.1) 60%, transparent 70%);
+    border: 1px solid rgba(0, 230, 118, 0.25);
+}
+.slot-chrome-vaultx .bolt-deco.tl { top: 8px; left: 8px; }
+.slot-chrome-vaultx .bolt-deco.tr { top: 8px; right: 8px; }
+.slot-chrome-vaultx .bolt-deco.bl { bottom: 8px; left: 8px; }
+.slot-chrome-vaultx .bolt-deco.br { bottom: 8px; right: 8px; }
+
+/* VaultX — scanning laser line */
+.slot-chrome-vaultx .provider-chrome-frame::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 50%;
+    right: 0;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(0, 230, 118, 0.3), transparent);
+    animation: vaultx-scan 4s ease-in-out infinite;
+}
+
+@keyframes vaultx-scan {
+    0%, 100% { top: 20%; opacity: 0.3; }
+    50% { top: 80%; opacity: 0.6; }
+}
+
+.slot-chrome-vaultx .provider-logo-badge {
+    background: rgba(0, 230, 118, 0.1);
+    color: #00e676;
+    border: 1px solid rgba(0, 230, 118, 0.25);
+    font-family: 'Share Tech Mono', 'Courier New', monospace;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+}
+
+.slot-chrome-vaultx .provider-watermark { color: #00e676; }
+
+.modal.slot-chrome-vaultx .slot-reel-area {
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 4px;
+    box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.6);
+}
+
+.modal.slot-chrome-vaultx #spinBtn,
+.slot-chrome-vaultx .slot-spin-btn {
+    border: 2px solid #00e676 !important;
+    border-radius: 4px !important;
+    box-shadow: 0 0 12px rgba(0, 230, 118, 0.3), inset 0 0 6px rgba(0, 230, 118, 0.05) !important;
+    background: rgba(0, 230, 118, 0.1) !important;
+}
+
+.modal.slot-chrome-vaultx .slot-bottom-bar,
+.modal.slot-chrome-vaultx .bet-slider-wrap {
+    border-top: 1px solid rgba(0, 230, 118, 0.15);
+    background: linear-gradient(180deg, rgba(10, 10, 10, 0.6), rgba(0, 0, 0, 0.8)) !important;
+}
+
+
+/* ═══════════════════════════════════════════════════════════════════
+   SOLSTICEFX — Imperial red lacquer, gold filigree, eastern dragon
+   ═══════════════════════════════════════════════════════════════════ */
+
+.slot-chrome-solstice {
+    border: 3px solid rgba(255, 23, 68, 0.35);
+    border-radius: 14px;
+    box-shadow:
+        0 0 25px rgba(255, 23, 68, 0.1),
+        0 0 50px rgba(255, 215, 0, 0.05);
+}
+
+.slot-chrome-solstice .provider-chrome-frame {
+    border-radius: 14px;
+    border: 1px solid rgba(255, 215, 0, 0.15);
+    background: linear-gradient(180deg, rgba(255, 23, 68, 0.06) 0%, transparent 25%, transparent 75%, rgba(255, 215, 0, 0.04) 100%);
+}
+
+/* SolsticeFX — ornate gold corners */
+.slot-chrome-solstice .provider-chrome-frame::before {
+    content: '❖';
+    position: absolute;
+    top: 6px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 16px;
+    color: rgba(255, 215, 0, 0.5);
+}
+
+.slot-chrome-solstice .provider-chrome-frame::after {
+    content: '';
+    position: absolute;
+    top: 6px;
+    bottom: 6px;
+    left: 6px;
+    right: 6px;
+    border: 1px solid rgba(255, 215, 0, 0.08);
+    border-radius: 10px;
+}
+
+.slot-chrome-solstice .provider-logo-badge {
+    background: linear-gradient(135deg, rgba(255, 23, 68, 0.2), rgba(255, 215, 0, 0.15));
+    color: #ffd700;
+    border: 1px solid rgba(255, 215, 0, 0.3);
+    font-family: 'Cinzel', 'Playfair Display', serif;
+}
+
+.slot-chrome-solstice .provider-watermark { color: #ff1744; }
+
+.modal.slot-chrome-solstice .slot-reel-area {
+    border: 2px solid rgba(255, 23, 68, 0.2);
+    border-radius: 8px;
+    box-shadow: inset 0 0 30px rgba(26, 10, 0, 0.5);
+}
+
+.modal.slot-chrome-solstice #spinBtn,
+.slot-chrome-solstice .slot-spin-btn {
+    border: 2px solid #ff1744 !important;
+    box-shadow: 0 0 18px rgba(255, 23, 68, 0.3), 0 0 40px rgba(255, 215, 0, 0.1) !important;
+    background: linear-gradient(135deg, rgba(255, 23, 68, 0.25), rgba(255, 215, 0, 0.15)) !important;
+}
+
+.modal.slot-chrome-solstice .slot-bottom-bar,
+.modal.slot-chrome-solstice .bet-slider-wrap {
+    border-top: 2px solid rgba(255, 23, 68, 0.15);
+    background: linear-gradient(180deg, rgba(26, 10, 0, 0.4), rgba(26, 10, 0, 0.6)) !important;
+}
+
+
+/* ═══════════════════════════════════════════════════════════════════
+   PHANTOMWORKS — Gothic purple, blood-red shadow, dark mystery
+   ═══════════════════════════════════════════════════════════════════ */
+
+.slot-chrome-shadow-works {
+    border: 2px solid rgba(170, 0, 255, 0.35);
+    border-radius: 12px;
+    box-shadow:
+        0 0 30px rgba(170, 0, 255, 0.1),
+        0 0 60px rgba(234, 128, 252, 0.03);
+}
+
+.slot-chrome-shadow-works .provider-chrome-frame {
+    border-radius: 12px;
+    border: 1px solid rgba(170, 0, 255, 0.1);
+    background: radial-gradient(ellipse at 50% 0%, rgba(170, 0, 255, 0.06) 0%, transparent 60%);
+}
+
+/* PhantomWorks — mist rising from bottom */
+.slot-chrome-shadow-works .provider-chrome-frame::before {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 80px;
+    background: linear-gradient(180deg, transparent, rgba(170, 0, 255, 0.05));
+    border-radius: 0 0 12px 12px;
+    animation: phantom-mist 6s ease-in-out infinite;
+}
+
+@keyframes phantom-mist {
+    0%, 100% { opacity: 0.4; height: 60px; }
+    50% { opacity: 0.8; height: 100px; }
+}
+
+/* PhantomWorks — blood drip accent */
+.slot-chrome-shadow-works .provider-chrome-frame::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 30%;
+    width: 3px;
+    height: 20px;
+    background: linear-gradient(180deg, rgba(244, 67, 54, 0.5), transparent);
+    border-radius: 0 0 2px 2px;
+}
+
+.slot-chrome-shadow-works .provider-logo-badge {
+    background: rgba(170, 0, 255, 0.15);
+    color: #ea80fc;
+    border: 1px solid rgba(170, 0, 255, 0.25);
+    font-family: 'Cinzel', 'EB Garamond', serif;
+    font-style: italic;
+}
+
+.slot-chrome-shadow-works .provider-watermark { color: #aa00ff; }
+
+.modal.slot-chrome-shadow-works .slot-reel-area {
+    border: 2px solid rgba(170, 0, 255, 0.15);
+    border-radius: 8px;
+    box-shadow: inset 0 0 40px rgba(13, 0, 20, 0.6);
+}
+
+.modal.slot-chrome-shadow-works #spinBtn,
+.slot-chrome-shadow-works .slot-spin-btn {
+    border: 2px solid #aa00ff !important;
+    box-shadow: 0 0 20px rgba(170, 0, 255, 0.3), 0 0 40px rgba(234, 128, 252, 0.1) !important;
+    background: radial-gradient(circle, rgba(170, 0, 255, 0.2), rgba(13, 0, 20, 0.4)) !important;
+}
+
+.modal.slot-chrome-shadow-works .slot-bottom-bar,
+.modal.slot-chrome-shadow-works .bet-slider-wrap {
+    border-top: 1px solid rgba(170, 0, 255, 0.15);
+    background: linear-gradient(180deg, rgba(13, 0, 20, 0.4), rgba(13, 0, 20, 0.7)) !important;
+}
+
+
+/* ═══════════════════════════════════════════════════════════════════
+   ARCADEFORGE — Retro arcade cabinet, chrome ring, neon LED strips
+   ═══════════════════════════════════════════════════════════════════ */
+
+.slot-chrome-wild-frontier {
+    border: 4px solid rgba(255, 64, 129, 0.4);
+    border-radius: 8px;
+    box-shadow:
+        0 0 10px rgba(255, 64, 129, 0.15),
+        0 0 20px rgba(83, 109, 254, 0.08),
+        inset 0 0 3px rgba(0, 0, 0, 0.6);
+}
+
+.slot-chrome-wild-frontier .provider-chrome-frame {
+    border-radius: 8px;
+    border: 2px solid rgba(83, 109, 254, 0.2);
+    background: linear-gradient(180deg, rgba(255, 64, 129, 0.04) 0%, transparent 50%, rgba(83, 109, 254, 0.04) 100%);
+}
+
+/* ArcadeForge — LED strip top */
+.slot-chrome-wild-frontier .provider-chrome-frame::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(90deg,
+        #ff4081, #536dfe, #ffff00, #00e676, #ff4081, #536dfe);
+    background-size: 200% 100%;
+    animation: wild-frontier-led 3s linear infinite;
+}
+
+@keyframes wild-frontier-led {
+    0% { background-position: 0% 0%; }
+    100% { background-position: 200% 0%; }
+}
+
+/* ArcadeForge — LED strip bottom */
+.slot-chrome-wild-frontier .provider-chrome-frame::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(90deg,
+        #536dfe, #ff4081, #00e676, #ffff00, #536dfe, #ff4081);
+    background-size: 200% 100%;
+    animation: wild-frontier-led 3s linear infinite reverse;
+}
+
+.slot-chrome-wild-frontier .provider-logo-badge {
+    background: rgba(255, 64, 129, 0.15);
+    color: #ff4081;
+    border: 1px solid rgba(255, 64, 129, 0.3);
+    font-family: 'Press Start 2P', 'VT323', monospace;
+    font-size: 8px;
+    letter-spacing: 1px;
+}
+
+.slot-chrome-wild-frontier .provider-watermark { color: #ff4081; }
+
+.modal.slot-chrome-wild-frontier .slot-reel-area {
+    border: 3px solid rgba(255, 64, 129, 0.25);
+    border-radius: 4px;
+    box-shadow: inset 0 0 15px rgba(0, 0, 0, 0.5);
+}
+
+.modal.slot-chrome-wild-frontier #spinBtn,
+.slot-chrome-wild-frontier .slot-spin-btn {
+    border: 3px solid #ff4081 !important;
+    border-radius: 6px !important;
+    box-shadow: 0 0 10px rgba(255, 64, 129, 0.4), 0 4px 0 rgba(83, 109, 254, 0.4) !important;
+    background: linear-gradient(180deg, rgba(255, 64, 129, 0.3), rgba(83, 109, 254, 0.2)) !important;
+    text-transform: uppercase;
+}
+
+.modal.slot-chrome-wild-frontier .slot-bottom-bar,
+.modal.slot-chrome-wild-frontier .bet-slider-wrap {
+    border-top: 3px solid rgba(83, 109, 254, 0.2);
+    background: linear-gradient(180deg, rgba(10, 10, 26, 0.5), rgba(10, 10, 26, 0.8)) !important;
+}
+
+
+/* ═══════════════════════════════════════════════════════════════════
+   NEONCORE LABS — Matrix green, circuit board, digital data streams
+   ═══════════════════════════════════════════════════════════════════ */
+
+.slot-chrome-neoncore {
+    border: 1px solid rgba(0, 255, 128, 0.4);
+    border-radius: 4px;
+    box-shadow:
+        0 0 15px rgba(0, 255, 128, 0.1),
+        inset 0 0 2px rgba(0, 255, 128, 0.05);
+}
+
+.slot-chrome-neoncore .provider-chrome-frame {
+    border-radius: 4px;
+    border: 1px solid rgba(0, 255, 128, 0.1);
+    /* Circuit board trace pattern */
+    background-image:
+        linear-gradient(0deg, rgba(0, 255, 128, 0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0, 255, 128, 0.03) 1px, transparent 1px);
+    background-size: 20px 20px;
+}
+
+.slot-chrome-neoncore .provider-chrome-frame::before {
+    content: '> NEONCORE_';
+    position: absolute;
+    top: 6px;
+    right: 10px;
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 9px;
+    color: rgba(0, 255, 128, 0.3);
+    animation: neoncore-blink 1s step-end infinite;
+}
+
+@keyframes neoncore-blink {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0; }
+}
+
+.slot-chrome-neoncore .provider-logo-badge {
+    background: rgba(0, 26, 13, 0.8);
+    color: #00ff80;
+    border: 1px solid rgba(0, 255, 128, 0.3);
+    font-family: 'Share Tech Mono', 'Fira Code', monospace;
+    font-size: 9px;
+}
+
+.slot-chrome-neoncore .provider-watermark { color: #00ff80; }
+
+.modal.slot-chrome-neoncore .slot-reel-area {
+    border: 1px solid rgba(0, 255, 128, 0.2);
+    border-radius: 2px;
+}
+
+.modal.slot-chrome-neoncore #spinBtn,
+.slot-chrome-neoncore .slot-spin-btn {
+    border: 1px solid #00ff80 !important;
+    border-radius: 2px !important;
+    box-shadow: 0 0 10px rgba(0, 255, 128, 0.3) !important;
+    background: rgba(0, 255, 128, 0.08) !important;
+    font-family: monospace !important;
+}
+
+.modal.slot-chrome-neoncore .slot-bottom-bar,
+.modal.slot-chrome-neoncore .bet-slider-wrap {
+    border-top: 1px solid rgba(0, 255, 128, 0.15);
+    background: rgba(0, 26, 13, 0.5) !important;
+}
+
+
+/* ═══════════════════════════════════════════════════════════════════
+   FROSTBYTE GAMING — Icy blue, frozen crystal edges
+   ═══════════════════════════════════════════════════════════════════ */
+
+.slot-chrome-frostbyte {
+    border: 2px solid rgba(140, 210, 255, 0.35);
+    border-radius: 14px;
+    box-shadow:
+        0 0 25px rgba(140, 210, 255, 0.1),
+        0 0 50px rgba(96, 165, 250, 0.05);
+}
+
+.slot-chrome-frostbyte .provider-chrome-frame {
+    border-radius: 14px;
+    border: 1px solid rgba(140, 210, 255, 0.15);
+    background: linear-gradient(180deg, rgba(140, 210, 255, 0.06) 0%, transparent 30%, transparent 70%, rgba(224, 242, 254, 0.04) 100%);
+}
+
+/* FrostByte — ice crystal top edge */
+.slot-chrome-frostbyte .provider-chrome-frame::before {
+    content: '';
+    position: absolute;
+    top: -1px;
+    left: 10%;
+    right: 10%;
+    height: 6px;
+    background: linear-gradient(180deg, rgba(224, 242, 254, 0.3), transparent);
+    clip-path: polygon(0% 100%, 5% 0%, 10% 80%, 15% 20%, 20% 100%, 25% 30%, 30% 90%, 35% 10%, 40% 100%, 45% 40%, 50% 0%, 55% 60%, 60% 100%, 65% 20%, 70% 80%, 75% 0%, 80% 100%, 85% 30%, 90% 70%, 95% 0%, 100% 100%);
+}
+
+.slot-chrome-frostbyte .provider-logo-badge {
+    background: rgba(140, 210, 255, 0.12);
+    color: #8cd2ff;
+    border: 1px solid rgba(140, 210, 255, 0.25);
+    font-family: 'Rajdhani', 'Exo 2', sans-serif;
+}
+
+.slot-chrome-frostbyte .provider-watermark { color: #8cd2ff; }
+
+.modal.slot-chrome-frostbyte .slot-reel-area {
+    border: 2px solid rgba(140, 210, 255, 0.15);
+    border-radius: 10px;
+    box-shadow: inset 0 0 30px rgba(4, 16, 32, 0.5);
+}
+
+.modal.slot-chrome-frostbyte #spinBtn,
+.slot-chrome-frostbyte .slot-spin-btn {
+    border: 2px solid #8cd2ff !important;
+    box-shadow: 0 0 15px rgba(140, 210, 255, 0.3), inset 0 0 8px rgba(224, 242, 254, 0.1) !important;
+    background: linear-gradient(180deg, rgba(140, 210, 255, 0.15), rgba(96, 165, 250, 0.1)) !important;
+}
+
+.modal.slot-chrome-frostbyte .slot-bottom-bar,
+.modal.slot-chrome-frostbyte .bet-slider-wrap {
+    border-top: 1px solid rgba(140, 210, 255, 0.15);
+    background: linear-gradient(180deg, rgba(4, 16, 32, 0.4), rgba(4, 16, 32, 0.7)) !important;
+}
+
+
+/* ═══════════════════════════════════════════════════════════════════
+   DESERTGOLD STUDIOS — Warm sand, golden heat haze
+   ═══════════════════════════════════════════════════════════════════ */
+
+.slot-chrome-desertgold {
+    border: 3px solid rgba(218, 166, 60, 0.35);
+    border-radius: 10px;
+    box-shadow:
+        0 0 20px rgba(218, 166, 60, 0.1),
+        inset 0 2px 6px rgba(0, 0, 0, 0.3);
+}
+
+.slot-chrome-desertgold .provider-chrome-frame {
+    border-radius: 10px;
+    border: 1px solid rgba(218, 166, 60, 0.15);
+    background: linear-gradient(180deg, rgba(218, 166, 60, 0.05) 0%, transparent 40%, rgba(200, 150, 60, 0.03) 100%);
+}
+
+/* DesertGold — heat shimmer effect */
+.slot-chrome-desertgold .provider-chrome-frame::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(180deg, transparent 0%, rgba(218, 166, 60, 0.02) 50%, transparent 100%);
+    animation: desertgold-heat 4s ease-in-out infinite;
+    border-radius: 10px;
+}
+
+@keyframes desertgold-heat {
+    0%, 100% { transform: scaleY(1); }
+    50% { transform: scaleY(1.01); }
+}
+
+.slot-chrome-desertgold .provider-logo-badge {
+    background: rgba(218, 166, 60, 0.15);
+    color: #daa63c;
+    border: 1px solid rgba(218, 166, 60, 0.3);
+    font-family: 'Cinzel', 'Playfair Display', serif;
+}
+
+.slot-chrome-desertgold .provider-watermark { color: #daa63c; }
+
+.modal.slot-chrome-desertgold .slot-reel-area {
+    border: 2px solid rgba(218, 166, 60, 0.2);
+    border-radius: 6px;
+    box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.4);
+}
+
+.modal.slot-chrome-desertgold #spinBtn,
+.slot-chrome-desertgold .slot-spin-btn {
+    border: 2px solid #daa63c !important;
+    box-shadow: 0 4px 12px rgba(218, 166, 60, 0.25) !important;
+    background: linear-gradient(180deg, rgba(218, 166, 60, 0.25), rgba(200, 150, 60, 0.15)) !important;
+}
+
+.modal.slot-chrome-desertgold .slot-bottom-bar,
+.modal.slot-chrome-desertgold .bet-slider-wrap {
+    border-top: 2px solid rgba(218, 166, 60, 0.15);
+    background: linear-gradient(180deg, rgba(26, 15, 0, 0.5), rgba(26, 15, 0, 0.7)) !important;
+}
+
+
+/* ═══════════════════════════════════════════════════════════════════
+   ORIENT REELS — Red lantern, ink brush elegance, bamboo
+   ═══════════════════════════════════════════════════════════════════ */
+
+.slot-chrome-orientreels {
+    border: 3px solid rgba(230, 50, 40, 0.35);
+    border-radius: 12px;
+    box-shadow:
+        0 0 25px rgba(230, 50, 40, 0.1),
+        0 0 50px rgba(251, 191, 36, 0.05);
+}
+
+.slot-chrome-orientreels .provider-chrome-frame {
+    border-radius: 12px;
+    border: 1px solid rgba(230, 50, 40, 0.15);
+    background: linear-gradient(180deg, rgba(230, 50, 40, 0.05) 0%, transparent 30%, transparent 70%, rgba(251, 191, 36, 0.03) 100%);
+}
+
+/* OrientReels — lantern glow top center */
+.slot-chrome-orientreels .provider-chrome-frame::before {
+    content: '◆';
+    position: absolute;
+    top: 6px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 12px;
+    color: rgba(230, 50, 40, 0.5);
+    text-shadow: 0 0 8px rgba(230, 50, 40, 0.3);
+    animation: orient-lantern 3s ease-in-out infinite;
+}
+
+@keyframes orient-lantern {
+    0%, 100% { opacity: 0.4; text-shadow: 0 0 8px rgba(230, 50, 40, 0.2); }
+    50% { opacity: 0.8; text-shadow: 0 0 15px rgba(230, 50, 40, 0.5); }
+}
+
+.slot-chrome-orientreels .provider-logo-badge {
+    background: rgba(230, 50, 40, 0.15);
+    color: #e63228;
+    border: 1px solid rgba(230, 50, 40, 0.3);
+    font-family: 'Noto Serif', 'Playfair Display', serif;
+}
+
+.slot-chrome-orientreels .provider-watermark { color: #e63228; }
+
+.modal.slot-chrome-orientreels .slot-reel-area {
+    border: 2px solid rgba(230, 50, 40, 0.2);
+    border-radius: 8px;
+    box-shadow: inset 0 0 30px rgba(26, 0, 0, 0.5);
+}
+
+.modal.slot-chrome-orientreels #spinBtn,
+.slot-chrome-orientreels .slot-spin-btn {
+    border: 2px solid #e63228 !important;
+    box-shadow: 0 0 18px rgba(230, 50, 40, 0.3), 0 0 40px rgba(251, 191, 36, 0.1) !important;
+    background: linear-gradient(135deg, rgba(230, 50, 40, 0.25), rgba(251, 191, 36, 0.1)) !important;
+}
+
+.modal.slot-chrome-orientreels .slot-bottom-bar,
+.modal.slot-chrome-orientreels .bet-slider-wrap {
+    border-top: 2px solid rgba(230, 50, 40, 0.15);
+    background: linear-gradient(180deg, rgba(26, 0, 0, 0.4), rgba(26, 0, 0, 0.6)) !important;
+}
+
+
+/* ═══════════════════════════════════════════════════════════════════
+   LOBBY GAME CARDS — Provider-specific card treatments
+   ═══════════════════════════════════════════════════════════════════ */
+
+/* Provider badge on game cards */
+.game-card .provider-card-badge,
+.featured-card .provider-card-badge {
+    position: absolute;
+    bottom: 36px;
+    left: 6px;
+    font-size: 8px;
+    font-weight: 600;
+    letter-spacing: 0.8px;
+    text-transform: uppercase;
+    padding: 2px 6px;
+    border-radius: 3px;
+    opacity: 0.8;
+    z-index: 5;
+    pointer-events: none;
+    backdrop-filter: blur(4px);
+}
+
+/* Card border accents per provider */
+.game-card[data-provider="novaspin"],
+.featured-card[data-provider="novaspin"] {
+    border-bottom: 2px solid rgba(0, 229, 255, 0.4);
+}
+.game-card[data-provider="novaspin"] .provider-card-badge,
+.featured-card[data-provider="novaspin"] .provider-card-badge {
+    background: rgba(0, 229, 255, 0.15);
+    color: #00e5ff;
+    border: 1px solid rgba(0, 229, 255, 0.25);
+}
+
+.game-card[data-provider="mythic-forge"],
+.featured-card[data-provider="mythic-forge"] {
+    border-bottom: 2px solid rgba(255, 215, 0, 0.4);
+}
+.game-card[data-provider="mythic-forge"] .provider-card-badge,
+.featured-card[data-provider="mythic-forge"] .provider-card-badge {
+    background: rgba(255, 215, 0, 0.15);
+    color: #ffd700;
+    border: 1px solid rgba(255, 215, 0, 0.25);
+}
+
+.game-card[data-provider="ironclad"],
+.featured-card[data-provider="ironclad"] {
+    border-bottom: 2px solid rgba(255, 109, 0, 0.4);
+}
+.game-card[data-provider="ironclad"] .provider-card-badge,
+.featured-card[data-provider="ironclad"] .provider-card-badge {
+    background: rgba(255, 109, 0, 0.15);
+    color: #ff6d00;
+    border: 1px solid rgba(255, 109, 0, 0.25);
+}
+
+.game-card[data-provider="golden-reels"],
+.featured-card[data-provider="golden-reels"] {
+    border-bottom: 2px solid rgba(240, 98, 146, 0.4);
+}
+.game-card[data-provider="golden-reels"] .provider-card-badge,
+.featured-card[data-provider="golden-reels"] .provider-card-badge {
+    background: rgba(240, 98, 146, 0.15);
+    color: #f06292;
+    border: 1px solid rgba(240, 98, 146, 0.25);
+}
+
+.game-card[data-provider="vaultx"],
+.featured-card[data-provider="vaultx"] {
+    border-bottom: 2px solid rgba(0, 230, 118, 0.4);
+}
+.game-card[data-provider="vaultx"] .provider-card-badge,
+.featured-card[data-provider="vaultx"] .provider-card-badge {
+    background: rgba(0, 230, 118, 0.12);
+    color: #00e676;
+    border: 1px solid rgba(0, 230, 118, 0.25);
+}
+
+.game-card[data-provider="solstice"],
+.featured-card[data-provider="solstice"] {
+    border-bottom: 2px solid rgba(255, 23, 68, 0.4);
+}
+.game-card[data-provider="solstice"] .provider-card-badge,
+.featured-card[data-provider="solstice"] .provider-card-badge {
+    background: rgba(255, 23, 68, 0.15);
+    color: #ff1744;
+    border: 1px solid rgba(255, 23, 68, 0.25);
+}
+
+.game-card[data-provider="shadow-works"],
+.featured-card[data-provider="shadow-works"] {
+    border-bottom: 2px solid rgba(170, 0, 255, 0.4);
+}
+.game-card[data-provider="shadow-works"] .provider-card-badge,
+.featured-card[data-provider="shadow-works"] .provider-card-badge {
+    background: rgba(170, 0, 255, 0.15);
+    color: #ea80fc;
+    border: 1px solid rgba(170, 0, 255, 0.25);
+}
+
+.game-card[data-provider="wild-frontier"],
+.featured-card[data-provider="wild-frontier"] {
+    border-bottom: 2px solid rgba(255, 64, 129, 0.4);
+}
+.game-card[data-provider="wild-frontier"] .provider-card-badge,
+.featured-card[data-provider="wild-frontier"] .provider-card-badge {
+    background: rgba(255, 64, 129, 0.15);
+    color: #ff4081;
+    border: 1px solid rgba(255, 64, 129, 0.25);
+}
+
+.game-card[data-provider="neoncore"],
+.featured-card[data-provider="neoncore"] {
+    border-bottom: 2px solid rgba(0, 255, 128, 0.4);
+}
+.game-card[data-provider="neoncore"] .provider-card-badge,
+.featured-card[data-provider="neoncore"] .provider-card-badge {
+    background: rgba(0, 255, 128, 0.12);
+    color: #00ff80;
+    border: 1px solid rgba(0, 255, 128, 0.25);
+}
+
+.game-card[data-provider="frostbyte"],
+.featured-card[data-provider="frostbyte"] {
+    border-bottom: 2px solid rgba(140, 210, 255, 0.4);
+}
+.game-card[data-provider="frostbyte"] .provider-card-badge,
+.featured-card[data-provider="frostbyte"] .provider-card-badge {
+    background: rgba(140, 210, 255, 0.12);
+    color: #8cd2ff;
+    border: 1px solid rgba(140, 210, 255, 0.25);
+}
+
+.game-card[data-provider="desertgold"],
+.featured-card[data-provider="desertgold"] {
+    border-bottom: 2px solid rgba(218, 166, 60, 0.4);
+}
+.game-card[data-provider="desertgold"] .provider-card-badge,
+.featured-card[data-provider="desertgold"] .provider-card-badge {
+    background: rgba(218, 166, 60, 0.15);
+    color: #daa63c;
+    border: 1px solid rgba(218, 166, 60, 0.25);
+}
+
+.game-card[data-provider="orientreels"],
+.featured-card[data-provider="orientreels"] {
+    border-bottom: 2px solid rgba(230, 50, 40, 0.4);
+}
+.game-card[data-provider="orientreels"] .provider-card-badge,
+.featured-card[data-provider="orientreels"] .provider-card-badge {
+    background: rgba(230, 50, 40, 0.15);
+    color: #e63228;
+    border: 1px solid rgba(230, 50, 40, 0.25);
+}
+
+
+/* ═══════════════════════════════════════════════════════════════════
+   PROVIDER-SPECIFIC WIN DISPLAYS
+   ═══════════════════════════════════════════════════════════════════ */
+
+.slot-chrome-novaspin .last-win-preview { text-shadow: 0 0 20px rgba(0, 229, 255, 0.6); }
+.slot-chrome-mythic-forge .last-win-preview { text-shadow: 0 0 20px rgba(255, 215, 0, 0.6); }
+.slot-chrome-ironclad .last-win-preview { text-shadow: 0 0 20px rgba(255, 109, 0, 0.6); }
+.slot-chrome-golden-reels .last-win-preview { text-shadow: 0 0 20px rgba(240, 98, 146, 0.6); }
+.slot-chrome-vaultx .last-win-preview { text-shadow: 0 0 20px rgba(0, 230, 118, 0.6); }
+.slot-chrome-solstice .last-win-preview { text-shadow: 0 0 20px rgba(255, 23, 68, 0.6); }
+.slot-chrome-shadow-works .last-win-preview { text-shadow: 0 0 20px rgba(170, 0, 255, 0.6); }
+.slot-chrome-wild-frontier .last-win-preview { text-shadow: 0 0 20px rgba(255, 64, 129, 0.6); }
+.slot-chrome-neoncore .last-win-preview { text-shadow: 0 0 20px rgba(0, 255, 128, 0.6); }
+.slot-chrome-frostbyte .last-win-preview { text-shadow: 0 0 20px rgba(140, 210, 255, 0.6); }
+.slot-chrome-desertgold .last-win-preview { text-shadow: 0 0 20px rgba(218, 166, 60, 0.6); }
+.slot-chrome-orientreels .last-win-preview { text-shadow: 0 0 20px rgba(230, 50, 40, 0.6); }
+
+
+/* ═══════════════════════════════════════════════════════════════════
+   GOOGLE FONTS IMPORT (loaded async by JS for performance)
+   ═══════════════════════════════════════════════════════════════════ */
+
+/* Font fallbacks are baked into each provider's badge/text rules above */
+
+
+/* ═══════════════════════════════════════════════════════════════════
+   PROVIDER-SPECIFIC TOP BAR (header with close button & game name)
+   ═══════════════════════════════════════════════════════════════════ */
+
+.modal.slot-chrome-novaspin .slot-top-bar {
+    border-bottom: 1px solid rgba(0, 229, 255, 0.2) !important;
+    background: linear-gradient(180deg, rgba(0, 229, 255, 0.06) 0%, transparent 100%) !important;
+}
+.modal.slot-chrome-mythic-forge .slot-top-bar {
+    border-bottom: 2px solid rgba(255, 215, 0, 0.15) !important;
+    background: linear-gradient(180deg, rgba(255, 215, 0, 0.05) 0%, transparent 100%) !important;
+}
+.modal.slot-chrome-ironclad .slot-top-bar {
+    border-bottom: 2px solid rgba(255, 109, 0, 0.2) !important;
+    background: linear-gradient(180deg, rgba(139, 90, 43, 0.08) 0%, transparent 100%) !important;
+}
+.modal.slot-chrome-golden-reels .slot-top-bar {
+    border-bottom: 2px solid rgba(240, 98, 146, 0.15) !important;
+    background: linear-gradient(135deg, rgba(240, 98, 146, 0.04) 0%, rgba(186, 104, 200, 0.03) 100%) !important;
+}
+.modal.slot-chrome-vaultx .slot-top-bar {
+    border-bottom: 1px solid rgba(0, 230, 118, 0.15) !important;
+    background: linear-gradient(180deg, rgba(0, 230, 118, 0.04) 0%, transparent 100%) !important;
+}
+.modal.slot-chrome-solstice .slot-top-bar {
+    border-bottom: 2px solid rgba(255, 23, 68, 0.15) !important;
+    background: linear-gradient(180deg, rgba(255, 23, 68, 0.05) 0%, transparent 100%) !important;
+}
+.modal.slot-chrome-shadow-works .slot-top-bar {
+    border-bottom: 1px solid rgba(170, 0, 255, 0.15) !important;
+    background: radial-gradient(ellipse at 50% 0%, rgba(170, 0, 255, 0.06) 0%, transparent 70%) !important;
+}
+.modal.slot-chrome-wild-frontier .slot-top-bar {
+    border-bottom: 3px solid rgba(255, 64, 129, 0.25) !important;
+    background: linear-gradient(180deg, rgba(255, 64, 129, 0.04) 0%, rgba(83, 109, 254, 0.03) 100%) !important;
+}
+.modal.slot-chrome-neoncore .slot-top-bar {
+    border-bottom: 1px solid rgba(0, 255, 128, 0.15) !important;
+    background: rgba(0, 26, 13, 0.3) !important;
+}
+.modal.slot-chrome-frostbyte .slot-top-bar {
+    border-bottom: 1px solid rgba(140, 210, 255, 0.15) !important;
+    background: linear-gradient(180deg, rgba(140, 210, 255, 0.05) 0%, transparent 100%) !important;
+}
+.modal.slot-chrome-desertgold .slot-top-bar {
+    border-bottom: 2px solid rgba(218, 166, 60, 0.15) !important;
+    background: linear-gradient(180deg, rgba(218, 166, 60, 0.04) 0%, transparent 100%) !important;
+}
+.modal.slot-chrome-orientreels .slot-top-bar {
+    border-bottom: 2px solid rgba(230, 50, 40, 0.15) !important;
+    background: linear-gradient(180deg, rgba(230, 50, 40, 0.04) 0%, transparent 100%) !important;
+}
+
+
+/* ═══════════════════════════════════════════════════════════════════
+   PROVIDER-SPECIFIC BET PRESET BUTTONS
+   ═══════════════════════════════════════════════════════════════════ */
+
+.modal.slot-chrome-novaspin .bet-preset-btn { border-color: rgba(0, 229, 255, 0.3) !important; }
+.modal.slot-chrome-novaspin .bet-preset-btn:hover { background: rgba(0, 229, 255, 0.15) !important; box-shadow: 0 0 8px rgba(0, 229, 255, 0.3); }
+
+.modal.slot-chrome-mythic-forge .bet-preset-btn { border-color: rgba(255, 215, 0, 0.3) !important; }
+.modal.slot-chrome-mythic-forge .bet-preset-btn:hover { background: rgba(255, 215, 0, 0.15) !important; box-shadow: 0 0 8px rgba(255, 215, 0, 0.3); }
+
+.modal.slot-chrome-ironclad .bet-preset-btn { border-color: rgba(255, 109, 0, 0.3) !important; }
+.modal.slot-chrome-ironclad .bet-preset-btn:hover { background: rgba(255, 109, 0, 0.15) !important; }
+
+.modal.slot-chrome-golden-reels .bet-preset-btn { border-color: rgba(240, 98, 146, 0.3) !important; border-radius: 12px !important; }
+.modal.slot-chrome-golden-reels .bet-preset-btn:hover { background: rgba(240, 98, 146, 0.15) !important; }
+
+.modal.slot-chrome-vaultx .bet-preset-btn { border-color: rgba(0, 230, 118, 0.25) !important; border-radius: 2px !important; }
+.modal.slot-chrome-vaultx .bet-preset-btn:hover { background: rgba(0, 230, 118, 0.12) !important; }
+
+.modal.slot-chrome-solstice .bet-preset-btn { border-color: rgba(255, 23, 68, 0.3) !important; }
+.modal.slot-chrome-solstice .bet-preset-btn:hover { background: rgba(255, 23, 68, 0.15) !important; }
+
+.modal.slot-chrome-shadow-works .bet-preset-btn { border-color: rgba(170, 0, 255, 0.25) !important; }
+.modal.slot-chrome-shadow-works .bet-preset-btn:hover { background: rgba(170, 0, 255, 0.12) !important; }
+
+.modal.slot-chrome-wild-frontier .bet-preset-btn { border-color: rgba(255, 64, 129, 0.3) !important; border-radius: 4px !important; }
+.modal.slot-chrome-wild-frontier .bet-preset-btn:hover { background: rgba(255, 64, 129, 0.15) !important; }
+
+.modal.slot-chrome-neoncore .bet-preset-btn { border-color: rgba(0, 255, 128, 0.25) !important; border-radius: 0 !important; font-family: monospace !important; }
+.modal.slot-chrome-neoncore .bet-preset-btn:hover { background: rgba(0, 255, 128, 0.1) !important; }
+
+.modal.slot-chrome-frostbyte .bet-preset-btn { border-color: rgba(140, 210, 255, 0.25) !important; }
+.modal.slot-chrome-frostbyte .bet-preset-btn:hover { background: rgba(140, 210, 255, 0.12) !important; }
+
+.modal.slot-chrome-desertgold .bet-preset-btn { border-color: rgba(218, 166, 60, 0.3) !important; }
+.modal.slot-chrome-desertgold .bet-preset-btn:hover { background: rgba(218, 166, 60, 0.15) !important; }
+
+.modal.slot-chrome-orientreels .bet-preset-btn { border-color: rgba(230, 50, 40, 0.3) !important; }
+.modal.slot-chrome-orientreels .bet-preset-btn:hover { background: rgba(230, 50, 40, 0.15) !important; }
+
+
+/* ═══════════════════════════════════════════════════════════════════
+   PROVIDER-SPECIFIC CLOSE BUTTON ACCENTS
+   ═══════════════════════════════════════════════════════════════════ */
+
+.modal.slot-chrome-novaspin .slot-close-btn:hover { color: #00e5ff !important; text-shadow: 0 0 8px rgba(0, 229, 255, 0.5); }
+.modal.slot-chrome-mythic-forge .slot-close-btn:hover { color: #ffd700 !important; text-shadow: 0 0 8px rgba(255, 215, 0, 0.5); }
+.modal.slot-chrome-ironclad .slot-close-btn:hover { color: #ff6d00 !important; }
+.modal.slot-chrome-golden-reels .slot-close-btn:hover { color: #f06292 !important; }
+.modal.slot-chrome-vaultx .slot-close-btn:hover { color: #00e676 !important; }
+.modal.slot-chrome-solstice .slot-close-btn:hover { color: #ff1744 !important; }
+.modal.slot-chrome-shadow-works .slot-close-btn:hover { color: #ea80fc !important; }
+.modal.slot-chrome-wild-frontier .slot-close-btn:hover { color: #ff4081 !important; }
+.modal.slot-chrome-neoncore .slot-close-btn:hover { color: #00ff80 !important; }
+.modal.slot-chrome-frostbyte .slot-close-btn:hover { color: #8cd2ff !important; }
+.modal.slot-chrome-desertgold .slot-close-btn:hover { color: #daa63c !important; }
+.modal.slot-chrome-orientreels .slot-close-btn:hover { color: #e63228 !important; }
+
+
+/* ═══════════════════════════════════════════════════════════════════
+   PROVIDER-SPECIFIC AUTOPLAY BUTTON
+   ═══════════════════════════════════════════════════════════════════ */
+
+.modal.slot-chrome-novaspin .autoplay-btn, .modal.slot-chrome-novaspin .autospin-btn { border-color: rgba(0, 229, 255, 0.3) !important; }
+.modal.slot-chrome-mythic-forge .autoplay-btn, .modal.slot-chrome-mythic-forge .autospin-btn { border-color: rgba(255, 215, 0, 0.3) !important; }
+.modal.slot-chrome-ironclad .autoplay-btn, .modal.slot-chrome-ironclad .autospin-btn { border-color: rgba(255, 109, 0, 0.3) !important; }
+.modal.slot-chrome-golden-reels .autoplay-btn, .modal.slot-chrome-golden-reels .autospin-btn { border-color: rgba(240, 98, 146, 0.3) !important; }
+.modal.slot-chrome-vaultx .autoplay-btn, .modal.slot-chrome-vaultx .autospin-btn { border-color: rgba(0, 230, 118, 0.25) !important; }
+.modal.slot-chrome-solstice .autoplay-btn, .modal.slot-chrome-solstice .autospin-btn { border-color: rgba(255, 23, 68, 0.3) !important; }
+.modal.slot-chrome-shadow-works .autoplay-btn, .modal.slot-chrome-shadow-works .autospin-btn { border-color: rgba(170, 0, 255, 0.25) !important; }
+.modal.slot-chrome-wild-frontier .autoplay-btn, .modal.slot-chrome-wild-frontier .autospin-btn { border-color: rgba(255, 64, 129, 0.3) !important; }
+.modal.slot-chrome-neoncore .autoplay-btn, .modal.slot-chrome-neoncore .autospin-btn { border-color: rgba(0, 255, 128, 0.25) !important; }
+.modal.slot-chrome-frostbyte .autoplay-btn, .modal.slot-chrome-frostbyte .autospin-btn { border-color: rgba(140, 210, 255, 0.25) !important; }
+.modal.slot-chrome-desertgold .autoplay-btn, .modal.slot-chrome-desertgold .autospin-btn { border-color: rgba(218, 166, 60, 0.3) !important; }
+.modal.slot-chrome-orientreels .autoplay-btn, .modal.slot-chrome-orientreels .autospin-btn { border-color: rgba(230, 50, 40, 0.3) !important; }

@@ -1,0 +1,1679 @@
+/* ============================================================
+   ROYAL SLOTS CASINO - VISUAL OVERHAUL
+   Comprehensive CSS redesign for premium game presentation
+   ============================================================ */
+
+:root {
+  /* Provider Brand Colors */
+  --color-novaspin-primary: #00d4ff;
+  --color-novaspin-secondary: #0099cc;
+  --color-mythic-forge-primary: #ffd700;
+  --color-mythic-forge-secondary: #ffed4e;
+  --color-ironclad-primary: #d4a574;
+  --color-ironclad-secondary: #8b6914;
+  --color-golden-reels-primary: #ff69b4;
+  --color-golden-reels-secondary: #ff1493;
+  --color-vaultx-primary: #a0a0a0;
+  --color-vaultx-secondary: #ffa500;
+  --color-solstice-primary: #ff4444;
+  --color-solstice-secondary: #ffaa00;
+  --color-shadow-works-primary: #9933ff;
+  --color-shadow-works-secondary: #cc0044;
+  --color-wild-frontier-primary: #00ff00;
+  --color-wild-frontier-secondary: #ff00ff;
+
+  /* Gradient Overlays */
+  --gradient-egyptian: linear-gradient(135deg, rgba(184, 134, 11, 0.15), rgba(218, 165, 32, 0.15));
+  --gradient-ocean: linear-gradient(135deg, rgba(0, 105, 148, 0.15), rgba(30, 144, 255, 0.15));
+  --gradient-norse: linear-gradient(135deg, rgba(47, 79, 147, 0.15), rgba(176, 196, 222, 0.15));
+  --gradient-fire: linear-gradient(135deg, rgba(255, 69, 0, 0.15), rgba(255, 140, 0, 0.15));
+  --gradient-space: linear-gradient(135deg, rgba(25, 25, 112, 0.15), rgba(138, 43, 226, 0.15));
+  --gradient-candy: linear-gradient(135deg, rgba(255, 105, 180, 0.15), rgba(255, 182, 193, 0.15));
+  --gradient-gothic: linear-gradient(135deg, rgba(47, 47, 47, 0.15), rgba(139, 0, 0, 0.15));
+  --gradient-western: linear-gradient(135deg, rgba(139, 90, 43, 0.15), rgba(210, 180, 140, 0.15));
+}
+
+/* ============================================================
+   1. LOBBY GAME CARDS - BASE STYLES
+   ============================================================ */
+
+.game-card {
+  position: relative;
+  overflow: hidden;
+  transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+  perspective: 1000px;
+  transform-style: preserve-3d;
+}
+
+.game-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: radial-gradient(circle at 30% 30%, rgba(255, 255, 255, 0.1), transparent);
+  opacity: 0;
+  transition: opacity 0.4s ease;
+  pointer-events: none;
+  z-index: 2;
+}
+
+.game-card:hover::before {
+  opacity: 1;
+}
+
+/* 3D Tilt effect on hover */
+.game-card:hover {
+  transform: rotateX(5deg) rotateY(-8deg) scale(1.05);
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.4);
+}
+
+/* Inner shadow that moves with tilt */
+.game-card::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  box-shadow: inset 0 0 30px rgba(0, 0, 0, 0.3);
+  opacity: 0;
+  transition: opacity 0.4s ease;
+  pointer-events: none;
+  z-index: 3;
+}
+
+.game-card:hover::after {
+  opacity: 1;
+}
+
+/* ============================================================
+   2. PROVIDER ANIMATED BORDERS - NOVASPIN
+   ============================================================ */
+
+.game-card[data-provider="novaspin"],
+.provider-novaspin {
+  border: 2px solid var(--color-novaspin-primary);
+  box-shadow: inset 0 0 20px rgba(0, 212, 255, 0.1), 0 0 20px rgba(0, 212, 255, 0.2);
+}
+
+.game-card[data-provider="novaspin"]::before,
+.provider-novaspin::before {
+  animation: novaspin-scan 3s linear infinite;
+}
+
+@keyframes novaspin-scan {
+  0% {
+    box-shadow: inset 0 0 0 2px var(--color-novaspin-primary),
+                inset -200px 0 20px -100px rgba(0, 212, 255, 0.6);
+  }
+  100% {
+    box-shadow: inset 0 0 0 2px var(--color-novaspin-primary),
+                inset 200px 0 20px -100px rgba(0, 212, 255, 0.6);
+  }
+}
+
+/* ============================================================
+   3. PROVIDER ANIMATED BORDERS - CELESTIAL
+   ============================================================ */
+
+.game-card[data-provider="mythic-forge"],
+.provider-mythic-forge {
+  border: 2px solid var(--color-mythic-forge-primary);
+  box-shadow: inset 0 0 20px rgba(255, 215, 0, 0.1), 0 0 25px rgba(255, 215, 0, 0.15);
+}
+
+.game-card[data-provider="mythic-forge"]::before,
+.provider-mythic-forge::before {
+  animation: mythic-forge-shimmer 4s ease-in-out infinite;
+}
+
+@keyframes mythic-forge-shimmer {
+  0%, 100% {
+    background: linear-gradient(135deg, transparent, rgba(255, 215, 0, 0.3), transparent);
+    background-position: 0% 0%;
+  }
+  50% {
+    background: linear-gradient(45deg, transparent, rgba(255, 237, 74, 0.5), transparent);
+    background-position: 100% 100%;
+  }
+}
+
+/* ============================================================
+   4. PROVIDER ANIMATED BORDERS - IRONREEL
+   ============================================================ */
+
+.game-card[data-provider="ironclad"],
+.provider-ironclad {
+  border: 2px solid var(--color-ironclad-primary);
+  box-shadow: inset 0 0 20px rgba(212, 165, 116, 0.1), 0 0 20px rgba(212, 165, 116, 0.15);
+}
+
+.game-card[data-provider="ironclad"]::before,
+.provider-ironclad::before {
+  animation: ironclad-ember 2.5s ease-in-out infinite;
+}
+
+@keyframes ironclad-ember {
+  0%, 100% {
+    box-shadow: inset 0 0 10px rgba(212, 165, 116, 0.4),
+                inset -20px -20px 30px rgba(139, 105, 20, 0.3);
+  }
+  50% {
+    box-shadow: inset 0 0 20px rgba(212, 165, 116, 0.7),
+                inset 20px 20px 30px rgba(255, 140, 0, 0.3);
+  }
+}
+
+/* ============================================================
+   5. PROVIDER ANIMATED BORDERS - GOLDENEDGE
+   ============================================================ */
+
+.game-card[data-provider="golden-reels"],
+.provider-golden-reels {
+  border: 2px solid transparent;
+  background: linear-gradient(90deg, var(--color-golden-reels-primary), var(--color-golden-reels-secondary)) border-box;
+  box-shadow: inset 0 0 20px rgba(255, 105, 180, 0.1), 0 0 30px rgba(255, 105, 180, 0.2);
+}
+
+.game-card[data-provider="golden-reels"]::before,
+.provider-golden-reels::before {
+  animation: golden-reels-rotate 6s linear infinite;
+}
+
+@keyframes golden-reels-rotate {
+  0% {
+    background: conic-gradient(from 0deg, var(--color-golden-reels-primary), var(--color-golden-reels-secondary), var(--color-golden-reels-primary));
+  }
+  100% {
+    background: conic-gradient(from 360deg, var(--color-golden-reels-primary), var(--color-golden-reels-secondary), var(--color-golden-reels-primary));
+  }
+}
+
+/* ============================================================
+   6. PROVIDER ANIMATED BORDERS - VAULTX
+   ============================================================ */
+
+.game-card[data-provider="vaultx"],
+.provider-vaultx {
+  border: 3px solid var(--color-vaultx-primary);
+  box-shadow: inset 0 0 15px rgba(160, 160, 160, 0.2),
+              inset 0 0 5px rgba(255, 165, 0, 0.1),
+              0 0 20px rgba(160, 160, 160, 0.15);
+}
+
+.game-card[data-provider="vaultx"]::before,
+.provider-vaultx::before {
+  animation: vaultx-mechanical 3s ease-in-out infinite;
+  border: 1px dashed var(--color-vaultx-secondary);
+  border-radius: 4px;
+}
+
+@keyframes vaultx-mechanical {
+  0%, 100% {
+    box-shadow: inset 0 0 10px rgba(160, 160, 160, 0.3),
+                inset 3px 3px 0 rgba(255, 165, 0, 0.2);
+  }
+  50% {
+    box-shadow: inset 0 0 20px rgba(160, 160, 160, 0.5),
+                inset -3px -3px 0 rgba(255, 165, 0, 0.4);
+  }
+}
+
+/* ============================================================
+   7. PROVIDER ANIMATED BORDERS - SOLSTICE
+   ============================================================ */
+
+.game-card[data-provider="solstice"],
+.provider-solstice {
+  border: 2px solid var(--color-solstice-primary);
+  box-shadow: inset 0 0 20px rgba(255, 68, 68, 0.1), 0 0 25px rgba(255, 170, 0, 0.15);
+}
+
+.game-card[data-provider="solstice"]::before,
+.provider-solstice::before {
+  animation: solstice-filigree 5s linear infinite;
+  background: repeating-conic-gradient(from 0deg at 50% 50%, var(--color-solstice-primary) 0deg 10deg, transparent 10deg 20deg);
+}
+
+@keyframes solstice-filigree {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+/* ============================================================
+   8. PROVIDER ANIMATED BORDERS - PHANTOMWORKS
+   ============================================================ */
+
+.game-card[data-provider="shadow-works"],
+.provider-shadow-works {
+  border: 2px solid var(--color-shadow-works-primary);
+  box-shadow: inset 0 0 20px rgba(153, 51, 255, 0.1), 0 0 30px rgba(153, 51, 255, 0.15);
+}
+
+.game-card[data-provider="shadow-works"]::before,
+.provider-shadow-works::before {
+  animation: shadow-works-shadow 3.5s ease-in-out infinite;
+}
+
+@keyframes shadow-works-shadow {
+  0%, 100% {
+    box-shadow: 0 0 10px rgba(153, 51, 255, 0.3),
+                inset 0 0 15px rgba(204, 0, 68, 0.1);
+  }
+  50% {
+    box-shadow: 0 0 30px rgba(204, 0, 68, 0.6),
+                inset 0 0 25px rgba(153, 51, 255, 0.3);
+  }
+}
+
+/* ============================================================
+   9. PROVIDER ANIMATED BORDERS - ARCADEFORGE
+   ============================================================ */
+
+.game-card[data-provider="wild-frontier"],
+.provider-wild-frontier {
+  border: 2px solid transparent;
+  animation: wild-frontier-border-color 3s ease-in-out infinite;
+}
+
+.game-card[data-provider="wild-frontier"]::before,
+.provider-wild-frontier::before {
+  animation: wild-frontier-cycle 2s ease-in-out infinite;
+}
+
+@keyframes wild-frontier-border-color {
+  0%, 100% {
+    border-color: var(--color-wild-frontier-primary);
+    box-shadow: 0 0 20px rgba(0, 255, 0, 0.3), inset 0 0 15px rgba(0, 255, 0, 0.1);
+  }
+  33% {
+    border-color: var(--color-wild-frontier-secondary);
+    box-shadow: 0 0 20px rgba(255, 0, 255, 0.3), inset 0 0 15px rgba(255, 0, 255, 0.1);
+  }
+  66% {
+    border-color: #00ffff;
+    box-shadow: 0 0 20px rgba(0, 255, 255, 0.3), inset 0 0 15px rgba(0, 255, 255, 0.1);
+  }
+}
+
+@keyframes wild-frontier-cycle {
+  0% {
+    background-color: rgba(0, 255, 0, 0.05);
+  }
+  33% {
+    background-color: rgba(255, 0, 255, 0.05);
+  }
+  66% {
+    background-color: rgba(0, 255, 255, 0.05);
+  }
+  100% {
+    background-color: rgba(0, 255, 0, 0.05);
+  }
+}
+
+/* ============================================================
+   10. GAME TAG ANIMATIONS - JACKPOT
+   ============================================================ */
+
+.game-card-jackpot {
+  position: relative;
+}
+
+.game-card-jackpot::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background:
+    radial-gradient(circle at 20% 80%, rgba(255, 215, 0, 0.4) 0%, transparent 25%),
+    radial-gradient(circle at 80% 20%, rgba(255, 215, 0, 0.3) 0%, transparent 25%),
+    radial-gradient(circle at 50% 50%, rgba(255, 215, 0, 0.2) 0%, transparent 30%);
+  animation: jackpot-shimmer 2s ease-in-out infinite;
+  pointer-events: none;
+  z-index: 1;
+  mix-blend-mode: screen;
+}
+
+@keyframes jackpot-shimmer {
+  0%, 100% {
+    opacity: 0.3;
+  }
+  50% {
+    opacity: 0.8;
+  }
+}
+
+/* ============================================================
+   11. GAME TAG ANIMATIONS - HOT
+   ============================================================ */
+
+.game-card-hot {
+  position: relative;
+}
+
+.game-card-hot::before {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 40%;
+  background: linear-gradient(to top, rgba(255, 69, 0, 0.3), transparent);
+  animation: hot-flicker 1.5s ease-in-out infinite;
+  pointer-events: none;
+  z-index: 1;
+}
+
+@keyframes hot-flicker {
+  0%, 100% {
+    opacity: 0.3;
+    clip-path: polygon(0 100%, 100% 100%, 100% 50%, 0 45%);
+  }
+  25% {
+    opacity: 0.6;
+    clip-path: polygon(0 100%, 100% 100%, 100% 52%, 0 48%);
+  }
+  50% {
+    opacity: 0.4;
+    clip-path: polygon(0 100%, 100% 100%, 100% 48%, 0 52%);
+  }
+  75% {
+    opacity: 0.65;
+    clip-path: polygon(0 100%, 100% 100%, 100% 51%, 0 49%);
+  }
+}
+
+/* ============================================================
+   12. GAME TAG ANIMATIONS - NEW
+   ============================================================ */
+
+.game-card-new {
+  position: relative;
+}
+
+.game-card-new::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  border: 2px solid rgba(34, 255, 100, 0.3);
+  animation: new-pulse-ring 2s ease-out infinite;
+  pointer-events: none;
+  z-index: 1;
+}
+
+@keyframes new-pulse-ring {
+  0% {
+    width: 100%;
+    height: 100%;
+    opacity: 1;
+  }
+  100% {
+    width: 130%;
+    height: 130%;
+    opacity: 0;
+  }
+}
+
+/* ============================================================
+   13. GAME CARD HOVER FLOATING PARTICLES
+   ============================================================ */
+
+.game-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-image:
+    radial-gradient(2px 2px at 20px 30px, rgba(255, 255, 255, 0.5), rgba(255, 255, 255, 0)),
+    radial-gradient(2px 2px at 60px 70px, rgba(255, 255, 255, 0.4), rgba(255, 255, 255, 0)),
+    radial-gradient(1px 1px at 50px 50px, rgba(255, 255, 255, 0.3), rgba(255, 255, 255, 0)),
+    radial-gradient(1px 1px at 130px 80px, rgba(255, 255, 255, 0.3), rgba(255, 255, 255, 0)),
+    radial-gradient(2px 2px at 90px 10px, rgba(255, 255, 255, 0.4), rgba(255, 255, 255, 0));
+  background-repeat: repeat;
+  background-size: 200px 200px;
+  opacity: 0;
+  animation: floating-particles 8s ease-in-out infinite;
+  pointer-events: none;
+}
+
+.game-card:hover::before {
+  animation: floating-particles 8s ease-in-out infinite;
+  opacity: 0.6;
+}
+
+@keyframes floating-particles {
+  0%, 100% {
+    background-position: 0 0;
+  }
+  50% {
+    background-position: -20px -20px;
+  }
+}
+
+/* ============================================================
+   14. PER-GAME ATMOSPHERIC EFFECTS - EGYPTIAN
+   ============================================================ */
+
+.game-card[data-game-id*="book_dead"],
+.game-card[data-game-id*="pharaoh"],
+.game-card[data-game-id*="cleopatra"],
+.game-card[data-game-id*="golden_pharaoh"] {
+  background: var(--gradient-egyptian);
+}
+
+.game-card[data-game-id*="book_dead"]::before,
+.game-card[data-game-id*="pharaoh"]::before,
+.game-card[data-game-id*="cleopatra"]::before,
+.game-card[data-game-id*="golden_pharaoh"]::before {
+  animation: egyptian-drift 6s ease-in-out infinite !important;
+}
+
+@keyframes egyptian-drift {
+  0%, 100% {
+    background-position: 0% 0%;
+  }
+  50% {
+    background-position: 5% 5%;
+  }
+}
+
+/* ============================================================
+   15. PER-GAME ATMOSPHERIC EFFECTS - OCEAN
+   ============================================================ */
+
+.game-card[data-game-id*="big_bass"],
+.game-card[data-game-id*="bass_splash"],
+.game-card[data-game-id*="wild_deep"],
+.game-card[data-game-id*="razor_shark"] {
+  background: var(--gradient-ocean);
+}
+
+.game-card[data-game-id*="big_bass"]::before,
+.game-card[data-game-id*="bass_splash"]::before,
+.game-card[data-game-id*="wild_deep"]::before,
+.game-card[data-game-id*="razor_shark"]::before {
+  animation: bubble-float 5s ease-in infinite !important;
+}
+
+@keyframes bubble-float {
+  0% {
+    transform: translateY(100%) translateX(0);
+    opacity: 0;
+  }
+  10% {
+    opacity: 0.5;
+  }
+  90% {
+    opacity: 0.5;
+  }
+  100% {
+    transform: translateY(-100%) translateX(20px);
+    opacity: 0;
+  }
+}
+
+/* ============================================================
+   16. PER-GAME ATMOSPHERIC EFFECTS - NORSE
+   ============================================================ */
+
+.game-card[data-game-id*="viking"],
+.game-card[data-game-id*="norse"],
+.game-card[data-game-id*="gemhalla"],
+.game-card[data-game-id*="loki"] {
+  background: var(--gradient-norse);
+}
+
+.game-card[data-game-id*="viking"]::before,
+.game-card[data-game-id*="norse"]::before,
+.game-card[data-game-id*="gemhalla"]::before,
+.game-card[data-game-id*="loki"]::before {
+  animation: ice-shimmer 4s ease-in-out infinite !important;
+}
+
+@keyframes ice-shimmer {
+  0%, 100% {
+    background: linear-gradient(90deg, transparent, rgba(176, 196, 222, 0.3), transparent);
+    background-position: -100% 0;
+  }
+  50% {
+    background: linear-gradient(90deg, transparent, rgba(176, 196, 222, 0.5), transparent);
+    background-position: 100% 0;
+  }
+}
+
+/* ============================================================
+   17. PER-GAME ATMOSPHERIC EFFECTS - FIRE
+   ============================================================ */
+
+.game-card[data-game-id*="dragon_megafire"],
+.game-card[data-game-id*="dragon_forge"],
+.game-card[data-game-id*="crown_fire"],
+.game-card[data-game-id*="fire_hole"] {
+  background: var(--gradient-fire);
+}
+
+.game-card[data-game-id*="dragon_megafire"]::before,
+.game-card[data-game-id*="dragon_forge"]::before,
+.game-card[data-game-id*="crown_fire"]::before,
+.game-card[data-game-id*="fire_hole"]::before {
+  animation: ember-float 4s ease-in-out infinite !important;
+}
+
+@keyframes ember-float {
+  0% {
+    transform: translateY(0) translateX(-10px);
+    opacity: 0;
+  }
+  20% {
+    opacity: 0.6;
+  }
+  80% {
+    opacity: 0.3;
+  }
+  100% {
+    transform: translateY(-100%) translateX(10px);
+    opacity: 0;
+  }
+}
+
+/* ============================================================
+   18. PER-GAME ATMOSPHERIC EFFECTS - SPACE
+   ============================================================ */
+
+.game-card[data-game-id*="starburst"],
+.game-card[data-game-id*="quantum"],
+.game-card[data-game-id*="neon_nights"],
+.game-card[data-game-id*="nova"] {
+  background: var(--gradient-space);
+}
+
+.game-card[data-game-id*="starburst"]::before,
+.game-card[data-game-id*="quantum"]::before,
+.game-card[data-game-id*="neon_nights"]::before,
+.game-card[data-game-id*="nova"]::before {
+  animation: star-twinkle 3s ease-in-out infinite !important;
+}
+
+@keyframes star-twinkle {
+  0%, 100% {
+    opacity: 0.2;
+  }
+  50% {
+    opacity: 0.9;
+  }
+}
+
+/* ============================================================
+   19. PER-GAME ATMOSPHERIC EFFECTS - CANDY
+   ============================================================ */
+
+.game-card[data-game-id*="sugar_rush"],
+.game-card[data-game-id*="fruit_party"],
+.game-card[data-game-id*="jammin"],
+.game-card[data-game-id*="sweet_bonanza"] {
+  background: var(--gradient-candy);
+}
+
+.game-card[data-game-id*="sugar_rush"]::before,
+.game-card[data-game-id*="fruit_party"]::before,
+.game-card[data-game-id*="jammin"]::before,
+.game-card[data-game-id*="sweet_bonanza"]::before {
+  animation: candy-rain 5s ease-in infinite !important;
+}
+
+@keyframes candy-rain {
+  0% {
+    transform: translateY(-20px);
+    opacity: 0;
+  }
+  10% {
+    opacity: 1;
+  }
+  90% {
+    opacity: 0.5;
+  }
+  100% {
+    transform: translateY(100%);
+    opacity: 0;
+  }
+}
+
+/* ============================================================
+   20. PER-GAME ATMOSPHERIC EFFECTS - GOTHIC
+   ============================================================ */
+
+.game-card[data-game-id*="immortal_blood"],
+.game-card[data-game-id*="crimson_fang"],
+.game-card[data-game-id*="demon_chambers"] {
+  background: var(--gradient-gothic);
+}
+
+.game-card[data-game-id*="immortal_blood"]::before,
+.game-card[data-game-id*="crimson_fang"]::before,
+.game-card[data-game-id*="demon_chambers"]::before {
+  animation: blood-drip 3.5s ease-in-out infinite !important;
+}
+
+@keyframes blood-drip {
+  0% {
+    clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%);
+  }
+  50% {
+    clip-path: polygon(0 0, 100% 0, 100% 95%, 0 100%);
+  }
+  100% {
+    clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%);
+  }
+}
+
+/* ============================================================
+   21. PER-GAME ATMOSPHERIC EFFECTS - WESTERN
+   ============================================================ */
+
+.game-card[data-game-id*="wanted_dead"],
+.game-card[data-game-id*="san_quentin"],
+.game-card[data-game-id*="black_ops_heist"] {
+  background: var(--gradient-western);
+}
+
+.game-card[data-game-id*="wanted_dead"]::before,
+.game-card[data-game-id*="san_quentin"]::before,
+.game-card[data-game-id*="black_ops_heist"]::before {
+  animation: dust-mote 6s ease-in-out infinite !important;
+}
+
+@keyframes dust-mote {
+  0%, 100% {
+    background-position: 0 0;
+  }
+  50% {
+    background-position: 20px 20px;
+  }
+}
+
+/* ============================================================
+   22. SLOT PLAY SCREEN - BASE ENHANCEMENTS
+   ============================================================ */
+
+.slot-play-screen {
+  position: relative;
+  overflow: hidden;
+}
+
+.slot-play-screen::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.slot-chrome {
+  position: relative;
+  z-index: 10;
+}
+
+/* ============================================================
+   23. PROVIDER CHROME - NOVASPIN
+   ============================================================ */
+
+.slot-chrome-novaspin {
+  background: linear-gradient(135deg, #001a2d 0%, #003d66 100%);
+  border: 3px solid var(--color-novaspin-primary);
+  box-shadow: 0 0 40px rgba(0, 212, 255, 0.3),
+              inset 0 0 30px rgba(0, 212, 255, 0.1);
+}
+
+.slot-chrome-novaspin::before,
+.slot-chrome-novaspin::after {
+  content: '';
+  position: absolute;
+  width: 30px;
+  height: 30px;
+  border: 2px solid var(--color-novaspin-primary);
+}
+
+.slot-chrome-novaspin::before {
+  top: 10px;
+  left: 10px;
+  border-right: none;
+  border-bottom: none;
+  box-shadow: inset 0 0 10px rgba(0, 212, 255, 0.3);
+  animation: corner-glow 2s ease-in-out infinite;
+}
+
+.slot-chrome-novaspin::after {
+  bottom: 10px;
+  right: 10px;
+  border-left: none;
+  border-top: none;
+  box-shadow: inset 0 0 10px rgba(0, 212, 255, 0.3);
+  animation: corner-glow 2s ease-in-out infinite 0.5s;
+}
+
+@keyframes corner-glow {
+  0%, 100% {
+    box-shadow: inset 0 0 5px rgba(0, 212, 255, 0.2);
+  }
+  50% {
+    box-shadow: inset 0 0 20px rgba(0, 212, 255, 0.6);
+  }
+}
+
+/* ============================================================
+   24. PROVIDER CHROME - CELESTIAL
+   ============================================================ */
+
+.slot-chrome-mythic-forge {
+  background: linear-gradient(135deg, #332200 0%, #664d00 100%);
+  border: 3px solid var(--color-mythic-forge-primary);
+  box-shadow: 0 0 40px rgba(255, 215, 0, 0.3),
+              inset 0 0 30px rgba(255, 215, 0, 0.1);
+  position: relative;
+}
+
+.slot-chrome-mythic-forge::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: repeating-linear-gradient(
+    45deg,
+    transparent,
+    transparent 10px,
+    rgba(255, 215, 0, 0.05) 10px,
+    rgba(255, 215, 0, 0.05) 20px
+  );
+  animation: mythic-forge-pattern 6s linear infinite;
+  pointer-events: none;
+}
+
+@keyframes mythic-forge-pattern {
+  0% {
+    background-position: 0 0;
+  }
+  100% {
+    background-position: 40px 40px;
+  }
+}
+
+/* ============================================================
+   25. PROVIDER CHROME - IRONREEL
+   ============================================================ */
+
+.slot-chrome-ironclad {
+  background: linear-gradient(135deg, #1a1410 0%, #3d2817 100%);
+  border: 4px solid var(--color-ironclad-primary);
+  box-shadow: 0 0 35px rgba(212, 165, 116, 0.2),
+              inset 0 0 25px rgba(212, 165, 116, 0.08);
+  position: relative;
+}
+
+.slot-chrome-ironclad::before {
+  content: '';
+  position: absolute;
+  top: 15px;
+  left: 15px;
+  right: 15px;
+  bottom: 15px;
+  border: 2px solid rgba(212, 165, 116, 0.3);
+  border-radius: 4px;
+  animation: ironclad-frame-pulse 3s ease-in-out infinite;
+  pointer-events: none;
+}
+
+@keyframes ironclad-frame-pulse {
+  0%, 100% {
+    box-shadow: inset 0 0 10px rgba(212, 165, 116, 0.2);
+  }
+  50% {
+    box-shadow: inset 0 0 25px rgba(212, 165, 116, 0.4);
+  }
+}
+
+/* ============================================================
+   26. PROVIDER CHROME - GOLDENEDGE
+   ============================================================ */
+
+.slot-chrome-golden-reels {
+  background: linear-gradient(135deg, #330033 0%, #660066 100%);
+  border: 3px solid transparent;
+  background-clip: padding-box;
+  box-shadow: 0 0 40px rgba(255, 105, 180, 0.3),
+              inset 0 0 30px rgba(255, 105, 180, 0.1);
+  position: relative;
+  animation: golden-reels-border-rotate 8s linear infinite;
+}
+
+@keyframes golden-reels-border-rotate {
+  0% {
+    border-image: linear-gradient(45deg, var(--color-golden-reels-primary), var(--color-golden-reels-secondary)) 1;
+  }
+  50% {
+    border-image: linear-gradient(225deg, var(--color-golden-reels-primary), var(--color-golden-reels-secondary)) 1;
+  }
+  100% {
+    border-image: linear-gradient(45deg, var(--color-golden-reels-primary), var(--color-golden-reels-secondary)) 1;
+  }
+}
+
+/* ============================================================
+   27. PROVIDER CHROME - VAULTX
+   ============================================================ */
+
+.slot-chrome-vaultx {
+  background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
+  border: 4px solid var(--color-vaultx-primary);
+  box-shadow: 0 0 30px rgba(160, 160, 160, 0.2),
+              0 0 15px rgba(255, 165, 0, 0.1),
+              inset 0 0 20px rgba(160, 160, 160, 0.05);
+  position: relative;
+}
+
+.slot-chrome-vaultx::before {
+  content: '';
+  position: absolute;
+  top: 20px;
+  left: 20px;
+  right: 20px;
+  bottom: 20px;
+  border: 2px dashed var(--color-vaultx-secondary);
+  border-radius: 2px;
+  animation: vaultx-scan-line 3s linear infinite;
+  pointer-events: none;
+}
+
+@keyframes vaultx-scan-line {
+  0% {
+    box-shadow: inset 0 0 0 0 rgba(255, 165, 0, 0.1);
+  }
+  50% {
+    box-shadow: inset 0 20px 20px 0 rgba(255, 165, 0, 0.2);
+  }
+  100% {
+    box-shadow: inset 0 0 0 0 rgba(255, 165, 0, 0.1);
+  }
+}
+
+/* ============================================================
+   28. PROVIDER CHROME - SOLSTICE
+   ============================================================ */
+
+.slot-chrome-solstice {
+  background: linear-gradient(135deg, #330000 0%, #660000 100%);
+  border: 3px solid var(--color-solstice-primary);
+  box-shadow: 0 0 40px rgba(255, 68, 68, 0.3),
+              inset 0 0 30px rgba(255, 170, 0, 0.1);
+  position: relative;
+}
+
+.slot-chrome-solstice::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: repeating-linear-gradient(
+    0deg,
+    rgba(255, 170, 0, 0.05),
+    rgba(255, 170, 0, 0.05) 1px,
+    transparent 1px,
+    transparent 2px
+  );
+  animation: solstice-lines 2s linear infinite;
+  pointer-events: none;
+}
+
+@keyframes solstice-lines {
+  0% {
+    background-position-y: 0;
+  }
+  100% {
+    background-position-y: 4px;
+  }
+}
+
+/* ============================================================
+   29. PROVIDER CHROME - PHANTOMWORKS
+   ============================================================ */
+
+.slot-chrome-shadow-works {
+  background: linear-gradient(135deg, #1a0033 0%, #330066 100%);
+  border: 3px solid var(--color-shadow-works-primary);
+  box-shadow: 0 0 50px rgba(153, 51, 255, 0.3),
+              0 0 20px rgba(204, 0, 68, 0.2),
+              inset 0 0 30px rgba(153, 51, 255, 0.1);
+  position: relative;
+}
+
+.slot-chrome-shadow-works::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: radial-gradient(circle at 50% 50%, rgba(204, 0, 68, 0.2), transparent 70%);
+  animation: shadow-works-glow 4s ease-in-out infinite;
+  pointer-events: none;
+}
+
+@keyframes shadow-works-glow {
+  0%, 100% {
+    opacity: 0.3;
+  }
+  50% {
+    opacity: 0.8;
+  }
+}
+
+/* ============================================================
+   30. PROVIDER CHROME - ARCADEFORGE
+   ============================================================ */
+
+.slot-chrome-wild-frontier {
+  background: linear-gradient(135deg, #001a00 0%, #003300 100%);
+  border: 3px solid transparent;
+  animation: wild-frontier-chrome-border 3s ease-in-out infinite;
+  box-shadow: 0 0 30px rgba(0, 255, 0, 0.2);
+  position: relative;
+}
+
+.slot-chrome-wild-frontier::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  animation: wild-frontier-static 0.1s steps(2) infinite;
+  pointer-events: none;
+  background: repeating-linear-gradient(
+    0deg,
+    rgba(0, 255, 0, 0.03),
+    rgba(0, 255, 0, 0.03) 1px,
+    transparent 1px,
+    transparent 2px
+  );
+}
+
+@keyframes wild-frontier-chrome-border {
+  0%, 100% {
+    border-color: var(--color-wild-frontier-primary);
+  }
+  50% {
+    border-color: var(--color-wild-frontier-secondary);
+  }
+}
+
+/* ============================================================
+   31. REEL SEPARATORS - PER-PROVIDER
+   ============================================================ */
+
+.reel-separator {
+  position: relative;
+  width: 2px;
+  background: rgba(255, 255, 255, 0.1);
+  margin: 0 5px;
+}
+
+.slot-chrome-novaspin .reel-separator {
+  background: linear-gradient(180deg, transparent, var(--color-novaspin-primary), transparent);
+  box-shadow: 0 0 10px var(--color-novaspin-primary);
+}
+
+.slot-chrome-mythic-forge .reel-separator {
+  background: linear-gradient(180deg, transparent, var(--color-mythic-forge-primary), transparent);
+  box-shadow: 0 0 10px var(--color-mythic-forge-primary);
+}
+
+.slot-chrome-ironclad .reel-separator {
+  background: linear-gradient(180deg, transparent, var(--color-ironclad-primary), transparent);
+  box-shadow: 0 0 8px var(--color-ironclad-primary);
+}
+
+.slot-chrome-golden-reels .reel-separator {
+  background: linear-gradient(180deg, transparent, var(--color-golden-reels-primary), transparent);
+  box-shadow: 0 0 12px var(--color-golden-reels-primary);
+}
+
+.slot-chrome-vaultx .reel-separator {
+  background: linear-gradient(180deg, transparent, var(--color-vaultx-secondary), transparent);
+  box-shadow: 0 0 8px var(--color-vaultx-secondary);
+}
+
+.slot-chrome-solstice .reel-separator {
+  background: linear-gradient(180deg, transparent, var(--color-solstice-primary), transparent);
+  box-shadow: 0 0 10px var(--color-solstice-primary);
+}
+
+.slot-chrome-shadow-works .reel-separator {
+  background: linear-gradient(180deg, transparent, var(--color-shadow-works-primary), transparent);
+  box-shadow: 0 0 12px var(--color-shadow-works-primary);
+}
+
+.slot-chrome-wild-frontier .reel-separator {
+  background: linear-gradient(180deg, transparent, var(--color-wild-frontier-primary), transparent);
+  box-shadow: 0 0 10px var(--color-wild-frontier-primary);
+}
+
+/* ============================================================
+   32. AMBIENT PARTICLE EFFECTS - SLOT PLAY SCREEN
+   ============================================================ */
+
+.slot-play-screen[data-slot-theme*="book_dead"],
+.slot-play-screen[data-slot-theme*="pharaoh"],
+.slot-play-screen[data-slot-theme*="cleopatra"],
+.slot-play-screen[data-slot-theme*="golden_pharaoh"] {
+  background-image: linear-gradient(135deg, rgba(184, 134, 11, 0.2), rgba(218, 165, 32, 0.2));
+}
+
+.slot-play-screen[data-slot-theme*="big_bass"],
+.slot-play-screen[data-slot-theme*="bass_splash"],
+.slot-play-screen[data-slot-theme*="wild_deep"],
+.slot-play-screen[data-slot-theme*="razor_shark"] {
+  background-image: linear-gradient(135deg, rgba(0, 105, 148, 0.2), rgba(30, 144, 255, 0.2));
+}
+
+.slot-play-screen[data-slot-theme*="viking"],
+.slot-play-screen[data-slot-theme*="norse"],
+.slot-play-screen[data-slot-theme*="gemhalla"],
+.slot-play-screen[data-slot-theme*="loki"] {
+  background-image: linear-gradient(135deg, rgba(47, 79, 147, 0.2), rgba(176, 196, 222, 0.2));
+}
+
+.slot-play-screen[data-slot-theme*="dragon_megafire"],
+.slot-play-screen[data-slot-theme*="dragon_forge"],
+.slot-play-screen[data-slot-theme*="crown_fire"],
+.slot-play-screen[data-slot-theme*="fire_hole"] {
+  background-image: linear-gradient(135deg, rgba(255, 69, 0, 0.2), rgba(255, 140, 0, 0.2));
+}
+
+.slot-play-screen[data-slot-theme*="starburst"],
+.slot-play-screen[data-slot-theme*="quantum"],
+.slot-play-screen[data-slot-theme*="neon_nights"],
+.slot-play-screen[data-slot-theme*="nova"] {
+  background-image: linear-gradient(135deg, rgba(25, 25, 112, 0.2), rgba(138, 43, 226, 0.2));
+}
+
+.slot-play-screen[data-slot-theme*="sugar_rush"],
+.slot-play-screen[data-slot-theme*="fruit_party"],
+.slot-play-screen[data-slot-theme*="jammin"],
+.slot-play-screen[data-slot-theme*="sweet_bonanza"] {
+  background-image: linear-gradient(135deg, rgba(255, 105, 180, 0.2), rgba(255, 182, 193, 0.2));
+}
+
+.slot-play-screen[data-slot-theme*="immortal_blood"],
+.slot-play-screen[data-slot-theme*="crimson_fang"],
+.slot-play-screen[data-slot-theme*="demon_chambers"] {
+  background-image: linear-gradient(135deg, rgba(47, 47, 47, 0.2), rgba(139, 0, 0, 0.2));
+}
+
+.slot-play-screen[data-slot-theme*="wanted_dead"],
+.slot-play-screen[data-slot-theme*="san_quentin"],
+.slot-play-screen[data-slot-theme*="black_ops_heist"] {
+  background-image: linear-gradient(135deg, rgba(139, 90, 43, 0.2), rgba(210, 180, 140, 0.2));
+}
+
+/* ============================================================
+   33. WIN ANIMATIONS - BASE
+   ============================================================ */
+
+.win-celebration {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+  z-index: 1000;
+  animation: celebration-scale 0.8s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes celebration-scale {
+  0% {
+    transform: translate(-50%, -50%) scale(0.5);
+    opacity: 0;
+  }
+  50% {
+    transform: translate(-50%, -50%) scale(1.1);
+  }
+  100% {
+    transform: translate(-50%, -50%) scale(1);
+    opacity: 1;
+  }
+}
+
+/* ============================================================
+   34. WIN ANIMATIONS - PER-PROVIDER
+   ============================================================ */
+
+.win-celebration-novaspin {
+  border: 3px solid var(--color-novaspin-primary);
+  box-shadow: 0 0 40px var(--color-novaspin-primary),
+              inset 0 0 30px rgba(0, 212, 255, 0.2);
+  background: radial-gradient(circle, rgba(0, 212, 255, 0.15), transparent);
+}
+
+.win-celebration-mythic-forge {
+  border: 3px solid var(--color-mythic-forge-primary);
+  box-shadow: 0 0 40px var(--color-mythic-forge-primary),
+              inset 0 0 30px rgba(255, 215, 0, 0.2);
+  background: radial-gradient(circle, rgba(255, 215, 0, 0.15), transparent);
+}
+
+.win-celebration-ironclad {
+  border: 3px solid var(--color-ironclad-primary);
+  box-shadow: 0 0 35px var(--color-ironclad-primary),
+              inset 0 0 25px rgba(212, 165, 116, 0.2);
+  background: radial-gradient(circle, rgba(212, 165, 116, 0.15), transparent);
+}
+
+.win-celebration-golden-reels {
+  border: 3px solid var(--color-golden-reels-primary);
+  box-shadow: 0 0 40px var(--color-golden-reels-primary),
+              inset 0 0 30px rgba(255, 105, 180, 0.2);
+  background: radial-gradient(circle, rgba(255, 105, 180, 0.15), transparent);
+}
+
+.win-celebration-vaultx {
+  border: 3px solid var(--color-vaultx-secondary);
+  box-shadow: 0 0 35px var(--color-vaultx-secondary),
+              inset 0 0 25px rgba(255, 165, 0, 0.2);
+  background: radial-gradient(circle, rgba(255, 165, 0, 0.15), transparent);
+}
+
+.win-celebration-solstice {
+  border: 3px solid var(--color-solstice-primary);
+  box-shadow: 0 0 40px var(--color-solstice-primary),
+              inset 0 0 30px rgba(255, 68, 68, 0.2);
+  background: radial-gradient(circle, rgba(255, 68, 68, 0.15), transparent);
+}
+
+.win-celebration-shadow-works {
+  border: 3px solid var(--color-shadow-works-primary);
+  box-shadow: 0 0 45px var(--color-shadow-works-primary),
+              0 0 20px var(--color-shadow-works-secondary),
+              inset 0 0 30px rgba(153, 51, 255, 0.2);
+  background: radial-gradient(circle, rgba(153, 51, 255, 0.15), transparent);
+}
+
+.win-celebration-wild-frontier {
+  border: 3px solid transparent;
+  animation: wild-frontier-win-border 0.5s ease-in-out;
+  background: radial-gradient(circle, rgba(0, 255, 0, 0.15), transparent);
+}
+
+@keyframes wild-frontier-win-border {
+  0%, 100% {
+    border-color: var(--color-wild-frontier-primary);
+    box-shadow: 0 0 30px var(--color-wild-frontier-primary);
+  }
+  50% {
+    border-color: var(--color-wild-frontier-secondary);
+    box-shadow: 0 0 40px var(--color-wild-frontier-secondary);
+  }
+}
+
+/* ============================================================
+   35. BIG WIN SCREEN EFFECTS
+   ============================================================ */
+
+.big-win-screen {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2000;
+  animation: big-win-fade 0.6s ease-in-out;
+}
+
+@keyframes big-win-fade {
+  0% {
+    opacity: 0;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+
+.big-win-content {
+  position: relative;
+  padding: 40px;
+  border-radius: 10px;
+  animation: big-win-bounce 1s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes big-win-bounce {
+  0% {
+    transform: scale(0) rotateZ(-180deg);
+  }
+  60% {
+    transform: scale(1.1) rotateZ(10deg);
+  }
+  100% {
+    transform: scale(1) rotateZ(0deg);
+  }
+}
+
+/* ============================================================
+   36. GAME INFO SECTION - ENHANCED
+   ============================================================ */
+
+.game-info {
+  position: relative;
+  z-index: 5;
+  padding: 15px;
+}
+
+.game-name {
+  font-size: 18px;
+  font-weight: 700;
+  margin-bottom: 8px;
+  background: linear-gradient(135deg, #fff, #ccc);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.game-card[data-provider="novaspin"] .game-name {
+  background: linear-gradient(135deg, var(--color-novaspin-primary), var(--color-novaspin-secondary));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.game-card[data-provider="mythic-forge"] .game-name {
+  background: linear-gradient(135deg, var(--color-mythic-forge-primary), var(--color-mythic-forge-secondary));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.game-card[data-provider="ironclad"] .game-name {
+  background: linear-gradient(135deg, var(--color-ironclad-primary), var(--color-ironclad-secondary));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.game-card[data-provider="golden-reels"] .game-name {
+  background: linear-gradient(135deg, var(--color-golden-reels-primary), var(--color-golden-reels-secondary));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.game-card[data-provider="vaultx"] .game-name {
+  background: linear-gradient(135deg, var(--color-vaultx-primary), var(--color-vaultx-secondary));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.game-card[data-provider="solstice"] .game-name {
+  background: linear-gradient(135deg, var(--color-solstice-primary), var(--color-solstice-secondary));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.game-card[data-provider="shadow-works"] .game-name {
+  background: linear-gradient(135deg, var(--color-shadow-works-primary), var(--color-shadow-works-secondary));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.game-card[data-provider="wild-frontier"] .game-name {
+  background: linear-gradient(135deg, var(--color-wild-frontier-primary), var(--color-wild-frontier-secondary));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* ============================================================
+   37. PROVIDER LOGO WITH GLOW
+   ============================================================ */
+
+.provider-logo {
+  display: inline-block;
+  padding: 5px 12px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 600;
+  margin-bottom: 8px;
+  transition: all 0.3s ease;
+}
+
+.game-card[data-provider="novaspin"] .provider-logo {
+  background: rgba(0, 212, 255, 0.2);
+  color: var(--color-novaspin-primary);
+  border: 1px solid var(--color-novaspin-primary);
+  box-shadow: 0 0 10px rgba(0, 212, 255, 0.4);
+}
+
+.game-card[data-provider="mythic-forge"] .provider-logo {
+  background: rgba(255, 215, 0, 0.2);
+  color: var(--color-mythic-forge-primary);
+  border: 1px solid var(--color-mythic-forge-primary);
+  box-shadow: 0 0 10px rgba(255, 215, 0, 0.4);
+}
+
+.game-card[data-provider="ironclad"] .provider-logo {
+  background: rgba(212, 165, 116, 0.2);
+  color: var(--color-ironclad-primary);
+  border: 1px solid var(--color-ironclad-primary);
+  box-shadow: 0 0 8px rgba(212, 165, 116, 0.4);
+}
+
+.game-card[data-provider="golden-reels"] .provider-logo {
+  background: rgba(255, 105, 180, 0.2);
+  color: var(--color-golden-reels-primary);
+  border: 1px solid var(--color-golden-reels-primary);
+  box-shadow: 0 0 12px rgba(255, 105, 180, 0.4);
+}
+
+.game-card[data-provider="vaultx"] .provider-logo {
+  background: rgba(255, 165, 0, 0.2);
+  color: var(--color-vaultx-secondary);
+  border: 1px solid var(--color-vaultx-secondary);
+  box-shadow: 0 0 8px rgba(255, 165, 0, 0.4);
+}
+
+.game-card[data-provider="solstice"] .provider-logo {
+  background: rgba(255, 68, 68, 0.2);
+  color: var(--color-solstice-primary);
+  border: 1px solid var(--color-solstice-primary);
+  box-shadow: 0 0 10px rgba(255, 68, 68, 0.4);
+}
+
+.game-card[data-provider="shadow-works"] .provider-logo {
+  background: rgba(153, 51, 255, 0.2);
+  color: var(--color-shadow-works-primary);
+  border: 1px solid var(--color-shadow-works-primary);
+  box-shadow: 0 0 12px rgba(153, 51, 255, 0.4);
+}
+
+.game-card[data-provider="wild-frontier"] .provider-logo {
+  background: rgba(0, 255, 0, 0.2);
+  color: var(--color-wild-frontier-primary);
+  border: 1px solid var(--color-wild-frontier-primary);
+  box-shadow: 0 0 10px rgba(0, 255, 0, 0.4);
+}
+
+.game-card .provider-logo:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 15px currentColor;
+}
+
+/* ============================================================
+   38. RTP & VOLATILITY BADGES
+   ============================================================ */
+
+.badge-container {
+  display: flex;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.badge {
+  display: inline-block;
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 600;
+  backdrop-filter: blur(10px);
+  transition: all 0.3s ease;
+}
+
+.badge-rtp {
+  background: rgba(52, 211, 153, 0.3);
+  color: #34d399;
+  border: 1px solid rgba(52, 211, 153, 0.6);
+}
+
+.badge-volatility-low {
+  background: rgba(96, 165, 250, 0.3);
+  color: #60a5fa;
+  border: 1px solid rgba(96, 165, 250, 0.6);
+}
+
+.badge-volatility-medium {
+  background: rgba(251, 191, 36, 0.3);
+  color: #fbbf24;
+  border: 1px solid rgba(251, 191, 36, 0.6);
+}
+
+.badge-volatility-high {
+  background: rgba(239, 68, 68, 0.3);
+  color: #ef4444;
+  border: 1px solid rgba(239, 68, 68, 0.6);
+}
+
+.badge:hover {
+  transform: scale(1.1);
+  box-shadow: 0 4px 12px currentColor;
+}
+
+/* ============================================================
+   39. PERFORMANCE OPTIMIZATIONS
+   ============================================================ */
+
+.game-card {
+  will-change: transform;
+}
+
+.game-card:not(:hover) {
+  will-change: auto;
+}
+
+/* GPU hints moved to .slot-reel-area child to avoid breaking
+   position:fixed on #slotModal (transform creates containing block) */
+.slot-chrome-novaspin .slot-reel-area,
+.slot-chrome-mythic-forge .slot-reel-area,
+.slot-chrome-ironclad .slot-reel-area,
+.slot-chrome-golden-reels .slot-reel-area,
+.slot-chrome-vaultx .slot-reel-area,
+.slot-chrome-solstice .slot-reel-area,
+.slot-chrome-shadow-works .slot-reel-area,
+.slot-chrome-wild-frontier .slot-reel-area,
+.slot-chrome-neoncore .slot-reel-area,
+.slot-chrome-frostbyte .slot-reel-area,
+.slot-chrome-desertgold .slot-reel-area,
+.slot-chrome-orientreels .slot-reel-area {
+  will-change: box-shadow;
+  transform: translateZ(0);
+  backface-visibility: hidden;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* ============================================================
+   40. CASCADING WIN ANIMATION
+   ============================================================ */
+
+.cascade-animation {
+  animation: cascade-drop 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes cascade-drop {
+  0% {
+    transform: translateY(-30px);
+    opacity: 0;
+  }
+  50% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+/* ============================================================
+   41. TUMBLE ANIMATION
+   ============================================================ */
+
+.tumble-animation {
+  animation: tumble-spin 0.8s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes tumble-spin {
+  0% {
+    transform: rotateZ(0deg) scale(0.8);
+    opacity: 0;
+  }
+  50% {
+    opacity: 1;
+  }
+  100% {
+    transform: rotateZ(360deg) scale(1);
+    opacity: 1;
+  }
+}
+
+/* ============================================================
+   42. ADDITIONAL POLISH - SHINE EFFECTS
+   ============================================================ */
+
+.shine-effect {
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+  animation: shine-sweep 3s ease-in-out infinite;
+  pointer-events: none;
+}
+
+@keyframes shine-sweep {
+  0% {
+    left: -100%;
+  }
+  100% {
+    left: 100%;
+  }
+}
+
+/* ============================================================
+   43. SLOT SYMBOL PULSE ON MATCH
+   ============================================================ */
+
+.symbol-match {
+  animation: symbol-pulse 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes symbol-pulse {
+  0% {
+    transform: scale(1);
+  }
+  25% {
+    transform: scale(1.2);
+  }
+  50% {
+    transform: scale(0.95);
+  }
+  75% {
+    transform: scale(1.15);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+/* ============================================================
+   44. EDGE CASE IMPROVEMENTS
+   ============================================================ */
+
+/* Ensure smooth transitions on all interactive elements */
+button, a, .clickable {
+  transition: all 0.2s ease;
+}
+
+button:active, a:active, .clickable:active {
+  transform: scale(0.98);
+}
+
+/* Prevent text selection on animated elements */
+.game-card, .slot-chrome, .win-celebration {
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+/* Ensure proper stacking context */
+.game-card, .slot-chrome {
+  position: relative;
+  z-index: 1;
+}
+
+.game-card:hover {
+  z-index: 10;
+}
+
+/* ============================================================
+   SLOT GUI ENGINE — Clutter Suppression
+   ============================================================ */
+
+/* Elements suppressed by SlotGUIEngine stay hidden even if JS tries to show them */
+.gui-suppressed { display: none !important; }
+
+/* Smooth skin transitions when switching games */
+.slot-modal-fullscreen[data-gui-skin] .slot-top-bar,
+.slot-modal-fullscreen[data-gui-skin] .slot-bottom-bar,
+.slot-modal-fullscreen[data-gui-skin] #spinBtn,
+.slot-modal-fullscreen[data-gui-skin] .slot-reel-area,
+.slot-modal-fullscreen[data-gui-skin] .slot-title,
+.slot-modal-fullscreen[data-gui-skin] .bet-chip,
+.slot-modal-fullscreen[data-gui-skin] .slot-close-btn,
+.slot-modal-fullscreen[data-gui-game] .slot-top-bar,
+.slot-modal-fullscreen[data-gui-game] .slot-bottom-bar,
+.slot-modal-fullscreen[data-gui-game] #spinBtn,
+.slot-modal-fullscreen[data-gui-game] .slot-reel-area,
+.slot-modal-fullscreen[data-gui-game] .slot-title,
+.slot-modal-fullscreen[data-gui-game] .bet-chip,
+.slot-modal-fullscreen[data-gui-game] .slot-close-btn {
+    transition: background 0.4s ease, border-color 0.4s ease, box-shadow 0.4s ease, color 0.3s ease;
+}
+
+/* Ensure skin spin button icons don't overlap spin text */
+.slot-modal-fullscreen[data-gui-skin] #spinBtn,
+.slot-modal-fullscreen[data-gui-game] #spinBtn {
+    position: relative;
+    overflow: hidden;
+}
+
+/* ============================================================
+   END OF VISUAL OVERHAUL
+   ============================================================ */

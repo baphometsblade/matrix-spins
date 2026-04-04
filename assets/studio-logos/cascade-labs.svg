@@ -1,0 +1,46 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 80" width="300" height="80">
+  <defs>
+    <linearGradient id="cl-teal" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#4DD0E1"/>
+      <stop offset="100%" stop-color="#00838F"/>
+    </linearGradient>
+    <linearGradient id="cl-pink" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#FF80AB"/>
+      <stop offset="100%" stop-color="#FF4081"/>
+    </linearGradient>
+    <linearGradient id="cl-blend" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#00BCD4"/>
+      <stop offset="100%" stop-color="#FF4081"/>
+    </linearGradient>
+  </defs>
+  <!-- Geometric background shapes -->
+  <polygon points="20,65 45,15 70,65" fill="url(#cl-teal)" opacity="0.12"/>
+  <polygon points="35,65 55,25 75,65" fill="url(#cl-pink)" opacity="0.08"/>
+  <!-- Cascade/waterfall geometric icon -->
+  <!-- Stacked rectangles descending -->
+  <rect x="28" y="18" width="20" height="5" rx="1" fill="url(#cl-teal)" opacity="0.8"/>
+  <rect x="33" y="27" width="22" height="5" rx="1" fill="url(#cl-blend)" opacity="0.7"/>
+  <rect x="38" y="36" width="24" height="5" rx="1" fill="url(#cl-blend)" opacity="0.6"/>
+  <rect x="32" y="45" width="26" height="5" rx="1" fill="url(#cl-pink)" opacity="0.6"/>
+  <rect x="26" y="54" width="28" height="5" rx="1" fill="url(#cl-pink)" opacity="0.5"/>
+  <!-- Connecting flow lines -->
+  <path d="M38 23 L44 27" fill="none" stroke="#00BCD4" stroke-width="0.8" opacity="0.5"/>
+  <path d="M44 32 L50 36" fill="none" stroke="#00BCD4" stroke-width="0.8" opacity="0.4"/>
+  <path d="M50 41 L45 45" fill="none" stroke="#FF4081" stroke-width="0.8" opacity="0.4"/>
+  <path d="M45 50 L40 54" fill="none" stroke="#FF4081" stroke-width="0.8" opacity="0.3"/>
+  <!-- Geometric accents -->
+  <circle cx="72" cy="22" r="3" fill="none" stroke="#00BCD4" stroke-width="1" opacity="0.4"/>
+  <rect x="68" y="38" width="6" height="6" fill="none" stroke="#FF4081" stroke-width="0.8" opacity="0.3" transform="rotate(45 71 41)"/>
+  <polygon points="72,55 68,62 76,62" fill="none" stroke="url(#cl-blend)" stroke-width="0.8" opacity="0.3"/>
+  <!-- Main text -->
+  <text x="186" y="44" text-anchor="middle" font-family="'Segoe UI', 'Helvetica Neue', Arial, sans-serif" font-size="30" font-weight="300" fill="url(#cl-teal)" letter-spacing="8">CASCADE</text>
+  <!-- Subtitle -->
+  <text x="186" y="60" text-anchor="middle" font-family="'Segoe UI', 'Helvetica Neue', Arial, sans-serif" font-size="9" fill="#FF4081" letter-spacing="5" opacity="0.7">L A B S</text>
+  <!-- Clean geometric underline -->
+  <line x1="100" y1="66" x2="272" y2="66" stroke="url(#cl-blend)" stroke-width="1" opacity="0.3"/>
+  <!-- Dot accents -->
+  <circle cx="100" cy="66" r="2" fill="#00BCD4" opacity="0.5"/>
+  <circle cx="272" cy="66" r="2" fill="#FF4081" opacity="0.5"/>
+  <!-- Top accent line -->
+  <line x1="110" y1="18" x2="262" y2="18" stroke="#00BCD4" stroke-width="0.5" opacity="0.2"/>
+</svg>

@@ -1,0 +1,44 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 80" width="300" height="80">
+  <defs>
+    <linearGradient id="wf-earth" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#8BC34A"/>
+      <stop offset="100%" stop-color="#558B2F"/>
+    </linearGradient>
+    <linearGradient id="wf-sun" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#FFAB40"/>
+      <stop offset="100%" stop-color="#FF6D00"/>
+    </linearGradient>
+  </defs>
+  <!-- Mountain silhouette -->
+  <polygon points="15,60 35,25 50,42 65,18 85,60" fill="#558B2F" opacity="0.25"/>
+  <polygon points="25,60 42,32 55,45 68,22 88,60" fill="#8BC34A" opacity="0.15"/>
+  <!-- Sun/horizon -->
+  <circle cx="54" cy="28" r="10" fill="url(#wf-sun)" opacity="0.7"/>
+  <circle cx="54" cy="28" r="14" fill="none" stroke="#FF6D00" stroke-width="0.8" opacity="0.3"/>
+  <!-- Sun rays -->
+  <line x1="54" y1="10" x2="54" y2="14" stroke="#FFAB40" stroke-width="1" opacity="0.5"/>
+  <line x1="38" y1="22" x2="41" y2="24" stroke="#FFAB40" stroke-width="1" opacity="0.4"/>
+  <line x1="70" y1="22" x2="67" y2="24" stroke="#FFAB40" stroke-width="1" opacity="0.4"/>
+  <line x1="36" y1="34" x2="39" y2="32" stroke="#FFAB40" stroke-width="1" opacity="0.3"/>
+  <line x1="72" y1="34" x2="69" y2="32" stroke="#FFAB40" stroke-width="1" opacity="0.3"/>
+  <!-- Trees -->
+  <polygon points="22,58 27,42 32,58" fill="#558B2F" opacity="0.5"/>
+  <polygon points="76,58 82,38 88,58" fill="#558B2F" opacity="0.5"/>
+  <rect x="25.5" y="58" width="3" height="5" fill="#8D6E63" opacity="0.5"/>
+  <rect x="80.5" y="58" width="3" height="5" fill="#8D6E63" opacity="0.5"/>
+  <!-- Ground line -->
+  <path d="M10 62 Q30 58, 55 62 Q75 66, 95 62" fill="none" stroke="#8BC34A" stroke-width="1.5" opacity="0.4"/>
+  <!-- Leaf accent -->
+  <path d="M95 35 Q100 28, 108 32 Q100 34, 95 35Z" fill="#8BC34A" opacity="0.5"/>
+  <path d="M97 37 Q102 30, 110 34 Q102 36, 97 37Z" fill="#558B2F" opacity="0.3"/>
+  <!-- Main text -->
+  <text x="198" y="34" text-anchor="middle" font-family="'Impact', 'Arial Black', sans-serif" font-size="26" fill="url(#wf-sun)" letter-spacing="3">WILD</text>
+  <text x="198" y="58" text-anchor="middle" font-family="'Impact', 'Arial Black', sans-serif" font-size="18" fill="url(#wf-earth)" letter-spacing="5">FRONTIER</text>
+  <!-- Accent bar -->
+  <rect x="125" y="39" width="146" height="2" rx="1" fill="#FF6D00" opacity="0.3"/>
+  <!-- Small nature dots -->
+  <circle cx="130" cy="66" r="1.5" fill="#8BC34A" opacity="0.4"/>
+  <circle cx="140" cy="68" r="1" fill="#558B2F" opacity="0.3"/>
+  <circle cx="256" cy="66" r="1.5" fill="#8BC34A" opacity="0.4"/>
+  <circle cx="266" cy="68" r="1" fill="#558B2F" opacity="0.3"/>
+</svg>

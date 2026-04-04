@@ -1,0 +1,41 @@
+{
+    "name": "matrix-spins-server",
+    "version": "1.0.0",
+    "description": "Server-side casino with secure RNG, JWT auth, and house edge enforcement",
+    "main": "server/index.js",
+    "scripts": {
+        "build": "node scripts/bundle-js.js",
+        "start": "node scripts/bundle-js.js && node server/index.js",
+        "dev": "node server/index.js",
+        "qa:regression": "node scripts/qa_regression.js",
+        "gen:symbols": "py -3.10 scripts/generate_sdxl_symbols.py --force",
+        "gen:assets": "py -3.10 scripts/generate_sdxl_assets.py --all --quality ultra --force",
+        "gen:chrome": "py -3.10 scripts/reasset_slot_chrome.py --engine sdxl --force --style-mode contrast",
+        "gen:webp": "py -3.10 scripts/convert_thumbnails_webp.py",
+        "gen:all": "npm run gen:symbols && npm run gen:assets && npm run gen:chrome && npm run gen:webp"
+    },
+    "dependencies": {
+        "@sentry/node": "^10.47.0",
+        "bcryptjs": "^2.4.3",
+        "compression": "^1.8.1",
+        "cors": "^2.8.5",
+        "dotenv": "^16.4.1",
+        "express": "^4.18.2",
+        "express-rate-limit": "^7.1.5",
+        "express-validator": "^7.3.1",
+        "helmet": "^7.1.0",
+        "jsonwebtoken": "^9.0.2",
+        "node-cron": "^4.2.1",
+        "nodemailer": "^8.0.1",
+        "pg": "^8.18.0",
+        "sql.js": "^1.10.2",
+        "stripe": "^17.7.0"
+    },
+    "devDependencies": {
+        "acorn": "^8.16.0",
+        "clean-css": "^5.3.3",
+        "css-tree": "^3.2.1",
+        "playwright": "^1.58.2",
+        "terser": "^5.46.1"
+    }
+}

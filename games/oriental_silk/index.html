@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Silk Road Riches | Matrix Spins Casino</title>
+  <link rel="stylesheet" href="../_shared/game-runtime.css">
+  <link rel="preload" href="/assets/game_symbols/oriental_silk/s1_silk_ribbon.png" as="image">
+  <link rel="preload" href="/assets/game_symbols/oriental_silk/s2_porcelain_vase.png" as="image">
+  <link rel="preload" href="/assets/game_symbols/oriental_silk/s3_silk_fan.png" as="image">
+  <link rel="preload" href="/assets/game_symbols/oriental_silk/s4_golden_Buddha.png" as="image">
+  <link rel="preload" href="/assets/game_symbols/oriental_silk/s5_trade_caravan.png" as="image">
+  <link rel="preload" href="/assets/game_symbols/oriental_silk/wild_silk_treasure.png" as="image">
+  <style>
+    :root {
+      --studio-primary: #40c4ff;
+      --studio-secondary: #d50000;
+      --studio-bg: #1a0000;
+      --studio-surface: #2a0a0a;
+      --studio-font: 'Ma Shan Zheng', 'SimSun', serif;
+      --studio-glow: #40c4ff40;
+      --reel-border: #40c4ff;
+      --reel-cell-size: 68px;
+    }
+    
+  </style>
+</head>
+<body>
+
+  <!-- Symbol SVG Definitions (fallback for missing HD assets) -->
+  <div style="display:none">
+  <svg id="svg_s1_silk_ribbon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" style="display:none">
+    <defs><linearGradient id="sg350" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#40c4ff"/><stop offset="100%" stop-color="#d50000"/>
+    </linearGradient></defs>
+    <rect width="100" height="100" rx="10" fill="#0d0d1a"/>
+    <path d="M50,5 L90,20 L90,65 L50,95 L10,65 L10,20 Z" fill="url(#sg350)" stroke="#40c4ff" stroke-width="1.5"/>
+    
+    <text x="50" y="56" text-anchor="middle" font-family="Arial,sans-serif" font-weight="700" font-size="11" fill="white">SILK R</text>
+  </svg>
+  <svg id="svg_s2_porcelain_vase" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" style="display:none">
+    <defs><linearGradient id="sg351" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#40c4ff"/><stop offset="100%" stop-color="#d50000"/>
+    </linearGradient></defs>
+    <rect width="100" height="100" rx="10" fill="#0d0d1a"/>
+    <polygon points="50,8 61,38 95,38 67,58 78,90 50,70 22,90 33,58 5,38 39,38" fill="url(#sg351)" stroke="#40c4ff" stroke-width="1"/>
+    
+    <text x="50" y="56" text-anchor="middle" font-family="Arial,sans-serif" font-weight="700" font-size="11" fill="white">PORCEL</text>
+  </svg>
+  <svg id="svg_s3_silk_fan" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" style="display:none">
+    <defs><linearGradient id="sg352" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#40c4ff"/><stop offset="100%" stop-color="#d50000"/>
+    </linearGradient></defs>
+    <rect width="100" height="100" rx="10" fill="#0d0d1a"/>
+    <polygon points="50,8 92,50 50,92 8,50" fill="url(#sg352)" stroke="#40c4ff" stroke-width="1.5"/>
+    
+    <text x="50" y="56" text-anchor="middle" font-family="Arial,sans-serif" font-weight="700" font-size="11" fill="white">SILK F</text>
+  </svg>
+  <svg id="svg_s4_golden_Buddha" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" style="display:none">
+    <defs><linearGradient id="sg353" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#40c4ff"/><stop offset="100%" stop-color="#d50000"/>
+    </linearGradient></defs>
+    <rect width="100" height="100" rx="10" fill="#0d0d1a"/>
+    <polygon points="50,8 61,38 95,38 67,58 78,90 50,70 22,90 33,58 5,38 39,38" fill="url(#sg353)" stroke="#40c4ff" stroke-width="1"/>
+    
+    <text x="50" y="56" text-anchor="middle" font-family="Arial,sans-serif" font-weight="700" font-size="11" fill="white">GOLDEN</text>
+  </svg>
+  <svg id="svg_s5_trade_caravan" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" style="display:none">
+    <defs><linearGradient id="sg354" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#40c4ff"/><stop offset="100%" stop-color="#d50000"/>
+    </linearGradient></defs>
+    <rect width="100" height="100" rx="10" fill="#0d0d1a"/>
+    <circle cx="50" cy="50" r="38" fill="url(#sg354)" stroke="#40c4ff" stroke-width="1.5"/>
+    
+    <text x="50" y="56" text-anchor="middle" font-family="Arial,sans-serif" font-weight="700" font-size="11" fill="white">TRADE </text>
+  </svg>
+  <svg id="svg_wild_silk_treasure" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" style="display:none">
+    <defs><linearGradient id="sg355" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#ffd700"/><stop offset="100%" stop-color="#ff8f00"/>
+    </linearGradient></defs>
+    <rect width="100" height="100" rx="10" fill="#2a1a00"/>
+    <polygon points="50,8 92,50 50,92 8,50" fill="url(#sg355)" stroke="#ffd700" stroke-width="1.5"/>
+    <text x="50" y="28" text-anchor="middle" font-size="10" font-weight="900" fill="#ffd700">WILD</text>
+    <text x="50" y="62" text-anchor="middle" font-family="Arial,sans-serif" font-weight="700" font-size="11" fill="white">SILK T</text>
+  </svg>
+  </div>
+
+  <!-- Top Bar -->
+  <div class="game-topbar">
+    <button class="back-btn" id="backBtn">&#8592; Lobby</button>
+    <div class="game-title">Silk Road Riches</div>
+    <div class="studio-badge">
+      <span>Dragon Pearl</span>
+    </div>
+  </div>
+
+  <!-- Balance Bar -->
+  <div class="balance-bar">
+    <div class="balance-item"><div class="label">Balance</div><div class="value" id="balanceValue">$1,000.00</div></div>
+    <div class="balance-item"><div class="label">Bet</div><div class="value" id="betValue">$1.00</div></div>
+    <div class="balance-item"><div class="label">Win</div><div class="value" id="winValue">$0.00</div></div>
+  </div>
+
+  <!-- Game Area -->
+  <div class="game-area">
+    <div class="free-spins-banner" id="freeSpinsBanner">FREE SPINS</div>
+    <div class="reels-frame">
+      <div class="reels-grid" id="reelsGrid"></div>
+    </div>
+    <div class="mechanic-overlay" id="mechanicOverlay">
+      <div><div class="mechanic-text"></div><div class="mechanic-sub"></div></div>
+    </div>
+  </div>
+
+  <!-- Controls -->
+  <div class="controls-bar">
+    <button class="autoplay-btn" id="autoplayBtn">Auto</button>
+    <div class="bet-control">
+      <button id="betDown">-</button>
+      <div class="bet-display" id="betDisplay">$1.00</div>
+      <button id="betUp">+</button>
+    </div>
+    <button class="spin-btn" id="spinBtn">SPIN</button>
+    <button class="maxbet-btn" id="maxBet">MAX</button>
+  </div>
+
+  <!-- Info Bar -->
+  <div class="info-bar">
+    <span>RTP: 90.75%</span>
+    <span>PAYLINE | 5x4</span>
+    <span>MEDIUM</span>
+  </div>
+
+  <!-- Scripts -->
+  <script src="../../js/casino-engine.js?v=3.1.0"></script>
+  <script>
+    window.GAME_CONFIG = {
+  "id": "oriental_silk",
+  "name": "Silk Road Riches",
+  "provider": "dragon-pearl",
+  "studioId": "dragon-pearl",
+  "symbols": [
+    "s1_silk_ribbon",
+    "s2_porcelain_vase",
+    "s3_silk_fan",
+    "s4_golden_Buddha",
+    "s5_trade_caravan",
+    "wild_silk_treasure"
+  ],
+  "gridCols": 5,
+  "gridRows": 4,
+  "winType": "payline",
+  "wildSymbol": "wild_silk_treasure",
+  "scatterSymbol": "s5_trade_caravan",
+  "rtp": 90.75,
+  "volatility": "medium",
+  "bonusType": "multiplier_trail",
+  "freeSpinsCount": 10,
+  "freeSpinsTrigger": 3,
+  "clusterMin": 5,
+  "minBet": 0.2,
+  "maxBet": 2800
+};
+    window.GAME_MECHANIC = {
+            _gameIdx: 35,
+            _trail: [1,2,3,4,6,10],
+            _pos: 0,
+            onResult: function(grid, cfg, st, baseWin) {
+                if (baseWin > 0) {
+                    var mult = this._trail[Math.min(this._pos, this._trail.length - 1)];
+                    this._pos++;
+                    return { winAmount: baseWin * mult, message: mult > 1 ? 'TRAIL x' + mult + '!' : '', sub: 'Step ' + this._pos + '/' + this._trail.length };
+                }
+                this._pos = 0;
+                return null;
+            }
+        };
+  </script>
+  <script src="../_shared/game-runtime.js"></script>
+</body>
+</html>

@@ -1,0 +1,2206 @@
+{
+  "generated": "2026-04-04T19:26:55",
+  "version": "3.0.0",
+  "games": [
+    {
+      "id": "sugar_rush",
+      "name": "Candy Cascade 1000",
+      "studio": "Golden Reels Studio",
+      "provider": "Golden Reels Studio",
+      "assets": {
+        "thumbnail": "assets/thumbnails/sugar_rush.png",
+        "symbols": {
+          "s1_lollipop": "assets/game_symbols/sugar_rush/s1_lollipop.png",
+          "s2_gummy_bear": "assets/game_symbols/sugar_rush/s2_gummy_bear.png",
+          "s3_candy_cane": "assets/game_symbols/sugar_rush/s3_candy_cane.png",
+          "s4_cupcake": "assets/game_symbols/sugar_rush/s4_cupcake.png",
+          "s5_diamond_candy": "assets/game_symbols/sugar_rush/s5_diamond_candy.png",
+          "wild_sugar": "assets/game_symbols/sugar_rush/wild_sugar.png"
+        },
+        "backgrounds": {
+          "landscape": "assets/backgrounds/slots/sugar_rush.svg",
+          "portrait": "assets/backgrounds/slots/sugar_rush_portrait.svg"
+        },
+        "studioLogo": null
+      }
+    },
+    {
+      "id": "gates_olympus",
+      "name": "Halls of Thunder",
+      "studio": "Mythic Forge",
+      "provider": "Mythic Forge",
+      "assets": {
+        "thumbnail": "assets/thumbnails/gates_olympus.png",
+        "symbols": {
+          "s1_chalice": "assets/game_symbols/gates_olympus/s1_chalice.png",
+          "s2_ring": "assets/game_symbols/gates_olympus/s2_ring.png",
+          "s3_hourglass": "assets/game_symbols/gates_olympus/s3_hourglass.png",
+          "s4_crown": "assets/game_symbols/gates_olympus/s4_crown.png",
+          "s5_lightning": "assets/game_symbols/gates_olympus/s5_lightning.png",
+          "wild_zeus": "assets/game_symbols/gates_olympus/wild_zeus.png"
+        },
+        "backgrounds": {
+          "landscape": "assets/backgrounds/slots/gates_olympus.svg",
+          "portrait": "assets/backgrounds/slots/gates_olympus_portrait.svg"
+        },
+        "studioLogo": null
+      }
+    },
+    {
+      "id": "hot_chillies",
+      "name": "Salsa Spins",
+      "studio": "Golden Reels Studio",
+      "provider": "Golden Reels Studio",
+      "assets": {
+        "thumbnail": "assets/thumbnails/hot_chillies.png",
+        "symbols": {
+          "s1_taco": "assets/game_symbols/hot_chillies/s1_taco.png",
+          "s2_maracas": "assets/game_symbols/hot_chillies/s2_maracas.png",
+          "s3_sombrero": "assets/game_symbols/hot_chillies/s3_sombrero.png",
+          "s4_chilli": "assets/game_symbols/hot_chillies/s4_chilli.png",
+          "s5_hot_7": "assets/game_symbols/hot_chillies/s5_hot_7.png",
+          "wild_chilli": "assets/game_symbols/hot_chillies/wild_chilli.png"
+        },
+        "backgrounds": {
+          "landscape": "assets/backgrounds/slots/hot_chillies.svg",
+          "portrait": "assets/backgrounds/slots/hot_chillies_portrait.svg"
+        },
+        "studioLogo": null
+      }
+    },
+    {
+      "id": "wolf_gold",
+      "name": "Alpha Pack",
+      "studio": "Wild Frontier Games",
+      "provider": "Wild Frontier Games",
+      "assets": {
+        "thumbnail": "assets/thumbnails/wolf_gold.png",
+        "symbols": {
+          "s1_feather": "assets/game_symbols/wolf_gold/s1_feather.png",
+          "s2_paw": "assets/game_symbols/wolf_gold/s2_paw.png",
+          "s3_eagle": "assets/game_symbols/wolf_gold/s3_eagle.png",
+          "s4_totem": "assets/game_symbols/wolf_gold/s4_totem.png",
+          "s5_moon": "assets/game_symbols/wolf_gold/s5_moon.png",
+          "wild_wolf": "assets/game_symbols/wolf_gold/wild_wolf.png"
+        },
+        "backgrounds": {
+          "landscape": "assets/backgrounds/slots/wolf_gold.svg",
+          "portrait": "assets/backgrounds/slots/wolf_gold_portrait.svg"
+        },
+        "studioLogo": null
+      }
+    },
+    {
+      "id": "book_dead",
+      "name": "Tome of Ra",
+      "studio": "Mythic Forge",
+      "provider": "Mythic Forge",
+      "assets": {
+        "thumbnail": "assets/thumbnails/book_dead.png",
+        "symbols": {
+          "s1_ankh": "assets/game_symbols/book_dead/s1_ankh.png",
+          "s2_scarab": "assets/game_symbols/book_dead/s2_scarab.png",
+          "s3_eye": "assets/game_symbols/book_dead/s3_eye.png",
+          "s4_pharaoh": "assets/game_symbols/book_dead/s4_pharaoh.png",
+          "s5_anubis": "assets/game_symbols/book_dead/s5_anubis.png",
+          "wild_book": "assets/game_symbols/book_dead/wild_book.png"
+        },
+        "backgrounds": {
+          "landscape": "assets/backgrounds/slots/book_dead.svg",
+          "portrait": "assets/backgrounds/slots/book_dead_portrait.svg"
+        },
+        "studioLogo": null
+      }
+    },
+    {
+      "id": "starburst_xxl",
+      "name": "Cosmic Gems",
+      "studio": "Nebula Gaming",
+      "provider": "Nebula Gaming",
+      "assets": {
+        "thumbnail": "assets/thumbnails/starburst_xxl.png",
+        "symbols": {
+          "s1_gem_red": "assets/game_symbols/starburst_xxl/s1_gem_red.png",
+          "s2_gem_blue": "assets/game_symbols/starburst_xxl/s2_gem_blue.png",
+          "s3_gem_green": "assets/game_symbols/starburst_xxl/s3_gem_green.png",
+          "s4_gem_yellow": "assets/game_symbols/starburst_xxl/s4_gem_yellow.png",
+          "s5_gem_purple": "assets/game_symbols/starburst_xxl/s5_gem_purple.png",
+          "wild_star": "assets/game_symbols/starburst_xxl/wild_star.png"
+        },
+        "backgrounds": {
+          "landscape": "assets/backgrounds/slots/starburst_xxl.svg",
+          "portrait": "assets/backgrounds/slots/starburst_xxl_portrait.svg"
+        },
+        "studioLogo": null
+      }
+    },
+    {
+      "id": "starlight_princess",
+      "name": "Starlight Empress",
+      "studio": "Nebula Gaming",
+      "provider": "Nebula Gaming",
+      "assets": {
+        "thumbnail": "assets/thumbnails/starlight_princess.png",
+        "symbols": {
+          "s1_crystal_heart": "assets/game_symbols/starlight_princess/s1_crystal_heart.png",
+          "s2_magic_wand": "assets/game_symbols/starlight_princess/s2_magic_wand.png",
+          "s3_tiara": "assets/game_symbols/starlight_princess/s3_tiara.png",
+          "s4_moon_orb": "assets/game_symbols/starlight_princess/s4_moon_orb.png",
+          "s5_star_crystal": "assets/game_symbols/starlight_princess/s5_star_crystal.png",
+          "wild_empress": "assets/game_symbols/starlight_princess/wild_empress.png"
+        },
+        "backgrounds": {
+          "landscape": "assets/backgrounds/slots/starlight_princess.svg",
+          "portrait": "assets/backgrounds/slots/starlight_princess_portrait.svg"
+        },
+        "studioLogo": null
+      }
+    },
+    {
+      "id": "pyramid_king",
+      "name": "Pharaoh's Fortune",
+      "studio": "Mythic Forge",
+      "provider": "Mythic Forge",
+      "assets": {
+        "thumbnail": "assets/thumbnails/pyramid_king.png",
+        "symbols": {
+          "s1_pyramid": "assets/game_symbols/pyramid_king/s1_pyramid.svg",
+          "s2_scarab_golden": "assets/game_symbols/pyramid_king/s2_scarab_golden.svg",
+          "s3_sarcophagus": "assets/game_symbols/pyramid_king/s3_sarcophagus.svg",
+          "s4_cartouche": "assets/game_symbols/pyramid_king/s4_cartouche.svg",
+          "s5_sun_disk": "assets/game_symbols/pyramid_king/s5_sun_disk.svg",
+          "wild_pharaoh": "assets/game_symbols/pyramid_king/wild_pharaoh.svg"
+        },
+        "backgrounds": {
+          "landscape": "assets/backgrounds/slots/pyramid_king.svg",
+          "portrait": "assets/backgrounds/slots/pyramid_king_portrait.svg"
+        },
+        "studioLogo": null
+      }
+    },
+    {
+      "id": "fruit_bonanza",
+      "name": "Cherry Heaven",
+      "studio": "Golden Reels Studio",
+      "provider": "Golden Reels Studio",
+      "assets": {
+        "thumbnail": "assets/thumbnails/fruit_bonanza.png",
+        "symbols": {
+          "s1_cherry": "assets/game_symbols/fruit_bonanza/s1_cherry.svg",
+          "s2_plum": "assets/game_symbols/fruit_bonanza/s2_plum.svg",
+          "s3_lemon": "assets/game_symbols/fruit_bonanza/s3_lemon.svg",
+          "s4_orange": "assets/game_symbols/fruit_bonanza/s4_orange.svg",
+          "s5_bell": "assets/game_symbols/fruit_bonanza/s5_bell.svg",
+          "wild_grape": "assets/game_symbols/fruit_bonanza/wild_grape.svg"
+        },
+        "backgrounds": {
+          "landscape": "assets/backgrounds/slots/fruit_bonanza.svg",
+          "portrait": "assets/backgrounds/slots/fruit_bonanza_portrait.svg"
+        },
+        "studioLogo": null
+      }
+    },
+    {
+      "id": "space_odyssey",
+      "name": "Stellar Drift",
+      "studio": "Nebula Gaming",
+      "provider": "Nebula Gaming",
+      "assets": {
+        "thumbnail": "assets/thumbnails/space_odyssey.png",
+        "symbols": {
+          "s1_satellite": "assets/game_symbols/space_odyssey/s1_satellite.svg",
+          "s2_planet": "assets/game_symbols/space_odyssey/s2_planet.svg",
+          "s3_comet": "assets/game_symbols/space_odyssey/s3_comet.svg",
+          "s4_astronaut": "assets/game_symbols/space_odyssey/s4_astronaut.svg",
+          "s5_black_hole": "assets/game_symbols/space_odyssey/s5_black_hole.svg",
+          "wild_space_station": "assets/game_symbols/space_odyssey/wild_space_station.svg"
+        },
+        "backgrounds": {
+          "landscape": "assets/backgrounds/slots/space_odyssey.svg",
+          "portrait": "assets/backgrounds/slots/space_odyssey_portrait.svg"
+        },
+        "studioLogo": null
+      }
+    },
+    {
+      "id": "dragon_realm",
+      "name": "Dragon's Hoard",
+      "studio": "Dragon Pearl Studios",
+      "provider": "Dragon Pearl Studios",
+      "assets": {
+        "thumbnail": "assets/thumbnails/dragon_realm.png",
+        "symbols": {
+          "s1_dragon_egg": "assets/game_symbols/dragon_realm/s1_dragon_egg.svg",
+          "s2_treasure": "assets/game_symbols/dragon_realm/s2_treasure.svg",
+          "s3_castle": "assets/game_symbols/dragon_realm/s3_castle.svg",
+          "s4_knight": "assets/game_symbols/dragon_realm/s4_knight.svg",
+          "s5_dragon_scale": "assets/game_symbols/dragon_realm/s5_dragon_scale.svg",
+          "wild_dragon": "assets/game_symbols/dragon_realm/wild_dragon.svg"
+        },
+        "backgrounds": {
+          "landscape": "assets/backgrounds/slots/dragon_realm.svg",
+          "portrait": "assets/backgrounds/slots/dragon_realm_portrait.svg"
+        },
+        "studioLogo": null
+      }
+    },
+    {
+      "id": "leopard_prowl",
+      "name": "Jungle Predator",
+      "studio": "Wild Frontier Games",
+      "provider": "Wild Frontier Games",
+      "assets": {
+        "thumbnail": "assets/thumbnails/leopard_prowl.png",
+        "symbols": {
+          "s1_leopard": "assets/game_symbols/leopard_prowl/s1_leopard.svg",
+          "s2_gazelle": "assets/game_symbols/leopard_prowl/s2_gazelle.svg",
+          "s3_acacia_tree": "assets/game_symbols/leopard_prowl/s3_acacia_tree.svg",
+          "s4_sun": "assets/game_symbols/leopard_prowl/s4_sun.svg",
+          "s5_feline_face": "assets/game_symbols/leopard_prowl/s5_feline_face.svg",
+          "wild_leopard_gold": "assets/game_symbols/leopard_prowl/wild_leopard_gold.svg"
+        },
+        "backgrounds": {
+          "landscape": "assets/backgrounds/slots/leopard_prowl.svg",
+          "portrait": "assets/backgrounds/slots/leopard_prowl_portrait.svg"
+        },
+        "studioLogo": null
+      }
+    },
+    {
+      "id": "lucky_dragon",
+      "name": "Golden Dragon Dance",
+      "studio": "Dragon Pearl Studios",
+      "provider": "Dragon Pearl Studios",
+      "assets": {
+        "thumbnail": "assets/thumbnails/lucky_dragon.png",
+        "symbols": {
+          "s1_dragon_statue": "assets/game_symbols/lucky_dragon/s1_dragon_statue.svg",
+          "s2_lantern": "assets/game_symbols/lucky_dragon/s2_lantern.svg",
+          "s3_coin": "assets/game_symbols/lucky_dragon/s3_coin.svg",
+          "s4_fan": "assets/game_symbols/lucky_dragon/s4_fan.svg",
+          "s5_lucky_red": "assets/game_symbols/lucky_dragon/s5_lucky_red.svg",
+          "wild_gold_dragon": "assets/game_symbols/lucky_dragon/wild_gold_dragon.svg"
+        },
+        "backgrounds": {
+          "landscape": "assets/backgrounds/slots/lucky_dragon.svg",
+          "portrait": "assets/backgrounds/slots/lucky_dragon_portrait.svg"
+        },
+        "studioLogo": null
+      }
+    },
+    {
+      "id": "cursed_night",
+      "name": "Crimson Fang",
+      "studio": "Shadow Works",
+      "provider": "Shadow Works",
+      "assets": {
+        "thumbnail": "assets/thumbnails/cursed_night.png",
+        "symbols": {
+          "s1_vampire": "assets/game_symbols/cursed_night/s1_vampire.svg",
+          "s2_coffin": "assets/game_symbols/cursed_night/s2_coffin.svg",
+          "s3_bat": "assets/game_symbols/cursed_night/s3_bat.svg",
+          "s4_moon_blood": "assets/game_symbols/cursed_night/s4_moon_blood.svg",
+          "s5_gothic_cross": "assets/game_symbols/cursed_night/s5_gothic_cross.svg",
+          "wild_blood_splat": "assets/game_symbols/cursed_night/wild_blood_splat.svg"
+        },
+        "backgrounds": {
+          "landscape": "assets/backgrounds/slots/cursed_night.svg",
+          "portrait": "assets/backgrounds/slots/cursed_night_portrait.svg"
+        },
+        "studioLogo": null
+      }
+    },
+    {
+      "id": "outback_king",
+      "name": "Kookaburra Cash",
+      "studio": "Wild Frontier Games",
+      "provider": "Wild Frontier Games",
+      "assets": {
+        "thumbnail": "assets/thumbnails/outback_king.png",
+        "symbols": {
+          "s1_kangaroo": "assets/game_symbols/outback_king/s1_kangaroo.svg",
+          "s2_koala": "assets/game_symbols/outback_king/s2_koala.svg",
+          "s3_boomerang": "assets/game_symbols/outback_king/s3_boomerang.svg",
+          "s4_aboriginal_art": "assets/game_symbols/outback_king/s4_aboriginal_art.svg",
+          "s5_kookaburra": "assets/game_symbols/outback_king/s5_kookaburra.svg",
+          "wild_outback_sun": "assets/game_symbols/outback_king/wild_outback_sun.svg"
+        },
+        "backgrounds": {
+          "landscape": "assets/backgrounds/slots/outback_king.svg",
+          "portrait": "assets/backgrounds/slots/outback_king_portrait.svg"
+        },
+        "studioLogo": null
+      }
+    },
+    {
+      "id": "joker_frenzy",
+      "name": "Jester's Gambit",
+      "studio": "Cascade Labs",
+      "provider": "Cascade Labs",
+      "assets": {
+        "thumbnail": "assets/thumbnails/joker_frenzy.png",
+        "symbols": {
+          "s1_jester_hat": "assets/game_symbols/joker_frenzy/s1_jester_hat.svg",
+          "s2_playing_card": "assets/game_symbols/joker_frenzy/s2_playing_card.svg",
+          "s3_dice": "assets/game_symbols/joker_frenzy/s3_dice.svg",
+          "s4_trumpet": "assets/game_symbols/joker_frenzy/s4_trumpet.svg",
+          "s5_laugh_mask": "assets/game_symbols/joker_frenzy/s5_laugh_mask.svg",
+          "wild_joker_wild": "assets/game_symbols/joker_frenzy/wild_joker_wild.svg"
+        },
+        "backgrounds": {
+          "landscape": "assets/backgrounds/slots/joker_frenzy.svg",
+          "portrait": "assets/backgrounds/slots/joker_frenzy_portrait.svg"
+        },
+        "studioLogo": null
+      }
+    },
+    {
+      "id": "nile_jewels",
+      "name": "Cleopatra's Diamonds",
+      "studio": "Mythic Forge",
+      "provider": "Mythic Forge",
+      "assets": {
+        "thumbnail": "assets/thumbnails/nile_jewels.png",
+        "symbols": {
+          "s1_turquoise": "assets/game_symbols/nile_jewels/s1_turquoise.svg",
+          "s2_blue_topaz": "assets/game_symbols/nile_jewels/s2_blue_topaz.svg",
+          "s3_aquamarine": "assets/game_symbols/nile_jewels/s3_aquamarine.svg",
+          "s4_scarab_gem": "assets/game_symbols/nile_jewels/s4_scarab_gem.svg",
+          "s5_cleopatra_crown": "assets/game_symbols/nile_jewels/s5_cleopatra_crown.svg",
+          "wild_nile_pearl": "assets/game_symbols/nile_jewels/wild_nile_pearl.svg"
+        },
+        "backgrounds": {
+          "landscape": "assets/backgrounds/slots/nile_jewels.svg",
+          "portrait": "assets/backgrounds/slots/nile_jewels_portrait.svg"
+        },
+        "studioLogo": null
+      }
+    },
+    {
+      "id": "peach_paradise",
+      "name": "Paradise Peach",
+      "studio": "Golden Reels Studio",
+      "provider": "Golden Reels Studio",
+      "assets": {
+        "thumbnail": "assets/thumbnails/peach_paradise.png",
+        "symbols": {
+          "s1_peach": "assets/game_symbols/peach_paradise/s1_peach.svg",
+          "s2_mango": "assets/game_symbols/peach_paradise/s2_mango.svg",
+          "s3_passion_fruit": "assets/game_symbols/peach_paradise/s3_passion_fruit.svg",
+          "s4_papaya": "assets/game_symbols/peach_paradise/s4_papaya.svg",
+          "s5_banana_bunch": "assets/game_symbols/peach_paradise/s5_banana_bunch.svg",
+          "wild_tropical_mix": "assets/game_symbols/peach_paradise/wild_tropical_mix.svg"
+        },
+        "backgrounds": {
+          "landscape": "assets/backgrounds/slots/peach_paradise.svg",
+          "portrait": "assets/backgrounds/slots/peach_paradise_portrait.svg"
+        },
+        "studioLogo": null
+      }
+    },
+    {
+      "id": "cosmic_nova",
+      "name": "Nova Burst",
+      "studio": "Nebula Gaming",
+      "provider": "Nebula Gaming",
+      "assets": {
+        "thumbnail": "assets/thumbnails/cosmic_nova.png",
+        "symbols": {
+          "s1_nebula": "assets/game_symbols/cosmic_nova/s1_nebula.svg",
+          "s2_quasar": "assets/game_symbols/cosmic_nova/s2_quasar.svg",
+          "s3_meteor": "assets/game_symbols/cosmic_nova/s3_meteor.svg",
+          "s4_cosmic_dust": "assets/game_symbols/cosmic_nova/s4_cosmic_dust.svg",
+          "s5_supercluster": "assets/game_symbols/cosmic_nova/s5_supercluster.svg",
+          "wild_nova_core": "assets/game_symbols/cosmic_nova/wild_nova_core.svg"
+        },
+        "backgrounds": {
+          "landscape": "assets/backgrounds/slots/cosmic_nova.svg",
+          "portrait": "assets/backgrounds/slots/cosmic_nova_portrait.svg"
+        },
+        "studioLogo": null
+      }
+    },
+    {
+      "id": "sphinx_riddle",
+      "name": "Sphinx's Mystery",
+      "studio": "Mythic Forge",
+      "provider": "Mythic Forge",
+      "assets": {
+        "thumbnail": "assets/thumbnails/sphinx_riddle.png",
+        "symbols": {
+          "s1_sphinx_head": "assets/game_symbols/sphinx_riddle/s1_sphinx_head.svg",
+          "s2_papyrus": "assets/game_symbols/sphinx_riddle/s2_papyrus.svg",
+          "s3_lotus": "assets/game_symbols/sphinx_riddle/s3_lotus.svg",
+          "s4_horus_eye": "assets/game_symbols/sphinx_riddle/s4_horus_eye.svg",
+          "s5_kheops_pyramid": "assets/game_symbols/sphinx_riddle/s5_kheops_pyramid.svg",
+          "wild_ancient_curse": "assets/game_symbols/sphinx_riddle/wild_ancient_curse.svg"
+        },
+        "backgrounds": {
+          "landscape": "assets/backgrounds/slots/sphinx_riddle.svg",
+          "portrait": "assets/backgrounds/slots/sphinx_riddle_portrait.svg"
+        },
+        "studioLogo": null
+      }
+    },
+    {
+      "id": "wild_rooster",
+      "name": "Rooster's Crow",
+      "studio": "Wild Frontier Games",
+      "provider": "Wild Frontier Games",
+      "assets": {
+        "thumbnail": "assets/thumbnails/wild_rooster.png",
+        "symbols": {
+          "s1_rooster": "assets/game_symbols/wild_rooster/s1_rooster.svg",
+          "s2_hen": "assets/game_symbols/wild_rooster/s2_hen.svg",
+          "s3_barn": "assets/game_symbols/wild_rooster/s3_barn.svg",
+          "s4_corn": "assets/game_symbols/wild_rooster/s4_corn.svg",
+          "s5_sunrise": "assets/game_symbols/wild_rooster/s5_sunrise.svg",
+          "wild_golden_rooster": "assets/game_symbols/wild_rooster/wild_golden_rooster.svg"
+        },
+        "backgrounds": {
+          "landscape": "assets/backgrounds/slots/wild_rooster.svg",
+          "portrait": "assets/backgrounds/slots/wild_rooster_portrait.svg"
+        },
+        "studioLogo": null
+      }
+    },
+    {
+      "id": "infinity_mirror",
+      "name": "Enchanted Mirror",
+      "studio": "Mythic Forge",
+      "provider": "Mythic Forge",
+      "assets": {
+        "thumbnail": "assets/thumbnails/infinity_mirror.png",
+        "symbols": {
+          "s1_mirror_frame": "assets/game_symbols/infinity_mirror/s1_mirror_frame.svg",
+          "s2_crystal_ball": "assets/game_symbols/infinity_mirror/s2_crystal_ball.svg",
+          "s3_magic_rose": "assets/game_symbols/infinity_mirror/s3_magic_rose.svg",
+          "s4_enchanted_book": "assets/game_symbols/infinity_mirror/s4_enchanted_book.svg",
+          "s5_mirror_reflection": "assets/game_symbols/infinity_mirror/s5_mirror_reflection.svg",
+          "wild_infinite_mirror": "assets/game_symbols/infinity_mirror/wild_infinite_mirror.svg"
+        },
+        "backgrounds": {
+          "landscape": "assets/backgrounds/slots/infinity_mirror.svg",
+          "portrait": "assets/backgrounds/slots/infinity_mirror_portrait.svg"
+        },
+        "studioLogo": null
+      }
+    },
+    {
+      "id": "spice_fortune",
+      "name": "Spiced Fortune",
+      "studio": "Golden Reels Studio",
+      "provider": "Golden Reels Studio",
+      "assets": {
+        "thumbnail": "assets/thumbnails/spice_fortune.png",
+        "symbols": {
+          "s1_vanilla_pod": "assets/game_symbols/spice_fortune/s1_vanilla_pod.svg",
+          "s2_cinnamon_stick": "assets/game_symbols/spice_fortune/s2_cinnamon_stick.svg",
+          "s3_nutmeg": "assets/game_symbols/spice_fortune/s3_nutmeg.svg",
+          "s4_cardamom": "assets/game_symbols/spice_fortune/s4_cardamom.svg",
+          "s5_saffron_threads": "assets/game_symbols/spice_fortune/s5_saffron_threads.svg",
+          "wild_spice_jar": "assets/game_symbols/spice_fortune/wild_spice_jar.svg"
+        },
+        "backgrounds": {
+          "landscape": "assets/backgrounds/slots/spice_fortune.svg",
+          "portrait": "assets/backgrounds/slots/spice_fortune_portrait.svg"
+        },
+        "studioLogo": null
+      }
+    },
+    {
+      "id": "galaxy_rush",
+      "name": "Nebula Dash",
+      "studio": "Nebula Gaming",
+      "provider": "Nebula Gaming",
+      "assets": {
+        "thumbnail": "assets/thumbnails/galaxy_rush.png",
+        "symbols": {
+          "s1_asteroid": "assets/game_symbols/galaxy_rush/s1_asteroid.svg",
+          "s2_probe": "assets/game_symbols/galaxy_rush/s2_probe.svg",
+          "s3_galaxy": "assets/game_symbols/galaxy_rush/s3_galaxy.svg",
+          "s4_pulsar": "assets/game_symbols/galaxy_rush/s4_pulsar.svg",
+          "s5_space_ship": "assets/game_symbols/galaxy_rush/s5_space_ship.svg",
+          "wild_hyperspace": "assets/game_symbols/galaxy_rush/wild_hyperspace.svg"
+        },
+        "backgrounds": {
+          "landscape": "assets/backgrounds/slots/galaxy_rush.svg",
+          "portrait": "assets/backgrounds/slots/galaxy_rush_portrait.svg"
+        },
+        "studioLogo": null
+      }
+    },
+    {
+      "id": "warrior_princess",
+      "name": "Valkyrie's Valor",
+      "studio": "Ironclad Entertainment",
+      "provider": "Ironclad Entertainment",
+      "assets": {
+        "thumbnail": "assets/thumbnails/warrior_princess.png",
+        "symbols": {
+          "s1_valkyrie_helm": "assets/game_symbols/warrior_princess/s1_valkyrie_helm.svg",
+          "s2_battle_axe": "assets/game_symbols/warrior_princess/s2_battle_axe.svg",
+          "s3_shield": "assets/game_symbols/warrior_princess/s3_shield.svg",
+          "s4_spear": "assets/game_symbols/warrior_princess/s4_spear.svg",
+          "s5_rune_stone": "assets/game_symbols/warrior_princess/s5_rune_stone.svg",
+          "wild_valkyrie_warrior": "assets/game_symbols/warrior_princess/wild_valkyrie_warrior.svg"
+        },
+        "backgrounds": {
+          "landscape": "assets/backgrounds/slots/warrior_princess.svg",
+          "portrait": "assets/backgrounds/slots/warrior_princess_portrait.svg"
+        },
+        "studioLogo": null
+      }
+    },
+    {
+      "id": "jade_fortune",
+      "name": "Emperor's Jade",
+      "studio": "Dragon Pearl Studios",
+      "provider": "Dragon Pearl Studios",
+      "assets": {
+        "thumbnail": "assets/thumbnails/jade_fortune.png",
+        "symbols": {
+          "s1_jade_dragon": "assets/game_symbols/jade_fortune/s1_jade_dragon.svg",
+          "s2_pagoda": "assets/game_symbols/jade_fortune/s2_pagoda.svg",
+          "s3_golden_coin": "assets/game_symbols/jade_fortune/s3_golden_coin.svg",
+          "s4_silk_fan": "assets/game_symbols/jade_fortune/s4_silk_fan.svg",
+          "s5_emperor_seal": "assets/game_symbols/jade_fortune/s5_emperor_seal.svg",
+          "wild_jade_blessing": "assets/game_symbols/jade_fortune/wild_jade_blessing.svg"
+        },
+        "backgrounds": {
+          "landscape": "assets/backgrounds/slots/jade_fortune.svg",
+          "portrait": "assets/backgrounds/slots/jade_fortune_portrait.svg"
+        },
+        "studioLogo": null
+      }
+    },
+    {
+      "id": "midnight_phantom",
+      "name": "Phantom's Whisper",
+      "studio": "Shadow Works",
+      "provider": "Shadow Works",
+      "assets": {
+        "thumbnail": "assets/thumbnails/midnight_phantom.png",
+        "symbols": {
+          "s1_phantom_mask": "assets/game_symbols/midnight_phantom/s1_phantom_mask.svg",
+          "s2_haunted_bell": "assets/game_symbols/midnight_phantom/s2_haunted_bell.svg",
+          "s3_cursed_doll": "assets/game_symbols/midnight_phantom/s3_cursed_doll.svg",
+          "s4_ghost_orb": "assets/game_symbols/midnight_phantom/s4_ghost_orb.svg",
+          "s5_spectral_flame": "assets/game_symbols/midnight_phantom/s5_spectral_flame.svg",
+          "wild_phantom_essence": "assets/game_symbols/midnight_phantom/wild_phantom_essence.svg"
+        },
+        "backgrounds": {
+          "landscape": "assets/backgrounds/slots/midnight_phantom.svg",
+          "portrait": "assets/backgrounds/slots/midnight_phantom_portrait.svg"
+        },
+        "studioLogo": null
+      }
+    },
+    {
+      "id": "boomerang_luck",
+      "name": "Bush Tucker Riches",
+      "studio": "Wild Frontier Games",
+      "provider": "Wild Frontier Games",
+      "assets": {
+        "thumbnail": "assets/thumbnails/boomerang_luck.png",
+        "symbols": {
+          "s1_boomerang": "assets/game_symbols/boomerang_luck/s1_boomerang.svg",
+          "s2_dingo": "assets/game_symbols/boomerang_luck/s2_dingo.svg",
+          "s3_bush_berry": "assets/game_symbols/boomerang_luck/s3_bush_berry.svg",
+          "s4_emu": "assets/game_symbols/boomerang_luck/s4_emu.svg",
+          "s5_aboriginal_dot": "assets/game_symbols/boomerang_luck/s5_aboriginal_dot.svg",
+          "wild_outback_fire": "assets/game_symbols/boomerang_luck/wild_outback_fire.svg"
+        },
+        "backgrounds": {
+          "landscape": "assets/backgrounds/slots/boomerang_luck.svg",
+          "portrait": "assets/backgrounds/slots/boomerang_luck_portrait.svg"
+        },
+        "studioLogo": null
+      }
+    },
+    {
+      "id": "rainbow_fortune",
+      "name": "Leprechaun's Treasure",
+      "studio": "Mythic Forge",
+      "provider": "Mythic Forge",
+      "assets": {
+        "thumbnail": "assets/thumbnails/rainbow_fortune.png",
+        "symbols": {
+          "s1_leprechaun_hat": "assets/game_symbols/rainbow_fortune/s1_leprechaun_hat.svg",
+          "s2_gold_coin": "assets/game_symbols/rainbow_fortune/s2_gold_coin.svg",
+          "s3_rainbow": "assets/game_symbols/rainbow_fortune/s3_rainbow.svg",
+          "s4_shamrock": "assets/game_symbols/rainbow_fortune/s4_shamrock.svg",
+          "s5_pot_of_gold": "assets/game_symbols/rainbow_fortune/s5_pot_of_gold.svg",
+          "wild_lucky_charm": "assets/game_symbols/rainbow_fortune/wild_lucky_charm.svg"
+        },
+        "backgrounds": {
+          "landscape": "assets/backgrounds/slots/rainbow_fortune.svg",
+          "portrait": "assets/backgrounds/slots/rainbow_fortune_portrait.svg"
+        },
+        "studioLogo": null
+      }
+    },
+    {
+      "id": "sacred_ibis",
+      "name": "Ibis Blessing",
+      "studio": "Golden Reels Studio",
+      "provider": "Golden Reels Studio",
+      "assets": {
+        "thumbnail": "assets/thumbnails/sacred_ibis.png",
+        "symbols": {
+          "s1_ibis_bird": "assets/game_symbols/sacred_ibis/s1_ibis_bird.svg",
+          "s2_lotus_flower": "assets/game_symbols/sacred_ibis/s2_lotus_flower.svg",
+          "s3_papyrus_scroll": "assets/game_symbols/sacred_ibis/s3_papyrus_scroll.svg",
+          "s4_nile_reed": "assets/game_symbols/sacred_ibis/s4_nile_reed.svg",
+          "s5_sacred_vessel": "assets/game_symbols/sacred_ibis/s5_sacred_vessel.svg",
+          "wild_ibis_gold": "assets/game_symbols/sacred_ibis/wild_ibis_gold.svg"
+        },
+        "backgrounds": {
+          "landscape": "assets/backgrounds/slots/sacred_ibis.svg",
+          "portrait": "assets/backgrounds/slots/sacred_ibis_portrait.svg"
+        },
+        "studioLogo": null
+      }
+    },
+    {
+      "id": "berry_bliss",
+      "name": "Strawberry Fields",
+      "studio": "Golden Reels Studio",
+      "provider": "Golden Reels Studio",
+      "assets": {
+        "thumbnail": "assets/thumbnails/berry_bliss.png",
+        "symbols": {
+          "s1_strawberry": "assets/game_symbols/berry_bliss/s1_strawberry.svg",
+          "s2_blueberry": "assets/game_symbols/berry_bliss/s2_blueberry.svg",
+          "s3_raspberry": "assets/game_symbols/berry_bliss/s3_raspberry.svg",
+          "s4_blackberry": "assets/game_symbols/berry_bliss/s4_blackberry.svg",
+          "s5_berry_basket": "assets/game_symbols/berry_bliss/s5_berry_basket.svg",
+          "wild_berry_splash": "assets/game_symbols/berry_bliss/wild_berry_splash.svg"
+        },
+        "backgrounds": {
+          "landscape": "assets/backgrounds/slots/berry_bliss.svg",
+          "portrait": "assets/backgrounds/slots/berry_bliss_portrait.svg"
+        },
+        "studioLogo": null
+      }
+    },
+    {
+      "id": "eclipse_mystery",
+      "name": "Solar Eclipse",
+      "studio": "Nebula Gaming",
+      "provider": "Nebula Gaming",
+      "assets": {
+        "thumbnail": "assets/thumbnails/eclipse_mystery.png",
+        "symbols": {
+          "s1_sun_corona": "assets/game_symbols/eclipse_mystery/s1_sun_corona.svg",
+          "s2_moon_shadow": "assets/game_symbols/eclipse_mystery/s2_moon_shadow.svg",
+          "s3_eclipse_eye": "assets/game_symbols/eclipse_mystery/s3_eclipse_eye.svg",
+          "s4_celestial_alignment": "assets/game_symbols/eclipse_mystery/s4_celestial_alignment.svg",
+          "s5_total_eclipse": "assets/game_symbols/eclipse_mystery/s5_total_eclipse.svg",
+          "wild_cosmic_shadow": "assets/game_symbols/eclipse_mystery/wild_cosmic_shadow.svg"
+        },
+        "backgrounds": {
+          "landscape": "assets/backgrounds/slots/eclipse_mystery.svg",
+          "portrait": "assets/backgrounds/slots/eclipse_mystery_portrait.svg"
+        },
+        "studioLogo": null
+      }
+    },
+    {
+      "id": "mystic_grail",
+      "name": "Holy Grail Quest",
+      "studio": "Mythic Forge",
+      "provider": "Mythic Forge",
+      "assets": {
+        "thumbnail": "assets/thumbnails/mystic_grail.png",
+        "symbols": {
+          "s1_grail_cup": "assets/game_symbols/mystic_grail/s1_grail_cup.svg",
+          "s2_excalibur": "assets/game_symbols/mystic_grail/s2_excalibur.svg",
+          "s3_ancient_scroll": "assets/game_symbols/mystic_grail/s3_ancient_scroll.svg",
+          "s4_crown_jewels": "assets/game_symbols/mystic_grail/s4_crown_jewels.svg",
+          "s5_holy_light": "assets/game_symbols/mystic_grail/s5_holy_light.svg",
+          "wild_grail_power": "assets/game_symbols/mystic_grail/wild_grail_power.svg"
+        },
+        "backgrounds": {
+          "landscape": "assets/backgrounds/slots/mystic_grail.svg",
+          "portrait": "assets/backgrounds/slots/mystic_grail_portrait.svg"
+        },
+        "studioLogo": null
+      }
+    },
+    {
+      "id": "tiger_strike",
+      "name": "Bengal Tiger",
+      "studio": "Wild Frontier Games",
+      "provider": "Wild Frontier Games",
+      "assets": {
+        "thumbnail": "assets/thumbnails/tiger_strike.png",
+        "symbols": {
+          "s1_tiger": "assets/game_symbols/tiger_strike/s1_tiger.svg",
+          "s2_tiger_eye": "assets/game_symbols/tiger_strike/s2_tiger_eye.svg",
+          "s3_paw_print": "assets/game_symbols/tiger_strike/s3_paw_print.svg",
+          "s4_jungle_flower": "assets/game_symbols/tiger_strike/s4_jungle_flower.svg",
+          "s5_tiger_roar": "assets/game_symbols/tiger_strike/s5_tiger_roar.svg",
+          "wild_tiger_king": "assets/game_symbols/tiger_strike/wild_tiger_king.svg"
+        },
+        "backgrounds": {
+          "landscape": "assets/backgrounds/slots/tiger_strike.svg",
+          "portrait": "assets/backgrounds/slots/tiger_strike_portrait.svg"
+        },
+        "studioLogo": null
+      }
+    },
+    {
+      "id": "cherry_bombs",
+      "name": "Explosive Cherries",
+      "studio": "Golden Reels Studio",
+      "provider": "Golden Reels Studio",
+      "assets": {
+        "thumbnail": "assets/thumbnails/cherry_bombs.png",
+        "symbols": {
+          "s1_cherry_bomb": "assets/game_symbols/cherry_bombs/s1_cherry_bomb.svg",
+          "s2_dynamite": "assets/game_symbols/cherry_bombs/s2_dynamite.svg",
+          "s3_explosion": "assets/game_symbols/cherry_bombs/s3_explosion.svg",
+          "s4_cherry_red": "assets/game_symbols/cherry_bombs/s4_cherry_red.svg",
+          "s5_bomb_icon": "assets/game_symbols/cherry_bombs/s5_bomb_icon.svg",
+          "wild_explosion_wave": "assets/game_symbols/cherry_bombs/wild_explosion_wave.svg"
+        },
+        "backgrounds": {
+          "landscape": "assets/backgrounds/slots/cherry_bombs.svg",
+          "portrait": "assets/backgrounds/slots/cherry_bombs_portrait.svg"
+        },
+        "studioLogo": null
+      }
+    },
+    {
+      "id": "oriental_silk",
+      "name": "Silk Road Riches",
+      "studio": "Dragon Pearl Studios",
+      "provider": "Dragon Pearl Studios",
+      "assets": {
+        "thumbnail": "assets/thumbnails/oriental_silk.png",
+        "symbols": {
+          "s1_silk_ribbon": "assets/game_symbols/oriental_silk/s1_silk_ribbon.svg",
+          "s2_porcelain_vase": "assets/game_symbols/oriental_silk/s2_porcelain_vase.svg",
+          "s3_silk_fan": "assets/game_symbols/oriental_silk/s3_silk_fan.svg",
+          "s4_golden_Buddha": "assets/game_symbols/oriental_silk/s4_golden_Buddha.svg",
+          "s5_trade_caravan": "assets/game_symbols/oriental_silk/s5_trade_caravan.svg",
+          "wild_silk_treasure": "assets/game_symbols/oriental_silk/wild_silk_treasure.svg"
+        },
+        "backgrounds": {
+          "landscape": "assets/backgrounds/slots/oriental_silk.svg",
+          "portrait": "assets/backgrounds/slots/oriental_silk_portrait.svg"
+        },
+        "studioLogo": null
+      }
+    },
+    {
+      "id": "zombie_carnival",
+      "name": "Undead Fiesta",
+      "studio": "Shadow Works",
+      "provider": "Shadow Works",
+      "assets": {
+        "thumbnail": "assets/thumbnails/zombie_carnival.png",
+        "symbols": {
+          "s1_zombie_head": "assets/game_symbols/zombie_carnival/s1_zombie_head.svg",
+          "s2_carnival_mask": "assets/game_symbols/zombie_carnival/s2_carnival_mask.svg",
+          "s3_creepy_clown": "assets/game_symbols/zombie_carnival/s3_creepy_clown.svg",
+          "s4_rotten_rose": "assets/game_symbols/zombie_carnival/s4_rotten_rose.svg",
+          "s5_graveyard_gate": "assets/game_symbols/zombie_carnival/s5_graveyard_gate.svg",
+          "wild_zombie_king": "assets/game_symbols/zombie_carnival/wild_zombie_king.svg"
+        },
+        "backgrounds": {
+          "landscape": "assets/backgrounds/slots/zombie_carnival.svg",
+          "portrait": "assets/backgrounds/slots/zombie_carnival_portrait.svg"
+        },
+        "studioLogo": null
+      }
+    },
+    {
+      "id": "crocodile_gold",
+      "name": "Croc's Treasure",
+      "studio": "Wild Frontier Games",
+      "provider": "Wild Frontier Games",
+      "assets": {
+        "thumbnail": "assets/thumbnails/crocodile_gold.png",
+        "symbols": {
+          "s1_crocodile": "assets/game_symbols/crocodile_gold/s1_crocodile.svg",
+          "s2_waterhole": "assets/game_symbols/crocodile_gold/s2_waterhole.svg",
+          "s3_aboriginal_boomerang": "assets/game_symbols/crocodile_gold/s3_aboriginal_boomerang.svg",
+          "s4_river_stone": "assets/game_symbols/crocodile_gold/s4_river_stone.svg",
+          "s5_crocodile_eye": "assets/game_symbols/crocodile_gold/s5_crocodile_eye.svg",
+          "wild_croc_gold": "assets/game_symbols/crocodile_gold/wild_croc_gold.svg"
+        },
+        "backgrounds": {
+          "landscape": "assets/backgrounds/slots/crocodile_gold.svg",
+          "portrait": "assets/backgrounds/slots/crocodile_gold_portrait.svg"
+        },
+        "studioLogo": null
+      }
+    },
+    {
+      "id": "carnival_crown",
+      "name": "Mardi Gras Madness",
+      "studio": "Cascade Labs",
+      "provider": "Cascade Labs",
+      "assets": {
+        "thumbnail": "assets/thumbnails/carnival_crown.png",
+        "symbols": {
+          "s1_mardi_mask": "assets/game_symbols/carnival_crown/s1_mardi_mask.svg",
+          "s2_feather_boa": "assets/game_symbols/carnival_crown/s2_feather_boa.svg",
+          "s3_beaded_necklace": "assets/game_symbols/carnival_crown/s3_beaded_necklace.svg",
+          "s4_trumpet": "assets/game_symbols/carnival_crown/s4_trumpet.svg",
+          "s5_carnival_crown": "assets/game_symbols/carnival_crown/s5_carnival_crown.svg",
+          "wild_party_explosion": "assets/game_symbols/carnival_crown/wild_party_explosion.svg"
+        },
+        "backgrounds": {
+          "landscape": "assets/backgrounds/slots/carnival_crown.svg",
+          "portrait": "assets/backgrounds/slots/carnival_crown_portrait.svg"
+        },
+        "studioLogo": null
+      }
+    },
+    {
+      "id": "pyramid_power",
+      "name": "Ptolemy's Throne",
+      "studio": "Mythic Forge",
+      "provider": "Mythic Forge",
+      "assets": {
+        "thumbnail": "assets/thumbnails/pyramid_power.png",
+        "symbols": {
+          "s1_pyramid_block": "assets/game_symbols/pyramid_power/s1_pyramid_block.svg",
+          "s2_golden_mask": "assets/game_symbols/pyramid_power/s2_golden_mask.svg",
+          "s3_deity_statue": "assets/game_symbols/pyramid_power/s3_deity_statue.svg",
+          "s4_sacred_barrel": "assets/game_symbols/pyramid_power/s4_sacred_barrel.svg",
+          "s5_ptolemy_portrait": "assets/game_symbols/pyramid_power/s5_ptolemy_portrait.svg",
+          "wild_king_tut": "assets/game_symbols/pyramid_power/wild_king_tut.svg"
+        },
+        "backgrounds": {
+          "landscape": "assets/backgrounds/slots/pyramid_power.svg",
+          "portrait": "assets/backgrounds/slots/pyramid_power_portrait.svg"
+        },
+        "studioLogo": null
+      }
+    },
+    {
+      "id": "melon_feast",
+      "name": "Watermelon Splash",
+      "studio": "Golden Reels Studio",
+      "provider": "Golden Reels Studio",
+      "assets": {
+        "thumbnail": "assets/thumbnails/melon_feast.png",
+        "symbols": {
+          "s1_watermelon": "assets/game_symbols/melon_feast/s1_watermelon.svg",
+          "s2_cantaloupe": "assets/game_symbols/melon_feast/s2_cantaloupe.svg",
+          "s3_honeydew": "assets/game_symbols/melon_feast/s3_honeydew.svg",
+          "s4_lime_wedge": "assets/game_symbols/melon_feast/s4_lime_wedge.svg",
+          "s5_melon_juice": "assets/game_symbols/melon_feast/s5_melon_juice.svg",
+          "wild_melon_blend": "assets/game_symbols/melon_feast/wild_melon_blend.svg"
+        },
+        "backgrounds": {
+          "landscape": "assets/backgrounds/slots/melon_feast.svg",
+          "portrait": "assets/backgrounds/slots/melon_feast_portrait.svg"
+        },
+        "studioLogo": null
+      }
+    },
+    {
+      "id": "solar_system",
+      "name": "Planetary Alignment",
+      "studio": "Nebula Gaming",
+      "provider": "Nebula Gaming",
+      "assets": {
+        "thumbnail": "assets/thumbnails/solar_system.png",
+        "symbols": {
+          "s1_mercury": "assets/game_symbols/solar_system/s1_mercury.svg",
+          "s2_venus": "assets/game_symbols/solar_system/s2_venus.svg",
+          "s3_earth": "assets/game_symbols/solar_system/s3_earth.svg",
+          "s4_mars": "assets/game_symbols/solar_system/s4_mars.svg",
+          "s5_jupiter": "assets/game_symbols/solar_system/s5_jupiter.svg",
+          "wild_sun_star": "assets/game_symbols/solar_system/wild_sun_star.svg"
+        },
+        "backgrounds": {
+          "landscape": "assets/backgrounds/slots/solar_system.svg",
+          "portrait": "assets/backgrounds/slots/solar_system_portrait.svg"
+        },
+        "studioLogo": null
+      }
+    },
+    {
+      "id": "fairy_tales",
+      "name": "Enchanted Kingdom",
+      "studio": "Mythic Forge",
+      "provider": "Mythic Forge",
+      "assets": {
+        "thumbnail": "assets/thumbnails/fairy_tales.png",
+        "symbols": {
+          "s1_fairy": "assets/game_symbols/fairy_tales/s1_fairy.svg",
+          "s2_magic_wand": "assets/game_symbols/fairy_tales/s2_magic_wand.svg",
+          "s3_enchanted_forest": "assets/game_symbols/fairy_tales/s3_enchanted_forest.svg",
+          "s4_fairy_dust": "assets/game_symbols/fairy_tales/s4_fairy_dust.svg",
+          "s5_wishing_star": "assets/game_symbols/fairy_tales/s5_wishing_star.svg",
+          "wild_fairy_magic": "assets/game_symbols/fairy_tales/wild_fairy_magic.svg"
+        },
+        "backgrounds": {
+          "landscape": "assets/backgrounds/slots/fairy_tales.svg",
+          "portrait": "assets/backgrounds/slots/fairy_tales_portrait.svg"
+        },
+        "studioLogo": null
+      }
+    },
+    {
+      "id": "emerald_dragon",
+      "name": "Dragon's Emerald",
+      "studio": "Dragon Pearl Studios",
+      "provider": "Dragon Pearl Studios",
+      "assets": {
+        "thumbnail": "assets/thumbnails/emerald_dragon.png",
+        "symbols": {
+          "s1_dragon": "assets/game_symbols/emerald_dragon/s1_dragon.svg",
+          "s2_emerald_gem": "assets/game_symbols/emerald_dragon/s2_emerald_gem.svg",
+          "s3_dragon_egg": "assets/game_symbols/emerald_dragon/s3_dragon_egg.svg",
+          "s4_jade_circle": "assets/game_symbols/emerald_dragon/s4_jade_circle.svg",
+          "s5_dragon_breath": "assets/game_symbols/emerald_dragon/s5_dragon_breath.svg",
+          "wild_emerald_power": "assets/game_symbols/emerald_dragon/wild_emerald_power.svg"
+        },
+        "backgrounds": {
+          "landscape": "assets/backgrounds/slots/emerald_dragon.svg",
+          "portrait": "assets/backgrounds/slots/emerald_dragon_portrait.svg"
+        },
+        "studioLogo": null
+      }
+    },
+    {
+      "id": "haunted_mansion",
+      "name": "Ghost House",
+      "studio": "Shadow Works",
+      "provider": "Shadow Works",
+      "assets": {
+        "thumbnail": "assets/thumbnails/haunted_mansion.png",
+        "symbols": {
+          "s1_haunted_mansion": "assets/game_symbols/haunted_mansion/s1_haunted_mansion.svg",
+          "s2_ghost": "assets/game_symbols/haunted_mansion/s2_ghost.svg",
+          "s3_candelabra": "assets/game_symbols/haunted_mansion/s3_candelabra.svg",
+          "s4_portrait": "assets/game_symbols/haunted_mansion/s4_portrait.svg",
+          "s5_ghostly_hand": "assets/game_symbols/haunted_mansion/s5_ghostly_hand.svg",
+          "wild_spectral_glow": "assets/game_symbols/haunted_mansion/wild_spectral_glow.svg"
+        },
+        "backgrounds": {
+          "landscape": "assets/backgrounds/slots/haunted_mansion.svg",
+          "portrait": "assets/backgrounds/slots/haunted_mansion_portrait.svg"
+        },
+        "studioLogo": null
+      }
+    },
+    {
+      "id": "opal_outback",
+      "name": "Opal Dreams",
+      "studio": "Wild Frontier Games",
+      "provider": "Wild Frontier Games",
+      "assets": {
+        "thumbnail": "assets/thumbnails/opal_outback.png",
+        "symbols": {
+          "s1_opal_stone": "assets/game_symbols/opal_outback/s1_opal_stone.svg",
+          "s2_mining_cart": "assets/game_symbols/opal_outback/s2_mining_cart.svg",
+          "s3_outback_sunset": "assets/game_symbols/opal_outback/s3_outback_sunset.svg",
+          "s4_aboriginal_pattern": "assets/game_symbols/opal_outback/s4_aboriginal_pattern.svg",
+          "s5_opal_vein": "assets/game_symbols/opal_outback/s5_opal_vein.svg",
+          "wild_precious_opal": "assets/game_symbols/opal_outback/wild_precious_opal.svg"
+        },
+        "backgrounds": {
+          "landscape": "assets/backgrounds/slots/opal_outback.svg",
+          "portrait": "assets/backgrounds/slots/opal_outback_portrait.svg"
+        },
+        "studioLogo": null
+      }
+    },
+    {
+      "id": "circus_thrills",
+      "name": "Ringmaster's Fortune",
+      "studio": "Cascade Labs",
+      "provider": "Cascade Labs",
+      "assets": {
+        "thumbnail": "assets/thumbnails/circus_thrills.png",
+        "symbols": {
+          "s1_ringmaster": "assets/game_symbols/circus_thrills/s1_ringmaster.svg",
+          "s2_acrobat": "assets/game_symbols/circus_thrills/s2_acrobat.svg",
+          "s3_lion_tamer": "assets/game_symbols/circus_thrills/s3_lion_tamer.svg",
+          "s4_clown": "assets/game_symbols/circus_thrills/s4_clown.svg",
+          "s5_circus_tent": "assets/game_symbols/circus_thrills/s5_circus_tent.svg",
+          "wild_spotlight": "assets/game_symbols/circus_thrills/wild_spotlight.svg"
+        },
+        "backgrounds": {
+          "landscape": "assets/backgrounds/slots/circus_thrills.svg",
+          "portrait": "assets/backgrounds/slots/circus_thrills_portrait.svg"
+        },
+        "studioLogo": null
+      }
+    },
+    {
+      "id": "ancient_tombs",
+      "name": "Valley of Kings",
+      "studio": "Mythic Forge",
+      "provider": "Mythic Forge",
+      "assets": {
+        "thumbnail": "assets/thumbnails/ancient_tombs.png",
+        "symbols": {
+          "s1_tomb_door": "assets/game_symbols/ancient_tombs/s1_tomb_door.svg",
+          "s2_mummy_case": "assets/game_symbols/ancient_tombs/s2_mummy_case.svg",
+          "s3_burial_mask": "assets/game_symbols/ancient_tombs/s3_burial_mask.svg",
+          "s4_canopic_jar": "assets/game_symbols/ancient_tombs/s4_canopic_jar.svg",
+          "s5_tomb_seal": "assets/game_symbols/ancient_tombs/s5_tomb_seal.svg",
+          "wild_tomb_guardian": "assets/game_symbols/ancient_tombs/wild_tomb_guardian.svg"
+        },
+        "backgrounds": {
+          "landscape": "assets/backgrounds/slots/ancient_tombs.svg",
+          "portrait": "assets/backgrounds/slots/ancient_tombs_portrait.svg"
+        },
+        "studioLogo": null
+      }
+    },
+    {
+      "id": "grape_vine",
+      "name": "Vintage Grapes",
+      "studio": "Golden Reels Studio",
+      "provider": "Golden Reels Studio",
+      "assets": {
+        "thumbnail": "assets/thumbnails/grape_vine.png",
+        "symbols": {
+          "s1_red_grapes": "assets/game_symbols/grape_vine/s1_red_grapes.svg",
+          "s2_white_grapes": "assets/game_symbols/grape_vine/s2_white_grapes.svg",
+          "s3_grape_vine": "assets/game_symbols/grape_vine/s3_grape_vine.svg",
+          "s4_wine_glass": "assets/game_symbols/grape_vine/s4_wine_glass.svg",
+          "s5_vineyard": "assets/game_symbols/grape_vine/s5_vineyard.svg",
+          "wild_golden_grape": "assets/game_symbols/grape_vine/wild_golden_grape.svg"
+        },
+        "backgrounds": {
+          "landscape": "assets/backgrounds/slots/grape_vine.svg",
+          "portrait": "assets/backgrounds/slots/grape_vine_portrait.svg"
+        },
+        "studioLogo": null
+      }
+    },
+    {
+      "id": "supernova_slots",
+      "name": "Quantum Leap",
+      "studio": "Nebula Gaming",
+      "provider": "Nebula Gaming",
+      "assets": {
+        "thumbnail": "assets/thumbnails/supernova_slots.png",
+        "symbols": {
+          "s1_quantum_core": "assets/game_symbols/supernova_slots/s1_quantum_core.svg",
+          "s2_warp_portal": "assets/game_symbols/supernova_slots/s2_warp_portal.svg",
+          "s3_subatomic": "assets/game_symbols/supernova_slots/s3_subatomic.svg",
+          "s4_particle_wave": "assets/game_symbols/supernova_slots/s4_particle_wave.svg",
+          "s5_quantum_field": "assets/game_symbols/supernova_slots/s5_quantum_field.svg",
+          "wild_quantum_entangle": "assets/game_symbols/supernova_slots/wild_quantum_entangle.svg"
+        },
+        "backgrounds": {
+          "landscape": "assets/backgrounds/slots/supernova_slots.svg",
+          "portrait": "assets/backgrounds/slots/supernova_slots_portrait.svg"
+        },
+        "studioLogo": null
+      }
+    },
+    {
+      "id": "avalon_castle",
+      "name": "Avalon's Call",
+      "studio": "Mythic Forge",
+      "provider": "Mythic Forge",
+      "assets": {
+        "thumbnail": "assets/thumbnails/avalon_castle.png",
+        "symbols": {
+          "s1_avalon_tower": "assets/game_symbols/avalon_castle/s1_avalon_tower.svg",
+          "s2_lady_lake": "assets/game_symbols/avalon_castle/s2_lady_lake.svg",
+          "s3_sword_stone": "assets/game_symbols/avalon_castle/s3_sword_stone.svg",
+          "s4_magic_scroll": "assets/game_symbols/avalon_castle/s4_magic_scroll.svg",
+          "s5_avalon_mist": "assets/game_symbols/avalon_castle/s5_avalon_mist.svg",
+          "wild_avalon_crown": "assets/game_symbols/avalon_castle/wild_avalon_crown.svg"
+        },
+        "backgrounds": {
+          "landscape": "assets/backgrounds/slots/avalon_castle.svg",
+          "portrait": "assets/backgrounds/slots/avalon_castle_portrait.svg"
+        },
+        "studioLogo": null
+      }
+    },
+    {
+      "id": "rhino_rampage",
+      "name": "Rhino Charge",
+      "studio": "Wild Frontier Games",
+      "provider": "Wild Frontier Games",
+      "assets": {
+        "thumbnail": "assets/thumbnails/rhino_rampage.png",
+        "symbols": {
+          "s1_rhino": "assets/game_symbols/rhino_rampage/s1_rhino.svg",
+          "s2_savanna": "assets/game_symbols/rhino_rampage/s2_savanna.svg",
+          "s3_charging_rhino": "assets/game_symbols/rhino_rampage/s3_charging_rhino.svg",
+          "s4_tribal_mask": "assets/game_symbols/rhino_rampage/s4_tribal_mask.svg",
+          "s5_rhino_horn": "assets/game_symbols/rhino_rampage/s5_rhino_horn.svg",
+          "wild_stampede_rhino": "assets/game_symbols/rhino_rampage/wild_stampede_rhino.svg"
+        },
+        "backgrounds": {
+          "landscape": "assets/backgrounds/slots/rhino_rampage.svg",
+          "portrait": "assets/backgrounds/slots/rhino_rampage_portrait.svg"
+        },
+        "studioLogo": null
+      }
+    },
+    {
+      "id": "tangerine_tango",
+      "name": "Citrus Sunset",
+      "studio": "Golden Reels Studio",
+      "provider": "Golden Reels Studio",
+      "assets": {
+        "thumbnail": "assets/thumbnails/tangerine_tango.png",
+        "symbols": {
+          "s1_tangerine": "assets/game_symbols/tangerine_tango/s1_tangerine.svg",
+          "s2_orange": "assets/game_symbols/tangerine_tango/s2_orange.svg",
+          "s3_clementine": "assets/game_symbols/tangerine_tango/s3_clementine.svg",
+          "s4_citrus_leaf": "assets/game_symbols/tangerine_tango/s4_citrus_leaf.svg",
+          "s5_juice_burst": "assets/game_symbols/tangerine_tango/s5_juice_burst.svg",
+          "wild_citrus_blend": "assets/game_symbols/tangerine_tango/wild_citrus_blend.svg"
+        },
+        "backgrounds": {
+          "landscape": "assets/backgrounds/slots/tangerine_tango.svg",
+          "portrait": "assets/backgrounds/slots/tangerine_tango_portrait.svg"
+        },
+        "studioLogo": null
+      }
+    },
+    {
+      "id": "dragon_temple",
+      "name": "Dragon's Temple",
+      "studio": "Dragon Pearl Studios",
+      "provider": "Dragon Pearl Studios",
+      "assets": {
+        "thumbnail": "assets/thumbnails/dragon_temple.png",
+        "symbols": {
+          "s1_dragon_idol": "assets/game_symbols/dragon_temple/s1_dragon_idol.svg",
+          "s2_temple_bell": "assets/game_symbols/dragon_temple/s2_temple_bell.svg",
+          "s3_incense_burner": "assets/game_symbols/dragon_temple/s3_incense_burner.svg",
+          "s4_jade_ornament": "assets/game_symbols/dragon_temple/s4_jade_ornament.svg",
+          "s5_dragon_rune": "assets/game_symbols/dragon_temple/s5_dragon_rune.svg",
+          "wild_temple_guardian": "assets/game_symbols/dragon_temple/wild_temple_guardian.svg"
+        },
+        "backgrounds": {
+          "landscape": "assets/backgrounds/slots/dragon_temple.svg",
+          "portrait": "assets/backgrounds/slots/dragon_temple_portrait.svg"
+        },
+        "studioLogo": null
+      }
+    },
+    {
+      "id": "witches_brew",
+      "name": "Witches' Cauldron",
+      "studio": "Shadow Works",
+      "provider": "Shadow Works",
+      "assets": {
+        "thumbnail": "assets/thumbnails/witches_brew.png",
+        "symbols": {
+          "s1_witches_hat": "assets/game_symbols/witches_brew/s1_witches_hat.svg",
+          "s2_potion_bottle": "assets/game_symbols/witches_brew/s2_potion_bottle.svg",
+          "s3_spell_book": "assets/game_symbols/witches_brew/s3_spell_book.svg",
+          "s4_toad": "assets/game_symbols/witches_brew/s4_toad.svg",
+          "s5_bubbling_cauldron": "assets/game_symbols/witches_brew/s5_bubbling_cauldron.svg",
+          "wild_witches_magic": "assets/game_symbols/witches_brew/wild_witches_magic.svg"
+        },
+        "backgrounds": {
+          "landscape": "assets/backgrounds/slots/witches_brew.svg",
+          "portrait": "assets/backgrounds/slots/witches_brew_portrait.svg"
+        },
+        "studioLogo": null
+      }
+    },
+    {
+      "id": "platypus_paradise",
+      "name": "Platypus Pouch",
+      "studio": "Wild Frontier Games",
+      "provider": "Wild Frontier Games",
+      "assets": {
+        "thumbnail": "assets/thumbnails/platypus_paradise.png",
+        "symbols": {
+          "s1_platypus": "assets/game_symbols/platypus_paradise/s1_platypus.svg",
+          "s2_eucalyptus": "assets/game_symbols/platypus_paradise/s2_eucalyptus.svg",
+          "s3_billabong": "assets/game_symbols/platypus_paradise/s3_billabong.svg",
+          "s4_blue_gum": "assets/game_symbols/platypus_paradise/s4_blue_gum.svg",
+          "s5_platypus_egg": "assets/game_symbols/platypus_paradise/s5_platypus_egg.svg",
+          "wild_platypus_magic": "assets/game_symbols/platypus_paradise/wild_platypus_magic.svg"
+        },
+        "backgrounds": {
+          "landscape": "assets/backgrounds/slots/platypus_paradise.svg",
+          "portrait": "assets/backgrounds/slots/platypus_paradise_portrait.svg"
+        },
+        "studioLogo": null
+      }
+    },
+    {
+      "id": "ticket_to_fortune",
+      "name": "Lottery Dream",
+      "studio": "Cascade Labs",
+      "provider": "Cascade Labs",
+      "assets": {
+        "thumbnail": "assets/thumbnails/ticket_to_fortune.png",
+        "symbols": {
+          "s1_winning_ticket": "assets/game_symbols/ticket_to_fortune/s1_winning_ticket.svg",
+          "s2_lucky_number": "assets/game_symbols/ticket_to_fortune/s2_lucky_number.svg",
+          "s3_golden_ball": "assets/game_symbols/ticket_to_fortune/s3_golden_ball.svg",
+          "s4_champagne": "assets/game_symbols/ticket_to_fortune/s4_champagne.svg",
+          "s5_jackpot_bell": "assets/game_symbols/ticket_to_fortune/s5_jackpot_bell.svg",
+          "wild_lottery_star": "assets/game_symbols/ticket_to_fortune/wild_lottery_star.svg"
+        },
+        "backgrounds": {
+          "landscape": "assets/backgrounds/slots/ticket_to_fortune.svg",
+          "portrait": "assets/backgrounds/slots/ticket_to_fortune_portrait.svg"
+        },
+        "studioLogo": null
+      }
+    },
+    {
+      "id": "temple_bells",
+      "name": "Sacred Bells",
+      "studio": "Dragon Pearl Studios",
+      "provider": "Dragon Pearl Studios",
+      "assets": {
+        "thumbnail": "assets/thumbnails/temple_bells.png",
+        "symbols": {
+          "s1_temple_bell": "assets/game_symbols/temple_bells/s1_temple_bell.svg",
+          "s2_sacred_knot": "assets/game_symbols/temple_bells/s2_sacred_knot.svg",
+          "s3_holy_water": "assets/game_symbols/temple_bells/s3_holy_water.svg",
+          "s4_prayer_bead": "assets/game_symbols/temple_bells/s4_prayer_bead.svg",
+          "s5_bell_chime": "assets/game_symbols/temple_bells/s5_bell_chime.svg",
+          "wild_bell_resonance": "assets/game_symbols/temple_bells/wild_bell_resonance.svg"
+        },
+        "backgrounds": {
+          "landscape": "assets/backgrounds/slots/temple_bells.svg",
+          "portrait": "assets/backgrounds/slots/temple_bells_portrait.svg"
+        },
+        "studioLogo": null
+      }
+    },
+    {
+      "id": "lemon_drop",
+      "name": "Sour Lemon",
+      "studio": "Golden Reels Studio",
+      "provider": "Golden Reels Studio",
+      "assets": {
+        "thumbnail": "assets/thumbnails/lemon_drop.png",
+        "symbols": {
+          "s1_lemon": "assets/game_symbols/lemon_drop/s1_lemon.svg",
+          "s2_lime": "assets/game_symbols/lemon_drop/s2_lime.svg",
+          "s3_sour_candy": "assets/game_symbols/lemon_drop/s3_sour_candy.svg",
+          "s4_lemonade": "assets/game_symbols/lemon_drop/s4_lemonade.svg",
+          "s5_citric_acid": "assets/game_symbols/lemon_drop/s5_citric_acid.svg",
+          "wild_sour_blast": "assets/game_symbols/lemon_drop/wild_sour_blast.svg"
+        },
+        "backgrounds": {
+          "landscape": "assets/backgrounds/slots/lemon_drop.svg",
+          "portrait": "assets/backgrounds/slots/lemon_drop_portrait.svg"
+        },
+        "studioLogo": null
+      }
+    },
+    {
+      "id": "moon_madness",
+      "name": "Lunar Frenzy",
+      "studio": "Nebula Gaming",
+      "provider": "Nebula Gaming",
+      "assets": {
+        "thumbnail": "assets/thumbnails/moon_madness.png",
+        "symbols": {
+          "s1_moon_crescent": "assets/game_symbols/moon_madness/s1_moon_crescent.svg",
+          "s2_moon_crater": "assets/game_symbols/moon_madness/s2_moon_crater.svg",
+          "s3_lunar_eclipse": "assets/game_symbols/moon_madness/s3_lunar_eclipse.svg",
+          "s4_meteor": "assets/game_symbols/moon_madness/s4_meteor.svg",
+          "s5_moon_phase": "assets/game_symbols/moon_madness/s5_moon_phase.svg",
+          "wild_lunar_wolf": "assets/game_symbols/moon_madness/wild_lunar_wolf.svg"
+        },
+        "backgrounds": {
+          "landscape": "assets/backgrounds/slots/moon_madness.svg",
+          "portrait": "assets/backgrounds/slots/moon_madness_portrait.svg"
+        },
+        "studioLogo": null
+      }
+    },
+    {
+      "id": "tomb_anubis",
+      "name": "Tomb of Anubis",
+      "studio": "Mythic Forge",
+      "provider": "Mythic Forge",
+      "assets": {
+        "thumbnail": "assets/thumbnails/tomb_anubis.png",
+        "symbols": {
+          "s1_jackal": "assets/game_symbols/tomb_anubis/s1_jackal.svg",
+          "s2_ankh_gold": "assets/game_symbols/tomb_anubis/s2_ankh_gold.svg",
+          "s3_canopic_jar": "assets/game_symbols/tomb_anubis/s3_canopic_jar.svg",
+          "s4_death_mask": "assets/game_symbols/tomb_anubis/s4_death_mask.svg",
+          "s5_scales_maat": "assets/game_symbols/tomb_anubis/s5_scales_maat.svg",
+          "wild_anubis": "assets/game_symbols/tomb_anubis/wild_anubis.svg"
+        },
+        "backgrounds": {
+          "landscape": "assets/backgrounds/slots/tomb_anubis.svg",
+          "portrait": "assets/backgrounds/slots/tomb_anubis_portrait.svg"
+        },
+        "studioLogo": null
+      }
+    },
+    {
+      "id": "isis_blessing",
+      "name": "Blessing of Isis",
+      "studio": "Mythic Forge",
+      "provider": "Mythic Forge",
+      "assets": {
+        "thumbnail": "assets/thumbnails/isis_blessing.png",
+        "symbols": {
+          "s1_lotus_blue": "assets/game_symbols/isis_blessing/s1_lotus_blue.svg",
+          "s2_sistrum": "assets/game_symbols/isis_blessing/s2_sistrum.svg",
+          "s3_throne": "assets/game_symbols/isis_blessing/s3_throne.svg",
+          "s4_tyet_knot": "assets/game_symbols/isis_blessing/s4_tyet_knot.svg",
+          "s5_wings_isis": "assets/game_symbols/isis_blessing/s5_wings_isis.svg",
+          "wild_isis": "assets/game_symbols/isis_blessing/wild_isis.svg"
+        },
+        "backgrounds": {
+          "landscape": "assets/backgrounds/slots/isis_blessing.svg",
+          "portrait": "assets/backgrounds/slots/isis_blessing_portrait.svg"
+        },
+        "studioLogo": null
+      }
+    },
+    {
+      "id": "desert_dynasty",
+      "name": "Desert Dynasty",
+      "studio": "Ironclad Entertainment",
+      "provider": "Ironclad Entertainment",
+      "assets": {
+        "thumbnail": "assets/thumbnails/desert_dynasty.png",
+        "symbols": {
+          "s1_chariot": "assets/game_symbols/desert_dynasty/s1_chariot.svg",
+          "s2_cobra_crown": "assets/game_symbols/desert_dynasty/s2_cobra_crown.svg",
+          "s3_obelisk": "assets/game_symbols/desert_dynasty/s3_obelisk.svg",
+          "s4_papyrus": "assets/game_symbols/desert_dynasty/s4_papyrus.svg",
+          "s5_dynasty_seal": "assets/game_symbols/desert_dynasty/s5_dynasty_seal.svg",
+          "wild_dynasty": "assets/game_symbols/desert_dynasty/wild_dynasty.svg"
+        },
+        "backgrounds": {
+          "landscape": "assets/backgrounds/slots/desert_dynasty.svg",
+          "portrait": "assets/backgrounds/slots/desert_dynasty_portrait.svg"
+        },
+        "studioLogo": null
+      }
+    },
+    {
+      "id": "cleopatra_moon",
+      "name": "Cleopatra by Moonlight",
+      "studio": "Mythic Forge",
+      "provider": "Mythic Forge",
+      "assets": {
+        "thumbnail": "assets/thumbnails/cleopatra_moon.png",
+        "symbols": {
+          "s1_moon_scarab": "assets/game_symbols/cleopatra_moon/s1_moon_scarab.svg",
+          "s2_asp_crown": "assets/game_symbols/cleopatra_moon/s2_asp_crown.svg",
+          "s3_mirror": "assets/game_symbols/cleopatra_moon/s3_mirror.svg",
+          "s4_perfume": "assets/game_symbols/cleopatra_moon/s4_perfume.svg",
+          "s5_crescent_ankh": "assets/game_symbols/cleopatra_moon/s5_crescent_ankh.svg",
+          "wild_cleopatra": "assets/game_symbols/cleopatra_moon/wild_cleopatra.svg"
+        },
+        "backgrounds": {
+          "landscape": "assets/backgrounds/slots/cleopatra_moon.svg",
+          "portrait": "assets/backgrounds/slots/cleopatra_moon_portrait.svg"
+        },
+        "studioLogo": null
+      }
+    },
+    {
+      "id": "harvest_megaways",
+      "name": "Harvest Megaways",
+      "studio": "Wild Frontier Games",
+      "provider": "Wild Frontier Games",
+      "assets": {
+        "thumbnail": "assets/thumbnails/harvest_megaways.png",
+        "symbols": {
+          "s1_wheat": "assets/game_symbols/harvest_megaways/s1_wheat.svg",
+          "s2_apple": "assets/game_symbols/harvest_megaways/s2_apple.svg",
+          "s3_grape": "assets/game_symbols/harvest_megaways/s3_grape.svg",
+          "s4_pear": "assets/game_symbols/harvest_megaways/s4_pear.svg",
+          "s5_golden_harvest": "assets/game_symbols/harvest_megaways/s5_golden_harvest.svg",
+          "wild_scarecrow": "assets/game_symbols/harvest_megaways/wild_scarecrow.svg"
+        },
+        "backgrounds": {
+          "landscape": "assets/backgrounds/slots/harvest_megaways.svg",
+          "portrait": "assets/backgrounds/slots/harvest_megaways_portrait.svg"
+        },
+        "studioLogo": null
+      }
+    },
+    {
+      "id": "neon_nebula",
+      "name": "Neon Nebula",
+      "studio": "Nebula Gaming",
+      "provider": "Nebula Gaming",
+      "assets": {
+        "thumbnail": "assets/thumbnails/neon_nebula.png",
+        "symbols": {
+          "s1_nebula_cloud": "assets/game_symbols/neon_nebula/s1_nebula_cloud.svg",
+          "s2_plasma_orb": "assets/game_symbols/neon_nebula/s2_plasma_orb.svg",
+          "s3_cosmic_dust": "assets/game_symbols/neon_nebula/s3_cosmic_dust.svg",
+          "s4_ion_ring": "assets/game_symbols/neon_nebula/s4_ion_ring.svg",
+          "s5_nebula_core": "assets/game_symbols/neon_nebula/s5_nebula_core.svg",
+          "wild_supernova": "assets/game_symbols/neon_nebula/wild_supernova.svg"
+        },
+        "backgrounds": {
+          "landscape": "assets/backgrounds/slots/neon_nebula.svg",
+          "portrait": "assets/backgrounds/slots/neon_nebula_portrait.svg"
+        },
+        "studioLogo": null
+      }
+    },
+    {
+      "id": "stellar_drift",
+      "name": "Stellar Drift",
+      "studio": "Nebula Gaming",
+      "provider": "Nebula Gaming",
+      "assets": {
+        "thumbnail": "assets/thumbnails/stellar_drift.png",
+        "symbols": {
+          "s1_asteroid_belt": "assets/game_symbols/stellar_drift/s1_asteroid_belt.svg",
+          "s2_comet_tail": "assets/game_symbols/stellar_drift/s2_comet_tail.svg",
+          "s3_binary_star": "assets/game_symbols/stellar_drift/s3_binary_star.svg",
+          "s4_gas_giant": "assets/game_symbols/stellar_drift/s4_gas_giant.svg",
+          "s5_pulsar": "assets/game_symbols/stellar_drift/s5_pulsar.svg",
+          "wild_starship": "assets/game_symbols/stellar_drift/wild_starship.svg"
+        },
+        "backgrounds": {
+          "landscape": "assets/backgrounds/slots/stellar_drift.svg",
+          "portrait": "assets/backgrounds/slots/stellar_drift_portrait.svg"
+        },
+        "studioLogo": null
+      }
+    },
+    {
+      "id": "gravity_well",
+      "name": "Gravity Well",
+      "studio": "Cascade Labs",
+      "provider": "Cascade Labs",
+      "assets": {
+        "thumbnail": "assets/thumbnails/gravity_well.png",
+        "symbols": {
+          "s1_singularity": "assets/game_symbols/gravity_well/s1_singularity.svg",
+          "s2_event_horizon": "assets/game_symbols/gravity_well/s2_event_horizon.svg",
+          "s3_time_warp": "assets/game_symbols/gravity_well/s3_time_warp.svg",
+          "s4_quantum_flux": "assets/game_symbols/gravity_well/s4_quantum_flux.svg",
+          "s5_gravity_lens": "assets/game_symbols/gravity_well/s5_gravity_lens.svg",
+          "wild_blackhole": "assets/game_symbols/gravity_well/wild_blackhole.svg"
+        },
+        "backgrounds": {
+          "landscape": "assets/backgrounds/slots/gravity_well.svg",
+          "portrait": "assets/backgrounds/slots/gravity_well_portrait.svg"
+        },
+        "studioLogo": null
+      }
+    },
+    {
+      "id": "warp_station",
+      "name": "Warp Station Alpha",
+      "studio": "Nebula Gaming",
+      "provider": "Nebula Gaming",
+      "assets": {
+        "thumbnail": "assets/thumbnails/warp_station.png",
+        "symbols": {
+          "s1_docking_bay": "assets/game_symbols/warp_station/s1_docking_bay.svg",
+          "s2_cargo_pod": "assets/game_symbols/warp_station/s2_cargo_pod.svg",
+          "s3_nav_console": "assets/game_symbols/warp_station/s3_nav_console.svg",
+          "s4_energy_cell": "assets/game_symbols/warp_station/s4_energy_cell.svg",
+          "s5_warp_drive": "assets/game_symbols/warp_station/s5_warp_drive.svg",
+          "wild_captain": "assets/game_symbols/warp_station/wild_captain.svg"
+        },
+        "backgrounds": {
+          "landscape": "assets/backgrounds/slots/warp_station.svg",
+          "portrait": "assets/backgrounds/slots/warp_station_portrait.svg"
+        },
+        "studioLogo": null
+      }
+    },
+    {
+      "id": "crystal_cavern",
+      "name": "Crystal Cavern",
+      "studio": "Ironclad Entertainment",
+      "provider": "Ironclad Entertainment",
+      "assets": {
+        "thumbnail": "assets/thumbnails/crystal_cavern.png",
+        "symbols": {
+          "s1_amethyst": "assets/game_symbols/crystal_cavern/s1_amethyst.svg",
+          "s2_sapphire": "assets/game_symbols/crystal_cavern/s2_sapphire.svg",
+          "s3_emerald_shard": "assets/game_symbols/crystal_cavern/s3_emerald_shard.svg",
+          "s4_ruby_cluster": "assets/game_symbols/crystal_cavern/s4_ruby_cluster.svg",
+          "s5_diamond_heart": "assets/game_symbols/crystal_cavern/s5_diamond_heart.svg",
+          "wild_prism": "assets/game_symbols/crystal_cavern/wild_prism.svg"
+        },
+        "backgrounds": {
+          "landscape": "assets/backgrounds/slots/crystal_cavern.svg",
+          "portrait": "assets/backgrounds/slots/crystal_cavern_portrait.svg"
+        },
+        "studioLogo": null
+      }
+    },
+    {
+      "id": "fae_forest",
+      "name": "Fae Forest",
+      "studio": "Mythic Forge",
+      "provider": "Mythic Forge",
+      "assets": {
+        "thumbnail": "assets/thumbnails/fae_forest.png",
+        "symbols": {
+          "s1_pixie_dust": "assets/game_symbols/fae_forest/s1_pixie_dust.svg",
+          "s2_toadstool": "assets/game_symbols/fae_forest/s2_toadstool.svg",
+          "s3_fairy_ring": "assets/game_symbols/fae_forest/s3_fairy_ring.svg",
+          "s4_enchanted_oak": "assets/game_symbols/fae_forest/s4_enchanted_oak.svg",
+          "s5_fae_queen": "assets/game_symbols/fae_forest/s5_fae_queen.svg",
+          "wild_sprite": "assets/game_symbols/fae_forest/wild_sprite.svg"
+        },
+        "backgrounds": {
+          "landscape": "assets/backgrounds/slots/fae_forest.svg",
+          "portrait": "assets/backgrounds/slots/fae_forest_portrait.svg"
+        },
+        "studioLogo": null
+      }
+    },
+    {
+      "id": "runeblade",
+      "name": "Runeblade Saga",
+      "studio": "Ironclad Entertainment",
+      "provider": "Ironclad Entertainment",
+      "assets": {
+        "thumbnail": "assets/thumbnails/runeblade.png",
+        "symbols": {
+          "s1_rune_stone": "assets/game_symbols/runeblade/s1_rune_stone.svg",
+          "s2_blade_shard": "assets/game_symbols/runeblade/s2_blade_shard.svg",
+          "s3_warrior_helm": "assets/game_symbols/runeblade/s3_warrior_helm.svg",
+          "s4_dragon_scale": "assets/game_symbols/runeblade/s4_dragon_scale.svg",
+          "s5_runic_blade": "assets/game_symbols/runeblade/s5_runic_blade.svg",
+          "wild_runemaster": "assets/game_symbols/runeblade/wild_runemaster.svg"
+        },
+        "backgrounds": {
+          "landscape": "assets/backgrounds/slots/runeblade.svg",
+          "portrait": "assets/backgrounds/slots/runeblade_portrait.svg"
+        },
+        "studioLogo": null
+      }
+    },
+    {
+      "id": "arcane_tower",
+      "name": "Arcane Tower",
+      "studio": "Cascade Labs",
+      "provider": "Cascade Labs",
+      "assets": {
+        "thumbnail": "assets/thumbnails/arcane_tower.png",
+        "symbols": {
+          "s1_spell_scroll": "assets/game_symbols/arcane_tower/s1_spell_scroll.svg",
+          "s2_crystal_ball": "assets/game_symbols/arcane_tower/s2_crystal_ball.svg",
+          "s3_staff": "assets/game_symbols/arcane_tower/s3_staff.svg",
+          "s4_grimoire": "assets/game_symbols/arcane_tower/s4_grimoire.svg",
+          "s5_arcane_orb": "assets/game_symbols/arcane_tower/s5_arcane_orb.svg",
+          "wild_archmage": "assets/game_symbols/arcane_tower/wild_archmage.svg"
+        },
+        "backgrounds": {
+          "landscape": "assets/backgrounds/slots/arcane_tower.svg",
+          "portrait": "assets/backgrounds/slots/arcane_tower_portrait.svg"
+        },
+        "studioLogo": null
+      }
+    },
+    {
+      "id": "dragonfire_forge",
+      "name": "Dragonfire Forge",
+      "studio": "Dragon Pearl Studios",
+      "provider": "Dragon Pearl Studios",
+      "assets": {
+        "thumbnail": "assets/thumbnails/dragonfire_forge.png",
+        "symbols": {
+          "s1_anvil": "assets/game_symbols/dragonfire_forge/s1_anvil.svg",
+          "s2_molten_ingot": "assets/game_symbols/dragonfire_forge/s2_molten_ingot.svg",
+          "s3_dragon_egg": "assets/game_symbols/dragonfire_forge/s3_dragon_egg.svg",
+          "s4_flame_hammer": "assets/game_symbols/dragonfire_forge/s4_flame_hammer.svg",
+          "s5_legendary_blade": "assets/game_symbols/dragonfire_forge/s5_legendary_blade.svg",
+          "wild_dragon_smith": "assets/game_symbols/dragonfire_forge/wild_dragon_smith.svg"
+        },
+        "backgrounds": {
+          "landscape": "assets/backgrounds/slots/dragonfire_forge.svg",
+          "portrait": "assets/backgrounds/slots/dragonfire_forge_portrait.svg"
+        },
+        "studioLogo": null
+      }
+    },
+    {
+      "id": "tiger_temple",
+      "name": "Tiger Temple",
+      "studio": "Dragon Pearl Studios",
+      "provider": "Dragon Pearl Studios",
+      "assets": {
+        "thumbnail": "assets/thumbnails/tiger_temple.png",
+        "symbols": {
+          "s1_bamboo": "assets/game_symbols/tiger_temple/s1_bamboo.svg",
+          "s2_lotus": "assets/game_symbols/tiger_temple/s2_lotus.svg",
+          "s3_jade_tiger": "assets/game_symbols/tiger_temple/s3_jade_tiger.svg",
+          "s4_temple_gate": "assets/game_symbols/tiger_temple/s4_temple_gate.svg",
+          "s5_golden_tiger": "assets/game_symbols/tiger_temple/s5_golden_tiger.svg",
+          "wild_white_tiger": "assets/game_symbols/tiger_temple/wild_white_tiger.svg"
+        },
+        "backgrounds": {
+          "landscape": "assets/backgrounds/slots/tiger_temple.svg",
+          "portrait": "assets/backgrounds/slots/tiger_temple_portrait.svg"
+        },
+        "studioLogo": null
+      }
+    },
+    {
+      "id": "eagle_summit",
+      "name": "Eagle Summit",
+      "studio": "Wild Frontier Games",
+      "provider": "Wild Frontier Games",
+      "assets": {
+        "thumbnail": "assets/thumbnails/eagle_summit.png",
+        "symbols": {
+          "s1_mountain_peak": "assets/game_symbols/eagle_summit/s1_mountain_peak.svg",
+          "s2_pine_tree": "assets/game_symbols/eagle_summit/s2_pine_tree.svg",
+          "s3_feather_gold": "assets/game_symbols/eagle_summit/s3_feather_gold.svg",
+          "s4_nest": "assets/game_symbols/eagle_summit/s4_nest.svg",
+          "s5_summit_eagle": "assets/game_symbols/eagle_summit/s5_summit_eagle.svg",
+          "wild_bald_eagle": "assets/game_symbols/eagle_summit/wild_bald_eagle.svg"
+        },
+        "backgrounds": {
+          "landscape": "assets/backgrounds/slots/eagle_summit.svg",
+          "portrait": "assets/backgrounds/slots/eagle_summit_portrait.svg"
+        },
+        "studioLogo": null
+      }
+    },
+    {
+      "id": "panda_paradise",
+      "name": "Panda Paradise",
+      "studio": "Dragon Pearl Studios",
+      "provider": "Dragon Pearl Studios",
+      "assets": {
+        "thumbnail": "assets/thumbnails/panda_paradise.png",
+        "symbols": {
+          "s1_bamboo_shoot": "assets/game_symbols/panda_paradise/s1_bamboo_shoot.svg",
+          "s2_peach": "assets/game_symbols/panda_paradise/s2_peach.svg",
+          "s3_waterfall": "assets/game_symbols/panda_paradise/s3_waterfall.svg",
+          "s4_blossom": "assets/game_symbols/panda_paradise/s4_blossom.svg",
+          "s5_golden_panda": "assets/game_symbols/panda_paradise/s5_golden_panda.svg",
+          "wild_panda": "assets/game_symbols/panda_paradise/wild_panda.svg"
+        },
+        "backgrounds": {
+          "landscape": "assets/backgrounds/slots/panda_paradise.svg",
+          "portrait": "assets/backgrounds/slots/panda_paradise_portrait.svg"
+        },
+        "studioLogo": null
+      }
+    },
+    {
+      "id": "shark_reef",
+      "name": "Shark Reef",
+      "studio": "Wild Frontier Games",
+      "provider": "Wild Frontier Games",
+      "assets": {
+        "thumbnail": "assets/thumbnails/shark_reef.png",
+        "symbols": {
+          "s1_coral": "assets/game_symbols/shark_reef/s1_coral.svg",
+          "s2_clownfish": "assets/game_symbols/shark_reef/s2_clownfish.svg",
+          "s3_jellyfish": "assets/game_symbols/shark_reef/s3_jellyfish.svg",
+          "s4_treasure_chest": "assets/game_symbols/shark_reef/s4_treasure_chest.svg",
+          "s5_great_white": "assets/game_symbols/shark_reef/s5_great_white.svg",
+          "wild_hammerhead": "assets/game_symbols/shark_reef/wild_hammerhead.svg"
+        },
+        "backgrounds": {
+          "landscape": "assets/backgrounds/slots/shark_reef.svg",
+          "portrait": "assets/backgrounds/slots/shark_reef_portrait.svg"
+        },
+        "studioLogo": null
+      }
+    },
+    {
+      "id": "wolf_canyon",
+      "name": "Wolf Canyon",
+      "studio": "Wild Frontier Games",
+      "provider": "Wild Frontier Games",
+      "assets": {
+        "thumbnail": "assets/thumbnails/wolf_canyon.png",
+        "symbols": {
+          "s1_canyon_rock": "assets/game_symbols/wolf_canyon/s1_canyon_rock.svg",
+          "s2_cactus": "assets/game_symbols/wolf_canyon/s2_cactus.svg",
+          "s3_howling_moon": "assets/game_symbols/wolf_canyon/s3_howling_moon.svg",
+          "s4_elk_skull": "assets/game_symbols/wolf_canyon/s4_elk_skull.svg",
+          "s5_alpha_mark": "assets/game_symbols/wolf_canyon/s5_alpha_mark.svg",
+          "wild_lone_wolf": "assets/game_symbols/wolf_canyon/wild_lone_wolf.svg"
+        },
+        "backgrounds": {
+          "landscape": "assets/backgrounds/slots/wolf_canyon.svg",
+          "portrait": "assets/backgrounds/slots/wolf_canyon_portrait.svg"
+        },
+        "studioLogo": null
+      }
+    },
+    {
+      "id": "flamingo_fiesta",
+      "name": "Flamingo Fiesta",
+      "studio": "Cascade Labs",
+      "provider": "Cascade Labs",
+      "assets": {
+        "thumbnail": "assets/thumbnails/flamingo_fiesta.png",
+        "symbols": {
+          "s1_palm_leaf": "assets/game_symbols/flamingo_fiesta/s1_palm_leaf.svg",
+          "s2_sunset": "assets/game_symbols/flamingo_fiesta/s2_sunset.svg",
+          "s3_cocktail": "assets/game_symbols/flamingo_fiesta/s3_cocktail.svg",
+          "s4_seashell": "assets/game_symbols/flamingo_fiesta/s4_seashell.svg",
+          "s5_flamingo_dance": "assets/game_symbols/flamingo_fiesta/s5_flamingo_dance.svg",
+          "wild_flamingo": "assets/game_symbols/flamingo_fiesta/wild_flamingo.svg"
+        },
+        "backgrounds": {
+          "landscape": "assets/backgrounds/slots/flamingo_fiesta.svg",
+          "portrait": "assets/backgrounds/slots/flamingo_fiesta_portrait.svg"
+        },
+        "studioLogo": null
+      }
+    },
+    {
+      "id": "jade_emperor",
+      "name": "Jade Emperor",
+      "studio": "Dragon Pearl Studios",
+      "provider": "Dragon Pearl Studios",
+      "assets": {
+        "thumbnail": "assets/thumbnails/jade_emperor.png",
+        "symbols": {
+          "s1_jade_coin": "assets/game_symbols/jade_emperor/s1_jade_coin.svg",
+          "s2_dragon_pearl": "assets/game_symbols/jade_emperor/s2_dragon_pearl.svg",
+          "s3_imperial_seal": "assets/game_symbols/jade_emperor/s3_imperial_seal.svg",
+          "s4_golden_fan": "assets/game_symbols/jade_emperor/s4_golden_fan.svg",
+          "s5_emperor_throne": "assets/game_symbols/jade_emperor/s5_emperor_throne.svg",
+          "wild_jade_dragon": "assets/game_symbols/jade_emperor/wild_jade_dragon.svg"
+        },
+        "backgrounds": {
+          "landscape": "assets/backgrounds/slots/jade_emperor.svg",
+          "portrait": "assets/backgrounds/slots/jade_emperor_portrait.svg"
+        },
+        "studioLogo": null
+      }
+    },
+    {
+      "id": "koi_cascade",
+      "name": "Koi Cascade",
+      "studio": "Dragon Pearl Studios",
+      "provider": "Dragon Pearl Studios",
+      "assets": {
+        "thumbnail": "assets/thumbnails/koi_cascade.png",
+        "symbols": {
+          "s1_lily_pad": "assets/game_symbols/koi_cascade/s1_lily_pad.svg",
+          "s2_koi_orange": "assets/game_symbols/koi_cascade/s2_koi_orange.svg",
+          "s3_koi_gold": "assets/game_symbols/koi_cascade/s3_koi_gold.svg",
+          "s4_waterfall": "assets/game_symbols/koi_cascade/s4_waterfall.svg",
+          "s5_dragon_gate": "assets/game_symbols/koi_cascade/s5_dragon_gate.svg",
+          "wild_golden_koi": "assets/game_symbols/koi_cascade/wild_golden_koi.svg"
+        },
+        "backgrounds": {
+          "landscape": "assets/backgrounds/slots/koi_cascade.svg",
+          "portrait": "assets/backgrounds/slots/koi_cascade_portrait.svg"
+        },
+        "studioLogo": null
+      }
+    },
+    {
+      "id": "samurai_honor",
+      "name": "Samurai Honor",
+      "studio": "Ironclad Entertainment",
+      "provider": "Ironclad Entertainment",
+      "assets": {
+        "thumbnail": "assets/thumbnails/samurai_honor.png",
+        "symbols": {
+          "s1_katana": "assets/game_symbols/samurai_honor/s1_katana.svg",
+          "s2_cherry_blossom": "assets/game_symbols/samurai_honor/s2_cherry_blossom.svg",
+          "s3_armor": "assets/game_symbols/samurai_honor/s3_armor.svg",
+          "s4_war_fan": "assets/game_symbols/samurai_honor/s4_war_fan.svg",
+          "s5_honor_crest": "assets/game_symbols/samurai_honor/s5_honor_crest.svg",
+          "wild_ronin": "assets/game_symbols/samurai_honor/wild_ronin.svg"
+        },
+        "backgrounds": {
+          "landscape": "assets/backgrounds/slots/samurai_honor.svg",
+          "portrait": "assets/backgrounds/slots/samurai_honor_portrait.svg"
+        },
+        "studioLogo": null
+      }
+    },
+    {
+      "id": "moon_rabbit",
+      "name": "Moon Rabbit Festival",
+      "studio": "Ironclad Entertainment",
+      "provider": "Ironclad Entertainment",
+      "assets": {
+        "thumbnail": "assets/thumbnails/moon_rabbit.png",
+        "symbols": {
+          "s1_mooncake": "assets/game_symbols/moon_rabbit/s1_mooncake.svg",
+          "s2_lantern_red": "assets/game_symbols/moon_rabbit/s2_lantern_red.svg",
+          "s3_rabbit": "assets/game_symbols/moon_rabbit/s3_rabbit.svg",
+          "s4_rice_dumpling": "assets/game_symbols/moon_rabbit/s4_rice_dumpling.svg",
+          "s5_full_moon": "assets/game_symbols/moon_rabbit/s5_full_moon.svg",
+          "wild_moon_rabbit": "assets/game_symbols/moon_rabbit/wild_moon_rabbit.svg"
+        },
+        "backgrounds": {
+          "landscape": "assets/backgrounds/slots/moon_rabbit.svg",
+          "portrait": "assets/backgrounds/slots/moon_rabbit_portrait.svg"
+        },
+        "studioLogo": null
+      }
+    },
+    {
+      "id": "dragon_gate",
+      "name": "Dragon Gate",
+      "studio": "Ironclad Entertainment",
+      "provider": "Ironclad Entertainment",
+      "assets": {
+        "thumbnail": "assets/thumbnails/dragon_gate.png",
+        "symbols": {
+          "s1_pearl": "assets/game_symbols/dragon_gate/s1_pearl.svg",
+          "s2_cloud": "assets/game_symbols/dragon_gate/s2_cloud.svg",
+          "s3_thunder": "assets/game_symbols/dragon_gate/s3_thunder.svg",
+          "s4_gate_pillar": "assets/game_symbols/dragon_gate/s4_gate_pillar.svg",
+          "s5_dragon_eye": "assets/game_symbols/dragon_gate/s5_dragon_eye.svg",
+          "wild_celestial_dragon": "assets/game_symbols/dragon_gate/wild_celestial_dragon.svg"
+        },
+        "backgrounds": {
+          "landscape": "assets/backgrounds/slots/dragon_gate.svg",
+          "portrait": "assets/backgrounds/slots/dragon_gate_portrait.svg"
+        },
+        "studioLogo": null
+      }
+    },
+    {
+      "id": "lucky_tanuki",
+      "name": "Lucky Tanuki",
+      "studio": "Cascade Labs",
+      "provider": "Cascade Labs",
+      "assets": {
+        "thumbnail": "assets/thumbnails/lucky_tanuki.png",
+        "symbols": {
+          "s1_sake_bottle": "assets/game_symbols/lucky_tanuki/s1_sake_bottle.svg",
+          "s2_straw_hat": "assets/game_symbols/lucky_tanuki/s2_straw_hat.svg",
+          "s3_coin_pouch": "assets/game_symbols/lucky_tanuki/s3_coin_pouch.svg",
+          "s4_bamboo": "assets/game_symbols/lucky_tanuki/s4_bamboo.svg",
+          "s5_tanuki_statue": "assets/game_symbols/lucky_tanuki/s5_tanuki_statue.svg",
+          "wild_tanuki": "assets/game_symbols/lucky_tanuki/wild_tanuki.svg"
+        },
+        "backgrounds": {
+          "landscape": "assets/backgrounds/slots/lucky_tanuki.svg",
+          "portrait": "assets/backgrounds/slots/lucky_tanuki_portrait.svg"
+        },
+        "studioLogo": null
+      }
+    },
+    {
+      "id": "crimson_fang",
+      "name": "Crimson Fang",
+      "studio": "Shadow Works",
+      "provider": "Shadow Works",
+      "assets": {
+        "thumbnail": "assets/thumbnails/crimson_fang.png",
+        "symbols": {
+          "s1_coffin": "assets/game_symbols/crimson_fang/s1_coffin.svg",
+          "s2_blood_vial": "assets/game_symbols/crimson_fang/s2_blood_vial.svg",
+          "s3_bat_swarm": "assets/game_symbols/crimson_fang/s3_bat_swarm.svg",
+          "s4_castle": "assets/game_symbols/crimson_fang/s4_castle.svg",
+          "s5_crimson_eye": "assets/game_symbols/crimson_fang/s5_crimson_eye.svg",
+          "wild_vampire": "assets/game_symbols/crimson_fang/wild_vampire.svg"
+        },
+        "backgrounds": {
+          "landscape": "assets/backgrounds/slots/crimson_fang.svg",
+          "portrait": "assets/backgrounds/slots/crimson_fang_portrait.svg"
+        },
+        "studioLogo": null
+      }
+    },
+    {
+      "id": "plague_doctor",
+      "name": "Plague Doctor",
+      "studio": "Shadow Works",
+      "provider": "Shadow Works",
+      "assets": {
+        "thumbnail": "assets/thumbnails/plague_doctor.png",
+        "symbols": {
+          "s1_plague_mask": "assets/game_symbols/plague_doctor/s1_plague_mask.svg",
+          "s2_potion": "assets/game_symbols/plague_doctor/s2_potion.svg",
+          "s3_rats": "assets/game_symbols/plague_doctor/s3_rats.svg",
+          "s4_lantern_dim": "assets/game_symbols/plague_doctor/s4_lantern_dim.svg",
+          "s5_death_toll": "assets/game_symbols/plague_doctor/s5_death_toll.svg",
+          "wild_doctor": "assets/game_symbols/plague_doctor/wild_doctor.svg"
+        },
+        "backgrounds": {
+          "landscape": "assets/backgrounds/slots/plague_doctor.svg",
+          "portrait": "assets/backgrounds/slots/plague_doctor_portrait.svg"
+        },
+        "studioLogo": null
+      }
+    },
+    {
+      "id": "eldritch_depths",
+      "name": "Eldritch Depths",
+      "studio": "Shadow Works",
+      "provider": "Shadow Works",
+      "assets": {
+        "thumbnail": "assets/thumbnails/eldritch_depths.png",
+        "symbols": {
+          "s1_tentacle": "assets/game_symbols/eldritch_depths/s1_tentacle.svg",
+          "s2_eye_abyss": "assets/game_symbols/eldritch_depths/s2_eye_abyss.svg",
+          "s3_ancient_tome": "assets/game_symbols/eldritch_depths/s3_ancient_tome.svg",
+          "s4_madness_spiral": "assets/game_symbols/eldritch_depths/s4_madness_spiral.svg",
+          "s5_elder_sign": "assets/game_symbols/eldritch_depths/s5_elder_sign.svg",
+          "wild_cthulhu": "assets/game_symbols/eldritch_depths/wild_cthulhu.svg"
+        },
+        "backgrounds": {
+          "landscape": "assets/backgrounds/slots/eldritch_depths.svg",
+          "portrait": "assets/backgrounds/slots/eldritch_depths_portrait.svg"
+        },
+        "studioLogo": null
+      }
+    },
+    {
+      "id": "banshee_wail",
+      "name": "Banshee Wail",
+      "studio": "Shadow Works",
+      "provider": "Shadow Works",
+      "assets": {
+        "thumbnail": "assets/thumbnails/banshee_wail.png",
+        "symbols": {
+          "s1_gravestone": "assets/game_symbols/banshee_wail/s1_gravestone.svg",
+          "s2_fog": "assets/game_symbols/banshee_wail/s2_fog.svg",
+          "s3_will_o_wisp": "assets/game_symbols/banshee_wail/s3_will_o_wisp.svg",
+          "s4_dead_tree": "assets/game_symbols/banshee_wail/s4_dead_tree.svg",
+          "s5_banshee_cry": "assets/game_symbols/banshee_wail/s5_banshee_cry.svg",
+          "wild_banshee": "assets/game_symbols/banshee_wail/wild_banshee.svg"
+        },
+        "backgrounds": {
+          "landscape": "assets/backgrounds/slots/banshee_wail.svg",
+          "portrait": "assets/backgrounds/slots/banshee_wail_portrait.svg"
+        },
+        "studioLogo": null
+      }
+    },
+    {
+      "id": "puppet_master",
+      "name": "Puppet Master",
+      "studio": "Shadow Works",
+      "provider": "Shadow Works",
+      "assets": {
+        "thumbnail": "assets/thumbnails/puppet_master.png",
+        "symbols": {
+          "s1_marionette": "assets/game_symbols/puppet_master/s1_marionette.svg",
+          "s2_thread": "assets/game_symbols/puppet_master/s2_thread.svg",
+          "s3_stage": "assets/game_symbols/puppet_master/s3_stage.svg",
+          "s4_music_box": "assets/game_symbols/puppet_master/s4_music_box.svg",
+          "s5_puppet_eye": "assets/game_symbols/puppet_master/s5_puppet_eye.svg",
+          "wild_puppeteer": "assets/game_symbols/puppet_master/wild_puppeteer.svg"
+        },
+        "backgrounds": {
+          "landscape": "assets/backgrounds/slots/puppet_master.svg",
+          "portrait": "assets/backgrounds/slots/puppet_master_portrait.svg"
+        },
+        "studioLogo": null
+      }
+    },
+    {
+      "id": "kookaburra_cash",
+      "name": "Kookaburra Cash",
+      "studio": "Wild Frontier Games",
+      "provider": "Wild Frontier Games",
+      "assets": {
+        "thumbnail": "assets/thumbnails/kookaburra_cash.png",
+        "symbols": {
+          "s1_gum_tree": "assets/game_symbols/kookaburra_cash/s1_gum_tree.svg",
+          "s2_kookaburra": "assets/game_symbols/kookaburra_cash/s2_kookaburra.svg",
+          "s3_wattle": "assets/game_symbols/kookaburra_cash/s3_wattle.svg",
+          "s4_billabong": "assets/game_symbols/kookaburra_cash/s4_billabong.svg",
+          "s5_golden_egg": "assets/game_symbols/kookaburra_cash/s5_golden_egg.svg",
+          "wild_laughing_kook": "assets/game_symbols/kookaburra_cash/wild_laughing_kook.svg"
+        },
+        "backgrounds": {
+          "landscape": "assets/backgrounds/slots/kookaburra_cash.svg",
+          "portrait": "assets/backgrounds/slots/kookaburra_cash_portrait.svg"
+        },
+        "studioLogo": null
+      }
+    },
+    {
+      "id": "crocodile_dundee",
+      "name": "Croc Country",
+      "studio": "Wild Frontier Games",
+      "provider": "Wild Frontier Games",
+      "assets": {
+        "thumbnail": "assets/thumbnails/crocodile_dundee.png",
+        "symbols": {
+          "s1_croc_teeth": "assets/game_symbols/crocodile_dundee/s1_croc_teeth.svg",
+          "s2_river_mud": "assets/game_symbols/crocodile_dundee/s2_river_mud.svg",
+          "s3_dragonfly": "assets/game_symbols/crocodile_dundee/s3_dragonfly.svg",
+          "s4_fishing_rod": "assets/game_symbols/crocodile_dundee/s4_fishing_rod.svg",
+          "s5_mega_croc": "assets/game_symbols/crocodile_dundee/s5_mega_croc.svg",
+          "wild_crocodile": "assets/game_symbols/crocodile_dundee/wild_crocodile.svg"
+        },
+        "backgrounds": {
+          "landscape": "assets/backgrounds/slots/crocodile_dundee.svg",
+          "portrait": "assets/backgrounds/slots/crocodile_dundee_portrait.svg"
+        },
+        "studioLogo": null
+      }
+    },
+    {
+      "id": "uluru_gold",
+      "name": "Uluru Gold",
+      "studio": "Ironclad Entertainment",
+      "provider": "Ironclad Entertainment",
+      "assets": {
+        "thumbnail": "assets/thumbnails/uluru_gold.png",
+        "symbols": {
+          "s1_boomerang": "assets/game_symbols/uluru_gold/s1_boomerang.svg",
+          "s2_dot_painting": "assets/game_symbols/uluru_gold/s2_dot_painting.svg",
+          "s3_didgeridoo": "assets/game_symbols/uluru_gold/s3_didgeridoo.svg",
+          "s4_desert_sun": "assets/game_symbols/uluru_gold/s4_desert_sun.svg",
+          "s5_uluru_symbol": "assets/game_symbols/uluru_gold/s5_uluru_symbol.svg",
+          "wild_uluru": "assets/game_symbols/uluru_gold/wild_uluru.svg"
+        },
+        "backgrounds": {
+          "landscape": "assets/backgrounds/slots/uluru_gold.svg",
+          "portrait": "assets/backgrounds/slots/uluru_gold_portrait.svg"
+        },
+        "studioLogo": null
+      }
+    },
+    {
+      "id": "platypus_fortune",
+      "name": "Platypus Fortune",
+      "studio": "Cascade Labs",
+      "provider": "Cascade Labs",
+      "assets": {
+        "thumbnail": "assets/thumbnails/platypus_fortune.png",
+        "symbols": {
+          "s1_eucalyptus": "assets/game_symbols/platypus_fortune/s1_eucalyptus.svg",
+          "s2_river_stone": "assets/game_symbols/platypus_fortune/s2_river_stone.svg",
+          "s3_yabby": "assets/game_symbols/platypus_fortune/s3_yabby.svg",
+          "s4_fern": "assets/game_symbols/platypus_fortune/s4_fern.svg",
+          "s5_golden_platypus": "assets/game_symbols/platypus_fortune/s5_golden_platypus.svg",
+          "wild_platypus": "assets/game_symbols/platypus_fortune/wild_platypus.svg"
+        },
+        "backgrounds": {
+          "landscape": "assets/backgrounds/slots/platypus_fortune.svg",
+          "portrait": "assets/backgrounds/slots/platypus_fortune_portrait.svg"
+        },
+        "studioLogo": null
+      }
+    },
+    {
+      "id": "great_barrier",
+      "name": "Great Barrier Riches",
+      "studio": "Ironclad Entertainment",
+      "provider": "Ironclad Entertainment",
+      "assets": {
+        "thumbnail": "assets/thumbnails/great_barrier.png",
+        "symbols": {
+          "s1_sea_turtle": "assets/game_symbols/great_barrier/s1_sea_turtle.svg",
+          "s2_anemone": "assets/game_symbols/great_barrier/s2_anemone.svg",
+          "s3_manta_ray": "assets/game_symbols/great_barrier/s3_manta_ray.svg",
+          "s4_pearl_oyster": "assets/game_symbols/great_barrier/s4_pearl_oyster.svg",
+          "s5_reef_treasure": "assets/game_symbols/great_barrier/s5_reef_treasure.svg",
+          "wild_whale": "assets/game_symbols/great_barrier/wild_whale.svg"
+        },
+        "backgrounds": {
+          "landscape": "assets/backgrounds/slots/great_barrier.svg",
+          "portrait": "assets/backgrounds/slots/great_barrier_portrait.svg"
+        },
+        "studioLogo": null
+      }
+    },
+    {
+      "id": "pirate_plunder",
+      "name": "Pirate Plunder",
+      "studio": "Ironclad Entertainment",
+      "provider": "Ironclad Entertainment",
+      "assets": {
+        "thumbnail": "assets/thumbnails/pirate_plunder.png",
+        "symbols": {
+          "s1_compass": "assets/game_symbols/pirate_plunder/s1_compass.svg",
+          "s2_cannon": "assets/game_symbols/pirate_plunder/s2_cannon.svg",
+          "s3_treasure_map": "assets/game_symbols/pirate_plunder/s3_treasure_map.svg",
+          "s4_skull_cross": "assets/game_symbols/pirate_plunder/s4_skull_cross.svg",
+          "s5_treasure_key": "assets/game_symbols/pirate_plunder/s5_treasure_key.svg",
+          "wild_captain": "assets/game_symbols/pirate_plunder/wild_captain.svg"
+        },
+        "backgrounds": {
+          "landscape": "assets/backgrounds/slots/pirate_plunder.svg",
+          "portrait": "assets/backgrounds/slots/pirate_plunder_portrait.svg"
+        },
+        "studioLogo": null
+      }
+    },
+    {
+      "id": "steampunk_fortune",
+      "name": "Steampunk Fortune",
+      "studio": "Ironclad Entertainment",
+      "provider": "Ironclad Entertainment",
+      "assets": {
+        "thumbnail": "assets/thumbnails/steampunk_fortune.png",
+        "symbols": {
+          "s1_gear": "assets/game_symbols/steampunk_fortune/s1_gear.svg",
+          "s2_steam_pipe": "assets/game_symbols/steampunk_fortune/s2_steam_pipe.svg",
+          "s3_goggles": "assets/game_symbols/steampunk_fortune/s3_goggles.svg",
+          "s4_airship": "assets/game_symbols/steampunk_fortune/s4_airship.svg",
+          "s5_clockwork_heart": "assets/game_symbols/steampunk_fortune/s5_clockwork_heart.svg",
+          "wild_inventor": "assets/game_symbols/steampunk_fortune/wild_inventor.svg"
+        },
+        "backgrounds": {
+          "landscape": "assets/backgrounds/slots/steampunk_fortune.svg",
+          "portrait": "assets/backgrounds/slots/steampunk_fortune_portrait.svg"
+        },
+        "studioLogo": null
+      }
+    },
+    {
+      "id": "wild_west_bounty",
+      "name": "Wild West Bounty",
+      "studio": "Ironclad Entertainment",
+      "provider": "Ironclad Entertainment",
+      "assets": {
+        "thumbnail": "assets/thumbnails/wild_west_bounty.png",
+        "symbols": {
+          "s1_wanted_poster": "assets/game_symbols/wild_west_bounty/s1_wanted_poster.svg",
+          "s2_revolver": "assets/game_symbols/wild_west_bounty/s2_revolver.svg",
+          "s3_sheriff_badge": "assets/game_symbols/wild_west_bounty/s3_sheriff_badge.svg",
+          "s4_horseshoe": "assets/game_symbols/wild_west_bounty/s4_horseshoe.svg",
+          "s5_bounty_bag": "assets/game_symbols/wild_west_bounty/s5_bounty_bag.svg",
+          "wild_outlaw": "assets/game_symbols/wild_west_bounty/wild_outlaw.svg"
+        },
+        "backgrounds": {
+          "landscape": "assets/backgrounds/slots/wild_west_bounty.svg",
+          "portrait": "assets/backgrounds/slots/wild_west_bounty_portrait.svg"
+        },
+        "studioLogo": null
+      }
+    },
+    {
+      "id": "deep_dive",
+      "name": "Deep Dive Treasures",
+      "studio": "Cascade Labs",
+      "provider": "Cascade Labs",
+      "assets": {
+        "thumbnail": "assets/thumbnails/deep_dive.png",
+        "symbols": {
+          "s1_submarine": "assets/game_symbols/deep_dive/s1_submarine.svg",
+          "s2_anchor": "assets/game_symbols/deep_dive/s2_anchor.svg",
+          "s3_diving_helmet": "assets/game_symbols/deep_dive/s3_diving_helmet.svg",
+          "s4_trident": "assets/game_symbols/deep_dive/s4_trident.svg",
+          "s5_sunken_crown": "assets/game_symbols/deep_dive/s5_sunken_crown.svg",
+          "wild_diver": "assets/game_symbols/deep_dive/wild_diver.svg"
+        },
+        "backgrounds": {
+          "landscape": "assets/backgrounds/slots/deep_dive.svg",
+          "portrait": "assets/backgrounds/slots/deep_dive_portrait.svg"
+        },
+        "studioLogo": null
+      }
+    }
+  ]
+}

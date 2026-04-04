@@ -1,0 +1,66 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 80" width="300" height="80">
+  <defs>
+    <linearGradient id="ic-brass" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#FFAB40"/>
+      <stop offset="40%" stop-color="#FF6D00"/>
+      <stop offset="100%" stop-color="#BF360C"/>
+    </linearGradient>
+    <linearGradient id="ic-leather" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#A1887F"/>
+      <stop offset="100%" stop-color="#5D4037"/>
+    </linearGradient>
+    <linearGradient id="ic-metal" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#9E9E9E"/>
+      <stop offset="40%" stop-color="#757575"/>
+      <stop offset="60%" stop-color="#BDBDBD"/>
+      <stop offset="100%" stop-color="#616161"/>
+    </linearGradient>
+    <pattern id="ic-plate" patternUnits="userSpaceOnUse" width="8" height="8">
+      <rect width="8" height="8" fill="#5D4037" opacity="0.1"/>
+      <line x1="0" y1="4" x2="8" y2="4" stroke="#8D6E63" stroke-width="0.3" opacity="0.15"/>
+    </pattern>
+  </defs>
+  <!-- Leather strap background -->
+  <rect x="4" y="15" width="292" height="50" rx="4" fill="url(#ic-leather)" opacity="0.15"/>
+  <rect x="4" y="15" width="292" height="50" rx="4" fill="url(#ic-plate)"/>
+  <!-- Metal plate border -->
+  <rect x="6" y="17" width="288" height="46" rx="3" fill="none" stroke="url(#ic-brass)" stroke-width="1.5" opacity="0.5"/>
+  <!-- Rivets along top and bottom -->
+  <circle cx="18" cy="20" r="2.5" fill="url(#ic-metal)" opacity="0.6"/>
+  <circle cx="18" cy="20" r="1" fill="#BDBDBD" opacity="0.3"/>
+  <circle cx="40" cy="20" r="2.5" fill="url(#ic-metal)" opacity="0.6"/>
+  <circle cx="40" cy="20" r="1" fill="#BDBDBD" opacity="0.3"/>
+  <circle cx="260" cy="20" r="2.5" fill="url(#ic-metal)" opacity="0.6"/>
+  <circle cx="260" cy="20" r="1" fill="#BDBDBD" opacity="0.3"/>
+  <circle cx="282" cy="20" r="2.5" fill="url(#ic-metal)" opacity="0.6"/>
+  <circle cx="282" cy="20" r="1" fill="#BDBDBD" opacity="0.3"/>
+  <circle cx="18" cy="60" r="2.5" fill="url(#ic-metal)" opacity="0.6"/>
+  <circle cx="18" cy="60" r="1" fill="#BDBDBD" opacity="0.3"/>
+  <circle cx="40" cy="60" r="2.5" fill="url(#ic-metal)" opacity="0.6"/>
+  <circle cx="40" cy="60" r="1" fill="#BDBDBD" opacity="0.3"/>
+  <circle cx="260" cy="60" r="2.5" fill="url(#ic-metal)" opacity="0.6"/>
+  <circle cx="260" cy="60" r="1" fill="#BDBDBD" opacity="0.3"/>
+  <circle cx="282" cy="60" r="2.5" fill="url(#ic-metal)" opacity="0.6"/>
+  <circle cx="282" cy="60" r="1" fill="#BDBDBD" opacity="0.3"/>
+  <!-- Gear icon -->
+  <circle cx="68" cy="40" r="14" fill="none" stroke="url(#ic-brass)" stroke-width="2.5" opacity="0.7"/>
+  <circle cx="68" cy="40" r="6" fill="url(#ic-brass)" opacity="0.5"/>
+  <circle cx="68" cy="40" r="3" fill="url(#ic-metal)" opacity="0.6"/>
+  <!-- Gear teeth -->
+  <rect x="64" y="23" width="8" height="6" rx="1" fill="url(#ic-brass)" opacity="0.6"/>
+  <rect x="64" y="51" width="8" height="6" rx="1" fill="url(#ic-brass)" opacity="0.6"/>
+  <rect x="51" y="36" width="6" height="8" rx="1" fill="url(#ic-brass)" opacity="0.6"/>
+  <rect x="79" y="36" width="6" height="8" rx="1" fill="url(#ic-brass)" opacity="0.6"/>
+  <rect x="54" y="26" width="6" height="6" rx="1" fill="url(#ic-brass)" opacity="0.5" transform="rotate(-45 57 29)"/>
+  <rect x="76" y="48" width="6" height="6" rx="1" fill="url(#ic-brass)" opacity="0.5" transform="rotate(-45 79 51)"/>
+  <rect x="76" y="26" width="6" height="6" rx="1" fill="url(#ic-brass)" opacity="0.5" transform="rotate(45 79 29)"/>
+  <rect x="54" y="48" width="6" height="6" rx="1" fill="url(#ic-brass)" opacity="0.5" transform="rotate(45 57 51)"/>
+  <!-- Divider bolt -->
+  <circle cx="96" cy="40" r="3" fill="url(#ic-metal)" opacity="0.5"/>
+  <circle cx="96" cy="40" r="1.2" fill="#BDBDBD" opacity="0.3"/>
+  <!-- Main text - industrial stencil feel -->
+  <text x="196" y="47" text-anchor="middle" font-family="'Impact', 'Arial Black', sans-serif" font-size="30" fill="url(#ic-brass)" letter-spacing="6">IRONCLAD</text>
+  <!-- Steampunk accent lines -->
+  <line x1="108" y1="54" x2="284" y2="54" stroke="#FF6D00" stroke-width="0.8" opacity="0.25"/>
+  <line x1="108" y1="28" x2="284" y2="28" stroke="#FF6D00" stroke-width="0.8" opacity="0.25"/>
+</svg>

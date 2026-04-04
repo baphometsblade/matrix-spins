@@ -1,0 +1,3 @@
+Contact: mailto:markmma1985@gmail.com
+Preferred-Languages: en
+Canonical: https://msaart.online/.well-known/security.txt

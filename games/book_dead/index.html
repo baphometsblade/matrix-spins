@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tome of Ra | Matrix Spins Casino</title>
+  <link rel="stylesheet" href="../_shared/game-runtime.css">
+  <link rel="preload" href="/assets/game_symbols/book_dead/s1_ankh.png" as="image">
+  <link rel="preload" href="/assets/game_symbols/book_dead/s2_scarab.png" as="image">
+  <link rel="preload" href="/assets/game_symbols/book_dead/s3_eye.png" as="image">
+  <link rel="preload" href="/assets/game_symbols/book_dead/s4_pharaoh.png" as="image">
+  <link rel="preload" href="/assets/game_symbols/book_dead/s5_anubis.png" as="image">
+  <link rel="preload" href="/assets/game_symbols/book_dead/wild_book.png" as="image">
+  <style>
+    :root {
+      --studio-primary: #b388ff;
+      --studio-secondary: #7c4dff;
+      --studio-bg: #0d0a1a;
+      --studio-surface: #1a1230;
+      --studio-font: 'Cinzel', Georgia, serif;
+      --studio-glow: #b388ff40;
+      --reel-border: #b388ff;
+      --reel-cell-size: 68px;
+    }
+    body { background-image: url('/assets/backgrounds/slots/book_dead_bg.webp'); background-size: cover; background-position: center; background-attachment: fixed; }
+  </style>
+</head>
+<body>
+
+  <!-- Symbol SVG Definitions (fallback for missing HD assets) -->
+  <div style="display:none">
+  <svg id="svg_s1_ankh" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" style="display:none">
+    <defs><linearGradient id="sg40" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#b388ff"/><stop offset="100%" stop-color="#7c4dff"/>
+    </linearGradient></defs>
+    <rect width="100" height="100" rx="10" fill="#0d0d1a"/>
+    <ellipse cx="50" cy="50" rx="42" ry="35" fill="url(#sg40)" stroke="#b388ff" stroke-width="1.5"/>
+    
+    <text x="50" y="56" text-anchor="middle" font-family="Arial,sans-serif" font-weight="700" font-size="11" fill="white">ANKH</text>
+  </svg>
+  <svg id="svg_s2_scarab" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" style="display:none">
+    <defs><linearGradient id="sg41" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#b388ff"/><stop offset="100%" stop-color="#7c4dff"/>
+    </linearGradient></defs>
+    <rect width="100" height="100" rx="10" fill="#0d0d1a"/>
+    <rect x="12" y="12" width="76" height="76" rx="12" fill="url(#sg41)" stroke="#b388ff" stroke-width="1.5"/>
+    
+    <text x="50" y="56" text-anchor="middle" font-family="Arial,sans-serif" font-weight="700" font-size="11" fill="white">SCARAB</text>
+  </svg>
+  <svg id="svg_s3_eye" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" style="display:none">
+    <defs><linearGradient id="sg42" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#b388ff"/><stop offset="100%" stop-color="#7c4dff"/>
+    </linearGradient></defs>
+    <rect width="100" height="100" rx="10" fill="#0d0d1a"/>
+    <circle cx="50" cy="50" r="38" fill="url(#sg42)" stroke="#b388ff" stroke-width="1.5"/>
+    
+    <text x="50" y="56" text-anchor="middle" font-family="Arial,sans-serif" font-weight="700" font-size="11" fill="white">EYE</text>
+  </svg>
+  <svg id="svg_s4_pharaoh" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" style="display:none">
+    <defs><linearGradient id="sg43" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#b388ff"/><stop offset="100%" stop-color="#7c4dff"/>
+    </linearGradient></defs>
+    <rect width="100" height="100" rx="10" fill="#0d0d1a"/>
+    <ellipse cx="50" cy="50" rx="42" ry="35" fill="url(#sg43)" stroke="#b388ff" stroke-width="1.5"/>
+    
+    <text x="50" y="56" text-anchor="middle" font-family="Arial,sans-serif" font-weight="700" font-size="11" fill="white">PHARAOH</text>
+  </svg>
+  <svg id="svg_s5_anubis" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" style="display:none">
+    <defs><linearGradient id="sg44" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#b388ff"/><stop offset="100%" stop-color="#7c4dff"/>
+    </linearGradient></defs>
+    <rect width="100" height="100" rx="10" fill="#0d0d1a"/>
+    <circle cx="50" cy="50" r="38" fill="url(#sg44)" stroke="#b388ff" stroke-width="1.5"/>
+    
+    <text x="50" y="56" text-anchor="middle" font-family="Arial,sans-serif" font-weight="700" font-size="11" fill="white">ANUBIS</text>
+  </svg>
+  <svg id="svg_wild_book" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" style="display:none">
+    <defs><linearGradient id="sg45" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#ffd700"/><stop offset="100%" stop-color="#ff8f00"/>
+    </linearGradient></defs>
+    <rect width="100" height="100" rx="10" fill="#2a1a00"/>
+    <ellipse cx="50" cy="50" rx="42" ry="35" fill="url(#sg45)" stroke="#ffd700" stroke-width="1.5"/>
+    <text x="50" y="28" text-anchor="middle" font-size="10" font-weight="900" fill="#ffd700">WILD</text>
+    <text x="50" y="62" text-anchor="middle" font-family="Arial,sans-serif" font-weight="700" font-size="11" fill="white">BOOK</text>
+  </svg>
+  </div>
+
+  <!-- Top Bar -->
+  <div class="game-topbar">
+    <button class="back-btn" id="backBtn">&#8592; Lobby</button>
+    <div class="game-title">Tome of Ra</div>
+    <div class="studio-badge">
+      <span>Mythic Forge</span>
+    </div>
+  </div>
+
+  <!-- Balance Bar -->
+  <div class="balance-bar">
+    <div class="balance-item"><div class="label">Balance</div><div class="value" id="balanceValue">$1,000.00</div></div>
+    <div class="balance-item"><div class="label">Bet</div><div class="value" id="betValue">$1.00</div></div>
+    <div class="balance-item"><div class="label">Win</div><div class="value" id="winValue">$0.00</div></div>
+  </div>
+
+  <!-- Game Area -->
+  <div class="game-area">
+    <div class="free-spins-banner" id="freeSpinsBanner">FREE SPINS</div>
+    <div class="reels-frame">
+      <div class="reels-grid" id="reelsGrid"></div>
+    </div>
+    <div class="mechanic-overlay" id="mechanicOverlay">
+      <div><div class="mechanic-text"></div><div class="mechanic-sub"></div></div>
+    </div>
+  </div>
+
+  <!-- Controls -->
+  <div class="controls-bar">
+    <button class="autoplay-btn" id="autoplayBtn">Auto</button>
+    <div class="bet-control">
+      <button id="betDown">-</button>
+      <div class="bet-display" id="betDisplay">$1.00</div>
+      <button id="betUp">+</button>
+    </div>
+    <button class="spin-btn" id="spinBtn">SPIN</button>
+    <button class="maxbet-btn" id="maxBet">MAX</button>
+  </div>
+
+  <!-- Info Bar -->
+  <div class="info-bar">
+    <span>RTP: 90.83%</span>
+    <span>PAYLINE | 5x3</span>
+    <span>MEDIUM</span>
+  </div>
+
+  <!-- Scripts -->
+  <script src="../../js/casino-engine.js?v=3.1.0"></script>
+  <script>
+    window.GAME_CONFIG = {
+  "id": "book_dead",
+  "name": "Tome of Ra",
+  "provider": "mythic-forge",
+  "studioId": "mythic-forge",
+  "symbols": [
+    "s1_ankh",
+    "s2_scarab",
+    "s3_eye",
+    "s4_pharaoh",
+    "s5_anubis",
+    "wild_book"
+  ],
+  "gridCols": 5,
+  "gridRows": 3,
+  "winType": "payline",
+  "wildSymbol": "wild_book",
+  "scatterSymbol": "wild_book",
+  "rtp": 90.83,
+  "volatility": "medium",
+  "bonusType": "expanding_symbol",
+  "freeSpinsCount": 10,
+  "freeSpinsTrigger": 3,
+  "clusterMin": 5,
+  "minBet": 0.2,
+  "maxBet": 1000
+};
+    window.GAME_MECHANIC = {
+            _gameIdx: 4,
+            _expandSym: null,
+            onResult: function(grid, cfg, st, baseWin) {
+                if (st.freeSpinsActive && baseWin > 0) {
+                    if (!this._expandSym) {
+                        var candidates = cfg.symbols.filter(function(s) { return s !== cfg.wildSymbol && s !== cfg.scatterSymbol; });
+                        this._expandSym = candidates[Math.floor(Math.random() * candidates.length)];
+                    }
+                    // Count expanded symbol appearances
+                    var count = 0;
+                    for (var c = 0; c < grid.length; c++) for (var r = 0; r < grid[c].length; r++) {
+                        if (grid[c][r] === this._expandSym) count++;
+                    }
+                    if (count >= 2) {
+                        return { winAmount: baseWin * 1.5, message: 'EXPANDING ' + this._expandSym.replace(/^s\d+_/,'').toUpperCase() + '!', sub: '' };
+                    }
+                }
+                if (!st.freeSpinsActive) this._expandSym = null;
+                return null;
+            }
+        };
+  </script>
+  <script src="../_shared/game-runtime.js"></script>
+</body>
+</html>

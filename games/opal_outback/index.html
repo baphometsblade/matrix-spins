@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Opal Dreams | Matrix Spins Casino</title>
+  <link rel="stylesheet" href="../_shared/game-runtime.css">
+  <link rel="preload" href="/assets/game_symbols/opal_outback/s1_opal_stone.png" as="image">
+  <link rel="preload" href="/assets/game_symbols/opal_outback/s2_mining_cart.png" as="image">
+  <link rel="preload" href="/assets/game_symbols/opal_outback/s3_outback_sunset.png" as="image">
+  <link rel="preload" href="/assets/game_symbols/opal_outback/s4_aboriginal_pattern.png" as="image">
+  <link rel="preload" href="/assets/game_symbols/opal_outback/s5_opal_vein.png" as="image">
+  <link rel="preload" href="/assets/game_symbols/opal_outback/wild_precious_opal.png" as="image">
+  <style>
+    :root {
+      --studio-primary: #ff4081;
+      --studio-secondary: #880e4f;
+      --studio-bg: #0a1a0a;
+      --studio-surface: #1a2a1a;
+      --studio-font: 'Bungee', Impact, sans-serif;
+      --studio-glow: #ff408140;
+      --reel-border: #ff4081;
+      --reel-cell-size: 68px;
+    }
+    
+  </style>
+</head>
+<body>
+
+  <!-- Symbol SVG Definitions (fallback for missing HD assets) -->
+  <div style="display:none">
+  <svg id="svg_s1_opal_stone" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" style="display:none">
+    <defs><linearGradient id="sg450" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#ff4081"/><stop offset="100%" stop-color="#880e4f"/>
+    </linearGradient></defs>
+    <rect width="100" height="100" rx="10" fill="#0d0d1a"/>
+    <polygon points="50,8 92,50 50,92 8,50" fill="url(#sg450)" stroke="#ff4081" stroke-width="1.5"/>
+    
+    <text x="50" y="56" text-anchor="middle" font-family="Arial,sans-serif" font-weight="700" font-size="11" fill="white">OPAL S</text>
+  </svg>
+  <svg id="svg_s2_mining_cart" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" style="display:none">
+    <defs><linearGradient id="sg451" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#ff4081"/><stop offset="100%" stop-color="#880e4f"/>
+    </linearGradient></defs>
+    <rect width="100" height="100" rx="10" fill="#0d0d1a"/>
+    <ellipse cx="50" cy="50" rx="42" ry="35" fill="url(#sg451)" stroke="#ff4081" stroke-width="1.5"/>
+    
+    <text x="50" y="56" text-anchor="middle" font-family="Arial,sans-serif" font-weight="700" font-size="11" fill="white">MINING</text>
+  </svg>
+  <svg id="svg_s3_outback_sunset" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" style="display:none">
+    <defs><linearGradient id="sg452" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#ff4081"/><stop offset="100%" stop-color="#880e4f"/>
+    </linearGradient></defs>
+    <rect width="100" height="100" rx="10" fill="#0d0d1a"/>
+    <path d="M50,5 L90,20 L90,65 L50,95 L10,65 L10,20 Z" fill="url(#sg452)" stroke="#ff4081" stroke-width="1.5"/>
+    
+    <text x="50" y="56" text-anchor="middle" font-family="Arial,sans-serif" font-weight="700" font-size="11" fill="white">OUTBAC</text>
+  </svg>
+  <svg id="svg_s4_aboriginal_pattern" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" style="display:none">
+    <defs><linearGradient id="sg453" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#ff4081"/><stop offset="100%" stop-color="#880e4f"/>
+    </linearGradient></defs>
+    <rect width="100" height="100" rx="10" fill="#0d0d1a"/>
+    <rect x="12" y="12" width="76" height="76" rx="12" fill="url(#sg453)" stroke="#ff4081" stroke-width="1.5"/>
+    
+    <text x="50" y="56" text-anchor="middle" font-family="Arial,sans-serif" font-weight="700" font-size="11" fill="white">ABORIG</text>
+  </svg>
+  <svg id="svg_s5_opal_vein" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" style="display:none">
+    <defs><linearGradient id="sg454" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#ff4081"/><stop offset="100%" stop-color="#880e4f"/>
+    </linearGradient></defs>
+    <rect width="100" height="100" rx="10" fill="#0d0d1a"/>
+    <polygon points="50,8 92,50 50,92 8,50" fill="url(#sg454)" stroke="#ff4081" stroke-width="1.5"/>
+    
+    <text x="50" y="56" text-anchor="middle" font-family="Arial,sans-serif" font-weight="700" font-size="11" fill="white">OPAL V</text>
+  </svg>
+  <svg id="svg_wild_precious_opal" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" style="display:none">
+    <defs><linearGradient id="sg455" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#ffd700"/><stop offset="100%" stop-color="#ff8f00"/>
+    </linearGradient></defs>
+    <rect width="100" height="100" rx="10" fill="#2a1a00"/>
+    <ellipse cx="50" cy="50" rx="42" ry="35" fill="url(#sg455)" stroke="#ffd700" stroke-width="1.5"/>
+    <text x="50" y="28" text-anchor="middle" font-size="10" font-weight="900" fill="#ffd700">WILD</text>
+    <text x="50" y="62" text-anchor="middle" font-family="Arial,sans-serif" font-weight="700" font-size="11" fill="white">PRECIO</text>
+  </svg>
+  </div>
+
+  <!-- Top Bar -->
+  <div class="game-topbar">
+    <button class="back-btn" id="backBtn">&#8592; Lobby</button>
+    <div class="game-title">Opal Dreams</div>
+    <div class="studio-badge">
+      <span>Wild Frontier</span>
+    </div>
+  </div>
+
+  <!-- Balance Bar -->
+  <div class="balance-bar">
+    <div class="balance-item"><div class="label">Balance</div><div class="value" id="balanceValue">$1,000.00</div></div>
+    <div class="balance-item"><div class="label">Bet</div><div class="value" id="betValue">$1.00</div></div>
+    <div class="balance-item"><div class="label">Win</div><div class="value" id="winValue">$0.00</div></div>
+  </div>
+
+  <!-- Game Area -->
+  <div class="game-area">
+    <div class="free-spins-banner" id="freeSpinsBanner">FREE SPINS</div>
+    <div class="reels-frame">
+      <div class="reels-grid" id="reelsGrid"></div>
+    </div>
+    <div class="mechanic-overlay" id="mechanicOverlay">
+      <div><div class="mechanic-text"></div><div class="mechanic-sub"></div></div>
+    </div>
+  </div>
+
+  <!-- Controls -->
+  <div class="controls-bar">
+    <button class="autoplay-btn" id="autoplayBtn">Auto</button>
+    <div class="bet-control">
+      <button id="betDown">-</button>
+      <div class="bet-display" id="betDisplay">$1.00</div>
+      <button id="betUp">+</button>
+    </div>
+    <button class="spin-btn" id="spinBtn">SPIN</button>
+    <button class="maxbet-btn" id="maxBet">MAX</button>
+  </div>
+
+  <!-- Info Bar -->
+  <div class="info-bar">
+    <span>RTP: 90.88%</span>
+    <span>PAYLINE | 5x3</span>
+    <span>MEDIUM-HIGH</span>
+  </div>
+
+  <!-- Scripts -->
+  <script src="../../js/casino-engine.js?v=3.1.0"></script>
+  <script>
+    window.GAME_CONFIG = {
+  "id": "opal_outback",
+  "name": "Opal Dreams",
+  "provider": "wild-frontier",
+  "studioId": "wild-frontier",
+  "symbols": [
+    "s1_opal_stone",
+    "s2_mining_cart",
+    "s3_outback_sunset",
+    "s4_aboriginal_pattern",
+    "s5_opal_vein",
+    "wild_precious_opal"
+  ],
+  "gridCols": 5,
+  "gridRows": 3,
+  "winType": "payline",
+  "wildSymbol": "wild_precious_opal",
+  "scatterSymbol": "s5_opal_vein",
+  "rtp": 90.88,
+  "volatility": "medium-high",
+  "bonusType": "multiplier_trail",
+  "freeSpinsCount": 9,
+  "freeSpinsTrigger": 3,
+  "clusterMin": 5,
+  "minBet": 0.2,
+  "maxBet": 2800
+};
+    window.GAME_MECHANIC = {
+            _gameIdx: 45,
+            _trail: [2,3,4,6,10],
+            _pos: 0,
+            onResult: function(grid, cfg, st, baseWin) {
+                if (baseWin > 0) {
+                    var mult = this._trail[Math.min(this._pos, this._trail.length - 1)];
+                    this._pos++;
+                    return { winAmount: baseWin * mult, message: mult > 1 ? 'TRAIL x' + mult + '!' : '', sub: 'Step ' + this._pos + '/' + this._trail.length };
+                }
+                this._pos = 0;
+                return null;
+            }
+        };
+  </script>
+  <script src="../_shared/game-runtime.js"></script>
+</body>
+</html>

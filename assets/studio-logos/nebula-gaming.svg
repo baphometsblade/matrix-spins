@@ -1,0 +1,55 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 80" width="300" height="80">
+  <defs>
+    <radialGradient id="ng-bg" cx="50%" cy="50%" r="60%">
+      <stop offset="0%" stop-color="#9C27B0" stop-opacity="0.4"/>
+      <stop offset="60%" stop-color="#7C4DFF" stop-opacity="0.2"/>
+      <stop offset="100%" stop-color="#311B92" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="ng-glow" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#00E5FF" stop-opacity="0.3"/>
+      <stop offset="50%" stop-color="#00E5FF"/>
+      <stop offset="100%" stop-color="#00E5FF" stop-opacity="0.3"/>
+    </linearGradient>
+    <filter id="ng-neon">
+      <feGaussianBlur stdDeviation="2" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+    <filter id="ng-glow-filter">
+      <feGaussianBlur stdDeviation="3" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+  <!-- Deep space background glow -->
+  <ellipse cx="150" cy="40" rx="140" ry="35" fill="url(#ng-bg)"/>
+  <!-- Nebula swirl shape -->
+  <path d="M25 50 Q45 15, 75 30 Q95 40, 80 55 Q65 70, 40 60 Q30 55, 25 50Z" fill="#7C4DFF" opacity="0.15" filter="url(#ng-neon)"/>
+  <path d="M30 35 Q50 10, 70 25 T85 45" fill="none" stroke="#00E5FF" stroke-width="1" opacity="0.3"/>
+  <!-- Star/nebula icon -->
+  <circle cx="55" cy="40" r="16" fill="none" stroke="#00E5FF" stroke-width="1.5" opacity="0.6" filter="url(#ng-neon)"/>
+  <circle cx="55" cy="40" r="8" fill="none" stroke="#00E5FF" stroke-width="1" opacity="0.4"/>
+  <circle cx="55" cy="40" r="3" fill="#00E5FF" opacity="0.9" filter="url(#ng-glow-filter)"/>
+  <!-- Orbital rings -->
+  <ellipse cx="55" cy="40" rx="20" ry="8" fill="none" stroke="#00E5FF" stroke-width="0.8" opacity="0.35" transform="rotate(-30 55 40)"/>
+  <ellipse cx="55" cy="40" rx="20" ry="8" fill="none" stroke="#7C4DFF" stroke-width="0.8" opacity="0.35" transform="rotate(30 55 40)"/>
+  <!-- Small stars -->
+  <circle cx="30" cy="20" r="1" fill="#00E5FF" opacity="0.7"/>
+  <circle cx="78" cy="15" r="0.8" fill="#E1BEE7" opacity="0.6"/>
+  <circle cx="20" cy="55" r="0.6" fill="#00E5FF" opacity="0.5"/>
+  <circle cx="85" cy="60" r="1" fill="#7C4DFF" opacity="0.6"/>
+  <circle cx="270" cy="18" r="0.8" fill="#00E5FF" opacity="0.5"/>
+  <circle cx="250" cy="62" r="0.6" fill="#E1BEE7" opacity="0.4"/>
+  <!-- Main text with neon effect -->
+  <text x="185" y="46" text-anchor="middle" font-family="'Segoe UI', Arial, sans-serif" font-size="30" font-weight="300" fill="#00E5FF" letter-spacing="12" filter="url(#ng-neon)">NEBULA</text>
+  <!-- Subtitle -->
+  <text x="185" y="62" text-anchor="middle" font-family="'Segoe UI', Arial, sans-serif" font-size="8" fill="#7C4DFF" letter-spacing="6" opacity="0.7">G A M I N G</text>
+  <!-- Neon accent lines -->
+  <line x1="100" y1="68" x2="270" y2="68" stroke="#00E5FF" stroke-width="0.5" opacity="0.3"/>
+  <line x1="110" y1="70" x2="260" y2="70" stroke="#7C4DFF" stroke-width="0.3" opacity="0.2"/>
+</svg>

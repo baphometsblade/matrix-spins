@@ -1,0 +1,9 @@
+/* TEAM */
+Site: Matrix Spins Casino
+URL: https://msaart.online
+
+/* TECHNOLOGY */
+Runtime: Node.js + Express
+Frontend: Vanilla JS
+Hosting: Render
+CDN: Cloudflare

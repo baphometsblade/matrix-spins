@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cleopatra's Diamonds | Matrix Spins Casino</title>
+  <link rel="stylesheet" href="../_shared/game-runtime.css">
+  <link rel="preload" href="/assets/game_symbols/nile_jewels/s1_turquoise.png" as="image">
+  <link rel="preload" href="/assets/game_symbols/nile_jewels/s2_blue_topaz.png" as="image">
+  <link rel="preload" href="/assets/game_symbols/nile_jewels/s3_aquamarine.png" as="image">
+  <link rel="preload" href="/assets/game_symbols/nile_jewels/s4_scarab_gem.png" as="image">
+  <link rel="preload" href="/assets/game_symbols/nile_jewels/s5_cleopatra_crown.png" as="image">
+  <link rel="preload" href="/assets/game_symbols/nile_jewels/wild_nile_pearl.png" as="image">
+  <style>
+    :root {
+      --studio-primary: #b388ff;
+      --studio-secondary: #7c4dff;
+      --studio-bg: #0d0a1a;
+      --studio-surface: #1a1230;
+      --studio-font: 'Cinzel', Georgia, serif;
+      --studio-glow: #b388ff40;
+      --reel-border: #b388ff;
+      --reel-cell-size: 68px;
+    }
+    
+  </style>
+</head>
+<body>
+
+  <!-- Symbol SVG Definitions (fallback for missing HD assets) -->
+  <div style="display:none">
+  <svg id="svg_s1_turquoise" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" style="display:none">
+    <defs><linearGradient id="sg160" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#b388ff"/><stop offset="100%" stop-color="#7c4dff"/>
+    </linearGradient></defs>
+    <rect width="100" height="100" rx="10" fill="#0d0d1a"/>
+    <rect x="12" y="12" width="76" height="76" rx="12" fill="url(#sg160)" stroke="#b388ff" stroke-width="1.5"/>
+    
+    <text x="50" y="56" text-anchor="middle" font-family="Arial,sans-serif" font-weight="700" font-size="11" fill="white">TURQUO</text>
+  </svg>
+  <svg id="svg_s2_blue_topaz" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" style="display:none">
+    <defs><linearGradient id="sg161" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#b388ff"/><stop offset="100%" stop-color="#7c4dff"/>
+    </linearGradient></defs>
+    <rect width="100" height="100" rx="10" fill="#0d0d1a"/>
+    <rect x="12" y="12" width="76" height="76" rx="12" fill="url(#sg161)" stroke="#b388ff" stroke-width="1.5"/>
+    
+    <text x="50" y="56" text-anchor="middle" font-family="Arial,sans-serif" font-weight="700" font-size="11" fill="white">BLUE T</text>
+  </svg>
+  <svg id="svg_s3_aquamarine" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" style="display:none">
+    <defs><linearGradient id="sg162" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#b388ff"/><stop offset="100%" stop-color="#7c4dff"/>
+    </linearGradient></defs>
+    <rect width="100" height="100" rx="10" fill="#0d0d1a"/>
+    <rect x="12" y="12" width="76" height="76" rx="12" fill="url(#sg162)" stroke="#b388ff" stroke-width="1.5"/>
+    
+    <text x="50" y="56" text-anchor="middle" font-family="Arial,sans-serif" font-weight="700" font-size="11" fill="white">AQUAMA</text>
+  </svg>
+  <svg id="svg_s4_scarab_gem" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" style="display:none">
+    <defs><linearGradient id="sg163" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#b388ff"/><stop offset="100%" stop-color="#7c4dff"/>
+    </linearGradient></defs>
+    <rect width="100" height="100" rx="10" fill="#0d0d1a"/>
+    <rect x="12" y="12" width="76" height="76" rx="12" fill="url(#sg163)" stroke="#b388ff" stroke-width="1.5"/>
+    
+    <text x="50" y="56" text-anchor="middle" font-family="Arial,sans-serif" font-weight="700" font-size="11" fill="white">SCARAB</text>
+  </svg>
+  <svg id="svg_s5_cleopatra_crown" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" style="display:none">
+    <defs><linearGradient id="sg164" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#b388ff"/><stop offset="100%" stop-color="#7c4dff"/>
+    </linearGradient></defs>
+    <rect width="100" height="100" rx="10" fill="#0d0d1a"/>
+    <circle cx="50" cy="50" r="38" fill="url(#sg164)" stroke="#b388ff" stroke-width="1.5"/>
+    
+    <text x="50" y="56" text-anchor="middle" font-family="Arial,sans-serif" font-weight="700" font-size="11" fill="white">CLEOPA</text>
+  </svg>
+  <svg id="svg_wild_nile_pearl" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" style="display:none">
+    <defs><linearGradient id="sg165" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#ffd700"/><stop offset="100%" stop-color="#ff8f00"/>
+    </linearGradient></defs>
+    <rect width="100" height="100" rx="10" fill="#2a1a00"/>
+    <rect x="12" y="12" width="76" height="76" rx="12" fill="url(#sg165)" stroke="#ffd700" stroke-width="1.5"/>
+    <text x="50" y="28" text-anchor="middle" font-size="10" font-weight="900" fill="#ffd700">WILD</text>
+    <text x="50" y="62" text-anchor="middle" font-family="Arial,sans-serif" font-weight="700" font-size="11" fill="white">NILE P</text>
+  </svg>
+  </div>
+
+  <!-- Top Bar -->
+  <div class="game-topbar">
+    <button class="back-btn" id="backBtn">&#8592; Lobby</button>
+    <div class="game-title">Cleopatra's Diamonds</div>
+    <div class="studio-badge">
+      <span>Mythic Forge</span>
+    </div>
+  </div>
+
+  <!-- Balance Bar -->
+  <div class="balance-bar">
+    <div class="balance-item"><div class="label">Balance</div><div class="value" id="balanceValue">$1,000.00</div></div>
+    <div class="balance-item"><div class="label">Bet</div><div class="value" id="betValue">$1.00</div></div>
+    <div class="balance-item"><div class="label">Win</div><div class="value" id="winValue">$0.00</div></div>
+  </div>
+
+  <!-- Game Area -->
+  <div class="game-area">
+    <div class="free-spins-banner" id="freeSpinsBanner">FREE SPINS</div>
+    <div class="reels-frame">
+      <div class="reels-grid" id="reelsGrid"></div>
+    </div>
+    <div class="mechanic-overlay" id="mechanicOverlay">
+      <div><div class="mechanic-text"></div><div class="mechanic-sub"></div></div>
+    </div>
+  </div>
+
+  <!-- Controls -->
+  <div class="controls-bar">
+    <button class="autoplay-btn" id="autoplayBtn">Auto</button>
+    <div class="bet-control">
+      <button id="betDown">-</button>
+      <div class="bet-display" id="betDisplay">$1.00</div>
+      <button id="betUp">+</button>
+    </div>
+    <button class="spin-btn" id="spinBtn">SPIN</button>
+    <button class="maxbet-btn" id="maxBet">MAX</button>
+  </div>
+
+  <!-- Info Bar -->
+  <div class="info-bar">
+    <span>RTP: 91.42%</span>
+    <span>PAYLINE | 5x3</span>
+    <span>MEDIUM</span>
+  </div>
+
+  <!-- Scripts -->
+  <script src="../../js/casino-engine.js?v=3.1.0"></script>
+  <script>
+    window.GAME_CONFIG = {
+  "id": "nile_jewels",
+  "name": "Cleopatra's Diamonds",
+  "provider": "mythic-forge",
+  "studioId": "mythic-forge",
+  "symbols": [
+    "s1_turquoise",
+    "s2_blue_topaz",
+    "s3_aquamarine",
+    "s4_scarab_gem",
+    "s5_cleopatra_crown",
+    "wild_nile_pearl"
+  ],
+  "gridCols": 5,
+  "gridRows": 3,
+  "winType": "payline",
+  "wildSymbol": "wild_nile_pearl",
+  "scatterSymbol": "s5_cleopatra_crown",
+  "rtp": 91.42,
+  "volatility": "medium",
+  "bonusType": "expanding_symbol",
+  "freeSpinsCount": 12,
+  "freeSpinsTrigger": 3,
+  "clusterMin": 5,
+  "minBet": 0.2,
+  "maxBet": 2000
+};
+    window.GAME_MECHANIC = {
+            _gameIdx: 16,
+            _expandSym: null,
+            onResult: function(grid, cfg, st, baseWin) {
+                if (st.freeSpinsActive && baseWin > 0) {
+                    if (!this._expandSym) {
+                        var candidates = cfg.symbols.filter(function(s) { return s !== cfg.wildSymbol && s !== cfg.scatterSymbol; });
+                        this._expandSym = candidates[Math.floor(Math.random() * candidates.length)];
+                    }
+                    // Count expanded symbol appearances
+                    var count = 0;
+                    for (var c = 0; c < grid.length; c++) for (var r = 0; r < grid[c].length; r++) {
+                        if (grid[c][r] === this._expandSym) count++;
+                    }
+                    if (count >= 2) {
+                        return { winAmount: baseWin * 1.5, message: 'EXPANDING ' + this._expandSym.replace(/^s\d+_/,'').toUpperCase() + '!', sub: '' };
+                    }
+                }
+                if (!st.freeSpinsActive) this._expandSym = null;
+                return null;
+            }
+        };
+  </script>
+  <script src="../_shared/game-runtime.js"></script>
+</body>
+</html>

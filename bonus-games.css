@@ -1,0 +1,1360 @@
+/* ═══════════════════════════════════════════════════════════════
+   BONUS GAMES — Custom GUI for Every Bonus Type
+   Each of the 19 bonus types has a unique interactive overlay
+   with per-game accent color theming via CSS custom properties
+   ═══════════════════════════════════════════════════════════════ */
+
+/* ─── BASE BONUS OVERLAY ─── */
+.bonus-game-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 10500;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0,0,0,0.92);
+    backdrop-filter: blur(12px);
+    opacity: 0;
+    transition: opacity 0.5s ease;
+    overflow: hidden;
+}
+.bonus-game-overlay.active {
+    display: flex;
+    opacity: 1;
+}
+.bonus-game-overlay .bg-scene {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    overflow: hidden;
+}
+
+/* ─── BONUS GAME CONTAINER ─── */
+.bonus-game-container {
+    position: relative;
+    width: min(94vw, 720px);
+    max-height: 88vh;
+    border-radius: 24px;
+    overflow: hidden;
+    background: linear-gradient(180deg, rgba(15,10,25,0.98) 0%, rgba(8,5,15,0.99) 100%);
+    border: 2px solid var(--bonus-accent, #fbbf24);
+    box-shadow: 0 0 60px var(--bonus-accent-glow, rgba(251,191,36,0.3)),
+                0 0 120px var(--bonus-accent-glow, rgba(251,191,36,0.1)),
+                inset 0 1px 0 rgba(255,255,255,0.05);
+    animation: bonusContainerEntry 0.6s cubic-bezier(0.34,1.56,0.64,1) forwards;
+    z-index: 2;
+}
+@keyframes bonusContainerEntry {
+    from { transform: scale(0.7) translateY(40px); opacity: 0; }
+    to   { transform: scale(1) translateY(0); opacity: 1; }
+}
+
+/* ─── HEADER BAR ─── */
+.bonus-header {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    padding: 16px 24px;
+    background: linear-gradient(135deg, var(--bonus-accent, #fbbf24), transparent 70%);
+    background-size: 200% 200%;
+    animation: bonusHeaderShimmer 3s ease-in-out infinite;
+    border-bottom: 1px solid var(--bonus-accent, #fbbf24);
+    position: relative;
+    overflow: hidden;
+}
+@keyframes bonusHeaderShimmer {
+    0%, 100% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+}
+.bonus-header::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.08), transparent);
+    animation: bonusHeaderSweep 2.5s ease-in-out infinite;
+}
+@keyframes bonusHeaderSweep {
+    0% { transform: translateX(-100%); }
+    100% { transform: translateX(100%); }
+}
+.bonus-header-icon {
+    font-size: 1.8rem;
+    filter: drop-shadow(0 0 8px var(--bonus-accent, #fbbf24));
+}
+.bonus-header-title {
+    font-size: clamp(1rem, 3vw, 1.4rem);
+    font-weight: 900;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: #fff;
+    text-shadow: 0 0 20px var(--bonus-accent, #fbbf24);
+}
+.bonus-header-game {
+    font-size: 0.75rem;
+    color: var(--bonus-accent, #fbbf24);
+    opacity: 0.8;
+    letter-spacing: 1px;
+}
+
+/* ─── BONUS BODY ─── */
+.bonus-body {
+    padding: 20px;
+    min-height: 300px;
+    position: relative;
+}
+
+/* ─── BONUS FOOTER ─── */
+.bonus-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 20px;
+    background: rgba(0,0,0,0.6);
+    border-top: 1px solid rgba(255,255,255,0.05);
+}
+.bonus-win-display {
+    font-size: 1.2rem;
+    font-weight: 800;
+    color: var(--bonus-accent, #fbbf24);
+    text-shadow: 0 0 12px var(--bonus-accent-glow, rgba(251,191,36,0.5));
+}
+.bonus-spins-display {
+    font-size: 0.9rem;
+    color: rgba(255,255,255,0.7);
+    letter-spacing: 1px;
+}
+.bonus-start-btn {
+    display: block;
+    margin: 0 auto;
+    padding: 14px 48px;
+    background: linear-gradient(135deg, var(--bonus-accent, #fbbf24), var(--bonus-accent-dark, #d4a017));
+    color: #0d0d1a;
+    border: none;
+    border-radius: 50px;
+    font-size: 1.1rem;
+    font-weight: 900;
+    letter-spacing: 3px;
+    cursor: pointer;
+    box-shadow: 0 0 30px var(--bonus-accent-glow, rgba(251,191,36,0.5));
+    transition: transform 0.2s, box-shadow 0.2s;
+    animation: bonusBtnPulse 1.5s ease-in-out infinite;
+}
+.bonus-start-btn:hover {
+    transform: scale(1.05);
+    box-shadow: 0 0 50px var(--bonus-accent-glow, rgba(251,191,36,0.8));
+}
+@keyframes bonusBtnPulse {
+    0%, 100% { box-shadow: 0 0 30px var(--bonus-accent-glow, rgba(251,191,36,0.4)); }
+    50% { box-shadow: 0 0 50px var(--bonus-accent-glow, rgba(251,191,36,0.8)); }
+}
+
+/* ═════════════════════════════════════════════════
+   1. TUMBLE / AVALANCHE — Cascading Grid
+   ═════════════════════════════════════════════════ */
+.bonus-type-tumble .bonus-body,
+.bonus-type-avalanche .bonus-body {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+}
+.tumble-grid {
+    display: grid;
+    gap: 4px;
+    width: 100%;
+    max-width: 420px;
+    margin: 0 auto;
+}
+.tumble-cell {
+    aspect-ratio: 1;
+    background: rgba(255,255,255,0.03);
+    border: 1px solid rgba(255,255,255,0.06);
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.6rem;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+}
+.tumble-cell.matched {
+    border-color: var(--bonus-accent, #fbbf24);
+    box-shadow: 0 0 12px var(--bonus-accent-glow);
+    animation: tumbleCellPop 0.4s ease;
+}
+@keyframes tumbleCellPop {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.15); background: var(--bonus-accent-glow); }
+    100% { transform: scale(0); opacity: 0; }
+}
+.tumble-cell.falling {
+    animation: tumbleFall 0.35s ease-in forwards;
+}
+@keyframes tumbleFall {
+    from { transform: translateY(-100%); opacity: 0; }
+    to   { transform: translateY(0); opacity: 1; }
+}
+/* Multiplier ladder */
+.tumble-multiplier-ladder {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 10px 16px;
+    background: rgba(0,0,0,0.5);
+    border-radius: 12px;
+    border: 1px solid rgba(255,255,255,0.05);
+}
+.tumble-mult-step {
+    padding: 6px 12px;
+    border-radius: 8px;
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: rgba(255,255,255,0.4);
+    background: rgba(255,255,255,0.03);
+    transition: all 0.3s ease;
+}
+.tumble-mult-step.active {
+    color: #fff;
+    background: var(--bonus-accent, #fbbf24);
+    box-shadow: 0 0 15px var(--bonus-accent-glow);
+    transform: scale(1.15);
+}
+
+/* Avalanche-specific: rock/mountain BG */
+.bonus-type-avalanche .bg-scene {
+    background: radial-gradient(ellipse at 50% 120%, rgba(80,60,40,0.3) 0%, transparent 60%);
+}
+.bonus-type-avalanche .tumble-cell {
+    border-radius: 4px;
+    background: rgba(80,60,40,0.15);
+    border-color: rgba(120,100,80,0.15);
+}
+
+/* ═════════════════════════════════════════════════
+   2. HOLD & WIN — Lock Grid + Jackpot Meters
+   ═════════════════════════════════════════════════ */
+.bonus-type-hold_and_win .bonus-body {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+}
+.hold-win-grid {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 6px;
+    width: 100%;
+    max-width: 400px;
+}
+.hw-cell {
+    aspect-ratio: 1;
+    background: linear-gradient(180deg, rgba(20,15,35,0.95), rgba(10,8,20,0.98));
+    border: 2px solid rgba(255,255,255,0.08);
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.9rem;
+    font-weight: 800;
+    color: transparent;
+    position: relative;
+    transition: all 0.4s ease;
+}
+.hw-cell.locked {
+    border-color: var(--bonus-accent, #fbbf24);
+    color: var(--bonus-accent, #fbbf24);
+    background: linear-gradient(180deg, rgba(251,191,36,0.15), rgba(251,191,36,0.05));
+    box-shadow: 0 0 15px var(--bonus-accent-glow);
+    animation: hwCellLock 0.5s ease;
+}
+@keyframes hwCellLock {
+    0% { transform: rotateY(0); }
+    50% { transform: rotateY(90deg); }
+    100% { transform: rotateY(0); }
+}
+.hw-cell.locked::after {
+    content: '🔒';
+    position: absolute;
+    top: 2px;
+    right: 4px;
+    font-size: 0.5rem;
+    opacity: 0.6;
+}
+/* Jackpot meters */
+.hw-jackpot-row {
+    display: flex;
+    gap: 8px;
+    width: 100%;
+    max-width: 400px;
+}
+.hw-jackpot {
+    flex: 1;
+    padding: 8px;
+    border-radius: 10px;
+    text-align: center;
+    font-weight: 800;
+    font-size: 0.75rem;
+    letter-spacing: 1px;
+    border: 1px solid;
+    transition: all 0.3s ease;
+}
+.hw-jackpot-mini { background: rgba(168,162,158,0.15); border-color: #a8a29e; color: #a8a29e; }
+.hw-jackpot-minor { background: rgba(59,130,246,0.15); border-color: #3b82f6; color: #3b82f6; }
+.hw-jackpot-major { background: rgba(168,85,247,0.15); border-color: #a855f7; color: #a855f7; }
+.hw-jackpot-grand { background: rgba(251,191,36,0.15); border-color: #fbbf24; color: #fbbf24; }
+.hw-jackpot.won {
+    animation: hwJackpotWin 0.6s ease;
+    box-shadow: 0 0 30px currentColor;
+    transform: scale(1.1);
+}
+@keyframes hwJackpotWin {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.2); }
+    100% { transform: scale(1.1); }
+}
+/* Respin counter */
+.hw-respins {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    font-size: 1.1rem;
+    font-weight: 800;
+    color: rgba(255,255,255,0.8);
+    padding: 8px;
+}
+.hw-respins-count {
+    color: var(--bonus-accent, #fbbf24);
+    font-size: 1.4rem;
+    text-shadow: 0 0 10px var(--bonus-accent-glow);
+}
+
+/* ═════════════════════════════════════════════════
+   3. RANDOM MULTIPLIER — Multiplier Orb Rain
+   ═════════════════════════════════════════════════ */
+.bonus-type-random_multiplier .bonus-body {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 20px;
+    min-height: 350px;
+}
+.rm-orb-field {
+    position: relative;
+    width: 100%;
+    max-width: 500px;
+    height: 280px;
+    background: radial-gradient(ellipse at 50% 50%, rgba(var(--bonus-accent-rgb, 251,191,36),0.08) 0%, transparent 70%);
+    border-radius: 16px;
+    overflow: hidden;
+}
+.rm-orb {
+    position: absolute;
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1rem;
+    font-weight: 900;
+    color: #fff;
+    text-shadow: 0 0 8px rgba(0,0,0,0.6);
+    cursor: pointer;
+    border: 2px solid rgba(255,255,255,0.2);
+    transition: transform 0.2s;
+}
+.rm-orb:hover { transform: scale(1.15); }
+.rm-orb.orb-2x  { background: radial-gradient(circle, #60a5fa, #2563eb); }
+.rm-orb.orb-3x  { background: radial-gradient(circle, #34d399, #059669); }
+.rm-orb.orb-5x  { background: radial-gradient(circle, #a78bfa, #7c3aed); }
+.rm-orb.orb-10x { background: radial-gradient(circle, #fbbf24, #d97706); }
+.rm-orb.orb-25x { background: radial-gradient(circle, #f472b6, #db2777); }
+.rm-orb.orb-50x { background: radial-gradient(circle, #fb923c, #ea580c); }
+.rm-orb.orb-100x { background: radial-gradient(circle, #fbbf24, #ff0000); box-shadow: 0 0 20px rgba(255,0,0,0.5); }
+.rm-orb.caught {
+    animation: orbCatch 0.4s ease-out forwards;
+}
+@keyframes orbCatch {
+    0% { transform: scale(1); opacity: 1; }
+    50% { transform: scale(1.5); opacity: 0.8; }
+    100% { transform: scale(0); opacity: 0; }
+}
+.rm-orb.falling {
+    animation: orbFall linear forwards;
+}
+@keyframes orbFall {
+    from { transform: translateY(-60px); }
+    to   { transform: translateY(340px); }
+}
+.rm-current-mult {
+    font-size: 2.4rem;
+    font-weight: 900;
+    color: var(--bonus-accent, #fbbf24);
+    text-shadow: 0 0 30px var(--bonus-accent-glow);
+    text-align: center;
+    animation: multPulse 1s ease-in-out infinite;
+}
+@keyframes multPulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.08); }
+}
+
+/* ═════════════════════════════════════════════════
+   4. WHEEL MULTIPLIER — Spinning Fortune Wheel
+   ═════════════════════════════════════════════════ */
+.bonus-type-wheel_multiplier .bonus-body {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+}
+.wheel-container {
+    position: relative;
+    width: min(300px, 70vw);
+    height: min(300px, 70vw);
+}
+.wheel-svg {
+    width: 100%;
+    height: 100%;
+    transition: transform 4s cubic-bezier(0.17, 0.67, 0.12, 0.99);
+}
+.wheel-svg.spinning {
+    animation: none;
+}
+.wheel-pointer {
+    position: absolute;
+    top: -12px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 0;
+    height: 0;
+    border-left: 14px solid transparent;
+    border-right: 14px solid transparent;
+    border-top: 28px solid var(--bonus-accent, #fbbf24);
+    filter: drop-shadow(0 2px 6px rgba(0,0,0,0.5));
+    z-index: 3;
+}
+.wheel-center-hub {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--bonus-accent, #fbbf24), var(--bonus-accent-dark, #d4a017));
+    border: 3px solid rgba(255,255,255,0.3);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 900;
+    color: #0d0d1a;
+    font-size: 0.8rem;
+    z-index: 3;
+}
+.wheel-result {
+    font-size: 2.2rem;
+    font-weight: 900;
+    color: var(--bonus-accent, #fbbf24);
+    text-shadow: 0 0 20px var(--bonus-accent-glow);
+    text-align: center;
+    opacity: 0;
+    transition: opacity 0.5s ease;
+}
+.wheel-result.visible { opacity: 1; }
+
+/* ═════════════════════════════════════════════════
+   5. EXPANDING SYMBOL — Symbol Reveal & Expand
+   ═════════════════════════════════════════════════ */
+.bonus-type-expanding_symbol .bonus-body {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 20px;
+}
+.es-reveal-stage {
+    position: relative;
+    width: 140px;
+    height: 140px;
+    border-radius: 50%;
+    border: 3px solid var(--bonus-accent, #fbbf24);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 0 40px var(--bonus-accent-glow);
+    background: radial-gradient(circle, rgba(var(--bonus-accent-rgb),0.15), transparent 70%);
+}
+.es-symbol-preview {
+    font-size: 3rem;
+    animation: esSymbolFloat 2s ease-in-out infinite;
+}
+@keyframes esSymbolFloat {
+    0%, 100% { transform: translateY(0) scale(1); }
+    50% { transform: translateY(-8px) scale(1.05); }
+}
+.es-reel-preview {
+    display: flex;
+    gap: 6px;
+    width: 100%;
+    max-width: 400px;
+}
+.es-reel-col {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+.es-reel-cell {
+    aspect-ratio: 1;
+    background: rgba(255,255,255,0.03);
+    border: 1px solid rgba(255,255,255,0.06);
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.2rem;
+    transition: all 0.5s ease;
+}
+.es-reel-cell.expanded {
+    background: var(--bonus-accent-glow);
+    border-color: var(--bonus-accent, #fbbf24);
+    animation: esExpand 0.6s ease;
+}
+@keyframes esExpand {
+    0% { transform: scale(0.5); opacity: 0; }
+    60% { transform: scale(1.15); }
+    100% { transform: scale(1); opacity: 1; }
+}
+
+/* ═════════════════════════════════════════════════
+   6. EXPANDING WILD RESPIN — Wild Column Expand
+   ═════════════════════════════════════════════════ */
+.bonus-type-expanding_wild_respin .bonus-body {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+}
+.ewr-reel-display {
+    display: flex;
+    gap: 8px;
+    width: 100%;
+    max-width: 420px;
+}
+.ewr-col {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    padding: 4px;
+    border-radius: 8px;
+    border: 1px solid rgba(255,255,255,0.05);
+    transition: all 0.5s ease;
+}
+.ewr-col.wild-expanded {
+    border-color: var(--bonus-accent, #fbbf24);
+    background: rgba(var(--bonus-accent-rgb),0.12);
+    box-shadow: 0 0 20px var(--bonus-accent-glow);
+}
+.ewr-col.wild-expanded .ewr-cell {
+    background: var(--bonus-accent-glow);
+    border-color: var(--bonus-accent, #fbbf24);
+}
+.ewr-cell {
+    aspect-ratio: 1;
+    background: rgba(255,255,255,0.03);
+    border: 1px solid rgba(255,255,255,0.06);
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.3rem;
+}
+.ewr-respin-counter {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: rgba(255,255,255,0.7);
+    text-align: center;
+}
+.ewr-respin-counter span {
+    color: var(--bonus-accent, #fbbf24);
+    font-size: 1.3rem;
+}
+
+/* ═════════════════════════════════════════════════
+   7. ZEUS MULTIPLIER — Lightning Bolt Strike
+   ═════════════════════════════════════════════════ */
+.bonus-type-zeus_multiplier .bonus-body {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+}
+.zeus-stage {
+    position: relative;
+    width: 100%;
+    max-width: 500px;
+    height: 280px;
+    background: radial-gradient(ellipse at 50% 20%, rgba(100,126,234,0.15) 0%, transparent 60%);
+    border-radius: 16px;
+    overflow: hidden;
+}
+.zeus-bolt {
+    position: absolute;
+    width: 40px;
+    height: 120px;
+    top: 0;
+    opacity: 0;
+    pointer-events: none;
+}
+.zeus-bolt.strike {
+    opacity: 1;
+    animation: zeusStrike 0.8s ease-out forwards;
+}
+@keyframes zeusStrike {
+    0% { transform: translateY(-40px) scaleY(0); opacity: 0; }
+    20% { transform: translateY(0) scaleY(1); opacity: 1; }
+    40% { opacity: 1; }
+    100% { opacity: 0; transform: translateY(20px); }
+}
+.zeus-bolt svg {
+    width: 100%;
+    height: 100%;
+}
+.zeus-mult-display {
+    position: absolute;
+    bottom: 40px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    justify-content: center;
+}
+.zeus-mult-orb {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 900;
+    font-size: 0.9rem;
+    color: #fff;
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    border: 2px solid rgba(255,255,255,0.2);
+    box-shadow: 0 0 12px rgba(102,126,234,0.4);
+    transition: all 0.3s ease;
+}
+.zeus-mult-orb.active {
+    transform: scale(1.25);
+    box-shadow: 0 0 30px var(--bonus-accent-glow);
+    background: linear-gradient(135deg, var(--bonus-accent, #667eea), #fff);
+}
+.zeus-total-mult {
+    font-size: 2.2rem;
+    font-weight: 900;
+    text-align: center;
+    color: var(--bonus-accent, #667eea);
+    text-shadow: 0 0 25px var(--bonus-accent-glow);
+}
+
+/* ═════════════════════════════════════════════════
+   8. MONEY COLLECT — Coin Trail Collection
+   ═════════════════════════════════════════════════ */
+.bonus-type-money_collect .bonus-body {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+}
+.mc-coin-grid {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 8px;
+    width: 100%;
+    max-width: 380px;
+}
+.mc-coin {
+    aspect-ratio: 1;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 800;
+    font-size: 0.85rem;
+    transition: all 0.4s ease;
+    position: relative;
+}
+.mc-coin.empty {
+    background: rgba(255,255,255,0.03);
+    border: 2px dashed rgba(255,255,255,0.1);
+    color: transparent;
+}
+.mc-coin.filled {
+    background: linear-gradient(135deg, #fbbf24, #f59e0b);
+    border: 2px solid #fbbf24;
+    color: #0d0d1a;
+    box-shadow: 0 0 12px rgba(251,191,36,0.4);
+    animation: mcCoinAppear 0.4s ease;
+}
+@keyframes mcCoinAppear {
+    from { transform: scale(0) rotateY(180deg); }
+    to   { transform: scale(1) rotateY(0); }
+}
+.mc-coin.collected {
+    animation: mcCoinCollect 0.5s ease-out forwards;
+}
+@keyframes mcCoinCollect {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.3); box-shadow: 0 0 30px #fbbf24; }
+    100% { transform: scale(0); opacity: 0; }
+}
+.mc-wild-collector {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--bonus-accent, #e94560), #ff6b6b);
+    border: 3px solid var(--bonus-accent, #e94560);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2rem;
+    box-shadow: 0 0 25px var(--bonus-accent-glow);
+    animation: mcCollectorPulse 1.5s ease-in-out infinite;
+}
+@keyframes mcCollectorPulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.08); }
+}
+.mc-total {
+    font-size: 1.8rem;
+    font-weight: 900;
+    color: #fbbf24;
+    text-shadow: 0 0 15px rgba(251,191,36,0.6);
+    text-align: center;
+}
+
+/* ═════════════════════════════════════════════════
+   9. STACKED WILDS — Wild Reel Stack Animation
+   ═════════════════════════════════════════════════ */
+.bonus-type-stacked_wilds .bonus-body {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+}
+.sw-reel-display {
+    display: flex;
+    gap: 8px;
+    width: 100%;
+    max-width: 400px;
+}
+.sw-col {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    border-radius: 8px;
+    border: 1px solid rgba(255,255,255,0.05);
+    padding: 4px;
+    transition: all 0.5s ease;
+}
+.sw-col.stacked {
+    border-color: var(--bonus-accent, #fbbf24);
+    background: linear-gradient(180deg, rgba(var(--bonus-accent-rgb),0.2), transparent);
+    box-shadow: 0 0 20px var(--bonus-accent-glow);
+}
+.sw-cell {
+    aspect-ratio: 1;
+    border-radius: 6px;
+    background: rgba(255,255,255,0.03);
+    border: 1px solid rgba(255,255,255,0.06);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.2rem;
+    transition: all 0.3s ease;
+}
+.sw-cell.wild {
+    background: linear-gradient(135deg, var(--bonus-accent, #fbbf24), var(--bonus-accent-dark, #d4a017));
+    border-color: var(--bonus-accent, #fbbf24);
+    animation: swWildStack 0.4s ease forwards;
+}
+@keyframes swWildStack {
+    from { transform: translateY(-20px) scale(0.8); opacity: 0; }
+    to   { transform: translateY(0) scale(1); opacity: 1; }
+}
+.sw-meter {
+    width: 100%;
+    max-width: 400px;
+    height: 8px;
+    background: rgba(255,255,255,0.05);
+    border-radius: 4px;
+    overflow: hidden;
+}
+.sw-meter-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--bonus-accent, #fbbf24), #fff);
+    border-radius: 4px;
+    transition: width 0.5s ease;
+    box-shadow: 0 0 8px var(--bonus-accent-glow);
+}
+
+/* ═════════════════════════════════════════════════
+   10. STICKY WILDS — Sticky Web Grid
+   ═════════════════════════════════════════════════ */
+.bonus-type-sticky_wilds .bonus-body {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+}
+.sticky-grid {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 6px;
+    width: 100%;
+    max-width: 380px;
+}
+.sticky-cell {
+    aspect-ratio: 1;
+    border-radius: 8px;
+    background: rgba(255,255,255,0.02);
+    border: 1px solid rgba(255,255,255,0.06);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.2rem;
+    position: relative;
+    transition: all 0.4s ease;
+}
+.sticky-cell.stuck {
+    border-color: var(--bonus-accent, #fbbf24);
+    background: rgba(var(--bonus-accent-rgb),0.15);
+    box-shadow: 0 0 12px var(--bonus-accent-glow);
+}
+.sticky-cell.stuck::before {
+    content: '';
+    position: absolute;
+    inset: -2px;
+    border: 2px solid var(--bonus-accent, #fbbf24);
+    border-radius: 10px;
+    animation: stickyGlow 1.5s ease-in-out infinite;
+}
+@keyframes stickyGlow {
+    0%, 100% { opacity: 0.4; }
+    50% { opacity: 1; }
+}
+
+/* ═════════════════════════════════════════════════
+   11. WALKING WILDS — Walking Character Trail
+   ═════════════════════════════════════════════════ */
+.bonus-type-walking_wilds .bonus-body {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+}
+.ww-stage {
+    position: relative;
+    width: 100%;
+    max-width: 420px;
+    height: 200px;
+    background: rgba(255,255,255,0.02);
+    border-radius: 12px;
+    border: 1px solid rgba(255,255,255,0.05);
+    overflow: hidden;
+}
+.ww-walker {
+    position: absolute;
+    bottom: 20px;
+    font-size: 3rem;
+    transition: left 0.8s cubic-bezier(0.34,1.56,0.64,1);
+    filter: drop-shadow(0 0 12px var(--bonus-accent-glow));
+}
+.ww-trail-mark {
+    position: absolute;
+    bottom: 30px;
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    background: var(--bonus-accent-glow);
+    opacity: 0.4;
+    animation: wwTrailFade 2s ease-out forwards;
+}
+@keyframes wwTrailFade {
+    from { opacity: 0.5; transform: scale(1); }
+    to   { opacity: 0; transform: scale(2); }
+}
+
+/* ═════════════════════════════════════════════════
+   12. MYSTERY STACKS — Mystery Box Reveal
+   ═════════════════════════════════════════════════ */
+.bonus-type-mystery_stacks .bonus-body {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+}
+.ms-box-grid {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 8px;
+    width: 100%;
+    max-width: 400px;
+}
+.ms-box {
+    aspect-ratio: 1;
+    border-radius: 10px;
+    background: linear-gradient(135deg, #2a1f3d, #1a1428);
+    border: 2px solid rgba(var(--bonus-accent-rgb),0.3);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.8rem;
+    cursor: pointer;
+    transition: all 0.4s ease;
+    position: relative;
+}
+.ms-box:not(.revealed):hover {
+    transform: scale(1.05);
+    border-color: var(--bonus-accent, #fbbf24);
+    box-shadow: 0 0 15px var(--bonus-accent-glow);
+}
+.ms-box::before {
+    content: '?';
+    font-size: 1.5rem;
+    font-weight: 900;
+    color: var(--bonus-accent, #fbbf24);
+    opacity: 0.5;
+}
+.ms-box.revealed::before { content: none; }
+.ms-box.revealed {
+    background: linear-gradient(135deg, rgba(var(--bonus-accent-rgb),0.2), transparent);
+    border-color: var(--bonus-accent, #fbbf24);
+    animation: msReveal 0.6s ease;
+}
+@keyframes msReveal {
+    0% { transform: rotateY(0); }
+    50% { transform: rotateY(90deg); }
+    100% { transform: rotateY(0); }
+}
+
+/* ═════════════════════════════════════════════════
+   13. MULTIPLIER WILDS — Wild Cards + Values
+   ═════════════════════════════════════════════════ */
+.bonus-type-multiplier_wilds .bonus-body {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+}
+.mw-card-row {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+    justify-content: center;
+    max-width: 420px;
+}
+.mw-card {
+    width: 70px;
+    height: 95px;
+    border-radius: 10px;
+    background: linear-gradient(180deg, rgba(20,15,35,0.95), rgba(10,8,20,0.98));
+    border: 2px solid rgba(255,255,255,0.08);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    transition: all 0.4s ease;
+    position: relative;
+}
+.mw-card.active {
+    border-color: var(--bonus-accent, #fbbf24);
+    box-shadow: 0 0 20px var(--bonus-accent-glow);
+    background: linear-gradient(180deg, rgba(var(--bonus-accent-rgb),0.15), rgba(var(--bonus-accent-rgb),0.05));
+    animation: mwCardFlip 0.5s ease;
+}
+@keyframes mwCardFlip {
+    0% { transform: rotateY(0); }
+    50% { transform: rotateY(90deg); }
+    100% { transform: rotateY(0); }
+}
+.mw-card-symbol { font-size: 1.6rem; }
+.mw-card-mult {
+    font-size: 0.85rem;
+    font-weight: 900;
+    color: var(--bonus-accent, #fbbf24);
+}
+
+/* ═════════════════════════════════════════════════
+   14. COIN RESPIN — Coin Cascade
+   ═════════════════════════════════════════════════ */
+.bonus-type-coin_respin .bonus-body {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+}
+.cr-coin-grid {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 6px;
+    width: 100%;
+    max-width: 360px;
+}
+.cr-coin {
+    aspect-ratio: 1;
+    border-radius: 50%;
+    border: 2px solid rgba(255,255,255,0.1);
+    background: rgba(255,255,255,0.02);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 800;
+    font-size: 0.8rem;
+    color: transparent;
+    transition: all 0.4s ease;
+}
+.cr-coin.landed {
+    background: linear-gradient(135deg, #fbbf24, #f59e0b);
+    border-color: #fbbf24;
+    color: #0d0d1a;
+    animation: crCoinLand 0.5s ease;
+    box-shadow: 0 0 10px rgba(251,191,36,0.4);
+}
+@keyframes crCoinLand {
+    0% { transform: translateY(-30px) rotateX(180deg) scale(0.5); }
+    60% { transform: translateY(3px) rotateX(0) scale(1.1); }
+    100% { transform: translateY(0) rotateX(0) scale(1); }
+}
+.cr-respins-left {
+    text-align: center;
+    font-size: 1rem;
+    color: rgba(255,255,255,0.6);
+}
+.cr-respins-left span {
+    color: var(--bonus-accent, #fbbf24);
+    font-weight: 800;
+    font-size: 1.3rem;
+}
+
+/* ═════════════════════════════════════════════════
+   15. CHAMBER SPINS — Vault Door Opening
+   ═════════════════════════════════════════════════ */
+.bonus-type-chamber_spins .bonus-body {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 20px;
+}
+.chamber-door {
+    position: relative;
+    width: 200px;
+    height: 200px;
+    border-radius: 50%;
+    border: 6px solid rgba(var(--bonus-accent-rgb),0.5);
+    background: linear-gradient(135deg, rgba(20,15,35,0.95), rgba(10,8,20,0.98));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    transition: all 1s ease;
+}
+.chamber-door.opening {
+    animation: chamberOpen 1.5s ease forwards;
+}
+@keyframes chamberOpen {
+    0% { border-width: 6px; box-shadow: 0 0 20px var(--bonus-accent-glow); }
+    50% { border-width: 3px; box-shadow: 0 0 60px var(--bonus-accent-glow); transform: scale(1.05); }
+    100% { border-width: 1px; box-shadow: 0 0 100px var(--bonus-accent-glow), inset 0 0 40px var(--bonus-accent-glow); transform: scale(1); }
+}
+.chamber-handle {
+    width: 60px;
+    height: 60px;
+    border: 4px solid var(--bonus-accent, #fbbf24);
+    border-radius: 50%;
+    position: relative;
+    transition: transform 1s ease;
+}
+.chamber-door.opening .chamber-handle {
+    transform: rotate(180deg);
+}
+.chamber-handle::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 24px;
+    height: 4px;
+    background: var(--bonus-accent, #fbbf24);
+    transform: translate(-50%, -50%);
+    border-radius: 2px;
+}
+.chamber-prizes {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    justify-content: center;
+    max-width: 400px;
+}
+.chamber-prize {
+    padding: 10px 18px;
+    border-radius: 10px;
+    border: 1px solid rgba(255,255,255,0.08);
+    background: rgba(255,255,255,0.03);
+    font-weight: 700;
+    font-size: 0.9rem;
+    color: rgba(255,255,255,0.5);
+    opacity: 0;
+    transition: all 0.5s ease;
+}
+.chamber-prize.revealed {
+    opacity: 1;
+    color: var(--bonus-accent, #fbbf24);
+    border-color: var(--bonus-accent, #fbbf24);
+    background: rgba(var(--bonus-accent-rgb),0.1);
+}
+
+/* ═════════════════════════════════════════════════
+   16. FISHERMAN COLLECT — Fishing Minigame
+   ═════════════════════════════════════════════════ */
+.bonus-type-fisherman_collect .bonus-body {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+}
+.fish-pond {
+    position: relative;
+    width: 100%;
+    max-width: 500px;
+    height: 280px;
+    background: linear-gradient(180deg, rgba(0,119,182,0.15) 0%, rgba(0,50,80,0.3) 100%);
+    border-radius: 16px;
+    border: 1px solid rgba(72,202,228,0.15);
+    overflow: hidden;
+}
+.fish-pond::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, transparent, rgba(72,202,228,0.4), transparent);
+    animation: fishWaterShimmer 3s ease-in-out infinite;
+}
+@keyframes fishWaterShimmer {
+    0%, 100% { opacity: 0.3; }
+    50% { opacity: 0.8; }
+}
+.fish-sprite {
+    position: absolute;
+    font-size: 2rem;
+    cursor: pointer;
+    transition: transform 0.2s;
+    animation: fishSwim 3s ease-in-out infinite;
+}
+.fish-sprite:hover { transform: scale(1.2); }
+@keyframes fishSwim {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-10px); }
+}
+.fish-sprite.caught {
+    animation: fishCatch 0.6s ease-out forwards;
+}
+@keyframes fishCatch {
+    0% { transform: scale(1); }
+    30% { transform: scale(1.3) translateY(-20px); }
+    100% { transform: scale(0) translateY(-80px); opacity: 0; }
+}
+.fish-rod {
+    position: absolute;
+    top: -10px;
+    right: 20px;
+    font-size: 2.5rem;
+    transform: rotate(-20deg);
+    filter: drop-shadow(0 2px 8px rgba(0,0,0,0.5));
+}
+.fish-catch-total {
+    font-size: 1.6rem;
+    font-weight: 900;
+    color: #48cae4;
+    text-shadow: 0 0 15px rgba(72,202,228,0.5);
+    text-align: center;
+}
+
+/* ═════════════════════════════════════════════════
+   17. WILD COLLECT — Wild Meter Fill
+   ═════════════════════════════════════════════════ */
+.bonus-type-wild_collect .bonus-body {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 20px;
+}
+.wc-meter-container {
+    width: 100%;
+    max-width: 400px;
+}
+.wc-meter-track {
+    width: 100%;
+    height: 24px;
+    background: rgba(255,255,255,0.05);
+    border-radius: 12px;
+    overflow: hidden;
+    position: relative;
+    border: 1px solid rgba(255,255,255,0.08);
+}
+.wc-meter-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--bonus-accent, #fbbf24), #fff);
+    border-radius: 12px;
+    transition: width 0.6s ease;
+    position: relative;
+    box-shadow: 0 0 12px var(--bonus-accent-glow);
+}
+.wc-meter-fill::after {
+    content: '';
+    position: absolute;
+    right: 0;
+    top: 0;
+    width: 20px;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4));
+    border-radius: 0 12px 12px 0;
+}
+.wc-wild-count {
+    text-align: center;
+    font-size: 2rem;
+    font-weight: 900;
+    color: var(--bonus-accent, #fbbf24);
+}
+.wc-wild-symbols {
+    display: flex;
+    gap: 8px;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+.wc-wild-sym {
+    width: 48px;
+    height: 48px;
+    border-radius: 10px;
+    background: rgba(var(--bonus-accent-rgb),0.15);
+    border: 2px solid var(--bonus-accent, #fbbf24);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.4rem;
+    animation: wcSymPop 0.4s ease;
+}
+@keyframes wcSymPop {
+    from { transform: scale(0) rotate(180deg); }
+    to   { transform: scale(1) rotate(0); }
+}
+
+/* ═════════════════════════════════════════════════
+   18. RESPIN — Classic Lock & Respin
+   ═════════════════════════════════════════════════ */
+.bonus-type-respin .bonus-body {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+}
+.respin-reels {
+    display: flex;
+    gap: 10px;
+}
+.respin-reel {
+    width: 80px;
+    height: 80px;
+    border-radius: 12px;
+    background: rgba(255,255,255,0.03);
+    border: 2px solid rgba(255,255,255,0.08);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2rem;
+    transition: all 0.4s ease;
+}
+.respin-reel.locked {
+    border-color: var(--bonus-accent, #fbbf24);
+    box-shadow: 0 0 15px var(--bonus-accent-glow);
+    background: rgba(var(--bonus-accent-rgb),0.1);
+}
+.respin-reel.spinning {
+    animation: respinSpin 0.1s linear infinite;
+}
+@keyframes respinSpin {
+    0% { transform: translateY(0); }
+    50% { transform: translateY(-3px); }
+    100% { transform: translateY(0); }
+}
+.respin-count {
+    font-size: 1.1rem;
+    color: rgba(255,255,255,0.6);
+    text-align: center;
+}
+.respin-count span {
+    color: var(--bonus-accent, #fbbf24);
+    font-weight: 800;
+    font-size: 1.3rem;
+}
+
+/* ═════════════════════════════════════════════════
+   ANIMATED PARTICLES for bonus background scenes
+   ═════════════════════════════════════════════════ */
+.bonus-particle {
+    position: absolute;
+    border-radius: 50%;
+    pointer-events: none;
+    opacity: 0;
+}
+.bonus-particle.gold {
+    background: radial-gradient(circle, #fbbf24, #f59e0b);
+    animation: bpFloat 4s ease-in-out infinite;
+}
+.bonus-particle.blue {
+    background: radial-gradient(circle, #60a5fa, #2563eb);
+    animation: bpFloat 5s ease-in-out infinite;
+}
+.bonus-particle.purple {
+    background: radial-gradient(circle, #a78bfa, #7c3aed);
+    animation: bpFloat 4.5s ease-in-out infinite;
+}
+@keyframes bpFloat {
+    0% { transform: translateY(0) scale(0); opacity: 0; }
+    20% { opacity: 0.6; transform: scale(1); }
+    80% { opacity: 0.3; }
+    100% { transform: translateY(-200px) scale(0.5); opacity: 0; }
+}
+
+/* ═════════════════════════════════════════════════
+   RESPONSIVE
+   ═════════════════════════════════════════════════ */
+@media (max-width: 480px) {
+    .bonus-game-container { border-radius: 16px; }
+    .bonus-header { padding: 12px 16px; }
+    .bonus-body { padding: 14px; min-height: 240px; }
+    .wheel-container { width: min(240px, 65vw); height: min(240px, 65vw); }
+    .rm-orb-field { height: 220px; }
+    .rm-orb { width: 44px; height: 44px; font-size: 0.8rem; }
+    .zeus-stage { height: 220px; }
+    .fish-pond { height: 220px; }
+}
+
+/* Accessibility: respect reduced-motion preference */
+@media (prefers-reduced-motion: reduce) {
+    .bonus-container *, .bonus-overlay * {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+    }
+}

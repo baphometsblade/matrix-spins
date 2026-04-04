@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Valley of Kings | Matrix Spins Casino</title>
+  <link rel="stylesheet" href="../_shared/game-runtime.css">
+  <link rel="preload" href="/assets/game_symbols/ancient_tombs/s1_tomb_door.png" as="image">
+  <link rel="preload" href="/assets/game_symbols/ancient_tombs/s2_mummy_case.png" as="image">
+  <link rel="preload" href="/assets/game_symbols/ancient_tombs/s3_burial_mask.png" as="image">
+  <link rel="preload" href="/assets/game_symbols/ancient_tombs/s4_canopic_jar.png" as="image">
+  <link rel="preload" href="/assets/game_symbols/ancient_tombs/s5_tomb_seal.png" as="image">
+  <link rel="preload" href="/assets/game_symbols/ancient_tombs/wild_tomb_guardian.png" as="image">
+  <style>
+    :root {
+      --studio-primary: #b388ff;
+      --studio-secondary: #7c4dff;
+      --studio-bg: #0d0a1a;
+      --studio-surface: #1a1230;
+      --studio-font: 'Cinzel', Georgia, serif;
+      --studio-glow: #b388ff40;
+      --reel-border: #b388ff;
+      --reel-cell-size: 56px;
+    }
+    
+  </style>
+</head>
+<body>
+
+  <!-- Symbol SVG Definitions (fallback for missing HD assets) -->
+  <div style="display:none">
+  <svg id="svg_s1_tomb_door" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" style="display:none">
+    <defs><linearGradient id="sg470" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#b388ff"/><stop offset="100%" stop-color="#7c4dff"/>
+    </linearGradient></defs>
+    <rect width="100" height="100" rx="10" fill="#0d0d1a"/>
+    <ellipse cx="50" cy="50" rx="42" ry="35" fill="url(#sg470)" stroke="#b388ff" stroke-width="1.5"/>
+    
+    <text x="50" y="56" text-anchor="middle" font-family="Arial,sans-serif" font-weight="700" font-size="11" fill="white">TOMB D</text>
+  </svg>
+  <svg id="svg_s2_mummy_case" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" style="display:none">
+    <defs><linearGradient id="sg471" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#b388ff"/><stop offset="100%" stop-color="#7c4dff"/>
+    </linearGradient></defs>
+    <rect width="100" height="100" rx="10" fill="#0d0d1a"/>
+    <polygon points="50,8 92,50 50,92 8,50" fill="url(#sg471)" stroke="#b388ff" stroke-width="1.5"/>
+    
+    <text x="50" y="56" text-anchor="middle" font-family="Arial,sans-serif" font-weight="700" font-size="11" fill="white">MUMMY </text>
+  </svg>
+  <svg id="svg_s3_burial_mask" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" style="display:none">
+    <defs><linearGradient id="sg472" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#b388ff"/><stop offset="100%" stop-color="#7c4dff"/>
+    </linearGradient></defs>
+    <rect width="100" height="100" rx="10" fill="#0d0d1a"/>
+    <polygon points="50,8 92,50 50,92 8,50" fill="url(#sg472)" stroke="#b388ff" stroke-width="1.5"/>
+    
+    <text x="50" y="56" text-anchor="middle" font-family="Arial,sans-serif" font-weight="700" font-size="11" fill="white">BURIAL</text>
+  </svg>
+  <svg id="svg_s4_canopic_jar" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" style="display:none">
+    <defs><linearGradient id="sg473" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#b388ff"/><stop offset="100%" stop-color="#7c4dff"/>
+    </linearGradient></defs>
+    <rect width="100" height="100" rx="10" fill="#0d0d1a"/>
+    <polygon points="50,8 61,38 95,38 67,58 78,90 50,70 22,90 33,58 5,38 39,38" fill="url(#sg473)" stroke="#b388ff" stroke-width="1"/>
+    
+    <text x="50" y="56" text-anchor="middle" font-family="Arial,sans-serif" font-weight="700" font-size="11" fill="white">CANOPI</text>
+  </svg>
+  <svg id="svg_s5_tomb_seal" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" style="display:none">
+    <defs><linearGradient id="sg474" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#b388ff"/><stop offset="100%" stop-color="#7c4dff"/>
+    </linearGradient></defs>
+    <rect width="100" height="100" rx="10" fill="#0d0d1a"/>
+    <ellipse cx="50" cy="50" rx="42" ry="35" fill="url(#sg474)" stroke="#b388ff" stroke-width="1.5"/>
+    
+    <text x="50" y="56" text-anchor="middle" font-family="Arial,sans-serif" font-weight="700" font-size="11" fill="white">TOMB S</text>
+  </svg>
+  <svg id="svg_wild_tomb_guardian" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" style="display:none">
+    <defs><linearGradient id="sg475" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#ffd700"/><stop offset="100%" stop-color="#ff8f00"/>
+    </linearGradient></defs>
+    <rect width="100" height="100" rx="10" fill="#2a1a00"/>
+    <polygon points="50,8 61,38 95,38 67,58 78,90 50,70 22,90 33,58 5,38 39,38" fill="url(#sg475)" stroke="#ffd700" stroke-width="1"/>
+    <text x="50" y="28" text-anchor="middle" font-size="10" font-weight="900" fill="#ffd700">WILD</text>
+    <text x="50" y="62" text-anchor="middle" font-family="Arial,sans-serif" font-weight="700" font-size="11" fill="white">TOMB G</text>
+  </svg>
+  </div>
+
+  <!-- Top Bar -->
+  <div class="game-topbar">
+    <button class="back-btn" id="backBtn">&#8592; Lobby</button>
+    <div class="game-title">Valley of Kings</div>
+    <div class="studio-badge">
+      <span>Mythic Forge</span>
+    </div>
+  </div>
+
+  <!-- Balance Bar -->
+  <div class="balance-bar">
+    <div class="balance-item"><div class="label">Balance</div><div class="value" id="balanceValue">$1,000.00</div></div>
+    <div class="balance-item"><div class="label">Bet</div><div class="value" id="betValue">$1.00</div></div>
+    <div class="balance-item"><div class="label">Win</div><div class="value" id="winValue">$0.00</div></div>
+  </div>
+
+  <!-- Game Area -->
+  <div class="game-area">
+    <div class="free-spins-banner" id="freeSpinsBanner">FREE SPINS</div>
+    <div class="reels-frame">
+      <div class="reels-grid" id="reelsGrid"></div>
+    </div>
+    <div class="mechanic-overlay" id="mechanicOverlay">
+      <div><div class="mechanic-text"></div><div class="mechanic-sub"></div></div>
+    </div>
+  </div>
+
+  <!-- Controls -->
+  <div class="controls-bar">
+    <button class="autoplay-btn" id="autoplayBtn">Auto</button>
+    <div class="bet-control">
+      <button id="betDown">-</button>
+      <div class="bet-display" id="betDisplay">$1.00</div>
+      <button id="betUp">+</button>
+    </div>
+    <button class="spin-btn" id="spinBtn">SPIN</button>
+    <button class="maxbet-btn" id="maxBet">MAX</button>
+  </div>
+
+  <!-- Info Bar -->
+  <div class="info-bar">
+    <span>RTP: 92.42%</span>
+    <span>CLUSTER | 6x5</span>
+    <span>MEDIUM-HIGH</span>
+  </div>
+
+  <!-- Scripts -->
+  <script src="../../js/casino-engine.js?v=3.1.0"></script>
+  <script>
+    window.GAME_CONFIG = {
+  "id": "ancient_tombs",
+  "name": "Valley of Kings",
+  "provider": "mythic-forge",
+  "studioId": "mythic-forge",
+  "symbols": [
+    "s1_tomb_door",
+    "s2_mummy_case",
+    "s3_burial_mask",
+    "s4_canopic_jar",
+    "s5_tomb_seal",
+    "wild_tomb_guardian"
+  ],
+  "gridCols": 6,
+  "gridRows": 5,
+  "winType": "cluster",
+  "wildSymbol": "wild_tomb_guardian",
+  "scatterSymbol": "s5_tomb_seal",
+  "rtp": 92.42,
+  "volatility": "medium-high",
+  "bonusType": "symbol_upgrade",
+  "freeSpinsCount": 12,
+  "freeSpinsTrigger": 3,
+  "clusterMin": 5,
+  "minBet": 0.2,
+  "maxBet": 3500
+};
+    window.GAME_MECHANIC = {
+            _gameIdx: 47,
+            _upgradeLevel: 0,
+            onResult: function(grid, cfg, st, baseWin) {
+                if (st.freeSpinsActive && baseWin > 0) {
+                    this._upgradeLevel = Math.min(this._upgradeLevel + 1, 3);
+                    var bonus = baseWin * this._upgradeLevel * 0.5;
+                    return { winAmount: baseWin + bonus, message: 'UPGRADE LEVEL ' + this._upgradeLevel + '!', sub: 'Symbols enhanced!' };
+                }
+                if (!st.freeSpinsActive) this._upgradeLevel = 0;
+                return null;
+            }
+        };
+  </script>
+  <script src="../_shared/game-runtime.js"></script>
+</body>
+</html>

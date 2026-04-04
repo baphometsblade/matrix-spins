@@ -1,0 +1,55 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 80" width="300" height="80">
+  <defs>
+    <linearGradient id="dp-red" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#EF5350"/>
+      <stop offset="100%" stop-color="#B71C1C"/>
+    </linearGradient>
+    <linearGradient id="dp-gold" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#FFE082"/>
+      <stop offset="50%" stop-color="#FFD700"/>
+      <stop offset="100%" stop-color="#B8860B"/>
+    </linearGradient>
+    <radialGradient id="dp-jade" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#A5D6A7"/>
+      <stop offset="100%" stop-color="#2E7D32"/>
+    </radialGradient>
+    <filter id="dp-glow">
+      <feGaussianBlur stdDeviation="1.5" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+  <!-- Chinese-style border corners -->
+  <path d="M8 8 L28 8 L28 12 L12 12 L12 28 L8 28 Z" fill="url(#dp-gold)" opacity="0.6"/>
+  <path d="M292 8 L272 8 L272 12 L288 12 L288 28 L292 28 Z" fill="url(#dp-gold)" opacity="0.6"/>
+  <path d="M8 72 L28 72 L28 68 L12 68 L12 52 L8 52 Z" fill="url(#dp-gold)" opacity="0.6"/>
+  <path d="M292 72 L272 72 L272 68 L288 68 L288 52 L292 52 Z" fill="url(#dp-gold)" opacity="0.6"/>
+  <!-- Stylized dragon -->
+  <path d="M30 40 Q35 20, 50 25 Q58 28, 55 35 Q52 40, 58 42 Q65 44, 62 50 Q58 56, 50 55 Q42 54, 38 48 Q34 44, 30 40Z" fill="url(#dp-red)" opacity="0.6"/>
+  <!-- Dragon details - scales/whiskers -->
+  <path d="M50 25 Q55 20, 58 22" fill="none" stroke="#FFD700" stroke-width="0.8" opacity="0.7"/>
+  <path d="M48 24 Q52 18, 55 19" fill="none" stroke="#FFD700" stroke-width="0.6" opacity="0.5"/>
+  <circle cx="52" cy="28" r="1.5" fill="#FFD700" opacity="0.8"/>
+  <!-- Dragon body continuation -->
+  <path d="M38 48 Q30 55, 25 50 Q22 47, 26 44" fill="none" stroke="#F44336" stroke-width="1.5" opacity="0.4"/>
+  <!-- Pearl (jade) -->
+  <circle cx="70" cy="40" r="8" fill="url(#dp-jade)" opacity="0.7" filter="url(#dp-glow)"/>
+  <circle cx="68" cy="37" r="2.5" fill="#C8E6C9" opacity="0.5"/>
+  <circle cx="70" cy="40" r="8" fill="none" stroke="#FFD700" stroke-width="0.8" opacity="0.5"/>
+  <!-- Flame wisps around pearl -->
+  <path d="M62 35 Q60 30, 63 32" fill="none" stroke="#F44336" stroke-width="0.8" opacity="0.4"/>
+  <path d="M78 35 Q80 30, 77 32" fill="none" stroke="#F44336" stroke-width="0.8" opacity="0.4"/>
+  <!-- Cloud motifs -->
+  <path d="M88 28 Q92 24, 96 28 Q100 24, 104 28" fill="none" stroke="#FFD700" stroke-width="0.8" opacity="0.3"/>
+  <path d="M88 52 Q92 48, 96 52 Q100 48, 104 52" fill="none" stroke="#FFD700" stroke-width="0.8" opacity="0.3"/>
+  <!-- Main text -->
+  <text x="196" y="33" text-anchor="middle" font-family="Georgia, 'Times New Roman', serif" font-size="22" font-weight="bold" fill="url(#dp-red)" letter-spacing="3">DRAGON</text>
+  <text x="196" y="56" text-anchor="middle" font-family="Georgia, 'Times New Roman', serif" font-size="18" fill="url(#dp-gold)" letter-spacing="5">PEARL</text>
+  <!-- Gold decorative line -->
+  <line x1="130" y1="40" x2="262" y2="40" stroke="#FFD700" stroke-width="0.5" opacity="0.3"/>
+  <!-- Small jade accent dots -->
+  <circle cx="130" cy="64" r="2" fill="url(#dp-jade)" opacity="0.35"/>
+  <circle cx="262" cy="64" r="2" fill="url(#dp-jade)" opacity="0.35"/>
+</svg>

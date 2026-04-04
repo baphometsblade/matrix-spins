@@ -1,0 +1,52 @@
+{
+  "name": "RoyalSlotsToken",
+  "description": "ERC-1155 multi-token contract for Matrix Spins Casino. Token ID 0 = fungible balance (1 token = $0.01 USD). Token ID N>0 = deposit receipt (non-fungible, one per deposit).",
+  "standard": "ERC-1155",
+  "network": "Polygon PoS",
+  "chainId": 137,
+  "testnet": {
+    "network": "Polygon Mumbai",
+    "chainId": 80001
+  },
+  "tokenIds": {
+    "0": {
+      "name": "BALANCE",
+      "type": "fungible",
+      "description": "Player balance token. 1 token = $0.01 AUD. 100 tokens = $1.00 AUD.",
+      "decimals": 0
+    },
+    "N>0": {
+      "name": "DEPOSIT_RECEIPT",
+      "type": "non-fungible",
+      "description": "Unique deposit receipt. One minted per deposit transaction.",
+      "metadata": {
+        "depositId": "UUID",
+        "amountAUD": "number",
+        "timestamp": "ISO 8601",
+        "stripePaymentId": "string",
+        "playerHash": "SHA-256 hash of player email"
+      }
+    }
+  },
+  "functions": {
+    "mint": {
+      "signature": "mint(address to, uint256 id, uint256 amount, bytes data)",
+      "access": "MINTER_ROLE only (server hot wallet)",
+      "usage": "Called on deposit confirmation"
+    },
+    "burn": {
+      "signature": "burn(address from, uint256 id, uint256 amount)",
+      "access": "MINTER_ROLE only (server hot wallet)",
+      "usage": "Called on withdrawal execution"
+    },
+    "balanceOf": {
+      "signature": "balanceOf(address account, uint256 id) → uint256",
+      "usage": "Query player balance: balanceOf(serverWallet, 0) / 100 = AUD balance"
+    }
+  },
+  "thirdweb": {
+    "contractType": "edition",
+    "sdk": "@thirdweb-dev/sdk",
+    "version": "^4.0.0"
+  }
+}

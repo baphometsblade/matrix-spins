@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ghost House | Matrix Spins Casino</title>
+  <link rel="stylesheet" href="../_shared/game-runtime.css">
+  <link rel="preload" href="/assets/game_symbols/haunted_mansion/s1_haunted_mansion.png" as="image">
+  <link rel="preload" href="/assets/game_symbols/haunted_mansion/s2_ghost.png" as="image">
+  <link rel="preload" href="/assets/game_symbols/haunted_mansion/s3_candelabra.png" as="image">
+  <link rel="preload" href="/assets/game_symbols/haunted_mansion/s4_portrait.png" as="image">
+  <link rel="preload" href="/assets/game_symbols/haunted_mansion/s5_ghostly_hand.png" as="image">
+  <link rel="preload" href="/assets/game_symbols/haunted_mansion/wild_spectral_glow.png" as="image">
+  <style>
+    :root {
+      --studio-primary: #69f0ae;
+      --studio-secondary: #1b5e20;
+      --studio-bg: #0a0a0a;
+      --studio-surface: #151515;
+      --studio-font: 'Share Tech Mono', 'Courier New', monospace;
+      --studio-glow: #69f0ae40;
+      --reel-border: #69f0ae;
+      --reel-cell-size: 56px;
+    }
+    
+  </style>
+</head>
+<body>
+
+  <!-- Symbol SVG Definitions (fallback for missing HD assets) -->
+  <div style="display:none">
+  <svg id="svg_s1_haunted_mansion" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" style="display:none">
+    <defs><linearGradient id="sg440" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#69f0ae"/><stop offset="100%" stop-color="#1b5e20"/>
+    </linearGradient></defs>
+    <rect width="100" height="100" rx="10" fill="#0d0d1a"/>
+    <polygon points="50,8 92,50 50,92 8,50" fill="url(#sg440)" stroke="#69f0ae" stroke-width="1.5"/>
+    
+    <text x="50" y="56" text-anchor="middle" font-family="Arial,sans-serif" font-weight="700" font-size="11" fill="white">HAUNTE</text>
+  </svg>
+  <svg id="svg_s2_ghost" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" style="display:none">
+    <defs><linearGradient id="sg441" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#69f0ae"/><stop offset="100%" stop-color="#1b5e20"/>
+    </linearGradient></defs>
+    <rect width="100" height="100" rx="10" fill="#0d0d1a"/>
+    <ellipse cx="50" cy="50" rx="42" ry="35" fill="url(#sg441)" stroke="#69f0ae" stroke-width="1.5"/>
+    
+    <text x="50" y="56" text-anchor="middle" font-family="Arial,sans-serif" font-weight="700" font-size="11" fill="white">GHOST</text>
+  </svg>
+  <svg id="svg_s3_candelabra" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" style="display:none">
+    <defs><linearGradient id="sg442" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#69f0ae"/><stop offset="100%" stop-color="#1b5e20"/>
+    </linearGradient></defs>
+    <rect width="100" height="100" rx="10" fill="#0d0d1a"/>
+    <rect x="12" y="12" width="76" height="76" rx="12" fill="url(#sg442)" stroke="#69f0ae" stroke-width="1.5"/>
+    
+    <text x="50" y="56" text-anchor="middle" font-family="Arial,sans-serif" font-weight="700" font-size="11" fill="white">CANDEL</text>
+  </svg>
+  <svg id="svg_s4_portrait" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" style="display:none">
+    <defs><linearGradient id="sg443" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#69f0ae"/><stop offset="100%" stop-color="#1b5e20"/>
+    </linearGradient></defs>
+    <rect width="100" height="100" rx="10" fill="#0d0d1a"/>
+    <path d="M50,5 L90,20 L90,65 L50,95 L10,65 L10,20 Z" fill="url(#sg443)" stroke="#69f0ae" stroke-width="1.5"/>
+    
+    <text x="50" y="56" text-anchor="middle" font-family="Arial,sans-serif" font-weight="700" font-size="11" fill="white">PORTRA</text>
+  </svg>
+  <svg id="svg_s5_ghostly_hand" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" style="display:none">
+    <defs><linearGradient id="sg444" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#69f0ae"/><stop offset="100%" stop-color="#1b5e20"/>
+    </linearGradient></defs>
+    <rect width="100" height="100" rx="10" fill="#0d0d1a"/>
+    <ellipse cx="50" cy="50" rx="42" ry="35" fill="url(#sg444)" stroke="#69f0ae" stroke-width="1.5"/>
+    
+    <text x="50" y="56" text-anchor="middle" font-family="Arial,sans-serif" font-weight="700" font-size="11" fill="white">GHOSTL</text>
+  </svg>
+  <svg id="svg_wild_spectral_glow" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" style="display:none">
+    <defs><linearGradient id="sg445" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#ffd700"/><stop offset="100%" stop-color="#ff8f00"/>
+    </linearGradient></defs>
+    <rect width="100" height="100" rx="10" fill="#2a1a00"/>
+    <path d="M50,5 L90,20 L90,65 L50,95 L10,65 L10,20 Z" fill="url(#sg445)" stroke="#ffd700" stroke-width="1.5"/>
+    <text x="50" y="28" text-anchor="middle" font-size="10" font-weight="900" fill="#ffd700">WILD</text>
+    <text x="50" y="62" text-anchor="middle" font-family="Arial,sans-serif" font-weight="700" font-size="11" fill="white">SPECTR</text>
+  </svg>
+  </div>
+
+  <!-- Top Bar -->
+  <div class="game-topbar">
+    <button class="back-btn" id="backBtn">&#8592; Lobby</button>
+    <div class="game-title">Ghost House</div>
+    <div class="studio-badge">
+      <span>Shadow Works</span>
+    </div>
+  </div>
+
+  <!-- Balance Bar -->
+  <div class="balance-bar">
+    <div class="balance-item"><div class="label">Balance</div><div class="value" id="balanceValue">$1,000.00</div></div>
+    <div class="balance-item"><div class="label">Bet</div><div class="value" id="betValue">$1.00</div></div>
+    <div class="balance-item"><div class="label">Win</div><div class="value" id="winValue">$0.00</div></div>
+  </div>
+
+  <!-- Game Area -->
+  <div class="game-area">
+    <div class="free-spins-banner" id="freeSpinsBanner">FREE SPINS</div>
+    <div class="reels-frame">
+      <div class="reels-grid" id="reelsGrid"></div>
+    </div>
+    <div class="mechanic-overlay" id="mechanicOverlay">
+      <div><div class="mechanic-text"></div><div class="mechanic-sub"></div></div>
+    </div>
+  </div>
+
+  <!-- Controls -->
+  <div class="controls-bar">
+    <button class="autoplay-btn" id="autoplayBtn">Auto</button>
+    <div class="bet-control">
+      <button id="betDown">-</button>
+      <div class="bet-display" id="betDisplay">$1.00</div>
+      <button id="betUp">+</button>
+    </div>
+    <button class="spin-btn" id="spinBtn">SPIN</button>
+    <button class="maxbet-btn" id="maxBet">MAX</button>
+  </div>
+
+  <!-- Info Bar -->
+  <div class="info-bar">
+    <span>RTP: 91.35%</span>
+    <span>CLUSTER | 6x5</span>
+    <span>MEDIUM-HIGH</span>
+  </div>
+
+  <!-- Scripts -->
+  <script src="../../js/casino-engine.js?v=3.1.0"></script>
+  <script>
+    window.GAME_CONFIG = {
+  "id": "haunted_mansion",
+  "name": "Ghost House",
+  "provider": "shadow-works",
+  "studioId": "shadow-works",
+  "symbols": [
+    "s1_haunted_mansion",
+    "s2_ghost",
+    "s3_candelabra",
+    "s4_portrait",
+    "s5_ghostly_hand",
+    "wild_spectral_glow"
+  ],
+  "gridCols": 6,
+  "gridRows": 5,
+  "winType": "cluster",
+  "wildSymbol": "wild_spectral_glow",
+  "scatterSymbol": "s5_ghostly_hand",
+  "rtp": 91.35,
+  "volatility": "medium-high",
+  "bonusType": "cascading",
+  "freeSpinsCount": 10,
+  "freeSpinsTrigger": 3,
+  "clusterMin": 8,
+  "minBet": 0.2,
+  "maxBet": 3200
+};
+    window.GAME_MECHANIC = {
+            _gameIdx: 44,
+            _cascadeCount: 0,
+            _levels: 6,
+            onResult: function(grid, cfg, st, baseWin) {
+                if (baseWin > 0) {
+                    this._cascadeCount++;
+                    var lvl = Math.min(this._cascadeCount, this._levels.length) - 1;
+                    var mult = this._levels[lvl];
+                    return { winAmount: baseWin * mult, message: mult > 1 ? 'CASCADE x' + mult : '', sub: 'Level ' + (lvl + 1) };
+                }
+                this._cascadeCount = 0;
+                return null;
+            }
+        };
+  </script>
+  <script src="../_shared/game-runtime.js"></script>
+</body>
+</html>

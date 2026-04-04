@@ -1,0 +1,143 @@
+﻿/* ================================================================
+   POPUP NUKE - Permanently suppress ALL non-essential overlays
+   This removes achievements, referrals, deposit streaks, 
+   daily challenges, keyboard shortcuts, bonus offers, promos,
+   welcome tours, cookie banners, season banners, country selectors,
+   gamble overlays, scratch cards, and all other popup spam.
+   ================================================================ */
+
+/* === Non-slot modals === */
+.modal:not(#slotModal):not([class*="slot-chrome"]):not([class*="slot-template"]) {
+  display: none !important;
+}
+
+/* === Achievement & Badge panels === */
+.achievement-toast, .achievement-panel, .badges-panel,
+[class*="achievement"], [class*="Achievement"] {
+  display: none !important;
+}
+
+/* === Referral & Deposit Streak === */
+[class*="referral"], [class*="deposit-streak"], [class*="deposit-bonus"],
+[class*="first-deposit"], [class*="reload-banner"] {
+  display: none !important;
+}
+
+/* === Daily Challenges & Streaks === */
+[class*="daily-challenge"], [class*="daily-login"],
+[class*="streak-bonus"], [class*="streak-panel"] {
+  display: none !important;
+}
+
+/* === Welcome & Onboarding === */
+[class*="welcome-tour"], [class*="onboarding"],
+[class*="welcome-modal"], [class*="tutorial"] {
+  display: none !important;
+}
+
+/* === Keyboard Shortcuts panel === */
+[class*="keyboard-shortcut"], [class*="KeyboardShortcut"],
+.kb-hints {
+  display: none !important;
+}
+
+/* === Cookie & ToS === */
+[class*="cookie-banner"], [class*="cookie-consent"],
+.terms-overlay, #termsOverlay,
+.tos-modal, #tosModal {
+  display: none !important;
+}
+
+/* === Country & Geo === */
+[class*="country-selector"], [class*="geo-restrict"] {
+  display: none !important;
+}
+
+/* === Season & Tournament Banners === */
+[class*="season-banner"], [class*="season-leader"],
+.tournament-banner, #tournamentBanner {
+  display: none !important;
+}
+
+/* === Promo & Marketing Banners === */
+.promo-banner, #promoBanner, [class*="promo-bar"],
+[class*="promo-carousel"], [class*="happy-hour"],
+[class*="midweek-boost"], .bonus-countdown-bar,
+[class*="comeback-offer"], [class*="limited-offer"],
+[class*="lucky-hour"] {
+  display: none !important;
+}
+
+/* === Bonus Wheel === */
+[class*="bonus-wheel"], .btn-bonus-wheel,
+.csb-item-promo, #bonusWheelBtn {
+  display: none !important;
+}
+
+/* === Gamble / Double-Up === */
+.gamble-overlay, #gambleOverlay, .gamble-offer, #gambleOffer,
+.slot-gamble-btn, #gambleBtn, [class*="gamble-modal"] {
+  display: none !important;
+}
+
+/* === Scratch Cards === */
+[class*="scratch-card"], [class*="scratchCard"] {
+  display: none !important;
+}
+
+/* === Notification Toasts & Popups === */
+[class*="notification-popup"], [class*="snackbar"],
+.notification-bell-dropdown,
+[class*="toast"]:not(#slotModal [class*="toast"]) {
+  display: none !important;
+}
+
+/* === Social Proof / Win Feed === */
+.social-proof-feed, [class*="win-feed"], [class*="jackpot-feed"],
+[class*="win-ticker"] {
+  display: none !important;
+}
+
+/* === Verification Bars === */
+[class*="verification-bar"], [class*="submit-verification"],
+.kyc-panel, #kyc-panel, .audit-panel, #audit-panel {
+  display: none !important;
+}
+
+/* === Live Chat & Support bubbles === */
+.support-chat-bubble, #support-chat-bubble,
+.support-chat-panel, #support-chat-panel,
+.live-chat-btn, #liveChatBtn359,
+.player-chat-panel, #player-chat-panel {
+  display: none !important;
+}
+
+/* === Misc UI clutter === */
+.gem-store-btn, #gem-store-fab,
+.rtp-display, #rtp-display,
+.payout-panel, #payout-panel,
+.age-verify-overlay, #ageVerifyOverlay,
+#pageTransition {
+  display: none !important;
+}
+
+/* === Page transition overlay === */
+.page-transition {
+  display: none !important;
+}
+
+/* === Responsible gambling overlays (keep self-exclusion for compliance) === */
+.rg-overlay:not(#selfExclusionOverlay) {
+  display: none !important;
+}
+
+/* === Mobile bottom nav (Mini-Games button) === */
+.mobile-bottom-nav .mob-nav-btn[onclick*="BonusWheel"],
+.mobile-bottom-nav .mob-nav-btn[onclick*="Mini"] {
+  display: none !important;
+}
+
+/* === Hero promo banners === */
+.hero-banner .btn-bonus-wheel {
+  display: none !important;
+}

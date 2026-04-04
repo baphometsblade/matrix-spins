@@ -1,0 +1,27 @@
+services:
+  - type: web
+    name: matrix-spins
+    runtime: node
+    plan: free
+    nodeVersion: "20"
+    buildCommand: npm install --omit=dev && node scripts/bundle-js.js && node scripts/fix-encoding.js
+    startCommand: node server/index.js
+    healthCheckPath: /api/health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: JWT_SECRET
+        generateValue: true
+      - key: ADMIN_PASSWORD
+        sync: false  # Set manually in Render dashboard — NEVER commit passwords to repo
+      - key: ALLOWED_ORIGIN
+        value: https://msaart.online
+      - key: CRYPTO_WALLET_ADDRESS
+        value: "0x5cee55FF03c247c1C2b4b9b4e732B087758CD863"
+      - key: BTC_WALLET_ADDRESS
+        value: "bc1qtl6rrtzcnrjycjdccm08d42u2qucu7qnz7ma0q"
+      # STRIPE_SECRET_KEY: set manually in Render dashboard
+      # STRIPE_PUBLISHABLE_KEY: set manually in Render dashboard
+      # STRIPE_WEBHOOK_SECRET: set manually in Render dashboard
+      # DATABASE_URL: set manually in Render dashboard to use PostgreSQL
+      # Without DATABASE_URL, the app falls back to SQLite - works fine for single-instance deploys

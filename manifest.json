@@ -1,0 +1,58 @@
+{
+  "id": "/",
+  "name": "Matrix Spins Casino",
+  "short_name": "Matrix Spins",
+  "description": "Premium online slots casino with 100+ games, jackpots, and exclusive bonuses",
+  "start_url": "/",
+  "display": "standalone",
+  "display_override": ["standalone", "minimal-ui"],
+  "background_color": "#0a0a1a",
+  "theme_color": "#f59e0b",
+  "orientation": "any",
+  "categories": [
+    "games",
+    "entertainment",
+    "casino"
+  ],
+  "lang": "en-AU",
+  "dir": "ltr",
+  "scope": "/",
+  "prefer_related_applications": false,
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "maskable"
+    },
+    {
+      "src": "/images/logo-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "/img/og-banner.png",
+      "sizes": "1200x630",
+      "type": "image/png",
+      "form_factor": "wide",
+      "label": "Matrix Spins Casino lobby with 100+ premium slot games"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Play Slots",
+      "short_name": "Play",
+      "url": "/#lobby",
+      "description": "Jump straight to the slot lobby"
+    }
+  ]
+}
