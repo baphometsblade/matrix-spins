@@ -13,6 +13,12 @@
   background: #000 !important;
 }
 
+#slotModal.active {
+  display: block !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+}
+
 #slotModal .modal-content.slot-modal-fullscreen {
   display: flex !important;
   flex-direction: column !important;

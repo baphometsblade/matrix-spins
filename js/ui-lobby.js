@@ -1253,8 +1253,8 @@ function renderGames() {
                             'Ironclad Entertainment':'ironclad', 'Shadow Works':'shadow-works', 'Wild Frontier Games':'wild-frontier',
                             'Cascade Labs':'cascade-labs', 'Dragon Pearl Studios':'dragon-pearl' };
                         _provKey = _prov2s[g.provider] || 'ironclad';
-                        var _accent = { nebula-gaming:'#00e5ff', golden-reels:'#ffd700', mythic-forge:'#e040fb', ironclad:'#ff6d00',
-                            shadow-works:'#b388ff', wild-frontier:'#76ff03', cascade-labs:'#ffea00', dragon-pearl:'#00bcd4' }[_provKey] || '#00ff41';
+                        var _accent = { 'nebula-gaming':'#00e5ff', 'golden-reels':'#ffd700', 'mythic-forge':'#e040fb', ironclad:'#ff6d00',
+                            'shadow-works':'#b388ff', 'wild-frontier':'#76ff03', 'cascade-labs':'#ffea00', 'dragon-pearl':'#00bcd4' }[_provKey] || '#00ff41';
                         return '<div class="hero-slide' + (idx === 0 ? ' hero-slide-active' : '') + '" data-slide="' + idx + '" style="background:' + _bg + '">' +
                             '<div class="hero-slide-content">' +
                             '<div class="hero-studio-badge" style="background:' + _accent + ';color:#000">' + g.provider + '</div>' +

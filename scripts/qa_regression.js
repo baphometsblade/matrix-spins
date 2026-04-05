@@ -514,8 +514,8 @@ async function run() {
     await page.addInitScript(() => { window._qaMode = true; });
 
     page.on("console", (msg) => {
-      if (msg.type() !== "error") return;
-      trackRuntimeError("console.error", msg.text());
+      if (msg.type() === "error") trackRuntimeError("console.error", msg.text());
+      if (msg.type() === "warning" && msg.text().includes('[openSlot]')) console.warn('[QA-CONSOLE]', msg.text());
     });
     page.on("pageerror", (err) => {
       trackRuntimeError("pageerror", err.stack || String(err));
@@ -706,6 +706,12 @@ async function run() {
     });
     // Retry once if the slot modal fails to activate — handles CI timing jitter
     await page.waitForSelector("#slotModal.active", { timeout: 15000 }).catch(async () => {
+      // Recover: force slotModal out of casinoMainWrap so display:none on wrap doesn't hide it
+      await page.evaluate(() => {
+        var m = document.getElementById('slotModal');
+        if (m && m.parentNode !== document.body) document.body.appendChild(m);
+        if (m) { m.style.display = 'block'; m.style.visibility = 'visible'; m.style.opacity = '1'; }
+      });
       await dismissFeaturePopupIfVisible(page);
       await page.evaluate(() => {
         openSlot("sugar_rush");

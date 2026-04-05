@@ -1925,7 +1925,7 @@
                 });
             })();
 
-            showPageTransition(() => {
+            (typeof showPageTransition === 'function' ? showPageTransition : function(cb) { if (cb) cb(); })(() => {
                 closeStatsModal();
 
                 // Dismiss all high-z-index overlays that block game interaction
@@ -2120,6 +2120,10 @@
             freeSpinsRemaining = 0;
 
                 var _slotModalOpen = document.getElementById('slotModal');
+                // Ensure slotModal is a direct body child so hiding casinoMainWrap doesn't also hide it
+                if (_slotModalOpen && _slotModalOpen.parentNode !== document.body) {
+                    document.body.appendChild(_slotModalOpen);
+                }
                 _slotModalOpen.classList.add('active');
                 // Clear any inline display:none so CSS .modal.active { display:block } takes effect
                 _slotModalOpen.style.display = '';
@@ -3042,6 +3046,10 @@
                 console.warn('[openSlot] Error opening game:', _openSlotErr.message, _openSlotErr.stack);
                 // Still try to show the modal even if setup partially failed
                 var _fallbackModal = document.getElementById('slotModal');
+                // Move slotModal to body first so hiding casinoMainWrap doesn't also hide it
+                if (_fallbackModal && _fallbackModal.parentNode !== document.body) {
+                    document.body.appendChild(_fallbackModal);
+                }
                 if (_fallbackModal && !_fallbackModal.classList.contains('active')) {
                     _fallbackModal.classList.add('active');
                     _fallbackModal.style.display = '';
@@ -27612,4 +27620,8 @@ function _initResponsibleGaming656() {
 }
 function _checkDailyLimit656(betAmount) {
     if (_respGaming656.dailyLimit > 0 && (_respGaming656.dailySpent + betAmount) > _respGaming656.dailyLimit) {
-        if (typeof _showNotification571 === 'function') _showNotification571('Daily limi
+        if (typeof _showNotification571 === 'function') _showNotification571('Daily limit reached. Bet blocked.');
+        return false;
+    }
+    return true;
+}

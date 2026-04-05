@@ -92,7 +92,7 @@ var PROVIDER_PARTICLE_CONFIGS = {
     },
 
     // Celestial — Golden falling feathers, divine rays
-    mythic-forge: {
+    'mythic-forge': {
         colors: ['#ffd700', '#ffec8b', '#fff8dc', '#daa520', '#fffacd'],
         types: [PE_TYPE_GLOW, PE_TYPE_GLOW, PE_TYPE_TRAIL, PE_TYPE_POINT],
         gravity: 0.8,
@@ -134,7 +134,7 @@ var PROVIDER_PARTICLE_CONFIGS = {
     },
 
     // Golden Reels — Liquid gold droplets, coin shower
-    golden-reels: {
+    'golden-reels': {
         colors: ['#ffb74d', '#ffd54f', '#ffe082', '#ffcc02', '#ffffff'],
         types: [PE_TYPE_GLOW, PE_TYPE_POINT, PE_TYPE_GLOW, PE_TYPE_TRAIL],
         gravity: 1.8,
@@ -197,7 +197,7 @@ var PROVIDER_PARTICLE_CONFIGS = {
     },
 
     // Shadow Works — Purple mist, ghostly tendrils
-    shadow-works: {
+    'shadow-works': {
         colors: ['#8000ff', '#a855f7', '#c084fc', '#9333ea', '#e9d5ff'],
         types: [PE_TYPE_GLOW, PE_TYPE_GLOW, PE_TYPE_TRAIL, PE_TYPE_POINT],
         gravity: 0.3,
@@ -218,7 +218,7 @@ var PROVIDER_PARTICLE_CONFIGS = {
     },
 
     // Wild Frontier — Pixel explosions, retro confetti
-    wild-frontier: {
+    'wild-frontier': {
         colors: ['#00ffff', '#ff00ff', '#ffff00', '#00ff00', '#ff4444'],
         types: [PE_TYPE_POINT, PE_TYPE_POINT, PE_TYPE_GLOW, PE_TYPE_TRAIL],
         gravity: 1.6,
@@ -240,11 +240,11 @@ var PROVIDER_PARTICLE_CONFIGS = {
 };
 
 // ── Aliases: map new studio theme keys to closest particle configs ──
-PROVIDER_PARTICLE_CONFIGS.goldenreels  = PROVIDER_PARTICLE_CONFIGS.golden-reels;
-PROVIDER_PARTICLE_CONFIGS.nebula       = PROVIDER_PARTICLE_CONFIGS.mythic-forge;
+PROVIDER_PARTICLE_CONFIGS.goldenreels  = PROVIDER_PARTICLE_CONFIGS['golden-reels'];
+PROVIDER_PARTICLE_CONFIGS.nebula       = PROVIDER_PARTICLE_CONFIGS['mythic-forge'];
 PROVIDER_PARTICLE_CONFIGS.mythicforge  = PROVIDER_PARTICLE_CONFIGS.solstice;
-PROVIDER_PARTICLE_CONFIGS.wildfrontier = PROVIDER_PARTICLE_CONFIGS.golden-reels;
-PROVIDER_PARTICLE_CONFIGS.shadowworks  = PROVIDER_PARTICLE_CONFIGS.shadow-works;
+PROVIDER_PARTICLE_CONFIGS.wildfrontier = PROVIDER_PARTICLE_CONFIGS['golden-reels'];
+PROVIDER_PARTICLE_CONFIGS.shadowworks  = PROVIDER_PARTICLE_CONFIGS['shadow-works'];
 PROVIDER_PARTICLE_CONFIGS.dragonpearl  = PROVIDER_PARTICLE_CONFIGS.vaultx;
 PROVIDER_PARTICLE_CONFIGS.ironclad     = PROVIDER_PARTICLE_CONFIGS.ironclad;
 PROVIDER_PARTICLE_CONFIGS.cascadelabs  = PROVIDER_PARTICLE_CONFIGS.novaspin;

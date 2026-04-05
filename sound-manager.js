@@ -48,7 +48,7 @@
             count:    { waveType: 'square',   freq: 1800,                            dur: 0.02  },
             reelstop: { waveType: 'sawtooth', freq: 180,                             dur: 0.06  },
         },
-        mythic-forge: {
+        'mythic-forge': {
             // Heavenly/orchestral — sine/triangle waves, harmonic intervals, slow arpeggios
             spin:     { waveType: 'sine',     freqs: [523, 659, 784],                dur: 0.18, spacing: 0.07  },
             win:      { waveType: 'sine',     freqs: [523, 659, 784, 1047],          dur: 0.38, spacing: 0.09  },
@@ -76,7 +76,7 @@
             count:    { waveType: 'square',   freq: 440,                             dur: 0.02  },
             reelstop: { waveType: 'square',   freq: 80,                              dur: 0.07  },
         },
-        golden-reels: {
+        'golden-reels': {
             // Luxe/elegant — sine waves, warm frequencies, smooth legato
             spin:     { waveType: 'sine',     freqs: [1046, 1318, 1568],             dur: 0.08, spacing: 0.04  },
             win:      { waveType: 'sine',     freqs: [1047, 1319, 1568, 2093],       dur: 0.22, spacing: 0.06  },
@@ -118,7 +118,7 @@
             count:    { waveType: 'triangle', freq: 659,                             dur: 0.025 },
             reelstop: { waveType: 'triangle', freq: 165,                             dur: 0.08  },
         },
-        shadow-works: {
+        'shadow-works': {
             // Gothic/eerie — sawtooth waves, dissonant intervals, slow with reverb
             spin:     { waveType: 'square',   freqs: [233, 277],                     dur: 0.16, spacing: 0.08  },
             win:      { waveType: 'square',   freqs: [233, 277, 311],                dur: 0.32, spacing: 0.08  },
@@ -132,7 +132,7 @@
             count:    { waveType: 'square',   freq: 466,                             dur: 0.025 },
             reelstop: { waveType: 'sawtooth', freq: 100,                             dur: 0.10  },
         },
-        wild-frontier: {
+        'wild-frontier': {
             // Retro 8-bit — square waves, classic game frequencies, fast bleeps
             spin:     { waveType: 'square',   freqs: [440, 660],                     dur: 0.07, spacing: 0.04  },
             win:      { waveType: 'square',   freqs: [440, 554, 660, 880],           dur: 0.16, spacing: 0.045 },
@@ -149,11 +149,11 @@
     };
 
     // ── Aliases: map new studio theme keys to closest SFX configs ──
-    PROVIDER_SFX_THEMES.goldenreels  = PROVIDER_SFX_THEMES.golden-reels;
-    PROVIDER_SFX_THEMES.nebula       = PROVIDER_SFX_THEMES.mythic-forge;
+    PROVIDER_SFX_THEMES.goldenreels  = PROVIDER_SFX_THEMES['golden-reels'];
+    PROVIDER_SFX_THEMES.nebula       = PROVIDER_SFX_THEMES['mythic-forge'];
     PROVIDER_SFX_THEMES.mythicforge  = PROVIDER_SFX_THEMES.solstice;
-    PROVIDER_SFX_THEMES.wildfrontier = PROVIDER_SFX_THEMES.golden-reels;
-    PROVIDER_SFX_THEMES.shadowworks  = PROVIDER_SFX_THEMES.shadow-works;
+    PROVIDER_SFX_THEMES.wildfrontier = PROVIDER_SFX_THEMES['golden-reels'];
+    PROVIDER_SFX_THEMES.shadowworks  = PROVIDER_SFX_THEMES['shadow-works'];
     PROVIDER_SFX_THEMES.dragonpearl  = PROVIDER_SFX_THEMES.vaultx;
     PROVIDER_SFX_THEMES.ironclad     = PROVIDER_SFX_THEMES.ironclad;
     PROVIDER_SFX_THEMES.cascadelabs  = PROVIDER_SFX_THEMES.novaspin;

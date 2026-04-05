@@ -17,18 +17,18 @@ function _animSettingEnabled(key) {
 // Provider Animation Themes
 // ───────────────────────────────────────────────────────
 var PROVIDER_ANIM_THEMES = {
-    novaspin:     { particles: ['⚡','🌌','💫','🔬','🚀'], color: '#00e5ff', glow: '#00e5ff44' },
-    mythic-forge:    { particles: ['🏛️','⚡','👑','🌟','💎'], color: '#ffd700', glow: '#ffd70044' },
-    ironclad:     { particles: ['🌿','🍀','🌲','🍃','🌱'], color: '#22c55e', glow: '#22c55e44' },
-    golden-reels:   { particles: ['🍭','💎','🌸','🍬','✨'], color: '#f472b6', glow: '#f472b644' },
-    vaultx:       { particles: ['💰','🔑','💣','🤠','⚙️'], color: '#d97706', glow: '#d9770644' },
-    solstice:     { particles: ['🏮','🎋','🔱','🌸','🐉'], color: '#ef4444', glow: '#ef444444' },
-    shadow-works: { particles: ['💀','🕷️','🌑','🦇','💜'], color: '#a855f7', glow: '#a855f744' },
-    wild-frontier:  { particles: ['👾','🕹️','⭐','🎮','🔴'], color: '#06b6d4', glow: '#06b6d444' },
-    neoncore:     { particles: ['💻','🔋','📡','⚡','🟢'], color: '#00ff80', glow: '#00ff8044' },
-    frostbyte:    { particles: ['❄️','🧊','💎','🌨️','✨'], color: '#8cd2ff', glow: '#8cd2ff44' },
-    desertgold:   { particles: ['🏜️','🌅','💰','🐪','⭐'], color: '#daa63c', glow: '#daa63c44' },
-    orientreels:  { particles: ['🏮','🐉','🎋','🧧','✨'], color: '#e63228', glow: '#e6322844' },
+    novaspin:          { particles: ['⚡','🌌','💫','🔬','🚀'], color: '#00e5ff', glow: '#00e5ff44' },
+    'mythic-forge':    { particles: ['🏛️','⚡','👑','🌟','💎'], color: '#ffd700', glow: '#ffd70044' },
+    ironclad:          { particles: ['🌿','🍀','🌲','🍃','🌱'], color: '#22c55e', glow: '#22c55e44' },
+    'golden-reels':    { particles: ['🍭','💎','🌸','🍬','✨'], color: '#f472b6', glow: '#f472b644' },
+    vaultx:            { particles: ['💰','🔑','💣','🤠','⚙️'], color: '#d97706', glow: '#d9770644' },
+    solstice:          { particles: ['🏮','🎋','🔱','🌸','🐉'], color: '#ef4444', glow: '#ef444444' },
+    'shadow-works':    { particles: ['💀','🕷️','🌑','🦇','💜'], color: '#a855f7', glow: '#a855f744' },
+    'wild-frontier':   { particles: ['👾','🕹️','⭐','🎮','🔴'], color: '#06b6d4', glow: '#06b6d444' },
+    neoncore:          { particles: ['💻','🔋','📡','⚡','🟢'], color: '#00ff80', glow: '#00ff8044' },
+    frostbyte:         { particles: ['❄️','🧊','💎','🌨️','✨'], color: '#8cd2ff', glow: '#8cd2ff44' },
+    desertgold:        { particles: ['🏜️','🌅','💰','🐪','⭐'], color: '#daa63c', glow: '#daa63c44' },
+    orientreels:       { particles: ['🏮','🐉','🎋','🧧','✨'], color: '#e63228', glow: '#e6322844' },
 };
 
 function getProviderAnimTheme(game) {

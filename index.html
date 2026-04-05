@@ -234,14 +234,14 @@
                     <span class="csb-icon">✨</span><span>New Games</span>
                 </button>
                 <button class="csb-item" onclick="setFilter('favorites');closeSidebarMobile()">
-                    <span class="csb-icon">❤ï¸</span><span>Favourites</span>
+                    <span class="csb-icon">❤️</span><span>Favourites</span>
                 </button>
             </div>
 
             <!-- Bonuses -->
             <div class="csb-section">
                 <div class="csb-section-label">🎁 BONUSES</div>
-                <!-- Removed: Bonus Wheel sidebar button -->
+                <button class="csb-item" onclick="showBonusWheelModal();closeSidebarMobile()">
                     <span class="csb-icon">🎡</span><span>Daily Wheel</span>
                     <span class="csb-badge csb-badge-new">FREE</span>
                 </button>
@@ -254,7 +254,7 @@
                     <span class="csb-icon">📊</span><span>My Stats</span>
                 </button>
                 <button class="csb-item" onclick="openSettingsModal();closeSidebarMobile()">
-                    <span class="csb-icon">⚙ï¸</span><span>Settings</span>
+                    <span class="csb-icon">⚙️</span><span>Settings</span>
                 </button>
             </div>
         </div>
@@ -423,8 +423,8 @@
             <span class="section-game-count" id="allGamesCount">100 games</span>
             <span class="games-explored-badge" id="gamesExploredBadge" style="display:none" title="Unique games you've tried"></span>
             <div class="layout-toggle">
-                <button class="layout-btn layout-btn-active" id="layoutGridBtn" onclick="setLobbyLayout('grid')" title="Grid view">?</button>
-                <button class="layout-btn" id="layoutListBtn" onclick="setLobbyLayout('list')" title="List view">=</button>
+                <button class="layout-btn layout-btn-active" id="layoutGridBtn" onclick="setLobbyLayout('grid')" title="Grid view"><svg viewBox="0 0 16 16" fill="currentColor" width="14" height="14"><rect x="1" y="1" width="6" height="6" rx="1"/><rect x="9" y="1" width="6" height="6" rx="1"/><rect x="1" y="9" width="6" height="6" rx="1"/><rect x="9" y="9" width="6" height="6" rx="1"/></svg></button>
+                <button class="layout-btn" id="layoutListBtn" onclick="setLobbyLayout('list')" title="List view"><svg viewBox="0 0 16 16" fill="currentColor" width="14" height="14"><rect x="1" y="2" width="14" height="2" rx="1"/><rect x="1" y="7" width="14" height="2" rx="1"/><rect x="1" y="12" width="14" height="2" rx="1"/></svg></button>
             </div>
         </div>
         <div class="games-grid" id="allGames"></div>
@@ -603,7 +603,7 @@
             <span class="session-timer-badge" id="sessionTimerBadge" style="display:none">0:00</span>
             <span class="volatility-badge" id="volatilityBadge" style="display:none"></span>
             <!-- Sprint 179-186 badges -->
-            <span class="avg-bet-badge" id="avgBetBadge" style="display:none"></span>
+            <span class="avg-bet-badge" id="avgBetBadge2" style="display:none"></span>
             <span class="win-streak-fire" id="winStreakFire" style="display:none"></span>
             <span class="cooldown-badge" id="cooldownBadge" style="display:none"></span>
             <span class="loss-recovery-badge" id="lossRecoveryBadge" style="display:none"></span>
@@ -633,7 +633,7 @@
             <span class="double-up-badge" id="doubleUpBadge" style="display:none"></span>
             <span class="provider-loyalty-badge" id="providerLoyaltyBadge" style="display:none"></span>
             <span class="scatter-countdown-badge" id="scatterCountdownBadge" style="display:none"></span>
-            <span class="bet-efficiency-badge" id="betEfficiencyBadge" style="display:none"></span>
+            <span class="bet-efficiency-badge" id="betEfficiencyBadge2" style="display:none"></span>
             <span class="spin-rhythm-badge" id="spinRhythmBadge" style="display:none"></span>
             <span class="max-exposure-badge" id="maxExposureBadge" style="display:none"></span>
             <span class="game-diversity-badge" id="gameDiversityBadge" style="display:none"></span>
@@ -711,9 +711,8 @@
             <div class="mult-graph-container">
                 <canvas id="multGraphCanvas" width="160" height="40"></canvas>
             </div>
-            <div class="game-search-bar" id="gameSearchBar">
-                <input type="text" id="gameSearchInput" placeholder="Search games..." class="game-search-input" />
-                <!-- Filter buttons removed -->
+            <div class="game-search-bar" id="slotGameSearchBar" style="display:none">
+                <input type="text" id="slotGameSearchInput" placeholder="Search games..." class="game-search-input" />
             </div>
             <div class="age-verify-overlay" id="ageVerifyOverlay" style="display:none">
                 <div class="age-verify-popup">
@@ -741,12 +740,12 @@
                     <button class="terms-accept-btn" onclick="_acceptTerms()">I Accept the Terms & Conditions</button>
                 </div>
             </div>
-            <div class="next-level-xp-bar"
+            <div class="next-level-xp-bar" id="nextLevelXpBar" style="display:none"></div>
             <span class="offline-badge" id="offlineBadge" style="display:none"></span>
             <span class="battery-badge" id="batteryBadge" style="display:none"></span>
             <button class="pwa-install-btn" id="pwaInstallBtn" style="display:none" onclick="_installPWA()">Install App</button>
-            <div class="mobile-bottom-nav" id="mobileBottomNav" style="display:none">
-                <button class="mob-nav-btn" onclick="document.getElementById('lobbySection').scrollIntoView()">Lobby</button>
+            <div class="mobile-bottom-nav" id="slotMobileBottomNav" style="display:none">
+                <button class="mob-nav-btn" onclick="document.getElementById('lobbySection')&&document.getElementById('lobbySection').scrollIntoView()">Lobby</button>
                 <button class="mob-nav-btn" onclick="_openAnalyticsDashboard()">Stats</button>
                 <button class="mob-nav-btn" onclick="_exportBetHistory()">History</button>
                 <button class="mob-nav-btn" onclick="_saveSessionBookmark()">Save</button>
@@ -1142,12 +1141,12 @@
             <div class="gamble-result" id="gambleResult" style="display:none;"></div>
             <div class="gamble-choices" id="gambleChoices">
                 <button class="gamble-choice-btn gamble-red" onclick="makeGambleChoice('red')">
-                    <span class="choice-suit">?</span>
+                    <span class="choice-suit">♥</span>
                     <span>RED</span>
                 </button>
                 <div class="gamble-or">OR</div>
                 <button class="gamble-choice-btn gamble-black" onclick="makeGambleChoice('black')">
-                    <span class="choice-suit">?</span>
+                    <span class="choice-suit">♠</span>
                     <span>BLACK</span>
                 </button>
             </div>
@@ -1155,7 +1154,7 @@
                 <button class="gamble-collect-btn" onclick="collectGamble()">
                     💰 COLLECT $<span id="gambleCollectAmt">0</span>
                 </button>
-                <button class="gamble-close-btn" onclick="closeGamble(false)">? CLOSE</button>
+                <button class="gamble-close-btn" onclick="closeGamble(false)">✕ CLOSE</button>
             </div>
             <div class="gamble-history" id="gambleHistory"></div>
         </div>
@@ -1176,7 +1175,7 @@
     <div class="buybonus-overlay" id="buyBonusOverlay" style="display:none;">
         <div class="buybonus-modal">
             <div class="buybonus-header">
-                <span class="buybonus-icon">?</span>
+                <span class="buybonus-icon">⚡</span>
                 <div class="buybonus-title">BUY FREE SPINS</div>
             </div>
             <div class="buybonus-info">
@@ -1189,7 +1188,7 @@
                 <div class="buybonus-cost-value" id="buyBonusCostValue">$500</div>
             </div>
             <div class="buybonus-actions">
-                <button class="buybonus-confirm" onclick="confirmBuyBonus()">? BUY NOW</button>
+                <button class="buybonus-confirm" onclick="confirmBuyBonus()">⚡ BUY NOW</button>
                 <button class="buybonus-cancel" onclick="closeBuyBonus()">CANCEL</button>
             </div>
         </div>
@@ -1211,7 +1210,7 @@
                         <button class="autoplay-spin-btn autoplay-spin-selected" data-count="50" onclick="selectAutoplayCount(50)">50</button>
                         <button class="autoplay-spin-btn" data-count="100" onclick="selectAutoplayCount(100)">100</button>
                         <button class="autoplay-spin-btn" data-count="250" onclick="selectAutoplayCount(250)">250</button>
-                        <button class="autoplay-spin-btn" data-count="999" onclick="selectAutoplayCount(999)">8</button>
+                        <button class="autoplay-spin-btn" data-count="999" onclick="selectAutoplayCount(999)">∞</button>
                     </div>
                 </div>
                 <div class="autoplay-section">

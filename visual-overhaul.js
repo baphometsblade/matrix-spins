@@ -754,13 +754,13 @@
     function getProviderColors(provider) {
         const colors = {
             novaspin: ['#00e5ff', '#7c4dff', '#448aff'],
-            mythic-forge: ['#ffd700', '#ff8f00', '#4fc3f7'],
+            'mythic-forge': ['#ffd700', '#ff8f00', '#4fc3f7'],
             ironclad: ['#ff6d00', '#ffab00', '#26a69a'],
-            golden-reels: ['#ffab00', '#ffd54f', '#f06292'],
+            'golden-reels': ['#ffab00', '#ffd54f', '#f06292'],
             vaultx: ['#00e676', '#69f0ae', '#ffd700'],
             solstice: ['#ff1744', '#ffd700', '#ff6d00'],
-            shadow-works: ['#aa00ff', '#ea80fc', '#d500f9'],
-            wild-frontier: ['#ff4081', '#536dfe', '#ffff00']
+            'shadow-works': ['#aa00ff', '#ea80fc', '#d500f9'],
+            'wild-frontier': ['#ff4081', '#536dfe', '#ffff00']
         };
         return colors[provider] || colors.ironclad;
     }
