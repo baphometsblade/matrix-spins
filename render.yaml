@@ -1,0 +1,17 @@
+services:
+  - type: web
+    name: matrix-spins
+    runtime: node
+    plan: free
+    buildCommand: npm install --omit=dev && node scripts/bundle-js.js && node scripts/fix-encoding.js
+    startCommand: node server/index.js
+    healthCheckPath: /api/health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: NODE_VERSION
+        value: "20"
+      - key: ALLOWED_ORIGIN
+        value: https://msaart.online
+      # Secrets (JWT_SECRET, STRIPE_*, ADMIN_PASSWORD, DATABASE_URL) must be set manually
+      # in the Render dashboard — do not add them here to avoid Blueprint sync conflicts
