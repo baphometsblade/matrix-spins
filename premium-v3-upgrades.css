@@ -44,3 +44,13 @@
 .ms-sound-toggle.muted::after{content:'';position:absolute;width:2px;height:22px;background:#F87171;transform:rotate(45deg);border-radius:1px}
 h2,h3,.section-title{font-family:'Plus Jakarta Sans','Inter',sans-serif!important;letter-spacing:-.02em!important}
 @media(max-width:768px){.game-card .game-card-art{height:100px!important;min-height:100px!important}.game-card .card-anim-preview{min-height:100px!important}}
+
+/* --- FINAL POLISH (v3.1) --- */
+.games-grid{gap:16px!important}
+.section-header{margin-top:24px!important;margin-bottom:12px!important;padding-bottom:8px!important;border-bottom:1px solid rgba(255,255,255,.04)}
+.section-title{font-size:16px!important}
+.section-see-all{font-size:12px!important;color:var(--accent-gold,#D4A853)!important;opacity:.7;transition:opacity .15s ease!important}
+.section-see-all:hover{opacity:1}
+#scrollTopBtn{position:fixed;bottom:130px;right:16px;width:40px;height:40px;border-radius:50%;background:rgba(19,21,28,.85);backdrop-filter:blur(12px);border:1px solid rgba(255,255,255,.08);color:#9CA3AF;font-size:16px;cursor:pointer;display:none;align-items:center;justify-content:center;transition:all .2s ease;z-index:100}
+#scrollTopBtn:hover{background:rgba(26,29,39,.95);color:#F0C66E;border-color:rgba(212,168,83,.2)}
+#scrollTopBtn.visible{display:flex}

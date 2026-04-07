@@ -10,3 +10,12 @@ function init(){fixArt();patchIdle();SM.init();hookSounds();initSkeleton();var g
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init);else init();
 window.MSSoundManager=SM;
 })();
+
+/* Scroll-to-top button */
+(function(){
+var btn=document.createElement('button');
+btn.id='scrollTopBtn';btn.innerHTML='&#x2191;';btn.title='Back to top';
+btn.addEventListener('click',function(){window.scrollTo({top:0,behavior:'smooth'})});
+document.body.appendChild(btn);
+window.addEventListener('scroll',function(){btn.classList.toggle('visible',window.scrollY>600)},{passive:true});
+})();

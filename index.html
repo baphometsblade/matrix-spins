@@ -2334,6 +2334,21 @@ window.MSSoundManager=SM;
 })();
 
   </script>
+
+  <!-- Premium V3.1 polish (inline) -->
+  <style id="v3-polish-inline">
+.games-grid{gap:16px!important}
+.section-header{margin-top:24px!important;margin-bottom:12px!important;padding-bottom:8px!important;border-bottom:1px solid rgba(255,255,255,.04)}
+.section-title{font-size:16px!important}
+.section-see-all{font-size:12px!important;color:#D4A853!important;opacity:.7;transition:opacity .15s ease!important}
+.section-see-all:hover{opacity:1}
+#scrollTopBtn{position:fixed;bottom:130px;right:16px;width:40px;height:40px;border-radius:50%;background:rgba(19,21,28,.85);backdrop-filter:blur(12px);border:1px solid rgba(255,255,255,.08);color:#9CA3AF;font-size:16px;cursor:pointer;display:none;align-items:center;justify-content:center;transition:all .2s ease;z-index:100}
+#scrollTopBtn:hover{background:rgba(26,29,39,.95);color:#F0C66E;border-color:rgba(212,168,83,.2)}
+#scrollTopBtn.visible{display:flex}
+  </style>
+  <script id="v3-polish-inline-js">
+(function(){var b=document.createElement('button');b.id='scrollTopBtn';b.innerHTML='&#x2191;';b.title='Back to top';b.addEventListener('click',function(){window.scrollTo({top:0,behavior:'smooth'})});document.body.appendChild(b);window.addEventListener('scroll',function(){b.classList.toggle('visible',window.scrollY>600)},{passive:true})})();
+  </script>
 </body>
 </html>
 
