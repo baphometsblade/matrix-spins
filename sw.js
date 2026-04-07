@@ -1,5 +1,5 @@
 const CACHE_VERSION = 6;
-const CACHE_NAME = 'matrix-spins-v' + CACHE_VERSION;
+const CACHE_NAME = 'royal-slots-v' + CACHE_VERSION;
 const PRECACHE_URLS = [
   '/',
   '/manifest.json',

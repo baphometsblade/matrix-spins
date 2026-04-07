@@ -32,8 +32,10 @@ screenshots/
 
 # IDE & tool config
 .claude/settings.local.json
+.claude/worktrees/
 .serena/
 .playwright-mcp/
+.superpowers/
 
 # Dev screenshots at root
 /*.png
@@ -54,3 +56,4 @@ assets/backgrounds/**/*_portrait*
 
 # Build output (generated at deploy time)
 dist/
+.vercel
