@@ -44,6 +44,8 @@
     <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@700;800&display=swap"></noscript>
     <link rel="stylesheet" href="design-tokens.css">
     <link rel="stylesheet" href="layout-shell.css">
+    <link rel="stylesheet" href="game-cards.css">
+    <link rel="stylesheet" href="social-proof.css">
     <link rel="stylesheet" href="popup-nuke.css">
     <link rel="stylesheet" href="premium-animations.css" media="print" onload="this.media='all'">
     <link rel="stylesheet" href="slot-layout-fix.css">
@@ -241,6 +243,33 @@
           <span class="trust-dot"></span>
           <span id="onlineCountDisplay">1,247</span> players online
         </span>
+      </div>
+    </div>
+
+    <div id="socialProofBar" class="social-proof-bar">
+      <div class="jackpot-pills">
+        <span class="jackpot-pill jackpot-grand" onclick="setFilter('jackpot')">
+          <span class="jp-label">GRAND</span>
+          <span class="jp-amount" id="jpGrand">$124,891</span>
+        </span>
+        <span class="jackpot-pill jackpot-major" onclick="setFilter('jackpot')">
+          <span class="jp-label">MAJOR</span>
+          <span class="jp-amount" id="jpMajor">$12,440</span>
+        </span>
+        <span class="jackpot-pill jackpot-minor" onclick="setFilter('jackpot')">
+          <span class="jp-label">MINOR</span>
+          <span class="jp-amount" id="jpMinor">$1,892</span>
+        </span>
+        <span class="jackpot-pill jackpot-mini" onclick="setFilter('jackpot')">
+          <span class="jp-label">MINI</span>
+          <span class="jp-amount" id="jpMini">$248</span>
+        </span>
+      </div>
+      <div class="wins-ticker-wrap">
+        <span class="wins-ticker-label">LIVE WINS</span>
+        <div class="wins-ticker">
+          <div class="wins-ticker-track" id="winsTickerTrack"></div>
+        </div>
       </div>
     </div>
 
