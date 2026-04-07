@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
 
@@ -2331,6 +2331,8 @@ function initSkeleton(){document.querySelectorAll('.game-card').forEach(function
 function init(){fixArt();patchIdle();SM.init();hookSounds();initSkeleton();var go=new MutationObserver(function(){hookSounds();fixArt()});document.querySelectorAll('.games-grid').forEach(function(g){go.observe(g,{childList:true})})}
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init);else init();
 window.MSSoundManager=SM;
+function eagerThumbs(){document.querySelectorAll('[data-bg]').forEach(function(el){var src=el.getAttribute('data-bg');if(!src)return;el.style.setProperty('background-image','url('+src+')','important');el.style.setProperty('background-size','cover','important');el.style.setProperty('background-position','center','important');el.removeAttribute('data-bg')})}
+setTimeout(eagerThumbs,500);setTimeout(eagerThumbs,2000);
 })();
 
   </script>
