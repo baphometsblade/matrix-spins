@@ -1,0 +1,120 @@
+<h2>Game Card Design</h2>
+<p class="subtitle">Cards are what players interact with most. Which style hits the right premium feel?</p>
+
+<div class="cards">
+
+  <div class="card" data-choice="minimal-art" onclick="toggleSelect(this)">
+    <div class="card-image" style="background:#020c02;padding:16px;min-height:200px;display:flex;flex-direction:column;gap:10px;align-items:center;justify-content:center;">
+      <!-- Minimal art card -->
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;width:100%;">
+
+        <div style="background:rgba(0,255,65,0.06);border:1px solid rgba(0,255,65,0.18);border-radius:8px;overflow:hidden;position:relative;">
+          <div style="background:linear-gradient(135deg,#1a0a2e,#051205);height:60px;display:flex;align-items:center;justify-content:center;color:rgba(0,255,65,0.3);font-size:18px;">🍭</div>
+          <div style="padding:5px 6px;">
+            <div style="color:#fff;font-size:8px;font-weight:700;line-height:1.2;">Candy Cascade</div>
+            <div style="color:rgba(0,255,65,0.5);font-size:7px;margin-top:1px;">Golden Reels</div>
+          </div>
+          <div style="position:absolute;top:4px;right:4px;background:#ef4444;border-radius:3px;padding:1px 4px;color:#fff;font-size:6px;font-weight:800;">HOT</div>
+        </div>
+
+        <div style="background:rgba(0,255,65,0.06);border:1px solid rgba(0,255,65,0.18);border-radius:8px;overflow:hidden;position:relative;">
+          <div style="background:linear-gradient(135deg,#1a1000,#0a0800);height:60px;display:flex;align-items:center;justify-content:center;color:rgba(255,215,0,0.4);font-size:18px;">⚡</div>
+          <div style="padding:5px 6px;">
+            <div style="color:#fff;font-size:8px;font-weight:700;line-height:1.2;">Zeus Megaways</div>
+            <div style="color:rgba(0,255,65,0.5);font-size:7px;margin-top:1px;">Mythic Forge</div>
+          </div>
+          <div style="position:absolute;top:4px;right:4px;background:#8b5cf6;border-radius:3px;padding:1px 4px;color:#fff;font-size:6px;font-weight:800;">NEW</div>
+        </div>
+
+        <div style="background:rgba(0,255,65,0.06);border:1px solid rgba(0,212,255,0.25);border-radius:8px;overflow:hidden;position:relative;">
+          <div style="background:linear-gradient(135deg,#001a1a,#000f1a);height:60px;display:flex;align-items:center;justify-content:center;color:rgba(0,212,255,0.4);font-size:18px;">🌌</div>
+          <div style="padding:5px 6px;">
+            <div style="color:#fff;font-size:8px;font-weight:700;line-height:1.2;">Nebula Dreams</div>
+            <div style="color:rgba(0,212,255,0.6);font-size:7px;margin-top:1px;">Nebula Gaming</div>
+          </div>
+          <div style="position:absolute;bottom:4px;right:4px;background:rgba(0,212,255,0.15);border:1px solid rgba(0,212,255,0.3);border-radius:3px;padding:1px 4px;color:#00d4ff;font-size:6px;font-weight:700;">💰 JACKPOT</div>
+        </div>
+
+      </div>
+      <div style="color:rgba(0,255,65,0.3);font-size:8px;text-align:center;">Hover reveals: RTP badge + Play button overlay</div>
+    </div>
+    <div class="card-body">
+      <h3>Minimal Art Focus</h3>
+      <p>Art fills top ~60%, thin info strip below. Studio name in provider accent colour. Tag badge top-right. Hover reveals full overlay with RTP, max win, Play button. Clean, modern — like Stake's card style.</p>
+    </div>
+  </div>
+
+  <div class="card" data-choice="info-rich" onclick="toggleSelect(this)">
+    <div class="card-image" style="background:#020c02;padding:16px;min-height:200px;display:flex;flex-direction:column;gap:10px;align-items:center;justify-content:center;">
+
+      <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:7px;width:100%;">
+
+        <div style="background:rgba(0,255,65,0.06);border:1px solid rgba(0,255,65,0.2);border-radius:8px;overflow:hidden;">
+          <div style="background:linear-gradient(135deg,#1a0a2e,#051205);height:55px;display:flex;align-items:center;justify-content:center;color:rgba(0,255,65,0.3);font-size:20px;position:relative;">
+            🍭
+            <div style="position:absolute;top:4px;left:4px;background:#ef4444;border-radius:3px;padding:1px 4px;color:#fff;font-size:6px;font-weight:800;">HOT</div>
+          </div>
+          <div style="padding:5px 7px;display:flex;flex-direction:column;gap:3px;">
+            <div style="color:#fff;font-size:9px;font-weight:700;">Candy Cascade 1000</div>
+            <div style="display:flex;align-items:center;justify-content:space-between;">
+              <span style="color:rgba(0,255,65,0.5);font-size:7px;">Golden Reels</span>
+              <span style="color:#fbbf24;font-size:7px;font-weight:700;">88% RTP</span>
+            </div>
+            <div style="display:flex;gap:3px;flex-wrap:wrap;">
+              <span style="background:rgba(0,255,65,0.1);border:1px solid rgba(0,255,65,0.2);border-radius:3px;padding:1px 4px;color:rgba(0,255,65,0.7);font-size:6px;">TUMBLE</span>
+              <span style="background:rgba(0,255,65,0.1);border:1px solid rgba(0,255,65,0.2);border-radius:3px;padding:1px 4px;color:rgba(0,255,65,0.7);font-size:6px;">1000x</span>
+            </div>
+          </div>
+        </div>
+
+        <div style="background:rgba(0,255,65,0.06);border:1px solid rgba(0,212,255,0.2);border-radius:8px;overflow:hidden;">
+          <div style="background:linear-gradient(135deg,#001a1a,#000f1a);height:55px;display:flex;align-items:center;justify-content:center;color:rgba(0,212,255,0.4);font-size:20px;position:relative;">
+            🌌
+            <div style="position:absolute;top:4px;left:4px;background:rgba(0,212,255,0.2);border:1px solid rgba(0,212,255,0.4);border-radius:3px;padding:1px 4px;color:#00d4ff;font-size:6px;font-weight:700;">JACKPOT</div>
+          </div>
+          <div style="padding:5px 7px;display:flex;flex-direction:column;gap:3px;">
+            <div style="color:#fff;font-size:9px;font-weight:700;">Nebula Megaways</div>
+            <div style="display:flex;align-items:center;justify-content:space-between;">
+              <span style="color:rgba(0,212,255,0.6);font-size:7px;">Nebula Gaming</span>
+              <span style="color:#fbbf24;font-size:7px;font-weight:700;">87% RTP</span>
+            </div>
+            <div style="display:flex;gap:3px;flex-wrap:wrap;">
+              <span style="background:rgba(0,212,255,0.1);border:1px solid rgba(0,212,255,0.2);border-radius:3px;padding:1px 4px;color:rgba(0,212,255,0.7);font-size:6px;">MEGAWAYS</span>
+              <span style="background:rgba(0,212,255,0.1);border:1px solid rgba(0,212,255,0.2);border-radius:3px;padding:1px 4px;color:rgba(0,212,255,0.7);font-size:6px;">250x</span>
+            </div>
+          </div>
+        </div>
+
+      </div>
+      <div style="color:rgba(0,255,65,0.3);font-size:8px;text-align:center;">Always-visible RTP, mechanic tags, max win</div>
+    </div>
+    <div class="card-body">
+      <h3>Info-Rich Cards</h3>
+      <p>Always-visible RTP, mechanic tags (TUMBLE, MEGAWAYS), max win multiplier below the art. Larger card footprint, fewer per row. Appeals to informed players who pick games by stats. Closer to BetOnline.</p>
+    </div>
+  </div>
+
+  <div class="card" data-choice="thumbnail-dense" onclick="toggleSelect(this)">
+    <div class="card-image" style="background:#020c02;padding:16px;min-height:200px;display:flex;flex-direction:column;gap:8px;align-items:center;justify-content:center;">
+
+      <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:4px;width:100%;">
+        <div style="background:rgba(0,255,65,0.08);border:1px solid rgba(0,255,65,0.2);border-radius:5px;height:46px;position:relative;display:flex;align-items:center;justify-content:center;font-size:12px;">🍭<div style="position:absolute;top:2px;right:2px;width:5px;height:5px;background:#ef4444;border-radius:50%;"></div></div>
+        <div style="background:rgba(255,215,0,0.05);border:1px solid rgba(255,215,0,0.2);border-radius:5px;height:46px;display:flex;align-items:center;justify-content:center;font-size:12px;">⚡</div>
+        <div style="background:rgba(0,212,255,0.06);border:1px solid rgba(0,212,255,0.2);border-radius:5px;height:46px;position:relative;display:flex;align-items:center;justify-content:center;font-size:12px;">🌌<div style="position:absolute;bottom:2px;left:0;right:0;background:rgba(0,212,255,0.15);height:8px;display:flex;align-items:center;justify-content:center;"><span style="color:#00d4ff;font-size:5px;font-weight:700;">JACKPOT</span></div></div>
+        <div style="background:rgba(0,255,65,0.06);border:1px solid rgba(0,255,65,0.15);border-radius:5px;height:46px;display:flex;align-items:center;justify-content:center;font-size:12px;">🐉</div>
+        <div style="background:rgba(255,0,0,0.05);border:1px solid rgba(139,0,0,0.3);border-radius:5px;height:46px;display:flex;align-items:center;justify-content:center;font-size:12px;">💀</div>
+        <div style="background:rgba(0,255,65,0.06);border:1px solid rgba(0,255,65,0.15);border-radius:5px;height:46px;display:flex;align-items:center;justify-content:center;font-size:12px;">🤠</div>
+        <div style="background:rgba(0,255,65,0.06);border:1px solid rgba(0,255,65,0.15);border-radius:5px;height:46px;display:flex;align-items:center;justify-content:center;font-size:12px;">🔱</div>
+        <div style="background:rgba(0,102,255,0.06);border:1px solid rgba(0,102,255,0.2);border-radius:5px;height:46px;display:flex;align-items:center;justify-content:center;font-size:12px;">🧪</div>
+        <div style="background:rgba(0,255,65,0.06);border:1px solid rgba(0,255,65,0.15);border-radius:5px;height:46px;display:flex;align-items:center;justify-content:center;font-size:12px;">🍀</div>
+        <div style="background:rgba(184,101,29,0.08);border:1px solid rgba(184,101,29,0.3);border-radius:5px;height:46px;display:flex;align-items:center;justify-content:center;font-size:12px;">⚙️</div>
+      </div>
+      <div style="color:rgba(0,255,65,0.3);font-size:8px;text-align:center;">5-column dense grid · tooltip on hover · fast scan</div>
+    </div>
+    <div class="card-body">
+      <h3>Thumbnail Dense (Stake-Style)</h3>
+      <p>5–6 columns, pure thumbnail with minimal text. Provider border-colour accent, tiny tag dot. All info on hover tooltip. Maximum games above the fold — 20+ visible without scrolling. Best discovery experience.</p>
+    </div>
+  </div>
+
+</div>

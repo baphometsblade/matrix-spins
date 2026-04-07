@@ -45,4 +45,21 @@
     
     // Start after 10 seconds
     setTimeout(function() { showWinToast(); scheduleNext(); }, 10000);
+
+    // Populate wins ticker
+    function populateTicker() {
+      var track = document.getElementById('winsTickerTrack');
+      if (!track) return;
+      var items = [];
+      for (var i = 0; i < 20; i++) {
+        var name = WINNER_NAMES[Math.floor(cryptoRandom() * WINNER_NAMES.length)];
+        var game = GAMES[Math.floor(cryptoRandom() * GAMES.length)];
+        var amount = (cryptoRandom() * 4900 + 100).toFixed(2);
+        items.push('<span class="win-item"><strong>$' + amount + '</strong><span>' + name + '</span><span class="win-game">on ' + game + '</span></span>');
+      }
+      // Duplicate for seamless loop
+      var html = items.join('') + items.join('');
+      track.innerHTML = html;
+    }
+    populateTicker();
 })();

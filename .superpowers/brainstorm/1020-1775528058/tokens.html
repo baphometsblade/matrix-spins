@@ -1,0 +1,225 @@
+<h2>Section 1 — Design Token System</h2>
+<p class="subtitle">The CSS custom property foundation everything else is built on. Approve this before we design any component.</p>
+
+<div class="section">
+  <h3>Color Ramp — Primary (Green)</h3>
+  <p class="subtitle" style="font-size:12px;">Single hue, 9 steps. Components only use these tokens — never raw hex values.</p>
+  <div style="display:grid;grid-template-columns:repeat(9,1fr);gap:4px;margin-top:10px;">
+    <div style="text-align:center;">
+      <div style="height:40px;border-radius:6px;background:#f0fff4;border:1px solid rgba(255,255,255,0.1);"></div>
+      <div style="color:#888;font-size:9px;margin-top:4px;">--green-50</div>
+    </div>
+    <div style="text-align:center;">
+      <div style="height:40px;border-radius:6px;background:#c6f6d5;"></div>
+      <div style="color:#888;font-size:9px;margin-top:4px;">--green-100</div>
+    </div>
+    <div style="text-align:center;">
+      <div style="height:40px;border-radius:6px;background:#68d391;"></div>
+      <div style="color:#888;font-size:9px;margin-top:4px;">--green-300</div>
+    </div>
+    <div style="text-align:center;">
+      <div style="height:40px;border-radius:6px;background:#38a169;"></div>
+      <div style="color:#888;font-size:9px;margin-top:4px;">--green-500</div>
+    </div>
+    <div style="text-align:center;">
+      <div style="height:40px;border-radius:6px;background:#00ff41;box-shadow:0 0 10px rgba(0,255,65,0.5);border:2px solid rgba(0,255,65,0.8);"></div>
+      <div style="color:#00ff41;font-size:9px;margin-top:4px;font-weight:700;">--green-brand ★</div>
+    </div>
+    <div style="text-align:center;">
+      <div style="height:40px;border-radius:6px;background:#00cc34;"></div>
+      <div style="color:#888;font-size:9px;margin-top:4px;">--green-600</div>
+    </div>
+    <div style="text-align:center;">
+      <div style="height:40px;border-radius:6px;background:#00882a;"></div>
+      <div style="color:#888;font-size:9px;margin-top:4px;">--green-700</div>
+    </div>
+    <div style="text-align:center;">
+      <div style="height:40px;border-radius:6px;background:#004a18;"></div>
+      <div style="color:#888;font-size:9px;margin-top:4px;">--green-800</div>
+    </div>
+    <div style="text-align:center;">
+      <div style="height:40px;border-radius:6px;background:#020c02;border:1px solid rgba(0,255,65,0.15);"></div>
+      <div style="color:#888;font-size:9px;margin-top:4px;">--green-950</div>
+    </div>
+  </div>
+</div>
+
+<div class="section">
+  <h3>Surface & Background Tokens</h3>
+  <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:6px;margin-top:10px;">
+    <div>
+      <div style="height:50px;border-radius:6px;background:#020c02;border:1px solid rgba(0,255,65,0.1);display:flex;align-items:flex-end;padding:4px 6px;">
+        <span style="color:rgba(0,255,65,0.5);font-size:8px;">--surface-base</span>
+      </div>
+      <div style="color:#666;font-size:9px;margin-top:3px;">#020c02 · Page bg</div>
+    </div>
+    <div>
+      <div style="height:50px;border-radius:6px;background:#0a120a;border:1px solid rgba(0,255,65,0.12);display:flex;align-items:flex-end;padding:4px 6px;">
+        <span style="color:rgba(0,255,65,0.5);font-size:8px;">--surface-raised</span>
+      </div>
+      <div style="color:#666;font-size:9px;margin-top:3px;">#0a120a · Cards, panels</div>
+    </div>
+    <div>
+      <div style="height:50px;border-radius:6px;background:#111a11;border:1px solid rgba(0,255,65,0.15);display:flex;align-items:flex-end;padding:4px 6px;">
+        <span style="color:rgba(0,255,65,0.5);font-size:8px;">--surface-overlay</span>
+      </div>
+      <div style="color:#666;font-size:9px;margin-top:3px;">#111a11 · Modals</div>
+    </div>
+    <div>
+      <div style="height:50px;border-radius:6px;background:rgba(0,0,0,0.75);backdrop-filter:blur(12px);border:1px solid rgba(0,255,65,0.15);display:flex;align-items:flex-end;padding:4px 6px;">
+        <span style="color:rgba(0,255,65,0.5);font-size:8px;">--surface-glass</span>
+      </div>
+      <div style="color:#666;font-size:9px;margin-top:3px;">blur(12px) · Header</div>
+    </div>
+    <div>
+      <div style="height:50px;border-radius:6px;background:rgba(0,255,65,0.07);border:1px solid rgba(0,255,65,0.2);display:flex;align-items:flex-end;padding:4px 6px;">
+        <span style="color:rgba(0,255,65,0.5);font-size:8px;">--surface-tinted</span>
+      </div>
+      <div style="color:#666;font-size:9px;margin-top:3px;">Active states</div>
+    </div>
+  </div>
+</div>
+
+<div class="section">
+  <h3>Semantic Accent Tokens</h3>
+  <div style="display:grid;grid-template-columns:repeat(6,1fr);gap:6px;margin-top:10px;">
+    <div style="text-align:center;">
+      <div style="height:36px;border-radius:6px;background:#ef4444;"></div>
+      <div style="color:#888;font-size:9px;margin-top:3px;">--accent-hot<br/>HOT tag</div>
+    </div>
+    <div style="text-align:center;">
+      <div style="height:36px;border-radius:6px;background:#8b5cf6;"></div>
+      <div style="color:#888;font-size:9px;margin-top:3px;">--accent-new<br/>NEW tag</div>
+    </div>
+    <div style="text-align:center;">
+      <div style="height:36px;border-radius:6px;background:linear-gradient(135deg,#f59e0b,#ef4444);"></div>
+      <div style="color:#888;font-size:9px;margin-top:3px;">--accent-jackpot<br/>Jackpot</div>
+    </div>
+    <div style="text-align:center;">
+      <div style="height:36px;border-radius:6px;background:#00d4ff;"></div>
+      <div style="color:#888;font-size:9px;margin-top:3px;">--accent-info<br/>Nebula / info</div>
+    </div>
+    <div style="text-align:center;">
+      <div style="height:36px;border-radius:6px;background:#fbbf24;"></div>
+      <div style="color:#888;font-size:9px;margin-top:3px;">--accent-gold<br/>Balance / VIP</div>
+    </div>
+    <div style="text-align:center;">
+      <div style="height:36px;border-radius:6px;background:#10b981;"></div>
+      <div style="color:#888;font-size:9px;margin-top:3px;">--accent-success<br/>Wins / CTA</div>
+    </div>
+  </div>
+</div>
+
+<div class="section">
+  <h3>Typography Scale</h3>
+  <div style="background:#0a120a;border:1px solid rgba(0,255,65,0.15);border-radius:8px;padding:16px;display:flex;flex-direction:column;gap:10px;">
+    <div style="display:flex;align-items:baseline;gap:12px;">
+      <span style="color:#00ff41;font-size:28px;font-weight:900;letter-spacing:-0.5px;font-family:'Inter',sans-serif;line-height:1;">$124,891</span>
+      <span style="color:rgba(0,255,65,0.4);font-size:9px;">--text-display · 28px/900 · Jackpot numbers</span>
+    </div>
+    <div style="display:flex;align-items:baseline;gap:12px;">
+      <span style="color:#fff;font-size:18px;font-weight:800;font-family:'Inter',sans-serif;line-height:1;">Candy Cascade 1000</span>
+      <span style="color:rgba(0,255,65,0.4);font-size:9px;">--text-title · 18px/800 · Game names, modal titles</span>
+    </div>
+    <div style="display:flex;align-items:baseline;gap:12px;">
+      <span style="color:#e2e8f0;font-size:14px;font-weight:600;font-family:'Inter',sans-serif;">Hot Games · Section Labels</span>
+      <span style="color:rgba(0,255,65,0.4);font-size:9px;">--text-label · 14px/600 · Section headers</span>
+    </div>
+    <div style="display:flex;align-items:baseline;gap:12px;">
+      <span style="color:#94a3b8;font-size:13px;font-weight:400;font-family:'Inter',sans-serif;">Golden Reels Studio · 88% RTP</span>
+      <span style="color:rgba(0,255,65,0.4);font-size:9px;">--text-body · 13px/400 · Card metadata</span>
+    </div>
+    <div style="display:flex;align-items:baseline;gap:12px;">
+      <span style="color:#64748b;font-size:11px;font-weight:500;letter-spacing:1px;text-transform:uppercase;font-family:'Inter',sans-serif;">TUMBLE · MEGAWAYS · 250×</span>
+      <span style="color:rgba(0,255,65,0.4);font-size:9px;">--text-tag · 11px/500/uppercase · Mechanic tags</span>
+    </div>
+  </div>
+</div>
+
+<div class="section">
+  <h3>Spacing, Radius & Shadow Tokens</h3>
+  <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-top:8px;">
+    <!-- Spacing -->
+    <div style="background:#0a120a;border:1px solid rgba(0,255,65,0.12);border-radius:6px;padding:12px;">
+      <div style="color:#00ff41;font-size:10px;font-weight:700;margin-bottom:8px;">SPACING</div>
+      <div style="display:flex;flex-direction:column;gap:5px;">
+        <div style="display:flex;align-items:center;gap:8px;"><div style="width:4px;height:4px;background:rgba(0,255,65,0.5);border-radius:1px;"></div><span style="color:#94a3b8;font-size:9px;">--space-1 · 4px</span></div>
+        <div style="display:flex;align-items:center;gap:8px;"><div style="width:8px;height:4px;background:rgba(0,255,65,0.5);border-radius:1px;"></div><span style="color:#94a3b8;font-size:9px;">--space-2 · 8px</span></div>
+        <div style="display:flex;align-items:center;gap:8px;"><div style="width:12px;height:4px;background:rgba(0,255,65,0.5);border-radius:1px;"></div><span style="color:#94a3b8;font-size:9px;">--space-3 · 12px</span></div>
+        <div style="display:flex;align-items:center;gap:8px;"><div style="width:16px;height:4px;background:rgba(0,255,65,0.5);border-radius:1px;"></div><span style="color:#94a3b8;font-size:9px;">--space-4 · 16px</span></div>
+        <div style="display:flex;align-items:center;gap:8px;"><div style="width:24px;height:4px;background:rgba(0,255,65,0.5);border-radius:1px;"></div><span style="color:#94a3b8;font-size:9px;">--space-6 · 24px</span></div>
+        <div style="display:flex;align-items:center;gap:8px;"><div style="width:32px;height:4px;background:rgba(0,255,65,0.5);border-radius:1px;"></div><span style="color:#94a3b8;font-size:9px;">--space-8 · 32px</span></div>
+      </div>
+    </div>
+    <!-- Radius -->
+    <div style="background:#0a120a;border:1px solid rgba(0,255,65,0.12);border-radius:6px;padding:12px;">
+      <div style="color:#00ff41;font-size:10px;font-weight:700;margin-bottom:8px;">BORDER RADIUS</div>
+      <div style="display:flex;flex-direction:column;gap:6px;">
+        <div style="display:flex;align-items:center;gap:8px;">
+          <div style="width:20px;height:14px;background:rgba(0,255,65,0.2);border:1px solid rgba(0,255,65,0.3);border-radius:2px;"></div>
+          <span style="color:#94a3b8;font-size:9px;">--radius-sm · 4px · Tags</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px;">
+          <div style="width:20px;height:14px;background:rgba(0,255,65,0.2);border:1px solid rgba(0,255,65,0.3);border-radius:4px;"></div>
+          <span style="color:#94a3b8;font-size:9px;">--radius-md · 8px · Buttons</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px;">
+          <div style="width:20px;height:14px;background:rgba(0,255,65,0.2);border:1px solid rgba(0,255,65,0.3);border-radius:6px;"></div>
+          <span style="color:#94a3b8;font-size:9px;">--radius-lg · 12px · Cards</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px;">
+          <div style="width:20px;height:14px;background:rgba(0,255,65,0.2);border:1px solid rgba(0,255,65,0.3);border-radius:9px;"></div>
+          <span style="color:#94a3b8;font-size:9px;">--radius-xl · 16px · Modals</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px;">
+          <div style="width:20px;height:14px;background:rgba(0,255,65,0.2);border:1px solid rgba(0,255,65,0.3);border-radius:7px;"></div>
+          <span style="color:#94a3b8;font-size:9px;">--radius-pill · 999px · Chips</span>
+        </div>
+      </div>
+    </div>
+    <!-- Shadows / Glows -->
+    <div style="background:#0a120a;border:1px solid rgba(0,255,65,0.12);border-radius:6px;padding:12px;">
+      <div style="color:#00ff41;font-size:10px;font-weight:700;margin-bottom:8px;">GLOW / SHADOW</div>
+      <div style="display:flex;flex-direction:column;gap:8px;">
+        <div style="background:#0d160d;border:1px solid rgba(0,255,65,0.2);border-radius:4px;padding:5px 8px;box-shadow:0 0 6px rgba(0,255,65,0.15);font-size:9px;color:#94a3b8;">--glow-sm · subtle</div>
+        <div style="background:#0d160d;border:1px solid rgba(0,255,65,0.35);border-radius:4px;padding:5px 8px;box-shadow:0 0 12px rgba(0,255,65,0.3);font-size:9px;color:#94a3b8;">--glow-md · active</div>
+        <div style="background:#0d160d;border:1px solid rgba(0,255,65,0.5);border-radius:4px;padding:5px 8px;box-shadow:0 0 20px rgba(0,255,65,0.45);font-size:9px;color:#94a3b8;">--glow-lg · focus/win</div>
+        <div style="background:#0d160d;border:1px solid rgba(0,255,65,0.15);border-radius:4px;padding:5px 8px;box-shadow:0 4px 24px rgba(0,0,0,0.6);font-size:9px;color:#94a3b8;">--shadow-card · elevation</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="section">
+  <h3>Transition Tokens</h3>
+  <div style="background:#0a120a;border:1px solid rgba(0,255,65,0.12);border-radius:6px;padding:12px;display:flex;gap:20px;flex-wrap:wrap;">
+    <div style="color:#94a3b8;font-size:10px;"><span style="color:#00ff41;">--transition-fast</span> · 120ms ease-out · Hover states</div>
+    <div style="color:#94a3b8;font-size:10px;"><span style="color:#00ff41;">--transition-base</span> · 200ms ease-out · Color, opacity</div>
+    <div style="color:#94a3b8;font-size:10px;"><span style="color:#00ff41;">--transition-move</span> · 300ms cubic-bezier(0.34,1.56,0.64,1) · Scale, position</div>
+    <div style="color:#94a3b8;font-size:10px;"><span style="color:#00ff41;">--transition-modal</span> · 250ms ease · Modal open/close</div>
+  </div>
+</div>
+
+<div class="section">
+  <h3>Implementation: <code style="background:rgba(0,255,65,0.1);padding:2px 6px;border-radius:4px;color:#00ff41;font-size:11px;">design-tokens.css</code></h3>
+  <div style="background:#040d04;border:1px solid rgba(0,255,65,0.15);border-radius:6px;padding:12px;font-family:monospace;font-size:10px;color:#94a3b8;line-height:1.7;">
+    <span style="color:rgba(0,255,65,0.6);">/* New file — loaded first, before all other CSS */</span><br>
+    <span style="color:#60a5fa;">:root</span> {<br>
+    &nbsp;&nbsp;<span style="color:rgba(0,255,65,0.8);">/* Surfaces */</span><br>
+    &nbsp;&nbsp;--surface-base: #020c02;<br>
+    &nbsp;&nbsp;--surface-raised: #0a120a;<br>
+    &nbsp;&nbsp;--surface-overlay: #111a11;<br>
+    &nbsp;&nbsp;--surface-glass: rgba(2,12,2,0.80);<br>
+    &nbsp;&nbsp;<span style="color:rgba(0,255,65,0.8);">/* Brand green */</span><br>
+    &nbsp;&nbsp;--green-brand: #00ff41;<br>
+    &nbsp;&nbsp;--green-brand-dim: rgba(0,255,65,0.5);<br>
+    &nbsp;&nbsp;--green-brand-subtle: rgba(0,255,65,0.08);<br>
+    &nbsp;&nbsp;<span style="color:rgba(0,255,65,0.8);">/* Accents, type, spacing, radius, glow… */</span><br>
+    }
+  </div>
+</div>
+
+<div style="background:rgba(0,255,65,0.05);border:1px solid rgba(0,255,65,0.2);border-radius:8px;padding:14px;margin-top:8px;">
+  <div style="color:#00ff41;font-size:11px;font-weight:700;margin-bottom:4px;">✓ What this gives you</div>
+  <div style="color:#94a3b8;font-size:11px;line-height:1.6;">One file to change a color across the entire casino. No hunting through 43k lines of styles.css. Every future component is built from the same vocabulary — consistent glow, consistent radius, consistent type scale. Provider accent colors become token overrides, not magic numbers.</div>
+</div>

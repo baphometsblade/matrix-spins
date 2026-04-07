@@ -972,11 +972,28 @@ function renderGames() {
                 ? '<div class="game-max-win-badge" title="Max win multiplier">' + (maxWin >= 1000 ? (maxWin/1000).toFixed(1) + 'K' : maxWin) + 'x</div>'
                 : '';
             _seedCount(game.id, isHot || _hotIds.has(game.id));
+            // RTP chip
+            const rtpChip = game.rtp
+                ? '<span class="game-chip game-chip-rtp">' + game.rtp + '% RTP</span>'
+                : '';
+            // Max win chip
+            var maxWinChip = maxWin > 0
+                ? '<span class="game-chip game-chip-maxwin">' + (maxWin >= 1000 ? (maxWin/1000).toFixed(1) + 'K' : maxWin) + 'x MAX</span>'
+                : '';
+            // Mechanic chip from bonusType
+            const mechanicLabel = game.bonusType
+                ? game.bonusType.replace(/_/g, ' ').replace(/\b\w/g, function(c){ return c.toUpperCase(); })
+                : '';
+            const mechanicChip = mechanicLabel
+                ? '<span class="game-chip">' + mechanicLabel + '</span>'
+                : '';
+            // Studio dot color
+            const studioAccent = _getProviderAccent(game.provider);
             return `
-                <div class="game-card${isHot ? ' game-card-hot' : ''}${isJackpot ? ' game-card-jackpot' : ''}${gameDayCardClass}" onclick="try{if(typeof _compareMode!=='undefined'&&_compareMode){_addToCompare('${game.id}');this.classList.toggle('compare-selected',typeof _compareGames!=='undefined'&&_compareGames.indexOf('${game.id}')>=0);}else{(window.openSlot||openSlot)('${game.id}');}}catch(e){console.warn('Game click error:',e.message);}" style="position:relative" data-game-name="${(game.name || game.id || '').toLowerCase()}" data-game-id="${(game.id || '').toLowerCase()}">
+                <div class="game-card${isHot ? ' game-card-hot' : ''}${isJackpot ? ' game-card-jackpot is-jackpot' : ''}${gameDayCardClass}" onclick="try{if(typeof _compareMode!=='undefined'&&_compareMode){_addToCompare('${game.id}');this.classList.toggle('compare-selected',typeof _compareGames!=='undefined'&&_compareGames.indexOf('${game.id}')>=0);}else{(window.openSlot||openSlot)('${game.id}');}}catch(e){console.warn('Game click error:',e.message);}" style="position:relative" data-game-name="${(game.name || game.id || '').toLowerCase()}" data-game-id="${(game.id || '').toLowerCase()}">
                     <button class="fav-btn${favored ? ' fav-active' : ''}" data-game-id="${game.id}" title="${favored ? 'Remove from favourites' : 'Add to favourites'}" onclick="event.stopPropagation(); (function(btn){var nowFav=toggleFavorite('${game.id}'); btn.textContent=nowFav?'\u2764\uFE0F':'\u2661'; btn.title=nowFav?'Remove from favourites':'Add to favourites'; btn.classList.add('fav-active'); setTimeout(function(){btn.classList.remove('fav-active');},350); updateFavTabBadge();})(this)">${favIcon}</button>
-                    <div class="game-thumbnail" style="${thumbStyle}"${thumbDataBg}>
-                        ${!game.thumbnail && game.asset ? (assetTemplates[game.asset] || '') : ''}
+                    <div class="game-card-art" style="${thumbStyle}"${thumbDataBg}>
+                        ${hasThumbnail ? '<img src="" loading="lazy" decoding="async" alt="${escapeHtml(game.name)}">' : (!game.thumbnail && game.asset ? (assetTemplates[game.asset] || '') : '')}
                         <div class="card-anim-preview" style="background-image:url('assets/backgrounds/slots/${game.id}_bg.webp')" onerror="this.classList.add('hidden')">
                             <span class="preview-badge">&#9654; PREVIEW</span>
                         </div>
@@ -987,25 +1004,28 @@ function renderGames() {
                         <div class="game-vol-badge ${volClass}" title="Volatility: ${vol}">
                             ${dotsHtml}
                         </div>
-                        <div class="game-hover-overlay">
-                            <svg class="game-play-svg" viewBox="0 0 48 48" fill="none"><circle cx="24" cy="24" r="23" fill="rgba(23,145,99,0.9)" stroke="rgba(86,210,160,0.6)" stroke-width="2"/><polygon points="19,14 19,34 35,24" fill="#fff"/></svg>
-                            ${metaPills ? `<div class="game-hover-pills">${metaPills}</div>` : ''}
-                            ${shortDesc}
+                        <div class="game-card-overlay">
+                            <button class="game-overlay-play" onclick="event.stopPropagation();(window.openSlot||openSlot)('${game.id}')">PLAY NOW</button>
+                            <button class="game-overlay-demo" onclick="event.stopPropagation();(window.openSlot||openSlot)('${game.id}')">Try Demo</button>
                         </div>
                         <div class="gi-strip">
-                            <span class="gi-grid">${game.gridCols}×${game.gridRows}</span>
+                            <span class="gi-grid">${game.gridCols}\xd7${game.gridRows}</span>
                             <span class="gi-bonus">${_giBonusLabel(game)}</span>
                             <span class="gi-vol ${_giVolatility(game).cls}" title="Volatility: ${_giVolatility(game).label}">${_giVolatility(game).dots}</span>
                         </div>
                     </div>
-                    <div class="game-info">
-                        <div class="game-name">${escapeHtml(game.name)}</div>
-                        <div class="game-meta-row">
-                            <span class="game-provider" style="color:${_getProviderAccent(game.provider)}">${_getProviderLogo(game.provider)} ${escapeHtml(game.provider || '')}</span>
+                    <div class="game-card-info">
+                        <div class="game-card-name">${escapeHtml(game.name)}</div>
+                        <div class="game-card-studio">
+                            <span class="game-card-studio-dot" style="background:${studioAccent}"></span>
+                            <span style="color:${studioAccent}">${_getProviderLogo(game.provider)} ${escapeHtml(game.provider || '')}</span>
+                        </div>
+                        <div class="game-card-chips">
+                            ${rtpChip}${maxWinChip}${mechanicChip}
                         </div>
                     </div>
-                    ${_hotIds.has(game.id) ? '<span class="lobby-badge lobby-badge-hot">🔥 HOT</span>' : ''}
-                    ${_newIds.has(game.id) ? '<span class="lobby-badge lobby-badge-new">✨ NEW</span>' : ''}
+                    ${_hotIds.has(game.id) ? '<span class="lobby-badge lobby-badge-hot">\uD83D\uDD25 HOT</span>' : ''}
+                    ${_newIds.has(game.id) ? '<span class="lobby-badge lobby-badge-new">\u2728 NEW</span>' : ''}
                     ${gameDayBadgeHtml}
                     ${hotColdHtml}
                     ${maxWinHtml}
