@@ -4,59 +4,6 @@
    Load LAST to override all existing styles
    ═══════════════════════════════════════════════════════════════════════ */
 
-/* ── 1. DESIGN TOKENS ──────────────────────────────────────────────── */
-:root {
-  --ms-bg-darkest:    #0A0C10;
-  --ms-bg-dark:       #0D0F14;
-  --ms-bg-base:       #111318;
-  --ms-bg-elevated:   #161921;
-  --ms-bg-surface:    #1C1F2A;
-  --ms-bg-card:       #1E2130;
-  --ms-bg-hover:      #252838;
-  --ms-gold:          #F0A500;
-  --ms-gold-light:    #FFD166;
-  --ms-gold-dim:      rgba(240, 165, 0, 0.15);
-  --ms-gold-glow:     rgba(240, 165, 0, 0.25);
-  --ms-cyan:          #00D4FF;
-  --ms-cyan-dim:      rgba(0, 212, 255, 0.12);
-  --ms-cyan-glow:     rgba(0, 212, 255, 0.25);
-  --ms-violet:        #8B5CF6;
-  --ms-violet-dim:    rgba(139, 92, 246, 0.12);
-  --ms-green:         #22C55E;
-  --ms-green-dim:     rgba(34, 197, 94, 0.12);
-  --ms-red:           #EF4444;
-  --ms-red-dim:       rgba(239, 68, 68, 0.12);
-  --ms-text:          #E8E8ED;
-  --ms-text-secondary: #9CA3AF;
-  --ms-text-muted:    #6B7280;
-  --ms-text-dim:      #4B5563;
-  --ms-border:        rgba(255,255,255,0.06);
-  --ms-border-hover:  rgba(255,255,255,0.12);
-  --ms-border-active: rgba(240, 165, 0, 0.3);
-  --ms-shadow-sm:     0 1px 2px rgba(0,0,0,0.3);
-  --ms-shadow-md:     0 4px 12px rgba(0,0,0,0.4);
-  --ms-shadow-lg:     0 8px 32px rgba(0,0,0,0.5);
-  --ms-shadow-glow:   0 0 20px rgba(240, 165, 0, 0.15);
-  --ms-glass-bg:      rgba(22, 25, 33, 0.75);
-  --ms-glass-border:  rgba(255,255,255,0.08);
-  --ms-glass-blur:    12px;
-  --ms-radius-sm:     6px;
-  --ms-radius-md:     10px;
-  --ms-radius-lg:     14px;
-  --ms-radius-xl:     20px;
-  --ms-radius-pill:   100px;
-  --ms-font-body:     'Inter', 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-  --ms-font-display:  'Inter', 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
-  --ms-font-mono:     'JetBrains Mono', 'SF Mono', 'Fira Code', monospace;
-  --ms-space-1: 4px; --ms-space-2: 8px; --ms-space-3: 12px; --ms-space-4: 16px;
-  --ms-space-5: 20px; --ms-space-6: 24px; --ms-space-8: 32px; --ms-space-10: 40px; --ms-space-12: 48px;
-  --ms-transition-fast: 150ms cubic-bezier(0.4, 0, 0.2, 1);
-  --ms-transition-base: 250ms cubic-bezier(0.4, 0, 0.2, 1);
-  --ms-transition-slow: 400ms cubic-bezier(0.4, 0, 0.2, 1);
-  --ms-z-base: 1; --ms-z-sticky: 100; --ms-z-header: 200; --ms-z-sidebar: 300;
-  --ms-z-modal-backdrop: 1000; --ms-z-modal: 1010; --ms-z-toast: 2000; --ms-z-tooltip: 3000;
-}
-
 /* ── 2. GLOBAL RESET & BASE ──── */
 *,*::before,*::after { box-sizing: border-box; }
 html { -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; text-rendering: optimizeLegibility; scroll-behavior: smooth; }

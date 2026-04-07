@@ -8,7 +8,7 @@
     <title>Matrix Spins Casino | Free Online Slots & Casino Games</title>
     <meta name="description" content="Play 100 free online slots at Matrix Spins Casino. Daily bonuses, VIP rewards, jackpots, tournaments, and provably fair gameplay. Join now and spin to win!">
     <meta name="keywords" content="online casino, free slots, slot games, matrix spins, casino games, provably fair, VIP casino">
-    <meta name="theme-color" content="#0a0a1a">
+    <meta name="theme-color" content="#0D0F14">
     <link rel="manifest" href="/manifest.json">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -42,6 +42,8 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link rel="preload" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@700;800&display=swap" as="style" onload="this.onload=null;this.rel='stylesheet'">
     <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@700;800&display=swap"></noscript>
+    <link rel="stylesheet" href="design-tokens.css">
+    <link rel="stylesheet" href="layout-shell.css">
     <link rel="stylesheet" href="popup-nuke.css">
     <link rel="stylesheet" href="premium-animations.css" media="print" onload="this.media='all'">
     <link rel="stylesheet" href="slot-layout-fix.css">
@@ -87,7 +89,10 @@
     <!-- WebApplication structured data merged into WebSite block above -->
     <link rel="stylesheet" href="promo-styles.css">
     <link rel="stylesheet" href="phase5-lobby.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@500;700;800&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap">
     <link rel="stylesheet" href="premium-redesign.css">
+    <link rel="stylesheet" href="premium-polish.css">
+    <link rel="stylesheet" href="premium-animations.css">
 </head>
 <body>
     <script src="js/error-handler.js"></script>
@@ -142,6 +147,8 @@
             </div>
         </div>
     </div>
+
+    <!-- Trust Bar (legacy — replaced by post-header trust bar below) -->
 
     <!-- Header -->
     <header>
@@ -210,6 +217,31 @@
             </div>
         </div>
     </header>
+
+    <!-- Trust Bar -->
+    <div class="trust-bar" id="trustBar">
+      <div class="trust-bar-inner">
+        <span class="trust-item">
+          <svg class="trust-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+          SSL Secured
+        </span>
+        <span class="trust-sep">·</span>
+        <span class="trust-item">
+          <svg class="trust-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+          Provably Fair
+        </span>
+        <span class="trust-sep">·</span>
+        <span class="trust-item">
+          <svg class="trust-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+          Licensed
+        </span>
+        <span class="trust-sep">·</span>
+        <span class="trust-item trust-online">
+          <span class="trust-dot"></span>
+          <span id="onlineCountDisplay">1,247</span> players online
+        </span>
+      </div>
+    </div>
 
     <!-- Casino Sidebar Navigation -->
     <aside class="casino-sidebar" id="casinoSidebar">
@@ -382,7 +414,7 @@
                 <svg viewBox="0 0 20 20" fill="currentColor" width="16" height="16"><path d="M10 1l1.5 3.5h3.7l-3 2.2 1.2 3.5L10 8l-3.4 2.2 1.2-3.5-3-2.2h3.7z"/><path d="M5 13h10v2H5z"/><path d="M6 16h8v2H6z"/></svg>
                 Jackpot
             </button>
-            <button class="filter-tab" data-filter="adult" onclick="setFilter('adult')" style="color:#ff1744;">
+            <button class="filter-tab" data-filter="adult" onclick="setFilter('adult')">
                 <svg viewBox="0 0 20 20" fill="currentColor" width="16" height="16"><circle cx="10" cy="10" r="8" stroke="currentColor" stroke-width="2" fill="none"/><text x="10" y="14" font-size="10" font-weight="bold" text-anchor="middle" fill="currentColor">18</text></svg>
                 18+
             </button>
@@ -402,7 +434,7 @@
         </div>
 
         <!-- Theme Category Filter -->
-        <div class="provider-filter-row" id="themeCategoryRow" style="margin-top:6px;">
+        <div class="provider-filter-row" id="themeCategoryRow">
             <button class="provider-chip provider-chip-active" data-theme="all" onclick="setThemeCategoryFilter('all')">All Themes</button>
             <button class="provider-chip" data-theme="egypt" onclick="setThemeCategoryFilter('egypt')">&#127978; Egypt &amp; Myth</button>
             <button class="provider-chip" data-theme="fruit" onclick="setThemeCategoryFilter('fruit')">&#127826; Fruit Classics</button>
@@ -493,7 +525,7 @@
                 <a href="javascript:void(0)" onclick=" if(typeof showMatrixMoneyInfo==='function') showMatrixMoneyInfo();">Matrix Money Info</a>
             </div>
             <p class="footer-copyright">&copy; 2024-2026 Matrix Spins Casino. All rights reserved.</p>
-            <p class="footer-disclaimer" style="font-size:10px;color:#475569;max-width:800px;margin:8px auto 0;line-height:1.5;text-align:center;">Matrix Spins is a social casino for entertainment only. No real money gambling. Matrix Money is a virtual currency with no real-world value. All games use a certified provably fair RNG system. Players must be 18+ to play. Need help? Visit <a href="https://www.ncpgambling.org" target="_blank" rel="noopener" style="color:#64748b;">NCPG</a> or <a href="https://www.gamcare.org.uk" target="_blank" rel="noopener" style="color:#64748b;">GamCare</a>.</p>
+            <p class="footer-disclaimer" class="footer-disclaimer">Matrix Spins is a social casino for entertainment only. No real money gambling. Matrix Money is a virtual currency with no real-world value. All games use a certified provably fair RNG system. Players must be 18+ to play. Need help? Visit <a href="https://www.ncpgambling.org" target="_blank" rel="noopener">NCPG</a> or <a href="https://www.gamcare.org.uk" target="_blank" rel="noopener">GamCare</a>.</p>
         </div>
     </footer>
 
@@ -1763,7 +1795,11 @@
     <script src="js/ui-wallet.js"></script>
     <script src="js/ui-profile.js"></script>
     <script src="js/ui-vip.js"></script>
-    <script src="js/qa-tools.js"></script>
+    <script>
+if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' || window.location.search.includes('devtools=ms2026')) {
+  var s = document.createElement('script'); s.src = 'js/qa-tools.js'; document.head.appendChild(s);
+}
+</script>
 
     <script src="js/session-rtp-client.js"></script>
     
@@ -2169,6 +2205,7 @@ if ('serviceWorker' in navigator) {
         });
     })();
     </script>
+    <script src="js/premium-ui.js" defer></script>
 </body>
 </html>
 
