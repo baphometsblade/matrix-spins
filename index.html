@@ -562,6 +562,18 @@
     </footer>
 
     <!-- Mobile Bottom Nav — replaced by premium version before     <script src="premium-v2-fixes.js" defer></script>
+
+  <!-- Premium V2 inline fixes (bypass build cache) -->
+  <script>
+  document.addEventListener('DOMContentLoaded', function() {
+    // Force-show promo bar (popup-nuke.css hides it)
+    var s = document.createElement('style');
+    s.textContent = 'html body [class*="promo-bar"]{display:flex!important;overflow:hidden!important;background:linear-gradient(90deg,rgba(240,165,0,.12),rgba(255,208,74,.08),rgba(240,165,0,.12))!important;border-top:1px solid rgba(240,165,0,.2)!important;border-bottom:1px solid rgba(240,165,0,.2)!important;height:auto!important;opacity:1!important;visibility:visible!important;max-height:34px!important;padding:6px 0!important}';
+    document.head.appendChild(s);
+    var pb = document.querySelector('.promo-bar');
+    if (pb) pb.style.setProperty('display', 'flex', 'important');
+  });
+  </script>
 </body> -->
 
     <!-- Slot Machine Modal • Pragmatic Play Style -->
@@ -2240,6 +2252,18 @@ if ('serviceWorker' in navigator) {
       </button>
     </nav>
     <script src="premium-v2-fixes.js" defer></script>
+
+  <!-- Premium V2 inline fixes (bypass build cache) -->
+  <script>
+  document.addEventListener('DOMContentLoaded', function() {
+    // Force-show promo bar (popup-nuke.css hides it)
+    var s = document.createElement('style');
+    s.textContent = 'html body [class*="promo-bar"]{display:flex!important;overflow:hidden!important;background:linear-gradient(90deg,rgba(240,165,0,.12),rgba(255,208,74,.08),rgba(240,165,0,.12))!important;border-top:1px solid rgba(240,165,0,.2)!important;border-bottom:1px solid rgba(240,165,0,.2)!important;height:auto!important;opacity:1!important;visibility:visible!important;max-height:34px!important;padding:6px 0!important}';
+    document.head.appendChild(s);
+    var pb = document.querySelector('.promo-bar');
+    if (pb) pb.style.setProperty('display', 'flex', 'important');
+  });
+  </script>
 </body>
 </html>
 
