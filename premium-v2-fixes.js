@@ -100,6 +100,66 @@
         document.head.appendChild(style);
     }
 
+
+    // ── 7. Force-show promo bar (popup-nuke.css hides it) ───────────
+    function showPromoBar() {
+        var bar = document.querySelector('.promo-bar');
+        if (!bar) return;
+        // Inject a style that beats popup-nuke's attribute selector
+        var style = document.createElement('style');
+        style.textContent = [
+            'body .promo-bar,',
+            'html body [class*="promo-bar"] {',
+            '  display: flex !important;',
+            '  overflow: hidden !important;',
+            '  background: linear-gradient(90deg,',
+            '    rgba(240,165,0,0.12) 0%,',
+            '    rgba(255,208,74,0.08) 50%,',
+            '    rgba(240,165,0,0.12) 100%) !important;',
+            '  border-top: 1px solid rgba(240,165,0,0.2) !important;',
+            '  border-bottom: 1px solid rgba(240,165,0,0.2) !important;',
+            '  height: auto !important;',
+            '  opacity: 1 !important;',
+            '  visibility: visible !important;',
+            '  max-height: 34px !important;',
+            '  padding: 6px 0 !important;',
+            '}'
+        ].join('\n');
+        document.head.appendChild(style);
+        // Also force inline style as final override
+        bar.style.setProperty('display', 'flex', 'important');
+    }
+
+
+    // ── 7. Force-show promo bar (popup-nuke.css hides it) ───────────
+    function showPromoBar() {
+        var bar = document.querySelector('.promo-bar');
+        if (!bar) return;
+        // Inject a style that beats popup-nuke's attribute selector
+        var style = document.createElement('style');
+        style.textContent = [
+            'body .promo-bar,',
+            'html body [class*="promo-bar"] {',
+            '  display: flex !important;',
+            '  overflow: hidden !important;',
+            '  background: linear-gradient(90deg,',
+            '    rgba(240,165,0,0.12) 0%,',
+            '    rgba(255,208,74,0.08) 50%,',
+            '    rgba(240,165,0,0.12) 100%) !important;',
+            '  border-top: 1px solid rgba(240,165,0,0.2) !important;',
+            '  border-bottom: 1px solid rgba(240,165,0,0.2) !important;',
+            '  height: auto !important;',
+            '  opacity: 1 !important;',
+            '  visibility: visible !important;',
+            '  max-height: 34px !important;',
+            '  padding: 6px 0 !important;',
+            '}'
+        ].join('\n');
+        document.head.appendChild(style);
+        // Also force inline style as final override
+        bar.style.setProperty('display', 'flex', 'important');
+    }
+
     // ── Initialize ───────────────────────────────────────────────────
     function init() {
         fixFooterPlacement();
@@ -107,6 +167,8 @@
         enhanceSidebarNav();
         addSkeletonLoading();
         styleIdlePopups();
+        showPromoBar();
+        showPromoBar();
     }
 
     if (document.readyState === 'loading') {
