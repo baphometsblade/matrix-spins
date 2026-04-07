@@ -16,7 +16,7 @@ const BOOSTS = [
 
 async function initSchema() {
 
-    const isPg  = !!process.env.DATABASE_URL;
+    const isPg = db.isPg();
     const idDef = isPg ? 'SERIAL PRIMARY KEY' : 'INTEGER PRIMARY KEY AUTOINCREMENT';
     const tsType    = isPg ? 'TIMESTAMPTZ' : 'TEXT';
     const tsDefault = isPg ? 'NOW()' : "(datetime('now'))";

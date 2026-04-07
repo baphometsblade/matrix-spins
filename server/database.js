@@ -59,6 +59,16 @@ function getBackend() {
     return backend;
 }
 
+/**
+ * Returns true only if the active backend is PostgreSQL.
+ * Safe to call after initDatabase() — reflects the actual backend even if
+ * PostgreSQL was unreachable and we fell back to SQLite.
+ */
+function isPg() {
+    if (!backend) return !!process.env.DATABASE_URL; // pre-init best guess
+    return backend.constructor.name === 'PgBackend';
+}
+
 async function run(sql, params) {
     return getBackend().run(sql, params);
 }
@@ -96,6 +106,7 @@ async function rollback() {
 module.exports = {
     initDatabase,
     getBackend,
+    isPg,
     // Keep legacy alias for any code that calls getDb()
     getDb: getBackend,
     run,
