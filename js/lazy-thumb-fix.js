@@ -1,8 +1,16 @@
 /**
- * Matrix Spins Casino — Lazy Thumbnail Loader Fix
+ * Matrix Spins Casino — Lazy Thumbnail Loader Fix v2
+ *
+ * The bundled lobby code creates game cards with data-bg attributes
+ * but then sets el.style.background = '...' which overrides any
+ * background-image set by the original IntersectionObserver.
+ *
+ * This fix uses a periodic check + MutationObserver to reliably
+ * apply thumbnails AFTER the lobby code finishes styling cards.
  */
 (function() {
   'use strict';
+
   function loadThumb(el) {
     var bg = el.getAttribute('data-bg');
     if (!bg) return;
@@ -12,31 +20,46 @@
     el.removeAttribute('data-bg');
     el.classList.add('thumb-loaded');
   }
-  function initLazy() {
+
+  function applyAll() {
     var els = document.querySelectorAll('[data-bg]');
-    if (!els.length) return;
-    if ('IntersectionObserver' in window) {
-      var obs = new IntersectionObserver(function(entries) {
-        entries.forEach(function(entry) {
-          if (entry.isIntersecting) { loadThumb(entry.target); obs.unobserve(entry.target); }
-        });
-      }, { rootMargin: '200px' });
-      els.forEach(function(el) { obs.observe(el); });
-    } else { els.forEach(loadThumb); }
+    if (els.length) {
+      els.forEach(loadThumb);
+    }
+    return els.length;
+  }
+
+  function init() {
+    // Immediate pass
+    applyAll();
+
+    // Periodic check — catches cards styled by lobby code after DOM insertion
+    // Runs every 500ms for 30 seconds, then every 2s indefinitely for dynamic content
+    var passes = 0;
+    var interval = setInterval(function() {
+      var applied = applyAll();
+      passes++;
+      // After 30s (60 passes at 500ms), slow down to every 2s
+      if (passes === 60) {
+        clearInterval(interval);
+        setInterval(applyAll, 2000);
+      }
+    }, 500);
+
+    // MutationObserver for dynamically added elements (filter changes, etc.)
     if ('MutationObserver' in window) {
-      var mo = new MutationObserver(function(mutations) {
-        mutations.forEach(function(m) {
-          m.addedNodes.forEach(function(node) {
-            if (node.nodeType !== 1) return;
-            if (node.hasAttribute && node.hasAttribute('data-bg')) loadThumb(node);
-            var ch = node.querySelectorAll ? node.querySelectorAll('[data-bg]') : [];
-            ch.forEach(loadThumb);
-          });
-        });
+      var mo = new MutationObserver(function() {
+        // Debounce: wait 100ms for lobby code to finish styling
+        clearTimeout(mo._timer);
+        mo._timer = setTimeout(applyAll, 100);
       });
       mo.observe(document.body, { childList: true, subtree: true });
     }
   }
-  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', initLazy);
-  else initLazy();
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init);
+  } else {
+    init();
+  }
 })();
