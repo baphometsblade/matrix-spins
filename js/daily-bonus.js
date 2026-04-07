@@ -127,7 +127,7 @@
 
         var modal = document.createElement('div');
         modal.id = 'dailyBonusModal';
-        modal.style.cssText = 'position:fixed;inset:0;z-index:99999;background:rgba(0,0,0,0.85);display:flex;align-items:center;justify-content:center;animation:fadeIn 0.3s ease';
+        modal.style.cssText = 'position:fixed;inset:0;z-index:1050;background:rgba(0,0,0,0.85);display:flex;align-items:center;justify-content:center;animation:fadeIn 0.3s ease';
 
         // Build streak day indicators
         var daysHtml = '';
@@ -142,7 +142,8 @@
                 '</div>';
         }
 
-        modal.innerHTML = '<div class="db-card">' +
+        modal.innerHTML = '<div class="db-card" style="position:relative">' +
+            '<button class="db-close-btn" id="dbCloseBtn" style="position:absolute;top:12px;right:12px;background:none;border:none;color:#888;font-size:24px;cursor:pointer;padding:4px 8px;z-index:2;transition:color 0.15s" aria-label="Close">&times;</button>' +
             '<div class="db-header">' +
             '<div class="db-icon">🎁</div>' +
             '<h2 class="db-title">Daily Bonus!</h2>' +
@@ -177,6 +178,12 @@
                 setTimeout(function() { modal.remove(); }, 1200);
             }
         });
+
+        // Close button
+        document.getElementById('dbCloseBtn').addEventListener('click', function() { modal.remove(); });
+        // Escape key
+        var escHandler = function(e) { if (e.key === 'Escape') { modal.remove(); document.removeEventListener('keydown', escHandler); } };
+        document.addEventListener('keydown', escHandler);
 
         // Close on backdrop click
         modal.addEventListener('click', function(e) {
@@ -213,7 +220,7 @@
 
         var notif = document.createElement('div');
         notif.id = 'streakNotify';
-        notif.style.cssText = 'position:fixed;top:20px;right:20px;z-index:99998;' +
+        notif.style.cssText = 'position:fixed;top:20px;right:20px;z-index:1049;' +
             'background:linear-gradient(135deg, #ffd700, #ff8c00);color:#000;' +
             'padding:16px 24px;border-radius:12px;font-weight:700;font-size:14px;' +
             'box-shadow:0 4px 20px rgba(255,215,0,0.4);' +
@@ -290,6 +297,14 @@
         '@keyframes fadeIn{from{opacity:0}to{opacity:1}}'
     ].join('\n');
     document.head.appendChild(style);
+
+    // ── Global close function (referenced by HTML modal)
+    window.closeDailyBonusModal = function() {
+        var m = document.getElementById('dailyBonusModal');
+        if (m) m.remove();
+        var m2 = document.getElementById('dailyLoginModal');
+        if (m2) { m2.style.display = 'none'; m2.classList.remove('p5-modal-visible'); }
+    };
 
     // ── Expose API ───────────────────────────────────────────────────
     window.DailyBonus = {

@@ -1,0 +1,609 @@
+/* ═══════════════════════════════════════════════════════════════════════
+   MATRIX SPINS — Premium V2 Fixes
+   Addresses: container visibility, widget backgrounds, game card polish,
+   footer placement, micro-interactions, glassmorphism, idle popups
+   Load AFTER premium-redesign.css and premium-polish.css
+   ═══════════════════════════════════════════════════════════════════════ */
+
+/* ── 1. CONTAINER OPACITY FIX ────────────────────────────────────────
+   Content between game cards was invisible due to transparent backgrounds
+   against the fixed matrixCanvas. Give all content areas an opaque base. */
+
+#casinoMainWrap {
+  position: relative !important;
+  z-index: 2 !important;
+  background: var(--ms-bg-darkest, #0a0a0f) !important;
+}
+
+#casinoMainWrap > .container {
+  position: relative !important;
+  z-index: 2 !important;
+}
+
+/* Matrix canvas should stay behind content, not cover everything */
+#matrixCanvas {
+  z-index: 0 !important;
+  opacity: 0.25 !important;
+  pointer-events: none !important;
+}
+
+/* ── 2. RESPONSIBLE GAMBLING FOOTER ──────────────────────────────────
+   Was position:sticky as a body child, covering mid-page content.
+   Move it to static flow at the bottom. */
+
+#responsibleGamblingFooter {
+  position: static !important;
+  z-index: auto !important;
+  background: var(--ms-bg-dark, #0f0f17) !important;
+  border-top: 1px solid var(--ms-border, rgba(255,255,255,0.06)) !important;
+  padding: var(--ms-space-6, 24px) var(--ms-space-4, 16px) !important;
+  text-align: center !important;
+  color: var(--ms-text-muted, #66667a) !important;
+  font-size: 12px !important;
+  margin-top: var(--ms-space-8, 32px) !important;
+}
+
+/* ── 3. WIDGET SECTION BACKGROUNDS ───────────────────────────────────
+   Give all intermediate sections visible backgrounds so they don't
+   disappear against the dark canvas/body. */
+
+#recentlyPlayedSection,
+#youMightLikeSection,
+#featuredSpotlight,
+#wagerRaceBanner,
+#gameOfDayBanner,
+.jackpot-ticker-bar,
+.leaderboard-widget,
+.lucky-hours-banner,
+#weeklyLeaderboardSection,
+.social-proof-bar,
+.promo-code-widget {
+  background: var(--ms-bg-base, #111318) !important;
+  border: 1px solid var(--ms-border, rgba(255,255,255,0.06)) !important;
+  border-radius: var(--ms-radius-lg, 14px) !important;
+  padding: var(--ms-space-4, 16px) !important;
+  margin-bottom: var(--ms-space-4, 16px) !important;
+}
+
+/* Wager race — premium gold accent */
+#wagerRaceBanner {
+  background: linear-gradient(135deg, var(--ms-bg-base, #111318) 0%, rgba(240,165,0,0.04) 100%) !important;
+  border-color: rgba(240,165,0,0.12) !important;
+}
+
+/* Jackpot ticker — subtle gold glow */
+.jackpot-ticker-bar {
+  background: linear-gradient(90deg, var(--ms-bg-base, #111318), rgba(240,165,0,0.06), var(--ms-bg-base, #111318)) !important;
+  border-color: rgba(240,165,0,0.15) !important;
+}
+
+/* Leaderboard — subtle violet accent */
+.leaderboard-widget,
+#weeklyLeaderboardSection {
+  background: linear-gradient(135deg, var(--ms-bg-base, #111318) 0%, rgba(139,92,246,0.04) 100%) !important;
+  border-color: rgba(139,92,246,0.12) !important;
+}
+
+/* Recently Played & You Might Like — horizontal scroll rows */
+#recentlyPlayedSection,
+#youMightLikeSection {
+  background: transparent !important;
+  border: none !important;
+  padding: var(--ms-space-2, 8px) 0 !important;
+}
+
+/* ── 4. GAME CARD POLISH ─────────────────────────────────────────────
+   Premium card styling: 16:10-ish aspect ratio, better hover,
+   glassmorphism overlay, smooth transitions */
+
+.game-card,
+.slot-card {
+  background: var(--ms-bg-card, #1e1e2e) !important;
+  border: 1px solid var(--ms-border, rgba(255,255,255,0.06)) !important;
+  border-radius: var(--ms-radius-md, 10px) !important;
+  overflow: hidden !important;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease !important;
+  cursor: pointer !important;
+  position: relative !important;
+}
+
+.game-card:hover,
+.slot-card:hover {
+  transform: translateY(-4px) scale(1.02) !important;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.5), 0 0 0 1px rgba(240,165,0,0.2) !important;
+  border-color: rgba(240,165,0,0.3) !important;
+  z-index: 10 !important;
+}
+
+.game-card:active,
+.slot-card:active {
+  transform: translateY(-2px) scale(1.01) !important;
+  transition-duration: 0.08s !important;
+}
+
+/* Card thumbnail area — gradient overlay for text readability */
+.game-card .game-card-thumb,
+.game-card .game-thumb,
+.game-card .card-thumbnail {
+  position: relative !important;
+  aspect-ratio: 16 / 10 !important;
+  overflow: hidden !important;
+}
+
+.game-card .game-card-thumb::after,
+.game-card .game-thumb::after {
+  content: '' !important;
+  position: absolute !important;
+  inset: 0 !important;
+  background: linear-gradient(180deg, transparent 40%, rgba(0,0,0,0.6) 100%) !important;
+  pointer-events: none !important;
+}
+
+/* Card info bar — studio name, RTP, etc. */
+.game-card .game-card-info,
+.game-card .card-info {
+  padding: var(--ms-space-2, 8px) var(--ms-space-3, 12px) !important;
+  background: var(--ms-bg-elevated, #222236) !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  gap: var(--ms-space-2, 8px) !important;
+}
+
+.game-card .game-card-name,
+.game-card .card-title {
+  font-weight: 600 !important;
+  font-size: 12px !important;
+  color: var(--ms-text, #e8e8f0) !important;
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+}
+
+.game-card .game-card-studio,
+.game-card .card-studio {
+  font-size: 10px !important;
+  color: var(--ms-text-muted, #66667a) !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.04em !important;
+}
+
+/* RTP badge on cards */
+.game-card .rtp-badge,
+.game-card [class*="rtp"] {
+  font-family: var(--ms-font-mono) !important;
+  font-size: 10px !important;
+  font-weight: 600 !important;
+  color: var(--ms-green, #22C55E) !important;
+  background: var(--ms-green-dim, rgba(34,197,94,0.12)) !important;
+  padding: 2px 6px !important;
+  border-radius: var(--ms-radius-sm, 6px) !important;
+}
+
+/* Hot badge */
+.game-card-hot .game-card-badge,
+.game-card .badge-hot,
+.game-tag-hot {
+  background: linear-gradient(135deg, #ef4444, #dc2626) !important;
+  color: #fff !important;
+  font-size: 9px !important;
+  font-weight: 700 !important;
+  padding: 2px 6px !important;
+  border-radius: var(--ms-radius-sm) !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.04em !important;
+}
+
+/* Multiplier badge on game cards */
+.game-card .multiplier-badge,
+.game-card [class*="multiplier"] {
+  font-family: var(--ms-font-mono) !important;
+  font-size: 10px !important;
+  color: var(--ms-gold, #F0A500) !important;
+  font-weight: 700 !important;
+}
+
+/* ── 5. HERO CAROUSEL POLISH ─────────────────────────────────────────
+   Bigger hero, better gradients, glassmorphic game info overlay */
+
+.hero-carousel,
+#heroCarousel {
+  border-radius: var(--ms-radius-xl, 20px) !important;
+  overflow: hidden !important;
+  margin-bottom: var(--ms-space-4, 16px) !important;
+  border: 1px solid var(--ms-border, rgba(255,255,255,0.06)) !important;
+  min-height: 280px !important;
+}
+
+.hero-carousel .hero-slide {
+  position: relative !important;
+  min-height: 280px !important;
+}
+
+/* Hero slide title */
+.hero-carousel .hero-game-title,
+.hero-carousel .hero-title {
+  font-family: var(--ms-font-display) !important;
+  font-size: clamp(24px, 4vw, 40px) !important;
+  font-weight: 800 !important;
+  color: #fff !important;
+  text-shadow: 0 2px 12px rgba(0,0,0,0.5) !important;
+}
+
+/* Hero CTA buttons */
+.hero-carousel .btn-play-now,
+.hero-carousel .hero-cta {
+  background: linear-gradient(135deg, var(--ms-gold, #F0A500), #E09400) !important;
+  color: #000 !important;
+  font-weight: 700 !important;
+  padding: 12px 28px !important;
+  border-radius: var(--ms-radius-pill, 9999px) !important;
+  border: none !important;
+  font-size: 14px !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.04em !important;
+  box-shadow: 0 4px 16px rgba(240,165,0,0.3) !important;
+  transition: all 0.2s ease !important;
+}
+
+.hero-carousel .btn-play-now:hover,
+.hero-carousel .hero-cta:hover {
+  transform: translateY(-2px) !important;
+  box-shadow: 0 6px 24px rgba(240,165,0,0.45) !important;
+}
+
+/* Hero navigation arrows */
+.hero-carousel .hero-nav-prev,
+.hero-carousel .hero-nav-next,
+.hero-carousel .carousel-arrow {
+  background: var(--ms-glass-bg, rgba(15,15,23,0.8)) !important;
+  backdrop-filter: blur(8px) !important;
+  -webkit-backdrop-filter: blur(8px) !important;
+  border: 1px solid var(--ms-glass-border, rgba(255,255,255,0.08)) !important;
+  border-radius: 50% !important;
+  width: 40px !important;
+  height: 40px !important;
+  color: var(--ms-text, #e8e8f0) !important;
+  transition: all 0.2s ease !important;
+}
+
+.hero-carousel .hero-nav-prev:hover,
+.hero-carousel .hero-nav-next:hover,
+.hero-carousel .carousel-arrow:hover {
+  background: rgba(240,165,0,0.15) !important;
+  border-color: var(--ms-gold, #F0A500) !important;
+  color: var(--ms-gold, #F0A500) !important;
+}
+
+/* ── 6. FEATURED STUDIO BANNER ───────────────────────────────────────*/
+
+.featured-studio-banner,
+#featuredStudioBanner {
+  background: linear-gradient(135deg, var(--ms-bg-surface, #1a1a28), rgba(240,165,0,0.06)) !important;
+  border: 1px solid rgba(240,165,0,0.15) !important;
+  border-radius: var(--ms-radius-lg, 14px) !important;
+  padding: var(--ms-space-4, 16px) var(--ms-space-6, 24px) !important;
+  margin-bottom: var(--ms-space-4, 16px) !important;
+  display: flex !important;
+  align-items: center !important;
+}
+
+.featured-studio-banner .explore-btn,
+.featured-studio-banner button {
+  background: transparent !important;
+  border: 1px solid var(--ms-gold, #F0A500) !important;
+  color: var(--ms-gold, #F0A500) !important;
+  border-radius: var(--ms-radius-pill) !important;
+  padding: 8px 20px !important;
+  font-weight: 600 !important;
+  font-size: 12px !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.04em !important;
+  transition: all 0.2s ease !important;
+}
+
+.featured-studio-banner .explore-btn:hover,
+.featured-studio-banner button:hover {
+  background: var(--ms-gold-dim, rgba(240,165,0,0.12)) !important;
+  box-shadow: 0 0 16px rgba(240,165,0,0.2) !important;
+}
+
+/* ── 7. SIDEBAR POLISH ───────────────────────────────────────────────*/
+
+.casino-sidebar, #casinoSidebar {
+  background: var(--ms-bg-dark, #0f0f17) !important;
+  border-right: 1px solid var(--ms-border, rgba(255,255,255,0.06)) !important;
+}
+
+.casino-sidebar a,
+.casino-sidebar .sidebar-item,
+.casino-sidebar .csb-item {
+  color: var(--ms-text-secondary, #9595a8) !important;
+  font-size: 13px !important;
+  font-weight: 500 !important;
+  padding: 10px 16px !important;
+  border-radius: var(--ms-radius-md, 10px) !important;
+  transition: all 0.15s ease !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: var(--ms-space-3, 12px) !important;
+}
+
+.casino-sidebar a:hover,
+.casino-sidebar .sidebar-item:hover,
+.casino-sidebar .csb-item:hover {
+  background: var(--ms-bg-hover, #2a2a40) !important;
+  color: var(--ms-text, #e8e8f0) !important;
+}
+
+.casino-sidebar .active,
+.casino-sidebar .sidebar-item-active {
+  background: var(--ms-gold-dim, rgba(240,165,0,0.12)) !important;
+  color: var(--ms-gold, #F0A500) !important;
+}
+
+.casino-sidebar .section-label,
+.casino-sidebar .csb-section-label {
+  font-size: 10px !important;
+  color: var(--ms-text-dim, #44445a) !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.1em !important;
+  font-weight: 600 !important;
+  padding: 16px 16px 4px !important;
+}
+
+/* ── 8. FILTER TABS & PROVIDER STRIP ─────────────────────────────────*/
+
+.filter-tabs, #filterTabs,
+.provider-filter-row, #providerFilterRow,
+.theme-category-row, #themeCategoryRow,
+.mechanic-filter-bar, #mechanicFilterBar {
+  display: flex !important;
+  gap: var(--ms-space-2, 8px) !important;
+  padding: var(--ms-space-2, 8px) 0 !important;
+  overflow-x: auto !important;
+  scrollbar-width: none !important;
+}
+
+.filter-tabs::-webkit-scrollbar,
+.provider-filter-row::-webkit-scrollbar,
+.theme-category-row::-webkit-scrollbar {
+  display: none !important;
+}
+
+.filter-tab, .provider-chip, .theme-chip, .mechanic-chip {
+  background: var(--ms-bg-surface, #1a1a28) !important;
+  border: 1px solid var(--ms-border, rgba(255,255,255,0.06)) !important;
+  border-radius: var(--ms-radius-pill, 9999px) !important;
+  padding: 6px 14px !important;
+  color: var(--ms-text-secondary, #9595a8) !important;
+  font-size: 12px !important;
+  font-weight: 500 !important;
+  white-space: nowrap !important;
+  cursor: pointer !important;
+  transition: all 0.15s ease !important;
+}
+
+.filter-tab:hover, .provider-chip:hover, .theme-chip:hover, .mechanic-chip:hover {
+  background: var(--ms-bg-hover, #2a2a40) !important;
+  border-color: var(--ms-border-hover, rgba(255,255,255,0.12)) !important;
+  color: var(--ms-text, #e8e8f0) !important;
+}
+
+/* ── 9. BOTTOM NAV POLISH ────────────────────────────────────────────*/
+
+.mobile-bottom-nav, #mobileBottomNav {
+  background: var(--ms-glass-bg, rgba(15,15,23,0.9)) !important;
+  backdrop-filter: blur(16px) saturate(1.5) !important;
+  -webkit-backdrop-filter: blur(16px) saturate(1.5) !important;
+  border-top: 1px solid var(--ms-glass-border, rgba(255,255,255,0.08)) !important;
+  padding: 8px 0 env(safe-area-inset-bottom, 0) !important;
+  z-index: 100 !important;
+}
+
+.mobile-bottom-nav .nav-item,
+.mobile-bottom-nav button {
+  color: var(--ms-text-muted, #66667a) !important;
+  font-size: 10px !important;
+  transition: color 0.15s ease !important;
+}
+
+.mobile-bottom-nav .nav-item:hover,
+.mobile-bottom-nav button:hover {
+  color: var(--ms-gold, #F0A500) !important;
+}
+
+.mobile-bottom-nav .nav-item.active,
+.mobile-bottom-nav .active {
+  color: var(--ms-gold, #F0A500) !important;
+}
+
+/* ── 10. QUICK DEPOSIT & SESSION TIMER ───────────────────────────────*/
+
+.quick-deposit-fab, #quickDepositBtn, [class*="quick-deposit"] {
+  background: linear-gradient(135deg, var(--ms-green, #22C55E), #16a34a) !important;
+  border: none !important;
+  border-radius: var(--ms-radius-pill, 9999px) !important;
+  padding: 12px 20px !important;
+  color: #fff !important;
+  font-weight: 700 !important;
+  font-size: 13px !important;
+  box-shadow: 0 4px 16px rgba(34,197,94,0.35) !important;
+  transition: all 0.2s ease !important;
+  z-index: 50 !important;
+}
+
+.quick-deposit-fab:hover, #quickDepositBtn:hover {
+  transform: translateY(-2px) !important;
+  box-shadow: 0 6px 24px rgba(34,197,94,0.5) !important;
+}
+
+#rg-session-timer, .session-timer, [class*="session-timer"] {
+  background: var(--ms-bg-surface, #1a1a28) !important;
+  border: 1px solid var(--ms-border, rgba(255,255,255,0.06)) !important;
+  border-radius: var(--ms-radius-pill) !important;
+  font-family: var(--ms-font-mono) !important;
+  font-size: 12px !important;
+  color: var(--ms-text-muted, #66667a) !important;
+  padding: 8px 16px !important;
+  z-index: 50 !important;
+}
+
+/* ── 11. IDLE POPUP / ATTRACT MODE ───────────────────────────────────*/
+
+[class*="idle-prompt"],
+[class*="attract-popup"],
+div[style*="Still spinning"] {
+  background: var(--ms-glass-bg, rgba(15,15,23,0.9)) !important;
+  backdrop-filter: blur(12px) !important;
+  -webkit-backdrop-filter: blur(12px) !important;
+  border: 1px solid var(--ms-glass-border, rgba(255,255,255,0.08)) !important;
+  border-radius: var(--ms-radius-lg, 14px) !important;
+  box-shadow: var(--ms-shadow-lg, 0 8px 32px rgba(0,0,0,0.5)) !important;
+  padding: var(--ms-space-5, 20px) !important;
+  color: var(--ms-text, #e8e8f0) !important;
+}
+
+/* ── 12. CASINO FOOTER ───────────────────────────────────────────────*/
+
+.casino-footer, #casinoFooter {
+  background: var(--ms-bg-dark, #0f0f17) !important;
+  border-top: 1px solid var(--ms-border, rgba(255,255,255,0.06)) !important;
+  padding: var(--ms-space-10, 40px) var(--ms-space-6, 24px) !important;
+  color: var(--ms-text-muted, #66667a) !important;
+}
+
+.casino-footer a {
+  color: var(--ms-text-secondary, #9595a8) !important;
+  transition: color 0.15s ease !important;
+}
+
+.casino-footer a:hover {
+  color: var(--ms-gold, #F0A500) !important;
+}
+
+/* ── 13. DAILY BONUS MODAL (JS-created) ──────────────────────────────
+   Ensure the dynamically created daily bonus modal matches premium design */
+
+#dailyBonusModal {
+  z-index: 1050 !important;
+}
+
+#dailyBonusModal .db-card {
+  background: var(--ms-bg-surface, #1a1a28) !important;
+  border: 1px solid rgba(240,165,0,0.2) !important;
+  border-radius: var(--ms-radius-xl, 20px) !important;
+  box-shadow: 0 24px 64px rgba(0,0,0,0.6) !important;
+}
+
+#dailyBonusModal .db-title {
+  color: var(--ms-gold, #F0A500) !important;
+  font-family: var(--ms-font-display) !important;
+}
+
+#dailyBonusModal .db-claim-btn {
+  background: linear-gradient(135deg, var(--ms-gold, #F0A500), #E09400) !important;
+  border-radius: var(--ms-radius-md, 10px) !important;
+  font-family: var(--ms-font-display) !important;
+}
+
+/* ── 14. MICRO-INTERACTIONS ──────────────────────────────────────────*/
+
+/* Smooth hover lift for all interactive elements */
+a, button, .clickable, [role="button"] {
+  transition: color 0.15s ease, background-color 0.15s ease, transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease !important;
+}
+
+/* Focus visible ring for accessibility */
+:focus-visible {
+  outline: 2px solid var(--ms-gold, #F0A500) !important;
+  outline-offset: 2px !important;
+}
+
+/* Reduced motion preference */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+  #matrixCanvas { display: none !important; }
+}
+
+/* ── 15. GAMES GRID LAYOUT ───────────────────────────────────────────*/
+
+.games-grid, #hotGames, #allGames {
+  display: grid !important;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)) !important;
+  gap: var(--ms-space-3, 12px) !important;
+  padding: var(--ms-space-2, 8px) 0 !important;
+}
+
+/* ── 16. PROVIDER SHOWCASE ───────────────────────────────────────────*/
+
+.provider-showcase, #providerShowcase {
+  background: var(--ms-bg-base, #111318) !important;
+  border: 1px solid var(--ms-border) !important;
+  border-radius: var(--ms-radius-lg) !important;
+  padding: var(--ms-space-4) !important;
+  margin-bottom: var(--ms-space-4) !important;
+}
+
+/* ── 17. CHALLENGES BAR ──────────────────────────────────────────────*/
+
+#challengesBar, .challenges-bar {
+  background: linear-gradient(135deg, var(--ms-bg-base) 0%, rgba(0,212,255,0.04) 100%) !important;
+  border: 1px solid rgba(0,212,255,0.12) !important;
+  border-radius: var(--ms-radius-lg) !important;
+  padding: var(--ms-space-3) var(--ms-space-4) !important;
+  margin-bottom: var(--ms-space-4) !important;
+}
+
+/* ── 18. PROMO BAR — show & polish ───────────────────────────────────*/
+
+.promo-bar {
+  display: block !important;
+  background: linear-gradient(90deg, var(--ms-bg-dark), var(--ms-bg-base), var(--ms-bg-dark)) !important;
+  border-bottom: 1px solid var(--ms-border) !important;
+  height: 32px !important;
+  overflow: hidden !important;
+  font-size: 11px !important;
+  color: var(--ms-text-muted) !important;
+}
+
+.promo-bar .promo-item {
+  color: var(--ms-text-secondary) !important;
+}
+
+.promo-bar .promo-sep {
+  color: var(--ms-gold-dim) !important;
+  margin: 0 12px !important;
+}
+
+/* ── 19. FEATURED SPOTLIGHT (game card row) ──────────────────────────*/
+
+.featured-spotlight, #featuredSpotlight {
+  display: flex !important;
+  gap: var(--ms-space-3) !important;
+  overflow-x: auto !important;
+  padding: var(--ms-space-3) 0 !important;
+  scrollbar-width: none !important;
+  background: transparent !important;
+  border: none !important;
+}
+
+.featured-spotlight::-webkit-scrollbar { display: none !important; }
+
+.featured-card {
+  min-width: 160px !important;
+  border-radius: var(--ms-radius-md) !important;
+  overflow: hidden !important;
+  border: 1px solid var(--ms-border) !important;
+  transition: all 0.2s ease !important;
+  flex-shrink: 0 !important;
+}
+
+.featured-card:hover {
+  border-color: rgba(240,165,0,0.3) !important;
+  transform: translateY(-3px) !important;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.4) !important;
+}
