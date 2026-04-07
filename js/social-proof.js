@@ -1,7 +1,11 @@
 /* Matrix Spins - Social Proof Win Notifications */
 (function() {
     'use strict';
-    
+
+    function cryptoRandom() {
+      return crypto.getRandomValues(new Uint32Array(1))[0] / 0xFFFFFFFF;
+    }
+
     const WINNER_NAMES = ['Lucky_Star', 'GoldRush99', 'SpinMaster', 'JackpotJane', 'SlotKing', 'WinnerCircle',
         'MegaSpin', 'FortuneX', 'DiamondDave', 'WildCard77', 'BonusHunter', 'CashFlow', 'HighRoller',
         'SpinQueen', 'GoldenEagle', 'NeonNights', 'ThunderBolt', 'StarChaser', 'MysticWolf', 'PhoenixFire'];
@@ -9,8 +13,8 @@
     const GAMES = ['Gates of Olympus', 'Sweet Bonanza', 'Wolf Gold', 'Buffalo Stampede', 'Dragon Hoard',
         'Pharaohs Legacy', 'Viking Forge', 'Olympus Thunder', 'Cosmic Cash', 'Golden Genie'];
     
-    function randomFrom(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
-    function randomWin() { return (Math.random() * 490 + 10).toFixed(2); }
+    function randomFrom(arr) { return arr[Math.floor(cryptoRandom() * arr.length)]; }
+    function randomWin() { return (cryptoRandom() * 490 + 10).toFixed(2); }
     
     function showWinToast() {
         const name = randomFrom(WINNER_NAMES);
@@ -35,7 +39,7 @@
     
     // Show a notification every 30-90 seconds
     function scheduleNext() {
-        var delay = 30000 + Math.random() * 60000;
+        var delay = 30000 + cryptoRandom() * 60000;
         setTimeout(function() { showWinToast(); scheduleNext(); }, delay);
     }
     
