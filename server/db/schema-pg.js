@@ -1,11 +1,11 @@
 /**
- * PostgreSQL schema DDL — translated from the SQLite originals.
+ * PostgreSQL schema DDL â€” translated from the SQLite originals.
  *
  * Key differences:
- *   AUTOINCREMENT  → SERIAL
- *   REAL (money)   → NUMERIC(15,2)
- *   datetime('now') → NOW()
- *   INTEGER bool   → INTEGER (kept for compat — PG supports it fine)
+ *   AUTOINCREMENT  â†’ SERIAL
+ *   REAL (money)   â†’ NUMERIC(15,2)
+ *   datetime('now') â†’ NOW()
+ *   INTEGER bool   â†’ INTEGER (kept for compat â€” PG supports it fine)
  */
 
 'use strict';
@@ -705,11 +705,9 @@ const TABLES = [
         stock INTEGER DEFAULT -1,
         active INTEGER DEFAULT 1,
         created_at TIMESTAMPTZ DEFAULT NOW()
-    )`
-];
+    )`,
 
-
-    // ── Spec §4: Provably Fair Sessions ──
+    // â”€â”€ Spec Â§4: Provably Fair Sessions â”€â”€
     `CREATE TABLE IF NOT EXISTS player_sessions (
         id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
         player_id INTEGER NOT NULL REFERENCES users(id),
@@ -725,7 +723,7 @@ const TABLES = [
         seed_revealed INTEGER DEFAULT 0
     )`,
 
-    // ── Spec §4: Self-Exclusion (proper schema) ──
+    // â”€â”€ Spec Â§4: Self-Exclusion (proper schema) â”€â”€
     `CREATE TABLE IF NOT EXISTS self_exclusions_v2 (
         id SERIAL PRIMARY KEY,
         player_id INTEGER NOT NULL REFERENCES users(id),
@@ -737,7 +735,7 @@ const TABLES = [
         created_at TIMESTAMPTZ DEFAULT NOW()
     )`,
 
-    // ── Spec §4: Responsible Gambling Limits ──
+    // â”€â”€ Spec Â§4: Responsible Gambling Limits â”€â”€
     `CREATE TABLE IF NOT EXISTS player_limits (
         id SERIAL PRIMARY KEY,
         player_id INTEGER NOT NULL REFERENCES users(id),
@@ -751,7 +749,7 @@ const TABLES = [
         UNIQUE(player_id, limit_type, period)
     )`,
 
-    // ── Spec §3: Blockchain Transaction Log ──
+    // â”€â”€ Spec Â§3: Blockchain Transaction Log â”€â”€
     `CREATE TABLE IF NOT EXISTS chain_transactions (
         id SERIAL PRIMARY KEY,
         player_id INTEGER NOT NULL REFERENCES users(id),
@@ -827,7 +825,7 @@ const INDEXES = [
 ];
 
 
-/** Extra columns added via migrations (column name → PG definition). */
+/** Extra columns added via migrations (column name â†’ PG definition). */
 const USER_MIGRATIONS = [
     ['display_name', 'TEXT'],
     ['avatar_url', 'TEXT'],
@@ -919,7 +917,7 @@ const USER_MIGRATIONS = [
     ['last_login_date', 'TEXT'],
 ];
 
-/** Extra columns added to withdrawals table via migrations (column name → PG definition). */
+/** Extra columns added to withdrawals table via migrations (column name â†’ PG definition). */
 const WITHDRAWAL_MIGRATIONS = [
     ['otp_code', 'TEXT'],
     ['otp_attempts', 'INTEGER DEFAULT 0'],
