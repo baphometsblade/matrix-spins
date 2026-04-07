@@ -489,14 +489,65 @@
             drawGrid();
 
             if (frames < maxFrames) {
-                requestAnimationFrame(frame);
+                setTimeout(frame, 50);
             } else {
                 grid = finalGrid;
                 drawGrid();
                 if (callback) callback();
             }
         }
-        requestAnimationFrame(frame);
+        setTimeout(frame, 50);
+    }
+
+    // Detect if API server is available (checked once on load)
+    var API_AVAILABLE = false;
+    (function checkAPI() {
+        var x = new XMLHttpRequest();
+        x.open('HEAD', '/api/health', true);
+        x.timeout = 1500;
+        x.onload = function() { if (x.status === 200) API_AVAILABLE = true; };
+        x.onerror = function() { API_AVAILABLE = false; };
+        x.ontimeout = function() { API_AVAILABLE = false; };
+        try { x.send(); } catch(e) {}
+    })();
+
+    function demoSpin(betCents) {
+        var demoGrid = [];
+        for (var r = 0; r < GRID_ROWS; r++) {
+            var row = [];
+            for (var c = 0; c < GRID_COLS; c++) {
+                row.push(SYMBOLS[Math.floor(Math.random() * SYMBOLS.length)]);
+            }
+            demoGrid.push(row);
+        }
+        // Simple win check: if any row has 3+ matching, it's a win
+        var winAmount = 0;
+        for (var ri = 0; ri < demoGrid.length; ri++) {
+            var streak = 1;
+            for (var ci = 1; ci < demoGrid[ri].length; ci++) {
+                if (demoGrid[ri][ci] === demoGrid[ri][ci-1]) streak++;
+                else break;
+            }
+            if (streak >= 3) {
+                var sym = demoGrid[ri][0];
+                var idx = SYMBOLS.indexOf(sym);
+                var multiplier = (SYMBOLS.length - idx) * streak;
+                winAmount += betCents * multiplier;
+            }
+        }
+        grid = demoGrid; drawGrid(); (function() {
+            if (winAmount > 0) {
+                balance += winAmount;
+                updateBalance();
+            }
+            showWin(winAmount);
+            if (window.RG && window.RG.onSpinComplete) {
+                window.RG.onSpinComplete(betCents, winAmount);
+            }
+            spinning = false;
+            spinBtn.disabled = false;
+            spinBtn.textContent = 'SPIN';
+        })();
     }
 
     async function doSpin() {
@@ -514,13 +565,16 @@
         balance -= betCents;
         updateBalance();
 
-        // Notify responsible gambling if available
-        if (window.RG && window.RG.onSpinComplete) {
-            // Pre-spin tracking
+        // If no API server, run pure client-side demo
+        if (!API_AVAILABLE) {
+            demoSpin(betCents);
+            return;
         }
 
         try {
             var token = getToken();
+            var ac = new AbortController();
+            setTimeout(function(){ac.abort()},3000);
             var resp = await fetch('/api/spin', {
                 method: 'POST',
                 headers: {
@@ -530,33 +584,19 @@
                 body: JSON.stringify({
                     gameId: GAME_ID,
                     betAmount: betCents
-                })
+                }),
+                signal: ac.signal
             });
 
             if (!resp.ok) {
-                // Fallback to demo mode
-                var demoGrid = [];
-                for (var r = 0; r < GRID_ROWS; r++) {
-                    var row = [];
-                    for (var c = 0; c < GRID_COLS; c++) {
-                        row.push(SYMBOLS[Math.floor(Math.random() * SYMBOLS.length)]);
-                    }
-                    demoGrid.push(row);
-                }
-                animateSpin(demoGrid, function() {
-                    spinning = false;
-                    spinBtn.disabled = false;
-                    spinBtn.textContent = 'SPIN';
-                });
+                API_AVAILABLE = false;
+                demoSpin(betCents);
                 return;
             }
 
             var result = await resp.json();
             var serverGrid = result.grid || result.reels || [];
-
-            // Normalize grid
             if (serverGrid.length && !Array.isArray(serverGrid[0])) {
-                // Flat array → 2D
                 var g2d = [];
                 for (var ri = 0; ri < GRID_ROWS; ri++) {
                     g2d.push(serverGrid.slice(ri * GRID_COLS, (ri + 1) * GRID_COLS));
@@ -569,11 +609,9 @@
                 balance += winAmount;
                 updateBalance();
                 showWin(winAmount);
-
                 if (window.RG && window.RG.onSpinComplete) {
                     window.RG.onSpinComplete(betCents, winAmount);
                 }
-
                 spinning = false;
                 spinBtn.disabled = false;
                 spinBtn.textContent = 'SPIN';
@@ -581,22 +619,11 @@
 
         } catch (err) {
             console.warn('[GamePage] Spin error, falling back to demo:', err.message);
-            // Demo fallback
-            var fallbackGrid = [];
-            for (var r2 = 0; r2 < GRID_ROWS; r2++) {
-                var row2 = [];
-                for (var c2 = 0; c2 < GRID_COLS; c2++) {
-                    row2.push(SYMBOLS[Math.floor(Math.random() * SYMBOLS.length)]);
-                }
-                fallbackGrid.push(row2);
-            }
-            animateSpin(fallbackGrid, function() {
-                spinning = false;
-                spinBtn.disabled = false;
-                spinBtn.textContent = 'SPIN';
-            });
+            API_AVAILABLE = false;
+            demoSpin(betCents);
         }
     }
+
 
     // Init
     function init() {
