@@ -3009,7 +3009,7 @@ async function walletRenderVipDepositSection(parentContainer) {
     var available = !!data.available;
     var nextAvailableAt = data.nextAvailableAt || null;
     var minDeposit = parseFloat(data.minDepositRequired) || 20;
-    var wageringMult = parseInt(data.wageringMultiplier, 10) || 20;
+    var wageringMult = parseInt(data.wageringMultiplier, 10) || 30;
 
     // Tier badge
     var badge = document.createElement('div');
