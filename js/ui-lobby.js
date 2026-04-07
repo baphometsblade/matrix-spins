@@ -94,10 +94,10 @@
             let html = '';
             for (let i = 0; i < count; i++) {
                 html += `<div class="game-card-skeleton">
-                    <div class="skeleton-thumb"></div>
-                    <div class="skeleton-text">
-                        <div class="skeleton-line"></div>
-                        <div class="skeleton-line"></div>
+                    <div class="game-card-skeleton-art"></div>
+                    <div class="game-card-skeleton-info">
+                        <div class="game-card-skeleton-line"></div>
+                        <div class="game-card-skeleton-line short"></div>
                     </div>
                 </div>`;
             }
@@ -3297,7 +3297,7 @@ async function _renderFeaturedSpotlight() {
   function _initLazyThumbnails() {
     if (!('IntersectionObserver' in window)) {
       // Fallback: apply all immediately for browsers without IO support.
-      document.querySelectorAll('.game-thumbnail[data-bg]').forEach(function(el) {
+      document.querySelectorAll('.game-thumbnail[data-bg], .game-card-art[data-bg]').forEach(function(el) {
         _applyBg(el);
       });
       return;
@@ -3312,26 +3312,34 @@ async function _renderFeaturedSpotlight() {
         });
       }, { rootMargin: '600px 0px', threshold: 0 });
     }
-    document.querySelectorAll('.game-thumbnail[data-bg]').forEach(function(el) {
+    document.querySelectorAll('.game-thumbnail[data-bg], .game-card-art[data-bg]').forEach(function(el) {
       _thumbObserver.observe(el);
     });
   }
 
-  /** Apply background image, preferring WebP over PNG for smaller file sizes. */
+  /** Apply background image, preferring WebP over PNG for smaller file sizes.
+   *  For .game-card-art elements that contain an <img>, sets img.src instead of backgroundImage. */
   function _applyBg(el) {
     var src = el.getAttribute('data-bg');
     if (!src) return;
     el.removeAttribute('data-bg');
-    el.style.backgroundSize     = 'cover';
-    el.style.backgroundPosition = 'center';
+    var img = el.classList.contains('game-card-art') ? el.querySelector('img') : null;
     var webpSrc = src.replace(/\.png$/, '.webp');
-    if (webpSrc !== src) {
-      var probe = new Image();
-      probe.onload  = function() { el.style.backgroundImage = 'url(\'' + webpSrc + '\')'; };
-      probe.onerror = function() { el.style.backgroundImage = 'url(\'' + src + '\')'; };
-      probe.src = webpSrc;
+    if (img) {
+      // Use <img> element for game-card-art: set srcset with webp fallback
+      img.onerror = function() { img.src = src; img.onerror = null; };
+      img.src = webpSrc !== src ? webpSrc : src;
     } else {
-      el.style.backgroundImage = 'url(\'' + src + '\')';
+      el.style.backgroundSize     = 'cover';
+      el.style.backgroundPosition = 'center';
+      if (webpSrc !== src) {
+        var probe = new Image();
+        probe.onload  = function() { el.style.backgroundImage = 'url(\'' + webpSrc + '\')'; };
+        probe.onerror = function() { el.style.backgroundImage = 'url(\'' + src + '\')'; };
+        probe.src = webpSrc;
+      } else {
+        el.style.backgroundImage = 'url(\'' + src + '\')';
+      }
     }
   }
 
