@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════════════════════════════
-   ROYAL SLOTS — Premium V2 Fixes
+   MATRIX SPINS — Premium V2 Fixes
    Addresses: container visibility, widget backgrounds, game card polish,
    footer placement, micro-interactions, glassmorphism, idle popups
    Load AFTER premium-redesign.css and premium-polish.css
@@ -606,4 +606,209 @@ a, button, .clickable, [role="button"] {
   border-color: rgba(240,165,0,0.3) !important;
   transform: translateY(-3px) !important;
   box-shadow: 0 8px 24px rgba(0,0,0,0.4) !important;
+}
+
+
+/* ═══════════════════════════════════════════════════════════════════════
+   PREMIUM V2.1 — Promo Bar, Certification Badges, Micro-interactions
+   ═══════════════════════════════════════════════════════════════════════ */
+
+/* ── 20. PROMO BAR — Enable & Premium Style ─────────────────────────── */
+.promo-bar {
+  display: flex !important;
+  overflow: hidden !important;
+  background: linear-gradient(90deg, 
+    rgba(240,165,0,0.12) 0%, 
+    rgba(255,208,74,0.08) 50%, 
+    rgba(240,165,0,0.12) 100%) !important;
+  border-top: 1px solid rgba(240,165,0,0.2) !important;
+  border-bottom: 1px solid rgba(240,165,0,0.2) !important;
+  padding: 6px 0 !important;
+  font-size: 12px !important;
+  font-weight: 600 !important;
+  letter-spacing: 0.5px !important;
+  text-transform: uppercase !important;
+  color: var(--ms-gold, #F0A500) !important;
+  white-space: nowrap !important;
+  position: relative !important;
+}
+
+.promo-bar .promo-content,
+.promo-bar .promo-ticker {
+  display: inline-block !important;
+  animation: promo-scroll 30s linear infinite !important;
+  padding-right: 60px !important;
+}
+
+@keyframes promo-scroll {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+
+.promo-bar::before,
+.promo-bar::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 60px;
+  z-index: 2;
+  pointer-events: none;
+}
+
+.promo-bar::before {
+  left: 0;
+  background: linear-gradient(90deg, var(--ms-bg-darkest, #0a0a0f) 0%, transparent 100%);
+}
+
+.promo-bar::after {
+  right: 0;
+  background: linear-gradient(270deg, var(--ms-bg-darkest, #0a0a0f) 0%, transparent 100%);
+}
+
+/* ── 21. CERTIFICATION BADGES — Footer Trust Section ──────────────── */
+.footer-certifications,
+.footer-badges,
+.operator-license {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 16px !important;
+  flex-wrap: wrap !important;
+  padding: 12px 0 !important;
+  opacity: 0.7 !important;
+  transition: opacity 0.3s ease !important;
+}
+
+.footer-certifications:hover,
+.footer-badges:hover {
+  opacity: 1 !important;
+}
+
+.footer-certifications img,
+.footer-badges img {
+  height: 28px !important;
+  width: auto !important;
+  filter: grayscale(0.5) brightness(0.8) !important;
+  transition: filter 0.3s ease !important;
+}
+
+.footer-certifications img:hover,
+.footer-badges img:hover {
+  filter: grayscale(0) brightness(1) !important;
+}
+
+/* ── 22. ENHANCED MICRO-INTERACTIONS ────────────────────────────────── */
+
+/* Sidebar items — subtle gold accent on hover */
+#casinoSidebar a:hover,
+#casinoSidebar .sidebar-item:hover {
+  background: rgba(240,165,0,0.06) !important;
+  transform: translateX(2px) !important;
+  transition: all 0.2s ease !important;
+}
+
+/* Search input focus glow */
+.search-input:focus,
+input[type="search"]:focus,
+.search-bar input:focus {
+  border-color: var(--ms-gold, #F0A500) !important;
+  box-shadow: 0 0 0 2px rgba(240,165,0,0.15),
+              0 0 12px rgba(240,165,0,0.08) !important;
+  outline: none !important;
+  transition: all 0.2s ease !important;
+}
+
+/* Button press effect */
+.p5-btn:active,
+.btn:active,
+button:active:not(.p5-modal-close) {
+  transform: scale(0.97) !important;
+  transition: transform 0.1s ease !important;
+}
+
+/* Jackpot ticker pulse */
+.jackpot-ticker-bar,
+#jackpotTicker {
+  animation: jackpot-glow 3s ease-in-out infinite alternate !important;
+}
+
+@keyframes jackpot-glow {
+  0% { box-shadow: 0 0 8px rgba(240,165,0,0.1); }
+  100% { box-shadow: 0 0 16px rgba(240,165,0,0.25); }
+}
+
+/* ── 23. LIVE WINS TICKER — Premium scrolling ────────────────────── */
+.live-wins-bar,
+.live-wins {
+  background: linear-gradient(90deg,
+    rgba(240,165,0,0.05) 0%,
+    transparent 20%,
+    transparent 80%,
+    rgba(240,165,0,0.05) 100%) !important;
+}
+
+.live-wins-bar .win-amount,
+.live-wins .win-amount {
+  color: var(--ms-gold-light, #FFD04A) !important;
+  font-weight: 700 !important;
+}
+
+/* ── 24. PHASE 5 MODAL CLOSE BUTTON ──────────────────────────────── */
+.p5-modal-close {
+  position: absolute !important;
+  top: 10px !important;
+  right: 12px !important;
+  background: none !important;
+  border: none !important;
+  color: #888 !important;
+  font-size: 26px !important;
+  cursor: pointer !important;
+  padding: 4px 10px !important;
+  z-index: 2 !important;
+  transition: color 0.15s ease !important;
+  line-height: 1 !important;
+}
+
+.p5-modal-close:hover {
+  color: #fff !important;
+}
+
+/* ── 25. DEPOSIT / CTA BUTTONS — Gold gradient premium feel ─────── */
+.deposit-btn,
+[class*="deposit-btn"],
+.quick-deposit-btn {
+  background: linear-gradient(135deg, var(--ms-gold, #F0A500) 0%, #d4940a 100%) !important;
+  color: #000 !important;
+  font-weight: 700 !important;
+  border: none !important;
+  text-shadow: 0 1px 0 rgba(255,255,255,0.2) !important;
+  box-shadow: 0 2px 8px rgba(240,165,0,0.3) !important;
+  transition: all 0.2s ease !important;
+}
+
+.deposit-btn:hover,
+[class*="deposit-btn"]:hover,
+.quick-deposit-btn:hover {
+  box-shadow: 0 4px 16px rgba(240,165,0,0.4) !important;
+  transform: translateY(-1px) !important;
+}
+
+/* ── 26. SCROLLBAR STYLING ──────────────────────────────────────── */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--ms-bg-darkest, #0a0a0f);
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(240,165,0,0.3);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(240,165,0,0.5);
 }
