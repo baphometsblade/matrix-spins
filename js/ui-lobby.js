@@ -902,7 +902,7 @@ function renderGames() {
             // data-bg stores the URL; the observer applies it only when the card is visible.
             const hasThumbnail = !!game.thumbnail;
             const thumbStyle = hasThumbnail
-                ? `background: #1a2332;`
+                ? `background-color: #1a2332; background-size: cover; background-position: center;`
                 : `background: ${game.bgGradient};`;
             const thumbDataBg = hasThumbnail ? ` data-bg="${game.thumbnail}"` : '';
             const isJackpot = game.tag === 'JACKPOT' || game.tagClass === 'tag-jackpot';
