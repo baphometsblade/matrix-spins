@@ -2823,8 +2823,6 @@
     _initGeoCompliance654();       // 651-658 - geo compliance
     _initAgeGate655();             // 651-658 - age gate
     _initResponsibleGaming656();   // 651-658 - responsible gaming v2
-    _initSecurityHeaders657();     // 651-658 - security headers
-    _initAuditLogger658();         // 651-658 - audit logger - ARIA labels - milestones - connection quality
     if (typeof _trackRecentGame595 === "function" && typeof currentGame !== "undefined" && currentGame) _trackRecentGame595(currentGame.id, currentGame.name); // 595-602
     _showAgeGate();            // 339-346 — age gate
     _checkTosAcceptance();     // 339-346 — tos
