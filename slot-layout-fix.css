@@ -29,7 +29,7 @@
   overflow: hidden !important;
   margin: 0 !important;
   padding: 0 !important;
-  position: relative !important;
+  position: absolute !important;
   background: #0a0a12 !important;
 }
 
@@ -95,7 +95,7 @@
   border-bottom: 1px solid rgba(255,255,255,0.06) !important;
   flex-shrink: 0 !important;
   z-index: 10 !important;
-  position: relative !important;
+  position: absolute !important;
   width: 100% !important;
   box-sizing: border-box !important;
 }
@@ -129,7 +129,7 @@
   max-width: 100% !important;
   min-height: 0 !important;
   overflow: hidden !important;
-  position: relative !important;
+  position: absolute !important;
   z-index: 5 !important;
   padding: 8px 0 !important;
 }
@@ -172,7 +172,7 @@
   border-top: 1px solid rgba(255,255,255,0.06) !important;
   flex-shrink: 0 !important;
   z-index: 10 !important;
-  position: relative !important;
+  position: absolute !important;
   width: 100% !important;
   box-sizing: border-box !important;
 }
@@ -188,7 +188,7 @@
   border: 3px solid rgba(255,255,255,0.15) !important;
   box-shadow: 0 0 20px rgba(255,215,0,0.15), inset 0 1px 0 rgba(255,255,255,0.1) !important;
   transition: all 0.2s ease !important;
-  position: relative !important;
+  position: absolute !important;
   z-index: 20 !important;
   margin-top: -14px !important;
   text-transform: uppercase !important;
