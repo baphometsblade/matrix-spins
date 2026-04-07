@@ -1,11 +1,9 @@
 {
   "version": 2,
-  "name": "royal-slots-casino",
-  "buildCommand": null,
+  "buildCommand": "",
+  "installCommand": "",
   "outputDirectory": ".",
-  "rewrites": [
-    { "source": "/api/(.*)", "destination": "/api/$1" }
-  ],
+  "framework": null,
   "headers": [
     {
       "source": "/(.*)",

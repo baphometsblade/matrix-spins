@@ -3334,11 +3334,11 @@ async function _renderFeaturedSpotlight() {
       el.style.backgroundPosition = 'center';
       if (webpSrc !== src) {
         var probe = new Image();
-        probe.onload  = function() { el.style.backgroundImage = 'url(\'' + webpSrc + '\')'; };
-        probe.onerror = function() { el.style.backgroundImage = 'url(\'' + src + '\')'; };
+        probe.onload  = function() { el.style.setProperty('background-image', 'url(\'' + webpSrc + '\')', 'important'); };
+        probe.onerror = function() { el.style.setProperty('background-image', 'url(\'' + src + '\')', 'important'); };
         probe.src = webpSrc;
       } else {
-        el.style.backgroundImage = 'url(\'' + src + '\')';
+        el.style.setProperty('background-image', 'url(\'' + src + '\')', 'important');
       }
     }
   }
@@ -3348,7 +3348,7 @@ async function _renderFeaturedSpotlight() {
 
 /* ── Sprint 82: Daily Win Goal bar ── */
 (function() {
-    var _DG_KEY = typeof STORAGE_KEY_DAILY_GOAL !== 'undefined' ? STORAGE_KEY_DAILY_GOAL : 'matrixDailyGoal';
+    var _DG_KEY = typeof STORAGE_KEY_DAILY_GOAL !== 'undefined' ? STORAGE_KEY_DAILY_GOAL : 'royalSlotsDailyGoal';
     var _DG_DEFAULT = 100;
 
     function _today() { return new Date().toISOString().slice(0, 10); }
