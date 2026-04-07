@@ -146,4 +146,36 @@ router.get('/recent-wins', async (req, res) => {
     }
 });
 
+
+// GET /api/leaderboard/top — top 20 all-time players by total wagered (Season Leaderboard widget)
+router.get('/top', async (req, res) => {
+    try {
+        const rows = await db.all(
+            `SELECT s.user_id, u.username,
+                    SUM(s.bet_amount) as total_wagered,
+                    SUM(CASE WHEN s.win_amount > s.bet_amount THEN s.win_amount - s.bet_amount ELSE 0 END) as total_profit,
+                    COUNT(*) as spin_count
+             FROM spins s
+             JOIN users u ON s.user_id = u.id
+             WHERE u.is_banned = 0
+             GROUP BY s.user_id, u.username
+             ORDER BY total_wagered DESC
+             LIMIT 20`
+        );
+
+        const entries = rows.map(function (r, i) {
+            return {
+                rank: i + 1,
+                maskedUser: maskUsername(r.username),
+                totalWagered: parseFloat(r.total_wagered) || 0,
+                totalProfit: parseFloat(r.total_profit) || 0,
+                spinCount: parseInt(r.spin_count, 10) || 0
+            };
+        });
+
+        res.json({ entries: entries });
+    } catch (err) {
+        res.status(500).json({ error: 'Failed to load top leaderboard' });
+    }
+});
 module.exports = router;
