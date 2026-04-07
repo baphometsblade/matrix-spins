@@ -2021,15 +2021,29 @@ if (window.location.hostname === 'localhost' || window.location.hostname === '12
             visibility: hidden !important;
             pointer-events: none !important;
         }
-        /* Ensure auth modal is visible even when nested inside a hidden wrapper */
+        /* Force auth modal visible — overrides .modal { display:none } from premium-redesign.css */
         body.auth-gate #authModal {
+            display: flex !important;
             visibility: visible !important;
             pointer-events: auto !important;
+            z-index: 999999 !important;
+        }
+        /* Kill preloader when auth gate is active — no spinner before login */
+        body.auth-gate .preloader-overlay,
+        body.auth-gate #preloaderOverlay {
+            display: none !important;
         }
         body.auth-gate #casinoMainWrap {
             pointer-events: auto !important;
         }
     </style>
+    <!-- Failsafe: dismiss preloader after 3s even if JS init fails -->
+    <script>
+    setTimeout(function() {
+        var p = document.getElementById('preloaderOverlay');
+        if (p && p.style.display !== 'none') { p.style.opacity = '0'; setTimeout(function() { p.style.display = 'none'; }, 600); }
+    }, 3000);
+    </script>
 
     <!-- Slot intro splash overlay -->
     <style>
