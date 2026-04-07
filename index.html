@@ -90,6 +90,7 @@
     <link rel="stylesheet" href="promo-styles.css">
     <link rel="stylesheet" href="phase5-lobby.css">
     <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@500;700;800&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap">
+    <link rel="stylesheet" href="design-tokens.css">
     <link rel="stylesheet" href="premium-redesign.css">
     <link rel="stylesheet" href="premium-polish.css">
     <link rel="stylesheet" href="premium-animations.css">
@@ -529,29 +530,7 @@
         </div>
     </footer>
 
-    <!-- Mobile Bottom Nav -->
-    <nav class="mobile-bottom-nav" id="mobileBottomNav">
-        <button class="mob-nav-btn" onclick="window.scrollTo({top:0,behavior:'smooth'})">
-            <svg viewBox="0 0 20 20" fill="currentColor" width="20" height="20"><path d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z"/></svg>
-            <span>Home</span>
-        </button>
-        <button class="mob-nav-btn" onclick="setFilter('hot'); document.getElementById('filterTabs').scrollIntoView({behavior:'smooth'})">
-            <svg viewBox="0 0 20 20" fill="currentColor" width="20" height="20"><path d="M10 18c-4.4 0-7-3.1-7-6.8 0-3.3 2.3-5.8 4-7.2.4-.3 1 0 .9.5-.3 1.5.3 3 1.6 3.8.2.1.5 0 .5-.2.2-1.5.9-3.4 2.5-4.8.3-.3.8-.1.9.3.5 1.8 1.8 3.2 2.8 4.4C17.7 10 18 11.6 18 12.5 18 15.5 15.3 18 10 18z"/></svg>
-            <span>Hot</span>
-        </button>
-        <button class="mob-nav-btn mob-nav-play" onclick="playRandomHotGame()">
-            <svg viewBox="0 0 20 20" fill="currentColor" width="22" height="22"><circle cx="10" cy="10" r="9" stroke="rgba(255,255,255,0.3)" stroke-width="1.5" fill="none"/><polygon points="8,6 15,10 8,14"/></svg>
-            <span>Play</span>
-        </button>
-        <button class="mob-nav-btn" onclick="showBonusWheelModal()">
-            <svg viewBox="0 0 20 20" fill="currentColor" width="20" height="20"><path d="M10 1l2.5 5.5L18 7.5l-4 4 1 5.5L10 14.5 4.5 17l1-5.5-4-4 5.5-1z"/></svg>
-            <span>Bonus</span>
-        </button>
-        <button class="mob-nav-btn" onclick="openStatsModal()">
-            <svg viewBox="0 0 20 20" fill="currentColor" width="20" height="20"><path d="M3 3h4v14H3zm5 4h4v10H8zm5-2h4v12h-4z"/></svg>
-            <span>Stats</span>
-        </button>
-    </nav>
+    <!-- Mobile Bottom Nav — replaced by premium version before </body> -->
 
     <!-- Slot Machine Modal • Pragmatic Play Style -->
     <div class="modal" id="slotModal">
