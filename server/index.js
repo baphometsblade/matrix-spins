@@ -5,20 +5,25 @@ const express = require('express');
 const path = require('path');
 const fs = require('fs');
 const cors = require('cors');
+const db = require('./database');
+
 const app = express();
 const PORT = process.env.PORT || 3001;
 const distDir = path.join(__dirname, '..', 'dist');
 const hasBundle = fs.existsSync(path.join(distDir, 'index.html'));
 console.log('[SERVER] Bundle mode: ' + (hasBundle ? 'ON' : 'OFF'));
+
 app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
 if (hasBundle) {
   app.use(express.static(distDir, { maxAge: '1y', immutable: true, index: false }));
   app.use(express.static(path.join(__dirname, '..'), { maxAge: '1h', index: false }));
 } else {
   app.use(express.static(path.join(__dirname, '..')));
 }
+
 try {
   var paymentRoutes = require('./routes/payment');
   app.use('/api', paymentRoutes);
@@ -29,6 +34,7 @@ try {
   app.post('/api/withdraw', function(req, res) { res.json({ success: true, message: 'Processing' }); });
   app.get('/api/balance/:userId', function(req, res) { res.json({ balance: '$1000.00' }); });
 }
+
 try {
   var gameSessionRoutes = require('./routes/game-session');
   app.use('/api', gameSessionRoutes);
@@ -37,6 +43,7 @@ try {
   console.warn('[SERVER] Game session routes not loaded:', err.message);
   app.post('/api/spin', function(req, res) { res.json({ success: true, grid: [], winAmount: 0 }); });
 }
+
 var routesDir = path.join(__dirname, 'routes');
 var autoLoaded = 0;
 var autoFailed = 0;
@@ -59,18 +66,33 @@ try {
 } catch (dirErr) {
   console.warn('[SERVER] Could not read routes dir:', dirErr.message);
 }
+
 app.get('/api/health', function(req, res) {
   res.json({ status: 'ok', uptime: process.uptime(), timestamp: new Date().toISOString(), version: '1.0.0', name: 'Matrix Spins Casino', bundleMode: hasBundle, routesLoaded: autoLoaded, routesFailed: autoFailed });
 });
+
 app.get('*', function(req, res) {
   if (hasBundle) { res.sendFile(path.join(distDir, 'index.html')); }
   else { res.sendFile(path.join(__dirname, '..', 'index.html')); }
 });
+
 app.use(function(err, req, res, next) {
   console.error('[SERVER] Error:', err.message);
   res.status(500).json({ error: 'Something went wrong.', referenceNumber: 'ERR-' + Date.now().toString(36).toUpperCase() });
 });
-app.listen(PORT, function() {
-  console.log('ROYAL SLOTS CASINO Server Running on port ' + PORT);
-});
+
+async function startServer() {
+  try {
+    await db.initDatabase();
+    console.log('[SERVER] Database initialized');
+  } catch (err) {
+    console.error('[SERVER] Database init failed:', err.message);
+    console.warn('[SERVER] Starting without database - some routes will return errors');
+  }
+  app.listen(PORT, function() {
+    console.log('ROYAL SLOTS CASINO Server Running on port ' + PORT);
+  });
+}
+
+startServer();
 module.exports = app;
