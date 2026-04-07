@@ -1,7 +1,6 @@
 /* ============================================================
-   INDUSTRY STANDARD SLOT LAYOUT
+   INDUSTRY STANDARD SLOT LAYOUT v2
    Fullscreen takeover, centered reels, minimal chrome
-   Inspired by Pragmatic Play, NetEnt, Play'n GO
    ============================================================ */
 
 /* --- FULLSCREEN MODAL TAKEOVER --- */
@@ -11,6 +10,7 @@
   z-index: 999999 !important;
   overflow: hidden !important;
   background: #000 !important;
+  padding: 0 !important;
 }
 
 #slotModal.active {
@@ -20,25 +20,23 @@
 }
 
 #slotModal .modal-content.slot-modal-fullscreen {
-  display: flex !important;
-  flex-direction: column !important;
-  width: 100vw !important;
-  max-width: 100vw !important;
-  height: 100vh !important;
-  max-height: 100vh !important;
+  display: block !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  height: 100% !important;
+  max-height: 100% !important;
   overflow: hidden !important;
   margin: 0 !important;
   padding: 0 !important;
   position: absolute !important;
+  left: 0 !important;
+  top: 0 !important;
+  right: 0 !important;
+  bottom: 0 !important;
   background: #0a0a12 !important;
 }
 
-/* --- HIDE ALL CLUTTER ---
-   Whitelist approach: hide EVERYTHING, then show only essentials.
-   Essentials: slot-bg-canvas, slot-top-bar, slot-reel-area,
-              slot-bottom-bar, slot-ambient-sparkle, provider-chrome-frame,
-              big-win-celebration, free-spins-overlay.active
-   ------------------------------------------------------------ */
+/* --- HIDE CLUTTER --- */
 #slotModal .modal-content > .session-stats-bar,
 #slotModal .modal-content > .session-summary,
 #slotModal .modal-content > .quick-stats-panel,
@@ -81,28 +79,25 @@
   display: none !important;
 }
 
-/* --- COMPACT TOP BAR (game title + close) --- */
+/* --- TOP BAR: Pinned to top --- */
 #slotModal .slot-top-bar {
   display: flex !important;
   align-items: center !important;
   justify-content: space-between !important;
-  height: 40px !important;
-  min-height: 40px !important;
-  max-height: 40px !important;
+  height: 52px !important;
+  min-height: 52px !important;
+  max-height: 52px !important;
   padding: 0 16px !important;
-  background: linear-gradient(180deg, rgba(0,0,0,0.8) 0%, rgba(0,0,0,0.4) 100%) !important;
+  background: linear-gradient(180deg, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.5) 100%) !important;
   backdrop-filter: blur(12px) !important;
-  border-bottom: 1px solid rgba(255,255,255,0.06) !important;
+  border-bottom: 1px solid rgba(255,255,255,0.08) !important;
   flex-shrink: 0 !important;
   z-index: 10 !important;
   position: absolute !important;
-  width: 100% !important;
+  top: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
   box-sizing: border-box !important;
-}
-
-/* In top bar: only show game title and close button */
-#slotModal .slot-top-bar > *:not(.slot-game-title):not(.slot-provider-badge):not(.cashier-close):not(.slot-close-btn) {
-  display: none !important;
 }
 
 #slotModal .slot-top-bar .slot-game-title {
@@ -119,30 +114,29 @@
   margin-left: 8px !important;
 }
 
-/* --- REEL AREA: CENTERED, FILLS AVAILABLE SPACE --- */
+/* --- REEL AREA: Fills between top and bottom bars --- */
 #slotModal .slot-reel-area {
-  flex: 1 1 auto !important;
   display: flex !important;
   align-items: center !important;
   justify-content: center !important;
-  width: 100% !important;
-  max-width: 100% !important;
-  min-height: 0 !important;
-  overflow: hidden !important;
   position: absolute !important;
+  top: 52px !important;
+  left: 0 !important;
+  right: 0 !important;
+  bottom: 64px !important;
   z-index: 5 !important;
-  padding: 8px 0 !important;
+  overflow: hidden !important;
+  padding: 8px !important;
+  box-sizing: border-box !important;
 }
 
-/* Reel grid should fit within the available space */
 #slotModal .slot-reel-area .reel-grid,
 #slotModal .slot-reel-area .reel-container {
   max-height: 100% !important;
-  max-width: 85% !important;
+  max-width: 90% !important;
   margin: 0 auto !important;
 }
 
-/* Individual reel cells - ensure consistent sizing */
 #slotModal .reel-cell {
   display: flex !important;
   align-items: center !important;
@@ -154,30 +148,31 @@
   width: 100% !important;
   height: 100% !important;
   object-fit: contain !important;
-  image-rendering: auto !important;
 }
 
-/* --- COMPACT BOTTOM BAR (bet + spin + balance) --- */
+/* --- BOTTOM BAR: Pinned to bottom --- */
 #slotModal .slot-bottom-bar {
   display: flex !important;
   align-items: center !important;
   justify-content: center !important;
   gap: 16px !important;
-  height: 52px !important;
-  min-height: 52px !important;
-  max-height: 52px !important;
+  height: 64px !important;
+  min-height: 64px !important;
+  max-height: 64px !important;
   padding: 0 20px !important;
-  background: linear-gradient(0deg, rgba(0,0,0,0.8) 0%, rgba(0,0,0,0.4) 100%) !important;
+  background: linear-gradient(0deg, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.5) 100%) !important;
   backdrop-filter: blur(12px) !important;
-  border-top: 1px solid rgba(255,255,255,0.06) !important;
+  border-top: 1px solid rgba(255,255,255,0.08) !important;
   flex-shrink: 0 !important;
   z-index: 10 !important;
   position: absolute !important;
-  width: 100% !important;
+  bottom: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
   box-sizing: border-box !important;
 }
 
-/* --- SPIN BUTTON: Premium centered circle --- */
+/* --- SPIN BUTTON --- */
 #slotModal .slot-spin-btn {
   width: 62px !important;
   height: 62px !important;
@@ -188,17 +183,14 @@
   border: 3px solid rgba(255,255,255,0.15) !important;
   box-shadow: 0 0 20px rgba(255,215,0,0.15), inset 0 1px 0 rgba(255,255,255,0.1) !important;
   transition: all 0.2s ease !important;
-  position: absolute !important;
+  position: relative !important;
   z-index: 20 !important;
-  margin-top: -14px !important;
-  text-transform: uppercase !important;
-  letter-spacing: 1px !important;
 }
 
 #slotModal .slot-spin-btn:hover:not(:disabled) {
   transform: scale(1.08) !important;
   border-color: rgba(255,215,0,0.4) !important;
-  box-shadow: 0 0 30px rgba(255,215,0,0.3), inset 0 1px 0 rgba(255,255,255,0.15) !important;
+  box-shadow: 0 0 30px rgba(255,215,0,0.3) !important;
 }
 
 #slotModal .slot-spin-btn:active:not(:disabled) {
@@ -214,20 +206,12 @@
   text-shadow: 0 0 8px rgba(255,215,0,0.3) !important;
 }
 
-/* --- BET CONTROLS: Inline with bottom bar --- */
-#slotModal .bet-slider-wrap {
-  display: flex !important;
-  align-items: center !important;
-  gap: 8px !important;
-  height: 100% !important;
-}
-
-/* --- CLOSE BUTTON: Top right corner --- */
+/* --- CLOSE BUTTON --- */
 #slotModal .cashier-close,
 #slotModal .slot-close-btn {
   position: absolute !important;
-  top: 4px !important;
-  right: 8px !important;
+  top: 10px !important;
+  right: 12px !important;
   width: 32px !important;
   height: 32px !important;
   border-radius: 50% !important;
@@ -250,7 +234,7 @@
   transform: scale(1.1) !important;
 }
 
-/* --- PROVIDER CHROME: Subtle border only --- */
+/* --- PROVIDER CHROME --- */
 #slotModal .provider-chrome-frame {
   position: absolute !important;
   inset: 0 !important;
@@ -261,7 +245,8 @@
 }
 
 /* --- BACKGROUND CANVAS: Full bleed --- */
-#slotModal .slot-bg-canvas {
+#slotModal .slot-bg-canvas,
+#slotModal .upx-bg-canvas {
   position: absolute !important;
   inset: 0 !important;
   width: 100% !important;
@@ -270,16 +255,16 @@
   pointer-events: none !important;
 }
 
-/* --- AMBIENT SPARKLES: Absolute positioned --- */
+/* --- AMBIENT SPARKLES --- */
 #slotModal .slot-ambient-sparkle {
   z-index: 1 !important;
   pointer-events: none !important;
 }
 
-/* --- WIN DISPLAY: Centered overlay --- */
+/* --- WIN DISPLAY --- */
 #slotModal .last-win-preview {
   position: absolute !important;
-  top: 50px !important;
+  top: 60px !important;
   left: 50% !important;
   transform: translateX(-50%) !important;
   z-index: 50 !important;
@@ -290,10 +275,10 @@
   pointer-events: none !important;
 }
 
-/* --- JACKPOT DISPLAY: Subtle top center --- */
+/* --- JACKPOT DISPLAY --- */
 #slotModal .slot-jackpot-display {
   position: absolute !important;
-  top: 44px !important;
+  top: 56px !important;
   left: 50% !important;
   transform: translateX(-50%) !important;
   z-index: 15 !important;
@@ -304,8 +289,17 @@
   pointer-events: none !important;
 }
 
-/* --- RESPONSIVE: Portrait mode --- */
+/* --- RESPONSIVE: Portrait --- */
 @media (max-aspect-ratio: 1/1) {
+  #slotModal .slot-top-bar {
+    height: 44px !important;
+    min-height: 44px !important;
+    max-height: 44px !important;
+  }
+  #slotModal .slot-reel-area {
+    top: 44px !important;
+    bottom: 72px !important;
+  }
   #slotModal .slot-bottom-bar {
     height: 72px !important;
     min-height: 72px !important;
@@ -315,11 +309,6 @@
   #slotModal .slot-spin-btn {
     width: 68px !important;
     height: 68px !important;
-  }
-  #slotModal .slot-top-bar {
-    height: 36px !important;
-    min-height: 36px !important;
-    max-height: 36px !important;
   }
 }
 
