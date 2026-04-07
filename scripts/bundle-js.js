@@ -19,7 +19,8 @@ const INDEX_HTML = path.join(ROOT_DIR, 'index.html');
 const EARLY_SCRIPTS = [
     'js/maintenance-check.js',
     'js/error-handler.js',
-    'js/onclick-polyfill.js'
+    'js/onclick-polyfill.js',
+    'js/eager-thumbs.js'
 ];
 
 // CSS files to bundle (in order)
