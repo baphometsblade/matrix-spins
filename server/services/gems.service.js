@@ -2,7 +2,7 @@
 
 const db = require('../database');
 
-// ── Gem Pack Definitions ─────────────────────────────────────────────────────
+// â”€â”€ Gem Pack Definitions â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 const GEM_PACKS = [
     { id: 'starter', price: 4.99, gems: 500, bonus: 0 },
@@ -12,12 +12,12 @@ const GEM_PACKS = [
     { id: 'whale', price: 99.99, gems: 14000, bonus: 40 },
 ];
 
-// ── Schema Init ──────────────────────────────────────────────────────────────
+// â”€â”€ Schema Init â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 async function initSchema() {
     const isPg = db.isPg();
     const tsType    = isPg ? 'TIMESTAMPTZ' : 'TEXT';
-    const tsDefault = isPg ? 'NOW()' : "(datetime('now'))";
+    const tsDefault = isPg ? 'NOW()' : "CURRENT_TIMESTAMP";
     const idDef     = isPg ? 'SERIAL PRIMARY KEY' : 'INTEGER PRIMARY KEY AUTOINCREMENT';
     await db.run(`CREATE TABLE IF NOT EXISTS gem_balances (
         user_id INTEGER PRIMARY KEY,
@@ -36,7 +36,7 @@ async function initSchema() {
     )`);
 }
 
-// ── Core Functions ───────────────────────────────────────────────────────────
+// â”€â”€ Core Functions â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 /**
  * Get the gem balance for a user. If no row exists, insert one with 0.
@@ -62,11 +62,11 @@ async function purchaseGems(userId, packId) {
     const pack = GEM_PACKS.find(p => p.id === packId);
     if (!pack) throw new Error('Invalid gem pack');
 
-    // Wrap entire purchase in transaction — if gem credit or log INSERT
+    // Wrap entire purchase in transaction â€” if gem credit or log INSERT
     // fails after balance deduction, everything rolls back (no lost funds)
     await db.beginTransaction();
     try {
-        // Atomic balance deduction — prevents race condition double-purchase
+        // Atomic balance deduction â€” prevents race condition double-purchase
         const deductResult = await db.run(
             'UPDATE users SET balance = balance - ? WHERE id = ? AND balance >= ?',
             [pack.price, userId, pack.price]
@@ -102,7 +102,7 @@ async function purchaseGems(userId, packId) {
 
         await db.commit();
 
-        // Get updated balances (outside transaction — read-only)
+        // Get updated balances (outside transaction â€” read-only)
         const updatedGems = await db.get('SELECT balance FROM gem_balances WHERE user_id = ?', [userId]);
         const updatedUser = await db.get('SELECT balance FROM users WHERE id = ?', [userId]);
 
@@ -158,7 +158,7 @@ async function addGems(userId, amount, description) {
 
     if (!Number.isFinite(amount) || amount <= 0) throw new Error('Invalid gem amount');
 
-    // Atomic upsert — INSERT or UPDATE in one statement, prevents race condition duplicate inserts
+    // Atomic upsert â€” INSERT or UPDATE in one statement, prevents race condition duplicate inserts
     await db.run(
         "INSERT INTO gem_balances (user_id, balance, total_purchased, total_spent, updated_at) VALUES (?, ?, 0, 0, datetime('now')) " +
         "ON CONFLICT(user_id) DO UPDATE SET balance = gem_balances.balance + ?, updated_at = datetime('now')",
