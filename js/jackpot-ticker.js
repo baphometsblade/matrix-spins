@@ -1,4 +1,4 @@
-/* Matrix Spins - Jackpot Ticker Bar */
+/* Royal Slots - Jackpot Ticker Bar */
 (function() {
     'use strict';
     

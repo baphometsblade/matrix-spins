@@ -1,6 +1,6 @@
 /**
  * Matrix Money System Module
- * Matrix Spins Casino - msaart.online
+ * Royal Slots Casino - msaart.online
  *
  * Manages virtual currency purchases and withdrawals via backend API.
  * Purchases = Buying digital credits

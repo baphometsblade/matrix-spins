@@ -1,6 +1,6 @@
 /**
  * ultra-premium-slot.js v2.0
- * Industry-Standard Per-Game Visual Engine for Matrix Spins Casino
+ * Industry-Standard Per-Game Visual Engine for Royal Slots Casino
  * 
  * Each of the 100 slot games has a unique combination of:
  *   - Animated canvas background (25 distinct renderers)

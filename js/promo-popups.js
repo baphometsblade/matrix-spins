@@ -1,4 +1,4 @@
-/* Matrix Spins - Promotional Popup System (Client) */
+/* Royal Slots - Promotional Popup System (Client) */
 (function() {
     'use strict';
     

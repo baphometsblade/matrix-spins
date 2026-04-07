@@ -1,4 +1,4 @@
-/* Matrix Spins - Social Proof Win Notifications */
+/* Royal Slots - Social Proof Win Notifications */
 (function() {
     'use strict';
 

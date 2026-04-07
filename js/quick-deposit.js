@@ -1,4 +1,4 @@
-/* Matrix Spins - Quick Deposit FAB (Floating Action Button) */
+/* Royal Slots - Quick Deposit FAB (Floating Action Button) */
 (function() {
     'use strict';
     

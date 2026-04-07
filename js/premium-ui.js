@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════════════════════════════
-   MATRIX SPINS — Premium UI Enhancements
+   Royal Slots — Premium UI Enhancements
    Header scroll shadow, smooth reveal animations, intersection observer
    ═══════════════════════════════════════════════════════════════════════ */
 

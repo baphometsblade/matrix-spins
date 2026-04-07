@@ -1,6 +1,6 @@
 /**
  * Keyboard Shortcuts Module
- * Provides keyboard shortcuts for the Matrix Spins Casino game
+ * Provides keyboard shortcuts for the Royal Slots Casino game
  */
 
 (function() {

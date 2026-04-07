@@ -17121,7 +17121,7 @@ function _initWelcomeFlow() {
     var overlay = document.getElementById('welcomeFlow315');
     if (!overlay) return;
     overlay.innerHTML = '<div class="wf315-card">' +
-        '<h2>Welcome to Matrix Spins!</h2>' +
+        '<h2>Welcome to Royal Slots!</h2>' +
         '<p>Your starting balance: <strong>$5,000</strong></p>' +
         '<ul class="wf315-steps">' +
         '<li>Pick a slot from the lobby</li>' +
@@ -17207,7 +17207,7 @@ function _generateStatement() {
     var won = (typeof totalWon !== 'undefined') ? totalWon : 0;
     var spins = (typeof totalSpins !== 'undefined') ? totalSpins : 0;
     var netPL = won - wagered;
-    var stmt = 'MATRIX SPINS - Player Statement\n';
+    var stmt = 'Royal Slots - Player Statement\n';
     stmt += 'Date: ' + new Date().toLocaleDateString() + '\n';
     stmt += '----------------------------\n';
     stmt += 'Total Spins: ' + spins + '\n';
@@ -17537,12 +17537,12 @@ function _showShareCard(winAmount, gameName) {
     var el = document.getElementById('shareCard335');
     if (!el || winAmount < 10) return;
     el.querySelector('.sc335-amount').textContent = '$' + winAmount.toFixed(2);
-    el.querySelector('.sc335-game').textContent = gameName || 'Matrix Spins';
+    el.querySelector('.sc335-game').textContent = gameName || 'Royal Slots';
     el.style.display = 'flex';
 }
 function _shareToTwitter() {
     var amt = document.querySelector('.sc335-amount');
-    var text = 'Just won ' + (amt ? amt.textContent : '') + ' on Matrix Spins! Try your luck at https://msaart.online';
+    var text = 'Just won ' + (amt ? amt.textContent : '') + ' on Royal Slots! Try your luck at https://msaart.online';
     window.open('https://twitter.com/intent/tweet?text=' + encodeURIComponent(text), '_blank');
     _dismissShareCard();
 }
@@ -17706,7 +17706,7 @@ function _generateTaxDoc() {
     var w = (typeof totalWagered !== 'undefined') ? totalWagered : 0;
     var won = (typeof totalWon !== 'undefined') ? totalWon : 0;
     var net = won - w;
-    var doc = 'MATRIX SPINS - Annual Tax Summary\n';
+    var doc = 'Royal Slots - Annual Tax Summary\n';
     doc += 'Tax Year: ' + new Date().getFullYear() + '\n';
     doc += 'Generated: ' + new Date().toISOString().split('T')[0] + '\n';
     doc += '========================================\n';
@@ -17716,7 +17716,7 @@ function _generateTaxDoc() {
     doc += '========================================\n';
     doc += 'This document is provided for tax reporting purposes.\n';
     doc += 'Consult a tax professional for your specific situation.\n';
-    doc += 'Operator: Matrix Spins (msaart.online)\n';
+    doc += 'Operator: Royal Slots (msaart.online)\n';
     var blob = new Blob([doc], {type: 'text/plain'});
     var a = document.createElement('a');
     a.href = URL.createObjectURL(blob);
@@ -17783,7 +17783,7 @@ function _showAgeGate() {
     overlay.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.95);z-index:99999;display:flex;align-items:center;justify-content:center;';
     overlay.innerHTML = '<div style="background:#1a1a2e;border:2px solid #ffd700;border-radius:16px;padding:40px;text-align:center;max-width:420px;">' +
         '<h2 style="color:#ffd700;margin:0 0 16px;">Age Verification Required</h2>' +
-        '<p style="color:#ccc;margin:0 0 8px;">You must be 18 years or older to access Matrix Spins.</p>' +
+        '<p style="color:#ccc;margin:0 0 8px;">You must be 18 years or older to access Royal Slots.</p>' +
         '<p style="color:#999;font-size:13px;margin:0 0 24px;">By clicking Confirm, you certify that you are of legal gambling age in your jurisdiction.</p>' +
         '<div style="display:flex;gap:12px;justify-content:center;">' +
         '<button id="ageGateConfirm" style="background:#ffd700;color:#000;border:none;padding:12px 32px;border-radius:8px;font-weight:bold;cursor:pointer;font-size:15px;">I am 18+</button>' +
@@ -17955,7 +17955,7 @@ function _generateTaxDoc() {
     var w = (typeof totalWagered !== 'undefined') ? totalWagered : 0;
     var won = (typeof totalWon !== 'undefined') ? totalWon : 0;
     var net = won - w;
-    var doc = 'MATRIX SPINS - Annual Tax Summary\n';
+    var doc = 'Royal Slots - Annual Tax Summary\n';
     doc += 'Tax Year: ' + new Date().getFullYear() + '\n';
     doc += 'Generated: ' + new Date().toISOString().split('T')[0] + '\n';
     doc += '========================================\n';
@@ -17965,7 +17965,7 @@ function _generateTaxDoc() {
     doc += '========================================\n';
     doc += 'This document is provided for tax reporting purposes.\n';
     doc += 'Consult a tax professional for your specific situation.\n';
-    doc += 'Operator: Matrix Spins (msaart.online)\n';
+    doc += 'Operator: Royal Slots (msaart.online)\n';
     var blob = new Blob([doc], {type: 'text/plain'});
     var a = document.createElement('a');
     a.href = URL.createObjectURL(blob);
@@ -18005,7 +18005,7 @@ function _showAgeGate() {
     overlay.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.95);z-index:99999;display:flex;align-items:center;justify-content:center;';
     overlay.innerHTML = '<div style="background:#1a1a2e;border:2px solid #ffd700;border-radius:16px;padding:40px;text-align:center;max-width:420px;">' +
         '<h2 style="color:#ffd700;margin:0 0 16px;">Age Verification Required</h2>' +
-        '<p style="color:#ccc;margin:0 0 8px;">You must be 18 years or older to access Matrix Spins.</p>' +
+        '<p style="color:#ccc;margin:0 0 8px;">You must be 18 years or older to access Royal Slots.</p>' +
         '<p style="color:#999;font-size:13px;margin:0 0 24px;">By clicking Confirm, you certify that you are of legal gambling age in your jurisdiction.</p>' +
         '<div style="display:flex;gap:12px;justify-content:center;">' +
         '<button id="ageGateConfirm" style="background:#ffd700;color:#000;border:none;padding:12px 32px;border-radius:8px;font-weight:bold;cursor:pointer;font-size:15px;">I am 18+</button>' +
@@ -18385,7 +18385,7 @@ function _initPushNotifications() {
 function _enablePush() {
     Notification.requestPermission().then(function(perm) {
         if (perm === 'granted') {
-            new Notification('Matrix Spins', { body: 'Notifications enabled! You\'ll be the first to know about bonuses.', icon: '/favicon.ico' });
+            new Notification('Royal Slots', { body: 'Notifications enabled! You\'ll be the first to know about bonuses.', icon: '/favicon.ico' });
         }
     });
     var el = document.getElementById('pushOptIn354');
@@ -18959,7 +18959,7 @@ function _showInstallBanner() {
     banner.className = 'pwa-install-banner';
     banner.innerHTML = '<div class="pwa-install-inner">' +
         '<span class="pwa-icon">\u{1F4F1}</span>' +
-        '<div><strong>Install Matrix Spins</strong><br><small>Add to home screen for the best experience</small></div>' +
+        '<div><strong>Install Royal Slots</strong><br><small>Add to home screen for the best experience</small></div>' +
         '<button onclick="_installPWA()" class="pwa-install-btn">Install</button>' +
         '<button onclick="_dismissPWA()" class="pwa-dismiss-btn">&times;</button></div>';
     document.body.appendChild(banner);
@@ -19157,7 +19157,7 @@ function _checkRatingPrompt() {
     modal.id = 'ratingModal378';
     modal.className = 'rating-overlay';
     modal.innerHTML = '<div class="rating-card">' +
-        '<h3>Enjoying Matrix Spins?</h3>' +
+        '<h3>Enjoying Royal Slots?</h3>' +
         '<div class="rating-stars" id="ratingStars378"></div>' +
         '<p style="color:#888;font-size:13px;" id="ratingText378">Tap a star to rate</p>' +
         '<div class="rating-btns">' +
@@ -19769,7 +19769,7 @@ function _updateSocialTicker() {
         case 'jackpot': msg = '\u{1F451} JACKPOT! ' + (latest.data.player || 'Someone') + ' hit the ' + (latest.data.tier || '') + ' jackpot!'; break;
         case 'deposit': msg = '\u{1F4B3} ' + (latest.data.player || 'A player') + ' just deposited!'; break;
         case 'achievement': msg = '\u{1F3C6} ' + (latest.data.player || 'A player') + ' unlocked: ' + (latest.data.name || ''); break;
-        default: msg = '\u{1F3B0} Activity on Matrix Spins';
+        default: msg = '\u{1F3B0} Activity on Royal Slots';
     }
     ticker.innerHTML = '<div class="st-content">' + msg + '</div>';
 }
@@ -19938,24 +19938,24 @@ function _stopAutoBet() { _autoBetActive = false; _autoBetConfig = null; }
 
 /* ── 403-410 — SEO meta tags & schema markup ─────────────────── */
 function _initSEO() {
-    _setMeta('description', 'Matrix Spins - Premier online slots casino with progressive jackpots, 100+ premium games. Play now and win big!');
-    _setMeta('keywords', 'online slots, casino, progressive jackpot, free spins, slot machine, gambling, Matrix Spins');
-    _setMeta('author', 'Matrix Spins');
+    _setMeta('description', 'Royal Slots - Premier online slots casino with progressive jackpots, 100+ premium games. Play now and win big!');
+    _setMeta('keywords', 'online slots, casino, progressive jackpot, free spins, slot machine, gambling, Royal Slots');
+    _setMeta('author', 'Royal Slots');
     _setMeta('robots', 'index, follow');
-    _setMeta('og:title', 'Matrix Spins - Online Slots Casino');
-    _setMeta('og:description', 'Play slots, win jackpots, earn rewards. Join Matrix Spins today!');
+    _setMeta('og:title', 'Royal Slots - Online Slots Casino');
+    _setMeta('og:description', 'Play slots, win jackpots, earn rewards. Join Royal Slots today!');
     _setMeta('og:type', 'website');
     _setMeta('og:url', 'https://msaart.online');
     _setMeta('og:image', 'https://msaart.online/og-image.png');
     _setMeta('twitter:card', 'summary_large_image');
-    _setMeta('twitter:title', 'Matrix Spins Casino');
+    _setMeta('twitter:title', 'Royal Slots Casino');
     _setMeta('twitter:description', 'Progressive jackpots, 100+ premium slot games');
     var schema = document.createElement('script');
     schema.type = 'application/ld+json';
     schema.textContent = JSON.stringify({
         '@context': 'https://schema.org',
         '@type': 'WebApplication',
-        'name': 'Matrix Spins',
+        'name': 'Royal Slots',
         'url': 'https://msaart.online',
         'description': 'Online slots casino with progressive jackpots and 100+ games',
         'applicationCategory': 'GameApplication',
@@ -19976,7 +19976,7 @@ function _setMeta(name, content) {
 /* ── 403-410 — analytics event tracking ──────────────────────── */
 function _initAnalytics() {
     if (typeof gtag === 'undefined') return;
-    gtag('event', 'page_view', { page_title: 'Matrix Spins Casino' });
+    gtag('event', 'page_view', { page_title: 'Royal Slots Casino' });
 }
 function _trackEvent(category, action, label, value) {
     if (typeof gtag !== 'undefined') {
@@ -20690,7 +20690,7 @@ function _showSharePrompt(winAmount, gameName) {
         el.className = 'social-share-overlay';
         document.body.appendChild(el);
     }
-    var msg = 'I just won ' + winAmount.toFixed(2) + ' on ' + (gameName || 'Matrix Spins') + '!';
+    var msg = 'I just won ' + winAmount.toFixed(2) + ' on ' + (gameName || 'Royal Slots') + '!';
     el.innerHTML = '<div class="share-card">' +
         '<h3>Share Your Win!</h3>' +
         '<p class="share-msg">' + msg + '</p>' +
@@ -21062,7 +21062,7 @@ function _initLoadingScreen() {
     el = document.createElement('div');
     el.id = 'casinoLoadingScreen';
     el.className = 'casino-loading-screen';
-    el.innerHTML = '<div class="loading-logo">MATRIX SPINS</div><div class="loading-spinner"></div><div class="loading-text">Loading your experience...</div>';
+    el.innerHTML = '<div class="loading-logo">Royal Slots</div><div class="loading-spinner"></div><div class="loading-text">Loading your experience...</div>';
     document.body.appendChild(el);
     setTimeout(function() {
         el.classList.add('fade-out');
@@ -22400,7 +22400,7 @@ function _initWelcomeTutorial() {
 }
 function _showWelcomeTutorial() {
     var steps = [
-        { title: 'Welcome to Matrix Spins!', text: 'Your premium online slots casino. Let us show you around!' },
+        { title: 'Welcome to Royal Slots!', text: 'Your premium online slots casino. Let us show you around!' },
         { title: 'Choose a Slot', text: 'Browse our collection and tap any slot to start playing.' },
         { title: 'Place Your Bet', text: 'Use the bet controls to set your wager, then hit SPIN!' },
         { title: 'Win Big!', text: 'Match symbols across paylines to win. Look for Wilds and Scatters for bonus features!' },
@@ -22430,7 +22430,7 @@ function _nextTutorialStep(step) {
     }
     el._step = step;
     _renderTutorialStep(el, [
-        { title: 'Welcome to Matrix Spins!', text: 'Your premium online slots casino. Let us show you around!' },
+        { title: 'Welcome to Royal Slots!', text: 'Your premium online slots casino. Let us show you around!' },
         { title: 'Choose a Slot', text: 'Browse our collection and tap any slot to start playing.' },
         { title: 'Place Your Bet', text: 'Use the bet controls to set your wager, then hit SPIN!' },
         { title: 'Win Big!', text: 'Match symbols across paylines to win. Look for Wilds and Scatters for bonus features!' },
@@ -25462,7 +25462,7 @@ function _initLoadingScreen() {
         loader.id = 'loading-screen';
         loader.className = 'ms-loader571';
         loader.innerHTML = '<div class="ms-loader-inner571">' +
-            '<div class="ms-loader-logo571">MATRIX SPINS</div>' +
+            '<div class="ms-loader-logo571">Royal Slots</div>' +
             '<div class="ms-loader-bar571"><div class="ms-loader-fill571"></div></div>' +
             '<div class="ms-loader-text571">Loading your experience...</div>' +
             '</div>';
@@ -26096,7 +26096,7 @@ function _initSocialShare595() {
 }
 function _shareWin595(amount, gameName) {
     if (document.getElementById('share-win-595')) document.getElementById('share-win-595').remove();
-    var text = 'I just won $' + amount.toFixed(2) + ' playing ' + (gameName || 'slots') + ' on Matrix Spins!';
+    var text = 'I just won $' + amount.toFixed(2) + ' playing ' + (gameName || 'slots') + ' on Royal Slots!';
     var overlay = document.createElement('div');
     overlay.id = 'share-win-595';
     overlay.className = 'sw-overlay595';
@@ -26687,7 +26687,7 @@ function _initWelcomeBonus627() {
             var overlay = document.createElement('div');
             overlay.id = 'welcome-bonus-627';
             overlay.className = 'wb-overlay627';
-            overlay.innerHTML = '<div class="wb-inner627"><h2>Welcome to Matrix Spins!</h2><p>Start with a bonus:</p><div class="wb-offer627">$10 Free Credits</div><button class="wb-claim627" onclick="_claimWelcomeBonus627()">Claim Now</button><button class="wb-skip627" onclick="document.getElementById(this.parentElement.parentElement.id).remove()">Skip</button></div>';
+            overlay.innerHTML = '<div class="wb-inner627"><h2>Welcome to Royal Slots!</h2><p>Start with a bonus:</p><div class="wb-offer627">$10 Free Credits</div><button class="wb-claim627" onclick="_claimWelcomeBonus627()">Claim Now</button><button class="wb-skip627" onclick="document.getElementById(this.parentElement.parentElement.id).remove()">Skip</button></div>';
             document.body.appendChild(overlay);
         }, 3000);
     }

@@ -1,5 +1,5 @@
 // ═══════════════════════════════════════════════════════════════════════════
-// CASINO-ENGINE.JS v3.0.0 — Complete Shared Engine for Matrix Spins Casino
+// CASINO-ENGINE.JS v3.0.0 — Complete Shared Engine for Royal Slots Casino
 // ═══════════════════════════════════════════════════════════════════════════
 // Single authoritative engine: accepts a game config object and runs any of
 // the 100 games with zero logic duplication.
@@ -1317,7 +1317,7 @@
             var overlay = _buildElement('div', 'ce-attract-overlay');
             overlay.id = 'ce-attract-overlay';
             var content = _buildElement('div', 'ce-attract-content');
-            var logo = _buildElement('div', 'ce-attract-logo', 'MATRIX SPINS');
+            var logo = _buildElement('div', 'ce-attract-logo', 'Royal Slots');
             var text = _buildElement('div', 'ce-attract-text', 'Tap to Play');
             var shimmer = _buildElement('div', 'ce-attract-shimmer');
             content.appendChild(logo);

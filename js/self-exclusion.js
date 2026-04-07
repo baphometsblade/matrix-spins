@@ -1,5 +1,5 @@
 /**
- * Self-Exclusion UI Module for Matrix Spins Casino
+ * Self-Exclusion UI Module for Royal Slots Casino
  * Responsible gambling feature — lets users voluntarily exclude themselves from play.
  */
 (function() {

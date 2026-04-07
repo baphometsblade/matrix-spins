@@ -55,7 +55,7 @@
         `;
 
         const messageEl = document.createElement('p');
-        messageEl.textContent = message || 'Matrix Spins is undergoing scheduled maintenance. We\'ll be back shortly!';
+        messageEl.textContent = message || 'Royal Slots is undergoing scheduled maintenance. We\'ll be back shortly!';
         messageEl.style.cssText = `
             font-size: 16px;
             margin: 0 0 30px 0;
