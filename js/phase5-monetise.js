@@ -106,6 +106,47 @@
         overlay.appendChild(modal);
         document.body.appendChild(overlay);
 
+        // Close button (X) in header
+        var closeBtn = _el('button', 'p5-modal-close');
+        closeBtn.innerHTML = '&times;';
+        closeBtn.setAttribute('aria-label', 'Close');
+        closeBtn.style.cssText = 'position:absolute;top:10px;right:12px;background:none;border:none;color:#888;font-size:26px;cursor:pointer;padding:4px 10px;z-index:2;transition:color 0.15s;line-height:1';
+        closeBtn.addEventListener('mouseenter', function() { this.style.color = '#fff'; });
+        closeBtn.addEventListener('mouseleave', function() { this.style.color = '#888'; });
+        closeBtn.addEventListener('click', function() {
+            overlay.classList.remove('p5-modal-visible');
+            setTimeout(function() { if (overlay.parentNode) overlay.parentNode.removeChild(overlay); }, 300);
+        });
+        modal.style.position = 'relative';
+        modal.insertBefore(closeBtn, modal.firstChild);
+
+        // Backdrop click to dismiss
+        overlay.addEventListener('click', function(e) {
+            if (e.target === overlay) {
+                overlay.classList.remove('p5-modal-visible');
+                setTimeout(function() { if (overlay.parentNode) overlay.parentNode.removeChild(overlay); }, 300);
+            }
+        });
+
+        // Escape key to dismiss
+        var escHandler = function(e) {
+            if (e.key === 'Escape') {
+                overlay.classList.remove('p5-modal-visible');
+                setTimeout(function() { if (overlay.parentNode) overlay.parentNode.removeChild(overlay); }, 300);
+                document.removeEventListener('keydown', escHandler);
+            }
+        };
+        document.addEventListener('keydown', escHandler);
+
+        // Global close function
+        window.closeDailyBonusModal = function() {
+            var m = document.getElementById('dailyLoginModal');
+            if (m) {
+                m.classList.remove('p5-modal-visible');
+                setTimeout(function() { if (m.parentNode) m.parentNode.removeChild(m); }, 300);
+            }
+        };
+
         // Animate in
         requestAnimationFrame(function() { overlay.classList.add('p5-modal-visible'); });
     }
@@ -450,7 +491,7 @@
 
     // ═══════════════════════════════════════════════════════
     // 6. STRIPE-READY DEPOSIT FLOW
-    // Shows $ amounts only � no technical implementation details exposed
+    // Shows $ amounts only � no technical implementation details exposed
     // ═══════════════════════════════════════════════════════
     var DEPOSIT_AMOUNTS = [10, 25, 50, 100, 250, 500];
 
