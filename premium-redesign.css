@@ -1,0 +1,311 @@
+/* ═══════════════════════════════════════════════════════════════════════
+   MATRIX SPINS — Premium Redesign CSS
+   Transforms the visual identity to compete with Stake, Ignition, BetOnline
+   Load LAST to override all existing styles
+   ═══════════════════════════════════════════════════════════════════════ */
+
+/* ── 1. DESIGN TOKENS ──────────────────────────────────────────────── */
+:root {
+  --ms-bg-darkest:    #0A0C10;
+  --ms-bg-dark:       #0D0F14;
+  --ms-bg-base:       #111318;
+  --ms-bg-elevated:   #161921;
+  --ms-bg-surface:    #1C1F2A;
+  --ms-bg-card:       #1E2130;
+  --ms-bg-hover:      #252838;
+  --ms-gold:          #F0A500;
+  --ms-gold-light:    #FFD166;
+  --ms-gold-dim:      rgba(240, 165, 0, 0.15);
+  --ms-gold-glow:     rgba(240, 165, 0, 0.25);
+  --ms-cyan:          #00D4FF;
+  --ms-cyan-dim:      rgba(0, 212, 255, 0.12);
+  --ms-cyan-glow:     rgba(0, 212, 255, 0.25);
+  --ms-violet:        #8B5CF6;
+  --ms-violet-dim:    rgba(139, 92, 246, 0.12);
+  --ms-green:         #22C55E;
+  --ms-green-dim:     rgba(34, 197, 94, 0.12);
+  --ms-red:           #EF4444;
+  --ms-red-dim:       rgba(239, 68, 68, 0.12);
+  --ms-text:          #E8E8ED;
+  --ms-text-secondary: #9CA3AF;
+  --ms-text-muted:    #6B7280;
+  --ms-text-dim:      #4B5563;
+  --ms-border:        rgba(255,255,255,0.06);
+  --ms-border-hover:  rgba(255,255,255,0.12);
+  --ms-border-active: rgba(240, 165, 0, 0.3);
+  --ms-shadow-sm:     0 1px 2px rgba(0,0,0,0.3);
+  --ms-shadow-md:     0 4px 12px rgba(0,0,0,0.4);
+  --ms-shadow-lg:     0 8px 32px rgba(0,0,0,0.5);
+  --ms-shadow-glow:   0 0 20px rgba(240, 165, 0, 0.15);
+  --ms-glass-bg:      rgba(22, 25, 33, 0.75);
+  --ms-glass-border:  rgba(255,255,255,0.08);
+  --ms-glass-blur:    12px;
+  --ms-radius-sm:     6px;
+  --ms-radius-md:     10px;
+  --ms-radius-lg:     14px;
+  --ms-radius-xl:     20px;
+  --ms-radius-pill:   100px;
+  --ms-font-body:     'Inter', 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --ms-font-display:  'Inter', 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+  --ms-font-mono:     'JetBrains Mono', 'SF Mono', 'Fira Code', monospace;
+  --ms-space-1: 4px; --ms-space-2: 8px; --ms-space-3: 12px; --ms-space-4: 16px;
+  --ms-space-5: 20px; --ms-space-6: 24px; --ms-space-8: 32px; --ms-space-10: 40px; --ms-space-12: 48px;
+  --ms-transition-fast: 150ms cubic-bezier(0.4, 0, 0.2, 1);
+  --ms-transition-base: 250ms cubic-bezier(0.4, 0, 0.2, 1);
+  --ms-transition-slow: 400ms cubic-bezier(0.4, 0, 0.2, 1);
+  --ms-z-base: 1; --ms-z-sticky: 100; --ms-z-header: 200; --ms-z-sidebar: 300;
+  --ms-z-modal-backdrop: 1000; --ms-z-modal: 1010; --ms-z-toast: 2000; --ms-z-tooltip: 3000;
+}
+
+/* ── 2. GLOBAL RESET & BASE ──── */
+*,*::before,*::after { box-sizing: border-box; }
+html { -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; text-rendering: optimizeLegibility; scroll-behavior: smooth; }
+body { font-family: var(--ms-font-body) !important; background: var(--ms-bg-darkest) !important; color: var(--ms-text) !important; line-height: 1.5; letter-spacing: -0.01em; overflow-x: hidden; background-image: radial-gradient(ellipse at 20% 50%, rgba(139, 92, 246, 0.03) 0%, transparent 60%), radial-gradient(ellipse at 80% 20%, rgba(0, 212, 255, 0.02) 0%, transparent 50%), radial-gradient(ellipse at 50% 100%, rgba(240, 165, 0, 0.02) 0%, transparent 40%) !important; }
+.balance, .wallet-balance-amount, .tier-amount, .jackpot-amount, [id*="Balance"], [id*="balance"], [id*="Amount"], [id*="amount"], [id*="Counter"], [id*="counter"], [id*="pnl"], [id*="Badge"] { font-variant-numeric: tabular-nums; font-feature-settings: "tnum"; font-family: var(--ms-font-mono) !important; }
+::selection { background: rgba(240, 165, 0, 0.3); color: #fff; }
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: var(--ms-bg-dark); }
+::-webkit-scrollbar-thumb { background: var(--ms-bg-hover); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--ms-text-muted); }
+
+/* ── 3. TYPOGRAPHY ──── */
+h1, h2, h3, h4, h5, h6, .hero-title, .wallet-title, .settings-title, .modal-title, .section-title { font-family: var(--ms-font-display) !important; font-weight: 700 !important; letter-spacing: -0.02em; color: var(--ms-text) !important; }
+.section-header, .lobby-section-title, .category-title, .filter-label, .wallet-tab, #allSlotsTitle, .hero-tags span { text-transform: uppercase !important; letter-spacing: 0.08em !important; font-weight: 600 !important; font-size: 11px !important; color: var(--ms-text-secondary) !important; }
+
+/* ── 4. HEADER ──── */
+header, .casino-header, .header { background: var(--ms-glass-bg) !important; backdrop-filter: blur(var(--ms-glass-blur)) saturate(1.5) !important; -webkit-backdrop-filter: blur(var(--ms-glass-blur)) saturate(1.5) !important; border-bottom: 1px solid var(--ms-glass-border) !important; box-shadow: 0 1px 0 rgba(0,0,0,0.3), 0 4px 24px rgba(0,0,0,0.2) !important; padding: 0 var(--ms-space-5) !important; height: 56px !important; position: sticky !important; top: 0 !important; z-index: var(--ms-z-header) !important; }
+.logo, .casino-logo, .header-logo { font-family: var(--ms-font-display) !important; font-weight: 800 !important; font-size: 18px !important; letter-spacing: 0.05em !important; background: linear-gradient(135deg, var(--ms-gold), var(--ms-gold-light)) !important; -webkit-background-clip: text !important; -webkit-text-fill-color: transparent !important; background-clip: text !important; }
+.btn-deposit, .btn-user, .btn-settings, .btn-profile, header button, .casino-header button { background: var(--ms-bg-surface) !important; border: 1px solid var(--ms-border) !important; border-radius: var(--ms-radius-md) !important; color: var(--ms-text-secondary) !important; font-size: 13px !important; font-weight: 500 !important; padding: 6px 12px !important; transition: all var(--ms-transition-fast) !important; cursor: pointer !important; }
+.btn-deposit:hover, .btn-user:hover, header button:hover { background: var(--ms-bg-hover) !important; border-color: var(--ms-border-hover) !important; color: var(--ms-text) !important; }
+.btn-deposit { background: linear-gradient(135deg, var(--ms-gold), #E09400) !important; border: none !important; color: #000 !important; font-weight: 700 !important; padding: 8px 16px !important; border-radius: var(--ms-radius-pill) !important; box-shadow: 0 2px 8px rgba(240, 165, 0, 0.25) !important; text-transform: uppercase !important; letter-spacing: 0.04em !important; font-size: 12px !important; }
+.btn-deposit:hover { background: linear-gradient(135deg, var(--ms-gold-light), var(--ms-gold)) !important; box-shadow: 0 4px 16px rgba(240, 165, 0, 0.4) !important; color: #000 !important; transform: translateY(-1px) !important; }
+#balance, .balance-display, .balance-amount { font-family: var(--ms-font-mono) !important; font-weight: 700 !important; color: var(--ms-green) !important; font-size: 15px !important; }
+.xp-bar, .xp-bar-fill, #xpBarFill { border-radius: var(--ms-radius-pill) !important; height: 4px !important; }
+.xp-bar { background: var(--ms-bg-dark) !important; }
+#xpBarFill { background: linear-gradient(90deg, var(--ms-cyan), var(--ms-violet)) !important; }
+#levelBadge { background: var(--ms-violet-dim) !important; color: var(--ms-violet) !important; border-radius: var(--ms-radius-pill) !important; font-weight: 700 !important; font-size: 11px !important; padding: 2px 8px !important; }
+#headerSearchInput, #gameSearchInput, .search-input, .game-search-input { background: var(--ms-bg-surface) !important; border: 1px solid var(--ms-border) !important; border-radius: var(--ms-radius-pill) !important; color: var(--ms-text) !important; padding: 8px 16px 8px 36px !important; font-size: 13px !important; transition: all var(--ms-transition-fast) !important; }
+#headerSearchInput:focus, #gameSearchInput:focus { border-color: var(--ms-gold) !important; box-shadow: 0 0 0 3px var(--ms-gold-dim) !important; outline: none !important; }
+
+/* ── 5. PROMO BAR ──── */
+.promo-bar, #promo-bar, [class*="promo-bar"] { background: linear-gradient(90deg, var(--ms-bg-dark), var(--ms-bg-base), var(--ms-bg-dark)) !important; border-bottom: 1px solid var(--ms-border) !important; padding: 6px 0 !important; font-size: 12px !important; color: var(--ms-text-muted) !important; }
+.promo-bar .promo-highlight { color: var(--ms-gold) !important; font-weight: 600 !important; }
+
+/* ── 6. SIDEBAR ──── */
+#casinoSidebar, .casino-sidebar { background: var(--ms-bg-dark) !important; border-right: 1px solid var(--ms-border) !important; width: 240px !important; transition: width var(--ms-transition-base), transform var(--ms-transition-base) !important; }
+.casino-sidebar .csb-item, .csb-nav button { background: transparent !important; border: none !important; border-radius: var(--ms-radius-md) !important; color: var(--ms-text-secondary) !important; padding: 10px 14px !important; font-size: 13px !important; font-weight: 500 !important; transition: all var(--ms-transition-fast) !important; display: flex !important; align-items: center !important; gap: 10px !important; width: 100% !important; text-align: left !important; cursor: pointer !important; }
+.csb-item:hover { background: var(--ms-bg-surface) !important; color: var(--ms-text) !important; }
+.csb-item.active, .csb-item[aria-current="true"] { background: var(--ms-gold-dim) !important; color: var(--ms-gold) !important; }
+.csb-icon { font-size: 16px !important; width: 20px !important; text-align: center !important; }
+.csb-deposit-btn { background: linear-gradient(135deg, var(--ms-gold), #E09400) !important; color: #000 !important; border: none !important; border-radius: var(--ms-radius-md) !important; font-weight: 700 !important; font-size: 13px !important; padding: 12px !important; width: 100% !important; cursor: pointer !important; transition: all var(--ms-transition-fast) !important; text-transform: uppercase !important; letter-spacing: 0.04em !important; }
+.csb-deposit-btn:hover { transform: translateY(-1px) !important; box-shadow: 0 4px 16px rgba(240, 165, 0, 0.3) !important; }
+
+/* ── 7. HERO ──── */
+.hero-banner, .hero-section { background: radial-gradient(ellipse at 30% 0%, rgba(240, 165, 0, 0.08) 0%, transparent 50%), radial-gradient(ellipse at 70% 100%, rgba(0, 212, 255, 0.05) 0%, transparent 50%), var(--ms-bg-base) !important; border-radius: var(--ms-radius-xl) !important; padding: var(--ms-space-10) var(--ms-space-8) !important; margin-bottom: var(--ms-space-8) !important; border: 1px solid var(--ms-border) !important; position: relative !important; overflow: hidden !important; }
+.hero-title { font-size: clamp(28px, 4vw, 48px) !important; font-weight: 800 !important; line-height: 1.1 !important; letter-spacing: -0.03em !important; margin-bottom: var(--ms-space-4) !important; }
+.hero-highlight { background: linear-gradient(135deg, var(--ms-gold), var(--ms-gold-light)) !important; -webkit-background-clip: text !important; -webkit-text-fill-color: transparent !important; background-clip: text !important; }
+.hero-subtitle { font-size: 15px !important; color: var(--ms-text-secondary) !important; max-width: 500px !important; line-height: 1.5 !important; }
+.btn-play, .hero-buttons .btn { border-radius: var(--ms-radius-pill) !important; font-weight: 700 !important; font-size: 14px !important; padding: 12px 28px !important; text-transform: uppercase !important; letter-spacing: 0.06em !important; transition: all var(--ms-transition-fast) !important; cursor: pointer !important; border: none !important; }
+.btn-play { background: linear-gradient(135deg, var(--ms-cyan), #0099CC) !important; color: #fff !important; box-shadow: 0 4px 16px rgba(0, 212, 255, 0.3) !important; }
+.btn-play:hover { transform: translateY(-2px) scale(1.02) !important; box-shadow: 0 6px 24px rgba(0, 212, 255, 0.4) !important; }
+.btn-bonus-wheel { background: var(--ms-bg-surface) !important; color: var(--ms-gold) !important; border: 1px solid var(--ms-gold-dim) !important; }
+.btn-deposit-hero { background: linear-gradient(135deg, var(--ms-gold), #E09400) !important; color: #000 !important; }
+.hero-stats { background: var(--ms-glass-bg) !important; backdrop-filter: blur(8px) !important; border: 1px solid var(--ms-glass-border) !important; border-radius: var(--ms-radius-lg) !important; padding: var(--ms-space-5) !important; }
+.stats-value { font-family: var(--ms-font-mono) !important; font-weight: 800 !important; font-size: 28px !important; background: linear-gradient(135deg, var(--ms-gold), var(--ms-gold-light)) !important; -webkit-background-clip: text !important; -webkit-text-fill-color: transparent !important; }
+
+/* ── 8. GAME GRID ──── */
+.games-grid, .game-grid, #allGames { display: grid !important; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)) !important; gap: var(--ms-space-4) !important; padding: 0 !important; }
+@media (min-width: 768px) { .games-grid, .game-grid, #allGames { grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)) !important; gap: var(--ms-space-5) !important; } }
+@media (min-width: 1200px) { .games-grid, .game-grid, #allGames { grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)) !important; } }
+.game-card, .game-tile, .slot-card { position: relative !important; border-radius: var(--ms-radius-lg) !important; overflow: hidden !important; background: var(--ms-bg-card) !important; border: 1px solid var(--ms-border) !important; transition: all var(--ms-transition-base) !important; cursor: pointer !important; aspect-ratio: 4 / 3 !important; }
+.game-card:hover, .slot-card:hover { transform: translateY(-4px) scale(1.02) !important; border-color: var(--ms-gold) !important; box-shadow: 0 8px 32px rgba(0,0,0,0.4), 0 0 0 1px var(--ms-gold), 0 0 20px var(--ms-gold-dim) !important; z-index: 2 !important; }
+.game-card img, .slot-card img, .game-thumb { width: 100% !important; height: 100% !important; object-fit: cover !important; transition: transform var(--ms-transition-base) !important; }
+.game-card:hover img, .slot-card:hover img { transform: scale(1.05) !important; }
+.game-card::after, .slot-card .game-overlay { content: '' !important; position: absolute !important; inset: 0 !important; background: linear-gradient(to top, rgba(0,0,0,0.8) 0%, transparent 50%) !important; opacity: 0 !important; transition: opacity var(--ms-transition-base) !important; pointer-events: none !important; }
+.game-card:hover::after, .slot-card:hover .game-overlay { opacity: 1 !important; }
+.game-card .game-name, .slot-card .game-title, .game-card-name { position: absolute !important; bottom: 0 !important; left: 0 !important; right: 0 !important; padding: var(--ms-space-3) var(--ms-space-4) !important; font-weight: 600 !important; font-size: 13px !important; color: #fff !important; z-index: 1 !important; background: linear-gradient(to top, rgba(0,0,0,0.85) 0%, transparent 100%) !important; }
+.game-card .provider-badge, .game-provider-tag { position: absolute !important; top: var(--ms-space-2) !important; right: var(--ms-space-2) !important; background: rgba(0,0,0,0.6) !important; backdrop-filter: blur(4px) !important; color: var(--ms-text-secondary) !important; font-size: 9px !important; font-weight: 600 !important; text-transform: uppercase !important; letter-spacing: 0.06em !important; padding: 2px 6px !important; border-radius: var(--ms-radius-sm) !important; z-index: 1 !important; }
+.game-card.jackpot-game, .game-card[data-jackpot="true"] { border-color: var(--ms-gold) !important; box-shadow: 0 0 12px var(--ms-gold-dim) !important; }
+.game-card .hot-badge, .game-badge-hot { position: absolute !important; top: var(--ms-space-2) !important; left: var(--ms-space-2) !important; background: linear-gradient(135deg, #EF4444, #DC2626) !important; color: #fff !important; font-size: 9px !important; font-weight: 700 !important; text-transform: uppercase !important; letter-spacing: 0.06em !important; padding: 2px 8px !important; border-radius: var(--ms-radius-sm) !important; z-index: 1 !important; }
+.game-card.loading, .game-card-skeleton { background: var(--ms-bg-card) !important; animation: shimmer 1.5s infinite !important; }
+@keyframes shimmer { 0% { background-position: -200% 0; } 100% { background-position: 200% 0; } }
+
+/* ── 9. FILTER TABS ──── */
+#filterTabs, .filter-tabs, .category-tabs { display: flex !important; gap: var(--ms-space-2) !important; overflow-x: auto !important; scrollbar-width: none !important; -webkit-overflow-scrolling: touch !important; padding: var(--ms-space-3) 0 !important; }
+#filterTabs::-webkit-scrollbar { display: none; }
+.filter-tab, .filter-btn, #filterTabs button, .category-chip, .provider-chip, .theme-chip { background: var(--ms-bg-surface) !important; border: 1px solid var(--ms-border) !important; border-radius: var(--ms-radius-pill) !important; color: var(--ms-text-secondary) !important; padding: 7px 16px !important; font-size: 12px !important; font-weight: 600 !important; white-space: nowrap !important; cursor: pointer !important; transition: all var(--ms-transition-fast) !important; flex-shrink: 0 !important; }
+.filter-tab:hover, .filter-btn:hover, #filterTabs button:hover, .category-chip:hover, .provider-chip:hover { background: var(--ms-bg-hover) !important; color: var(--ms-text) !important; border-color: var(--ms-border-hover) !important; }
+.filter-tab.active, .filter-btn.active, #filterTabs button.active, .category-chip.active, .provider-chip.active, .theme-chip.active { background: var(--ms-gold-dim) !important; border-color: var(--ms-gold) !important; color: var(--ms-gold) !important; }
+#providerFilterRow, .provider-filter-row { display: flex !important; gap: var(--ms-space-2) !important; overflow-x: auto !important; scrollbar-width: none !important; padding: var(--ms-space-2) 0 !important; }
+#providerFilterRow::-webkit-scrollbar { display: none; }
+
+/* ── 10. MODALS ──── */
+.modal { display: none !important; position: fixed !important; inset: 0 !important; background: rgba(0,0,0,0.7) !important; backdrop-filter: blur(8px) !important; -webkit-backdrop-filter: blur(8px) !important; z-index: var(--ms-z-modal-backdrop) !important; align-items: center !important; justify-content: center !important; padding: var(--ms-space-5) !important; }
+.modal.active { display: flex !important; }
+.modal-content, .wallet-modal-content { background: var(--ms-bg-elevated) !important; border: 1px solid var(--ms-glass-border) !important; border-radius: var(--ms-radius-xl) !important; box-shadow: var(--ms-shadow-lg) !important; max-width: 600px !important; width: 100% !important; max-height: 85vh !important; overflow-y: auto !important; position: relative !important; animation: modalSlideIn 0.3s ease-out !important; }
+@keyframes modalSlideIn { from { opacity: 0; transform: translateY(16px) scale(0.97); } to { opacity: 1; transform: translateY(0) scale(1); } }
+.modal-close-btn, .auth-close-btn { position: absolute !important; top: var(--ms-space-4) !important; right: var(--ms-space-4) !important; background: var(--ms-bg-surface) !important; border: 1px solid var(--ms-border) !important; color: var(--ms-text-secondary) !important; width: 36px !important; height: 36px !important; border-radius: 50% !important; display: flex !important; align-items: center !important; justify-content: center !important; font-size: 20px !important; cursor: pointer !important; transition: all var(--ms-transition-fast) !important; z-index: 10 !important; }
+.modal-close-btn:hover, .auth-close-btn:hover { background: var(--ms-bg-hover) !important; color: var(--ms-text) !important; border-color: var(--ms-border-hover) !important; }
+
+/* ── 11. WALLET MODAL ──── */
+.wallet-modal { padding: 0 !important; }
+.wallet-header { background: linear-gradient(135deg, var(--ms-bg-surface), var(--ms-bg-card)) !important; padding: var(--ms-space-6) !important; border-bottom: 1px solid var(--ms-border) !important; border-radius: var(--ms-radius-xl) var(--ms-radius-xl) 0 0 !important; }
+.wallet-title { font-size: 20px !important; font-weight: 700 !important; display: flex !important; align-items: center !important; gap: var(--ms-space-3) !important; }
+.wallet-balance-amount { font-family: var(--ms-font-mono) !important; font-size: 28px !important; font-weight: 800 !important; color: var(--ms-green) !important; }
+.wallet-tab { background: transparent !important; border: none !important; border-bottom: 2px solid transparent !important; color: var(--ms-text-secondary) !important; padding: var(--ms-space-3) var(--ms-space-4) !important; font-weight: 600 !important; font-size: 13px !important; cursor: pointer !important; transition: all var(--ms-transition-fast) !important; }
+.wallet-tab.active, .wallet-tab:hover { color: var(--ms-gold) !important; border-bottom-color: var(--ms-gold) !important; }
+
+/* ── 12. AUTH MODAL ──── */
+#authModal .modal-content { max-width: 420px !important; padding: var(--ms-space-8) !important; }
+.auth-tabs { display: flex !important; gap: var(--ms-space-1) !important; background: var(--ms-bg-dark) !important; border-radius: var(--ms-radius-md) !important; padding: 3px !important; margin-bottom: var(--ms-space-6) !important; }
+.auth-tab, #tabLogin, #tabRegister { flex: 1 !important; background: transparent !important; border: none !important; border-radius: var(--ms-radius-sm) !important; color: var(--ms-text-secondary) !important; padding: 10px !important; font-weight: 600 !important; font-size: 13px !important; cursor: pointer !important; transition: all var(--ms-transition-fast) !important; }
+.auth-tab.active, #tabLogin.active, #tabRegister.active { background: var(--ms-bg-surface) !important; color: var(--ms-text) !important; box-shadow: var(--ms-shadow-sm) !important; }
+.auth-input, input[type="text"], input[type="password"], input[type="email"], .form-control { background: var(--ms-bg-surface) !important; border: 1px solid var(--ms-border) !important; border-radius: var(--ms-radius-md) !important; color: var(--ms-text) !important; padding: 12px 14px !important; font-size: 14px !important; font-family: var(--ms-font-body) !important; width: 100% !important; transition: all var(--ms-transition-fast) !important; }
+.auth-input:focus, input[type="text"]:focus, input[type="password"]:focus, input[type="email"]:focus { border-color: var(--ms-gold) !important; box-shadow: 0 0 0 3px var(--ms-gold-dim) !important; outline: none !important; }
+.btn-auth, .login-btn, .register-btn, #loginBtn, #registerBtn, button[type="submit"] { background: linear-gradient(135deg, var(--ms-cyan), #0099CC) !important; color: #fff !important; border: none !important; border-radius: var(--ms-radius-md) !important; padding: 12px 24px !important; font-weight: 700 !important; font-size: 14px !important; width: 100% !important; cursor: pointer !important; transition: all var(--ms-transition-fast) !important; text-transform: uppercase !important; letter-spacing: 0.04em !important; }
+.btn-auth:hover, .login-btn:hover, .register-btn:hover { transform: translateY(-1px) !important; box-shadow: 0 4px 16px rgba(0, 212, 255, 0.3) !important; }
+
+/* ── 13. SETTINGS ──── */
+.settings-panel { padding: var(--ms-space-6) !important; }
+.settings-title { font-size: 20px !important; margin-bottom: var(--ms-space-6) !important; }
+.settings-group { background: var(--ms-bg-surface) !important; border: 1px solid var(--ms-border) !important; border-radius: var(--ms-radius-lg) !important; padding: var(--ms-space-5) !important; margin-bottom: var(--ms-space-4) !important; }
+.settings-label { color: var(--ms-text-secondary) !important; font-size: 12px !important; font-weight: 600 !important; text-transform: uppercase !important; letter-spacing: 0.06em !important; margin-bottom: var(--ms-space-3) !important; }
+input[type="checkbox"] { appearance: none !important; -webkit-appearance: none !important; width: 40px !important; height: 22px !important; background: var(--ms-bg-dark) !important; border-radius: 11px !important; position: relative !important; cursor: pointer !important; transition: background var(--ms-transition-fast) !important; }
+input[type="checkbox"]::after { content: '' !important; position: absolute !important; top: 2px !important; left: 2px !important; width: 18px !important; height: 18px !important; background: var(--ms-text-secondary) !important; border-radius: 50% !important; transition: transform var(--ms-transition-fast), background var(--ms-transition-fast) !important; }
+input[type="checkbox"]:checked { background: var(--ms-cyan) !important; }
+input[type="checkbox"]:checked::after { transform: translateX(18px) !important; background: #fff !important; }
+input[type="range"] { -webkit-appearance: none !important; appearance: none !important; width: 100% !important; height: 4px !important; background: var(--ms-bg-dark) !important; border-radius: 2px !important; outline: none !important; }
+input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none !important; width: 16px !important; height: 16px !important; background: var(--ms-gold) !important; border-radius: 50% !important; cursor: pointer !important; box-shadow: 0 0 0 4px var(--ms-gold-dim) !important; }
+
+/* ── 14. DEPOSIT ──── */
+.deposit-panel { padding: var(--ms-space-6) !important; text-align: center !important; }
+.deposit-grid { display: grid !important; grid-template-columns: 1fr 1fr !important; gap: var(--ms-space-3) !important; margin: var(--ms-space-6) 0 !important; }
+.deposit-option { background: var(--ms-bg-surface) !important; border: 1px solid var(--ms-border) !important; border-radius: var(--ms-radius-lg) !important; padding: var(--ms-space-5) var(--ms-space-4) !important; cursor: pointer !important; transition: all var(--ms-transition-fast) !important; text-align: center !important; }
+.deposit-option:hover { border-color: var(--ms-gold) !important; background: var(--ms-gold-dim) !important; transform: translateY(-2px) !important; }
+.deposit-option-featured { border-color: var(--ms-gold) !important; background: var(--ms-gold-dim) !important; position: relative !important; }
+.deposit-amount { font-family: var(--ms-font-mono) !important; font-size: 22px !important; font-weight: 800 !important; color: var(--ms-text) !important; display: block !important; }
+.deposit-label { font-size: 11px !important; color: var(--ms-text-muted) !important; text-transform: uppercase !important; letter-spacing: 0.06em !important; margin-top: var(--ms-space-1) !important; }
+.deposit-badge { position: absolute !important; top: -8px !important; right: -8px !important; background: linear-gradient(135deg, var(--ms-gold), #E09400) !important; color: #000 !important; font-size: 9px !important; font-weight: 800 !important; padding: 2px 8px !important; border-radius: var(--ms-radius-pill) !important; text-transform: uppercase !important; letter-spacing: 0.04em !important; }
+
+/* ── 15. DAILY BONUS ──── */
+.daily-day { background: var(--ms-bg-surface) !important; border: 1px solid var(--ms-border) !important; border-radius: var(--ms-radius-md) !important; padding: var(--ms-space-3) !important; transition: all var(--ms-transition-fast) !important; }
+.daily-day.day-claimed { background: var(--ms-green-dim) !important; border-color: var(--ms-green) !important; }
+.daily-day.day-today { background: var(--ms-gold-dim) !important; border-color: var(--ms-gold) !important; box-shadow: 0 0 12px var(--ms-gold-dim) !important; }
+.daily-day.day-locked { opacity: 0.4 !important; }
+#dailyClaimBtn { background: linear-gradient(135deg, var(--ms-gold), #E09400) !important; color: #000 !important; border: none !important; border-radius: var(--ms-radius-md) !important; padding: 14px 28px !important; font-weight: 700 !important; font-size: 14px !important; cursor: pointer !important; text-transform: uppercase !important; }
+#dailyClaimBtn:disabled { background: var(--ms-bg-surface) !important; color: var(--ms-text-muted) !important; cursor: not-allowed !important; }
+
+/* ── 16. TOASTS ──── */
+.toast-container { position: fixed !important; top: 70px !important; right: var(--ms-space-4) !important; z-index: var(--ms-z-toast) !important; display: flex !important; flex-direction: column !important; gap: var(--ms-space-2) !important; }
+.toast { background: var(--ms-glass-bg) !important; backdrop-filter: blur(var(--ms-glass-blur)) !important; border: 1px solid var(--ms-glass-border) !important; border-radius: var(--ms-radius-md) !important; padding: var(--ms-space-3) var(--ms-space-4) !important; font-size: 13px !important; font-weight: 500 !important; color: var(--ms-text) !important; box-shadow: var(--ms-shadow-md) !important; animation: toastIn 0.3s ease-out !important; max-width: 320px !important; }
+.toast.success, .toast.win { border-left: 3px solid var(--ms-green) !important; }
+.toast.error { border-left: 3px solid var(--ms-red) !important; }
+.toast.info { border-left: 3px solid var(--ms-cyan) !important; }
+.toast.bigwin { border-left: 3px solid var(--ms-gold) !important; }
+@keyframes toastIn { from { opacity: 0; transform: translateX(24px); } to { opacity: 1; transform: translateX(0); } }
+
+/* ── 17. FOOTER ──── */
+footer, .casino-footer, #casinoFooter { background: var(--ms-bg-dark) !important; border-top: 1px solid var(--ms-border) !important; padding: var(--ms-space-10) var(--ms-space-6) var(--ms-space-6) !important; margin-top: var(--ms-space-12) !important; }
+.footer-section { margin-bottom: var(--ms-space-6) !important; }
+.footer-section h4 { color: var(--ms-text) !important; font-size: 13px !important; font-weight: 700 !important; text-transform: uppercase !important; letter-spacing: 0.06em !important; margin-bottom: var(--ms-space-3) !important; }
+.footer-section a { color: var(--ms-text-muted) !important; text-decoration: none !important; font-size: 13px !important; display: block !important; padding: var(--ms-space-1) 0 !important; transition: color var(--ms-transition-fast) !important; }
+.footer-section a:hover { color: var(--ms-gold) !important; }
+.footer-bottom { border-top: 1px solid var(--ms-border) !important; padding-top: var(--ms-space-6) !important; text-align: center !important; }
+.footer-bottom p, .footer-legal { color: var(--ms-text-dim) !important; font-size: 11px !important; line-height: 1.6 !important; }
+
+/* ── 18. MOBILE BOTTOM NAV ──── */
+#mobileBottomNav { position: fixed !important; bottom: 0 !important; left: 0 !important; right: 0 !important; background: var(--ms-glass-bg) !important; backdrop-filter: blur(var(--ms-glass-blur)) saturate(1.5) !important; -webkit-backdrop-filter: blur(var(--ms-glass-blur)) saturate(1.5) !important; border-top: 1px solid var(--ms-glass-border) !important; display: flex !important; justify-content: space-around !important; align-items: center !important; padding: 6px 0 env(safe-area-inset-bottom, 0) !important; z-index: var(--ms-z-sticky) !important; box-shadow: 0 -4px 24px rgba(0,0,0,0.3) !important; }
+#mobileBottomNav button, .mobile-nav-item { background: none !important; border: none !important; display: flex !important; flex-direction: column !important; align-items: center !important; gap: 2px !important; color: var(--ms-text-muted) !important; font-size: 10px !important; font-weight: 500 !important; padding: 6px 12px !important; cursor: pointer !important; transition: color var(--ms-transition-fast) !important; min-width: 48px !important; min-height: 48px !important; justify-content: center !important; }
+#mobileBottomNav button:hover, #mobileBottomNav button.active { color: var(--ms-gold) !important; }
+#mobileBottomNav button svg, #mobileBottomNav button .nav-icon { width: 22px !important; height: 22px !important; }
+
+/* ── 19. SLOT MODAL ──── */
+#slotModal { background: var(--ms-bg-darkest) !important; }
+#slotModal.active { display: flex !important; flex-direction: column !important; }
+.slot-top-bar, .game-header-bar { background: var(--ms-glass-bg) !important; backdrop-filter: blur(8px) !important; border-bottom: 1px solid var(--ms-border) !important; padding: var(--ms-space-2) var(--ms-space-4) !important; }
+#slotGameName { font-family: var(--ms-font-display) !important; font-size: 16px !important; font-weight: 700 !important; color: var(--ms-text) !important; }
+#slotProvider { font-size: 11px !important; color: var(--ms-text-muted) !important; text-transform: uppercase !important; letter-spacing: 0.06em !important; }
+#spinBtn { background: linear-gradient(135deg, var(--ms-gold), #E09400) !important; color: #000 !important; border: none !important; border-radius: 50% !important; width: 64px !important; height: 64px !important; font-weight: 900 !important; font-size: 14px !important; cursor: pointer !important; transition: all var(--ms-transition-fast) !important; box-shadow: 0 4px 20px rgba(240, 165, 0, 0.4) !important; text-transform: uppercase !important; }
+#spinBtn:hover { transform: scale(1.05) !important; box-shadow: 0 6px 28px rgba(240, 165, 0, 0.5) !important; }
+#spinBtn:active { transform: scale(0.97) !important; }
+#betUpBtn, #betDownBtn { background: var(--ms-bg-surface) !important; border: 1px solid var(--ms-border) !important; color: var(--ms-text) !important; border-radius: var(--ms-radius-md) !important; width: 36px !important; height: 36px !important; cursor: pointer !important; transition: all var(--ms-transition-fast) !important; display: flex !important; align-items: center !important; justify-content: center !important; }
+#betUpBtn:hover, #betDownBtn:hover { background: var(--ms-bg-hover) !important; border-color: var(--ms-border-hover) !important; }
+#betAmount { font-family: var(--ms-font-mono) !important; font-weight: 700 !important; font-size: 16px !important; color: var(--ms-text) !important; }
+#autoSpinBtn { background: var(--ms-bg-surface) !important; border: 1px solid var(--ms-border) !important; color: var(--ms-text-secondary) !important; border-radius: var(--ms-radius-md) !important; font-weight: 600 !important; font-size: 12px !important; cursor: pointer !important; transition: all var(--ms-transition-fast) !important; }
+#turboBtn { background: var(--ms-bg-surface) !important; border: 1px solid var(--ms-border) !important; color: var(--ms-text-secondary) !important; border-radius: var(--ms-radius-md) !important; cursor: pointer !important; }
+#turboBtn.active { background: var(--ms-cyan-dim) !important; border-color: var(--ms-cyan) !important; color: var(--ms-cyan) !important; }
+#slotWinDisplay, .win-display { font-family: var(--ms-font-mono) !important; font-weight: 800 !important; color: var(--ms-gold) !important; }
+#slotBalance { font-family: var(--ms-font-mono) !important; font-weight: 700 !important; color: var(--ms-green) !important; }
+
+/* ── 20. BIG WIN ──── */
+#bigWinOverlay { background: radial-gradient(ellipse at center, rgba(240, 165, 0, 0.2), rgba(0,0,0,0.9)) !important; backdrop-filter: blur(8px) !important; }
+#bigWinAmount { font-family: var(--ms-font-mono) !important; font-size: clamp(32px, 8vw, 64px) !important; font-weight: 900 !important; background: linear-gradient(135deg, var(--ms-gold), var(--ms-gold-light), var(--ms-gold)) !important; -webkit-background-clip: text !important; -webkit-text-fill-color: transparent !important; }
+
+/* ── 21. JACKPOT TICKER ──── */
+#jackpotTickerContainer .jackpot-ticker { background: var(--ms-glass-bg) !important; backdrop-filter: blur(var(--ms-glass-blur)) !important; border: 1px solid var(--ms-gold-dim) !important; border-radius: var(--ms-radius-xl) !important; box-shadow: 0 0 30px var(--ms-gold-dim) !important; }
+.jackpot-tier { background: var(--ms-bg-surface) !important; border: 1px solid var(--ms-border) !important; border-radius: var(--ms-radius-md) !important; }
+.tier-amount { font-family: var(--ms-font-mono) !important; font-weight: 800 !important; background: linear-gradient(135deg, var(--ms-gold), var(--ms-gold-light)) !important; -webkit-background-clip: text !important; -webkit-text-fill-color: transparent !important; }
+
+/* ── 22. LIVE WIN TICKER ──── */
+.win-ticker, #winTicker { background: var(--ms-bg-base) !important; border: 1px solid var(--ms-border) !important; border-radius: var(--ms-radius-md) !important; padding: var(--ms-space-2) var(--ms-space-4) !important; font-size: 12px !important; color: var(--ms-text-secondary) !important; }
+
+/* ── 23-28. MISC ──── */
+#rgFooterEnhanced { background: var(--ms-bg-dark) !important; border-top: 1px solid var(--ms-border) !important; padding: var(--ms-space-4) !important; }
+#ageVerifyOverlay, #termsOverlay, #kycOverlay, #selfExclusionOverlay { background: rgba(0,0,0,0.85) !important; backdrop-filter: blur(8px) !important; }
+#qaTools { background: var(--ms-bg-surface) !important; border: 2px dashed var(--ms-red-dim) !important; border-radius: var(--ms-radius-lg) !important; padding: var(--ms-space-4) !important; }
+#bonusWheelModal .modal-content { background: radial-gradient(ellipse at center, var(--ms-bg-elevated), var(--ms-bg-dark)) !important; max-width: 500px !important; }
+#gambleOverlay { background: rgba(0,0,0,0.85) !important; backdrop-filter: blur(8px) !important; }
+#statsModal .modal-content { max-width: 640px !important; }
+.stats-grid { display: grid !important; grid-template-columns: 1fr 1fr !important; gap: var(--ms-space-3) !important; }
+.stat-card { background: var(--ms-bg-surface) !important; border: 1px solid var(--ms-border) !important; border-radius: var(--ms-radius-md) !important; padding: var(--ms-space-4) !important; }
+
+/* ── 29. TRUST BAR ──── */
+.trust-bar { display: flex; justify-content: center; align-items: center; gap: var(--ms-space-6); padding: var(--ms-space-2) var(--ms-space-4); background: var(--ms-bg-base); border-bottom: 1px solid var(--ms-border); font-size: 11px; color: var(--ms-text-muted); letter-spacing: 0.04em; }
+.trust-bar-item { display: flex; align-items: center; gap: var(--ms-space-2); }
+.trust-bar-item svg { width: 14px; height: 14px; opacity: 0.6; }
+
+/* ── 30. MICRO-INTERACTIONS ──── */
+button:active, .btn:active, [role="button"]:active { transform: scale(0.97) !important; }
+:focus-visible { outline: 2px solid var(--ms-cyan) !important; outline-offset: 2px !important; }
+a, button, input, select, textarea, .game-card, .slot-card { transition: all var(--ms-transition-fast); }
+.jackpot-amount, .tier-amount, #heroJackpotAmount { text-shadow: 0 0 20px var(--ms-gold-glow) !important; }
+
+/* ── 31. RESPONSIVE ──── */
+@media (max-width: 768px) {
+  .hero-banner { padding: var(--ms-space-6) var(--ms-space-4) !important; border-radius: var(--ms-radius-lg) !important; }
+  .hero-title { font-size: 24px !important; }
+  .games-grid, #allGames { grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)) !important; gap: var(--ms-space-3) !important; }
+  .modal-content { border-radius: var(--ms-radius-lg) var(--ms-radius-lg) 0 0 !important; max-height: 90vh !important; margin-top: auto !important; }
+  .modal { align-items: flex-end !important; padding: 0 !important; }
+  body { padding-bottom: 70px !important; }
+}
+@media (max-width: 480px) {
+  .deposit-grid { grid-template-columns: 1fr !important; }
+  #spinBtn { width: 56px !important; height: 56px !important; font-size: 12px !important; }
+}
+@media (min-width: 1440px) { .games-grid, #allGames { grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)) !important; } }
+
+/* ── 32. LOADING ──── */
+#preloaderOverlay { background: var(--ms-bg-darkest) !important; }
+.loading-spinner { border-color: var(--ms-border) !important; border-top-color: var(--ms-gold) !important; }
+
+/* ── 33. EMOJI ICONS ──── */
+.csb-icon { filter: grayscale(100%) brightness(0.8) !important; font-size: 14px !important; }
+
+/* ── 34. SPIN STREAK ──── */
+#spin-streak-badge { background: var(--ms-glass-bg) !important; backdrop-filter: blur(var(--ms-glass-blur)) !important; border: 1px solid var(--ms-gold-dim) !important; border-radius: var(--ms-radius-lg) !important; box-shadow: 0 4px 16px rgba(0,0,0,0.3) !important; animation: none !important; }
+#spin-streak-leaderboard-panel { background: var(--ms-glass-bg) !important; backdrop-filter: blur(var(--ms-glass-blur)) !important; border: 1px solid var(--ms-border) !important; border-radius: var(--ms-radius-lg) !important; box-shadow: var(--ms-shadow-lg) !important; }
+
+/* ── 35. LOSS STREAK ──── */
+.loss-streak-banner { background: var(--ms-glass-bg) !important; backdrop-filter: blur(var(--ms-glass-blur)) !important; border: 1px solid var(--ms-glass-border) !important; border-radius: var(--ms-radius-lg) !important; box-shadow: var(--ms-shadow-lg) !important; }
+.loss-streak-modal, .loss-streak-recovery-modal, .loss-streak-low-balance-modal { background: var(--ms-bg-elevated) !important; border: 1px solid var(--ms-glass-border) !important; border-radius: var(--ms-radius-xl) !important; box-shadow: var(--ms-shadow-lg) !important; }
+.loss-streak-button-primary { background: linear-gradient(135deg, var(--ms-cyan), #0099CC) !important; border-radius: var(--ms-radius-md) !important; }
+.loss-streak-button-secondary { background: var(--ms-gold-dim) !important; color: var(--ms-gold) !important; border: 1px solid var(--ms-gold) !important; border-radius: var(--ms-radius-md) !important; }
+
+/* ── 36-40. MISC ──── */
+#matrixCanvas { opacity: 0.3 !important; }
+#pageTransition { background: var(--ms-bg-darkest) !important; }
+#heroCarousel, .hero-carousel { border-radius: var(--ms-radius-xl) !important; overflow: hidden !important; }
+.hero-carousel-item, .hero-slide { border-radius: var(--ms-radius-xl) !important; }
+#gameSortSelect, select { background: var(--ms-bg-surface) !important; border: 1px solid var(--ms-border) !important; border-radius: var(--ms-radius-md) !important; color: var(--ms-text) !important; padding: 8px 12px !important; font-size: 13px !important; cursor: pointer !important; }
+.notification-badge, .badge-count, [class*="notif-badge"] { background: var(--ms-red) !important; color: #fff !important; font-size: 10px !important; font-weight: 700 !important; min-width: 18px !important; height: 18px !important; border-radius: 9px !important; display: flex !important; align-items: center !important; justify-content: center !important; padding: 0 4px !important; }
