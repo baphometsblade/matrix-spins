@@ -6,7 +6,7 @@
 (function() {
     'use strict';
 
-    var PREFIX = 'matrixspins_';
+    var PREFIX = 'royalslots_';
 
     // ── Daily Login Bonus Schedule ───────────────────────────────────
     // Day → bonus in cents

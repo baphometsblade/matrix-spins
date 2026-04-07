@@ -1,4 +1,4 @@
-﻿/**
+/**
  * Win Limit Safety Feature
  * Responsible gambling tool to set session win limits and auto-cashout prompts
  * IIFE pattern with localStorage persistence and in-memory session tracking
@@ -142,7 +142,7 @@ window.WinLimit = (function () {
     const modal = createModal(
       modalId,
       `<div class="win-limit-modal-content">
-        <div class="win-limit-icon">🎉</div>
+        <div class="win-limit-icon">??</div>
         <h2>You've Reached Your Win Goal!</h2>
         <p class="win-limit-amount">$${state.winLimit}</p>
         <p class="win-limit-message">Great session! You've achieved your target winnings.</p>
@@ -153,9 +153,9 @@ window.WinLimit = (function () {
           </div>
         </div>
         <div class="win-limit-actions">
-          <button class="btn-primary btn-cashout" id="btnCashOut">💰 Cash Out</button>
+          <button class="btn-primary btn-cashout" id="btnCashOut">?? Cash Out</button>
           <button class="btn-secondary btn-keep-playing" id="btnKeepPlaying">Continue Playing</button>
-          <button class="btn-tertiary btn-increase-limit" id="btnIncreaseLimit">📈 Increase Limit</button>
+          <button class="btn-tertiary btn-increase-limit" id="btnIncreaseLimit">?? Increase Limit</button>
         </div>
       </div>`
     );
@@ -221,7 +221,7 @@ window.WinLimit = (function () {
     const modal = createModal(
       modalId,
       `<div class="win-limit-settings-content">
-        <h2>🎯 Win Limit Settings</h2>
+        <h2>?? Win Limit Settings</h2>
         <p class="settings-description">Set a win goal to help you play responsibly</p>
 
         <div class="settings-form">
@@ -250,7 +250,7 @@ window.WinLimit = (function () {
         </div>
 
         <div class="win-limit-actions">
-          <button class="btn-primary" id="btnSaveLimit">💾 Save Limit</button>
+          <button class="btn-primary" id="btnSaveLimit">?? Save Limit</button>
           <button class="btn-secondary" id="btnCloseSettings">Close</button>
         </div>
       </div>`

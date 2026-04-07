@@ -1717,7 +1717,7 @@
             overlay.appendChild(box);
             document.body.appendChild(overlay);
             document.getElementById('ageGateConfirm').addEventListener('click', function() {
-                localStorage.setItem('matrixspins_age_verified', 'true');
+                localStorage.setItem('royalslots_age_verified', 'true');
                 overlay.remove();
                 openSlot(gameId);
             });
@@ -1797,7 +1797,7 @@
 
             // Age gate for 18+ adult-themed slots
             if (currentGame.adult) {
-                var _ageVerified = localStorage.getItem('matrixspins_age_verified');
+                var _ageVerified = localStorage.getItem('royalslots_age_verified');
                 if (!_ageVerified) {
                     _showAgeGate(gameId);
                     currentGame = null;
@@ -16926,7 +16926,7 @@ function _mobileNavAction(a) {
         case 'favorites': if (typeof showFavorites === 'function') showFavorites(); break;
         case 'deposit': if (typeof openDepositModal === 'function') openDepositModal(); break;
         case 'profile': if (typeof openStatsModal === 'function') openStatsModal(); break;
-        case 'support': window.open('mailto:support@matrixspins.com','_blank'); break;
+        case 'support': window.open('mailto:support@royalslots.com','_blank'); break;
     }
 }
 

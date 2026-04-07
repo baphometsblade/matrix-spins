@@ -10,7 +10,7 @@
  */
 
 (function() {
-    var RG_KEY = 'matrixspins_rg_';
+    var RG_KEY = 'royalslots_rg_';
 
     function rgGet(key, fallback) {
         try { var v = localStorage.getItem(RG_KEY + key); return v !== null ? JSON.parse(v) : fallback; }

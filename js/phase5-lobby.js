@@ -243,11 +243,11 @@
             var gameId = typeof gameIdOrObj === 'string' ? gameIdOrObj : (gameIdOrObj && gameIdOrObj.id ? gameIdOrObj.id : null);
             if (gameId) {
                 try {
-                    var recent = JSON.parse(localStorage.getItem('matrixspins_recent') || '[]');
+                    var recent = JSON.parse(localStorage.getItem('royalslots_recent') || '[]');
                     recent = recent.filter(function(id) { return id !== gameId; });
                     recent.unshift(gameId);
                     if (recent.length > 20) recent = recent.slice(0, 20);
-                    localStorage.setItem('matrixspins_recent', JSON.stringify(recent));
+                    localStorage.setItem('royalslots_recent', JSON.stringify(recent));
                 } catch(e) { /* storage full or unavailable */ }
             }
             if (typeof _origOpenSlot === 'function') _origOpenSlot(gameIdOrObj);

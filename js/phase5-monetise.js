@@ -34,13 +34,13 @@
 
     function getDailyLoginState() {
         try {
-            var data = JSON.parse(localStorage.getItem('matrixspins_daily_login') || '{}');
+            var data = JSON.parse(localStorage.getItem('royalslots_daily_login') || '{}');
             return data;
         } catch(e) { return {}; }
     }
 
     function saveDailyLoginState(state) {
-        try { localStorage.setItem('matrixspins_daily_login', JSON.stringify(state)); } catch(e) {}
+        try { localStorage.setItem('royalslots_daily_login', JSON.stringify(state)); } catch(e) {}
     }
 
     function checkDailyLogin() {
@@ -147,17 +147,17 @@
     // 3 consecutive wins: $2 bonus, 5 wins: $10, 10 wins: $50
     // ═══════════════════════════════════════════════════════
     var WIN_STREAK_REWARDS = { 3: 2, 5: 10, 10: 50 };
-    var _winStreak = parseInt(localStorage.getItem('matrixspins_win_streak') || '0', 10);
+    var _winStreak = parseInt(localStorage.getItem('royalslots_win_streak') || '0', 10);
     var _streakRewardsClaimed = {};
-    try { _streakRewardsClaimed = JSON.parse(localStorage.getItem('matrixspins_streak_claimed') || '{}'); } catch(e) {}
+    try { _streakRewardsClaimed = JSON.parse(localStorage.getItem('royalslots_streak_claimed') || '{}'); } catch(e) {}
 
     window.phase5RecordWin = function() {
         _winStreak++;
-        localStorage.setItem('matrixspins_win_streak', String(_winStreak));
+        localStorage.setItem('royalslots_win_streak', String(_winStreak));
         var reward = WIN_STREAK_REWARDS[_winStreak];
         if (reward && !_streakRewardsClaimed[_winStreak]) {
             _streakRewardsClaimed[_winStreak] = true;
-            localStorage.setItem('matrixspins_streak_claimed', JSON.stringify(_streakRewardsClaimed));
+            localStorage.setItem('royalslots_streak_claimed', JSON.stringify(_streakRewardsClaimed));
             showWinStreakReward(_winStreak, reward);
         }
     };
@@ -165,8 +165,8 @@
     window.phase5RecordLoss = function() {
         _winStreak = 0;
         _streakRewardsClaimed = {};
-        localStorage.setItem('matrixspins_win_streak', '0');
-        localStorage.setItem('matrixspins_streak_claimed', '{}');
+        localStorage.setItem('royalslots_win_streak', '0');
+        localStorage.setItem('royalslots_streak_claimed', '{}');
     };
 
     function showWinStreakReward(streak, reward) {
@@ -338,12 +338,12 @@
     // Top 10 biggest wins
     // ═══════════════════════════════════════════════════════
     function getLeaderboard() {
-        try { return JSON.parse(localStorage.getItem('matrixspins_leaderboard') || '[]'); }
+        try { return JSON.parse(localStorage.getItem('royalslots_leaderboard') || '[]'); }
         catch(e) { return []; }
     }
 
     function saveLeaderboard(lb) {
-        try { localStorage.setItem('matrixspins_leaderboard', JSON.stringify(lb)); } catch(e) {}
+        try { localStorage.setItem('royalslots_leaderboard', JSON.stringify(lb)); } catch(e) {}
     }
 
     function addToLeaderboard(winAmount) {
