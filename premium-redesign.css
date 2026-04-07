@@ -4,6 +4,17 @@
    Load LAST to override all existing styles
    ═══════════════════════════════════════════════════════════════════════ */
 
+/* Base overrides — uses design-tokens.css variables */
+html { scroll-behavior: smooth; }
+body {
+  background: var(--surface-base, #0D0F14);
+  color: var(--text-primary, #E8E8ED);
+  font-family: var(--font-base, 'Inter', sans-serif);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+*, *::before, *::after { box-sizing: border-box; }
+
 /* ── 2. GLOBAL RESET & BASE ──── */
 *,*::before,*::after { box-sizing: border-box; }
 html { -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; text-rendering: optimizeLegibility; scroll-behavior: smooth; }
@@ -66,8 +77,18 @@ header, .casino-header, .header { background: var(--ms-glass-bg) !important; bac
 @media (min-width: 1200px) { .games-grid, .game-grid, #allGames { grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)) !important; } }
 .game-card, .game-tile, .slot-card { position: relative !important; border-radius: var(--ms-radius-lg) !important; overflow: hidden !important; background: var(--ms-bg-card) !important; border: 1px solid var(--ms-border) !important; transition: all var(--ms-transition-base) !important; cursor: pointer !important; aspect-ratio: 4 / 3 !important; }
 .game-card:hover, .slot-card:hover { transform: translateY(-4px) scale(1.02) !important; border-color: var(--ms-gold) !important; box-shadow: 0 8px 32px rgba(0,0,0,0.4), 0 0 0 1px var(--ms-gold), 0 0 20px var(--ms-gold-dim) !important; z-index: 2 !important; }
-.game-card img, .slot-card img, .game-thumb { width: 100% !important; height: 100% !important; object-fit: cover !important; transition: transform var(--ms-transition-base) !important; }
-.game-card:hover img, .slot-card:hover img { transform: scale(1.05) !important; }
+.game-card .game-thumbnail, .slot-card .game-thumbnail { position: absolute !important; inset: 0 !important; background-size: cover !important; background-position: center !important; background-repeat: no-repeat !important; transition: transform var(--ms-transition-base) !important; z-index: 0 !important; }
+.game-card img, .slot-card img, .game-thumb { width: 100% !important; height: 100% !important; object-fit: cover !important; transition: transform var(--ms-transition-base) !important; position: absolute !important; inset: 0 !important; z-index: 0 !important; }
+.game-card:hover .game-thumbnail, .slot-card:hover .game-thumbnail, .game-card:hover img, .slot-card:hover img { transform: scale(1.05) !important; }
+.game-card .game-info { position: absolute !important; bottom: 0 !important; left: 0 !important; right: 0 !important; z-index: 2 !important; padding: 8px 10px !important; background: linear-gradient(to top, rgba(0,0,0,0.85) 0%, transparent 100%) !important; pointer-events: none !important; }
+.game-card .game-info .game-name-text, .game-card .game-info span, .game-card .game-info .game-title-text { color: #fff !important; font-size: 12px !important; font-weight: 600 !important; display: block !important; white-space: nowrap !important; overflow: hidden !important; text-overflow: ellipsis !important; }
+.game-card .game-info .game-provider-text { color: var(--ms-text-muted) !important; font-size: 9px !important; font-weight: 500 !important; text-transform: uppercase !important; letter-spacing: 0.06em !important; }
+.game-card .fav-btn { position: absolute !important; top: 6px !important; right: 6px !important; z-index: 5 !important; background: rgba(0,0,0,0.5) !important; backdrop-filter: blur(4px) !important; border: none !important; cursor: pointer !important; width: 28px !important; height: 28px !important; border-radius: 50% !important; display: flex !important; align-items: center !important; justify-content: center !important; color: var(--ms-text-secondary) !important; font-size: 14px !important; transition: all var(--ms-transition-fast) !important; opacity: 0 !important; }
+.game-card:hover .fav-btn { opacity: 1 !important; }
+.game-card .fav-btn:hover, .game-card .fav-btn.active { color: var(--ms-red) !important; background: rgba(0,0,0,0.7) !important; }
+.game-card .game-max-win-badge { position: absolute !important; bottom: 32px !important; right: 6px !important; z-index: 3 !important; background: rgba(240,165,0,0.9) !important; color: #000 !important; padding: 2px 6px !important; border-radius: var(--ms-radius-sm) !important; font-size: 9px !important; font-weight: 700 !important; text-transform: uppercase !important; letter-spacing: 0.04em !important; opacity: 0 !important; transition: opacity var(--ms-transition-fast) !important; }
+.game-card:hover .game-max-win-badge { opacity: 1 !important; }
+.game-card .provider-card-badge { position: absolute !important; top: 6px !important; left: 6px !important; z-index: 4 !important; background: rgba(0,0,0,0.6) !important; backdrop-filter: blur(4px) !important; color: var(--ms-text-secondary) !important; padding: 2px 6px !important; border-radius: var(--ms-radius-sm) !important; font-size: 9px !important; font-weight: 600 !important; text-transform: uppercase !important; letter-spacing: 0.06em !important; }
 .game-card::after, .slot-card .game-overlay { content: '' !important; position: absolute !important; inset: 0 !important; background: linear-gradient(to top, rgba(0,0,0,0.8) 0%, transparent 50%) !important; opacity: 0 !important; transition: opacity var(--ms-transition-base) !important; pointer-events: none !important; }
 .game-card:hover::after, .slot-card:hover .game-overlay { opacity: 1 !important; }
 .game-card .game-name, .slot-card .game-title, .game-card-name { position: absolute !important; bottom: 0 !important; left: 0 !important; right: 0 !important; padding: var(--ms-space-3) var(--ms-space-4) !important; font-weight: 600 !important; font-size: 13px !important; color: #fff !important; z-index: 1 !important; background: linear-gradient(to top, rgba(0,0,0,0.85) 0%, transparent 100%) !important; }

@@ -1,0 +1,182 @@
+/* modals-v2.css — Premium slot modal, wallet, profile overrides */
+
+/* ── SLOT MODAL ── */
+#slotModal {
+  z-index: var(--z-slot-modal, 1100);
+  background: var(--surface-base, #0D0F14);
+}
+
+.slot-modal-header {
+  height: var(--header-h, 56px);
+  background: var(--surface-glass, rgba(13,15,20,0.82));
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--green-border, rgba(0,255,65,0.22));
+  display: flex;
+  align-items: center;
+  padding: 0 var(--sp-4, 16px);
+  gap: var(--sp-3, 12px);
+  position: relative;
+  z-index: 2;
+  flex-shrink: 0;
+}
+.slot-header-back {
+  width: 36px; height: 36px;
+  border-radius: var(--r-md, 8px);
+  background: var(--surface-raised, #141720);
+  border: 1px solid rgba(255,255,255,0.08);
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; color: var(--text-primary, #E8E8ED);
+  transition: background var(--t-fast, 120ms ease-out), border-color var(--t-fast, 120ms ease-out);
+  flex-shrink: 0; padding: 0;
+}
+.slot-header-back:hover { background: var(--surface-high, #1A1E28); border-color: var(--green-border, rgba(0,255,65,0.22)); }
+.slot-header-game-info { flex: 1; }
+.slot-header-game-name { color: var(--text-primary, #E8E8ED); font-weight: 700; font-size: var(--text-base, 15px); }
+.slot-header-studio { color: var(--text-muted, #6B7280); font-size: var(--text-xs, 11px); }
+
+/* Spin button — premium redesign */
+.spin-btn, #spinButton, .spinBtn, [id*="spinBtn"], [class*="spin-button"] {
+  width: 72px !important; height: 72px !important;
+  border-radius: 50% !important;
+  background: var(--green-brand, #00ff41) !important;
+  color: var(--text-inverse, #0D0F14) !important;
+  border: none !important;
+  font-weight: 900 !important;
+  font-size: var(--text-lg, 18px) !important;
+  cursor: pointer;
+  box-shadow: var(--glow-green-md, 0 0 14px rgba(0,255,65,0.30)) !important;
+  transition: transform var(--t-fast, 120ms ease-out), box-shadow var(--t-fast, 120ms ease-out) !important;
+  animation: spin-btn-pulse 3s ease-in-out infinite;
+}
+.spin-btn:hover, #spinButton:hover { transform: scale(1.06) !important; box-shadow: var(--glow-green-lg, 0 0 24px rgba(0,255,65,0.45)) !important; }
+.spin-btn:active, #spinButton:active { transform: scale(0.94) !important; }
+.spin-btn:disabled, #spinButton:disabled, .spin-btn.spinning {
+  background: var(--surface-high, #1A1E28) !important;
+  color: var(--text-muted, #6B7280) !important;
+  box-shadow: none !important;
+  animation: none !important;
+}
+@keyframes spin-btn-pulse {
+  0%,100% { box-shadow: var(--glow-green-md, 0 0 14px rgba(0,255,65,0.30)); }
+  50%      { box-shadow: var(--glow-green-lg, 0 0 24px rgba(0,255,65,0.45)); }
+}
+
+/* ── WALLET MODAL ── */
+.wallet-modal-inner, #walletModal .modal-content, #cashierModal .modal-content {
+  background: var(--surface-overlay, #1E2230);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: var(--r-xl, 16px);
+  box-shadow: var(--shadow-modal, 0 24px 64px rgba(0,0,0,0.80));
+  max-width: 520px;
+  width: 100%;
+}
+.wallet-tabs, .cashier-tabs {
+  display: flex;
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+  padding: 0 var(--sp-4, 16px);
+}
+.wallet-tab, .cashier-tab {
+  padding: var(--sp-4, 16px);
+  font-size: var(--text-sm, 13px); font-weight: 600;
+  color: var(--text-muted, #6B7280);
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  transition: color var(--t-base, 200ms ease-out), border-color var(--t-base, 200ms ease-out);
+  background: none; border-top: none; border-left: none; border-right: none;
+  border-bottom: 2px solid transparent;
+}
+.wallet-tab.active, .cashier-tab.active { color: var(--green-brand, #00ff41); border-bottom-color: var(--green-brand, #00ff41); }
+
+/* Quick deposit picks */
+.deposit-quick-picks { display: flex; gap: var(--sp-2, 8px); margin: var(--sp-3, 12px) 0; }
+.deposit-pick {
+  flex: 1; padding: var(--sp-2, 8px) 0;
+  background: var(--surface-high, #1A1E28);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: var(--r-md, 8px);
+  color: var(--text-secondary, #9CA3AF); font-size: var(--text-sm, 13px); font-weight: 600;
+  cursor: pointer; text-align: center;
+  transition: background var(--t-fast, 120ms ease-out), border-color var(--t-fast, 120ms ease-out), color var(--t-fast, 120ms ease-out);
+  font-variant-numeric: tabular-nums;
+}
+.deposit-pick:hover { background: var(--surface-raised, #141720); border-color: var(--green-border, rgba(0,255,65,0.22)); color: var(--green-brand, #00ff41); }
+
+/* Balance breakdown */
+.balance-breakdown {
+  background: var(--surface-high, #1A1E28);
+  border-radius: var(--r-lg, 12px);
+  padding: var(--sp-4, 16px);
+  display: flex; gap: var(--sp-4, 16px);
+  margin: var(--sp-4, 16px) 0;
+}
+.balance-block { flex: 1; }
+.balance-block-label { font-size: var(--text-xs, 11px); color: var(--text-muted, #6B7280); margin-bottom: 4px; }
+.balance-block-amount { font-size: var(--text-xl, 22px); font-weight: 800; font-variant-numeric: tabular-nums; }
+.balance-withdrawable .balance-block-amount { color: var(--accent-success, #10b981); }
+.balance-locked .balance-block-amount { color: var(--gold, #F0A500); }
+
+/* ── PROFILE MODAL VIP BAR ── */
+.vip-tier-bar {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--sp-2, 8px);
+  padding: var(--sp-4, 16px);
+  background: var(--surface-high, #1A1E28);
+  border-radius: var(--r-lg, 12px);
+  margin: var(--sp-4, 16px) 0;
+}
+.vip-tier-step {
+  flex: 1; text-align: center;
+  font-size: 10px; font-weight: 600;
+  color: var(--text-muted, #6B7280);
+  position: relative;
+  padding-top: 18px;
+}
+.vip-tier-step::before {
+  content: '';
+  position: absolute; top: 0; left: 50%; transform: translateX(-50%);
+  width: 20px; height: 6px;
+  border-radius: var(--r-sm, 4px);
+  background: rgba(255,255,255,0.08);
+}
+.vip-tier-step.done { color: var(--gold, #F0A500); }
+.vip-tier-step.done::before { background: var(--gold-dim, rgba(240,165,0,0.15)); border: 1px solid var(--gold-border, rgba(240,165,0,0.35)); }
+.vip-tier-step.current { color: var(--green-brand, #00ff41); }
+.vip-tier-step.current::before { background: var(--green-subtle, rgba(0,255,65,0.08)); border: 1px solid var(--green-border, rgba(0,255,65,0.22)); box-shadow: var(--glow-green-sm, 0 0 6px rgba(0,255,65,0.15)); }
+
+/* ── GLOBAL MICRO-INTERACTIONS ── */
+button:active:not(:disabled):not(.spin-btn):not(#spinButton) {
+  transform: scale(0.97);
+}
+
+/* Modal backdrop */
+.modal-overlay, .modal-backdrop, #modalOverlay {
+  background: rgba(0,0,0,0.78) !important;
+  backdrop-filter: blur(4px) !important;
+}
+
+/* Body background override */
+body {
+  background-color: var(--surface-base, #0D0F14) !important;
+  font-family: var(--font-base, 'Inter', sans-serif) !important;
+  color: var(--text-primary, #E8E8ED) !important;
+}
+
+/* Section headers with display font */
+.section-title, .lobby-section-title, h2.section-heading, .game-row-title {
+  font-family: var(--font-display, 'Inter', sans-serif) !important;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+
+/* Balance display tabular nums */
+.balance-display, .player-balance, #playerBalance, .header-balance-amount,
+[class*="balance"], [id*="balance"] {
+  font-variant-numeric: tabular-nums;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .spin-btn, #spinButton { animation: none !important; }
+  button:active { transform: none !important; }
+}
