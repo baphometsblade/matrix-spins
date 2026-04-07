@@ -2,8 +2,7 @@ services:
   - type: web
     name: matrix-spins
     runtime: node
-    plan: free
-    buildCommand: npm install --omit=dev && node scripts/bundle-js.js && node scripts/fix-encoding.js
+    buildCommand: node --version && npm install --omit=dev && echo "[BUILD] npm install OK" && node scripts/bundle-js.js && echo "[BUILD] bundle OK" && node scripts/fix-encoding.js && echo "[BUILD] complete"
     startCommand: node server/index.js
     healthCheckPath: /api/health
     envVars:

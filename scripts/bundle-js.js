@@ -79,10 +79,10 @@ function parseIndexHtml(htmlContent) {
     const lines = htmlContent.split('\n');
 
     lines.forEach((line, idx) => {
-        // Extract <script src="...">
+        // Extract <script src="..."> (strip cache-busting query strings like ?v=2.0.0)
         const scriptMatch = line.match(/<script\s+src=["']([^"']+)["']/i);
         if (scriptMatch) {
-            scripts.push(scriptMatch[1]);
+            scripts.push(scriptMatch[1].split('?')[0]);
             return;
         }
 
@@ -217,9 +217,9 @@ function generateDistIndex(jsInfo, cssInfo, originalHtml) {
 
     let distHtml = originalHtml;
 
-    // Replace CSS links with bundled CSS
+    // Replace CSS links with bundled CSS (handles both normal and lazy-load link formats)
     CSS_FILES.forEach(cssFile => {
-        const regex = new RegExp(`<link\\s+rel=["']stylesheet["']\\s+href=["']${cssFile.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}["']\\s*>`, 'i');
+        const regex = new RegExp(`<link[^>]*href=["']${cssFile.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}["'][^>]*>`, 'i');
         distHtml = distHtml.replace(regex, '');
     });
 
@@ -231,12 +231,14 @@ function generateDistIndex(jsInfo, cssInfo, originalHtml) {
     }
 
     // Replace all script src tags with bundle reference (keep early scripts)
+    // Regex accounts for optional cache-busting query strings like ?v=2.0.0
     scripts.forEach(script => {
-        const scriptTag = `<script src="${script}"></script>`;
+        const escaped = script.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        const scriptTagRegex = new RegExp(`<script\\s+src=["']${escaped}(?:\\?[^"']*)?["']><\\/script>`, 'i');
         const isEarly = EARLY_SCRIPTS.some(es => script.endsWith(es));
 
         if (!isEarly) {
-            distHtml = distHtml.replace(scriptTag, '');
+            distHtml = distHtml.replace(scriptTagRegex, '');
         }
     });
 
@@ -273,6 +275,18 @@ function copyStaticAssets() {
         if (fs.existsSync(src)) {
             fs.copyFileSync(src, dst);
             log(`Copied ${file}`);
+        }
+    });
+
+    // Copy early scripts to dist/ so they're served from the hashed dist dir
+    EARLY_SCRIPTS.forEach(scriptPath => {
+        const src = path.join(ROOT_DIR, scriptPath);
+        const dst = path.join(DIST_DIR, scriptPath);
+        const dir = path.dirname(dst);
+        if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+        if (fs.existsSync(src)) {
+            fs.copyFileSync(src, dst);
+            log(`Copied ${scriptPath}`);
         }
     });
 }

@@ -5,15 +5,13 @@
       "name": "Casino Server",
       "runtimeExecutable": "npm",
       "runtimeArgs": ["start"],
-      "port": 3000,
-      "autoPort": true
+      "port": 3000
     },
     {
       "name": "Casino Dev (no bundle)",
       "runtimeExecutable": "npm",
       "runtimeArgs": ["run", "dev"],
-      "port": 3000,
-      "autoPort": true
+      "port": 3000
     }
   ]
 }
