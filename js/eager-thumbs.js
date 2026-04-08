@@ -17,12 +17,15 @@
     setTimeout(load,300);
     setTimeout(load,2000);
   }
-  // Also run when games grid mutates (filter/search changes cards)
+  // Observe the full document body so recently-played, you-might-like,
+  // and any other dynamically-added cards get their thumbnails applied.
   var obs = new MutationObserver(function(){ setTimeout(load,200); });
-  var grid = document.querySelector('.games-grid');
-  if(grid) obs.observe(grid,{childList:true,subtree:true});
-  else document.addEventListener('DOMContentLoaded',function(){
-    var g = document.querySelector('.games-grid');
-    if(g) obs.observe(g,{childList:true,subtree:true});
-  });
+  function startObserving(){
+    obs.observe(document.body,{childList:true,subtree:true});
+  }
+  if(document.body){
+    startObserving();
+  } else {
+    document.addEventListener('DOMContentLoaded', startObserving);
+  }
 })();
