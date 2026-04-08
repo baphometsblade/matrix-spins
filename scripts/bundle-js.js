@@ -129,8 +129,9 @@ function bundleJavaScript() {
     log(`Found ${scripts.length} script tags (${earlyScripts.length} early, ${bundledScripts.length} for bundling)`);
 
     // Read and concatenate bundled scripts
-    let bundleContent = '/* Matrix Spins Casino - Bundled JavaScript */\n';
-    bundleContent += `/* Generated: ${new Date().toISOString()} */\n\n`;
+    // NOTE: No timestamp in bundle content — it makes the hash non-deterministic
+    // which causes hash mismatches between build and start on platforms like Render
+    let bundleContent = '/* Matrix Spins Casino - Bundled JavaScript */\n\n';
 
     bundledScripts.forEach((script, idx) => {
         const filePath = path.join(ROOT_DIR, script);
@@ -176,8 +177,8 @@ function bundleJavaScript() {
 function bundleCSS() {
     log('Bundling CSS files...');
 
-    let cssContent = '/* Matrix Spins Casino - Bundled Styles */\n';
-    cssContent += `/* Generated: ${new Date().toISOString()} */\n\n`;
+    // NOTE: No timestamp — keeps hash deterministic across builds
+    let cssContent = '/* Matrix Spins Casino - Bundled Styles */\n\n';
 
     CSS_FILES.forEach((cssFile, idx) => {
         const filePath = path.join(ROOT_DIR, cssFile);
@@ -397,12 +398,31 @@ async function minifyBundle(bundleFileName) {
 }
 
 /**
+ * Clean stale bundle files from dist/ before building new ones
+ */
+function cleanStaleBundles() {
+    if (!fs.existsSync(DIST_DIR)) return;
+    const stale = fs.readdirSync(DIST_DIR).filter(f =>
+        /^bundle\.[a-f0-9]+(?:\.min)?\.js$/.test(f) ||
+        /^styles\.[a-f0-9]+(?:\.min)?\.css$/.test(f)
+    );
+    stale.forEach(f => {
+        fs.unlinkSync(path.join(DIST_DIR, f));
+        log(`Cleaned stale: ${f}`);
+    });
+    if (stale.length > 0) log(`Removed ${stale.length} stale bundle files`);
+}
+
+/**
  * Main bundling pipeline
  */
 async function main() {
     try {
         log('Starting bundling process...');
         console.log('');
+
+        // Step 0: Clean old bundles to prevent hash collisions
+        cleanStaleBundles();
 
         // Step 1: Bundle JavaScript
         const jsInfo = bundleJavaScript();
@@ -425,6 +445,21 @@ async function main() {
         // Step 7: Minify CSS bundle
         const cssMinInfo = await minifyCSS(cssInfo.cssFile);
 
+        // Step 8: Swap dist/index.html refs to minified versions (smaller payloads)
+        if (minInfo || cssMinInfo) {
+            const distIndexPath = path.join(DIST_DIR, 'index.html');
+            let html = fs.readFileSync(distIndexPath, 'utf8');
+            if (minInfo) {
+                html = html.replace(jsInfo.bundleFile, minInfo.minFile);
+                log(`Swapped JS ref: ${jsInfo.bundleFile} → ${minInfo.minFile}`);
+            }
+            if (cssMinInfo) {
+                html = html.replace(cssInfo.cssFile, cssMinInfo.minFile);
+                log(`Swapped CSS ref: ${cssInfo.cssFile} → ${cssMinInfo.minFile}`);
+            }
+            fs.writeFileSync(distIndexPath, html, 'utf8');
+        }
+
         console.log('');
         log('Bundling complete!');
         log(`JavaScript: ${jsInfo.bundleFile} (${(jsInfo.bundleContent / 1024).toFixed(2)} KB)`);
@@ -436,6 +471,29 @@ async function main() {
             log(`CSS Min:    ${cssMinInfo.minFile} (${(cssMinInfo.minSize / 1024).toFixed(2)} KB, ${cssMinInfo.savings}% savings)`);
         }
         log(`Output: ${DIST_DIR}/`);
+
+        // Step 9: Validate — ensure dist/index.html references files that actually exist
+        const distIndex = readFile(path.join(DIST_DIR, 'index.html'));
+        const jsRef = distIndex.match(/bundle\.[a-f0-9]+(?:\.min)?\.js/);
+        const cssRef = distIndex.match(/styles\.[a-f0-9]+(?:\.min)?\.css/);
+        const distFiles = fs.readdirSync(DIST_DIR);
+        log(`dist/ contains: ${distFiles.filter(f => /\.(js|css)$/.test(f)).join(', ')}`);
+        if (jsRef) {
+            const jsExists = fs.existsSync(path.join(DIST_DIR, jsRef[0]));
+            log(`index.html → ${jsRef[0]} (${jsExists ? 'EXISTS ✓' : 'MISSING ✗'})`);
+            if (!jsExists) {
+                console.error('[BUNDLE] FATAL: dist/index.html references a JS bundle that does not exist!');
+                process.exit(1);
+            }
+        }
+        if (cssRef) {
+            const cssExists = fs.existsSync(path.join(DIST_DIR, cssRef[0]));
+            log(`index.html → ${cssRef[0]} (${cssExists ? 'EXISTS ✓' : 'MISSING ✗'})`);
+            if (!cssExists) {
+                console.error('[BUNDLE] FATAL: dist/index.html references a CSS bundle that does not exist!');
+                process.exit(1);
+            }
+        }
         console.log('');
 
     } catch (err) {

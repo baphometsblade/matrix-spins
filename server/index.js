@@ -834,19 +834,28 @@ app.use((req, res, next) => {
 // Prefer bundled dist/ if it exists AND the referenced bundle file exists (production)
 const distPath = path.join(__dirname, '..', 'dist');
 let hasBundle = require('fs').existsSync(path.join(distPath, 'index.html'));
-// Safety: verify the JS bundle referenced in dist/index.html actually exists
+// Safety: verify BOTH the JS bundle AND CSS bundle referenced in dist/index.html actually exist
 if (hasBundle) {
     try {
         const _html = fs.readFileSync(path.join(distPath, 'index.html'), 'utf8');
-        const _ref = _html.match(/bundle\.[a-f0-9]+(?:\.min)?\.js/);
-        const _distFiles = fs.readdirSync(distPath).filter(f => /^bundle\./.test(f));
+        const _jsRef = _html.match(/bundle\.[a-f0-9]+(?:\.min)?\.js/);
+        const _cssRef = _html.match(/styles\.[a-f0-9]+(?:\.min)?\.css/);
+        const _distFiles = fs.readdirSync(distPath).filter(f => /^(bundle|styles)\./.test(f));
         console.log('[startup] dist/ bundles:', _distFiles.join(', '));
-        console.log('[startup] index.html references:', _ref?.[0]);
-        if (_ref && !fs.existsSync(path.join(distPath, _ref[0]))) {
-            console.error('[FATAL] dist/index.html references', _ref[0], 'but file missing! Falling back to dev mode.');
+        console.log('[startup] index.html JS ref:', _jsRef?.[0] || 'NONE');
+        console.log('[startup] index.html CSS ref:', _cssRef?.[0] || 'NONE');
+        if (_jsRef && !fs.existsSync(path.join(distPath, _jsRef[0]))) {
+            console.error('[FATAL] dist/index.html references', _jsRef[0], 'but file missing! Falling back to dev mode.');
             hasBundle = false;
         }
-    } catch (e) { /* proceed with hasBundle = true */ }
+        if (_cssRef && !fs.existsSync(path.join(distPath, _cssRef[0]))) {
+            console.error('[FATAL] dist/index.html references', _cssRef[0], 'but file missing! Falling back to dev mode.');
+            hasBundle = false;
+        }
+    } catch (e) {
+        console.error('[startup] Error validating dist/:', e.message);
+        /* proceed with hasBundle = true */
+    }
 }
 
 // Fix encoding corruption at startup: Render build can double-encode UTF-8
@@ -906,10 +915,39 @@ if (hasBundle) {
 // Admin dashboard
 app.use('/admin', express.static(path.join(__dirname, '..', 'admin')));
 
+// --- Diagnostic: what's in dist/ (admin only, helps debug Render deploys) ---
+app.get('/api/debug/dist', (req, res) => {
+    try {
+        const distExists = fs.existsSync(distPath);
+        const distFiles = distExists ? fs.readdirSync(distPath).filter(f => /\.(js|css|html)$/.test(f)).sort() : [];
+        const distIndex = distExists && fs.existsSync(path.join(distPath, 'index.html'))
+            ? fs.readFileSync(path.join(distPath, 'index.html'), 'utf8')
+            : null;
+        const bundleRef = distIndex ? distIndex.match(/bundle\.[a-f0-9]+(?:\.min)?\.js/) : null;
+        const cssRef = distIndex ? distIndex.match(/styles\.[a-f0-9]+(?:\.min)?\.css/) : null;
+        res.json({
+            hasBundle,
+            distExists,
+            distFiles,
+            bundleRef: bundleRef ? bundleRef[0] : null,
+            cssRef: cssRef ? cssRef[0] : null,
+            bundleFileExists: bundleRef ? fs.existsSync(path.join(distPath, bundleRef[0])) : false,
+            cssFileExists: cssRef ? fs.existsSync(path.join(distPath, cssRef[0])) : false
+        });
+    } catch (e) {
+        res.status(500).json({ error: e.message });
+    }
+});
+
 // SPA fallback — serve index.html for any unmatched route
 app.get('*', (req, res) => {
     if (req.path.startsWith('/api/')) {
         return res.status(404).json({ error: 'API endpoint not found' });
+    }
+    // CRITICAL: Never serve HTML as JS/CSS/map — return proper 404 instead
+    // (prevents silent "Loading Error" when bundle files are missing)
+    if (/\.(js|css|map|json|woff2?|ttf|eot|ico|png|jpg|jpeg|gif|svg|webp|avif)$/i.test(req.path)) {
+        return res.status(404).type('text/plain').send(`404 Not Found: ${req.path}`);
     }
     // If requesting a .html file that doesn't exist, serve 404 page
     if (req.path.endsWith('.html')) {
