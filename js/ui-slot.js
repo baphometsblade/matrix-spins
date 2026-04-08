@@ -21931,7 +21931,7 @@ function _evictOldestCache() {
 
 // --- Sprint 464 — CDN Prefetch ---
 function _initCDNPrefetch() {
-    var cdnHosts = ['https://cdnjs.cloudflare.com', 'https://fonts.googleapis.com', 'https://fonts.gstatic.com'];
+    var cdnHosts = ['https://fonts.googleapis.com', 'https://fonts.gstatic.com'];
     cdnHosts.forEach(function(host) {
         if (!document.querySelector('link[href="' + host + '"]')) {
             var link = document.createElement('link');
