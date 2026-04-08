@@ -446,7 +446,9 @@ app.use('/api/game-stats', require('./routes/gamestats.routes'));
 app.use('/api/gems', require('./routes/gems.routes'));
 app.use('/api/boosts', require('./routes/boost.routes'));
 app.use('/api/challenges', require('./routes/challenges.routes'));
-app.use('/api/battlepass', require('./routes/battlepass.routes'));
+// NOTE: battlepass.routes.js (50-line stub) removed — it lacked bonusGuard on claim,
+// bypassing the self-exclusion/daily-cap checks in battle-pass.routes.js (full implementation)
+app.use('/api/battlepass', require('./routes/battle-pass.routes'));
 app.use('/api/battle-pass', require('./routes/battle-pass.routes'));
 app.use('/api/cosmetics',  require('./routes/cosmetics.routes'));
 app.use('/api/wagerace',   require('./routes/wagerace.routes'));
