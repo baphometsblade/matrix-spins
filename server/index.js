@@ -890,7 +890,7 @@ if (hasBundle) {
         etag: true,
         lastModified: true,
         setHeaders: function(res, filePath) {
-            if (/bundle\.[a-f0-9]+\.js|styles\.[a-f0-9]+\.css/.test(filePath)) {
+            if (/bundle\.[a-f0-9]+(?:\.min)?\.js|styles\.[a-f0-9]+(?:\.min)?\.css/.test(filePath)) {
                 res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
             }
         }
