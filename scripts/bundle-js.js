@@ -247,7 +247,8 @@ function generateDistIndex(jsInfo, cssInfo, originalHtml) {
 
         if (!isEarly) {
             // Remove non-early script tags entirely (they're in the bundle)
-            const fullTagRegex = new RegExp(`<script\\s+src=["']${escaped}(?:\\?[^"']*)?["']><\\/script>`, 'i');
+            // Handle optional attributes like defer, async, type, etc. between src and closing tag
+            const fullTagRegex = new RegExp(`<script\\s+src=["']${escaped}(?:\\?[^"']*)?["'][^>]*><\\/script>`, 'i');
             distHtml = distHtml.replace(fullTagRegex, '');
         } else {
             // Add content-hash query string to early scripts for cache busting
