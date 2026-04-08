@@ -157,7 +157,7 @@
         for (var i = 0; i < allH.length; i++) {
             if (allH[i].textContent.trim() === 'Game Info') {
                 var container = allH[i].parentElement;
-                while (container && container !== slotModal.querySelector('.modal-content')) {
+                while (container && container !== slotModal) {
                     if (container.offsetHeight > 200) { // It's the info container
                         container.style.display = 'none';
                         return;
@@ -199,7 +199,7 @@
         // Give the page a moment to render, then clean up
         setTimeout(function() {
             // Hide all non-slot modals
-            document.querySelectorAll('.modal:not([class*="slot-chrome"]):not([class*="slot-template"])').forEach(function(el) {
+            document.querySelectorAll('.modal:not([class*="slot-chrome"]):not([class*="slot-template"]):not(#slotModal)').forEach(function(el) {
                 el.style.display = 'none';
             });
             // Try to close game info

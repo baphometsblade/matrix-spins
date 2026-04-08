@@ -6519,9 +6519,15 @@
         #slotModal.active {
             position: fixed !important;
             inset: 0 !important;
+            width: 100vw !important;
+            height: 100vh !important;
+            height: 100dvh !important;
+            max-height: none !important;
+            max-width: none !important;
             padding: 0;
             overflow: hidden;
             z-index: 1000;
+            transition: none !important;
         }
 
         .slot-modal-fullscreen {
