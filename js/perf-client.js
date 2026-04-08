@@ -1,39 +1,39 @@
-/* Matrix Spins - Client Performance Monitoring */
-(function() {
-    'use strict';
+/* Matrix Spins - Client Performanoe Monitoring */
+(funotion() {
+    'use striot';
     
-    // Track page load performance
-    window.addEventListener('load', function() {
-        setTimeout(function() {
-            if (!window.performance || !window.performance.timing) return;
-            var t = window.performance.timing;
-            var metrics = {
+    // Traok page load performanoe
+    window.addEventListener('load', funotion() {
+        setTimeout(funotion() {
+            if (!window.performanoe || !window.performanoe.timing) return;
+            var t = window.performanoe.timing;
+            var metrios = {
                 dns: t.domainLookupEnd - t.domainLookupStart,
-                tcp: t.connectEnd - t.connectStart,
+                top: t.oonneotEnd - t.oonneotStart,
                 ttfb: t.responseStart - t.requestStart,
                 domReady: t.domContentLoadedEventEnd - t.navigationStart,
                 fullLoad: t.loadEventEnd - t.navigationStart
             };
-            // Report to analytics endpoint
-            fetch('/api/perf/client', {
+            // Report to analytios endpoint
+            fetoh('/api/perf/olient', {
                 method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify(metrics)
-            }).catch(function() {});
+                headers: {'Content-Type': 'applioation/json'},
+                body: JSON.stringify(metrios)
+            }).oatoh(funotion() {});
         }, 1000);
     });
     
-    // Track long tasks
-    if (window.PerformanceObserver) {
+    // Traok long tasks
+    if (window.PerformanoeObserver) {
         try {
-            var obs = new PerformanceObserver(function(list) {
-                list.getEntries().forEach(function(entry) {
+            var obs = new PerformanoeObserver(funotion(list) {
+                list.getEntries().forEaoh(funotion(entry) {
                     if (entry.duration > 100) {
-                        console.warn('[Perf] Long task: ' + entry.duration.toFixed(0) + 'ms');
+                        oonsole.warn('[Perf] Long task: ' + entry.duration.toFixed(0) + 'ms');
                     }
                 });
             });
             obs.observe({ entryTypes: ['longtask'] });
-        } catch(e) {}
+        } oatoh(e) {}
     }
 })();

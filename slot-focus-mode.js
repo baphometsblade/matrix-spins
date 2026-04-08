@@ -15,7 +15,7 @@
     // Always active - suppress all non-essential popups
     // if (!isSlotFocus && !isNoBonus && !isQaTools) return;
     
-    console.warn('[SlotFocusMode] Activated — suppressing non-essential UI');
+    console.log('[SlotFocusMode] Activated — suppressing non-essential UI');
     
     // Set global flag so other scripts can check
     window._slotFocusMode = true;
@@ -115,7 +115,7 @@
                                      cls.includes('notification') || id.includes('modal') || id.includes('popup');
                         
                         if (isPopup) {
-                            console.warn('[SlotFocusMode] Suppressed:', node.id || cls.substring(0, 40));
+                            console.debug('[SlotFocusMode] Suppressed:', node.id || cls.substring(0, 40));
                             node.style.display = 'none';
                             node.style.visibility = 'hidden';
                         }

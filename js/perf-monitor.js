@@ -166,7 +166,7 @@ window.PerfMonitor = (function() {
                 summary.push(`  Memory Used: ${metricsData.memory.usedJSHeapSize}MB / ${metricsData.memory.totalJSHeapSize}MB`);
             }
 
-            console.warn(summary.join('\n'));
+            console.log(summary.join('\n'));
         } catch (err) {
             // Silent fail
         }

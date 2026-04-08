@@ -546,7 +546,7 @@
 
     addMessage('👋 Hi! How can I help you today?', false);
 
-    console.warn('[SupportChat] Initialized successfully');
+    console.log('[SupportChat] Initialized successfully');
   }
 
   // Public API

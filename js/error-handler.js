@@ -101,6 +101,8 @@
         var tag = target.tagName.toLowerCase();
         if (tag === 'script' || tag === 'link') {
             var src = target.src || target.href || 'unknown';
+            // Skip external CDN scripts that have their own onerror fallback
+            if (target.hasAttribute && target.hasAttribute('onerror') && src.indexOf(location.hostname) === -1) return;
             console.error('[ErrorHandler] Failed to load resource:', tag, src);
             // Show fallback UI if the main bundle failed to load
             if (src.indexOf('bundle.') !== -1) {

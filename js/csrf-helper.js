@@ -87,5 +87,5 @@
         getToken,
     };
 
-    console.warn('[CSRF] Helper loaded');
+    console.log('[CSRF] Helper loaded');
 })();

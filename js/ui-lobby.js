@@ -1074,7 +1074,7 @@ function renderGames() {
                            (typeof localStorage !== 'undefined' ? localStorage.getItem('authToken') : null);
 
             if (!authToken) {
-                console.warn('No auth token available for favorite sync');
+                console.debug('No auth token available for favorite sync');
                 return;
             }
 
@@ -1096,7 +1096,7 @@ function renderGames() {
                            (typeof localStorage !== 'undefined' ? localStorage.getItem('authToken') : null);
 
             if (!authToken) {
-                console.warn('No auth token available for loading favorites');
+                console.debug('No auth token available for loading favorites');
                 return;
             }
 

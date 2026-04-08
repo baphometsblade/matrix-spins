@@ -1,4 +1,4 @@
-﻿// ═══════════════════════════════════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════════════════════════════════
 // REALITY CHECK TIMER - Responsible Gambling Feature
 // ═══════════════════════════════════════════════════════════════════════════════
 // Periodic modal reminder (configurable interval) showing session summary.
@@ -584,5 +584,5 @@ window.RealityCheck = (function() {
     }
 })();
 
-console.warn('[RealityCheck] Module loaded — call window.RealityCheck.init() to start');
+console.log('[RealityCheck] Module loaded — call window.RealityCheck.init() to start');
 

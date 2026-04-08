@@ -454,5 +454,5 @@
     showHelp: () => KeyboardShortcuts.showHelp()
   };
 
-  console.warn('KeyboardShortcuts module loaded');
+  console.log('KeyboardShortcuts module loaded');
 })();

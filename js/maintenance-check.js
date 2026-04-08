@@ -114,7 +114,7 @@
         }
 
         document.body.appendChild(overlay);
-        console.warn('[Maintenance] Overlay displayed to user');
+        console.log('[Maintenance] Overlay displayed to user');
     }
 
     /**
@@ -129,7 +129,7 @@
                 if (overlay.parentNode) {
                     overlay.parentNode.removeChild(overlay);
                 }
-                console.warn('[Maintenance] Overlay removed');
+                console.log('[Maintenance] Overlay removed');
             }, 300);
         }
     }
@@ -145,7 +145,7 @@
             .then(data => {
                 if (!data.enabled) {
                     hideMaintenanceOverlay();
-                    console.warn('[Maintenance] System is back online');
+                    console.log('[Maintenance] System is back online');
                 } else {
                     // Check again in 5 seconds
                     setTimeout(checkMaintenanceStatus, MAINTENANCE_CHECK_TIMEOUT);
@@ -179,7 +179,7 @@
                     return response;
                 })
                 .catch(err => {
-                    console.warn('[Maintenance] Fetch error:', err);
+                    console.log('[Maintenance] Fetch error:', err);
                     throw err;
                 });
         };
@@ -189,7 +189,7 @@
      * Public initialization function
      */
     function init() {
-        console.warn('[Maintenance] Initializing maintenance check');
+        console.log('[Maintenance] Initializing maintenance check');
         wrapFetch();
 
         // Also do an initial check on page load

@@ -582,6 +582,6 @@
         }
     };
 
-    console.warn('BankrollCalculator module loaded successfully');
+    console.log('BankrollCalculator module loaded successfully');
 
 })();
