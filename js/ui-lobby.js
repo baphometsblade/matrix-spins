@@ -282,8 +282,8 @@
             document.body.appendChild(banner);
 
             // Slide in
-            requestAnimationFrame(function() {
-                requestAnimationFrame(function() { banner.classList.add('visible'); });
+            setTimeout(function() {
+                setTimeout(function() { banner.classList.add('visible'); });
             });
 
             // Click banner body to resume
@@ -1426,7 +1426,7 @@ function renderGames() {
                 var INITIAL_CHUNK = 24;
                 if (filtered.length > INITIAL_CHUNK) {
                     allGamesDiv.innerHTML = filtered.slice(0, INITIAL_CHUNK).map(g => createGameCard(g)).join('');
-                    requestAnimationFrame(function() {
+                    setTimeout(function() {
                         var rest = filtered.slice(INITIAL_CHUNK).map(g => createGameCard(g)).join('');
                         allGamesDiv.insertAdjacentHTML('beforeend', rest);
                         if (typeof _initLazyThumbnails === 'function') _initLazyThumbnails();

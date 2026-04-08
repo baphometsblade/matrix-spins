@@ -29,19 +29,21 @@ const THEME_PALETTES = {
   wildcard:   ['#1a1a2e', '#16213e', '#00bcd4', '#000']
 };
 
-// Provider mapping (8 studios distributed across 100 games)
-const PROVIDERS = [
-  { name: 'NovaPlay', color: '#00e5ff' },
-  { name: 'EmberForge', color: '#ff6d00' },
-  { name: 'LunarBet', color: '#b388ff' },
-  { name: 'PrismSlots', color: '#69f0ae' },
-  { name: 'ThunderReel', color: '#ffd740' },
-  { name: 'VortexGaming', color: '#ff4081' },
-  { name: 'ArcticSpin', color: '#40c4ff' },
-  { name: 'InfernoPlay', color: '#ff3d00' }
-];
+// Provider mapping — matches the 8 fictional studios
+const STUDIO_MAP = {
+  'Golden Reels Studio': { name: 'Golden Reels', color: '#D4A017' },
+  'Nebula Gaming':       { name: 'Nebula', color: '#00F0FF' },
+  'Mythic Forge':        { name: 'Mythic Forge', color: '#C8A415' },
+  'Wild Frontier Games': { name: 'Wild Frontier', color: '#CC5500' },
+  'Shadow Works':        { name: 'Shadow Works', color: '#8B0000' },
+  'Dragon Pearl Studios':{ name: 'Dragon Pearl', color: '#CC0000' },
+  'Ironclad Entertainment':{ name: 'Ironclad', color: '#B5651D' },
+  'Cascade Labs':        { name: 'Cascade Labs', color: '#0066FF' }
+};
+const PROVIDERS = Object.values(STUDIO_MAP);
 
-function getProvider(index) {
+function getProvider(game, index) {
+  if (game.provider && STUDIO_MAP[game.provider]) return STUDIO_MAP[game.provider];
   return PROVIDERS[index % PROVIDERS.length];
 }
 
@@ -66,8 +68,8 @@ function drawRoundedRect(ctx, x, y, w, h, r) {
 function generateThumbnail(game, index) {
   const canvas = createCanvas(W, H);
   const ctx = canvas.getContext('2d');
-  const palette = THEME_PALETTES[game.theme] || THEME_PALETTES.wildcard;
-  const provider = getProvider(index);
+  const palette = THEME_PALETTES[game.themeCategory] || THEME_PALETTES[game.theme] || THEME_PALETTES.wildcard;
+  const provider = getProvider(game, index);
 
   // === Background gradient ===
   const grad = ctx.createLinearGradient(0, 0, W, H);
@@ -104,25 +106,32 @@ function generateThumbnail(game, index) {
   ctx.fillStyle = topGrad;
   ctx.fillRect(0, 0, W, 3);
 
-  // === Emoji symbols row ===
-  const symbols = (game.symbols || []).slice(0, 5);
-  if (symbols.length > 0) {
-    ctx.font = '36px serif';
-    ctx.textAlign = 'center';
-    const symY = 70;
-    const spacing = W / (symbols.length + 1);
-    symbols.forEach((sym, si) => {
-      const emoji = typeof sym === 'string' ? sym : (sym.emoji || sym.symbol || '⭐');
-      ctx.shadowColor = palette[2];
-      ctx.shadowBlur = 10;
-      ctx.fillStyle = '#fff';
-      ctx.fillText(emoji, spacing * (si + 1), symY);
-    });
-    ctx.shadowBlur = 0;
+  // === Decorative symbol dots (replaces garbled text symbols) ===
+  // Instead of rendering symbol ID strings, draw themed decorative dots
+  const symCount = Math.min((game.symbols || []).length, 5) || 3;
+  ctx.textAlign = 'center';
+  const symY = 65;
+  const dotSpacing = W / (symCount + 1);
+  for (let si = 0; si < symCount; si++) {
+    const dx = dotSpacing * (si + 1);
+    // Glowing accent dot
+    const dotGrad = ctx.createRadialGradient(dx, symY, 0, dx, symY, 14);
+    dotGrad.addColorStop(0, palette[2]);
+    dotGrad.addColorStop(0.5, palette[2] + '60');
+    dotGrad.addColorStop(1, palette[2] + '00');
+    ctx.fillStyle = dotGrad;
+    ctx.beginPath();
+    ctx.arc(dx, symY, 14, 0, Math.PI * 2);
+    ctx.fill();
+    // Solid center
+    ctx.fillStyle = palette[2];
+    ctx.beginPath();
+    ctx.arc(dx, symY, 4, 0, Math.PI * 2);
+    ctx.fill();
   }
 
   // === Game title ===
-  const title = titleCase(game.id);
+  const title = game.name || titleCase(game.id);
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
 
@@ -155,7 +164,7 @@ function generateThumbnail(game, index) {
   ctx.fillRect(W/2 - tw/2, H/2 + 10 + fontSize/2 + 4, tw, 2);
 
   // === RTP badge (bottom left) ===
-  const rtpText = (game.rtp * 100).toFixed(1) + '% RTP';
+  const rtpText = (game.rtp || 0).toFixed(1) + '% RTP';
   ctx.font = 'bold 12px sans-serif';
   ctx.textAlign = 'left';
   ctx.fillStyle = palette[2] + 'cc';
@@ -171,10 +180,10 @@ function generateThumbnail(game, index) {
   ctx.font = '10px sans-serif';
   ctx.textAlign = 'right';
   ctx.fillStyle = '#ffffff80';
-  ctx.fillText((game.theme || 'wildcard').toUpperCase(), W - 20, 25);
+  ctx.fillText((game.themeCategory || game.theme || 'wildcard').toUpperCase(), W - 20, 25);
 
   // === Hot badge ===
-  if (game.hot) {
+  if (game.hot || game.tag === 'HOT') {
     ctx.font = 'bold 11px sans-serif';
     ctx.textAlign = 'left';
     ctx.fillStyle = '#ff1744';
