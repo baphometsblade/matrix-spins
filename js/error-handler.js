@@ -1,5 +1,5 @@
 /**
- * Global Frontend Error Handler for Royal Slots Casino
+ * Global Frontend Error Handler for Matrix Spins Casino
  * Catches unhandled errors and promise rejections, shows user-friendly
  * messages and prevents silent failures.
  */

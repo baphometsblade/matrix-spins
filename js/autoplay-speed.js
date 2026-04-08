@@ -1,4 +1,4 @@
-/* Royal Slots - Enhanced Autoplay with Speed Control */
+/* Matrix Spins - Enhanced Autoplay with Speed Control */
 (function() {
     'use strict';
     

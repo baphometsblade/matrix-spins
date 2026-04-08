@@ -1,4 +1,4 @@
-/* Royal Slots - Enhanced Win Celebration Animations */
+/* Matrix Spins - Enhanced Win Celebration Animations */
 (function() {
     'use strict';
     

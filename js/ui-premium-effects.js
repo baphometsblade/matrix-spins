@@ -1,6 +1,6 @@
 /**
  * ui-premium-effects.js
- * Premium micro-interaction effects for Royal Slots Casino
+ * Premium micro-interaction effects for Matrix Spins Casino
  * Enhances the visual experience with smooth animations and feedback.
  */
 (function () {

@@ -116,7 +116,7 @@ app.use(helmet({
     contentSecurityPolicy: {
         directives: {
             defaultSrc: ["'self'"],
-            scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'", "https://cdnjs.cloudflare.com"],  // casino client uses inline scripts + ethers.js CDN + onclick-polyfill needs eval
+            scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'", "https://cdnjs.cloudflare.com", "https://cdn.jsdelivr.net"],  // casino client uses inline scripts + ethers.js CDN + onclick-polyfill needs eval + canvas-confetti
             styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],       // inline styles + Google Fonts
             imgSrc: ["'self'", "data:", "blob:"],           // data URIs for generated assets
             connectSrc: ["'self'", "https://api.coingecko.com", "https://cloudflare-eth.com", "https://ipapi.co"],  // API calls + crypto price feed + ETH RPC

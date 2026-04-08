@@ -1,4 +1,4 @@
-/* Royal Slots - Client Performance Monitoring */
+/* Matrix Spins - Client Performance Monitoring */
 (function() {
     'use strict';
     

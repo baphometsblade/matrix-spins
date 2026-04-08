@@ -1,5 +1,5 @@
 /**
- * Server-side RNG for Royal Slots Casino
+ * Server-side RNG for Matrix Spins Casino
  * Cryptographically secure random number generation for fair gameplay
  */
 

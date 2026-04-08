@@ -1,7 +1,7 @@
 {
     "name": "royal-slots-casino",
     "version": "1.0.0",
-    "description": "Royal Slots Casino — server-side RNG, JWT auth, Stripe payments, silent blockchain economy",
+    "description": "Matrix Spins Casino — server-side RNG, JWT auth, Stripe payments, silent blockchain economy",
     "main": "server/index.js",
     "scripts": {
         "build": "node scripts/bundle-js.js",

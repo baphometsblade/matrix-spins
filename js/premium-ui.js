@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════════════════════════════
-   Royal Slots — Premium UI Enhancements
+   Matrix Spins — Premium UI Enhancements
    Header scroll shadow, smooth reveal animations, intersection observer
    ═══════════════════════════════════════════════════════════════════════ */
 

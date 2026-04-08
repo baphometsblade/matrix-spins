@@ -1,6 +1,6 @@
 /**
  * Legal Terms & Conditions Module
- * Royal Slots Casino - msaart.online
+ * Matrix Spins Casino - msaart.online
  *
  * Displays Terms of Service, Privacy Policy, and Matrix Money system information
  */
@@ -24,13 +24,13 @@ const LegalTerms = (() => {
           <button class="modal-close" aria-label="Close" onclick="this.closest('.modal-overlay').remove()">×</button>
 
           <h1 style="font-size: 28px; margin-bottom: 24px; color: #f9ca24; text-align: center; font-weight: 700;">Terms of Service</h1>
-          <p style="color: #aaa; font-size: 12px; margin-bottom: 24px; text-align: center;">Royal Slots Casino | msaart.online | Last Updated: 2026</p>
+          <p style="color: #aaa; font-size: 12px; margin-bottom: 24px; text-align: center;">Matrix Spins Casino | msaart.online | Last Updated: 2026</p>
 
           <div style="max-height: 70vh; overflow-y: auto; padding-right: 12px;">
 
             <section style="margin-bottom: 24px;">
               <h2 style="color: #56d2a0; font-size: 18px; margin-bottom: 12px; font-weight: 700;">1. Entertainment Platform & Virtual Currency</h2>
-              <p style="margin-bottom: 10px;">Royal Slots Casino ("the Platform") is an entertainment and social gaming platform that uses a virtual currency called "Matrix Money" (MM). Matrix Money has <strong>NO real-world monetary value</strong> and is provided solely for entertainment purposes.</p>
+              <p style="margin-bottom: 10px;">Matrix Spins Casino ("the Platform") is an entertainment and social gaming platform that uses a virtual currency called "Matrix Money" (MM). Matrix Money has <strong>NO real-world monetary value</strong> and is provided solely for entertainment purposes.</p>
               <p>The games and platform are designed for adult entertainment only. All transactions are final. No real money deposits or withdrawals occur on this Platform.</p>
             </section>
 
@@ -131,7 +131,7 @@ const LegalTerms = (() => {
 
             <section style="border-top: 1px solid rgba(249,202,36,0.2); padding-top: 20px;">
               <p style="color: #f9ca24; font-weight: 700; margin-bottom: 10px;">⚠ Entertainment Only</p>
-              <p style="color: #aaa; font-size: 13px;">Royal Slots Casino is an entertainment platform with virtual currency. Matrix Money has no real monetary value. Your use of this Platform constitutes acceptance of these Terms of Service.</p>
+              <p style="color: #aaa; font-size: 13px;">Matrix Spins Casino is an entertainment platform with virtual currency. Matrix Money has no real monetary value. Your use of this Platform constitutes acceptance of these Terms of Service.</p>
             </section>
 
           </div>
@@ -165,7 +165,7 @@ const LegalTerms = (() => {
           <button class="modal-close" aria-label="Close" onclick="this.closest('.modal-overlay').remove()">×</button>
 
           <h1 style="font-size: 28px; margin-bottom: 24px; color: #f9ca24; text-align: center; font-weight: 700;">Privacy Policy</h1>
-          <p style="color: #aaa; font-size: 12px; margin-bottom: 24px; text-align: center;">Royal Slots Casino | msaart.online | Last Updated: 2026</p>
+          <p style="color: #aaa; font-size: 12px; margin-bottom: 24px; text-align: center;">Matrix Spins Casino | msaart.online | Last Updated: 2026</p>
 
           <div style="max-height: 70vh; overflow-y: auto; padding-right: 12px;">
 
@@ -254,7 +254,7 @@ const LegalTerms = (() => {
 
             <section style="margin-bottom: 24px;">
               <h2 style="color: #f9ca24; font-size: 20px; margin-bottom: 12px; font-weight: 700;">What is Matrix Money?</h2>
-              <p style="margin-bottom: 10px;">Matrix Money (MM) is a virtual entertainment currency used exclusively on Royal Slots Casino. It has <strong>NO real monetary value</strong> and cannot be converted to cash except through official withdrawal on our Platform.</p>
+              <p style="margin-bottom: 10px;">Matrix Money (MM) is a virtual entertainment currency used exclusively on Matrix Spins Casino. It has <strong>NO real monetary value</strong> and cannot be converted to cash except through official withdrawal on our Platform.</p>
               <p>Matrix Money is provided for entertainment purposes only. It represents entertainment credits that allow you to play games on the Platform.</p>
             </section>
 
@@ -369,7 +369,7 @@ window.showMatrixMoneyInfo = () => LegalTerms.showMatrixMoneyInfo();
         overlay.innerHTML = `
             <div style="max-width:540px;width:100%;background:linear-gradient(135deg,#0f172a 0%,#1e293b 100%);border:1px solid rgba(249,202,36,0.3);border-radius:16px;padding:32px;color:#e0e0e0;text-align:center;">
                 <div style="font-size:48px;margin-bottom:12px;">🎰</div>
-                <h2 style="color:#f9ca24;font-size:22px;margin-bottom:12px;">Welcome to Royal Slots Casino</h2>
+                <h2 style="color:#f9ca24;font-size:22px;margin-bottom:12px;">Welcome to Matrix Spins Casino</h2>
                 <div style="background:rgba(220,38,38,0.12);border:1px solid rgba(220,38,38,0.3);border-radius:8px;padding:12px;margin-bottom:16px;">
                     <p style="color:#fca5a5;font-size:13px;font-weight:600;margin:0;">⚠️ IMPORTANT NOTICE</p>
                     <p style="color:#e0e0e0;font-size:12px;margin:6px 0 0;">Matrix Money is a virtual entertainment currency with <strong>NO real-world monetary value</strong>. This platform is for entertainment purposes only. All purchases constitute the acquisition of digital entertainment credits.</p>

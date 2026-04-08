@@ -264,12 +264,29 @@
 
     // ── Initialize ───────────────────────────────────────────────────
     function init() {
-        // Show daily bonus if available (with slight delay for page load)
-        setTimeout(function() {
-            if (checkDailyBonus()) {
-                showDailyBonusModal();
-            }
-        }, 1500);
+        // If age gate is currently visible, wait until it's dismissed before
+        // showing the daily bonus (prevents popup stacking on first visit).
+        var ageOverlay = document.getElementById('ageVerifyOverlay');
+        var ageGateOpen = ageOverlay && ageOverlay.style.display !== 'none' && ageOverlay.style.display !== '';
+
+        if (ageGateOpen) {
+            // Listen for the custom event fired by _confirmAge()
+            window.addEventListener('ageGateDismissed', function _onAgeGateDone() {
+                window.removeEventListener('ageGateDismissed', _onAgeGateDone);
+                setTimeout(function() {
+                    if (checkDailyBonus()) {
+                        showDailyBonusModal();
+                    }
+                }, 3000); // 3-second delay after age gate dismissed
+            });
+        } else {
+            // Age already verified — show after a brief page-load delay
+            setTimeout(function() {
+                if (checkDailyBonus()) {
+                    showDailyBonusModal();
+                }
+            }, 1500);
+        }
     }
 
     // ── Inject CSS ───────────────────────────────────────────────────

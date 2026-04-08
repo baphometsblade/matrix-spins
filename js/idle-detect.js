@@ -1,4 +1,4 @@
-/* Royal Slots - Idle Detection & Attract Mode */
+/* Matrix Spins - Idle Detection & Attract Mode */
 (function() {
     'use strict';
     var idleTimer = null;

@@ -1,5 +1,5 @@
 /**
- * Request validation middleware for Royal Slots Casino
+ * Request validation middleware for Matrix Spins Casino
  * Validates incoming requests, user IDs, and monetary amounts
  */
 

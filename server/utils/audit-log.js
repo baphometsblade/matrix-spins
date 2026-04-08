@@ -1,5 +1,5 @@
 /**
- * Audit logging utility for Royal Slots Casino
+ * Audit logging utility for Matrix Spins Casino
  * Logs all financial transactions and game events for compliance
  *
  * IMPORTANT: No blockchain/crypto terminology in log messages
