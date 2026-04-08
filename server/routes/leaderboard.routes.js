@@ -2,6 +2,13 @@
 const router = require('express').Router();
 const db = require('../database');
 
+// GET /api/leaderboard — returns available leaderboard endpoints
+router.get('/', (req, res) => {
+    res.json({
+        endpoints: ['/api/leaderboard/bigwins', '/api/leaderboard/weekly', '/api/leaderboard/richlist', '/api/leaderboard/recent-wins', '/api/leaderboard/top']
+    });
+});
+
 function maskUsername(username) {
     if (!username || username.length <= 3) return username.slice(0, 1) + '***';
     return username.slice(0, 2) + '***' + username.slice(-1);
