@@ -1,4 +1,4 @@
-﻿#!/usr/bin/env node
+#!/usr/bin/env node
 
 /**
  * Matrix Spins Casino - JavaScript & CSS Bundler
@@ -267,7 +267,7 @@ function generateDistIndex(jsInfo, cssInfo, originalHtml) {
 function copyStaticAssets() {
     log('Copying static assets...');
 
-    const staticFiles = ['manifest.json', 'favicon.svg', 'sw.js', 'premium-redesign.css', 'premium-polish.css', 'premium-animations.css', 'premium-v2-fixes.css', 'premium-v3-upgrades.css', 'premium-v3-upgrades.js', 'premium-v2-fixes.js', 'provably-fair.html', 'responsible-gambling.html'];
+    const staticFiles = ['manifest.json', 'favicon.svg', 'sw.js', 'premium-redesign.css', 'premium-polish.css', 'premium-animations.css', 'premium-v2-fixes.css', 'premium-v3-upgrades.css', 'premium-v3-upgrades.js', 'premium-v2-fixes.js', 'provably-fair.html', 'responsible-gambling.html', 'terms.html', '404.html'];
 
     staticFiles.forEach(file => {
         const src = path.join(ROOT_DIR, file);
