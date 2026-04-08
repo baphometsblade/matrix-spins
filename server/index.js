@@ -1234,9 +1234,4 @@ process.on('unhandledRejection', (reason, promise) => {
 });
 
 process.on('uncaughtException', (err) => {
-    console.warn('[Server] Uncaught Exception:', err.stack || err);
-    if (Sentry && process.env.SENTRY_DSN) {
-        Sentry.captureException(err);
-    }
-    // Don't exit — let the process continue serving requests
-});
+    console.warn('[Server] Uncaught Excep

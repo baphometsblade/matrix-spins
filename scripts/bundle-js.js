@@ -297,6 +297,20 @@ function copyStaticAssets() {
             log(`Copied ${scriptPath}`);
         }
     });
+
+    // Copy HTML directories (games/, categories/) to dist/
+    ['games', 'categories'].forEach(dir => {
+        const srcDir = path.join(ROOT_DIR, dir);
+        const dstDir = path.join(DIST_DIR, dir);
+        if (fs.existsSync(srcDir)) {
+            if (!fs.existsSync(dstDir)) fs.mkdirSync(dstDir, { recursive: true });
+            const files = fs.readdirSync(srcDir).filter(f => f.endsWith('.html'));
+            files.forEach(file => {
+                fs.copyFileSync(path.join(srcDir, file), path.join(dstDir, file));
+            });
+            log(`Copied ${files.length} files from ${dir}/`);
+        }
+    });
 }
 
 /**
