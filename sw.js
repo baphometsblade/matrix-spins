@@ -1,9 +1,10 @@
-const CACHE_VERSION = 7;
+const CACHE_VERSION = 8;
 const CACHE_NAME = 'matrix-spins-v' + CACHE_VERSION;
 const PRECACHE_URLS = [
   '/',
   '/manifest.json',
-  '/favicon.svg'
+  '/favicon.svg',
+  '/provably-fair.html'
 ];
 
 self.addEventListener('install', event => {
