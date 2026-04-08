@@ -1,4 +1,5 @@
 const express = require('express');
+const crypto = require('crypto');
 const router = express.Router();
 const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 const { mintOnDeposit } = require('../blockchain/mint');
@@ -15,7 +16,7 @@ const { logTransaction } = require('../utils/audit-log');
 function generateReferenceNumber(type) {
   const prefix = type === 'deposit' ? 'RSC' : 'RSW';
   const timestamp = Date.now().toString().slice(-5);
-  const random = Math.random().toString(36).substring(2, 7).toUpperCase();
+  const random = crypto.randomBytes(4).toString('hex').substring(0, 5).toUpperCase();
   return `${prefix}-${timestamp}${random}`;
 }
 

@@ -22,7 +22,7 @@ generate_sdxl_log.txt
 generation_log.txt
 
 # Temp/build artifacts
-_*.bat
+*.bat
 _*.js
 _*_log.txt
 nul
