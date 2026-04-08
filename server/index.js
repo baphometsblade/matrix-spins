@@ -920,12 +920,6 @@ app.use('/categories', express.static(path.join(__dirname, '..', 'categories'), 
     maxAge: '1h',
 }));
 
-// Category landing pages
-app.use('/categories', express.static(path.join(__dirname, '..', 'categories'), {
-    dotfiles: 'deny',
-    maxAge: '1h',
-}));
-
 // Admin dashboard
 app.use('/admin', express.static(path.join(__dirname, '..', 'admin')));
 

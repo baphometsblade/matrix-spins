@@ -1,4 +1,4 @@
-const CACHE_VERSION = 11;
+const CACHE_VERSION = 13;
 const CACHE_NAME = 'matrix-spins-v' + CACHE_VERSION;
 const PRECACHE_URLS = [
   '/',
@@ -17,7 +17,6 @@ self.addEventListener('install', event => {
 });
 
 self.addEventListener('activate', event => {
-  // IMPROVEMENT: Use Promise.allSettled so one failed delete doesn't block others
   event.waitUntil(
     caches.keys().then(keys =>
       Promise.allSettled(keys.filter(k => k !== CACHE_NAME).map(k => caches.delete(k)))
@@ -79,7 +78,7 @@ self.addEventListener('fetch', event => {
   );
 });
 
-// IMPROVEMENT: Listen for messages to trigger update
+// Listen for messages to trigger update
 self.addEventListener('message', event => {
   if (event.data === 'skipWaiting') {
     self.skipWaiting();

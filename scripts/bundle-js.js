@@ -23,17 +23,28 @@ const EARLY_SCRIPTS = [
     'js/eager-thumbs.js'
 ];
 
-// CSS files to bundle (in order)
+// CSS files to bundle (in specificity order — premium overrides MUST be last)
 const CSS_FILES = [
-    'popup-nuke.css',
+    'design-tokens.css',
     'styles.css',
+    'layout-shell.css',
+    'game-cards.css',
+    'social-proof.css',
+    'slot-layout-fix.css',
     'visual-overhaul.css',
     'bonus-games.css',
     'mobile-fixes.css',
-    'premium-animations.css',
-    'slot-layout-fix.css',
     'provider-chrome.css',
-    'promo-styles.css'
+    'studio-chrome.css',
+    'promo-styles.css',
+    'phase5-lobby.css',
+    'popup-nuke.css',
+    'premium-redesign.css',
+    'premium-polish.css',
+    'premium-animations.css',
+    'modals-v2.css',
+    'premium-v2-fixes.css',
+    'premium-v3-upgrades.css'
 ];
 
 // --- Helper Functions ---
@@ -225,11 +236,11 @@ function generateDistIndex(jsInfo, cssInfo, originalHtml) {
         distHtml = distHtml.replace(regex, '');
     });
 
-    // Add bundled CSS BEFORE premium overrides so premium CSS wins specificity
+    // All CSS is now in one bundle — insert at the foundation tokens position
     const cssLink = `    <link rel="stylesheet" href="${cssInfo.cssFile}">`;
-    const premiumMarker = distHtml.indexOf('<!-- 5. Premium overrides');
-    if (premiumMarker !== -1) {
-        distHtml = distHtml.slice(0, premiumMarker) + cssLink + '\n' + distHtml.slice(premiumMarker);
+    const foundationMarker = distHtml.indexOf('<!-- 1. Foundation tokens');
+    if (foundationMarker !== -1) {
+        distHtml = distHtml.slice(0, foundationMarker) + cssLink + '\n' + distHtml.slice(foundationMarker);
     } else {
         // Fallback: insert before </head>
         const headClosingIndex = distHtml.indexOf('</head>');
@@ -286,7 +297,7 @@ function generateDistIndex(jsInfo, cssInfo, originalHtml) {
 function copyStaticAssets() {
     log('Copying static assets...');
 
-    const staticFiles = ['manifest.json', 'favicon.svg', 'sw.js', 'robots.txt', 'sitemap.xml', 'premium-redesign.css', 'premium-polish.css', 'premium-animations.css', 'premium-v2-fixes.css', 'premium-v3-upgrades.css', 'premium-v3-upgrades.js', 'premium-v2-fixes.js', 'provably-fair.html', 'responsible-gambling.html', 'terms.html', '404.html', 'studio-chrome.css'];
+    const staticFiles = ['manifest.json', 'favicon.svg', 'sw.js', 'robots.txt', 'sitemap.xml', 'premium-v3-upgrades.js', 'premium-v2-fixes.js', 'provably-fair.html', 'responsible-gambling.html', 'terms.html', '404.html'];
 
     staticFiles.forEach(file => {
         const src = path.join(ROOT_DIR, file);
@@ -440,15 +451,24 @@ async function minifyBundle(bundleFileName) {
  */
 function cleanStaleBundles() {
     if (!fs.existsSync(DIST_DIR)) return;
+    // Clean old hashed bundles
     const stale = fs.readdirSync(DIST_DIR).filter(f =>
         /^bundle\.[a-f0-9]+(?:\.min)?\.js$/.test(f) ||
         /^styles\.[a-f0-9]+(?:\.min)?\.css$/.test(f)
     );
+    // Clean legacy unbundled CSS (now consolidated into the main bundle)
+    const legacyCss = ['premium-redesign.css', 'premium-polish.css', 'premium-animations.css',
+        'premium-v2-fixes.css', 'premium-v3-upgrades.css', 'studio-chrome.css'];
+    legacyCss.forEach(f => {
+        const fp = path.join(DIST_DIR, f);
+        if (fs.existsSync(fp)) { stale.push(f); fs.unlinkSync(fp); }
+    });
     stale.forEach(f => {
-        fs.unlinkSync(path.join(DIST_DIR, f));
+        const fp = path.join(DIST_DIR, f);
+        if (fs.existsSync(fp)) fs.unlinkSync(fp);
         log(`Cleaned stale: ${f}`);
     });
-    if (stale.length > 0) log(`Removed ${stale.length} stale bundle files`);
+    if (stale.length > 0) log(`Removed ${stale.length} stale files`);
 }
 
 /**

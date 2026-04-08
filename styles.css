@@ -2289,13 +2289,6 @@
             animation: novaSpinPulse 3s ease-in-out infinite;
         }
         .slot-chrome-novaspin .slot-reel-area::after {
-            background-image:
-                url('assets/chrome/neon/corner_tl.png'),
-                url('assets/chrome/neon/corner_tr.png'),
-                url('assets/chrome/neon/corner_bl.png'),
-                url('assets/chrome/neon/corner_br.png'),
-                url('assets/chrome/neon/frame_top.png'),
-                url('assets/chrome/neon/frame_bot.png');
         }
 
         /* ── 2. CELESTIAL PLAYS  (Gates of Olympus / Crown family) ── */
@@ -2348,13 +2341,6 @@
             animation: celestialFloat 4s ease-in-out infinite;
         }
         .slot-chrome-mythic-forge .slot-reel-area::after {
-            background-image:
-                url('assets/chrome/olympus/corner_tl.png'),
-                url('assets/chrome/olympus/corner_tr.png'),
-                url('assets/chrome/olympus/corner_bl.png'),
-                url('assets/chrome/olympus/corner_br.png'),
-                url('assets/chrome/olympus/frame_top.png'),
-                url('assets/chrome/olympus/frame_bot.png');
         }
 
         /* ── 3. IRONREEL ENTERTAINMENT  (Wolf Gold / Buffalo / Rhino family) ── */
@@ -2408,13 +2394,6 @@
             animation: ironcladGrain 0.8s steps(1) infinite;
         }
         .slot-chrome-ironclad .slot-reel-area::after {
-            background-image:
-                url('assets/chrome/wild/corner_tl.png'),
-                url('assets/chrome/wild/corner_tr.png'),
-                url('assets/chrome/wild/corner_bl.png'),
-                url('assets/chrome/wild/corner_br.png'),
-                url('assets/chrome/wild/frame_top.png'),
-                url('assets/chrome/wild/frame_bot.png');
         }
 
         /* ── 4. GOLDENEDGE GAMING  (Sugar Rush / Sweet Bonanza / Candy family) ── */
@@ -2468,13 +2447,6 @@
                 radial-gradient(ellipse at 50% 100%, rgba(247,165,49,0.06) 0%, transparent 60%);
         }
         .slot-chrome-golden-reels .slot-reel-area::after {
-            background-image:
-                url('assets/chrome/candy/corner_tl.png'),
-                url('assets/chrome/candy/corner_tr.png'),
-                url('assets/chrome/candy/corner_bl.png'),
-                url('assets/chrome/candy/corner_br.png'),
-                url('assets/chrome/candy/frame_top.png'),
-                url('assets/chrome/candy/frame_bot.png');
         }
 
         /* ── 5. VAULTX GAMING  (Tombstone / Wanted / Money Train / Big Bass family) ── */
@@ -2535,13 +2507,6 @@
             animation: vaultxHum 6s ease-in-out infinite;
         }
         .slot-chrome-vaultx .slot-reel-area::after {
-            background-image:
-                url('assets/chrome/western/corner_tl.png'),
-                url('assets/chrome/western/corner_tr.png'),
-                url('assets/chrome/western/corner_bl.png'),
-                url('assets/chrome/western/corner_br.png'),
-                url('assets/chrome/western/frame_top.png'),
-                url('assets/chrome/western/frame_bot.png');
         }
 
         /* ── 6. SOLSTICEFX  (5 Lions / Dragon / Bamboo / Oriental family) ── */
@@ -2596,13 +2561,6 @@
             animation: solsticeGlow 3s ease-in-out infinite;
         }
         .slot-chrome-solstice .slot-reel-area::after {
-            background-image:
-                url('assets/chrome/oriental/corner_tl.png'),
-                url('assets/chrome/oriental/corner_tr.png'),
-                url('assets/chrome/oriental/corner_bl.png'),
-                url('assets/chrome/oriental/corner_br.png'),
-                url('assets/chrome/oriental/frame_top.png'),
-                url('assets/chrome/oriental/frame_bot.png');
         }
 
         /* ── 7. PHANTOMWORKS  (Dark / Gothic / Egyptian family) ── */
@@ -2660,13 +2618,6 @@
             animation: phantomMist 5s ease-in-out infinite;
         }
         .slot-chrome-shadow-works .slot-reel-area::after {
-            background-image:
-                url('assets/chrome/dark/corner_tl.png'),
-                url('assets/chrome/dark/corner_tr.png'),
-                url('assets/chrome/dark/corner_bl.png'),
-                url('assets/chrome/dark/corner_br.png'),
-                url('assets/chrome/dark/frame_top.png'),
-                url('assets/chrome/dark/frame_bot.png');
         }
 
         /* ── 8. ARCADEFORGE  (Fire Joker / Mega Joker / Classic family) ── */
@@ -2728,13 +2679,6 @@
             animation: arcadeBlink 8s ease-in-out infinite;
         }
         .slot-chrome-wild-frontier .slot-reel-area::after {
-            background-image:
-                url('assets/chrome/joker/corner_tl.png'),
-                url('assets/chrome/joker/corner_tr.png'),
-                url('assets/chrome/joker/corner_bl.png'),
-                url('assets/chrome/joker/corner_br.png'),
-                url('assets/chrome/joker/frame_top.png'),
-                url('assets/chrome/joker/frame_bot.png');
         }
 
         /* ─── ThunderBolt Games chrome ─── */
