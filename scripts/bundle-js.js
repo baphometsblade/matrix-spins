@@ -94,7 +94,10 @@ function parseIndexHtml(htmlContent) {
         // Extract <script src="..."> (strip cache-busting query strings like ?v=2.0.0)
         const scriptMatch = line.match(/<script\s+src=["']([^"']+)["']/i);
         if (scriptMatch) {
-            scripts.push(scriptMatch[1].split('?')[0]);
+            const src = scriptMatch[1].split('?')[0];
+            if (!src.startsWith('http://') && !src.startsWith('https://')) {
+                scripts.push(src);
+            }
             return;
         }
 
@@ -461,7 +464,7 @@ function cleanStaleBundles() {
         'premium-v2-fixes.css', 'premium-v3-upgrades.css', 'studio-chrome.css'];
     legacyCss.forEach(f => {
         const fp = path.join(DIST_DIR, f);
-        if (fs.existsSync(fp)) { stale.push(f); fs.unlinkSync(fp); }
+        if (fs.existsSync(fp)) stale.push(f);
     });
     stale.forEach(f => {
         const fp = path.join(DIST_DIR, f);
