@@ -1,4 +1,4 @@
-﻿// ═══════════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════════
 // APP MODULE
 // ═══════════════════════════════════════════════════════
 
@@ -146,7 +146,7 @@
 
 
         function wireGameHooks() {
-            window.render_game_to_text = renderGameToText;
+            window.render_game_to_text = (typeof renderGameToText !== 'undefined') ? renderGameToText : (window.renderGameToText || function() { return '{}'; });
             window.advanceTime = (ms) => new Promise((resolve) => {
                 setTimeout(resolve, Math.max(0, ms));
             });
