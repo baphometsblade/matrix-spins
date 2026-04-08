@@ -543,6 +543,16 @@ async function main() {
         }
         log(`Output: ${DIST_DIR}/`);
 
+        // Remove unminified bundles from dist/ (saves ~5MB deploy size)
+        if (minInfo) {
+            const unminJs = path.join(DIST_DIR, jsInfo.bundleFile);
+            if (fs.existsSync(unminJs)) { fs.unlinkSync(unminJs); log(`Removed unminified: ${jsInfo.bundleFile}`); }
+        }
+        if (cssMinInfo) {
+            const unminCss = path.join(DIST_DIR, cssInfo.cssFile);
+            if (fs.existsSync(unminCss)) { fs.unlinkSync(unminCss); log(`Removed unminified: ${cssInfo.cssFile}`); }
+        }
+
         // Validate — ensure dist/index.html references files that actually exist
         const distIndex = readFile(path.join(DIST_DIR, 'index.html'));
         const jsRef = distIndex.match(/bundle\.[a-f0-9]+(?:\.min)?\.js/);
