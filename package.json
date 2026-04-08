@@ -5,7 +5,7 @@
     "main": "server/index.js",
     "scripts": {
         "build": "node scripts/bundle-js.js",
-        "start": "node scripts/bundle-js.js && node server/index.js",
+        "start": "node server/index.js",
         "dev": "node server/index.js",
         "serve": "node serve.js",
         "qa:regression": "node scripts/qa_regression.js",
@@ -19,6 +19,7 @@
         "@sentry/node": "^10.47.0",
         "@thirdweb-dev/sdk": "^4.0.0",
         "bcryptjs": "^2.4.3",
+        "clean-css": "^5.3.3",
         "compression": "^1.8.1",
         "cors": "^2.8.5",
         "dotenv": "^16.4.1",
@@ -32,13 +33,12 @@
         "nodemailer": "^8.0.1",
         "pg": "^8.18.0",
         "sql.js": "^1.10.2",
-        "stripe": "^17.7.0"
+        "stripe": "^17.7.0",
+        "terser": "^5.46.1"
     },
     "devDependencies": {
         "acorn": "^8.16.0",
-        "clean-css": "^5.3.3",
         "css-tree": "^3.2.1",
-        "playwright": "^1.58.2",
-        "terser": "^5.46.1"
+        "playwright": "^1.58.2"
     }
 }

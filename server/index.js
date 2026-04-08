@@ -831,9 +831,23 @@ app.use((req, res, next) => {
     next();
 });
 
-// Prefer bundled dist/ if it exists (production), otherwise serve from root (dev)
+// Prefer bundled dist/ if it exists AND the referenced bundle file exists (production)
 const distPath = path.join(__dirname, '..', 'dist');
-const hasBundle = require('fs').existsSync(path.join(distPath, 'index.html'));
+let hasBundle = require('fs').existsSync(path.join(distPath, 'index.html'));
+// Safety: verify the JS bundle referenced in dist/index.html actually exists
+if (hasBundle) {
+    try {
+        const _html = fs.readFileSync(path.join(distPath, 'index.html'), 'utf8');
+        const _ref = _html.match(/bundle\.[a-f0-9]+(?:\.min)?\.js/);
+        const _distFiles = fs.readdirSync(distPath).filter(f => /^bundle\./.test(f));
+        console.log('[startup] dist/ bundles:', _distFiles.join(', '));
+        console.log('[startup] index.html references:', _ref?.[0]);
+        if (_ref && !fs.existsSync(path.join(distPath, _ref[0]))) {
+            console.error('[FATAL] dist/index.html references', _ref[0], 'but file missing! Falling back to dev mode.');
+            hasBundle = false;
+        }
+    } catch (e) { /* proceed with hasBundle = true */ }
+}
 
 // Fix encoding corruption at startup: Render build can double-encode UTF-8
 if (hasBundle) {
