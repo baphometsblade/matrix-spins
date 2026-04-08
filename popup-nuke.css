@@ -7,7 +7,7 @@
    ================================================================ */
 
 /* === Non-slot modals === */
-.modal:not(#slotModal):not([class*="slot-chrome"]):not([class*="slot-template"]) {
+.modal:not(#slotModal):not(#authModal):not(#depositModal):not(#profileModal):not(#settingsModal):not(.active):not([class*="slot-chrome"]):not([class*="slot-template"]) {
   display: none !important;
 }
 

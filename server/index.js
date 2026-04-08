@@ -897,6 +897,13 @@ app.get('*', (req, res) => {
     if (req.path.startsWith('/api/')) {
         return res.status(404).json({ error: 'API endpoint not found' });
     }
+    // If requesting a .html file that doesn't exist, serve 404 page
+    if (req.path.endsWith('.html')) {
+        const fourOhFour = hasBundle
+            ? path.join(distPath, '404.html')
+            : path.join(__dirname, '..', '404.html');
+        return res.status(404).sendFile(fourOhFour);
+    }
     const indexPath = hasBundle
         ? path.join(distPath, 'index.html')
         : path.join(__dirname, '..', 'index.html');
@@ -1176,9 +1183,6 @@ process.on('uncaughtException', (err) => {
     console.warn('[Server] Uncaught Exception:', err.stack || err);
     if (Sentry && process.env.SENTRY_DSN) {
         Sentry.captureException(err);
-        Sentry.flush(2000).finally(() => process.exit(1));
-        return;
     }
-    // Exit after logging — the process manager (Render) will restart us
-    process.exit(1);
+    // Don't exit — let the process continue serving requests
 });

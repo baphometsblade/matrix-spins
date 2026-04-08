@@ -224,11 +224,17 @@ function generateDistIndex(jsInfo, cssInfo, originalHtml) {
         distHtml = distHtml.replace(regex, '');
     });
 
-    // Add single CSS link before the last CSS link location (in head)
-    const headClosingIndex = distHtml.indexOf('</head>');
-    if (headClosingIndex !== -1) {
-        const cssLink = `    <link rel="stylesheet" href="${cssInfo.cssFile}">`;
-        distHtml = distHtml.slice(0, headClosingIndex) + cssLink + '\n' + distHtml.slice(headClosingIndex);
+    // Add bundled CSS BEFORE premium overrides so premium CSS wins specificity
+    const cssLink = `    <link rel="stylesheet" href="${cssInfo.cssFile}">`;
+    const premiumMarker = distHtml.indexOf('<!-- 5. Premium overrides');
+    if (premiumMarker !== -1) {
+        distHtml = distHtml.slice(0, premiumMarker) + cssLink + '\n' + distHtml.slice(premiumMarker);
+    } else {
+        // Fallback: insert before </head>
+        const headClosingIndex = distHtml.indexOf('</head>');
+        if (headClosingIndex !== -1) {
+            distHtml = distHtml.slice(0, headClosingIndex) + cssLink + '\n' + distHtml.slice(headClosingIndex);
+        }
     }
 
     // Replace all script src tags with bundle reference (keep early scripts)

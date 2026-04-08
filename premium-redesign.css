@@ -108,7 +108,8 @@ header, .casino-header, .header { background: var(--ms-glass-bg) !important; bac
 #providerFilterRow::-webkit-scrollbar { display: none; }
 
 /* ── 10. MODALS ──── */
-.modal { display: none !important; position: fixed !important; inset: 0 !important; background: rgba(0,0,0,0.7) !important; backdrop-filter: blur(8px) !important; -webkit-backdrop-filter: blur(8px) !important; z-index: var(--ms-z-modal-backdrop) !important; align-items: center !important; justify-content: center !important; padding: var(--ms-space-5) !important; }
+.modal:not(.active) { display: none !important; }
+.modal { position: fixed !important; inset: 0 !important; background: rgba(0,0,0,0.7) !important; backdrop-filter: blur(8px) !important; -webkit-backdrop-filter: blur(8px) !important; z-index: var(--ms-z-modal-backdrop) !important; align-items: center !important; justify-content: center !important; padding: var(--ms-space-5) !important; }
 .modal.active { display: flex !important; }
 .modal-content, .wallet-modal-content { background: var(--ms-bg-elevated) !important; border: 1px solid var(--ms-glass-border) !important; border-radius: var(--ms-radius-xl) !important; box-shadow: var(--ms-shadow-lg) !important; max-width: 600px !important; width: 100% !important; max-height: 85vh !important; overflow-y: auto !important; position: relative !important; animation: modalSlideIn 0.3s ease-out !important; }
 @keyframes modalSlideIn { from { opacity: 0; transform: translateY(16px) scale(0.97); } to { opacity: 1; transform: translateY(0) scale(1); } }

@@ -29,7 +29,7 @@
         '/* === Slot Focus Mode: suppress non-slot overlays === */',
         '',
         '/* Hide all modals except the slot modal */',
-        '.modal:not([class*="slot-chrome"]):not([class*="slot-template"]):not(#slotModal) {',
+        '.modal:not([class*="slot-chrome"]):not([class*="slot-template"]):not(#slotModal):not(#authModal):not(#depositModal):not(#profileModal):not(#settingsModal):not(.active) {',
         '  display: none !important;',
         '}',
         '',
@@ -199,7 +199,7 @@
         // Give the page a moment to render, then clean up
         setTimeout(function() {
             // Hide all non-slot modals
-            document.querySelectorAll('.modal:not([class*="slot-chrome"]):not([class*="slot-template"]):not(#slotModal)').forEach(function(el) {
+            document.querySelectorAll('.modal:not([class*="slot-chrome"]):not([class*="slot-template"]):not(#slotModal):not(#authModal):not(#depositModal):not(#profileModal):not(#settingsModal):not(.active)').forEach(function(el) {
                 el.style.display = 'none';
             });
             // Try to close game info
