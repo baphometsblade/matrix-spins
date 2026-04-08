@@ -3316,28 +3316,23 @@ async function _renderFeaturedSpotlight() {
   }
 
   /** Apply background image, preferring WebP over PNG for smaller file sizes.
-   *  For .game-card-art elements that contain an <img>, sets img.src instead of backgroundImage. */
+   *  Always sets background-image on the container as primary display method.
+   *  Also sets img.src when an <img> exists for accessibility / SEO. */
   function _applyBg(el) {
     var src = el.getAttribute('data-bg');
     if (!src) return;
     el.removeAttribute('data-bg');
-    var img = el.classList.contains('game-card-art') ? el.querySelector('img') : null;
     var webpSrc = src.replace(/\.png$/, '.webp');
-    if (img) {
-      // Use <img> element for game-card-art: set srcset with webp fallback
-      img.onerror = function() { img.src = src; img.onerror = null; };
-      img.src = webpSrc !== src ? webpSrc : src;
+    // Always set background-image on the container — this is the reliable display path
+    el.style.backgroundSize     = 'cover';
+    el.style.backgroundPosition = 'center';
+    if (webpSrc !== src) {
+      var probe = new Image();
+      probe.onload  = function() { el.style.setProperty('background-image', 'url(\'' + webpSrc + '\')', 'important'); };
+      probe.onerror = function() { el.style.setProperty('background-image', 'url(\'' + src + '\')', 'important'); };
+      probe.src = webpSrc;
     } else {
-      el.style.backgroundSize     = 'cover';
-      el.style.backgroundPosition = 'center';
-      if (webpSrc !== src) {
-        var probe = new Image();
-        probe.onload  = function() { el.style.setProperty('background-image', 'url(\'' + webpSrc + '\')', 'important'); };
-        probe.onerror = function() { el.style.setProperty('background-image', 'url(\'' + src + '\')', 'important'); };
-        probe.src = webpSrc;
-      } else {
-        el.style.setProperty('background-image', 'url(\'' + src + '\')', 'important');
-      }
+      el.style.setProperty('background-image', 'url(\'' + src + '\')', 'important');
     }
   }
 
