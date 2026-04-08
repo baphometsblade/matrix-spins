@@ -95,11 +95,21 @@
         btns.appendChild(_btn('hc-demo-btn', 'TRY DEMO', function() { window.phase5PlayGame(gameId, true); }));
         left.appendChild(btns);
 
-        // Right thumbnail
+        // Right thumbnail - use actual game thumbnail image
         var right = _el('div', 'hc-right');
         var thumb = _el('div', 'hc-thumbnail', null, 'background:' + (g.bgGradient || '#222'));
-        var icon = _el('div', 'hc-thumb-icon', g.gridCols >= 6 ? '\u{1F3B0}' : '\u{1F3B2}');
-        thumb.appendChild(icon);
+        var thumbSrc = g.thumbnail || ('assets/thumbnails/' + g.id + '.png');
+        var thumbImg = document.createElement('img');
+        thumbImg.className = 'hc-thumb-img';
+        thumbImg.src = thumbSrc;
+        thumbImg.alt = g.name;
+        thumbImg.loading = 'eager';
+        thumbImg.onerror = function() {
+            this.style.display = 'none';
+            var fallback = _el('div', 'hc-thumb-icon', g.gridCols >= 6 ? '\u{1F3B0}' : '\u{1F3B2}');
+            thumb.appendChild(fallback);
+        };
+        thumb.appendChild(thumbImg);
         right.appendChild(thumb);
 
         inner.appendChild(left);
