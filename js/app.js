@@ -1,9 +1,9 @@
-// ═══════════════════════════════════════════════════════
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 // APP MODULE
-// ═══════════════════════════════════════════════════════
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 
 
-        // Initialize (base — called by initAllSystems)
+        // Initialize (base â€” called by initAllSystems)
         function initBase() {
             appSettings = loadSettings();
             loadState();
@@ -12,8 +12,8 @@
             updateStatsSummary();
             wireGameHooks();
             updateSoundButton();
-            initQaTools();
-            applyUrlDebugConfig();
+            if (typeof initQaTools === 'function') initQaTools(); else if (window.initQaTools) window.initQaTools();
+            if (typeof applyUrlDebugConfig === 'function') applyUrlDebugConfig(); else if (window.applyUrlDebugConfig) window.applyUrlDebugConfig();
         }
 
 
@@ -32,7 +32,7 @@
                 if (savedBalance !== null) balance = parseFloat(savedBalance);
             }
 
-            // Per-user stats key — try user-specific first, then legacy global
+            // Per-user stats key â€” try user-specific first, then legacy global
             const perUserKey = _statsStorageKey();
             let savedStats = localStorage.getItem(perUserKey);
 
@@ -59,7 +59,7 @@
 
         function saveBalance() {
             // ROUND 40: For authenticated (server) users, localStorage balance is
-            // NOT authoritative — the server is. Block client-side balance persistence
+            // NOT authoritative â€” the server is. Block client-side balance persistence
             // to prevent exploitation via console/DevTools manipulation.
             // Only local/guest users use localStorage balance.
             var token = typeof localStorage !== 'undefined' ? localStorage.getItem('casinoAuthToken') : null;
@@ -80,7 +80,7 @@
             }
         }
 
-        // ── Server Stats Sync ──────────────────────────────
+        // â”€â”€ Server Stats Sync â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
         let _statsSyncTimer = null;
         function _debouncedStatsSync() {
             if (_statsSyncTimer) clearTimeout(_statsSyncTimer);
@@ -99,7 +99,7 @@
                     requireAuth: true
                 });
             } catch (err) {
-                // Silently fail — localStorage is the fallback
+                // Silently fail â€” localStorage is the fallback
                 console.warn('Stats server sync failed:', err.message);
             }
         }
@@ -109,12 +109,12 @@
             try {
                 const res = await apiRequest('/api/user/stats', { requireAuth: true });
                 if (res && res.stats) {
-                    // Server stats take precedence — merge with defaults for any new fields
+                    // Server stats take precedence â€” merge with defaults for any new fields
                     stats = { ...createDefaultStats(), ...res.stats };
                     localStorage.setItem(_statsStorageKey(), JSON.stringify(stats));
                     if (typeof updateStatsSummary === 'function') updateStatsSummary();
                 } else {
-                    // No server stats yet — push current local stats to server
+                    // No server stats yet â€” push current local stats to server
                     _pushStatsToServer();
                 }
             } catch (err) {
@@ -123,9 +123,9 @@
         }
 
 
-        // ═══════════════════════════════════════════════════════
+        // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
         // SCREEN SHAKE ON BIG WINS
-        // ═══════════════════════════════════════════════════════
+        // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 
         function triggerScreenShake(intensity) {
             const reelArea = document.querySelector('.slot-reel-area');
@@ -150,7 +150,7 @@
             window.advanceTime = (ms) => new Promise((resolve) => {
                 setTimeout(resolve, Math.max(0, ms));
             });
-            // ROUND 31: window.casinoDebug REMOVED — was exposing queueForcedSpin,
+            // ROUND 31: window.casinoDebug REMOVED â€” was exposing queueForcedSpin,
             // forceNextSpinAndPlay, queueOutcome, setSpinSeed to browser console.
             // Any player could force jackpot wins. Debug tools now admin-only via server.
         }
@@ -169,12 +169,12 @@
         }
 
 
-        // Post-auth initialization — runs after login or on page load if already authenticated
+        // Post-auth initialization â€” runs after login or on page load if already authenticated
         function onPostAuthInit() {
             checkDailyBonusReset();
             // Load stats from server (overrides localStorage if server has data)
             _loadServerStats();
-            // Popups and engagement features only for verified (registered) users — not guests
+            // Popups and engagement features only for verified (registered) users â€” not guests
             if (!currentUser || currentUser.isGuest) return;
             const urlParams = new URLSearchParams(window.location.search);
             const suppressBonus = urlParams.get('qaTools') === '1' || urlParams.get('qaTools') === 'true'
@@ -331,7 +331,7 @@
             if (typeof LossCashback !== 'undefined' && LossCashback.init) {
                 LossCashback.init();
             }
-            // Referral widget — invite friends
+            // Referral widget â€” invite friends
             if (typeof ReferralWidget !== 'undefined' && ReferralWidget.init) {
                 setTimeout(function() { ReferralWidget.init(); }, 3000);
             }
@@ -441,66 +441,66 @@
             if (typeof BattlePass !== 'undefined' && BattlePass.init) {
                 setTimeout(function() { BattlePass.init(); }, 2000);
             }
-            // Bet Escalator — streak-based bet increase suggestions
+            // Bet Escalator â€” streak-based bet increase suggestions
             if (typeof BetEscalator !== 'undefined' && BetEscalator.init) {
                 BetEscalator.init();
             }
-            // Near-Miss Amplifier — excitement amplification on near-wins
+            // Near-Miss Amplifier â€” excitement amplification on near-wins
             if (typeof NearMissAmplifier !== 'undefined' && NearMissAmplifier.init) {
                 NearMissAmplifier.init();
             }
-            // Smart Game Recommendations — behavioral game suggestions
+            // Smart Game Recommendations â€” behavioral game suggestions
             if (typeof SmartRecommend !== 'undefined' && SmartRecommend.init) {
                 setTimeout(function() { SmartRecommend.init(); }, 2000);
             }
-            // Exit Intent Saver — anti-churn retention offers
+            // Exit Intent Saver â€” anti-churn retention offers
             if (typeof ExitIntentSaver !== 'undefined' && ExitIntentSaver.init) {
                 setTimeout(function() { ExitIntentSaver.init(); }, 5000);
             }
-            // Auto Promo Engine — time-based and event-based promotions
+            // Auto Promo Engine â€” time-based and event-based promotions
             if (typeof AutoPromoEngine !== 'undefined' && AutoPromoEngine.init) {
                 setTimeout(function() { AutoPromoEngine.init(); }, 3000);
             }
-            // Funnel Tracker — conversion analytics
+            // Funnel Tracker â€” conversion analytics
             if (typeof FunnelTracker !== 'undefined' && FunnelTracker.init) {
                 FunnelTracker.init();
             }
-            // Re-Engagement Handler — show comeback campaigns
+            // Re-Engagement Handler â€” show comeback campaigns
             if (typeof ReEngagementHandler !== 'undefined' && ReEngagementHandler.init) {
                 setTimeout(function() { ReEngagementHandler.init(); }, 7000);
             }
-            // A/B Testing — revenue optimization experiments
+            // A/B Testing â€” revenue optimization experiments
             if (typeof ABTesting !== 'undefined' && ABTesting.init) {
                 ABTesting.init();
             }
-            // Session RTP Client — dynamic difficulty tracking (invisible)
+            // Session RTP Client â€” dynamic difficulty tracking (invisible)
             if (typeof SessionRTPClient !== 'undefined' && SessionRTPClient.init) {
                 var _rtpUserId = currentUser ? currentUser.id : null;
                 var _rtpSession = 'ses_' + Date.now();
                 var _rtpBalance = typeof balance !== 'undefined' ? balance : 5000;
                 SessionRTPClient.init(_rtpUserId, _rtpSession, _rtpBalance);
             }
-            // LTV Personalization — tier-based UI customization
+            // LTV Personalization â€” tier-based UI customization
             if (typeof LTVPersonalization !== 'undefined' && LTVPersonalization.init) {
                 setTimeout(function() { LTVPersonalization.init(); }, 4000);
             }
-            // Loss Streak Intervention — churn prevention with deposit nudges
+            // Loss Streak Intervention â€” churn prevention with deposit nudges
             if (typeof LossStreakIntervention !== 'undefined' && LossStreakIntervention.init) {
                 LossStreakIntervention.init();
             }
-            // Social Jackpot Widget — shared community jackpot pools
+            // Social Jackpot Widget â€” shared community jackpot pools
             if (typeof SocialJackpotWidget !== 'undefined' && SocialJackpotWidget.init) {
                 setTimeout(function() { SocialJackpotWidget.init(); }, 3000);
             }
-            // Deposit Timing Optimizer — behavioral deposit moment detection
+            // Deposit Timing Optimizer â€” behavioral deposit moment detection
             if (typeof DepositTimingOptimizer !== 'undefined' && DepositTimingOptimizer.init) {
                 DepositTimingOptimizer.init();
             }
-            // Smart Deposit Nudge — behavioral deposit triggers
+            // Smart Deposit Nudge â€” behavioral deposit triggers
             if (typeof SmartDepositNudge !== 'undefined' && SmartDepositNudge.init) {
                 SmartDepositNudge.init();
             }
-            // Flash Bonus — time-limited deposit multipliers
+            // Flash Bonus â€” time-limited deposit multipliers
             if (typeof FlashBonus !== 'undefined' && FlashBonus.init) {
                 FlashBonus.init();
                 if (typeof NotificationManager !== 'undefined') {
@@ -522,7 +522,7 @@
                     });
                 }
             }
-            // Periodic loss-streak check — fires every 3 minutes during active play
+            // Periodic loss-streak check â€” fires every 3 minutes during active play
             if (!window._lossStreakCheckTimer) {
                 window._lossStreakCheckTimer = setInterval(function() {
                     _checkLossStreakOffer();
@@ -541,7 +541,7 @@
                     const hrs = mins / 60;
                     if (typeof showMessage === 'function') {
                         showMessage(
-                            '⏱ You\'ve been playing for ' + hrs + ' hour' + (hrs > 1 ? 's' : '') +
+                            'â± You\'ve been playing for ' + hrs + ' hour' + (hrs > 1 ? 's' : '') +
                             '. Remember to take breaks and play responsibly.',
                             'near-miss'
                         );
@@ -550,7 +550,7 @@
             }, 60000);
         }
 
-        // ── Return-status: welcome-back overlay for lapsed players ─────────
+        // â”€â”€ Return-status: welcome-back overlay for lapsed players â”€â”€â”€â”€â”€â”€â”€â”€â”€
         function _checkReturnStatus() {
             if (sessionStorage.getItem('_returnStatusChecked')) return; // once per session
             sessionStorage.setItem('_returnStatusChecked', '1');
@@ -672,7 +672,7 @@
             document.body.appendChild(overlay);
         }
 
-        // ── Birthday bonus ─────────────────────────────────────────────────────
+        // â”€â”€ Birthday bonus â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
         function _checkBirthday() {
             if (sessionStorage.getItem('_birthdayChecked')) return;
             sessionStorage.setItem('_birthdayChecked', '1');
@@ -794,7 +794,7 @@
             document.body.appendChild(overlay);
         }
 
-        // ── Loss Streak Offer ──────────────────────────────────────────────────
+        // â”€â”€ Loss Streak Offer â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
         function _checkLossStreakOffer() {
             if (sessionStorage.getItem('_lossStreakOfferShown')) return;
             if (typeof isServerAuthToken !== 'function' || !isServerAuthToken()) return;
@@ -917,7 +917,7 @@
             document.body.appendChild(overlay);
         }
 
-        // ── Level-Up Bonus ─────────────────────────────────────────────────────
+        // â”€â”€ Level-Up Bonus â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
         function _checkLevelUpBonus() {
             if (sessionStorage.getItem('_levelUpBonusChecked')) return;
             sessionStorage.setItem('_levelUpBonusChecked', '1');
@@ -1013,7 +1013,7 @@
                     }
                 })
                 .catch(function() {
-                    claimBtn.textContent = 'Error — try again';
+                    claimBtn.textContent = 'Error â€” try again';
                     claimBtn.disabled = false;
                 });
             });
@@ -1035,7 +1035,7 @@
             document.body.appendChild(overlay);
         }
 
-        // ── Milestone auto-claim ───────────────────────────────────────────────
+        // â”€â”€ Milestone auto-claim â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
         function _checkMilestones(isRecurse) {
             if (typeof isServerAuthToken !== 'function' || !isServerAuthToken()) return;
             var token = localStorage.getItem(typeof STORAGE_KEY_TOKEN !== 'undefined' ? STORAGE_KEY_TOKEN : 'casinoToken');
@@ -1082,7 +1082,7 @@
                 .catch(function() {});
         }
 
-        // ── Streak bonus status ────────────────────────────────────────────────
+        // â”€â”€ Streak bonus status â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
         function _checkStreakBonuses() {
             if (typeof isServerAuthToken !== 'function' || !isServerAuthToken()) return;
             var token = localStorage.getItem(typeof STORAGE_KEY_TOKEN !== 'undefined' ? STORAGE_KEY_TOKEN : 'casinoToken');
@@ -1092,7 +1092,7 @@
                 .then(function(data) {
                     window._spinStreakStatus = data || null;
                     if (data && data.multiplier && parseFloat(data.multiplier) > 1.0) {
-                        // Multiplier is active — store for use by spin engine if needed
+                        // Multiplier is active â€” store for use by spin engine if needed
                         window._spinStreakMultiplier = parseFloat(data.multiplier);
                     }
                 })
@@ -1105,7 +1105,7 @@
                 .catch(function() {});
         }
 
-        // ── Daily login streak reward ──────────────────────────────────────────
+        // â”€â”€ Daily login streak reward â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
         function _checkDailyStreak() {
             if (typeof isServerAuthToken !== 'function' || !isServerAuthToken()) return;
             var token = localStorage.getItem(typeof STORAGE_KEY_TOKEN !== 'undefined' ? STORAGE_KEY_TOKEN : 'casinoToken');
@@ -1154,7 +1154,7 @@
             }, 3000);
         }
 
-        // ── Weekend cashback notification ─────────────────────────────────────
+        // â”€â”€ Weekend cashback notification â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
         function _checkWeekendCashback() {
             // Session guard - only show once per session
             if (sessionStorage.getItem('_weekendCashbackChecked')) return;
@@ -1195,7 +1195,7 @@
             }
         }
 
-        // ── Subscription daily gem auto-claim ─────────────────────────────────
+        // â”€â”€ Subscription daily gem auto-claim â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
         function _checkSubscriptionDailyGems() {
             if (typeof isServerAuthToken !== 'function' || !isServerAuthToken()) return;
             var token = localStorage.getItem(typeof STORAGE_KEY_TOKEN !== 'undefined' ? STORAGE_KEY_TOKEN : 'casinoToken');
@@ -1226,7 +1226,7 @@
                 .catch(function() {});
         }
 
-        // ── Gifts inbox auto-check ─────────────────────────────────────────────
+        // â”€â”€ Gifts inbox auto-check â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
         function _checkGiftsInbox() {
             if (typeof isServerAuthToken !== 'function' || !isServerAuthToken()) return;
             var token = localStorage.getItem(typeof STORAGE_KEY_TOKEN !== 'undefined' ? STORAGE_KEY_TOKEN : 'casinoToken');
@@ -1251,7 +1251,7 @@
                 .catch(function() {});
         }
 
-        // ── XP server sync ────────────────────────────────────────────────────
+        // â”€â”€ XP server sync â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
         async function _syncXpWithServer() {
             if (typeof isServerAuthToken !== 'function' || !isServerAuthToken()) return;
             var token = localStorage.getItem(typeof STORAGE_KEY_TOKEN !== 'undefined' ? STORAGE_KEY_TOKEN : 'casinoToken');
@@ -1277,7 +1277,7 @@
                 if (!resp.ok) return;
                 var result = await resp.json();
                 if (result && typeof result.xp === 'number' && result.xp > xp) {
-                    // Server is authoritative — update localStorage if server has a higher value
+                    // Server is authoritative â€” update localStorage if server has a higher value
                     try {
                         var stored = JSON.parse(localStorage.getItem(xpKey));
                         if (stored && typeof stored === 'object') {
@@ -1292,7 +1292,7 @@
             } catch (e) { /* network / parse errors are non-fatal */ }
         }
 
-        // ── Tournament score recording ─────────────────────────────────────────
+        // â”€â”€ Tournament score recording â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
         function _initTournamentRecording() {
             if (window._tournamentRecordingInit) return;
             window._tournamentRecordingInit = true;
@@ -1315,7 +1315,7 @@
             });
         }
 
-        // ── Loss Streak Monitor ────────────────────────────────────────────────
+        // â”€â”€ Loss Streak Monitor â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
         // Watches client-side spin results; shows a 50% deposit-match popup after
         // 8 of 10 consecutive losses without having shown the offer this session.
         function _initLossStreakMonitor() {
@@ -1421,7 +1421,7 @@
             document.body.appendChild(overlay);
         }
 
-        // ── Spin Streak Ticker ─────────────────────────────────────────────────
+        // â”€â”€ Spin Streak Ticker â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
         // Calls POST /api/spinstreak/tick after every spin and shows a badge
         // next to the spin button indicating the current streak tier.
         function _initSpinStreakTicker() {
@@ -1506,7 +1506,7 @@
             }
         }
 
-        // ── Mystery Drop Checker ───────────────────────────────────────────────
+        // â”€â”€ Mystery Drop Checker â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
         // Polls /api/mystery every 10 spins (and once at startup after 15s)
         // to detect and auto-claim pending mystery drops.
         function _initMysteryDropChecker() {
@@ -1618,7 +1618,7 @@
             }, 5000);
         }
 
-        // ── Achievements check ─────────────────────────────────────────────────
+        // â”€â”€ Achievements check â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
         function _checkAchievements() {
             if (typeof isServerAuthToken !== 'function' || !isServerAuthToken()) return;
             var token = localStorage.getItem(typeof STORAGE_KEY_TOKEN !== 'undefined' ? STORAGE_KEY_TOKEN : 'casinoToken');
@@ -1641,7 +1641,7 @@
                 .catch(function() {});
         }
 
-        // ── Notification bell ──────────────────────────────────────────────────
+        // â”€â”€ Notification bell â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
         function _initNotificationBell() {
             if (document.getElementById('notifBellBtn')) return;
             if (typeof isServerAuthToken !== 'function' || !isServerAuthToken()) return;
@@ -1788,7 +1788,7 @@
         async function initAllSystems() {
             // Check for password reset token in URL before anything else
             if (typeof checkResetTokenOnLoad === 'function' && checkResetTokenOnLoad()) {
-                // Reset flow is active — show auth modal with reset form
+                // Reset flow is active â€” show auth modal with reset form
                 document.body.classList.add('auth-gate');
                 loadXP();
                 loadDailyBonus();
@@ -1832,7 +1832,7 @@
             await syncServerSession();
 
             if (!currentUser) {
-                // Token was invalidated by server (e.g. 401) — re-gate
+                // Token was invalidated by server (e.g. 401) â€” re-gate
                 document.body.classList.add('auth-gate');
                 showAuthModal();
                 return;
@@ -1846,15 +1846,15 @@
                 saveBalance();
             }
 
-            // Successfully authenticated — ensure auth-gate is removed
+            // Successfully authenticated â€” ensure auth-gate is removed
             document.body.classList.remove('auth-gate');
             onPostAuthInit();
         }
 
 
-        // ═══════════════════════════════════════════════════════
+        // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
         // KEYBOARD SHORTCUTS
-        // ═══════════════════════════════════════════════════════
+        // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 
         window.addEventListener('DOMContentLoaded', initAllSystems);
 
@@ -1909,11 +1909,11 @@
             }
         });
 
-        // ═══════════════════════════════════════════════════════
-        // CLICK-OUTSIDE-TO-CLOSE — all modal overlays
+        // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+        // CLICK-OUTSIDE-TO-CLOSE â€” all modal overlays
         // Clicking the dark backdrop (but NOT the inner content box)
         // closes the topmost modal.  Auth and slot modals are excluded.
-        // ═══════════════════════════════════════════════════════
+        // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
         document.addEventListener('click', function(e) {
             var el = e.target;
 
