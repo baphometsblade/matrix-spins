@@ -617,8 +617,7 @@ function renderGames() {
             allGamesDiv.innerHTML = createSkeletonCards(12);
 
             // Small delay to ensure CSS animations render, then swap in real cards
-            requestAnimationFrame(() => {
-                setTimeout(() => {
+            setTimeout(() => {
                     const hotGames = games.filter(g => g.hot);
                     hotGamesDiv.innerHTML = hotGames.map(g => createGameCard(g)).join('');
                     renderFilteredGames();
@@ -662,7 +661,6 @@ function renderGames() {
                     // // Game stats hot/cold indicator widget
                     if (typeof renderGameStatsWidget === 'function') renderGameStatsWidget();
                 }, 200);
-            });
         }
 
 
