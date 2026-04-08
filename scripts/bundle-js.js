@@ -238,18 +238,29 @@ function generateDistIndex(jsInfo, cssInfo, originalHtml) {
         }
     }
 
-    // Replace all script src tags with bundle reference (keep early scripts)
+    // Replace all script src tags with bundle reference (keep early scripts with cache-busting)
     // Regex accounts for optional cache-busting query strings like ?v=2.0.0
     scripts.forEach(script => {
         const escaped = script.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-        const scriptTagRegex = new RegExp(`<script\\s+src=["']${escaped}(?:\\?[^"']*)?["']><\\/script>`, 'i');
+        const scriptTagRegex = new RegExp(`<script\\s+src=["']${escaped}(?:\\?[^"']*)?["']`, 'i');
         const isEarly = EARLY_SCRIPTS.some(es => script.endsWith(es));
 
         if (!isEarly) {
-            distHtml = distHtml.replace(scriptTagRegex, '');
+            // Remove non-early script tags entirely (they're in the bundle)
+            const fullTagRegex = new RegExp(`<script\\s+src=["']${escaped}(?:\\?[^"']*)?["']><\\/script>`, 'i');
+            distHtml = distHtml.replace(fullTagRegex, '');
+        } else {
+            // Add content-hash query string to early scripts for cache busting
+            const earlyPath = path.join(ROOT_DIR, script);
+            if (fs.existsSync(earlyPath)) {
+                const earlyHash = contentHash(fs.readFileSync(earlyPath, 'utf8'));
+                const hashedSrc = `${script}?v=${earlyHash}`;
+                distHtml = distHtml.replace(scriptTagRegex, (match) => {
+                    return match.replace(new RegExp(`${escaped}(?:\\?[^"']*)?`), hashedSrc);
+                });
+            }
         }
     });
-
     // Add bundle script reference before body close
     const bodyClosingIndex = distHtml.lastIndexOf('</body>');
     if (bodyClosingIndex !== -1) {
