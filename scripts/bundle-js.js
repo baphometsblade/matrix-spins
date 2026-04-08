@@ -322,6 +322,18 @@ function copyStaticAssets() {
             log(`Copied ${files.length} files from ${dir}/`);
         }
     });
+
+    // Copy games/_shared/ runtime assets (JS/CSS needed by individual game pages)
+    const sharedSrc = path.join(ROOT_DIR, 'games', '_shared');
+    const sharedDst = path.join(DIST_DIR, 'games', '_shared');
+    if (fs.existsSync(sharedSrc)) {
+        if (!fs.existsSync(sharedDst)) fs.mkdirSync(sharedDst, { recursive: true });
+        const sharedFiles = fs.readdirSync(sharedSrc);
+        sharedFiles.forEach(file => {
+            fs.copyFileSync(path.join(sharedSrc, file), path.join(sharedDst, file));
+        });
+        log(`Copied ${sharedFiles.length} files from games/_shared/`);
+    }
 }
 
 /**

@@ -927,10 +927,17 @@ app.get('/api/debug/dist', (req, res) => {
             : null;
         const bundleRef = distIndex ? distIndex.match(/bundle\.[a-f0-9]+(?:\.min)?\.js/) : null;
         const cssRef = distIndex ? distIndex.match(/styles\.[a-f0-9]+(?:\.min)?\.css/) : null;
+        // Check subdirectories
+        const subdirs = {};
+        ['games', 'categories', 'js'].forEach(d => {
+            const sub = path.join(distPath, d);
+            subdirs[d] = fs.existsSync(sub) ? fs.readdirSync(sub).length : 0;
+        });
         res.json({
             hasBundle,
             distExists,
             distFiles,
+            subdirs,
             bundleRef: bundleRef ? bundleRef[0] : null,
             cssRef: cssRef ? cssRef[0] : null,
             bundleFileExists: bundleRef ? fs.existsSync(path.join(distPath, bundleRef[0])) : false,
@@ -1234,4 +1241,7 @@ process.on('unhandledRejection', (reason, promise) => {
 });
 
 process.on('uncaughtException', (err) => {
-    console.warn('[Server] Uncaught Excep
+    console.warn('[Server] Uncaught Exception:', err);
+    if (Sentry && process.env.SENTRY_DSN) Sentry.captureException(err);
+    // Don't exit — let the process continue serving requests
+});
