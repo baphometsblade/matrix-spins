@@ -804,8 +804,6 @@ const INDEXES = [
     `CREATE INDEX IF NOT EXISTS idx_withdrawals_user_status ON withdrawals(user_id, status, created_at)`,
     `CREATE INDEX IF NOT EXISTS idx_daily_mission_progress_user_date ON daily_mission_progress(user_id, mission_date, completed)`,
     `CREATE INDEX IF NOT EXISTS idx_spins_user_bet ON spins(user_id, bet_amount, win_amount)`,
-    // Self-exclusion checked on every spin — must be indexed
-    `CREATE INDEX IF NOT EXISTS idx_self_exclusions_user_active ON self_exclusions(user_id, is_active)`,
 ];
 
 // Deferred indexes — tables created lazily by route handlers, so indexes
@@ -813,6 +811,8 @@ const INDEXES = [
 const DEFERRED_INDEXES = [
     `CREATE INDEX IF NOT EXISTS idx_player_sessions_player ON player_sessions(player_id)`,
     `CREATE INDEX IF NOT EXISTS idx_player_limits_player ON player_limits(player_id)`,
+    // Self-exclusion checked on every spin — must be indexed (deferred: table created in selfexclusion.routes.js)
+    `CREATE INDEX IF NOT EXISTS idx_self_exclusions_user_active ON self_exclusions(user_id, is_active)`,
     `CREATE INDEX IF NOT EXISTS idx_self_exclusions_v2_player ON self_exclusions_v2(player_id, is_active)`,
     `CREATE INDEX IF NOT EXISTS idx_chain_transactions_player ON chain_transactions(player_id)`,
     `CREATE INDEX IF NOT EXISTS idx_chain_transactions_status ON chain_transactions(status)`

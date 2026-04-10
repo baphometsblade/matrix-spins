@@ -916,6 +916,18 @@ if (hasBundle) {
     }));
 }
 
+// PWA icons and branding images
+app.use('/images', express.static(path.join(__dirname, '..', 'images'), {
+    dotfiles: 'deny',
+    maxAge: '7d',
+}));
+
+// OG social sharing images
+app.use('/img', express.static(path.join(__dirname, '..', 'img'), {
+    dotfiles: 'deny',
+    maxAge: '7d',
+}));
+
 // Category landing pages
 app.use('/categories', express.static(path.join(__dirname, '..', 'categories'), {
     dotfiles: 'deny',
