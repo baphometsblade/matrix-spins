@@ -7,6 +7,30 @@ const router = express.Router();
 // All admin routes require authentication + admin role
 router.use(authenticate, requireAdmin);
 
+// Self-exclusion check for target user (admin bonuses must respect player self-exclusion)
+async function checkTargetSelfExclusion(userId) {
+    try {
+        const exclusion = await db.get(
+            "SELECT id FROM self_exclusions WHERE user_id = ? AND is_active = 1 AND (ends_at IS NULL OR ends_at > datetime('now'))",
+            [userId]
+        );
+        if (exclusion) return true;
+    } catch (e) {
+        if (!e.message || !e.message.includes('no such table')) throw e;
+    }
+    try {
+        const limits = await db.get('SELECT self_excluded_until, cooling_off_until FROM user_limits WHERE user_id = ?', [userId]);
+        if (limits) {
+            const now = new Date().toISOString().slice(0, 19).replace('T', ' ');
+            if ((limits.self_excluded_until && limits.self_excluded_until > now) ||
+                (limits.cooling_off_until && limits.cooling_off_until > now)) return true;
+        }
+    } catch (e) {
+        if (!e.message || !e.message.includes('no such table')) throw e;
+    }
+    return false;
+}
+
 // Bootstrap admin audit log table
 db.run(`CREATE TABLE IF NOT EXISTS admin_audit_log (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -362,6 +386,12 @@ router.post('/user/:id/send-bonus', async (req, res) => {
                 return res.status(404).json({ error: 'User not found' });
             }
 
+            // Self-exclusion check — admin bonuses must respect player self-exclusion
+            if (await checkTargetSelfExclusion(userId)) {
+                await db.rollback();
+                return res.status(403).json({ error: 'User is self-excluded. Cannot send bonus.' });
+            }
+
             // Lifetime admin bonus cap: $10,000 per user
             var totalAdminBonuses = await db.get(
                 "SELECT COALESCE(SUM(amount), 0) as total FROM transactions WHERE user_id = ? AND type = 'admin_bonus'",
@@ -438,6 +468,9 @@ router.post('/bulk-bonus', async (req, res) => {
 
             const user = await db.get('SELECT id, balance FROM users WHERE id = ?', [userId]);
             if (!user) continue;
+
+            // Skip self-excluded users in bulk bonus
+            if (await checkTargetSelfExclusion(userId)) continue;
 
             const balanceBefore = user.balance || 0;
             // SECURITY FIX: Bulk bonuses go to bonus_balance with 5x wagering
@@ -658,7 +691,8 @@ router.post('/approve-deposit', async (req, res) => {
         );
 
         // Credit bonus to bonus_balance with wagering requirement
-        if (bonusAmount > 0) {
+        // Skip bonus for self-excluded users (deposit itself is still approved)
+        if (bonusAmount > 0 && !(await checkTargetSelfExclusion(deposit.user_id))) {
             const wagerReq = bonusAmount * wageringMult;
             await db.run(
                 // ROUND 57: Must ACCUMULATE wagering, not reset — old pattern wiped existing wagering from other bonuses
