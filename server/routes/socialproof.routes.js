@@ -44,26 +44,16 @@ router.get('/', async function(req, res) {
       timeOfDayBase = 60;
     }
 
-    var onlineNow = Math.max(spinsLastHour * 3 + timeOfDayBase, 50);
+    // Real online estimate: recent spinners are likely still playing
+    var onlineNow = Math.max(spinsLastHour, 0);
 
-    // Simulated base for spins today (grows through the day)
-    var hoursElapsed = hour + now.getUTCMinutes() / 60;
-    var simulatedBase = Math.floor(hoursElapsed * 180);
-    var totalSpinsToday = spinsToday + simulatedBase;
-
-    // Add jitter +/-5% using crypto-secure RNG
-    var rng = require('../services/rng.service');
-    function jitter(n) {
-      var pct = 1 + (rng.randomFloat() * 0.1 - 0.05);
-      return Math.max(1, Math.floor(n * pct));
-    }
-
-    // Platform RTP — weighted average across all games (slight jitter for realism)
-    var platformRtp = 95.2 + (rng.randomFloat() * 0.6 - 0.3); // 94.9% - 95.5% range
+    // Real platform RTP from config
+    var config = require('../config');
+    var platformRtp = (config.TARGET_RTP || 0.88) * 100;
 
     return res.json({
-      onlineNow: jitter(onlineNow),
-      spinsToday: jitter(totalSpinsToday),
+      onlineNow: onlineNow,
+      spinsToday: spinsToday,
       registeredUsers: registeredUsers,
       platformRtp: parseFloat(platformRtp.toFixed(1))
     });

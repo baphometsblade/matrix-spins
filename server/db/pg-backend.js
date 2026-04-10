@@ -11,6 +11,11 @@
 const pg = require('pg');
 const { Pool } = pg;
 const { adaptSQL } = require('./query-adapter');
+const { AsyncLocalStorage } = require('async_hooks');
+
+// Per-request transaction scoping — prevents concurrent requests from
+// sharing a single _txClient (was a critical concurrency bug)
+const _txStore = new AsyncLocalStorage();
 
 // ── pg type parsers ──────────────────────────────────────────────
 // PostgreSQL NUMERIC columns (OID 1700) are returned as strings by
@@ -143,47 +148,59 @@ class PgBackend {
     // from the pool on BEGIN and route all queries through it until COMMIT/ROLLBACK.
 
     async beginTransaction() {
-        if (this._txClient) {
-            // Nested transaction guard — just log and continue (SQLite also doesn't nest)
+        var store = _txStore.getStore();
+        if (store && store.client) {
             console.warn('[DB/PG] beginTransaction called while already in transaction — ignoring');
             return;
         }
-        this._txClient = await this.pool.connect();
-        await this._txClient.query('BEGIN');
+        var client = await this.pool.connect();
+        await client.query('BEGIN');
+        // Store the client in AsyncLocalStorage for this async context
+        if (!store) {
+            // If we're not already in a store, enter one
+            _txStore.enterWith({ client: client });
+        } else {
+            store.client = client;
+        }
     }
 
     async commit() {
-        if (!this._txClient) {
+        var store = _txStore.getStore();
+        var client = store && store.client;
+        if (!client) {
             console.warn('[DB/PG] commit called without active transaction');
             return;
         }
         try {
-            await this._txClient.query('COMMIT');
+            await client.query('COMMIT');
         } finally {
-            this._txClient.release();
-            this._txClient = null;
+            client.release();
+            store.client = null;
         }
     }
 
     async rollback() {
-        if (!this._txClient) {
+        var store = _txStore.getStore();
+        var client = store && store.client;
+        if (!client) {
             console.warn('[DB/PG] rollback called without active transaction');
             return;
         }
         try {
-            await this._txClient.query('ROLLBACK');
+            await client.query('ROLLBACK');
         } finally {
-            this._txClient.release();
-            this._txClient = null;
+            client.release();
+            store.client = null;
         }
     }
 
     /**
-     * Returns the query target: the transaction client if inside a transaction,
-     * otherwise the pool (which auto-checks-out a connection per query).
+     * Returns the query target: the transaction client for this async context
+     * if inside a transaction, otherwise the pool.
      */
     _queryTarget() {
-        return this._txClient || this.pool;
+        var store = _txStore.getStore();
+        return (store && store.client) || this.pool;
     }
 
     // ─── Query helpers ───

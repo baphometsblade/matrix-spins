@@ -9655,34 +9655,10 @@
         }
 
         // ----------------------------------------------------------
-        // SPRINT 37 — Demo Mode
+        // SPRINT 37 — Demo Mode (DISABLED for production)
+        // All spins must go through the server for real-money operation.
         // ----------------------------------------------------------
         var _demoMode = false;
-        var _demoSpinsLeft = 0;
-        var _demoRealBalance = 0;
-
-        // Override openSlot to support demo mode: openSlot(gameId, { demo: true })
-        (function() {
-            var _origOpenSlot = typeof openSlot === 'function' ? openSlot : null;
-            if (!_origOpenSlot) return;
-            openSlot = function(gameId, opts) {
-                _demoMode = !!(opts && opts.demo);
-                if (_demoMode) {
-                    _demoSpinsLeft = 3;
-                    _demoRealBalance = typeof balance !== 'undefined' ? balance : 0;
-                    balance = 10000;
-                    if (typeof updateBalance === 'function') updateBalance();
-                } else {
-                    _demoMode = false;
-                }
-                _origOpenSlot(gameId);
-                // Show/hide demo banner
-                var banner = document.getElementById('demoBanner');
-                var spansEl = document.getElementById('demoSpinsLeft');
-                if (banner) banner.style.display = _demoMode ? 'flex' : 'none';
-                if (spansEl) spansEl.textContent = _demoSpinsLeft;
-            };
-        })();
 
         function _demoOnSpinEnd() {
             if (!_demoMode) return;

@@ -16,8 +16,7 @@ module.exports = {
     MAX_SPINS_PER_SECOND: 2,
     MIN_BET: 0.20,
     MAX_BET: 1000,
-    DEFAULT_BALANCE: 5,                // Lower start encourages first deposit
-    DEMO_BALANCE: 5000,
+    DEFAULT_BALANCE: 5,                // Signup bonus (goes to bonus_balance with 25x wagering, not real balance)
 
     // House edge â€” guaranteed profit
     TARGET_RTP: 0.88,              // 88% payout = 12% house edge (better retention, more volume)
@@ -32,7 +31,7 @@ module.exports = {
     MAX_PAYOUT_PROFIT_PCT: 0.08,   // Single payout never exceeds 8% of total site profit
     MIN_WIN_MULTIPLIER_FLOOR: 1.5, // Minimum win floor (1.5x bet) to keep game playable at low profit
 
-    // Stripe integration (optional â€” falls back to mock payments if unset)
+    // Stripe integration (REQUIRED for deposits — returns 503 if unset)
     STRIPE_SECRET_KEY: process.env.STRIPE_SECRET_KEY || null,
     STRIPE_WEBHOOK_SECRET: process.env.STRIPE_WEBHOOK_SECRET || null,
     STRIPE_PUBLISHABLE_KEY: process.env.STRIPE_PUBLISHABLE_KEY || null,
