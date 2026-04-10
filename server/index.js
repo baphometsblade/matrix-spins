@@ -1035,16 +1035,42 @@ async function start() {
 
     await initDatabase();
 
-    // Re-run route-level migrations that failed during require() (before DB init)
-    // These are fire-and-forget ALTERs that are safe to retry now
+    // Re-run route-level migrations that failed during require() (before DB init).
+    // Route files run CREATE TABLE and ALTER TABLE at module load time, before
+    // initDatabase() completes. These are idempotent and safe to retry.
     const db = require('./database');
-    const routeMigrations = [
+    {
+    // Block scope to avoid conflict with later `var isPg` declarations in migrations
+    const _pg = db.isPg();
+    const _id = _pg ? 'SERIAL PRIMARY KEY' : 'INTEGER PRIMARY KEY AUTOINCREMENT';
+    const _ts = _pg ? 'TIMESTAMPTZ DEFAULT NOW()' : "TEXT DEFAULT (datetime('now'))";
+
+    // Critical tables that block registration if missing
+    const deferredTables = [
+        `CREATE TABLE IF NOT EXISTS email_verification_tokens (id ${_id}, user_id INTEGER NOT NULL, token TEXT NOT NULL UNIQUE, expires_at TEXT NOT NULL, used INTEGER DEFAULT 0)`,
+        `CREATE TABLE IF NOT EXISTS password_reset_tokens (id ${_id}, user_id INTEGER NOT NULL, token TEXT NOT NULL UNIQUE, expires_at TEXT NOT NULL, used INTEGER DEFAULT 0)`,
+        `CREATE TABLE IF NOT EXISTS registration_ips (id ${_id}, user_id INTEGER NOT NULL, ip_address TEXT NOT NULL, created_at ${_ts})`,
+        `CREATE INDEX IF NOT EXISTS idx_reg_ips_ip ON registration_ips (ip_address)`,
+        `CREATE TABLE IF NOT EXISTS self_exclusions (id ${_id}, user_id INTEGER NOT NULL, exclusion_type TEXT, duration_hours INTEGER, start_date TEXT, end_date TEXT, is_active INTEGER DEFAULT 1, created_at ${_ts})`,
+        `CREATE INDEX IF NOT EXISTS idx_self_exclusions_user_active ON self_exclusions(user_id, is_active)`,
+        `CREATE TABLE IF NOT EXISTS favorites (id ${_id}, user_id INTEGER NOT NULL, game_id TEXT NOT NULL, created_at ${_ts})`,
+        `CREATE TABLE IF NOT EXISTS chat_messages (id ${_id}, user_id INTEGER, username TEXT, message TEXT, created_at ${_ts})`,
+        `CREATE TABLE IF NOT EXISTS notifications (id ${_id}, user_id INTEGER NOT NULL, type TEXT, title TEXT, message TEXT, read INTEGER DEFAULT 0, created_at ${_ts})`,
+        `CREATE TABLE IF NOT EXISTS account_deletion_requests (id ${_id}, user_id INTEGER NOT NULL, reason TEXT, status TEXT DEFAULT 'pending', created_at ${_ts})`,
+    ];
+    for (const sql of deferredTables) {
+        try { await db.run(sql); } catch (_) { /* already exists */ }
+    }
+    }
+
+    // Column additions (ALTER TABLE — safe to retry, silently fails if already exists)
+    const deferredAlters = [
         "ALTER TABLE users ADD COLUMN loyalty_points INTEGER DEFAULT 0",
         "ALTER TABLE users ADD COLUMN free_spin_state_json TEXT",
         "ALTER TABLE users ADD COLUMN vip_level INTEGER DEFAULT 0",
         "ALTER TABLE users ADD COLUMN last_bonus_level INTEGER DEFAULT 1",
     ];
-    for (const sql of routeMigrations) {
+    for (const sql of deferredAlters) {
         try { await db.run(sql); } catch (_) { /* column already exists */ }
     }
 
