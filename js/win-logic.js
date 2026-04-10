@@ -1403,10 +1403,10 @@
         // ── Comeback Bonus Functions ──
         function checkComebackBonus() {
             if (_comebackCheckInFlight) return;
-            if (!currentUser || !currentUser.token) return;
+            if (!currentUser || (typeof authToken === 'undefined' || !authToken)) return;
             _comebackCheckInFlight = true;
             fetch('/api/user/comeback-bonus', {
-                headers: { 'Authorization': 'Bearer ' + currentUser.token }
+                headers: { 'Authorization': 'Bearer ' + authToken }
             }).then(function(r) {
                 if (!r.ok) return null;
                 return r.json();
@@ -1466,20 +1466,20 @@
         }
 
         function _claimComebackBonus(toast) {
-            if (!currentUser || !currentUser.token) return;
+            if (!currentUser || (typeof authToken === 'undefined' || !authToken)) return;
             var btn = toast.querySelector('.comeback-toast-btn');
             if (btn) { btn.disabled = true; btn.textContent = 'Claiming...'; }
 
             fetch('/api/user/claim-comeback-bonus', {
                 method: 'POST',
                 headers: {
-                    'Authorization': 'Bearer ' + currentUser.token,
+                    'Authorization': 'Bearer ' + authToken,
                     'Content-Type': 'application/json'
                 }
             }).then(function(r) { return r.json(); }).then(function(data) {
                 if (data.success) {
                     balance = data.newBalance;
-                    updateBalanceDisplay();
+                    if (typeof updateBalance === 'function') updateBalance();
                     var text = toast.querySelector('.comeback-toast-text');
                     if (text) text.textContent = 'Bonus credited! New balance: $' + data.newBalance.toFixed(2);
                     if (btn) btn.remove();

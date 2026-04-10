@@ -2482,7 +2482,7 @@ function renderGames() {
 
             listEl.innerHTML = feed.slice(0, 8).map(function(entry) {
                 return '<div class="live-feed-entry">' +
-                    '<span class="lfe-user">' + entry.username + '</span>' +
+                    '<span class="lfe-user">' + escapeHtml(entry.username) + '</span>' +
                     ' won ' +
                     '<span class="lfe-win">' + _fmtMoney(entry.win) + '</span>' +
                     ' <span class="lfe-mult">(' + entry.mult + '×)</span>' +

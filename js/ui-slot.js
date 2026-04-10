@@ -17040,7 +17040,7 @@ function _quickDeposit(amount) {
         return;
     }
     if (typeof openDepositModal === 'function') { openDepositModal(amount); }
-    else { balance += amount; updateBalanceDisplay(); saveState(); showNotification('Deposited $' + amount + '!', 'success'); }
+    else { balance += amount; if (typeof updateBalance === 'function') updateBalance(); if (typeof saveState === 'function') saveState(); if (typeof showNotification === 'function') showNotification('Deposited $' + amount + '!', 'success'); }
     var el = document.getElementById('depositQuickStrip');
     if (el) el.style.display = 'none';
 }
