@@ -1045,6 +1045,7 @@
             gain1.gain.exponentialRampToValueAtTime(0.001 * soundVolume, now + dur);
             osc1.start(now);
             osc1.stop(now + dur + 0.02);
+            osc1.addEventListener('ended', function() { try { osc1.disconnect(); gain1.disconnect(); } catch(_){} });
 
             // Layer 2: Tremolo heartbeat pulse
             var osc2 = ctx.createOscillator();
@@ -1069,6 +1070,7 @@
             lfo.stop(now + dur + 0.02);
             osc2.start(now);
             osc2.stop(now + dur + 0.02);
+            osc2.addEventListener('ended', function() { try { osc2.disconnect(); gain2.disconnect(); lfo.disconnect(); lfoGain.disconnect(); } catch(_){} });
         } catch (e) { /* ignore audio errors */ }
     }
 

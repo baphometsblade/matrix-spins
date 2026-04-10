@@ -5624,10 +5624,13 @@
             // Update bottom bar win display
             updateSlotWinDisplay(amount);
 
-            // Premium: Float "+$XX" text from reel area upward
+            // Float "+$XX" text from reel area upward
             if (amount > 0 && _animSettingEnabled('animations')) {
                 var reelArea = document.querySelector('.slot-reel-area');
                 if (reelArea) {
+                    // Remove any existing floater to prevent accumulation during autoplay
+                    var existing = document.querySelector('.win-float-up');
+                    if (existing) existing.remove();
                     var rect = reelArea.getBoundingClientRect();
                     var floater = document.createElement('div');
                     floater.className = 'win-float-up';
@@ -5635,7 +5638,7 @@
                     floater.style.left = (rect.left + rect.width / 2) + 'px';
                     floater.style.top = (rect.top + rect.height * 0.35) + 'px';
                     document.body.appendChild(floater);
-                    setTimeout(function() { floater.remove(); }, 1700);
+                    setTimeout(function() { if (floater.parentNode) floater.remove(); }, 1700);
                 }
             }
 
@@ -7206,7 +7209,6 @@
                 if (isNearMiss) {
                     data.stripEl.classList.add('near-miss-decel');
                     data.colEl.classList.add('reel-near-miss-tension');
-                    // Premium: Play ascending tension tone during slow decel
                     if (typeof SoundManager !== 'undefined' && typeof SoundManager.playNearMissTension === 'function') {
                         SoundManager.playNearMissTension();
                     }
@@ -7224,7 +7226,6 @@
                     data.currentY = targetY;
                     data.colEl.classList.add('stopped');
 
-                    // Premium: Stop impact flash on the column
                     data.colEl.classList.add('reel-stop-impact');
                     (function(col) { setTimeout(function() { col.classList.remove('reel-stop-impact'); }, 400); })(data.colEl);
 
