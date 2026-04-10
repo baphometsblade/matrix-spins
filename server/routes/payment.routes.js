@@ -1079,7 +1079,7 @@ router.post('/admin/approve-deposit', authenticate, async (req, res) => {
             );
             if (priorDeposits && priorDeposits.count === 0) {
                 bonusAmount = Math.min(deposit.amount * (config.FIRST_DEPOSIT_BONUS_PCT / 100), config.FIRST_DEPOSIT_BONUS_MAX);
-                wageringMult = config.FIRST_DEPOSIT_WAGERING_MULT || 30;
+                wageringMult = config.FIRST_DEPOSIT_WAGERING_MULT || 45;
                 bonusType = 'first_deposit_bonus';
             } else {
                 // Reload bonus limited to once per 24 hours
@@ -1226,7 +1226,7 @@ router.post('/webhook/confirm', async (req, res) => {
         if (priorDeposits && priorDeposits.count <= 1) {
             // count <= 1 because the current deposit was already marked completed above
             bonusAmount = Math.min(deposit.amount * (config.FIRST_DEPOSIT_BONUS_PCT / 100), config.FIRST_DEPOSIT_BONUS_MAX);
-            wageringMult = config.FIRST_DEPOSIT_WAGERING_MULT || 30;
+            wageringMult = config.FIRST_DEPOSIT_WAGERING_MULT || 45;
             bonusType = 'first_deposit_bonus';
         } else {
             // Reload bonus limited to once per 24 hours

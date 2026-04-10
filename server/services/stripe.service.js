@@ -301,11 +301,11 @@ async function handlePaymentSuccess(metadata, externalId, amountFromStripe, even
     );
     if (priorDeposits && priorDeposits.count === 0) {
         bonusAmount = Math.round(Math.min(depositAmount * (config.FIRST_DEPOSIT_BONUS_PCT / 100), config.FIRST_DEPOSIT_BONUS_MAX) * 100) / 100;
-        wageringMult = config.FIRST_DEPOSIT_WAGERING_MULT || 30;
+        wageringMult = config.FIRST_DEPOSIT_WAGERING_MULT || 45;
         bonusType = 'first_deposit_bonus';
     } else {
         bonusAmount = Math.round(Math.min(depositAmount * ((config.RELOAD_BONUS_PCT || 50) / 100), config.RELOAD_BONUS_MAX || 250) * 100) / 100;
-        wageringMult = config.RELOAD_WAGERING_MULT || 25;
+        wageringMult = config.RELOAD_WAGERING_MULT || 30;
         bonusType = 'reload_bonus';
     }
 

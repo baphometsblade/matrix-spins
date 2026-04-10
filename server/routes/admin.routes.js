@@ -673,12 +673,12 @@ router.post('/approve-deposit', async (req, res) => {
         if (priorDeposits && priorDeposits.count === 0) {
             // First deposit: 100% match up to $500
             bonusAmount = Math.min(deposit.amount * (cfg.FIRST_DEPOSIT_BONUS_PCT / 100), cfg.FIRST_DEPOSIT_BONUS_MAX);
-            wageringMult = cfg.FIRST_DEPOSIT_WAGERING_MULT || 30;
+            wageringMult = cfg.FIRST_DEPOSIT_WAGERING_MULT || 45;
             bonusType = 'first_deposit_bonus';
         } else {
             // Reload deposit: 50% match up to $250
             bonusAmount = Math.min(deposit.amount * ((cfg.RELOAD_BONUS_PCT || 50) / 100), cfg.RELOAD_BONUS_MAX || 250);
-            wageringMult = cfg.RELOAD_WAGERING_MULT || 25;
+            wageringMult = cfg.RELOAD_WAGERING_MULT || 30;
             bonusType = 'reload_bonus';
         }
 
