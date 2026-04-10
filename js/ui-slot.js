@@ -982,10 +982,31 @@
             splash.appendChild(loadingBar);
             container.insertBefore(splash, container.firstChild);
             requestAnimationFrame(function() { splash.classList.add("splash-visible"); });
-            setTimeout(function() {
+
+            // Tie splash dismissal to actual asset preload completion
+            var _splashMinTime = new Promise(function(r) { setTimeout(r, 1200); }); // minimum display
+            var _splashAssets = [];
+            if (game.symbols) {
+                game.symbols.forEach(function(sym) {
+                    _splashAssets.push(new Promise(function(resolve) {
+                        var img = new Image();
+                        img.onload = resolve;
+                        img.onerror = resolve; // don't block on missing assets
+                        img.src = 'assets/game_symbols/' + game.id + '/' + sym + '.webp';
+                    }));
+                });
+            }
+            _splashAssets.push(new Promise(function(resolve) {
+                var bg = new Image();
+                bg.onload = resolve;
+                bg.onerror = resolve;
+                bg.src = 'assets/backgrounds/slots/' + game.id + '_bg.webp';
+            }));
+            // Wait for both minimum time AND asset load, then dismiss
+            Promise.all([_splashMinTime, Promise.all(_splashAssets)]).then(function() {
                 splash.classList.remove("splash-visible");
                 setTimeout(function() { if (splash.parentNode) splash.remove(); }, 350);
-            }, 1500);
+            });
         }
 
         // -- Paytable overlay helpers (Sprint 19) --
@@ -3709,6 +3730,8 @@
                             if (_retryErr && _retryErr.status && _retryErr.status >= 400 && _retryErr.status < 500) { clearTimeout(_spinTimeout); throw _retryErr; }
                             if (_spinRetries >= _spinMaxRetries) { clearTimeout(_spinTimeout); throw _retryErr; }
                             _spinRetries++;
+                            // Show retry indicator so player knows we're recovering
+                            if (typeof showMessage === 'function') showMessage('Connection issue \u2014 retrying\u2026', 'info');
                             await new Promise(function(r) { setTimeout(r, _spinRetries * 1000); }); // 1s, 2s backoff
                         }
                     }

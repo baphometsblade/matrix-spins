@@ -289,6 +289,28 @@
   pointer-events: none !important;
 }
 
+/* --- SAFE AREA INSETS (iPhone notch/home indicator) --- */
+@supports (padding-bottom: env(safe-area-inset-bottom)) {
+  #slotModal .slot-bottom-bar {
+    padding-bottom: calc(env(safe-area-inset-bottom) + 0px) !important;
+    height: calc(64px + env(safe-area-inset-bottom)) !important;
+    min-height: calc(64px + env(safe-area-inset-bottom)) !important;
+    max-height: calc(64px + env(safe-area-inset-bottom)) !important;
+  }
+  #slotModal .slot-reel-area {
+    bottom: calc(64px + env(safe-area-inset-bottom)) !important;
+  }
+  #slotModal .slot-top-bar {
+    padding-top: env(safe-area-inset-top) !important;
+    height: calc(52px + env(safe-area-inset-top)) !important;
+    min-height: calc(52px + env(safe-area-inset-top)) !important;
+    max-height: calc(52px + env(safe-area-inset-top)) !important;
+  }
+  #slotModal .slot-reel-area {
+    top: calc(52px + env(safe-area-inset-top)) !important;
+  }
+}
+
 /* --- RESPONSIVE: Portrait --- */
 @media (max-aspect-ratio: 1/1) {
   #slotModal .slot-top-bar {
@@ -309,6 +331,20 @@
   #slotModal .slot-spin-btn {
     width: 68px !important;
     height: 68px !important;
+  }
+}
+
+/* Portrait with safe area */
+@supports (padding-bottom: env(safe-area-inset-bottom)) {
+  @media (max-aspect-ratio: 1/1) {
+    #slotModal .slot-bottom-bar {
+      height: calc(72px + env(safe-area-inset-bottom)) !important;
+      min-height: calc(72px + env(safe-area-inset-bottom)) !important;
+      max-height: calc(72px + env(safe-area-inset-bottom)) !important;
+    }
+    #slotModal .slot-reel-area {
+      bottom: calc(72px + env(safe-area-inset-bottom)) !important;
+    }
   }
 }
 
