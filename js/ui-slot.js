@@ -2,6 +2,19 @@
 // UI-SLOT MODULE
 // -------------------------------------------------------
 
+        // Production: suppress verbose console.log (keep warn/error)
+        // Enable debug: localStorage.setItem('ms_debug', '1')
+        if (!localStorage.getItem('ms_debug')) {
+            var _origLog = console.log;
+            console.log = function() {
+                // Allow critical prefixes through
+                var msg = arguments[0];
+                if (typeof msg === 'string' && (msg.indexOf('[ERROR]') === 0 || msg.indexOf('[CRITICAL]') === 0)) {
+                    _origLog.apply(console, arguments);
+                }
+            };
+        }
+
         // -- Spin History State ----------------------------------
         let spinHistory = []; // [{win, bet, isNearMiss, timestamp}, ...]
         // Session stats tracking (reset each time a new game opens)
@@ -19749,8 +19762,10 @@ function _initSFX() {
 }
 function _playSFX(type) {
     if (!_sfxEnabled) return;
+    // Delegate to SoundManager if available (reuses shared AudioContext)
+    if (typeof playSound === 'function') { playSound(type); return; }
     try {
-        var ctx = new (window.AudioContext || window.webkitAudioContext)();
+        var ctx = typeof getAudioContext === 'function' ? getAudioContext() : new (window.AudioContext || window.webkitAudioContext)();
         var osc = ctx.createOscillator();
         var gain = ctx.createGain();
         osc.connect(gain);
