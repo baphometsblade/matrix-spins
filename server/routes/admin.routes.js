@@ -682,36 +682,49 @@ router.post('/approve-deposit', async (req, res) => {
             bonusType = 'reload_bonus';
         }
 
-        // Credit deposit to real balance (atomic add)
-        await db.run('UPDATE users SET balance = balance + ? WHERE id = ?', [deposit.amount, deposit.user_id]);
-        await db.run("UPDATE deposits SET status = 'completed', completed_at = datetime('now') WHERE id = ?", [depositId]);
-        await db.run(
-            'INSERT INTO transactions (user_id, type, amount, balance_before, balance_after, reference) VALUES (?, ?, ?, ?, ?, ?)',
-            [deposit.user_id, 'deposit', deposit.amount, balanceBefore, balanceAfter, deposit.reference || 'admin-approved']
-        );
+        // Check self-exclusion before the transaction (read-only check)
+        const isSelfExcluded = bonusAmount > 0 ? await checkTargetSelfExclusion(deposit.user_id) : true;
 
-        // Credit bonus to bonus_balance with wagering requirement
-        // Skip bonus for self-excluded users (deposit itself is still approved)
-        if (bonusAmount > 0 && !(await checkTargetSelfExclusion(deposit.user_id))) {
-            const wagerReq = bonusAmount * wageringMult;
-            await db.run(
-                // ROUND 57: Must ACCUMULATE wagering, not reset — old pattern wiped existing wagering from other bonuses
-                'UPDATE users SET bonus_balance = COALESCE(bonus_balance, 0) + ?, wagering_requirement = COALESCE(wagering_requirement, 0) + ? WHERE id = ?',
-                [bonusAmount, wagerReq, deposit.user_id]
-            );
-            const refLabel = bonusType === 'first_deposit_bonus'
-                ? `FIRST-DEPOSIT-${cfg.FIRST_DEPOSIT_BONUS_PCT}PCT-MATCH (${wageringMult}x wagering)`
-                : `RELOAD-${cfg.RELOAD_BONUS_PCT || 50}PCT-MATCH (${wageringMult}x wagering)`;
+        // Wrap all balance/deposit/bonus operations in a single transaction.
+        // Without this, a crash between balance credit and deposit status update
+        // could credit money without marking the deposit as completed, allowing
+        // the admin to approve it again (double-credit).
+        await db.beginTransaction();
+        try {
+            await db.run('UPDATE users SET balance = balance + ? WHERE id = ?', [deposit.amount, deposit.user_id]);
+            await db.run("UPDATE deposits SET status = 'completed', completed_at = datetime('now') WHERE id = ?", [depositId]);
             await db.run(
                 'INSERT INTO transactions (user_id, type, amount, balance_before, balance_after, reference) VALUES (?, ?, ?, ?, ?, ?)',
-                [deposit.user_id, bonusType, bonusAmount, balanceAfter, balanceAfter, refLabel]
+                [deposit.user_id, 'deposit', deposit.amount, balanceBefore, balanceAfter, deposit.reference || 'admin-approved']
             );
+
+            // Credit bonus to bonus_balance with wagering requirement
+            // Skip bonus for self-excluded users (deposit itself is still approved)
+            if (bonusAmount > 0 && !isSelfExcluded) {
+                const wagerReq = bonusAmount * wageringMult;
+                await db.run(
+                    'UPDATE users SET bonus_balance = COALESCE(bonus_balance, 0) + ?, wagering_requirement = COALESCE(wagering_requirement, 0) + ? WHERE id = ?',
+                    [bonusAmount, wagerReq, deposit.user_id]
+                );
+                const refLabel = bonusType === 'first_deposit_bonus'
+                    ? `FIRST-DEPOSIT-${cfg.FIRST_DEPOSIT_BONUS_PCT}PCT-MATCH (${wageringMult}x wagering)`
+                    : `RELOAD-${cfg.RELOAD_BONUS_PCT || 50}PCT-MATCH (${wageringMult}x wagering)`;
+                await db.run(
+                    'INSERT INTO transactions (user_id, type, amount, balance_before, balance_after, reference) VALUES (?, ?, ?, ?, ?, ?)',
+                    [deposit.user_id, bonusType, bonusAmount, balanceAfter, balanceAfter, refLabel]
+                );
+            }
+
+            await db.commit();
+        } catch (txErr) {
+            await db.rollback();
+            throw txErr;
         }
 
-        const msg = bonusAmount > 0
+        const msg = bonusAmount > 0 && !isSelfExcluded
             ? `Deposit approved + $${bonusAmount.toFixed(2)} ${bonusType.replace(/_/g, ' ')} (${wageringMult}x wagering required)`
             : 'Deposit approved';
-        res.json({ message: msg, depositId, amount: deposit.amount, bonus: bonusAmount, wageringRequired: bonusAmount * wageringMult, newBalance: balanceAfter });
+        res.json({ message: msg, depositId, amount: deposit.amount, bonus: isSelfExcluded ? 0 : bonusAmount, wageringRequired: isSelfExcluded ? 0 : bonusAmount * wageringMult, newBalance: balanceAfter });
     } catch (err) {
         console.warn('[Admin] Approve deposit error:', err.message);
         res.status(500).json({ error: 'Failed to approve deposit' });

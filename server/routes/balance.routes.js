@@ -45,16 +45,20 @@ router.post('/deposit', authenticate, async (req, res) => {
         }
 
         const balanceBefore = user.balance;
-
-        // Atomic balance credit — prevents race condition overwrites
-        await db.run('UPDATE users SET balance = balance + ? WHERE id = ?', [deposit, targetUserId]);
-
         const balanceAfter = balanceBefore + deposit;
 
-        await db.run(
-            'INSERT INTO transactions (user_id, type, amount, balance_before, balance_after, reference) VALUES (?, ?, ?, ?, ?, ?)',
-            [targetUserId, 'deposit', deposit, balanceBefore, balanceAfter, paymentRef || 'admin-manual']
-        );
+        await db.beginTransaction();
+        try {
+            await db.run('UPDATE users SET balance = balance + ? WHERE id = ?', [deposit, targetUserId]);
+            await db.run(
+                'INSERT INTO transactions (user_id, type, amount, balance_before, balance_after, reference) VALUES (?, ?, ?, ?, ?, ?)',
+                [targetUserId, 'deposit', deposit, balanceBefore, balanceAfter, paymentRef || 'admin-manual']
+            );
+            await db.commit();
+        } catch (txErr) {
+            await db.rollback();
+            throw txErr;
+        }
 
         res.json({ balance: balanceAfter, message: `Deposited $${deposit.toFixed(2)}` });
     } catch (err) {
@@ -82,23 +86,31 @@ router.post('/withdraw', authenticate, async (req, res) => {
             return res.status(400).json({ error: 'Invalid withdrawal amount' });
         }
 
-        // Atomic balance deduction — prevents race condition double-withdrawal
-        const result = await db.run(
-            'UPDATE users SET balance = balance - ? WHERE id = ? AND balance >= ?',
-            [withdrawal, targetUserId, withdrawal]
-        );
-        if (!result || result.changes === 0) {
-            return res.status(400).json({ error: 'Insufficient balance or user not found' });
+        await db.beginTransaction();
+        try {
+            // Atomic balance deduction — prevents race condition double-withdrawal
+            const result = await db.run(
+                'UPDATE users SET balance = balance - ? WHERE id = ? AND balance >= ?',
+                [withdrawal, targetUserId, withdrawal]
+            );
+            if (!result || result.changes === 0) {
+                await db.rollback();
+                return res.status(400).json({ error: 'Insufficient balance or user not found' });
+            }
+
+            const user = await db.get('SELECT balance FROM users WHERE id = ?', [targetUserId]);
+
+            await db.run(
+                'INSERT INTO transactions (user_id, type, amount, balance_before, balance_after, reference) VALUES (?, ?, ?, ?, ?, ?)',
+                [targetUserId, 'withdrawal', -withdrawal, (user ? user.balance : 0) + withdrawal, user ? user.balance : 0, 'admin-refund']
+            );
+
+            await db.commit();
+            res.json({ balance: user ? user.balance : 0, message: `Withdrawal of $${withdrawal.toFixed(2)} processed` });
+        } catch (txErr) {
+            await db.rollback();
+            throw txErr;
         }
-
-        const user = await db.get('SELECT balance FROM users WHERE id = ?', [targetUserId]);
-
-        await db.run(
-            'INSERT INTO transactions (user_id, type, amount, balance_before, balance_after, reference) VALUES (?, ?, ?, ?, ?, ?)',
-            [targetUserId, 'withdrawal', -withdrawal, (user ? user.balance : 0) + withdrawal, user ? user.balance : 0, 'admin-refund']
-        );
-
-        res.json({ balance: user ? user.balance : 0, message: `Withdrawal of $${withdrawal.toFixed(2)} processed` });
     } catch (err) {
         console.warn('[Balance] Withdrawal error:', err.message);
         res.status(500).json({ error: 'Withdrawal failed' });

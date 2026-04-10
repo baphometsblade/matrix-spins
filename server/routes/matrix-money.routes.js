@@ -317,27 +317,40 @@ router.post('/withdraw', authenticate, async (req, res) => {
         const reference = generateReference('MM-WDR');
         const balanceBefore = user.balance;
 
-        // Atomic balance deduction
-        const deductResult = await db.run(
-            'UPDATE users SET balance = balance - ? WHERE id = ? AND balance >= ?',
-            [withdrawal, req.user.id, withdrawal]
-        );
-        if (!deductResult || deductResult.changes === 0) {
-            return res.status(400).json({ error: 'Insufficient balance' });
+        // Wrap deduction + record + transaction log in DB transaction.
+        // Without this, a crash after balance deduction but before the withdrawal
+        // record is created permanently loses user funds.
+        await db.beginTransaction();
+        var withdrawalId;
+        try {
+            // Atomic balance deduction
+            const deductResult = await db.run(
+                'UPDATE users SET balance = balance - ? WHERE id = ? AND balance >= ?',
+                [withdrawal, req.user.id, withdrawal]
+            );
+            if (!deductResult || deductResult.changes === 0) {
+                await db.rollback();
+                return res.status(400).json({ error: 'Insufficient balance' });
+            }
+
+            // Create withdrawal record
+            const wdResult = await db.run(
+                'INSERT INTO withdrawals (user_id, amount, currency, payment_method_id, payment_type, status, reference) VALUES (?, ?, ?, ?, ?, ?, ?)',
+                [req.user.id, withdrawal, config.CURRENCY || 'AUD', paymentMethodId || null, paymentType, 'pending', reference]
+            );
+            withdrawalId = wdResult.lastInsertRowid;
+
+            // Log transaction
+            await db.run(
+                'INSERT INTO transactions (user_id, type, amount, balance_before, balance_after, reference) VALUES (?, ?, ?, ?, ?, ?)',
+                [req.user.id, 'withdrawal', -withdrawal, balanceBefore, balanceBefore - withdrawal, reference]
+            );
+
+            await db.commit();
+        } catch (txErr) {
+            try { await db.rollback(); } catch (_rb) {}
+            throw txErr;
         }
-
-        // Create withdrawal record
-        const wdResult = await db.run(
-            'INSERT INTO withdrawals (user_id, amount, currency, payment_method_id, payment_type, status, reference) VALUES (?, ?, ?, ?, ?, ?, ?)',
-            [req.user.id, withdrawal, config.CURRENCY || 'AUD', paymentMethodId || null, paymentType, 'pending', reference]
-        );
-        const withdrawalId = wdResult.lastInsertRowid;
-
-        // Log transaction
-        await db.run(
-            'INSERT INTO transactions (user_id, type, amount, balance_before, balance_after, reference) VALUES (?, ?, ?, ?, ?, ?)',
-            [req.user.id, 'withdrawal', -withdrawal, balanceBefore, balanceBefore - withdrawal, reference]
-        );
 
         // NFT ledger: record resale
         const tokenId = await recordResaleOnWithdrawal(db, {

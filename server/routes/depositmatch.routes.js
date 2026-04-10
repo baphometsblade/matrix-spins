@@ -129,10 +129,17 @@ router.post('/claim', authenticate, bonusGuard, async function(req, res) {
 
     // Credit to bonus_balance with wagering requirement (not withdrawable balance)
     var wageringMult = 30; // 30x playthrough on deposit match bonus
-    await db.run('UPDATE users SET bonus_balance = COALESCE(bonus_balance, 0) + ?, wagering_requirement = COALESCE(wagering_requirement, 0) + ?, deposit_match_credits = COALESCE(deposit_match_credits, 0) + ?, deposit_match_last = ? WHERE id = ?',
-      [matchAmount, matchAmount * wageringMult, matchAmount, lastDeposit.created_at, userId]);
-    await db.run("INSERT INTO transactions (user_id, type, amount, description) VALUES (?, 'bonus', ?, ?)",
-      [userId, matchAmount, 'Deposit Match ' + Math.round(cfg.rate * 100) + '% (' + cfg.label + ') — $' + matchAmount.toFixed(2) + ' (30x wagering)']);
+    await db.beginTransaction();
+    try {
+        await db.run('UPDATE users SET bonus_balance = COALESCE(bonus_balance, 0) + ?, wagering_requirement = COALESCE(wagering_requirement, 0) + ?, deposit_match_credits = COALESCE(deposit_match_credits, 0) + ?, deposit_match_last = ? WHERE id = ?',
+          [matchAmount, matchAmount * wageringMult, matchAmount, lastDeposit.created_at, userId]);
+        await db.run("INSERT INTO transactions (user_id, type, amount, description) VALUES (?, 'bonus', ?, ?)",
+          [userId, matchAmount, 'Deposit Match ' + Math.round(cfg.rate * 100) + '% (' + cfg.label + ') — $' + matchAmount.toFixed(2) + ' (30x wagering)']);
+        await db.commit();
+    } catch (txErr) {
+        await db.rollback();
+        throw txErr;
+    }
 
     var updated = await db.get('SELECT balance FROM users WHERE id = ?', [userId]);
     return res.json({
