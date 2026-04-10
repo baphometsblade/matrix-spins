@@ -88,7 +88,12 @@ function drawOctagon(ctx, cx, cy, r) {
     ctx.closePath();
 }
 
-const SHAPES = [drawDiamond, (ctx, cx, cy, r) => { ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI * 2); }, drawStar, drawHexagon, drawShield, drawOctagon];
+function drawCircle(ctx, cx, cy, r) {
+    ctx.beginPath();
+    ctx.arc(cx, cy, r, 0, Math.PI * 2);
+}
+
+const SHAPES = [drawDiamond, drawCircle, drawStar, drawHexagon, drawShield, drawOctagon];
 
 function formatLabel(symbolName) {
     // "s1_tomb_door" -> "TOMB DOOR", "wild_zeus" -> "WILD ZEUS"
@@ -114,14 +119,12 @@ function generateSymbol(symbolName, themeCategory, symbolIndex, isWild) {
     roundRect(ctx, 0, 0, S, S, 24);
     ctx.fill();
 
-    // Subtle pattern overlay
+    // Subtle checkerboard pattern overlay
     ctx.globalAlpha = 0.05;
-    for (let y = 0; y < S; y += 8) {
-        for (let x = 0; x < S; x += 8) {
-            if ((x + y) % 16 === 0) {
-                ctx.fillStyle = '#fff';
-                ctx.fillRect(x, y, 4, 4);
-            }
+    ctx.fillStyle = '#fff';
+    for (let y = 0; y < S; y += 16) {
+        for (let x = 0; x < S; x += 16) {
+            ctx.fillRect(x, y, 4, 4);
         }
     }
     ctx.globalAlpha = 1;
@@ -269,20 +272,9 @@ games.forEach((game, gi) => {
         const symName = typeof sym === 'string' ? sym : (sym.name || sym.id || `symbol_${si}`);
         const isWild = symName.startsWith('wild') || symName.includes('wild');
 
-        const pngBuf = generateSymbol(symName, theme, si, isWild);
-        const pngPath = path.join(gameDir, symName + '.png');
-        fs.writeFileSync(pngPath, pngBuf);
-
-        // Also save as WebP using canvas (lower quality but smaller)
-        const canvas = createCanvas(SIZE, SIZE);
-        const ctx = canvas.getContext('2d');
-        const { createCanvas: cc } = require('canvas');
-        // Re-render for webp
-        const webpBuf = generateSymbol(symName, theme, si, isWild);
-        const webpPath = path.join(gameDir, symName + '.webp');
-        // node-canvas doesn't support webp natively, save as png with .webp extension
-        // The browser will handle it via content-type from the server
-        fs.writeFileSync(webpPath, webpBuf);
+        const buf = generateSymbol(symName, theme, si, isWild);
+        fs.writeFileSync(path.join(gameDir, symName + '.png'), buf);
+        fs.writeFileSync(path.join(gameDir, symName + '.webp'), buf); // Same PNG data; server sets content-type
     });
 
     generated++;
