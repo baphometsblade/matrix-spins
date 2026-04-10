@@ -47,6 +47,10 @@ async function getContract() {
  * @returns {Object} { balanceTokensMinted, receiptId, txHash }
  */
 async function mintDeposit({ amountAUD, playerId, stripePaymentId }) {
+    // Simulated mode when no contract is deployed
+    if (!process.env.CONTRACT_ADDRESS || !ThirdwebSDK) {
+        return { simulated: true, balanceTokensMinted: Math.round(amountAUD * 100), receiptId: null, txHash: null };
+    }
     const contract = await getContract();
     const walletAddress = process.env.WALLET_ADDRESS || (await _sdk.wallet.getAddress());
 

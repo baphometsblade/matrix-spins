@@ -10,7 +10,8 @@
  */
 
 require('dotenv').config({ path: __dirname + '/.env' });
-const { ThirdwebSDK } = require('@thirdweb-dev/sdk');
+let ThirdwebSDK;
+try { ThirdwebSDK = require('@thirdweb-dev/sdk').ThirdwebSDK; } catch(e) { /* @thirdweb-dev/sdk not installed — balance queries will use simulated mode */ }
 
 let _sdk = null;
 let _contract = null;
@@ -30,6 +31,10 @@ async function getContract() {
  * @returns {Object} { tokens, balanceAUD, walletAddress }
  */
 async function getChainBalance() {
+    // Simulated mode when no contract is deployed
+    if (!process.env.CONTRACT_ADDRESS) {
+        return { simulated: true, tokens: 0, balanceAUD: 0, walletAddress: null, formatted: '$0.00 AUD (simulated)' };
+    }
     const contract = await getContract();
     const walletAddress = process.env.WALLET_ADDRESS || (await _sdk.wallet.getAddress());
 

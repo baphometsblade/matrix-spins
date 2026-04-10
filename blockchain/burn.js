@@ -12,7 +12,7 @@
 
 require('dotenv').config({ path: __dirname + '/.env' });
 let ThirdwebSDK;
-try { ThirdwebSDK = require('@thirdweb-dev/sdk').ThirdwebSDK; } catch(e) { console.warn('[blockchain/burn] @thirdweb-dev/sdk not installed — burn operations will be no-ops'); }
+try { ThirdwebSDK = require('@thirdweb-dev/sdk').ThirdwebSDK; } catch(e) { console.warn('[blockchain/burn] @thirdweb-dev/sdk not installed ï¿½ burn operations will be no-ops'); }
 
 let _sdk = null;
 let _contract = null;
@@ -35,6 +35,10 @@ async function getContract() {
  * @returns {Object} { tokensBurned, txHash }
  */
 async function burnWithdrawal({ amountAUD, playerId }) {
+    // Simulated mode when no contract is deployed
+    if (!process.env.CONTRACT_ADDRESS || !ThirdwebSDK) {
+        return { simulated: true, tokensBurned: Math.round(amountAUD * 100), txHash: null };
+    }
     const contract = await getContract();
     const walletAddress = process.env.WALLET_ADDRESS || (await _sdk.wallet.getAddress());
 
