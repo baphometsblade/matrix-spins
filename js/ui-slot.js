@@ -16952,7 +16952,7 @@ function _mobileNavAction(a) {
         case 'favorites': if (typeof showFavorites === 'function') showFavorites(); break;
         case 'deposit': if (typeof openDepositModal === 'function') openDepositModal(); break;
         case 'profile': if (typeof openStatsModal === 'function') openStatsModal(); break;
-        case 'support': window.open('mailto:support@royalslots.com','_blank'); break;
+        case 'support': window.open('mailto:support@msaart.online','_blank'); break;
     }
 }
 
