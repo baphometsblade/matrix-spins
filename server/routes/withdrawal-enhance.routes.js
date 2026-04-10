@@ -268,11 +268,33 @@ router.post('/accept-offer', authenticate, bonusGuard, async (req, res) => {
             // Mark offer as accepted
             await db.run('UPDATE withdrawal_offers SET accepted = 1 WHERE id = ?', [offerId]);
 
-            // Record transaction
-            const balanceAfter = balanceBefore + bonusAmount;
+            // Cancel the pending withdrawal that triggered this offer.
+            // The withdrawal amount was already deducted from balance when the withdrawal
+            // was created. If we don't cancel it, the user gets BOTH the bonus AND the
+            // withdrawal payout — a direct revenue loss.
+            const pendingWd = await db.get(
+                "SELECT id, amount FROM withdrawals WHERE user_id = ? AND status = 'pending' AND amount = ? ORDER BY id DESC LIMIT 1",
+                [userId, offer.withdrawal_amount]
+            );
+            if (pendingWd) {
+                await db.run(
+                    "UPDATE withdrawals SET status = 'cancelled', admin_note = 'User accepted retention offer', processed_at = datetime('now') WHERE id = ?",
+                    [pendingWd.id]
+                );
+                // Refund the withdrawal amount back to withdrawable balance
+                await db.run('UPDATE users SET balance = balance + ? WHERE id = ?', [pendingWd.amount, userId]);
+                await db.run(
+                    'INSERT INTO transactions (user_id, type, amount, balance_before, balance_after, reference) VALUES (?, ?, ?, ?, ?, ?)',
+                    [userId, 'withdrawal_cancel', pendingWd.amount, balanceBefore, balanceBefore + pendingWd.amount, `retention-cancel-wd-${pendingWd.id}`]
+                );
+            }
+
+            // Record bonus transaction (balance_before reflects post-refund if withdrawal was cancelled)
+            const effectiveBalanceBefore = pendingWd ? (balanceBefore + pendingWd.amount) : balanceBefore;
+            const balanceAfter = effectiveBalanceBefore + bonusAmount;
             await db.run(
                 'INSERT INTO transactions (user_id, type, amount, balance_before, balance_after, reference) VALUES (?, ?, ?, ?, ?, ?)',
-                [userId, 'bonus', bonusAmount, balanceBefore, balanceAfter, `retention-offer-${offerId}`]
+                [userId, 'bonus', bonusAmount, effectiveBalanceBefore, balanceAfter, `retention-offer-${offerId}`]
             );
 
             await db.commit();
@@ -281,12 +303,14 @@ router.post('/accept-offer', authenticate, bonusGuard, async (req, res) => {
             throw txErr;
         }
 
-        const balanceAfter = balanceBefore + bonusAmount;
+        // Re-read actual balance after transaction (withdrawal refund + bonus)
+        const updatedUser = await db.get('SELECT balance, bonus_balance FROM users WHERE id = ?', [userId]);
+        const finalBalance = updatedUser ? updatedUser.balance : balanceBefore;
 
         res.json({
             success: true,
             message: `Bonus of $${bonusAmount.toFixed(2)} credited to your account!`,
-            newBalance: parseFloat(balanceAfter.toFixed(2)),
+            newBalance: parseFloat(finalBalance.toFixed(2)),
             offerType: offer.offer_type
         });
     } catch (err) {

@@ -781,17 +781,25 @@ router.post('/withdraw/verify-otp', authenticate, otpLimiter, async (req, res) =
         const attempts = (wd.otp_attempts || 0) + 1;
         if (otp !== wd.otp_code) {
             if (attempts >= 5) {
-                // Invalidate the OTP and cancel the withdrawal
-                await db.run(
-                    "UPDATE withdrawals SET otp_code = NULL, otp_attempts = ?, status = 'cancelled', admin_note = 'OTP invalidated after 5 failed attempts', processed_at = datetime('now') WHERE id = ?",
-                    [attempts, wd.id]
-                );
-                // Refund balance
-                await db.run('UPDATE users SET balance = balance + ? WHERE id = ?', [wd.amount, req.user.id]);
-                await db.run(
-                    "INSERT INTO transactions (user_id, type, amount, balance_before, balance_after, reference) SELECT ?, 'withdrawal_cancel', ?, balance - ?, balance, ? FROM users WHERE id = ?",
-                    [req.user.id, wd.amount, wd.amount, `WDR-OTP-FAIL-${wd.id}`, req.user.id]
-                );
+                // Invalidate the OTP, cancel the withdrawal, and refund — all atomically.
+                // Without a transaction, a crash between status update and balance refund
+                // permanently loses user funds.
+                await db.beginTransaction();
+                try {
+                    await db.run(
+                        "UPDATE withdrawals SET otp_code = NULL, otp_attempts = ?, status = 'cancelled', admin_note = 'OTP invalidated after 5 failed attempts', processed_at = datetime('now') WHERE id = ?",
+                        [attempts, wd.id]
+                    );
+                    await db.run('UPDATE users SET balance = balance + ? WHERE id = ?', [wd.amount, req.user.id]);
+                    await db.run(
+                        "INSERT INTO transactions (user_id, type, amount, balance_before, balance_after, reference) SELECT ?, 'withdrawal_cancel', ?, balance - ?, balance, ? FROM users WHERE id = ?",
+                        [req.user.id, wd.amount, wd.amount, `WDR-OTP-FAIL-${wd.id}`, req.user.id]
+                    );
+                    await db.commit();
+                } catch (txErr) {
+                    await db.rollback();
+                    throw txErr;
+                }
                 return res.status(400).json({ error: 'Too many incorrect OTP attempts — withdrawal has been cancelled and refunded' });
             }
             await db.run('UPDATE withdrawals SET otp_attempts = ? WHERE id = ?', [attempts, wd.id]);
