@@ -1054,12 +1054,13 @@
                 if (payouts.payline5 || payouts.cluster15) symbolPayoutRows += '<span>5\u00d7</span>';
                 if (payouts.payline4 || payouts.cluster12 || payouts.cluster8) symbolPayoutRows += '<span>4\u00d7</span>';
                 symbolPayoutRows += '<span>3\u00d7</span></div>';
+                var maxTier = Math.pow(1.6, symCount - 1); // precompute once
                 for (var si = regularSymbols.length - 1; si >= 0; si--) {
                     var rank = regularSymbols.length - 1 - si;
                     var tier = Math.pow(1.6, rank);
-                    var p3 = Math.max(1, Math.round(base3 * tier / Math.pow(1.6, symCount - 1)));
-                    var p4 = Math.max(2, Math.round(base4 * tier / Math.pow(1.6, symCount - 1)));
-                    var p5 = Math.max(5, Math.round(base5 * tier / Math.pow(1.6, symCount - 1)));
+                    var p3 = Math.max(1, Math.round(base3 * tier / maxTier));
+                    var p4 = Math.max(2, Math.round(base4 * tier / maxTier));
+                    var p5 = Math.max(5, Math.round(base5 * tier / maxTier));
                     var sName = regularSymbols[si].replace(/^s\d+_/, '').replace(/_/g, ' ');
                     var sImg = '<span class="paytable-sym-img">' + getSymbolHtml(regularSymbols[si], game.id) + '</span>';
                     symbolPayoutRows += '<div class="paytable-sym-row">' + sImg + '<span class="paytable-sym-name">' + sName + '</span>';
@@ -1132,7 +1133,9 @@
         }
 
         // Standard 20-payline diagram for 5x3 grids (Pragmatic Play / Book of Dead style)
+        var _cachedPaylineDiagram = null;
         function _buildPaylineDiagram() {
+            if (_cachedPaylineDiagram) return _cachedPaylineDiagram;
             var lines = [
                 [1,1,1,1,1], [0,0,0,0,0], [2,2,2,2,2], [0,0,1,2,2], [2,2,1,0,0],
                 [0,0,0,1,2], [2,2,2,1,0], [1,0,0,0,1], [1,2,2,2,1], [0,1,1,1,0],
@@ -1142,7 +1145,7 @@
             var colors = ['#f59e0b','#ef4444','#22c55e','#3b82f6','#a855f7',
                           '#ec4899','#14b8a6','#f97316','#06b6d4','#84cc16',
                           '#e11d48','#8b5cf6','#10b981','#f43f5e','#6366f1',
-                          '#fbbf24','#ef4444','#22d3ee','#a78bfa','#fb923c'];
+                          '#fbbf24','#0ea5e9','#22d3ee','#a78bfa','#fb923c'];
             var html = '<div class="payline-grid">';
             for (var li = 0; li < 20; li += 5) {
                 html += '<div class="payline-row-group">';
@@ -1159,6 +1162,7 @@
                 html += '</div>';
             }
             html += '</div>';
+            _cachedPaylineDiagram = html;
             return html;
         }
 
@@ -19302,7 +19306,8 @@ function _initOrientationHandler() {
 function _handleOrientation() {
     var isLandscape = window.innerWidth > window.innerHeight;
     var hint = document.getElementById('orientationHint375');
-    if (isLandscape && window.innerWidth < 900) {
+    // Show hint in portrait on small screens (not landscape — that's already correct)
+    if (!isLandscape && window.innerWidth < 768) {
         if (!hint) {
             hint = document.createElement('div');
             hint.id = 'orientationHint375';
@@ -27481,8 +27486,10 @@ function _toggleSound644() {
 }
 function _playSound644(type) {
     if (_soundMgr644.muted || !_soundMgr644.enabled) return;
+    // Delegate to SoundManager which reuses a single AudioContext
+    if (typeof playSound === 'function') { playSound(type); return; }
     try {
-        var ctx = new (window.AudioContext || window.webkitAudioContext)();
+        var ctx = typeof getAudioContext === 'function' ? getAudioContext() : new (window.AudioContext || window.webkitAudioContext)();
         var osc = ctx.createOscillator();
         var gain = ctx.createGain();
         osc.connect(gain);
