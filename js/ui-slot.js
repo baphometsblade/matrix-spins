@@ -1041,6 +1041,44 @@
                        "</div>";
             }).join("");
             var symbols = (game.symbols || []).slice(0, 9);
+            // Generate per-symbol payout tiers (geometric distribution like Pragmatic Play)
+            var regularSymbols = symbols.filter(function(s) { return !/wild|scatter/i.test(s); });
+            var symbolPayoutRows = '';
+            if (regularSymbols.length > 0 && (payouts.payline3 || payouts.triple || payouts.cluster5)) {
+                var base3 = payouts.payline3 || payouts.triple || payouts.cluster5 || 5;
+                var base5 = payouts.payline5 || payouts.cluster15 || base3 * 10;
+                var base4 = payouts.payline4 || payouts.cluster8 || Math.round((base3 + base5) / 3);
+                var symCount = regularSymbols.length;
+                symbolPayoutRows = '<div class="paytable-symbol-payouts">';
+                symbolPayoutRows += '<div class="paytable-sym-header"><span></span>';
+                if (payouts.payline5 || payouts.cluster15) symbolPayoutRows += '<span>5\u00d7</span>';
+                if (payouts.payline4 || payouts.cluster12 || payouts.cluster8) symbolPayoutRows += '<span>4\u00d7</span>';
+                symbolPayoutRows += '<span>3\u00d7</span></div>';
+                for (var si = regularSymbols.length - 1; si >= 0; si--) {
+                    var rank = regularSymbols.length - 1 - si;
+                    var tier = Math.pow(1.6, rank);
+                    var p3 = Math.max(1, Math.round(base3 * tier / Math.pow(1.6, symCount - 1)));
+                    var p4 = Math.max(2, Math.round(base4 * tier / Math.pow(1.6, symCount - 1)));
+                    var p5 = Math.max(5, Math.round(base5 * tier / Math.pow(1.6, symCount - 1)));
+                    var sName = regularSymbols[si].replace(/^s\d+_/, '').replace(/_/g, ' ');
+                    var sImg = '<span class="paytable-sym-img">' + getSymbolHtml(regularSymbols[si], game.id) + '</span>';
+                    symbolPayoutRows += '<div class="paytable-sym-row">' + sImg + '<span class="paytable-sym-name">' + sName + '</span>';
+                    if (payouts.payline5 || payouts.cluster15) symbolPayoutRows += '<span>' + p5 + '\u00d7</span>';
+                    if (payouts.payline4 || payouts.cluster12 || payouts.cluster8) symbolPayoutRows += '<span>' + p4 + '\u00d7</span>';
+                    symbolPayoutRows += '<span>' + p3 + '\u00d7</span></div>';
+                }
+                // Wild and scatter rows
+                var wildSym = symbols.find(function(s) { return /wild/i.test(s); });
+                if (wildSym) {
+                    var wName = wildSym.replace(/^wild_/, '').replace(/_/g, ' ');
+                    var wImg = '<span class="paytable-sym-img">' + getSymbolHtml(wildSym, game.id) + '</span>';
+                    symbolPayoutRows += '<div class="paytable-sym-row paytable-sym-wild">' + wImg + '<span class="paytable-sym-name" style="color:#fbbf24">' + wName + '</span>';
+                    if (payouts.payline5 || payouts.cluster15) symbolPayoutRows += '<span>' + (payouts.wildTriple ? payouts.wildTriple * 2 : base5 * 2) + '\u00d7</span>';
+                    if (payouts.payline4 || payouts.cluster12 || payouts.cluster8) symbolPayoutRows += '<span>' + (payouts.wildTriple || base4 * 2) + '\u00d7</span>';
+                    symbolPayoutRows += '<span>' + Math.round((payouts.wildTriple || base3 * 3) * 0.6) + '\u00d7</span></div>';
+                }
+                symbolPayoutRows += '</div>';
+            }
             var symbolChips = symbols.map(function(s) {
                 var display = s.replace(/^s\d+_|^wild_|^scatter_/, "").replace(/_/g, " ");
                 var isWild = /wild/i.test(s);
@@ -1070,13 +1108,57 @@
                 html += "<div class=\"paytable-section\"><div class=\"paytable-section-title\">Payouts</div>" +
                         "<div class=\"paytable-payout-grid\">" + payoutRowsHTML + "</div></div>";
             }
-            if (symbolChips) {
+            if (symbolPayoutRows) {
+                html += "<div class=\"paytable-section\"><div class=\"paytable-section-title\">Symbol Payouts</div>" +
+                        symbolPayoutRows + "</div>";
+            } else if (symbolChips) {
                 html += "<div class=\"paytable-section\"><div class=\"paytable-section-title\">Symbols</div>" +
                         "<div class=\"paytable-symbols-list\">" + symbolChips + "</div></div>";
+            }
+            // Payline diagram for payline-based games
+            var cols = game.gridCols || game.cols || 5;
+            var rows = game.gridRows || game.rows || 3;
+            if ((game.winType === 'payline' || !game.winType) && cols === 5 && rows === 3) {
+                html += "<div class=\"paytable-section\"><div class=\"paytable-section-title\">Paylines (20 lines)</div>" +
+                        "<div class=\"paytable-paylines\">" + _buildPaylineDiagram() + "</div></div>";
+            } else if (game.winType === 'cluster') {
+                html += "<div class=\"paytable-section\"><div class=\"paytable-section-title\">Win Type</div>" +
+                        "<div class=\"paytable-bonus-desc\">Cluster Pays \u2014 win by matching " + (game.clusterMin || 5) + "+ adjacent symbols in any direction.</div></div>";
             }
             html += "<div class=\"paytable-section\"><div class=\"paytable-section-title\">Bonus Feature</div>" +
                     "<div class=\"paytable-bonus-desc\">" + bonusDesc + "</div></div>";
             html += "</div>";
+            return html;
+        }
+
+        // Standard 20-payline diagram for 5x3 grids (Pragmatic Play / Book of Dead style)
+        function _buildPaylineDiagram() {
+            var lines = [
+                [1,1,1,1,1], [0,0,0,0,0], [2,2,2,2,2], [0,0,1,2,2], [2,2,1,0,0],
+                [0,0,0,1,2], [2,2,2,1,0], [1,0,0,0,1], [1,2,2,2,1], [0,1,1,1,0],
+                [2,1,1,1,2], [0,1,0,1,0], [2,1,2,1,2], [1,0,1,0,1], [1,2,1,2,1],
+                [0,0,1,0,0], [2,2,1,2,2], [0,1,2,1,0], [2,1,0,1,2], [1,1,0,1,1]
+            ];
+            var colors = ['#f59e0b','#ef4444','#22c55e','#3b82f6','#a855f7',
+                          '#ec4899','#14b8a6','#f97316','#06b6d4','#84cc16',
+                          '#e11d48','#8b5cf6','#10b981','#f43f5e','#6366f1',
+                          '#fbbf24','#ef4444','#22d3ee','#a78bfa','#fb923c'];
+            var html = '<div class="payline-grid">';
+            for (var li = 0; li < 20; li += 5) {
+                html += '<div class="payline-row-group">';
+                for (var lj = li; lj < li + 5 && lj < 20; lj++) {
+                    html += '<div class="payline-mini" title="Line ' + (lj+1) + '">';
+                    html += '<svg viewBox="0 0 50 30" width="50" height="30">';
+                    var pts = lines[lj].map(function(r, c) { return (c * 12.5 + 5) + ',' + (r * 12.5 + 3.75); }).join(' ');
+                    html += '<polyline points="' + pts + '" fill="none" stroke="' + colors[lj] + '" stroke-width="2" stroke-linecap="round"/>';
+                    lines[lj].forEach(function(r, c) {
+                        html += '<circle cx="' + (c * 12.5 + 5) + '" cy="' + (r * 12.5 + 3.75) + '" r="2.5" fill="' + colors[lj] + '" opacity="0.7"/>';
+                    });
+                    html += '</svg><span class="payline-num">' + (lj+1) + '</span></div>';
+                }
+                html += '</div>';
+            }
+            html += '</div>';
             return html;
         }
 
@@ -14686,6 +14768,9 @@ function _resetSoundToggle() {
 }
 function _toggleSound() {
     _soundOn229 = !_soundOn229;
+    // Sync mute state across all audio systems
+    if (typeof SoundManager !== 'undefined' && typeof SoundManager.setSoundEnabled === 'function') SoundManager.setSoundEnabled(_soundOn229);
+    if (typeof Howler !== 'undefined') Howler.mute(!_soundOn229);
     var el = document.getElementById('soundToggleBadge');
     if (!el) return;
     if (_soundOn229) {
@@ -14926,6 +15011,9 @@ function _resetSoundToggle() {
 }
 function _toggleSound() {
     _soundOn229 = !_soundOn229;
+    // Sync mute state across all audio systems
+    if (typeof SoundManager !== 'undefined' && typeof SoundManager.setSoundEnabled === 'function') SoundManager.setSoundEnabled(_soundOn229);
+    if (typeof Howler !== 'undefined') Howler.mute(!_soundOn229);
     var el = document.getElementById('soundToggleBadge');
     if (!el) return;
     if (_soundOn229) {
@@ -17138,7 +17226,10 @@ function _initVolumeSlider() {
     slider.addEventListener('input', function() {
         _soundVolume312 = parseInt(this.value) / 100;
         localStorage.setItem('soundVolume312', _soundVolume312.toString());
+        // Sync all three audio systems
         if (typeof Howler !== 'undefined') Howler.volume(_soundVolume312);
+        if (typeof SoundManager !== 'undefined' && typeof SoundManager.setSoundVolume === 'function') SoundManager.setSoundVolume(_soundVolume312);
+        if (typeof _sfxVolume !== 'undefined') { _sfxVolume = _soundVolume312; try { localStorage.setItem('ms_sfx_vol', _soundVolume312.toString()); } catch(e){} }
     });
 }
 
@@ -19195,6 +19286,14 @@ function _updateOnlineStatus() {
 /* ── 371-378 — screen orientation handler ─────────────────────── */
 function _initOrientationHandler() {
     if (!screen.orientation) return;
+    // Attempt landscape lock when game is open (supported on Android Chrome)
+    try {
+        if (screen.orientation.lock && window.innerWidth < 768) {
+            screen.orientation.lock('landscape').catch(function() {
+                // Silently fail — not supported on iOS or desktop
+            });
+        }
+    } catch(e) { /* orientation lock not available */ }
     window.addEventListener('orientationchange', function() {
         _handleOrientation();
     });
@@ -27522,28 +27621,9 @@ function _initPaytable648() {
     console.log('[Sprint 643-650] Paytable Viewer ready');
 }
 function _showPaytable648() {
-    var panel = document.getElementById('paytablePanel648');
-    if (panel) { panel.remove(); return; }
-    panel = document.createElement('div');
-    panel.id = 'paytablePanel648';
-    panel.className = 'paytable-panel';
-    var game = typeof currentGame !== 'undefined' ? currentGame : null;
-    var gameName = game ? (game.name || 'Slot Game') : 'Slot Game';
-    var rtp = game && game.rtp ? game.rtp : 96;
-    panel.innerHTML = '<div class="pt-header"><h3>' + gameName + ' - Pay Table</h3><button onclick="document.getElementById(\x27paytablePanel648\x27).remove()">✕</button></div>' +
-        '<div class="pt-body">' +
-        '<div class="pt-section"><h4>Payout Multipliers</h4>' +
-        '<div class="pt-row"><span>3 matching symbols</span><span>2x - 5x</span></div>' +
-        '<div class="pt-row"><span>4 matching symbols</span><span>10x - 25x</span></div>' +
-        '<div class="pt-row"><span>5 matching symbols</span><span>50x - 100x</span></div>' +
-        '<div class="pt-row pt-special"><span>Wild + 4 matching</span><span>75x - 200x</span></div>' +
-        '<div class="pt-row pt-jackpot"><span>5 premium symbols</span><span>500x - 1000x</span></div></div>' +
-        '<div class="pt-section"><h4>Game Info</h4>' +
-        '<div class="pt-row"><span>RTP</span><span>' + rtp + '%</span></div>' +
-        '<div class="pt-row"><span>Volatility</span><span>Medium-High</span></div>' +
-        '<div class="pt-row"><span>Max Win</span><span>5,000x bet</span></div></div>' +
-        '</div>';
-    document.body.appendChild(panel);
+    // Redirect to the real per-symbol paytable (Sprint 19) instead of showing
+    // hardcoded generic ranges which are misleading
+    if (typeof _openPaytable === 'function') { _openPaytable(); return; }
 }
 
 
