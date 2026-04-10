@@ -1,0 +1,1502 @@
+[
+  {
+    "id": "sugar_rush",
+    "name": "Candy Cascade 1000",
+    "theme": "fruit",
+    "symbols": [
+      "s1_lollipop",
+      "s2_gummy_bear",
+      "s3_candy_cane",
+      "s4_cupcake",
+      "s5_diamond_candy",
+      "wild_sugar"
+    ],
+    "provider": "Golden Reels Studio",
+    "accentColor": "#ff6fd8"
+  },
+  {
+    "id": "gates_olympus",
+    "name": "Halls of Thunder",
+    "theme": "egypt",
+    "symbols": [
+      "s1_chalice",
+      "s2_ring",
+      "s3_hourglass",
+      "s4_crown",
+      "s5_lightning",
+      "wild_zeus"
+    ],
+    "provider": "Mythic Forge",
+    "accentColor": "#667eea"
+  },
+  {
+    "id": "hot_chillies",
+    "name": "Salsa Spins",
+    "theme": "fruit",
+    "symbols": [
+      "s1_taco",
+      "s2_maracas",
+      "s3_sombrero",
+      "s4_chilli",
+      "s5_hot_7",
+      "wild_chilli"
+    ],
+    "provider": "Golden Reels Studio",
+    "accentColor": "#f77f00"
+  },
+  {
+    "id": "wolf_gold",
+    "name": "Alpha Pack",
+    "theme": "animals",
+    "symbols": [
+      "s1_feather",
+      "s2_paw",
+      "s3_eagle",
+      "s4_totem",
+      "s5_moon",
+      "wild_wolf"
+    ],
+    "provider": "Wild Frontier Games",
+    "accentColor": "#d4a836"
+  },
+  {
+    "id": "book_dead",
+    "name": "Tome of Ra",
+    "theme": "egypt",
+    "symbols": [
+      "s1_ankh",
+      "s2_scarab",
+      "s3_eye",
+      "s4_pharaoh",
+      "s5_anubis",
+      "wild_book"
+    ],
+    "provider": "Mythic Forge",
+    "accentColor": "#c7a94e"
+  },
+  {
+    "id": "starburst_xxl",
+    "name": "Cosmic Gems",
+    "theme": "space",
+    "symbols": [
+      "s1_gem_red",
+      "s2_gem_blue",
+      "s3_gem_green",
+      "s4_gem_yellow",
+      "s5_gem_purple",
+      "wild_star"
+    ],
+    "provider": "Nebula Gaming",
+    "accentColor": "#a855f7"
+  },
+  {
+    "id": "starlight_princess",
+    "name": "Starlight Empress",
+    "theme": "fantasy",
+    "symbols": [
+      "s1_crystal_heart",
+      "s2_magic_wand",
+      "s3_tiara",
+      "s4_moon_orb",
+      "s5_star_crystal",
+      "wild_empress"
+    ],
+    "provider": "Nebula Gaming",
+    "accentColor": "#e040fb"
+  },
+  {
+    "id": "pyramid_king",
+    "name": "Pharaoh's Fortune",
+    "theme": "egypt",
+    "symbols": [
+      "s1_pyramid",
+      "s2_scarab_golden",
+      "s3_sarcophagus",
+      "s4_cartouche",
+      "s5_sun_disk",
+      "wild_pharaoh"
+    ],
+    "provider": "Mythic Forge",
+    "accentColor": "#c9a961"
+  },
+  {
+    "id": "fruit_bonanza",
+    "name": "Cherry Heaven",
+    "theme": "fruit",
+    "symbols": [
+      "s1_cherry",
+      "s2_plum",
+      "s3_lemon",
+      "s4_orange",
+      "s5_bell",
+      "wild_grape"
+    ],
+    "provider": "Golden Reels Studio",
+    "accentColor": "#ff1744"
+  },
+  {
+    "id": "space_odyssey",
+    "name": "Stellar Drift",
+    "theme": "space",
+    "symbols": [
+      "s1_satellite",
+      "s2_planet",
+      "s3_comet",
+      "s4_astronaut",
+      "s5_black_hole",
+      "wild_space_station"
+    ],
+    "provider": "Nebula Gaming",
+    "accentColor": "#00bcd4"
+  },
+  {
+    "id": "dragon_realm",
+    "name": "Dragon's Hoard",
+    "theme": "fantasy",
+    "symbols": [
+      "s1_dragon_egg",
+      "s2_treasure",
+      "s3_castle",
+      "s4_knight",
+      "s5_dragon_scale",
+      "wild_dragon"
+    ],
+    "provider": "Dragon Pearl Studios",
+    "accentColor": "#ffd700"
+  },
+  {
+    "id": "leopard_prowl",
+    "name": "Jungle Predator",
+    "theme": "animals",
+    "symbols": [
+      "s1_leopard",
+      "s2_gazelle",
+      "s3_acacia_tree",
+      "s4_sun",
+      "s5_feline_face",
+      "wild_leopard_gold"
+    ],
+    "provider": "Wild Frontier Games",
+    "accentColor": "#ffb300"
+  },
+  {
+    "id": "lucky_dragon",
+    "name": "Golden Dragon Dance",
+    "theme": "asian",
+    "symbols": [
+      "s1_dragon_statue",
+      "s2_lantern",
+      "s3_coin",
+      "s4_fan",
+      "s5_lucky_red",
+      "wild_gold_dragon"
+    ],
+    "provider": "Dragon Pearl Studios",
+    "accentColor": "#d4af37"
+  },
+  {
+    "id": "cursed_night",
+    "name": "Crimson Fang",
+    "theme": "horror",
+    "symbols": [
+      "s1_vampire",
+      "s2_coffin",
+      "s3_bat",
+      "s4_moon_blood",
+      "s5_gothic_cross",
+      "wild_blood_splat"
+    ],
+    "provider": "Shadow Works",
+    "accentColor": "#ff0000"
+  },
+  {
+    "id": "outback_king",
+    "name": "Kookaburra Cash",
+    "theme": "australian",
+    "symbols": [
+      "s1_kangaroo",
+      "s2_koala",
+      "s3_boomerang",
+      "s4_aboriginal_art",
+      "s5_kookaburra",
+      "wild_outback_sun"
+    ],
+    "provider": "Wild Frontier Games",
+    "accentColor": "#ffb74d"
+  },
+  {
+    "id": "joker_frenzy",
+    "name": "Jester's Gambit",
+    "theme": "wildcard",
+    "symbols": [
+      "s1_jester_hat",
+      "s2_playing_card",
+      "s3_dice",
+      "s4_trumpet",
+      "s5_laugh_mask",
+      "wild_joker_wild"
+    ],
+    "provider": "Cascade Labs",
+    "accentColor": "#ffeb3b"
+  },
+  {
+    "id": "nile_jewels",
+    "name": "Cleopatra's Diamonds",
+    "theme": "egypt",
+    "symbols": [
+      "s1_turquoise",
+      "s2_blue_topaz",
+      "s3_aquamarine",
+      "s4_scarab_gem",
+      "s5_cleopatra_crown",
+      "wild_nile_pearl"
+    ],
+    "provider": "Mythic Forge",
+    "accentColor": "#4dd0e1"
+  },
+  {
+    "id": "peach_paradise",
+    "name": "Paradise Peach",
+    "theme": "fruit",
+    "symbols": [
+      "s1_peach",
+      "s2_mango",
+      "s3_passion_fruit",
+      "s4_papaya",
+      "s5_banana_bunch",
+      "wild_tropical_mix"
+    ],
+    "provider": "Golden Reels Studio",
+    "accentColor": "#ff9800"
+  },
+  {
+    "id": "cosmic_nova",
+    "name": "Nova Burst",
+    "theme": "space",
+    "symbols": [
+      "s1_nebula",
+      "s2_quasar",
+      "s3_meteor",
+      "s4_cosmic_dust",
+      "s5_supercluster",
+      "wild_nova_core"
+    ],
+    "provider": "Nebula Gaming",
+    "accentColor": "#ff1493"
+  },
+  {
+    "id": "sphinx_riddle",
+    "name": "Sphinx's Mystery",
+    "theme": "egypt",
+    "symbols": [
+      "s1_sphinx_head",
+      "s2_papyrus",
+      "s3_lotus",
+      "s4_horus_eye",
+      "s5_kheops_pyramid",
+      "wild_ancient_curse"
+    ],
+    "provider": "Mythic Forge",
+    "accentColor": "#d2b48c"
+  },
+  {
+    "id": "wild_rooster",
+    "name": "Rooster's Crow",
+    "theme": "animals",
+    "symbols": [
+      "s1_rooster",
+      "s2_hen",
+      "s3_barn",
+      "s4_corn",
+      "s5_sunrise",
+      "wild_golden_rooster"
+    ],
+    "provider": "Wild Frontier Games",
+    "accentColor": "#ffb300"
+  },
+  {
+    "id": "infinity_mirror",
+    "name": "Enchanted Mirror",
+    "theme": "fantasy",
+    "symbols": [
+      "s1_mirror_frame",
+      "s2_crystal_ball",
+      "s3_magic_rose",
+      "s4_enchanted_book",
+      "s5_mirror_reflection",
+      "wild_infinite_mirror"
+    ],
+    "provider": "Mythic Forge",
+    "accentColor": "#e91e63"
+  },
+  {
+    "id": "spice_fortune",
+    "name": "Spiced Fortune",
+    "theme": "fruit",
+    "symbols": [
+      "s1_vanilla_pod",
+      "s2_cinnamon_stick",
+      "s3_nutmeg",
+      "s4_cardamom",
+      "s5_saffron_threads",
+      "wild_spice_jar"
+    ],
+    "provider": "Golden Reels Studio",
+    "accentColor": "#ff6f00"
+  },
+  {
+    "id": "galaxy_rush",
+    "name": "Nebula Dash",
+    "theme": "space",
+    "symbols": [
+      "s1_asteroid",
+      "s2_probe",
+      "s3_galaxy",
+      "s4_pulsar",
+      "s5_space_ship",
+      "wild_hyperspace"
+    ],
+    "provider": "Nebula Gaming",
+    "accentColor": "#00bcd4"
+  },
+  {
+    "id": "warrior_princess",
+    "name": "Valkyrie's Valor",
+    "theme": "fantasy",
+    "symbols": [
+      "s1_valkyrie_helm",
+      "s2_battle_axe",
+      "s3_shield",
+      "s4_spear",
+      "s5_rune_stone",
+      "wild_valkyrie_warrior"
+    ],
+    "provider": "Ironclad Entertainment",
+    "accentColor": "#ff6b6b"
+  },
+  {
+    "id": "jade_fortune",
+    "name": "Emperor's Jade",
+    "theme": "asian",
+    "symbols": [
+      "s1_jade_dragon",
+      "s2_pagoda",
+      "s3_golden_coin",
+      "s4_silk_fan",
+      "s5_emperor_seal",
+      "wild_jade_blessing"
+    ],
+    "provider": "Dragon Pearl Studios",
+    "accentColor": "#ffd700"
+  },
+  {
+    "id": "midnight_phantom",
+    "name": "Phantom's Whisper",
+    "theme": "horror",
+    "symbols": [
+      "s1_phantom_mask",
+      "s2_haunted_bell",
+      "s3_cursed_doll",
+      "s4_ghost_orb",
+      "s5_spectral_flame",
+      "wild_phantom_essence"
+    ],
+    "provider": "Shadow Works",
+    "accentColor": "#64b5f6"
+  },
+  {
+    "id": "boomerang_luck",
+    "name": "Bush Tucker Riches",
+    "theme": "australian",
+    "symbols": [
+      "s1_boomerang",
+      "s2_dingo",
+      "s3_bush_berry",
+      "s4_emu",
+      "s5_aboriginal_dot",
+      "wild_outback_fire"
+    ],
+    "provider": "Wild Frontier Games",
+    "accentColor": "#ff5722"
+  },
+  {
+    "id": "rainbow_fortune",
+    "name": "Leprechaun's Treasure",
+    "theme": "wildcard",
+    "symbols": [
+      "s1_leprechaun_hat",
+      "s2_gold_coin",
+      "s3_rainbow",
+      "s4_shamrock",
+      "s5_pot_of_gold",
+      "wild_lucky_charm"
+    ],
+    "provider": "Mythic Forge",
+    "accentColor": "#ffeb3b"
+  },
+  {
+    "id": "sacred_ibis",
+    "name": "Ibis Blessing",
+    "theme": "egypt",
+    "symbols": [
+      "s1_ibis_bird",
+      "s2_lotus_flower",
+      "s3_papyrus_scroll",
+      "s4_nile_reed",
+      "s5_sacred_vessel",
+      "wild_ibis_gold"
+    ],
+    "provider": "Golden Reels Studio",
+    "accentColor": "#c7a94e"
+  },
+  {
+    "id": "berry_bliss",
+    "name": "Strawberry Fields",
+    "theme": "fruit",
+    "symbols": [
+      "s1_strawberry",
+      "s2_blueberry",
+      "s3_raspberry",
+      "s4_blackberry",
+      "s5_berry_basket",
+      "wild_berry_splash"
+    ],
+    "provider": "Golden Reels Studio",
+    "accentColor": "#ff69b4"
+  },
+  {
+    "id": "eclipse_mystery",
+    "name": "Solar Eclipse",
+    "theme": "space",
+    "symbols": [
+      "s1_sun_corona",
+      "s2_moon_shadow",
+      "s3_eclipse_eye",
+      "s4_celestial_alignment",
+      "s5_total_eclipse",
+      "wild_cosmic_shadow"
+    ],
+    "provider": "Nebula Gaming",
+    "accentColor": "#ffeb3b"
+  },
+  {
+    "id": "mystic_grail",
+    "name": "Holy Grail Quest",
+    "theme": "fantasy",
+    "symbols": [
+      "s1_grail_cup",
+      "s2_excalibur",
+      "s3_ancient_scroll",
+      "s4_crown_jewels",
+      "s5_holy_light",
+      "wild_grail_power"
+    ],
+    "provider": "Mythic Forge",
+    "accentColor": "#ffd700"
+  },
+  {
+    "id": "tiger_strike",
+    "name": "Bengal Tiger",
+    "theme": "animals",
+    "symbols": [
+      "s1_tiger",
+      "s2_tiger_eye",
+      "s3_paw_print",
+      "s4_jungle_flower",
+      "s5_tiger_roar",
+      "wild_tiger_king"
+    ],
+    "provider": "Wild Frontier Games",
+    "accentColor": "#fff000"
+  },
+  {
+    "id": "cherry_bombs",
+    "name": "Explosive Cherries",
+    "theme": "fruit",
+    "symbols": [
+      "s1_cherry_bomb",
+      "s2_dynamite",
+      "s3_explosion",
+      "s4_cherry_red",
+      "s5_bomb_icon",
+      "wild_explosion_wave"
+    ],
+    "provider": "Golden Reels Studio",
+    "accentColor": "#fdd835"
+  },
+  {
+    "id": "oriental_silk",
+    "name": "Silk Road Riches",
+    "theme": "asian",
+    "symbols": [
+      "s1_silk_ribbon",
+      "s2_porcelain_vase",
+      "s3_silk_fan",
+      "s4_golden_Buddha",
+      "s5_trade_caravan",
+      "wild_silk_treasure"
+    ],
+    "provider": "Dragon Pearl Studios",
+    "accentColor": "#ff9800"
+  },
+  {
+    "id": "zombie_carnival",
+    "name": "Undead Fiesta",
+    "theme": "horror",
+    "symbols": [
+      "s1_zombie_head",
+      "s2_carnival_mask",
+      "s3_creepy_clown",
+      "s4_rotten_rose",
+      "s5_graveyard_gate",
+      "wild_zombie_king"
+    ],
+    "provider": "Shadow Works",
+    "accentColor": "#ff1744"
+  },
+  {
+    "id": "crocodile_gold",
+    "name": "Croc's Treasure",
+    "theme": "australian",
+    "symbols": [
+      "s1_crocodile",
+      "s2_waterhole",
+      "s3_aboriginal_boomerang",
+      "s4_river_stone",
+      "s5_crocodile_eye",
+      "wild_croc_gold"
+    ],
+    "provider": "Wild Frontier Games",
+    "accentColor": "#ffb300"
+  },
+  {
+    "id": "carnival_crown",
+    "name": "Mardi Gras Madness",
+    "theme": "wildcard",
+    "symbols": [
+      "s1_mardi_mask",
+      "s2_feather_boa",
+      "s3_beaded_necklace",
+      "s4_trumpet",
+      "s5_carnival_crown",
+      "wild_party_explosion"
+    ],
+    "provider": "Cascade Labs",
+    "accentColor": "#00bcd4"
+  },
+  {
+    "id": "pyramid_power",
+    "name": "Ptolemy's Throne",
+    "theme": "egypt",
+    "symbols": [
+      "s1_pyramid_block",
+      "s2_golden_mask",
+      "s3_deity_statue",
+      "s4_sacred_barrel",
+      "s5_ptolemy_portrait",
+      "wild_king_tut"
+    ],
+    "provider": "Mythic Forge",
+    "accentColor": "#d2b48c"
+  },
+  {
+    "id": "melon_feast",
+    "name": "Watermelon Splash",
+    "theme": "fruit",
+    "symbols": [
+      "s1_watermelon",
+      "s2_cantaloupe",
+      "s3_honeydew",
+      "s4_lime_wedge",
+      "s5_melon_juice",
+      "wild_melon_blend"
+    ],
+    "provider": "Golden Reels Studio",
+    "accentColor": "#4caf50"
+  },
+  {
+    "id": "solar_system",
+    "name": "Planetary Alignment",
+    "theme": "space",
+    "symbols": [
+      "s1_mercury",
+      "s2_venus",
+      "s3_earth",
+      "s4_mars",
+      "s5_jupiter",
+      "wild_sun_star"
+    ],
+    "provider": "Nebula Gaming",
+    "accentColor": "#1565c0"
+  },
+  {
+    "id": "fairy_tales",
+    "name": "Enchanted Kingdom",
+    "theme": "fantasy",
+    "symbols": [
+      "s1_fairy",
+      "s2_magic_wand",
+      "s3_enchanted_forest",
+      "s4_fairy_dust",
+      "s5_wishing_star",
+      "wild_fairy_magic"
+    ],
+    "provider": "Mythic Forge",
+    "accentColor": "#e91e63"
+  },
+  {
+    "id": "emerald_dragon",
+    "name": "Dragon's Emerald",
+    "theme": "animals",
+    "symbols": [
+      "s1_dragon",
+      "s2_emerald_gem",
+      "s3_dragon_egg",
+      "s4_jade_circle",
+      "s5_dragon_breath",
+      "wild_emerald_power"
+    ],
+    "provider": "Dragon Pearl Studios",
+    "accentColor": "#76ff03"
+  },
+  {
+    "id": "haunted_mansion",
+    "name": "Ghost House",
+    "theme": "horror",
+    "symbols": [
+      "s1_haunted_mansion",
+      "s2_ghost",
+      "s3_candelabra",
+      "s4_portrait",
+      "s5_ghostly_hand",
+      "wild_spectral_glow"
+    ],
+    "provider": "Shadow Works",
+    "accentColor": "#9c27b0"
+  },
+  {
+    "id": "opal_outback",
+    "name": "Opal Dreams",
+    "theme": "australian",
+    "symbols": [
+      "s1_opal_stone",
+      "s2_mining_cart",
+      "s3_outback_sunset",
+      "s4_aboriginal_pattern",
+      "s5_opal_vein",
+      "wild_precious_opal"
+    ],
+    "provider": "Wild Frontier Games",
+    "accentColor": "#ffeb3b"
+  },
+  {
+    "id": "circus_thrills",
+    "name": "Ringmaster's Fortune",
+    "theme": "wildcard",
+    "symbols": [
+      "s1_ringmaster",
+      "s2_acrobat",
+      "s3_lion_tamer",
+      "s4_clown",
+      "s5_circus_tent",
+      "wild_spotlight"
+    ],
+    "provider": "Cascade Labs",
+    "accentColor": "#ffeb3b"
+  },
+  {
+    "id": "ancient_tombs",
+    "name": "Valley of Kings",
+    "theme": "egypt",
+    "symbols": [
+      "s1_tomb_door",
+      "s2_mummy_case",
+      "s3_burial_mask",
+      "s4_canopic_jar",
+      "s5_tomb_seal",
+      "wild_tomb_guardian"
+    ],
+    "provider": "Mythic Forge",
+    "accentColor": "#d2b48c"
+  },
+  {
+    "id": "grape_vine",
+    "name": "Vintage Grapes",
+    "theme": "fruit",
+    "symbols": [
+      "s1_red_grapes",
+      "s2_white_grapes",
+      "s3_grape_vine",
+      "s4_wine_glass",
+      "s5_vineyard",
+      "wild_golden_grape"
+    ],
+    "provider": "Golden Reels Studio",
+    "accentColor": "#ec4899"
+  },
+  {
+    "id": "supernova_slots",
+    "name": "Quantum Leap",
+    "theme": "space",
+    "symbols": [
+      "s1_quantum_core",
+      "s2_warp_portal",
+      "s3_subatomic",
+      "s4_particle_wave",
+      "s5_quantum_field",
+      "wild_quantum_entangle"
+    ],
+    "provider": "Nebula Gaming",
+    "accentColor": "#00ffff"
+  },
+  {
+    "id": "avalon_castle",
+    "name": "Avalon's Call",
+    "theme": "fantasy",
+    "symbols": [
+      "s1_avalon_tower",
+      "s2_lady_lake",
+      "s3_sword_stone",
+      "s4_magic_scroll",
+      "s5_avalon_mist",
+      "wild_avalon_crown"
+    ],
+    "provider": "Mythic Forge",
+    "accentColor": "#4fc3f7"
+  },
+  {
+    "id": "rhino_rampage",
+    "name": "Rhino Charge",
+    "theme": "animals",
+    "symbols": [
+      "s1_rhino",
+      "s2_savanna",
+      "s3_charging_rhino",
+      "s4_tribal_mask",
+      "s5_rhino_horn",
+      "wild_stampede_rhino"
+    ],
+    "provider": "Wild Frontier Games",
+    "accentColor": "#ffb300"
+  },
+  {
+    "id": "tangerine_tango",
+    "name": "Citrus Sunset",
+    "theme": "fruit",
+    "symbols": [
+      "s1_tangerine",
+      "s2_orange",
+      "s3_clementine",
+      "s4_citrus_leaf",
+      "s5_juice_burst",
+      "wild_citrus_blend"
+    ],
+    "provider": "Golden Reels Studio",
+    "accentColor": "#ffd600"
+  },
+  {
+    "id": "dragon_temple",
+    "name": "Dragon's Temple",
+    "theme": "asian",
+    "symbols": [
+      "s1_dragon_idol",
+      "s2_temple_bell",
+      "s3_incense_burner",
+      "s4_jade_ornament",
+      "s5_dragon_rune",
+      "wild_temple_guardian"
+    ],
+    "provider": "Dragon Pearl Studios",
+    "accentColor": "#ffd700"
+  },
+  {
+    "id": "witches_brew",
+    "name": "Witches' Cauldron",
+    "theme": "horror",
+    "symbols": [
+      "s1_witches_hat",
+      "s2_potion_bottle",
+      "s3_spell_book",
+      "s4_toad",
+      "s5_bubbling_cauldron",
+      "wild_witches_magic"
+    ],
+    "provider": "Shadow Works",
+    "accentColor": "#66bb6a"
+  },
+  {
+    "id": "platypus_paradise",
+    "name": "Platypus Pouch",
+    "theme": "australian",
+    "symbols": [
+      "s1_platypus",
+      "s2_eucalyptus",
+      "s3_billabong",
+      "s4_blue_gum",
+      "s5_platypus_egg",
+      "wild_platypus_magic"
+    ],
+    "provider": "Wild Frontier Games",
+    "accentColor": "#ffb300"
+  },
+  {
+    "id": "ticket_to_fortune",
+    "name": "Lottery Dream",
+    "theme": "wildcard",
+    "symbols": [
+      "s1_winning_ticket",
+      "s2_lucky_number",
+      "s3_golden_ball",
+      "s4_champagne",
+      "s5_jackpot_bell",
+      "wild_lottery_star"
+    ],
+    "provider": "Cascade Labs",
+    "accentColor": "#ffeb3b"
+  },
+  {
+    "id": "temple_bells",
+    "name": "Sacred Bells",
+    "theme": "egypt",
+    "symbols": [
+      "s1_temple_bell",
+      "s2_sacred_knot",
+      "s3_holy_water",
+      "s4_prayer_bead",
+      "s5_bell_chime",
+      "wild_bell_resonance"
+    ],
+    "provider": "Dragon Pearl Studios",
+    "accentColor": "#c9a961"
+  },
+  {
+    "id": "lemon_drop",
+    "name": "Sour Lemon",
+    "theme": "fruit",
+    "symbols": [
+      "s1_lemon",
+      "s2_lime",
+      "s3_sour_candy",
+      "s4_lemonade",
+      "s5_citric_acid",
+      "wild_sour_blast"
+    ],
+    "provider": "Golden Reels Studio",
+    "accentColor": "#ffeb3b"
+  },
+  {
+    "id": "moon_madness",
+    "name": "Lunar Frenzy",
+    "theme": "space",
+    "symbols": [
+      "s1_moon_crescent",
+      "s2_moon_crater",
+      "s3_lunar_eclipse",
+      "s4_meteor",
+      "s5_moon_phase",
+      "wild_lunar_wolf"
+    ],
+    "provider": "Nebula Gaming",
+    "accentColor": "#e0e0e0"
+  },
+  {
+    "id": "tomb_anubis",
+    "name": "Tomb of Anubis",
+    "theme": "egypt",
+    "symbols": [
+      "s1_jackal",
+      "s2_ankh_gold",
+      "s3_canopic_jar",
+      "s4_death_mask",
+      "s5_scales_maat",
+      "wild_anubis"
+    ],
+    "provider": "Mythic Forge",
+    "accentColor": "#d4a017"
+  },
+  {
+    "id": "isis_blessing",
+    "name": "Blessing of Isis",
+    "theme": "egypt",
+    "symbols": [
+      "s1_lotus_blue",
+      "s2_sistrum",
+      "s3_throne",
+      "s4_tyet_knot",
+      "s5_wings_isis",
+      "wild_isis"
+    ],
+    "provider": "Mythic Forge",
+    "accentColor": "#7c4dff"
+  },
+  {
+    "id": "desert_dynasty",
+    "name": "Desert Dynasty",
+    "theme": "egypt",
+    "symbols": [
+      "s1_chariot",
+      "s2_cobra_crown",
+      "s3_obelisk",
+      "s4_papyrus",
+      "s5_dynasty_seal",
+      "wild_dynasty"
+    ],
+    "provider": "Ironclad Entertainment",
+    "accentColor": "#bf8c2c"
+  },
+  {
+    "id": "cleopatra_moon",
+    "name": "Cleopatra by Moonlight",
+    "theme": "egypt",
+    "symbols": [
+      "s1_moon_scarab",
+      "s2_asp_crown",
+      "s3_mirror",
+      "s4_perfume",
+      "s5_crescent_ankh",
+      "wild_cleopatra"
+    ],
+    "provider": "Mythic Forge",
+    "accentColor": "#c5a028"
+  },
+  {
+    "id": "harvest_megaways",
+    "name": "Harvest Megaways",
+    "theme": "fruit",
+    "symbols": [
+      "s1_wheat",
+      "s2_apple",
+      "s3_grape",
+      "s4_pear",
+      "s5_golden_harvest",
+      "wild_scarecrow"
+    ],
+    "provider": "Wild Frontier Games",
+    "accentColor": "#f9a825"
+  },
+  {
+    "id": "neon_nebula",
+    "name": "Neon Nebula",
+    "theme": "space",
+    "symbols": [
+      "s1_nebula_cloud",
+      "s2_plasma_orb",
+      "s3_cosmic_dust",
+      "s4_ion_ring",
+      "s5_nebula_core",
+      "wild_supernova"
+    ],
+    "provider": "Nebula Gaming",
+    "accentColor": "#e040fb"
+  },
+  {
+    "id": "stellar_drift",
+    "name": "Stellar Drift",
+    "theme": "space",
+    "symbols": [
+      "s1_asteroid_belt",
+      "s2_comet_tail",
+      "s3_binary_star",
+      "s4_gas_giant",
+      "s5_pulsar",
+      "wild_starship"
+    ],
+    "provider": "Nebula Gaming",
+    "accentColor": "#42a5f5"
+  },
+  {
+    "id": "gravity_well",
+    "name": "Gravity Well",
+    "theme": "space",
+    "symbols": [
+      "s1_singularity",
+      "s2_event_horizon",
+      "s3_time_warp",
+      "s4_quantum_flux",
+      "s5_gravity_lens",
+      "wild_blackhole"
+    ],
+    "provider": "Cascade Labs",
+    "accentColor": "#00e676"
+  },
+  {
+    "id": "warp_station",
+    "name": "Warp Station Alpha",
+    "theme": "space",
+    "symbols": [
+      "s1_docking_bay",
+      "s2_cargo_pod",
+      "s3_nav_console",
+      "s4_energy_cell",
+      "s5_warp_drive",
+      "wild_captain"
+    ],
+    "provider": "Nebula Gaming",
+    "accentColor": "#4fc3f7"
+  },
+  {
+    "id": "crystal_cavern",
+    "name": "Crystal Cavern",
+    "theme": "fantasy",
+    "symbols": [
+      "s1_amethyst",
+      "s2_sapphire",
+      "s3_emerald_shard",
+      "s4_ruby_cluster",
+      "s5_diamond_heart",
+      "wild_prism"
+    ],
+    "provider": "Ironclad Entertainment",
+    "accentColor": "#ce93d8"
+  },
+  {
+    "id": "fae_forest",
+    "name": "Fae Forest",
+    "theme": "fantasy",
+    "symbols": [
+      "s1_pixie_dust",
+      "s2_toadstool",
+      "s3_fairy_ring",
+      "s4_enchanted_oak",
+      "s5_fae_queen",
+      "wild_sprite"
+    ],
+    "provider": "Mythic Forge",
+    "accentColor": "#66bb6a"
+  },
+  {
+    "id": "runeblade",
+    "name": "Runeblade Saga",
+    "theme": "fantasy",
+    "symbols": [
+      "s1_rune_stone",
+      "s2_blade_shard",
+      "s3_warrior_helm",
+      "s4_dragon_scale",
+      "s5_runic_blade",
+      "wild_runemaster"
+    ],
+    "provider": "Ironclad Entertainment",
+    "accentColor": "#ff7043"
+  },
+  {
+    "id": "arcane_tower",
+    "name": "Arcane Tower",
+    "theme": "fantasy",
+    "symbols": [
+      "s1_spell_scroll",
+      "s2_crystal_ball",
+      "s3_staff",
+      "s4_grimoire",
+      "s5_arcane_orb",
+      "wild_archmage"
+    ],
+    "provider": "Cascade Labs",
+    "accentColor": "#ffd54f"
+  },
+  {
+    "id": "dragonfire_forge",
+    "name": "Dragonfire Forge",
+    "theme": "fantasy",
+    "symbols": [
+      "s1_anvil",
+      "s2_molten_ingot",
+      "s3_dragon_egg",
+      "s4_flame_hammer",
+      "s5_legendary_blade",
+      "wild_dragon_smith"
+    ],
+    "provider": "Dragon Pearl Studios",
+    "accentColor": "#ff8f00"
+  },
+  {
+    "id": "tiger_temple",
+    "name": "Tiger Temple",
+    "theme": "animals",
+    "symbols": [
+      "s1_bamboo",
+      "s2_lotus",
+      "s3_jade_tiger",
+      "s4_temple_gate",
+      "s5_golden_tiger",
+      "wild_white_tiger"
+    ],
+    "provider": "Dragon Pearl Studios",
+    "accentColor": "#e65100"
+  },
+  {
+    "id": "eagle_summit",
+    "name": "Eagle Summit",
+    "theme": "animals",
+    "symbols": [
+      "s1_mountain_peak",
+      "s2_pine_tree",
+      "s3_feather_gold",
+      "s4_nest",
+      "s5_summit_eagle",
+      "wild_bald_eagle"
+    ],
+    "provider": "Wild Frontier Games",
+    "accentColor": "#78909c"
+  },
+  {
+    "id": "panda_paradise",
+    "name": "Panda Paradise",
+    "theme": "animals",
+    "symbols": [
+      "s1_bamboo_shoot",
+      "s2_peach",
+      "s3_waterfall",
+      "s4_blossom",
+      "s5_golden_panda",
+      "wild_panda"
+    ],
+    "provider": "Dragon Pearl Studios",
+    "accentColor": "#66bb6a"
+  },
+  {
+    "id": "shark_reef",
+    "name": "Shark Reef",
+    "theme": "animals",
+    "symbols": [
+      "s1_coral",
+      "s2_clownfish",
+      "s3_jellyfish",
+      "s4_treasure_chest",
+      "s5_great_white",
+      "wild_hammerhead"
+    ],
+    "provider": "Wild Frontier Games",
+    "accentColor": "#00bfa5"
+  },
+  {
+    "id": "wolf_canyon",
+    "name": "Wolf Canyon",
+    "theme": "animals",
+    "symbols": [
+      "s1_canyon_rock",
+      "s2_cactus",
+      "s3_howling_moon",
+      "s4_elk_skull",
+      "s5_alpha_mark",
+      "wild_lone_wolf"
+    ],
+    "provider": "Wild Frontier Games",
+    "accentColor": "#ffa726"
+  },
+  {
+    "id": "flamingo_fiesta",
+    "name": "Flamingo Fiesta",
+    "theme": "animals",
+    "symbols": [
+      "s1_palm_leaf",
+      "s2_sunset",
+      "s3_cocktail",
+      "s4_seashell",
+      "s5_flamingo_dance",
+      "wild_flamingo"
+    ],
+    "provider": "Cascade Labs",
+    "accentColor": "#f06292"
+  },
+  {
+    "id": "jade_emperor",
+    "name": "Jade Emperor",
+    "theme": "asian",
+    "symbols": [
+      "s1_jade_coin",
+      "s2_dragon_pearl",
+      "s3_imperial_seal",
+      "s4_golden_fan",
+      "s5_emperor_throne",
+      "wild_jade_dragon"
+    ],
+    "provider": "Dragon Pearl Studios",
+    "accentColor": "#4caf50"
+  },
+  {
+    "id": "koi_cascade",
+    "name": "Koi Cascade",
+    "theme": "asian",
+    "symbols": [
+      "s1_lily_pad",
+      "s2_koi_orange",
+      "s3_koi_gold",
+      "s4_waterfall",
+      "s5_dragon_gate",
+      "wild_golden_koi"
+    ],
+    "provider": "Dragon Pearl Studios",
+    "accentColor": "#ff6d00"
+  },
+  {
+    "id": "samurai_honor",
+    "name": "Samurai Honor",
+    "theme": "asian",
+    "symbols": [
+      "s1_katana",
+      "s2_cherry_blossom",
+      "s3_armor",
+      "s4_war_fan",
+      "s5_honor_crest",
+      "wild_ronin"
+    ],
+    "provider": "Ironclad Entertainment",
+    "accentColor": "#ef5350"
+  },
+  {
+    "id": "moon_rabbit",
+    "name": "Moon Rabbit Festival",
+    "theme": "asian",
+    "symbols": [
+      "s1_mooncake",
+      "s2_lantern_red",
+      "s3_rabbit",
+      "s4_rice_dumpling",
+      "s5_full_moon",
+      "wild_moon_rabbit"
+    ],
+    "provider": "Ironclad Entertainment",
+    "accentColor": "#ffca28"
+  },
+  {
+    "id": "dragon_gate",
+    "name": "Dragon Gate",
+    "theme": "asian",
+    "symbols": [
+      "s1_pearl",
+      "s2_cloud",
+      "s3_thunder",
+      "s4_gate_pillar",
+      "s5_dragon_eye",
+      "wild_celestial_dragon"
+    ],
+    "provider": "Ironclad Entertainment",
+    "accentColor": "#ffd600"
+  },
+  {
+    "id": "lucky_tanuki",
+    "name": "Lucky Tanuki",
+    "theme": "asian",
+    "symbols": [
+      "s1_sake_bottle",
+      "s2_straw_hat",
+      "s3_coin_pouch",
+      "s4_bamboo",
+      "s5_tanuki_statue",
+      "wild_tanuki"
+    ],
+    "provider": "Cascade Labs",
+    "accentColor": "#8d6e63"
+  },
+  {
+    "id": "crimson_fang",
+    "name": "Crimson Fang",
+    "theme": "horror",
+    "symbols": [
+      "s1_coffin",
+      "s2_blood_vial",
+      "s3_bat_swarm",
+      "s4_castle",
+      "s5_crimson_eye",
+      "wild_vampire"
+    ],
+    "provider": "Shadow Works",
+    "accentColor": "#f44336"
+  },
+  {
+    "id": "plague_doctor",
+    "name": "Plague Doctor",
+    "theme": "horror",
+    "symbols": [
+      "s1_plague_mask",
+      "s2_potion",
+      "s3_rats",
+      "s4_lantern_dim",
+      "s5_death_toll",
+      "wild_doctor"
+    ],
+    "provider": "Shadow Works",
+    "accentColor": "#78909c"
+  },
+  {
+    "id": "eldritch_depths",
+    "name": "Eldritch Depths",
+    "theme": "horror",
+    "symbols": [
+      "s1_tentacle",
+      "s2_eye_abyss",
+      "s3_ancient_tome",
+      "s4_madness_spiral",
+      "s5_elder_sign",
+      "wild_cthulhu"
+    ],
+    "provider": "Shadow Works",
+    "accentColor": "#26a69a"
+  },
+  {
+    "id": "banshee_wail",
+    "name": "Banshee Wail",
+    "theme": "horror",
+    "symbols": [
+      "s1_gravestone",
+      "s2_fog",
+      "s3_will_o_wisp",
+      "s4_dead_tree",
+      "s5_banshee_cry",
+      "wild_banshee"
+    ],
+    "provider": "Shadow Works",
+    "accentColor": "#b39ddb"
+  },
+  {
+    "id": "puppet_master",
+    "name": "Puppet Master",
+    "theme": "horror",
+    "symbols": [
+      "s1_marionette",
+      "s2_thread",
+      "s3_stage",
+      "s4_music_box",
+      "s5_puppet_eye",
+      "wild_puppeteer"
+    ],
+    "provider": "Shadow Works",
+    "accentColor": "#ef5350"
+  },
+  {
+    "id": "kookaburra_cash",
+    "name": "Kookaburra Cash",
+    "theme": "australian",
+    "symbols": [
+      "s1_gum_tree",
+      "s2_kookaburra",
+      "s3_wattle",
+      "s4_billabong",
+      "s5_golden_egg",
+      "wild_laughing_kook"
+    ],
+    "provider": "Wild Frontier Games",
+    "accentColor": "#8bc34a"
+  },
+  {
+    "id": "crocodile_dundee",
+    "name": "Croc Country",
+    "theme": "australian",
+    "symbols": [
+      "s1_croc_teeth",
+      "s2_river_mud",
+      "s3_dragonfly",
+      "s4_fishing_rod",
+      "s5_mega_croc",
+      "wild_crocodile"
+    ],
+    "provider": "Wild Frontier Games",
+    "accentColor": "#689f38"
+  },
+  {
+    "id": "uluru_gold",
+    "name": "Uluru Gold",
+    "theme": "australian",
+    "symbols": [
+      "s1_boomerang",
+      "s2_dot_painting",
+      "s3_didgeridoo",
+      "s4_desert_sun",
+      "s5_uluru_symbol",
+      "wild_uluru"
+    ],
+    "provider": "Ironclad Entertainment",
+    "accentColor": "#ff6d00"
+  },
+  {
+    "id": "platypus_fortune",
+    "name": "Platypus Fortune",
+    "theme": "australian",
+    "symbols": [
+      "s1_eucalyptus",
+      "s2_river_stone",
+      "s3_yabby",
+      "s4_fern",
+      "s5_golden_platypus",
+      "wild_platypus"
+    ],
+    "provider": "Cascade Labs",
+    "accentColor": "#4fc3f7"
+  },
+  {
+    "id": "great_barrier",
+    "name": "Great Barrier Riches",
+    "theme": "australian",
+    "symbols": [
+      "s1_sea_turtle",
+      "s2_anemone",
+      "s3_manta_ray",
+      "s4_pearl_oyster",
+      "s5_reef_treasure",
+      "wild_whale"
+    ],
+    "provider": "Ironclad Entertainment",
+    "accentColor": "#00bcd4"
+  },
+  {
+    "id": "pirate_plunder",
+    "name": "Pirate Plunder",
+    "theme": "wildcard",
+    "symbols": [
+      "s1_compass",
+      "s2_cannon",
+      "s3_treasure_map",
+      "s4_skull_cross",
+      "s5_treasure_key",
+      "wild_captain"
+    ],
+    "provider": "Ironclad Entertainment",
+    "accentColor": "#d4a017"
+  },
+  {
+    "id": "steampunk_fortune",
+    "name": "Steampunk Fortune",
+    "theme": "wildcard",
+    "symbols": [
+      "s1_gear",
+      "s2_steam_pipe",
+      "s3_goggles",
+      "s4_airship",
+      "s5_clockwork_heart",
+      "wild_inventor"
+    ],
+    "provider": "Ironclad Entertainment",
+    "accentColor": "#ffb300"
+  },
+  {
+    "id": "wild_west_bounty",
+    "name": "Wild West Bounty",
+    "theme": "wildcard",
+    "symbols": [
+      "s1_wanted_poster",
+      "s2_revolver",
+      "s3_sheriff_badge",
+      "s4_horseshoe",
+      "s5_bounty_bag",
+      "wild_outlaw"
+    ],
+    "provider": "Ironclad Entertainment",
+    "accentColor": "#d84315"
+  },
+  {
+    "id": "deep_dive",
+    "name": "Deep Dive Treasures",
+    "theme": "wildcard",
+    "symbols": [
+      "s1_submarine",
+      "s2_anchor",
+      "s3_diving_helmet",
+      "s4_trident",
+      "s5_sunken_crown",
+      "wild_diver"
+    ],
+    "provider": "Cascade Labs",
+    "accentColor": "#0288d1"
+  }
+]
