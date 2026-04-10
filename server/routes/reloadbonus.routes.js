@@ -165,7 +165,7 @@ router.post('/claim', authenticate, bonusGuard, withSchema, async (req, res) => 
     // Calculate bonus (capped by daily bonus cap)
     var rawBonus = parseFloat(Math.min(deposit * MATCH_PERCENT, MAX_BONUS).toFixed(2));
     const bonus = await bonusCap.capBonusAmount(userId, rawBonus);
-    const WAGERING_MULTIPLIER = 15; // Must wager 15x bonus before withdrawal
+    const WAGERING_MULTIPLIER = require('../config').RELOAD_WAGERING_MULT || 30; // CLAUDE.md Rule: Deposit match/retention = 30x
     const wagerReq = parseFloat((bonus * WAGERING_MULTIPLIER).toFixed(2));
 
     // Update user: credit bonus to bonus_balance (NOT real balance) with wagering requirement

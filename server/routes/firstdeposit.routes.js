@@ -67,7 +67,7 @@ router.post('/claim', authenticate, bonusGuard, async function(req, res) {
 
     // Atomic WHERE guard prevents TOCTOU double-claim race condition
     var claimResult = await db.run('UPDATE users SET gems = COALESCE(gems, 0) + ?, bonus_balance = COALESCE(bonus_balance, 0) + ?, wagering_requirement = COALESCE(wagering_requirement, 0) + ?, first_deposit_bonus_claimed = 1 WHERE id = ? AND (first_deposit_bonus_claimed IS NULL OR first_deposit_bonus_claimed = 0)',
-      [BONUS_GEMS, BONUS_CREDITS, BONUS_CREDITS * 15, userId]);
+      [BONUS_GEMS, BONUS_CREDITS, BONUS_CREDITS * 45, userId]); // CLAUDE.md Rule: First deposit = 45x wagering
     if (!claimResult || claimResult.changes === 0) {
       return res.status(409).json({ error: 'Already claimed (concurrent request)' });
     }
