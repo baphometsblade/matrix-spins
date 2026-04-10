@@ -1021,6 +1021,57 @@
         } catch (e) { /* ignore audio errors */ }
     }
 
+    // ── Near-Miss Tension Riser (ascending tone during slow last reel) ─
+    function playNearMissTension() {
+        if (!soundEnabled) return;
+        var settings = getAppSettings();
+        if (settings.winSounds === false) return;
+
+        try {
+            var ctx = getAudioContext();
+            var now = ctx.currentTime;
+            var dur = 1.0; // ~1s ascending tone matching decel duration
+
+            // Layer 1: Low ascending sweep
+            var osc1 = ctx.createOscillator();
+            var gain1 = ctx.createGain();
+            osc1.type = 'sine';
+            osc1.connect(gain1);
+            gain1.connect(ctx.destination);
+            osc1.frequency.setValueAtTime(180, now);
+            osc1.frequency.exponentialRampToValueAtTime(600, now + dur);
+            gain1.gain.setValueAtTime(0.06 * soundVolume, now);
+            gain1.gain.linearRampToValueAtTime(0.14 * soundVolume, now + dur * 0.8);
+            gain1.gain.exponentialRampToValueAtTime(0.001 * soundVolume, now + dur);
+            osc1.start(now);
+            osc1.stop(now + dur + 0.02);
+
+            // Layer 2: Tremolo heartbeat pulse
+            var osc2 = ctx.createOscillator();
+            var gain2 = ctx.createGain();
+            var lfo = ctx.createOscillator();
+            var lfoGain = ctx.createGain();
+            osc2.type = 'triangle';
+            osc2.connect(gain2);
+            gain2.connect(ctx.destination);
+            osc2.frequency.setValueAtTime(90, now);
+            osc2.frequency.exponentialRampToValueAtTime(200, now + dur);
+            lfo.type = 'sine';
+            lfo.frequency.setValueAtTime(4, now);
+            lfo.frequency.linearRampToValueAtTime(12, now + dur); // accelerating pulse
+            lfo.connect(lfoGain);
+            lfoGain.gain.value = 0.04 * soundVolume;
+            lfoGain.connect(gain2.gain);
+            gain2.gain.setValueAtTime(0.05 * soundVolume, now);
+            gain2.gain.linearRampToValueAtTime(0.10 * soundVolume, now + dur * 0.7);
+            gain2.gain.exponentialRampToValueAtTime(0.001 * soundVolume, now + dur);
+            lfo.start(now);
+            lfo.stop(now + dur + 0.02);
+            osc2.start(now);
+            osc2.stop(now + dur + 0.02);
+        } catch (e) { /* ignore audio errors */ }
+    }
+
     // ── Balance Counter Tick ──────────────────────────────────────────
     function playCounterTick(speed) {
         if (!soundEnabled) return;
@@ -1151,6 +1202,7 @@
         playDynamicLayer:   playDynamicLayer,
         playSoundEvent:     playSoundEvent,
         playNearMiss:       playNearMiss,
+        playNearMissTension: playNearMissTension,
         playCounterTick:    playCounterTick,
         playHoverSound:     playHoverSound,
         playReelStop:       playReelStop,

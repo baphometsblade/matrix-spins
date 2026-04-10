@@ -5624,6 +5624,21 @@
             // Update bottom bar win display
             updateSlotWinDisplay(amount);
 
+            // Premium: Float "+$XX" text from reel area upward
+            if (amount > 0 && _animSettingEnabled('animations')) {
+                var reelArea = document.querySelector('.slot-reel-area');
+                if (reelArea) {
+                    var rect = reelArea.getBoundingClientRect();
+                    var floater = document.createElement('div');
+                    floater.className = 'win-float-up';
+                    floater.textContent = '+$' + amount.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+                    floater.style.left = (rect.left + rect.width / 2) + 'px';
+                    floater.style.top = (rect.top + rect.height * 0.35) + 'px';
+                    document.body.appendChild(floater);
+                    setTimeout(function() { floater.remove(); }, 1700);
+                }
+            }
+
             setTimeout(() => {
                 winDiv.innerHTML = '';
             }, winTier ? 5000 : 3000);
@@ -7191,6 +7206,10 @@
                 if (isNearMiss) {
                     data.stripEl.classList.add('near-miss-decel');
                     data.colEl.classList.add('reel-near-miss-tension');
+                    // Premium: Play ascending tension tone during slow decel
+                    if (typeof SoundManager !== 'undefined' && typeof SoundManager.playNearMissTension === 'function') {
+                        SoundManager.playNearMissTension();
+                    }
                 }
 
                 data.stripEl.style.transform = `translateY(${overshootY}px)`;
@@ -7204,6 +7223,10 @@
                     data.stripEl.style.transform = `translateY(${targetY}px)`;
                     data.currentY = targetY;
                     data.colEl.classList.add('stopped');
+
+                    // Premium: Stop impact flash on the column
+                    data.colEl.classList.add('reel-stop-impact');
+                    (function(col) { setTimeout(function() { col.classList.remove('reel-stop-impact'); }, 400); })(data.colEl);
 
                     // Add 3D landing tilt if quality supports it
                     var landQuality = (window.appSettings && window.appSettings.animationQuality) || 'ultra';
