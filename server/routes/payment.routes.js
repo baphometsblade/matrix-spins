@@ -494,7 +494,7 @@ router.post('/withdraw', authenticate, async (req, res) => {
             return res.status(429).json({ error: wdVelocityError });
         }
 
-        const user = await db.get('SELECT balance, bonus_balance, wagering_requirement, wagering_progress FROM users WHERE id = ?', [req.user.id]);
+        const user = await db.get('SELECT balance, bonus_balance, wagering_requirement, wagering_progress, email_verified, kyc_status FROM users WHERE id = ?', [req.user.id]);
         if (!user) {
             return res.status(404).json({ error: 'User not found' });
         }
@@ -546,9 +546,8 @@ router.post('/withdraw', authenticate, async (req, res) => {
             }
         }
 
-        // Withdrawable balance excludes bonus funds (bonus must be wagered, not cashed out)
-        var withdrawableBalance = user.balance - (user.bonus_balance || 0);
-        if (withdrawableBalance < 0) withdrawableBalance = 0;
+        // Withdrawable balance = real balance only (bonus_balance is a separate column, not included in balance)
+        var withdrawableBalance = user.balance || 0;
         if (withdrawableBalance < withdrawal) {
             return res.status(400).json({
                 error: 'Insufficient withdrawable balance. Bonus funds cannot be withdrawn directly.',
@@ -1085,7 +1084,8 @@ router.post('/admin/approve-deposit', authenticate, async (req, res) => {
                 "SELECT COUNT(*) as count FROM deposits WHERE user_id = ? AND status = 'completed'",
                 [deposit.user_id]
             );
-            if (priorDeposits && priorDeposits.count === 0) {
+            // count <= 1 because the current deposit was already marked 'completed' above
+            if (priorDeposits && priorDeposits.count <= 1) {
                 bonusAmount = Math.min(deposit.amount * (config.FIRST_DEPOSIT_BONUS_PCT / 100), config.FIRST_DEPOSIT_BONUS_MAX);
                 wageringMult = config.FIRST_DEPOSIT_WAGERING_MULT || 45;
                 bonusType = 'first_deposit_bonus';

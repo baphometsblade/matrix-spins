@@ -1051,7 +1051,7 @@ router.post('/gamble/start', authenticate, async (req, res) => {
 
         // Verify user actually won this amount recently (last 30s)
         var recentWin = await db.get(
-            "SELECT id, payout FROM spins WHERE user_id = ? AND payout >= ? AND created_at >= datetime('now', '-30 seconds') ORDER BY created_at DESC LIMIT 1",
+            "SELECT id, win_amount FROM spins WHERE user_id = ? AND win_amount >= ? AND created_at >= datetime('now', '-30 seconds') ORDER BY created_at DESC LIMIT 1",
             [userId, gambleAmount]
         );
         if (!recentWin) {
@@ -1140,9 +1140,11 @@ router.post('/gamble/choose', authenticate, async (req, res) => {
 
             // Record gamble loss transaction
             try {
+                var _glUser = await db.get('SELECT balance FROM users WHERE id = ?', [userId]);
+                var _glBal = _glUser ? _glUser.balance : 0;
                 await db.run(
-                    "INSERT INTO transactions (user_id, type, amount, description) VALUES (?, 'gamble_loss', ?, 'Gamble lost — double-or-nothing')",
-                    [userId, -lostAmount]
+                    "INSERT INTO transactions (user_id, type, amount, balance_before, balance_after, reference) VALUES (?, 'gamble_loss', ?, ?, ?, 'double-or-nothing')",
+                    [userId, -lostAmount, _glBal + lostAmount, _glBal]
                 );
             } catch (_glErr) { console.warn('[Gamble] loss transaction error:', _glErr.message); }
 
@@ -1179,9 +1181,11 @@ router.post('/gamble/collect', authenticate, async (req, res) => {
 
         // Record gamble win transaction
         try {
+            var _gwUser = await db.get('SELECT balance FROM users WHERE id = ?', [userId]);
+            var _gwBal = _gwUser ? _gwUser.balance : 0;
             await db.run(
-                "INSERT INTO transactions (user_id, type, amount, description) VALUES (?, 'gamble_win', ?, ?)",
-                [userId, session.amount, 'Gamble collected — round ' + (session.round - 1)]
+                "INSERT INTO transactions (user_id, type, amount, balance_before, balance_after, reference) VALUES (?, 'gamble_win', ?, ?, ?, ?)",
+                [userId, session.amount, _gwBal - session.amount, _gwBal, 'Gamble collected — round ' + (session.round - 1)]
             );
         } catch (_gwErr) { console.warn('[Gamble] win transaction error:', _gwErr.message); }
 
