@@ -1035,8 +1035,20 @@ async function start() {
 
     await initDatabase();
 
-    // ── Create audit_log table for financial operation tracking ──
+    // Re-run route-level migrations that failed during require() (before DB init)
+    // These are fire-and-forget ALTERs that are safe to retry now
     const db = require('./database');
+    const routeMigrations = [
+        "ALTER TABLE users ADD COLUMN loyalty_points INTEGER DEFAULT 0",
+        "ALTER TABLE users ADD COLUMN free_spin_state_json TEXT",
+        "ALTER TABLE users ADD COLUMN vip_level INTEGER DEFAULT 0",
+        "ALTER TABLE users ADD COLUMN last_bonus_level INTEGER DEFAULT 1",
+    ];
+    for (const sql of routeMigrations) {
+        try { await db.run(sql); } catch (_) { /* column already exists */ }
+    }
+
+    // ── Create audit_log table for financial operation tracking ──
     try {
         await db.run(
             "CREATE TABLE IF NOT EXISTS audit_log (" +
