@@ -76,6 +76,13 @@ class SqliteBackend {
             this.db.run(idx);
         }
 
+        // Deferred indexes — tables may not exist yet (created by lazy-init routes)
+        if (schema.DEFERRED_INDEXES) {
+            for (const idx of schema.DEFERRED_INDEXES) {
+                try { this.db.run(idx); } catch (_) { /* table not yet created */ }
+            }
+        }
+
         // Seed admin
         await this._seedAdmin();
 
