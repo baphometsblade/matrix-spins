@@ -1284,7 +1284,7 @@ function renderGames() {
                             '<button class="hero-play-btn" onclick="if(typeof openSlot===\'function\')openSlot(\'' + g.id + '\')" style="background:' + _accent + ';color:#000">PLAY NOW</button>' +
                             '</div>' +
                             '<div class="hero-slide-thumb">' +
-                            '<img src="assets/thumbnails/' + g.id + '.png" alt="' + g.name + '" loading="lazy" onerror="this.style.display=\'none\'" />' +
+                            '<img src="assets/thumbnails/' + g.id + '.webp" alt="' + g.name + '" loading="lazy" onerror="this.style.display=\'none\'" />' +
                             '</div>' +
                             '</div>';
                     }).join('');
@@ -3235,7 +3235,7 @@ async function _renderFeaturedSpotlight() {
 
     var card = document.createElement('div');
     card.className = 'featured-card';
-    card.style.backgroundImage = 'url(\'assets/thumbnails/' + game.id + '.png\')';
+    card.style.backgroundImage = 'url(\'assets/thumbnails/' + game.id + '.webp\')';
     card.setAttribute('data-game-id', game.id);
     card.title = game.name;
 

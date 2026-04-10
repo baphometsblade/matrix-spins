@@ -386,13 +386,12 @@
             var cssFallback = "if(this.parentNode){var sp=document.createElement('span');sp.className='" + cssClass + "';sp.textContent='" + emoji + "';this.parentNode.replaceChild(sp,this)}";
 
             if (useAnimated) {
-                var pngSrc = 'assets/game_symbols/' + gameId + '/' + symbolName + '.png';
                 return '<img class="reel-symbol-img reel-symbol-animated" ' +
                     'src="assets/game_symbols/' + gameId + '/' + symbolName + '.webp" ' +
                     'alt="' + symbolName + '" draggable="false" ' +
-                    'onerror="this.onerror=function(){' + cssFallback + '};this.src=\'' + pngSrc + '\';this.classList.remove(\'reel-symbol-animated\');">';
+                    'onerror="this.onerror=null;' + cssFallback + '">';
             }
-            return '<img class="reel-symbol-img" src="assets/game_symbols/' + gameId + '/' + symbolName + '.png" alt="' + symbolName + '" draggable="false" onerror="' + cssFallback + '">';
+            return '<img class="reel-symbol-img" src="assets/game_symbols/' + gameId + '/' + symbolName + '.webp" alt="' + symbolName + '" draggable="false" onerror="' + cssFallback + '">';
         }
 
 
@@ -1542,7 +1541,7 @@
                     const isScatterSym = sym === game.scatterSymbol;
                     const nameClass = isWildSym ? 'wild-symbol' : isScatterSym ? 'scatter-symbol' : '';
                     const badge = isWildSym ? ' (WILD)' : isScatterSym ? ' (SCATTER)' : '';
-                    const imgPath = `assets/game_symbols/${game.id}/${sym}.png`;
+                    const imgPath = `assets/game_symbols/${game.id}/${sym}.webp`;
 
                     html += `<div class="paytable-symbol-row">
                         <div class="paytable-symbol-icon">
@@ -1733,7 +1732,7 @@
 
             // Set feature image (SDXL background or fallback gradient)
             const imageEl = document.getElementById('featurePopupImage');
-            const bgImagePath = `assets/backgrounds/slots/${game.id}_bg.png`;
+            const bgImagePath = `assets/backgrounds/slots/${game.id}_bg.webp`;
             const testImg = new Image();
             testImg.onload = () => {
                 imageEl.style.background = `url('${bgImagePath}') center/cover no-repeat`;
@@ -2158,37 +2157,27 @@
             if (reelArea) {
                 var bgQuality = (window.appSettings && window.appSettings.animationQuality) || 'ultra';
                 var bgUseAnimated = bgQuality === 'ultra' || bgQuality === 'high' || bgQuality === 'medium';
-                var bgAnimPath = 'assets/backgrounds/slots/' + currentGame.id + '_bg.webp';
-                var bgStaticPath = 'assets/backgrounds/slots/' + currentGame.id + '_bg.png';
+                var bgPath = 'assets/backgrounds/slots/' + currentGame.id + '_bg.webp';
 
                 if (bgUseAnimated) {
                     var testBgImg = new Image();
                     testBgImg.onload = function() {
-                        reelArea.style.background = 'url(' + bgAnimPath + ') center/cover no-repeat';
+                        reelArea.style.background = 'url(' + bgPath + ') center/cover no-repeat';
                         reelArea.classList.add('has-bg-image');
                     };
                     testBgImg.onerror = function() {
-                        // Fallback to static PNG
-                        var fallbackImg = new Image();
-                        fallbackImg.onload = function() {
-                            reelArea.style.background = 'url(' + bgStaticPath + ') center/cover no-repeat';
-                            reelArea.classList.add('has-bg-image');
-                        };
-                        fallbackImg.onerror = function() {
-                            // Fallback to CSS gradient
-                            if (currentGame && currentGame.bgGradient) {
-                                reelArea.style.background = currentGame.bgGradient;
-                            }
-                            reelArea.classList.remove('has-bg-image');
-                        };
-                        fallbackImg.src = bgStaticPath;
+                        // Fallback to CSS gradient (PNGs removed to slim repo)
+                        if (currentGame && currentGame.bgGradient) {
+                            reelArea.style.background = currentGame.bgGradient;
+                        }
+                        reelArea.classList.remove('has-bg-image');
                     };
-                    testBgImg.src = bgAnimPath;
+                    testBgImg.src = bgPath;
                 } else {
-                    // Low/off quality: use static PNG only
+                    // Low/off quality: use WebP background
                     var testImg = new Image();
                     testImg.onload = function() {
-                        reelArea.style.background = 'url(' + bgStaticPath + ') center/cover no-repeat';
+                        reelArea.style.background = 'url(' + bgPath + ') center/cover no-repeat';
                         reelArea.classList.add('has-bg-image');
                     };
                     testImg.onerror = function() {
@@ -2198,7 +2187,7 @@
                         }
                         reelArea.classList.remove('has-bg-image');
                     };
-                    testImg.src = bgStaticPath;
+                    testImg.src = bgPath;
                 }
                 // Set gradient immediately as placeholder while image loads
                 if (currentGame.bgGradient) {

@@ -45,13 +45,12 @@ assets/gui/
 assets/ui/
 assets/game_symbols_animated/
 
-# HD assets: track PNGs and WebPs for game symbols + thumbnails
-# Exclude gradient SVGs (replaced by HD images)
+# HD assets: WebP only — PNGs removed to keep repo under Render's build limits
+assets/game_symbols/**/*.png
 assets/game_symbols/**/*.svg
-assets/backgrounds/**/*.svg
-
-# Background PNGs are too large (~191MB); only keep WebP
+assets/thumbnails/*.png
 assets/backgrounds/**/*.png
+assets/backgrounds/**/*.svg
 assets/backgrounds/**/*_portrait*
 
 # Build output (generated at deploy time)

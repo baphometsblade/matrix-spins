@@ -39,14 +39,14 @@ async function initDatabase() {
                 console.warn(`[DB] Init attempt ${attempt}/3 failed: ${err.message} — retrying in ${attempt * 5}s…`);
                 await new Promise(r => setTimeout(r, attempt * 5000));
             } else if (config.DATABASE_URL) {
-                // PostgreSQL unavailable after 3 attempts — fall back to SQLite so the site
-                // stays alive (e.g. when the Render free-tier PG instance expires)
-                console.warn(`[DB] PostgreSQL unreachable after 3 attempts: ${err.message}`);
-                console.warn('[DB] Falling back to SQLite — data will not persist across restarts');
-                const SqliteBackend = require('./db/sqlite-backend');
-                backend = new SqliteBackend(config.DB_PATH);
-                await backend.init();
-                return backend;
+                // PRODUCTION SAFETY: When DATABASE_URL is set, we MUST use PostgreSQL.
+                // Silently falling back to an empty SQLite DB is catastrophic for a real-money
+                // casino — users would see zero balance, deposits would vanish, and new signups
+                // would get a fresh empty database. Crash loudly so Render restarts the service.
+                console.error(`[DB] FATAL: PostgreSQL unreachable after 3 attempts: ${err.message}`);
+                console.error('[DB] DATABASE_URL is set — refusing to fall back to SQLite.');
+                console.error('[DB] Fix your PostgreSQL connection or remove DATABASE_URL to use SQLite intentionally.');
+                throw new Error(`PostgreSQL unreachable: ${err.message}. Cannot fall back to SQLite when DATABASE_URL is set.`);
             } else {
                 throw err;
             }

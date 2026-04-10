@@ -2,8 +2,8 @@
  * Stripe Payment Service
  *
  * Gracefully handles the case where the stripe npm package is not installed.
- * When Stripe is unavailable, all methods return appropriate errors and the
- * existing mock payment flow continues to work.
+ * When Stripe is unavailable, all methods return appropriate errors (503).
+ * No mock/simulated payments — real Stripe integration only.
  *
  * Required env vars (set in .env or environment):
  *   STRIPE_SECRET_KEY       — sk_test_... or sk_live_...

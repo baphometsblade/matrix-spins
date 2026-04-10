@@ -687,8 +687,8 @@
         img.alt = symbolId;
         img.draggable = false;
         img.loading = 'eager';
-        // Try PNG (all 100 games have PNG), WebP for the 7 that have it
-        img.src = basePath + '.png';
+        // All 100 games have WebP symbols (PNGs removed to slim repo)
+        img.src = basePath + '.webp';
         img.onerror = function() {
             // Final fallback: inline SVG if available
             var svgEl = document.getElementById('svg_' + symbolId);

@@ -430,7 +430,7 @@ function generateGameHTML(game, idx) {
 
     // Preload HD symbol images
     const symbolPreloads = game.symbols.map(sym =>
-        `<link rel="preload" href="/assets/game_symbols/${game.id}/${sym}.png" as="image">`
+        `<link rel="preload" href="/assets/game_symbols/${game.id}/${sym}.webp" as="image">`
     ).join('\n  ');
 
     // Background image (prefer WebP, fallback to PNG)
