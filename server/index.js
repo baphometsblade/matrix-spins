@@ -350,6 +350,8 @@ app.use('/api/bundles/purchase', paymentLimiter);
 app.use('/api/matrix-money/purchase', paymentLimiter);
 app.use('/api/matrix-money/withdraw', paymentLimiter);
 app.use('/api/gifts/send', paymentLimiter);
+app.use('/api/payment/create-checkout', paymentLimiter);
+app.use('/api/withdrawal-enhance', paymentLimiter);
 
 // Per-user payment limit: 5 requests per minute per authenticated user
 const userPaymentLimit = userRateLimit({ maxRequests: 60, windowMs: 60000 });
