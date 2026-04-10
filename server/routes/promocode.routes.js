@@ -8,7 +8,7 @@ const db = require('../database');
 // Bootstrap tables + seed (delayed to ensure DB is initialized)
 setTimeout(async function() {
   try {
-    var _isPg  = !!process.env.DATABASE_URL;
+    var _isPg  = db.isPg();
     var _idDef = _isPg ? 'SERIAL PRIMARY KEY' : 'INTEGER PRIMARY KEY AUTOINCREMENT';
     var _tsType    = _isPg ? 'TIMESTAMPTZ' : 'TEXT';
     var _tsDefault = _isPg ? 'NOW()' : "(datetime('now'))";

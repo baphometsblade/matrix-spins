@@ -20,7 +20,7 @@ async function _ensureCashbackTables() {
     if (_tablesInitialized) return;
     _tablesInitialized = true;
 
-    var isPg = !!process.env.DATABASE_URL;
+    var isPg = db.isPg();
     var idDef = isPg ? 'SERIAL PRIMARY KEY' : 'INTEGER PRIMARY KEY AUTOINCREMENT';
 
     try {
@@ -68,7 +68,7 @@ router.get('/status', authenticate, async (req, res) => {
         await _ensureCashbackTables();
         var userId = req.user.id;
 
-        var isPg = !!process.env.DATABASE_URL;
+        var isPg = db.isPg();
         var todayDate = isPg ? "CURRENT_DATE::text" : "date('now')";
         var yesterdayDate = isPg ? "(CURRENT_DATE - INTERVAL '1 day')::text" : "date('now', '-1 day')";
 
@@ -265,7 +265,7 @@ router.post('/record', authenticate, async (req, res) => {
         if (wagerAmount < 0) wagerAmount = 0;
         if (winAmount < 0) winAmount = 0;
 
-        var isPg = !!process.env.DATABASE_URL;
+        var isPg = db.isPg();
         var todayDate = isPg ? "CURRENT_DATE::text" : "date('now')";
 
         // Get or create today's record
@@ -323,7 +323,7 @@ async function _calculateYesterdaysCashback() {
     try {
         await _ensureCashbackTables();
 
-        var isPg = !!process.env.DATABASE_URL;
+        var isPg = db.isPg();
         var yesterdayDate = isPg ? "(CURRENT_DATE - INTERVAL '1 day')::text" : "date('now', '-1 day')";
 
         // Get all users with yesterday's data that haven't been calculated yet

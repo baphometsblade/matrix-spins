@@ -8,7 +8,7 @@ let _schemaReady = false;
 
 async function ensureSchema() {
     if (_schemaReady) return;
-    const _isPg = !!process.env.DATABASE_URL;
+    const _isPg = db.isPg();
     const _id = _isPg ? 'SERIAL PRIMARY KEY' : 'INTEGER PRIMARY KEY AUTOINCREMENT';
     await db.run(
         'CREATE TABLE IF NOT EXISTS player_analytics (' +

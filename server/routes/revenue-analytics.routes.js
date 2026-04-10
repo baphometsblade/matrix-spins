@@ -20,7 +20,7 @@ var router = require('express').Router();
 var db = require('../database');
 var { authenticate, requireAdmin } = require('../middleware/auth');
 
-var isPg = !!process.env.DATABASE_URL;
+var isPg = db.isPg();
 var idDef = isPg ? 'SERIAL PRIMARY KEY' : 'INTEGER PRIMARY KEY AUTOINCREMENT';
 var tsDef = isPg ? 'TIMESTAMPTZ DEFAULT NOW()' : "TEXT DEFAULT (datetime('now'))";
 

@@ -1049,7 +1049,7 @@ async function start() {
             await db.run('DROP TABLE IF EXISTS seasonal_event_prizes');
             await db.run('DROP TABLE IF EXISTS seasonal_events');
             // Re-create with correct schema
-            var isPg = !!process.env.DATABASE_URL;
+            var isPg = db.isPg();
             var idDef = isPg ? 'SERIAL PRIMARY KEY' : 'INTEGER PRIMARY KEY AUTOINCREMENT';
             var tsDef = isPg ? 'TIMESTAMPTZ DEFAULT NOW()' : "TEXT DEFAULT (datetime('now'))";
             await db.run('CREATE TABLE IF NOT EXISTS seasonal_events (id ' + idDef + ', name TEXT NOT NULL, theme TEXT NOT NULL, start_date TEXT NOT NULL, end_date TEXT NOT NULL, bonus_multiplier REAL NOT NULL DEFAULT 1.0, special_currency TEXT, challenges TEXT NOT NULL, created_at ' + (isPg ? 'TIMESTAMPTZ DEFAULT NOW()' : "TEXT DEFAULT (datetime('now'))") + ', updated_at ' + (isPg ? 'TIMESTAMPTZ DEFAULT NOW()' : "TEXT DEFAULT (datetime('now'))") + ')');

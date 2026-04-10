@@ -69,7 +69,7 @@ router.get('/', authenticate, async function(req, res) {
     try {
         var userId = req.user.id;
         var twoHoursAgo = new Date(Date.now() - SESSION_WINDOW_MS);
-        var isPg = !!process.env.DATABASE_URL;
+        var isPg = db.isPg();
 
         // Count spins in last 2 hours
         var result = await db.get(
@@ -115,7 +115,7 @@ router.get('/', authenticate, async function(req, res) {
 router.get('/leaderboard', async function(req, res) {
     try {
         var oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
-        var isPg = !!process.env.DATABASE_URL;
+        var isPg = db.isPg();
 
         var query = isPg
             ? "SELECT u.username, COUNT(s.id) as spin_count FROM spins s JOIN users u ON s.user_id = u.id WHERE s.created_at > $1 GROUP BY u.id, u.username ORDER BY spin_count DESC LIMIT 10"

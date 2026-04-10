@@ -18,7 +18,7 @@ const TIER_ORDER = { mini: 0, minor: 1, major: 2, grand: 3 };
  * Initialize jackpot tables if they don't exist
  */
 async function _ensureJackpotTables() {
-  var isPg = !!process.env.DATABASE_URL;
+  var isPg = db.isPg();
 
   // Check if tables exist
   const checkTableSql = isPg

@@ -13,7 +13,7 @@ let _tableReady = false;
 async function _ensureEmailLogTable() {
     if (_tableReady) return;
     try {
-        const _isPg = !!process.env.DATABASE_URL;
+        const _isPg = db.isPg();
         const _idDef = _isPg ? 'SERIAL PRIMARY KEY' : 'INTEGER PRIMARY KEY AUTOINCREMENT';
         await db.run(`CREATE TABLE IF NOT EXISTS email_log (
             id ${_idDef},

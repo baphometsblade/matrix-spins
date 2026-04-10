@@ -4,7 +4,7 @@ const { authenticate } = require('../middleware/auth');
 const db = require('../database');
 
 // Database setup pattern
-const isPg = !!process.env.DATABASE_URL;
+const isPg = db.isPg();
 const idDef = isPg ? 'SERIAL PRIMARY KEY' : 'INTEGER PRIMARY KEY AUTOINCREMENT';
 const tsDef = isPg ? 'TIMESTAMPTZ DEFAULT NOW()' : "TEXT DEFAULT (datetime('now'))";
 

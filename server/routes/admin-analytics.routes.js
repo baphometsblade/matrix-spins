@@ -25,7 +25,7 @@ async function safeCount(sql, params) {
 }
 
 // Helper: Detect PostgreSQL vs SQLite
-var isPg = !!process.env.DATABASE_URL;
+var isPg = db.isPg();
 var dateFunc = isPg ? "CURRENT_DATE::text" : "date('now')";
 
 // GET /api/admin/analytics/overview — Key metrics (cached 60s, parallelized)

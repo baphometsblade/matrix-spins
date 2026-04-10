@@ -3,7 +3,7 @@ var authenticate = require('../middleware/auth').authenticate;
 var db = require('../database');
 
 // Determine database type for SERIAL vs AUTOINCREMENT
-var isPg = !!process.env.DATABASE_URL;
+var isPg = db.isPg();
 
 // Initialize player_segments table
 async function initializeTable() {

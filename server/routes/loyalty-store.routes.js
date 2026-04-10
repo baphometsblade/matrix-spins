@@ -19,7 +19,7 @@ var REWARD_CATALOG = {
 
 // Lazy initialization: ensure loyalty tables exist
 async function _ensureLoyaltyTables() {
-    var isPg = !!process.env.DATABASE_URL;
+    var isPg = db.isPg();
 
     var loyaltyPointsSQL = isPg ? `
         CREATE TABLE IF NOT EXISTS loyalty_points (

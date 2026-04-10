@@ -46,7 +46,7 @@ function extractUserIdFromAuth(authHeader) {
  */
 async function bootstrapTable() {
     try {
-        var isPg = !!process.env.DATABASE_URL;
+        var isPg = db.isPg();
         var idDef = isPg ? 'SERIAL PRIMARY KEY' : 'INTEGER PRIMARY KEY AUTOINCREMENT';
         var tsDef = isPg ? 'TIMESTAMPTZ DEFAULT NOW()' : "TEXT DEFAULT (datetime('now'))";
         await db.run(

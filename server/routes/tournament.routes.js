@@ -22,7 +22,7 @@ var _schemaReady = false;
 async function _ensureTournamentTables() {
     if (_schemaReady) return;
 
-    var isPg = !!process.env.DATABASE_URL;
+    var isPg = db.isPg();
     var idDef = isPg ? 'SERIAL PRIMARY KEY' : 'INTEGER PRIMARY KEY AUTOINCREMENT';
     var dateDef = isPg ? 'TIMESTAMPTZ DEFAULT NOW()' : "TEXT DEFAULT (datetime('now'))";
 

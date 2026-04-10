@@ -16,7 +16,7 @@ async function _ensureBattlePassData() {
   if (_bpInitPromise) return _bpInitPromise;
   _bpInitPromise = (async function() {
     try {
-      const isPg = !!process.env.DATABASE_URL;
+      const isPg = db.isPg();
       const idDef = isPg ? 'SERIAL PRIMARY KEY' : 'INTEGER PRIMARY KEY AUTOINCREMENT';
       const tsDef = isPg ? 'TIMESTAMPTZ DEFAULT NOW()' : "TEXT DEFAULT (datetime('now'))";
 
@@ -349,7 +349,7 @@ router.get('/', async (req, res) => {
   try {
     await _ensureBattlePassData();
     // Get current active pass (by date)
-    const isPg = !!process.env.DATABASE_URL;
+    const isPg = db.isPg();
     const dateFunc = isPg ? "CURRENT_DATE::text" : "date('now')";
 
     const pass = await db.get(
@@ -431,7 +431,7 @@ router.get('/progress', authenticate, async (req, res) => {
     const userId = req.user.id;
 
     // Get current active pass
-    const isPg = !!process.env.DATABASE_URL;
+    const isPg = db.isPg();
     const dateFunc = isPg ? "CURRENT_DATE::text" : "date('now')";
 
     const pass = await db.get(
@@ -530,7 +530,7 @@ router.post('/purchase', authenticate, async (req, res) => {
     }
 
     // Get current active pass
-    const isPg = !!process.env.DATABASE_URL;
+    const isPg = db.isPg();
     const dateFunc = isPg ? "CURRENT_DATE::text" : "date('now')";
 
     const pass = await db.get(
@@ -649,7 +649,7 @@ router.post('/claim', authenticate, bonusGuard, async (req, res) => {
     }
 
     // Get current active pass
-    const isPg = !!process.env.DATABASE_URL;
+    const isPg = db.isPg();
     const dateFunc = isPg ? "CURRENT_DATE::text" : "date('now')";
 
     const pass = await db.get(
@@ -825,7 +825,7 @@ router.post('/add-xp', authenticate, async (req, res) => {
     }
 
     // Get current active pass
-    const isPg = !!process.env.DATABASE_URL;
+    const isPg = db.isPg();
     const dateFunc = isPg ? "CURRENT_DATE::text" : "date('now')";
 
     const pass = await db.get(
@@ -885,7 +885,7 @@ router.get('/leaderboard', async (req, res) => {
   try {
     await _ensureBattlePassData();
     // Get current active pass
-    const isPg = !!process.env.DATABASE_URL;
+    const isPg = db.isPg();
     const dateFunc = isPg ? "CURRENT_DATE::text" : "date('now')";
 
     const pass = await db.get(

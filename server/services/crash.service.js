@@ -7,7 +7,7 @@
 
 async function initSchema() {
     const db = require('../database');
-    const isPg = !!process.env.DATABASE_URL;
+    const isPg = db.isPg();
 
     const tsType    = isPg ? 'TIMESTAMPTZ' : 'TEXT';
     const tsDefault = isPg ? 'NOW()' : "(datetime('now'))";

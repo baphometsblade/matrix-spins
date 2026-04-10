@@ -20,7 +20,7 @@ async function _ensureDepositBonusTables() {
     if (_tablesInitialized) return;
     _tablesInitialized = true;
 
-    var isPg = !!process.env.DATABASE_URL;
+    var isPg = db.isPg();
     var idDef = isPg ? 'SERIAL PRIMARY KEY' : 'INTEGER PRIMARY KEY AUTOINCREMENT';
 
     try {

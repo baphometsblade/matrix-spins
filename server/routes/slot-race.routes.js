@@ -15,7 +15,7 @@ async function _ensureSlotRaceTables() {
     if (_initialized) return;
     _initialized = true;
 
-    const isPg = !!process.env.DATABASE_URL;
+    const isPg = db.isPg();
     const idDef = isPg ? 'SERIAL PRIMARY KEY' : 'INTEGER PRIMARY KEY AUTOINCREMENT';
     const tsDefault = isPg ? 'CURRENT_TIMESTAMP' : "(datetime('now'))";
     const dateFunc = isPg ? "CURRENT_DATE::text" : "date('now')";
@@ -136,7 +136,7 @@ async function _ensureCurrentRace() {
     const raceIndex = Math.floor(Date.now() / 1000 / 60 / 15) % RACE_CONFIGS.length;
     const config = RACE_CONFIGS[raceIndex];
 
-    const isPg = !!process.env.DATABASE_URL;
+    const isPg = db.isPg();
     const now = new Date();
     const startsAt = now.toISOString();
     const endsAt = new Date(now.getTime() + config.duration_minutes * 60000).toISOString();

@@ -46,7 +46,7 @@ async function ensureSchema() {
     try { await db.run(sql); } catch (_) {}
   }
 
-  const isPg  = !!process.env.DATABASE_URL;
+  const isPg  = db.isPg();
   const idDef = isPg ? 'SERIAL PRIMARY KEY' : 'INTEGER PRIMARY KEY AUTOINCREMENT';
   const tsType    = isPg ? 'TIMESTAMPTZ' : 'TEXT';
   const tsDefault = isPg ? 'NOW()' : "(datetime('now'))";

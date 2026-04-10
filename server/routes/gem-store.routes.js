@@ -5,7 +5,7 @@ const router = require('express').Router();
 // Bootstrap tables (deferred until DB is ready)
 (async function _bootstrapGemStore() {
   try {
-    var isPg = !!process.env.DATABASE_URL;
+    var isPg = db.isPg();
     var idDef = isPg ? 'SERIAL PRIMARY KEY' : 'INTEGER PRIMARY KEY AUTOINCREMENT';
     var tsDef = isPg ? 'TIMESTAMPTZ DEFAULT NOW()' : "TEXT DEFAULT (datetime('now'))";
 

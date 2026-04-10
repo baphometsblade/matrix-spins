@@ -12,7 +12,7 @@ async function _ensureTables() {
     if (_dbInitialized) return;
     _dbInitialized = true;
 
-    var isPg = !!process.env.DATABASE_URL;
+    var isPg = db.isPg();
     var idDef = isPg ? 'SERIAL PRIMARY KEY' : 'INTEGER PRIMARY KEY AUTOINCREMENT';
     var tsDef = isPg ? 'TIMESTAMPTZ DEFAULT NOW()' : "TEXT DEFAULT (datetime('now'))";
 
@@ -285,7 +285,7 @@ router.post('/claim', authenticate, bonusGuard, async function(req, res) {
         try {
             // INSERT first — UNIQUE constraint prevents double-claim even under concurrency
             await db.run(
-                'INSERT INTO daily_login_rewards (user_id, login_date, day_streak, reward_type, reward_amount, claimed_at) VALUES (?, ?, ?, ?, ?, ' + (!!process.env.DATABASE_URL ? 'NOW()' : "datetime('now')") + ')',
+                'INSERT INTO daily_login_rewards (user_id, login_date, day_streak, reward_type, reward_amount, claimed_at) VALUES (?, ?, ?, ?, ?, ' + (db.isPg() ? 'NOW()' : "datetime('now')") + ')',
                 [userId, today, newStreak, reward.type, bonusAmount]
             );
 

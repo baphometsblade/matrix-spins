@@ -126,7 +126,7 @@ async function checkWinAndRun(userId) {
  */
 async function ensureFraudTables() {
     try {
-        const isPg = !!process.env.DATABASE_URL;
+        const isPg = db.isPg();
         const idDef = isPg ? 'SERIAL PRIMARY KEY' : 'INTEGER PRIMARY KEY AUTOINCREMENT';
         const tsDef = isPg ? 'TIMESTAMPTZ DEFAULT NOW()' : "TEXT DEFAULT (datetime('now'))";
         await db.run("CREATE TABLE IF NOT EXISTS registration_ips (id " + idDef + ", user_id INTEGER NOT NULL, ip_address TEXT NOT NULL, created_at " + tsDef + ")");

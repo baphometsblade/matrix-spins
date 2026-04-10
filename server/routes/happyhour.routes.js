@@ -13,7 +13,7 @@ var HAPPY_HOUR_SCHEDULE = [
 ];
 
 // Bootstrap: Create happy_hour_bonuses table if it doesn't exist
-var isPg = !!process.env.DATABASE_URL;
+var isPg = db.isPg();
 var idDef = isPg ? 'SERIAL PRIMARY KEY' : 'INTEGER PRIMARY KEY AUTOINCREMENT';
 var tsType = isPg ? 'TIMESTAMPTZ' : 'TEXT';
 
