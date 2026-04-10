@@ -2,6 +2,7 @@
 
 const router = require('express').Router();
 const { authenticate } = require('../middleware/auth');
+const { bonusGuard } = require('../middleware/bonus-guard');
 const db = require('../database');
 
 // Database initialization — lazy init pattern
@@ -214,7 +215,7 @@ router.get('/status', authenticate, async function(req, res) {
 
 // POST /api/daily-login/claim
 // Claim today's reward, update streak
-router.post('/claim', authenticate, async function(req, res) {
+router.post('/claim', authenticate, bonusGuard, async function(req, res) {
     try {
         await _ensureTables();
 

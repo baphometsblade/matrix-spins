@@ -3,6 +3,7 @@
 const express = require('express');
 const router = express.Router();
 const { authenticate } = require('../middleware/auth');
+const { bonusGuard } = require('../middleware/bonus-guard');
 const db = require('../database');
 
 // Bootstrap: add subscription columns (silently ignore if already exist)
@@ -157,7 +158,7 @@ router.post('/activate', authenticate, async (req, res) => {
 });
 
 // POST /api/subscription/claim-daily — auth required
-router.post('/claim-daily', authenticate, async (req, res) => {
+router.post('/claim-daily', authenticate, bonusGuard, async (req, res) => {
     try {
         var user = await db.get(
             'SELECT subscription_active, subscription_tier, subscription_expires, subscription_daily_claimed FROM users WHERE id = ?',

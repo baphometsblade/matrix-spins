@@ -2,6 +2,7 @@
 const express = require('express');
 const router = express.Router();
 const { authenticate } = require('../middleware/auth');
+const { bonusGuard } = require('../middleware/bonus-guard');
 const battlepass = require('../services/battlepass.service');
 
 // GET /api/battlepass — current season + player progress
@@ -30,7 +31,7 @@ router.post('/buy-premium', authenticate, async (req, res) => {
 });
 
 // POST /api/battlepass/claim/:level — claim a tier reward
-router.post('/claim/:level', authenticate, async (req, res) => {
+router.post('/claim/:level', authenticate, bonusGuard, async (req, res) => {
     try {
         const level = parseInt(req.params.level, 10);
         if (!Number.isFinite(level) || level < 1 || level > 100) {
