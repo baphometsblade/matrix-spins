@@ -988,7 +988,7 @@ function renderGames() {
             // Studio dot color
             const studioAccent = _getProviderAccent(game.provider);
             return `
-                <div class="game-card${isHot ? ' game-card-hot' : ''}${isJackpot ? ' game-card-jackpot is-jackpot' : ''}${gameDayCardClass}" onclick="try{if(typeof _compareMode!=='undefined'&&_compareMode){_addToCompare('${game.id}');this.classList.toggle('compare-selected',typeof _compareGames!=='undefined'&&_compareGames.indexOf('${game.id}')>=0);}else{(window.openSlot||openSlot)('${game.id}');}}catch(e){console.warn('Game click error:',e.message);}" style="position:relative" data-game-name="${(game.name || game.id || '').toLowerCase()}" data-game-id="${(game.id || '').toLowerCase()}">
+                <div class="game-card${isHot ? ' game-card-hot' : ''}${isJackpot ? ' game-card-jackpot is-jackpot' : ''}${gameDayCardClass}" role="button" tabindex="0" aria-label="${escapeHtml(game.name)}" onclick="try{if(typeof _compareMode!=='undefined'&&_compareMode){_addToCompare('${game.id}');this.classList.toggle('compare-selected',typeof _compareGames!=='undefined'&&_compareGames.indexOf('${game.id}')>=0);}else{(window.openSlot||openSlot)('${game.id}');}}catch(e){console.warn('Game click error:',e.message);}" style="position:relative" data-game-name="${(game.name || game.id || '').toLowerCase()}" data-game-id="${(game.id || '').toLowerCase()}">
                     <button class="fav-btn${favored ? ' fav-active' : ''}" data-game-id="${game.id}" title="${favored ? 'Remove from favourites' : 'Add to favourites'}" onclick="event.stopPropagation(); (function(btn){var nowFav=toggleFavorite('${game.id}'); btn.textContent=nowFav?'\u2764\uFE0F':'\u2661'; btn.title=nowFav?'Remove from favourites':'Add to favourites'; btn.classList.add('fav-active'); setTimeout(function(){btn.classList.remove('fav-active');},350); updateFavTabBadge();})(this)">${favIcon}</button>
                     <div class="game-card-art" style="${thumbStyle}"${thumbDataBg}>
                         ${hasThumbnail ? '<img src="' + game.thumbnail + '" loading="lazy" decoding="async" alt="' + escapeHtml(game.name) + '" onerror="this.style.display=\'none\'">' : (!game.thumbnail && game.asset ? (assetTemplates[game.asset] || '') : '')}
@@ -7337,3 +7337,13 @@ function renderGameStatsWidget() {
         }
     });
 }
+
+// --- Accessibility: keyboard navigation for game cards ---
+// Delegated handler so it works with dynamically rendered cards
+document.addEventListener('keydown', function(e) {
+    if (e.key !== 'Enter' && e.key !== ' ') return;
+    var card = e.target.closest('.game-card');
+    if (!card) return;
+    e.preventDefault();
+    card.click();
+});
