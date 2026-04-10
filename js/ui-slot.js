@@ -22,6 +22,7 @@
         let _apStopOnWin         = false; // stop on any win
         let _apStopBigWinMult    = 0;   // stop when win/bet >= this (0 = off)
         let _apStopOnLoss        = 0;   // stop when (startBalance - balance) >= this (0 = off)
+        let _apStopOnBonus       = true; // stop when bonus/free spins trigger (regulatory default: on)
 
         // -- Smart Bet Nudge ------------------------------------------
         let _betNudgeShownCount = 0;
@@ -902,6 +903,7 @@
             }
             if (typeof spinning !== "undefined" && spinning) { setTimeout(_autoplayStep, 200); return; }
             if (typeof freeSpinsActive !== "undefined" && freeSpinsActive) { setTimeout(_autoplayStep, 200); return; }
+            if (window._bigWinOverlayActive) { setTimeout(_autoplayStep, 300); return; }
             if (typeof balance !== "undefined" && typeof currentBet !== "undefined" && balance < currentBet) {
                 window._autoplayActive = false;
                 window._autoplayRemaining = 0;
@@ -3687,19 +3689,25 @@
             try {
                 if (useServerSpin) {
                     // Retry with exponential backoff on network errors (not 4xx)
+                    // 15s timeout watchdog prevents stuck spinning state on TCP hang
                     var _spinRetries = 0, _spinMaxRetries = 2;
+                    var _spinAbort = typeof AbortController !== 'undefined' ? new AbortController() : null;
+                    var _spinTimeout = setTimeout(function() { if (_spinAbort) _spinAbort.abort(); }, 15000);
                     while (true) {
                         try {
                             serverResult = await apiRequest('/api/spin', {
                                 method: 'POST',
                                 body: { gameId: spinGame.id, betAmount: currentBet },
-                                requireAuth: true
+                                requireAuth: true,
+                                signal: _spinAbort ? _spinAbort.signal : undefined
                             });
+                            clearTimeout(_spinTimeout);
                             break; // success
                         } catch (_retryErr) {
-                            // Don't retry client errors (4xx) — only network/server errors
-                            if (_retryErr && _retryErr.status && _retryErr.status >= 400 && _retryErr.status < 500) throw _retryErr;
-                            if (_spinRetries >= _spinMaxRetries) throw _retryErr;
+                            // Don't retry client errors (4xx) or aborted requests
+                            if (_retryErr && _retryErr.name === 'AbortError') { clearTimeout(_spinTimeout); throw new Error('Spin request timed out — please try again'); }
+                            if (_retryErr && _retryErr.status && _retryErr.status >= 400 && _retryErr.status < 500) { clearTimeout(_spinTimeout); throw _retryErr; }
+                            if (_spinRetries >= _spinMaxRetries) { clearTimeout(_spinTimeout); throw _retryErr; }
                             _spinRetries++;
                             await new Promise(function(r) { setTimeout(r, _spinRetries * 1000); }); // 1s, 2s backoff
                         }
@@ -5655,6 +5663,12 @@
         // -------------------------------------------------------
 
         function triggerFreeSpins(game, count) {
+            // Regulatory: stop autoplay on bonus trigger if player opted in
+            if (_apStopOnBonus && (window._autoplayActive || (typeof autoSpinActive !== 'undefined' && autoSpinActive))) {
+                if (window._autoplayActive) { window._autoplayActive = false; window._autoplayRemaining = 0; window._autoplayStopping = false; if (typeof _updateAutoplayBtn === 'function') _updateAutoplayBtn(); }
+                if (typeof stopAutoSpin === 'function') stopAutoSpin();
+                if (typeof showToast === 'function') showToast('Autoplay paused: bonus triggered', 'info');
+            }
             // Sprint 82: record drought length then reset
             _bonusDroughtRounds++;
             _bonusDroughtTotal += _bonusDrought;
@@ -6683,7 +6697,7 @@
 
         function waitForSpinThenContinue() {
             if (!autoSpinActive) return;
-            if (spinning || freeSpinsActive) {
+            if (spinning || freeSpinsActive || window._bigWinOverlayActive) {
                 setTimeout(waitForSpinThenContinue, 300);
                 return;
             }
@@ -6877,6 +6891,12 @@
                 '  </label>',
                 '</div>',
                 '<div class="ap-stop-row">',
+                '  <label style="display:flex;align-items:center;gap:6px;cursor:pointer;">',
+                '    <input type="checkbox" id="apStopOnBonus" checked>',
+                '    Stop on bonus/free spins',
+                '  </label>',
+                '</div>',
+                '<div class="ap-stop-row">',
                 '  <label style="display:flex;align-items:center;gap:6px;">Stop if loss exceeds $',
                 '    <input type="number" id="apStopOnLoss" placeholder="e.g. 10" min="1" style="width:65px">',
                 '  </label>',
@@ -6959,13 +6979,16 @@
                 var _cbWin   = document.getElementById('apStopOnWin');
                 var _selBig  = document.getElementById('apStopOnBigWin');
                 var _inpLoss = document.getElementById('apStopOnLoss');
+                var _cbBonus = document.getElementById('apStopOnBonus');
                 _apStopOnWin      = _cbWin  ? _cbWin.checked : false;
                 _apStopBigWinMult = _selBig ? parseInt(_selBig.value, 10) || 0 : 0;
                 _apStopOnLoss     = _inpLoss && _inpLoss.value !== '' ? parseFloat(_inpLoss.value) || 0 : 0;
+                _apStopOnBonus    = _cbBonus ? _cbBonus.checked : true;
             } else {
                 _apStopOnWin      = false;
                 _apStopBigWinMult = 0;
                 _apStopOnLoss     = 0;
+                _apStopOnBonus    = true;
             }
             _autoplayLastWin = 0;
             toggleAutoSpin(autoplaySelectedCount);
@@ -7040,6 +7063,21 @@
 
             overlay.style.display = 'flex';
 
+            // Block spin button while big win overlay is showing
+            window._bigWinOverlayActive = true;
+            var spinBtn = document.getElementById('spinBtn');
+            if (spinBtn) spinBtn.disabled = true;
+
+            // Delay the collect button for 1.5s so players don't accidentally dismiss
+            var collectBtn = document.getElementById('bigWinCollect');
+            if (collectBtn) {
+                collectBtn.style.opacity = '0.3';
+                collectBtn.style.pointerEvents = 'none';
+                setTimeout(function() {
+                    if (collectBtn) { collectBtn.style.opacity = '1'; collectBtn.style.pointerEvents = 'auto'; }
+                }, 1500);
+            }
+
             // Bloom effect: brightness + saturation boost on reel area background
             const reelAreaBloom = document.querySelector('.slot-reel-area');
             if (reelAreaBloom) {
@@ -7065,6 +7103,10 @@
             if (_winCounterRaf)    { cancelAnimationFrame(_winCounterRaf); _winCounterRaf = null; }
             const overlay = document.getElementById('bigWinOverlay');
             if (overlay) overlay.style.display = 'none';
+            // Re-enable spin button
+            window._bigWinOverlayActive = false;
+            var spinBtn = document.getElementById('spinBtn');
+            if (spinBtn && balance >= currentBet) spinBtn.disabled = false;
         }
 
         function startReelScrolling(turbo) {
@@ -15153,15 +15195,11 @@ function _resetRealityCheck() {
     _realityCheck239.totalWon = 0;
 }
 function _updateRealityCheck(winAmount, betAmount) {
-    _realityCheck239.totalWagered += (betAmount || 0);
-    _realityCheck239.totalWon += (winAmount || 0);
-    var elapsed = (Date.now() - _realityCheck239.lastCheck) / 60000;
-    if (elapsed >= _realityCheck239.intervalMinutes) {
-        _realityCheck239.lastCheck = Date.now();
-        var net = _realityCheck239.totalWon - _realityCheck239.totalWagered;
-        var sign = net >= 0 ? '+' : '';
-        _showRGPopup('Reality Check: You have wagered $' + _realityCheck239.totalWagered.toFixed(0) + ' and your net result is ' + sign + '$' + net.toFixed(0) + '. Session time: ' + Math.floor((Date.now() - _rgTimer236.startTime) / 60000) + ' minutes.');
-    }
+    // Disabled: Sprint 444's _initRealityCheck (line 21459) handles reality checks
+    // with a better UI (overlay with Continue/Stop/Help). This Sprint 239 version
+    // was firing a second popup on a 15-min cycle, conflicting with the 30-min one.
+    // Stats are still forwarded to Sprint 444's tracker:
+    if (typeof _trackRealityStats === 'function') _trackRealityStats(betAmount, winAmount);
 }
 
 // Sprint 240 — Bet history export (CSV download)

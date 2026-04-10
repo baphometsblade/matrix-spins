@@ -168,11 +168,13 @@
 
             let response;
             try {
-                response = await fetch(path, {
+                const fetchOpts = {
                     method,
                     headers,
                     body: body !== undefined ? JSON.stringify(body) : undefined
-                });
+                };
+                if (options.signal) fetchOpts.signal = options.signal;
+                response = await fetch(path, fetchOpts);
             } catch (error) {
                 const networkError = new Error('Could not reach the casino server.');
                 networkError.isNetworkError = true;
