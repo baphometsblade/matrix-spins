@@ -167,11 +167,15 @@ router.post('/', authenticate, async (req, res) => {
             });
         }
 
-        // ── Deduct buy price (atomic with WHERE guard) ──
+        // ── Deduct buy price (atomic with WHERE guard, inside transaction) ──
+        // Transaction wraps debit through win credit — if the server crashes mid-spin,
+        // both the debit and any win credit roll back together.
+        await db.beginTransaction();
         const balanceBefore = currentUser.balance;
         const balanceAfterBuy = Math.round((balanceBefore - buyPrice) * 100) / 100;
         const debitResult = await db.run('UPDATE users SET balance = balance - ? WHERE id = ? AND balance >= ?', [buyPrice, userId, buyPrice]);
         if (!debitResult || debitResult.changes === 0) {
+            try { await db.rollback(); } catch (_) {}
             return res.status(400).json({ error: 'Insufficient balance' });
         }
 
@@ -249,6 +253,9 @@ router.post('/', authenticate, async (req, res) => {
         // ── Update game stats (house edge tracking) ──
         await houseEdge.updateGameStats(db, gameId, buyPrice, spinResult.winAmount);
 
+        // ── Commit transaction (debit + win credit + logs are all-or-nothing) ──
+        await db.commit();
+
         // ── Response ──
         res.json({
             grid: spinResult.grid,
@@ -262,6 +269,7 @@ router.post('/', authenticate, async (req, res) => {
         });
 
     } catch (err) {
+        try { await db.rollback(); } catch (_) {}
         console.warn('[BuyFeature] Error:', err.message);
         res.status(500).json({ error: 'Buy-feature failed' });
     }

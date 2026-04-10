@@ -206,35 +206,27 @@ router.post('/payment/webhook', express.raw({ type: 'application/json' }), async
                 chain: 'internal', stripeSessionId: session.id, stripePaymentIntent: session.payment_intent
             });
 
-            await db.run(
-                'INSERT INTO nfts (id, user_id, amount, name, description, metadata, stripe_payment_id) VALUES (?, ?, ?, ?, ?, ?, ?)',
-                [nftId, playerId, amount, nftName, '$' + amount + ' Casino Credit NFT', metadata, session.payment_intent || session.id]
-            );
-
-            // Credit balance
-            await db.run('UPDATE users SET balance = balance + ? WHERE id = ?', [amount, playerId]);
+            // Transaction: NFT record + balance credit must both succeed or both fail.
+            // Without this, a crash between INSERT and UPDATE would leave the player
+            // charged but uncredited, with the idempotency check blocking retries.
+            await db.beginTransaction();
+            try {
+                await db.run(
+                    'INSERT INTO nfts (id, user_id, amount, name, description, metadata, stripe_payment_id) VALUES (?, ?, ?, ?, ?, ?, ?)',
+                    [nftId, playerId, amount, nftName, '$' + amount + ' Casino Credit NFT', metadata, session.payment_intent || session.id]
+                );
+                await db.run('UPDATE users SET balance = balance + ? WHERE id = ?', [amount, playerId]);
+                await db.commit();
+            } catch (txErr) {
+                try { await db.rollback(); } catch (_) {}
+                throw txErr;
+            }
 
             console.warn('[Stripe+NFT] Minted ' + nftId + ' for player ' + playerId + ': $' + amount);
         } catch (dbErr) {
             console.error('[Stripe] NFT mint/credit error:', dbErr.message);
-            // SECURITY: Do NOT blindly retry balance credit — the UPDATE may have succeeded
-            // before the NFT INSERT failed, which would double-credit.
-            // Instead, check if balance was already credited by looking for the transaction.
-            try {
-                const { getBackend } = require('../database');
-                const db = getBackend();
-                const existing = await db.get(
-                    "SELECT id FROM nfts WHERE stripe_payment_id = ? LIMIT 1",
-                    [session.payment_intent || session.id]
-                );
-                if (!existing) {
-                    // NFT wasn't created, so balance credit likely also failed — safe to retry
-                    await db.run('UPDATE users SET balance = balance + ? WHERE id = ?', [amount, playerId]);
-                    console.warn('[Stripe] Fallback direct credit applied for player ' + playerId);
-                } else {
-                    console.warn('[Stripe] NFT already exists — skipping fallback credit to prevent double-credit');
-                }
-            } catch (e) { console.error('[Stripe] Fallback credit also failed:', e.message); }
+            // Transaction rollback ensures NFT + credit are atomic — if either failed,
+            // both are rolled back and the webhook can be retried safely by Stripe.
         }
     }
 

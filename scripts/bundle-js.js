@@ -307,8 +307,17 @@ function copyStaticAssets() {
         const dst = path.join(DIST_DIR, file);
 
         if (fs.existsSync(src)) {
-            fs.copyFileSync(src, dst);
-            log(`Copied ${file}`);
+            if (file === 'sw.js') {
+                // Auto-set CACHE_VERSION to current timestamp so stale caches are purged on each deploy
+                let swContent = fs.readFileSync(src, 'utf8');
+                const buildVersion = Date.now();
+                swContent = swContent.replace(/^const CACHE_VERSION = \d+;/m, 'const CACHE_VERSION = ' + buildVersion + ';');
+                fs.writeFileSync(dst, swContent);
+                log(`Copied ${file} (CACHE_VERSION → ${buildVersion})`);
+            } else {
+                fs.copyFileSync(src, dst);
+                log(`Copied ${file}`);
+            }
         }
     });
 
