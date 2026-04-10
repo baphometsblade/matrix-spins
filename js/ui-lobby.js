@@ -992,7 +992,7 @@ function renderGames() {
                     <button class="fav-btn${favored ? ' fav-active' : ''}" data-game-id="${game.id}" title="${favored ? 'Remove from favourites' : 'Add to favourites'}" onclick="event.stopPropagation(); (function(btn){var nowFav=toggleFavorite('${game.id}'); btn.textContent=nowFav?'\u2764\uFE0F':'\u2661'; btn.title=nowFav?'Remove from favourites':'Add to favourites'; btn.classList.add('fav-active'); setTimeout(function(){btn.classList.remove('fav-active');},350); updateFavTabBadge();})(this)">${favIcon}</button>
                     <div class="game-card-art" style="${thumbStyle}"${thumbDataBg}>
                         ${hasThumbnail ? '<img src="' + game.thumbnail + '" loading="lazy" decoding="async" alt="' + escapeHtml(game.name) + '" onerror="this.style.display=\'none\'">' : (!game.thumbnail && game.asset ? (assetTemplates[game.asset] || '') : '')}
-                        <div class="card-anim-preview" style="background-image:url('assets/backgrounds/slots/${game.id}_bg.webp')" onerror="this.classList.add('hidden')">
+                        <div class="card-anim-preview" style="background-image:url('assets/backgrounds/slots/${game.id}_bg.webp')">
                             <span class="preview-badge">&#9654; PREVIEW</span>
                         </div>
                         ${topTag}

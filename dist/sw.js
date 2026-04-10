@@ -1,4 +1,4 @@
-const CACHE_VERSION = 1775858187610;
+const CACHE_VERSION = 1775858345949;
 const CACHE_NAME = 'matrix-spins-v' + CACHE_VERSION;
 const PRECACHE_URLS = [
   '/',

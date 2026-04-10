@@ -12069,7 +12069,6 @@
     pointer-events: none; z-index: 2;
 }
 .game-card:hover .card-anim-preview { opacity: 1; }
-.card-anim-preview.hidden { display: none; }
 .preview-badge {
     position: absolute; top: 6px; right: 6px;
     background: rgba(0,0,0,0.6); color: #00ff41;
