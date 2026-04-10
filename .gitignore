@@ -57,3 +57,4 @@ assets/backgrounds/**/*_portrait*
 # Build output (generated at deploy time)
 dist/
 .vercel
+casino.db.bak
