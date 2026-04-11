@@ -1049,6 +1049,12 @@ router.post('/gamble/start', authenticate, async (req, res) => {
             return res.status(400).json({ error: 'Invalid gamble amount' });
         }
 
+        // Self-exclusion check
+        var selfExclCheck = await db.get('SELECT id FROM self_exclusions WHERE user_id = ? AND is_active = 1', [userId]);
+        if (selfExclCheck) {
+            return res.status(403).json({ error: 'Gambling is disabled during your self-exclusion period' });
+        }
+
         // Verify user actually won this amount recently (last 30s)
         var recentWin = await db.get(
             "SELECT id, win_amount FROM spins WHERE user_id = ? AND win_amount >= ? AND created_at >= datetime('now', '-30 seconds') ORDER BY created_at DESC LIMIT 1",
@@ -1105,6 +1111,9 @@ router.post('/gamble/choose', authenticate, async (req, res) => {
 
         if (win) {
             session.amount *= 2;
+            // Cap gamble payout at session win cap to prevent unlimited doubling
+            var gambleWinCap = config.SESSION_WIN_CAP || 5000;
+            if (session.amount > gambleWinCap) session.amount = gambleWinCap;
             session.round++;
 
             if (session.round > session.maxRound) {

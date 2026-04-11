@@ -704,24 +704,8 @@ const WHEEL_SEGMENTS = [
     { label: '$3',    value: 3.00, color: '#ffd700', xp: 150 }
 ];
 
-// ─────────────────────────────────────────────────────────────
-// 10. TICKER NAMES (fake player names for the win ticker)
-// ─────────────────────────────────────────────────────────────
-
-/** Display names randomly chosen for the rolling win ticker in the lobby */
-const TICKER_NAMES = [
-    'LuckyAce', 'JackpotKing', 'SlotMaster', 'BigWinner',
-    'CasinoQueen', 'DiamondDan', 'GoldenStar', 'RoyalFlush',
-    'MegaSpinner', 'FortuneHunter', 'VelvetRoller', 'NeonNight',
-    'CherryBomb77', 'WildCard', 'HighStakes', 'SpinQueen99',
-    'CashBlitz', 'PhantomBet', 'ReelChaser', 'TurboSpin',
-    'GoldRush22', 'MysticRoller', 'InfernoBets', 'AceOfSlots',
-    'ThunderSpin', 'BlazeRunner', 'CosmicWin', 'NovaBet',
-    'ShadowAces', 'VegasViper', 'LunarStrike', 'DiamondDiva',
-    'StarDust88', 'CryptoSpins', 'IronReeler', 'PlatinumPlay',
-    'NightOwl7', 'FrostBite99', 'NebulaKing', 'RubyRoyal',
-    'SilverFox21', 'EchoSlots', 'PixelBet', 'ZenSpinner'
-];
+// TICKER_NAMES removed — was fake social proof (44 fabricated player names including "CryptoSpins")
+const TICKER_NAMES = [];
 
 // ─────────────────────────────────────────────────────────────
 // 11. XP TIER DEFINITIONS

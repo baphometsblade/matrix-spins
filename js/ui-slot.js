@@ -18646,28 +18646,17 @@ function _toggleChatPanel() {
     panel = document.createElement('div');
     panel.id = 'liveChatWidget359';
     panel.className = 'live-chat-panel';
-    panel.innerHTML = '<div class="lc-header"><h4>Support Chat</h4><button onclick="document.getElementById(&quot;liveChatWidget359&quot;).style.display=&quot;none&quot;" class="lc-close">&times;</button></div>' +
-        '<div id="lcMessages359" class="lc-messages"><div class="lc-msg lc-bot">Hi! How can we help you today?</div></div>' +
-        '<div class="lc-input-row"><input type="text" id="lcInput359" placeholder="Type a message..." class="lc-input" onkeydown="if(event.key===&quot;Enter&quot;)_sendChatMsg()"><button onclick="_sendChatMsg()" class="lc-send">Send</button></div>';
+    panel.innerHTML = '<div class="lc-header"><h4>Support</h4><button onclick="document.getElementById(&quot;liveChatWidget359&quot;).style.display=&quot;none&quot;" class="lc-close">&times;</button></div>' +
+        '<div class="lc-messages" style="padding:16px;text-align:center;color:#94a3b8;">' +
+        '<p style="font-size:14px;margin-bottom:12px;">Need help? Contact our support team:</p>' +
+        '<a href="mailto:support@msaart.online" style="display:inline-block;background:#fbbf24;color:#000;padding:10px 24px;border-radius:8px;text-decoration:none;font-weight:700;margin-bottom:12px;">Email Support</a>' +
+        '<p style="font-size:12px;color:#64748b;">support@msaart.online</p>' +
+        '<p style="font-size:11px;color:#475569;margin-top:12px;">We typically respond within 24 hours.</p>' +
+        '</div>';
     document.body.appendChild(panel);
 }
 function _sendChatMsg() {
-    var input = document.getElementById('lcInput359');
-    var msg = input.value.trim();
-    if (!msg) return;
-    input.value = '';
-    var container = document.getElementById('lcMessages359');
-    container.innerHTML += '<div class="lc-msg lc-user">' + msg + '</div>';
-    container.scrollTop = container.scrollHeight;
-    setTimeout(function() {
-        var replies = ['Thanks for reaching out! A support agent will be with you shortly.',
-            'I understand your concern. Let me look into that for you.',
-            'For account issues, please email support@msaart.online with your player ID.',
-            'Our team typically responds within 30 minutes during business hours.'];
-        var reply = replies[Math.floor(Math.random() * replies.length)];
-        container.innerHTML += '<div class="lc-msg lc-bot">' + reply + '</div>';
-        container.scrollTop = container.scrollHeight;
-    }, 1500);
+    // Removed — no fake canned responses
 }
 
 
@@ -18839,28 +18828,8 @@ function _init2FA() {
     _2faEnabled = localStorage.getItem('ms_2fa_enabled') === 'true';
 }
 function _show2FASetup() {
-    var panel = document.getElementById('twoFAPanel365');
-    if (panel) { panel.style.display = panel.style.display === 'none' ? 'flex' : 'none'; return; }
-    panel = document.createElement('div');
-    panel.id = 'twoFAPanel365';
-    panel.className = 'twofa-overlay';
-    if (_2faEnabled) {
-        panel.innerHTML = '<div class="twofa-inner"><h3>Two-Factor Authentication</h3>' +
-            '<div class="twofa-enabled"><span>\u2705</span> 2FA is enabled</div>' +
-            '<button onclick="_disable2FA()" class="twofa-disable-btn">Disable 2FA</button>' +
-            '<button onclick="document.getElementById(\&quot;twoFAPanel365\&quot;).style.display=\&quot;none\&quot;" class="twofa-close-btn">Close</button></div>';
-    } else {
-        panel.innerHTML = '<div class="twofa-inner"><h3>Enable Two-Factor Authentication</h3>' +
-            '<p style="color:#888;font-size:13px;">Add an extra layer of security to your account.</p>' +
-            '<div class="twofa-steps">' +
-            '<div class="twofa-step"><span class="twofa-num">1</span> Download an authenticator app (Google Authenticator, Authy)</div>' +
-            '<div class="twofa-step" style="text-align:center;padding:20px;color:#aaa;">' +
-            '<p>Two-factor authentication is coming soon.</p>' +
-            '<p style="font-size:12px;margin-top:8px;">We are integrating authenticator app support for enhanced account security.</p>' +
-            '</div>' +
-            '<button onclick="document.getElementById(\&quot;twoFAPanel365\&quot;).style.display=\&quot;none\&quot;" class="twofa-close-btn" style="margin-top:12px;">Close</button></div>';
-    }
-    document.body.appendChild(panel);
+    // 2FA not yet implemented — hide the option entirely instead of showing "coming soon"
+    if (typeof showToast === 'function') showToast('2FA will be available in a future update.', 'info');
 }
 function _verify2FA() {
     var code = document.getElementById('twoFACode365');
@@ -19996,7 +19965,6 @@ function _showProfile() {
         '<div class="profile-actions">' +
         '<button onclick="document.getElementById(\&quot;profilePanel400\&quot;).style.display=\&quot;none\&quot;;_showVIPPanel();" class="pa-btn">VIP Status</button>' +
         '<button onclick="document.getElementById(\&quot;profilePanel400\&quot;).style.display=\&quot;none\&quot;;_showAchievementsPanel();" class="pa-btn">Achievements</button>' +
-        '<button onclick="document.getElementById(\&quot;profilePanel400\&quot;).style.display=\&quot;none\&quot;;_showRewardsGallery();" class="pa-btn">Rewards Gallery</button>' +
         '<button onclick="document.getElementById(\&quot;profilePanel400\&quot;).style.display=\&quot;none\&quot;;_showSettings();" class="pa-btn">Settings</button>' +
         '</div></div>';
     document.body.appendChild(panel);

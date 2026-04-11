@@ -394,21 +394,8 @@
 
 
         function loginAsGuest() {
-            // Create a fresh local guest session — no server auth needed
-            applyAuthSession(`${LOCAL_TOKEN_PREFIX}guest`, {
-                id: null,
-                username: 'Guest',
-                email: '',
-                isGuest: true,
-            });
-            balance = 1000;
-            updateBalance();
-            saveBalance();
-            document.body.classList.remove('auth-gate');
-            hideAuthModal();
-            updateAuthButton();
-            showToast('Playing as Guest — $1,000 loaded. Have fun!', 'success');
-            if (typeof onPostAuthInit === 'function') onPostAuthInit();
+            // DISABLED: Guest play removed for production — all players must register
+            showToast('Please create an account to play!', 'info');
         }
 
 
