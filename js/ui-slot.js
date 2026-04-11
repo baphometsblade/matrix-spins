@@ -945,15 +945,15 @@
             if (!_apBtn) return;
             if (window._autoplayActive && !window._autoplayStopping) {
                 _apBtn.className = "autoplay-btn autoplay-active";
-                _apBtn.innerHTML = "? Auto <span class='autoplay-count-badge'>" + window._autoplayRemaining + "</span>";
+                _apBtn.innerHTML = "▶ Auto <span class='autoplay-count-badge'>" + window._autoplayRemaining + "</span>";
                 _apBtn.title = "Click to stop autoplay";
             } else if (window._autoplayStopping) {
                 _apBtn.className = "autoplay-btn autoplay-stopping";
-                _apBtn.innerHTML = "? Stopping…";
+                _apBtn.innerHTML = "⏸ Stopping…";
                 _apBtn.title = "Stopping after this spin";
             } else {
                 _apBtn.className = "autoplay-btn";
-                _apBtn.innerHTML = "? Auto";
+                _apBtn.innerHTML = "▶ Auto";
                 _apBtn.title = "Autoplay";
             }
         }
@@ -3044,7 +3044,7 @@
                     var _apBtnEl = document.createElement("button");
                     _apBtnEl.id = "autoplayBtn";
                     _apBtnEl.className = "autoplay-btn";
-                    _apBtnEl.innerHTML = "? Auto";
+                    _apBtnEl.innerHTML = "▶ Auto";
                     _apBtnEl.title = "Autoplay";
                     var _apPicker = document.createElement("div");
                     _apPicker.id = "autoplayPicker";
@@ -3084,7 +3084,7 @@
                     _tBtn.id = 'turboSpinBtn';
                     _tBtn.className = 'turbo-spin-btn';
                     _tBtn.title = window._turboSpinEnabled ? 'Turbo: ON (click to disable)' : 'Turbo spin (fast reels)';
-                    _tBtn.innerHTML = '<span class="turbo-icon">?</span>TURBO';
+                    _tBtn.innerHTML = '<span class="turbo-icon">\u26A1</span>TURBO';
                     if (window._turboSpinEnabled) _tBtn.classList.add('turbo-on');
                     _tBtn.addEventListener('click', function() {
                         window._turboSpinEnabled = !window._turboSpinEnabled;
@@ -6182,7 +6182,7 @@
                 // Begin button so user knows to click
                 var _fsBeginBtn = document.createElement('button');
                 _fsBeginBtn.className = 'fs-begin-btn';
-                _fsBeginBtn.textContent = '?  BEGIN FREE SPINS';
+                _fsBeginBtn.textContent = '★  BEGIN FREE SPINS';
                 _fsBeginBtn.style.cssText = 'display:block;margin:20px auto 0;padding:14px 36px;background:linear-gradient(135deg,#fbbf24,#f59e0b);color:#0d0d1a;border:none;border-radius:30px;font-size:1.1rem;font-weight:900;letter-spacing:2px;cursor:pointer;box-shadow:0 0 30px rgba(251,191,36,0.6);animation:fsTapBlink 1.5s ease-in-out infinite;';
                 overlay.appendChild(_fsBeginBtn);
 
@@ -8277,7 +8277,7 @@
             if (!el) return;
             var mult = _currentIncrMult();
             if (!freeSpinsActive || mult < 2) { el.style.display = 'none'; return; }
-            el.textContent = '? ' + mult + 'x';
+            el.textContent = '✖ ' + mult + 'x';
             el.style.display = 'inline-block';
             var c = mult >= 8 ? '#ff5252' : mult >= 5 ? '#ff9800' : '#c6ff00';
             el.style.color = c;
@@ -8509,7 +8509,7 @@
                     ? ' <span class="fs-total-win">+$' + freeSpinsTotalWin.toFixed(2) + '</span>'
                     : '';
                 var remaining = typeof freeSpinsRemaining !== 'undefined' ? freeSpinsRemaining : '?';
-                banner.innerHTML = '? FREE SPINS <span class="fs-remaining">' + remaining + ' left</span>' + totalWinStr;
+                banner.innerHTML = '★ FREE SPINS <span class="fs-remaining">' + remaining + ' left</span>' + totalWinStr;
             } else {
                 parent.classList.remove('free-spins-active-frame');
                 var existBanner = document.getElementById('freeSpinsBanner');
@@ -9221,7 +9221,7 @@
             var tier = Math.min(window._collectTier || 0, _COLLECT_MULTS.length - 1);
             var mult = _COLLECT_MULTS[tier];
             var label = document.getElementById('collectLabel');
-            if (label) label.textContent = '? COLLECT ' + mult + 'x — ' + (window._collectCount || 0) + ' pts';
+            if (label) label.textContent = '✦ COLLECT ' + mult + 'x — ' + (window._collectCount || 0) + ' pts';
             var nextThresh = tier < _COLLECT_THRESHOLDS.length - 1 ? _COLLECT_THRESHOLDS[tier + 1] : _COLLECT_THRESHOLDS[_COLLECT_THRESHOLDS.length - 1];
             var prev = _COLLECT_THRESHOLDS[tier] || 0;
             var pct = nextThresh > prev ? Math.min(100, ((window._collectCount - prev) / (nextThresh - prev)) * 100) : 100;
@@ -9397,7 +9397,7 @@
                 + 'background:rgba(0,0,0,0.78);border:1.5px solid #40c4ff;border-radius:20px;'
                 + 'padding:4px 12px;font-size:0.76rem;font-weight:700;color:#40c4ff;'
                 + 'letter-spacing:0.06em;pointer-events:none;';
-            el.textContent = '? BOTH WAYS!';
+            el.textContent = '↔ BOTH WAYS!';
             document.body.appendChild(el);
         }
 
@@ -10842,7 +10842,7 @@ function _updateProfitTarget() {
         el.innerHTML = "";
         var span = document.createElement("span");
         span.className = "pt-reached";
-        span.textContent = "? Target reached!";
+        span.textContent = "✓ Target reached!";
         el.appendChild(span);
     } else {
         var toGo = (_profitTargetAmount - bal).toFixed(2);
