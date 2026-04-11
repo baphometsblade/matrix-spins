@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta http-equiv="refresh" content="8;url=/" />
+<title>404 - Page Not Found | Matrix Spins Casino</title>
+<meta name="robots" content="noindex, nofollow">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:#0D0F14;color:#F0F0F5;font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;display:flex;align-items:center;justify-content:center;min-height:100vh;text-align:center}
+.container{max-width:500px;padding:40px 20px}
+h1{font-size:clamp(48px,15vw,96px);background:linear-gradient(135deg,#D4A853,#F0C66E);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:16px}
+h2{font-size:clamp(18px,4vw,24px);margin-bottom:12px;color:#F0F0F5}
+p{color:#9CA3AF;margin-bottom:32px;line-height:1.6;font-size:clamp(14px,3vw,16px)}
+.btn{display:inline-block;background:linear-gradient(135deg,#D4A853,#F0C66E);color:#0D0F14;padding:14px 32px;border-radius:8px;text-decoration:none;font-weight:700;font-size:16px;transition:transform .2s,box-shadow .2s}
+.btn:hover{transform:scale(1.05);box-shadow:0 4px 20px rgba(212,168,83,.4)}
+.btn:focus{outline:2px solid #F0C66E;outline-offset:4px}
+.slots{font-size:48px;margin-bottom:24px}
+.redirect{color:#6B7280;font-size:13px;margin-top:20px}
+</style>
+</head>
+<body>
+<main class="container" role="main">
+    <div class="slots" aria-hidden="true">&#127920;</div>
+    <h1>404</h1>
+    <h2>This reel came up empty!</h2>
+    <p>The page you're looking for doesn't exist. Head back to the lobby and try your luck on our 100 premium slot games.</p>
+    <a href="/" class="btn">Back to Lobby</a>
+    <p class="redirect">Redirecting to lobby in <span id="countdown">8</span> seconds&hellip;</p>
+</main>
+<script>
+(function(){var el=document.getElementById('countdown');var sec=8;var t=setInterval(function(){sec--;if(el)el.textContent=sec;if(sec<=0){clearInterval(t);window.location.href='/'}},1000);window.addEventListener('beforeunload',function(){clearInterval(t)})})();
+</script>
+</body>
+</html>
