@@ -101,7 +101,7 @@ router.post('/withdrawals/:id/approve', async (req, res) => {
                 // Create a payout from the Stripe account balance
                 const payout = await stripe.payouts.create({
                     amount: Math.round(wd.amount * 100), // cents
-                    currency: 'usd',
+                    currency: (config.CURRENCY || 'AUD').toLowerCase(),
                     description: `Casino withdrawal ${id} for user ${wd.user_id}`,
                     metadata: {
                         withdrawal_id: id,

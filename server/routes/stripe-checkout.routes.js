@@ -4,14 +4,15 @@ const router = express.Router();
 const config = require('../config');
 const { authenticate } = require('../middleware/auth');
 
-// Deposit price mapping — these are LIVE Stripe Price IDs
+// Deposit price mapping — Stripe Price IDs from env or defaults
+// Set STRIPE_PRICE_5, STRIPE_PRICE_10 etc. in env to override
 const DEPOSIT_PRICES = {
-    5:   'price_1TE4GlEs7PHC7HDVUEhFXd1w',
-    10:  'price_1TE4GzEs7PHC7HDVA1e8ftkO',
-    25:  'price_1TE4H0Es7PHC7HDVwbmnJyEg',
-    50:  'price_1TE4H1Es7PHC7HDV9Ei4fdpz',
-    100: 'price_1TE4H2Es7PHC7HDVR6YXlofT',
-    250: 'price_1TE4H3Es7PHC7HDVHDwmeiB5'
+    5:   process.env.STRIPE_PRICE_5   || 'price_1TE4GlEs7PHC7HDVUEhFXd1w',
+    10:  process.env.STRIPE_PRICE_10  || 'price_1TE4GzEs7PHC7HDVA1e8ftkO',
+    25:  process.env.STRIPE_PRICE_25  || 'price_1TE4H0Es7PHC7HDVwbmnJyEg',
+    50:  process.env.STRIPE_PRICE_50  || 'price_1TE4H1Es7PHC7HDV9Ei4fdpz',
+    100: process.env.STRIPE_PRICE_100 || 'price_1TE4H2Es7PHC7HDVR6YXlofT',
+    250: process.env.STRIPE_PRICE_250 || 'price_1TE4H3Es7PHC7HDVHDwmeiB5'
 };
 
 // Deposit limits
@@ -64,7 +65,7 @@ router.post('/payment/create-checkout', authenticate, async (req, res) => {
             // Custom amount — use price_data
             lineItems = [{
                 price_data: {
-                    currency: 'usd',
+                    currency: (config.CURRENCY || 'AUD').toLowerCase(),
                     product_data: {
                         name: 'Matrix Spins - $' + amountNum.toFixed(2) + ' Deposit',
                         description: 'Add $' + amountNum.toFixed(2) + ' in credits to your Matrix Spins account'
@@ -216,6 +217,18 @@ router.post('/payment/webhook', express.raw({ type: 'application/json' }), async
                     [nftId, playerId, amount, nftName, '$' + amount + ' Casino Credit NFT', metadata, session.payment_intent || session.id]
                 );
                 await db.run('UPDATE users SET balance = balance + ? WHERE id = ?', [amount, playerId]);
+
+                // Record in deposits table — required for wagering/withdrawal checks downstream
+                try {
+                    await db.run(
+                        `INSERT INTO deposits (user_id, amount, currency, method, status, stripe_session_id, created_at)
+                         VALUES (?, ?, ?, 'stripe_checkout', 'completed', ?, datetime('now'))`,
+                        [playerId, amount, (config.CURRENCY || 'AUD'), session.id]
+                    );
+                } catch (depErr) {
+                    // Table might not exist yet or column mismatch — log but don't fail the credit
+                    console.warn('[Stripe] deposits table INSERT failed (non-fatal):', depErr.message);
+                }
 
                 // Credit advertised deposit bonus to bonus_balance with 30x wagering
                 var bonusMap = { 25: 5, 50: 15, 100: 40, 250: 125 };
