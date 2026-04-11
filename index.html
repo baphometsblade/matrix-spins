@@ -186,7 +186,7 @@
                 </button>
                 <div class="balance-display">
                     <div class="balance-label">BALANCE</div>
-                    <div class="balance-amount">$<span id="balance">5000.00</span></div>
+                    <div class="balance-amount">$<span id="balance">0.00</span></div>
                     <div class="wagering-bar-wrap" id="wageringBarWrap" style="display:none">
                         <div class="wagering-bar-track"><div class="wagering-bar-fill" id="wageringBarFill" style="width:0%"></div></div>
                         <div class="wagering-bar-label" id="wageringBarLabel">Bonus: $0 (0%)</div>
@@ -1046,7 +1046,7 @@
                 <!-- Left: Balance -->
                 <div class="slot-bar-section slot-bar-balance">
                     <div class="slot-bar-label">BALANCE</div>
-                    <div class="slot-bar-value">$<span id="slotBalance">5000.00</span></div>
+                    <div class="slot-bar-value">$<span id="slotBalance">0.00</span></div>
                     <span class="slot-net-display" id="slotNetDisplay" style="display:none"></span>
                     <span class="spin-counter" id="spinCounter" style="display:none"></span>
                     <div class="recent-outcomes" id="recentOutcomes" style="display:none"></div>
@@ -1791,8 +1791,7 @@
                     <button class="auth-submit" id="registerBtn" onclick="handleRegister()">CREATE ACCOUNT</button>
                 </div>
 
-                <div class="auth-divider"><span>OR</span></div>
-                <button class="auth-guest-btn" onclick="loginAsGuest()">PLAY AS GUEST • $1,000 FREE</button>
+                <!-- Guest play removed for production — real-money casino requires registration -->
 
                 <div class="auth-footer">
                     <p>Play responsibly. 18+ only.</p>

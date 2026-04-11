@@ -1318,17 +1318,15 @@
                 return;
             }
 
-            // Fallback for unauthenticated/local users (client-side, play money only)
-            const suits = { red: ['?','?'], black: ['?','?'] };
-            const outcome = Math.random() < 0.5 ? 'red' : 'black';
-            const win = (outcome === playerChoice);
-            _renderGambleResult(outcome, win, null);
+            // No fallback — guest play removed; must be authenticated
+            showMessage('Please log in to use the gamble feature', 'error');
+            closeGamble(false);
         }
 
         // Shared rendering for gamble result (used by both server and client paths)
         function _renderGambleResult(outcome, win, serverData) {
-            const suits = { red: ['?','?'], black: ['?','?'] };
-            const suitList = suits[outcome] || ['?'];
+            var suits = { red: ['\u2665','\u2666'], black: ['\u2660','\u2663'] };
+            var suitList = suits[outcome] || ['\u2665'];
             const suit = suitList[Math.floor(Math.random() * suitList.length)];
 
             // Flip card animation
@@ -1355,7 +1353,7 @@
                 const histEl = document.getElementById('gambleHistory');
                 const dot = document.createElement('span');
                 dot.className = 'gamble-history-dot ' + (win ? 'dot-win' : 'dot-lose');
-                dot.textContent = win ? '?' : '?';
+                dot.textContent = win ? '\u2713' : '\u2717';
                 dot.title = `Round ${gambleState.round}: ${outcome.toUpperCase()} — ${win ? 'WIN' : 'LOSE'}`;
                 histEl.appendChild(dot);
 
@@ -1497,7 +1495,7 @@
             if (!body) return;
 
             const isMulti = game.gridRows && game.gridRows > 1;
-            const rtp = (94 + Math.random() * 2.5).toFixed(2); // Simulated RTP
+            const rtp = '88.00'; // Real configured RTP from server (config.TARGET_RTP = 0.88)
 
             // Grid info section
             let html = `<div class="paytable-section">
@@ -3115,7 +3113,7 @@
                     _ptBtn.id = "paytableBtn";
                     _ptBtn.className = "paytable-btn";
                     _ptBtn.title = "Game info & paytable";
-                    _ptBtn.textContent = "?";
+                    _ptBtn.textContent = "\u2630";
                     _ptBtn.addEventListener("click", _openPaytable);
                     var _turboB = document.getElementById("turboSpinBtn");
                     if (_turboB && _turboB.parentNode) {
@@ -4283,7 +4281,7 @@
 
             var closeBtn = document.createElement('button');
             closeBtn.className = 'gcm-close';
-            closeBtn.textContent = '?';
+            closeBtn.textContent = '\u2715';
             closeBtn.addEventListener('click', closeModal);
             modal.appendChild(closeBtn);
 
@@ -6411,7 +6409,7 @@
 
             const starL = document.createElement('span');
             starL.className = 'bm-star';
-            starL.textContent = '?';
+            starL.textContent = '\u2605';
             badge.appendChild(starL);
 
             var _bonusLabel = (game && game.bonusTheme && game.bonusTheme.label) || 'BONUS ROUND';
@@ -6436,7 +6434,7 @@
             badge.appendChild(spacer);
             const starR = document.createElement('span');
             starR.className = 'bm-star';
-            starR.textContent = '?';
+            starR.textContent = '\u2605';
             badge.appendChild(starR);
         }
 
@@ -7147,7 +7145,7 @@
             _winCounterRaf = requestAnimationFrame(animateOverlayAmount);
 
             // Provider-themed particle emojis
-            const defaultCoins = ['??','??','??','?','??'];
+            const defaultCoins = ['\uD83D\uDCB0','\uD83D\uDCB5','\uD83E\uDE99','\u2B50','\uD83D\uDCB3'];
             let coinPool = defaultCoins;
             if (typeof getProviderAnimTheme === 'function' && currentGame) {
                 const theme = getProviderAnimTheme(currentGame);
@@ -10590,7 +10588,7 @@ function _addRecentOutcome(won) {
     _recentOutcomes.forEach(function(w) {
         var d = document.createElement("span");
         d.className = "ro-dot " + (w ? "ro-win" : "ro-loss");
-        d.textContent = "?";
+        d.textContent = '\u2022';
         el.appendChild(d);
     });
     el.style.display = "";
@@ -10867,7 +10865,7 @@ function _updateBetSteps() {
     var sorted = game.betOptions.slice().sort(function(a,b){return a-b;});
     var cur = typeof currentBet !== "undefined" ? currentBet : sorted[0];
     var idx = sorted.indexOf(cur); if (idx < 0) idx = 0;
-    el.textContent = "?" + (sorted.length-1-idx) + " ?" + idx;
+    el.textContent = '\u25B2' + (sorted.length-1-idx) + ' \u25BC' + idx;
     el.style.display = "";
 }
 
@@ -16936,32 +16934,39 @@ function _initAdminLink() {
 }
 
 
-// Sprint 299 — Live Player Count
-var _livePlayerCount = Math.floor(Math.random() * 200) + 80;
+// Sprint 299 — Live Player Count (REAL data from /api/socialproof)
 var _livePlayerInterval = null;
 function _initLivePlayerCount() {
     var el = document.getElementById('livePlayerBadge');
     if (!el) return;
-    el.style.display = 'flex';
-    _updateLivePlayerCount();
+    _fetchRealPlayerCount();
     if (_livePlayerInterval) clearInterval(_livePlayerInterval);
-    _livePlayerInterval = setInterval(_updateLivePlayerCount, 8000);
+    _livePlayerInterval = setInterval(_fetchRealPlayerCount, 30000); // refresh every 30s
 }
-function _updateLivePlayerCount() {
-    _livePlayerCount = Math.max(30, _livePlayerCount + Math.floor(Math.random() * 21) - 10);
-    var el = document.getElementById('livePlayerNum');
-    if (el) el.textContent = _livePlayerCount.toLocaleString();
+function _fetchRealPlayerCount() {
+    fetch('/api/socialproof').then(function(r) { return r.json(); }).then(function(data) {
+        var el = document.getElementById('livePlayerNum');
+        if (el && typeof data.onlineNow === 'number') {
+            el.textContent = data.onlineNow.toLocaleString();
+            var badge = document.getElementById('livePlayerBadge');
+            if (badge) badge.style.display = data.onlineNow > 0 ? 'flex' : 'none';
+        }
+    }).catch(function() { /* silent — hide badge on error */ });
 }
 
 
-// Sprint 300 — Dynamic RTP Display
+// Sprint 300 — Dynamic RTP Display (REAL configured RTP, not random)
 function _showGameRTP() {
     if (!currentGame) return;
     var el = document.getElementById('gameRtpBadge');
     if (!el) return;
-    var rtp = (96.5 + (Math.random() * 2 - 1)).toFixed(1);
-    el.textContent = 'RTP: ' + rtp + '%';
-    el.style.display = 'inline-block';
+    // Use real platform RTP from server config (fetched via socialproof)
+    fetch('/api/socialproof').then(function(r) { return r.json(); }).then(function(data) {
+        if (data.platformRtp) {
+            el.textContent = 'RTP: ' + data.platformRtp + '%';
+            el.style.display = 'inline-block';
+        }
+    }).catch(function() { el.style.display = 'none'; });
 }
 function _hideGameRTP() {
     var el = document.getElementById('gameRtpBadge');
