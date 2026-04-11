@@ -334,6 +334,25 @@ app.use('/api/auth/admin-reset', passwordResetLimiter);
 app.use('/api/user/change-password', sensitiveAuthLimiter);
 app.use('/api/account/request-deletion', accountDeletionLimiter);
 
+// ── Degraded mode guard: block money operations when PG is unreachable ──
+const { isDegraded } = require('./database');
+app.use('/api/payment', (req, res, next) => {
+    if (isDegraded()) return res.status(503).json({ error: 'Service temporarily unavailable — database maintenance in progress. Please try again later.' });
+    next();
+});
+app.use('/api/balance', (req, res, next) => {
+    if (isDegraded()) return res.status(503).json({ error: 'Service temporarily unavailable — database maintenance in progress. Please try again later.' });
+    next();
+});
+app.use('/api/withdrawal-enhance', (req, res, next) => {
+    if (isDegraded()) return res.status(503).json({ error: 'Service temporarily unavailable — database maintenance in progress. Please try again later.' });
+    next();
+});
+app.use('/api/spin', (req, res, next) => {
+    if (isDegraded()) return res.status(503).json({ error: 'Service temporarily unavailable — database maintenance in progress. Please try again later.' });
+    next();
+});
+
 // Strict rate limit for deposit/withdrawal endpoints
 const paymentLimiter = rateLimit({
     windowMs: 60 * 1000,
@@ -938,7 +957,8 @@ app.use('/categories', express.static(path.join(__dirname, '..', 'categories'), 
 app.use('/admin', express.static(path.join(__dirname, '..', 'admin')));
 
 // --- Diagnostic: what's in dist/ (admin only, helps debug Render deploys) ---
-app.get('/api/debug/dist', (req, res) => {
+const { authenticate: authDebug, requireAdmin: adminDebug } = require('./middleware/auth');
+app.get('/api/debug/dist', authDebug, adminDebug, (req, res) => {
     try {
         const distExists = fs.existsSync(distPath);
         const distFiles = distExists ? fs.readdirSync(distPath).filter(f => /\.(js|css|html)$/.test(f)).sort() : [];

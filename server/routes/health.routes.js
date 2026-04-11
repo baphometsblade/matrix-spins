@@ -33,14 +33,16 @@ router.get('/', async (req, res) => {
         }
 
         const now = new Date().toISOString();
+        const degraded = db.isDegraded ? db.isDegraded() : false;
         res.json({
-            status: 'ok',
+            status: degraded ? 'degraded' : 'ok',
             uptime: Math.floor(process.uptime()),
             timestamp: now,
             version: '1.0.0',
             memoryMB: Math.round(process.memoryUsage().rss / 1024 / 1024),
             nodeVersion: process.version,
-            db: dbOk ? 'ok' : 'error'
+            db: dbOk ? (degraded ? 'sqlite-fallback' : 'ok') : 'error',
+            ...(degraded && { warning: 'PostgreSQL unreachable — running on SQLite fallback. Money operations disabled.' })
         });
     } catch (err) {
         // Return 200 with degraded status during startup — load balancers
@@ -71,7 +73,7 @@ router.get('/', async (req, res) => {
 /**
  * GET /api/health/assets — Debug: check asset directories on disk
  */
-router.get('/assets', (req, res) => {
+router.get('/assets', authenticate, requireAdmin, (req, res) => {
     const path = require('path');
     const fs = require('fs');
     const assetsDir = path.join(__dirname, '..', '..', 'assets');

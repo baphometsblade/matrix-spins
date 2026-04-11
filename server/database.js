@@ -18,6 +18,7 @@
 const config = require('./config');
 
 let backend = null;
+let _degradedMode = false; // true when PG was requested but SQLite is active
 
 async function initDatabase() {
     if (config.DATABASE_URL) {
@@ -33,25 +34,45 @@ async function initDatabase() {
     for (let attempt = 1; attempt <= 3; attempt++) {
         try {
             await backend.init();
+            _degradedMode = false;
             return backend;
         } catch (err) {
             if (attempt < 3) {
                 console.warn(`[DB] Init attempt ${attempt}/3 failed: ${err.message} — retrying in ${attempt * 5}s…`);
                 await new Promise(r => setTimeout(r, attempt * 5000));
             } else if (config.DATABASE_URL) {
-                // PRODUCTION SAFETY: When DATABASE_URL is set, we MUST use PostgreSQL.
-                // Silently falling back to an empty SQLite DB is catastrophic for a real-money
-                // casino — users would see zero balance, deposits would vanish, and new signups
-                // would get a fresh empty database. Crash loudly so Render restarts the service.
-                console.error(`[DB] FATAL: PostgreSQL unreachable after 3 attempts: ${err.message}`);
-                console.error('[DB] DATABASE_URL is set — refusing to fall back to SQLite.');
-                console.error('[DB] Fix your PostgreSQL connection or remove DATABASE_URL to use SQLite intentionally.');
-                throw new Error(`PostgreSQL unreachable: ${err.message}. Cannot fall back to SQLite when DATABASE_URL is set.`);
+                // ═══════════════════════════════════════════════════════════════
+                // DEGRADED MODE: PG unreachable → fall back to SQLite so the
+                // deploy succeeds and health check passes, but ALL payment and
+                // balance routes are blocked (see isDegraded() checks in routes).
+                // This prevents the catastrophic scenario of operating a real-money
+                // casino on an ephemeral SQLite database.
+                // ═══════════════════════════════════════════════════════════════
+                console.error('╔══════════════════════════════════════════════════════════════╗');
+                console.error('║  ⚠ DEGRADED MODE — PostgreSQL unreachable after 3 attempts  ║');
+                console.error('║  Falling back to SQLite. Money operations BLOCKED.           ║');
+                console.error('║  Fix DATABASE_URL or provision PostgreSQL to go live.        ║');
+                console.error('╚══════════════════════════════════════════════════════════════╝');
+                console.error(`[DB] PG error: ${err.message}`);
+                // Fall back to SQLite so the server can start
+                const SqliteBackend = require('./db/sqlite-backend');
+                backend = new SqliteBackend(config.DB_PATH);
+                await backend.init();
+                _degradedMode = true;
+                return backend;
             } else {
                 throw err;
             }
         }
     }
+}
+
+/**
+ * Returns true when DATABASE_URL was set but PG was unreachable,
+ * so the server fell back to SQLite. All money routes should return 503.
+ */
+function isDegraded() {
+    return _degradedMode;
 }
 
 function getBackend() {
@@ -107,6 +128,7 @@ module.exports = {
     initDatabase,
     getBackend,
     isPg,
+    isDegraded,
     // Keep legacy alias for any code that calls getDb()
     getDb: getBackend,
     run,

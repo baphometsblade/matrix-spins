@@ -927,9 +927,7 @@
             </div>
 
             <!-- Top Bar: Game Info + Close -->
-            <div class="demo-banner" id="demoBanner" style="display:none">
-                Playing for free — <a href="#" onclick="event.preventDefault();exitDemoMode(false);showAuthModal();" style="color:#FFD700;text-decoration:underline;">Create an account</a> to play with real money • <span id="demoSpinsLeft">3</span> free spins left
-            </div>
+            <!-- Demo mode removed — real-money casino requires registration -->
             <div class="slot-top-bar">
                 <button class="slot-close-btn" onclick="closeSlot()" title="Back to lobby">&times;</button>
                 <div class="slot-top-info">
@@ -1358,57 +1356,7 @@
                 <div id="dailyChallengesPanel"></div>
                 <div id="weeklyChallengesPanel" style="display:none"></div>
 
-                <div class="qa-tools" id="qaTools" style="display:none">
-                    <div class="qa-tools-header">
-                        <div class="qa-tools-title">QA Tools</div>
-                        <button class="qa-toggle-btn" id="qaToggleBtn" onclick="toggleQaTools()">Show</button>
-                    </div>
-                    <div class="qa-tools-body" id="qaToolsBody">
-                        <div class="qa-row">
-                            <div class="qa-label">Seeded RNG</div>
-                            <div class="qa-row-group">
-                                <input class="qa-input" id="qaSeedInput" type="text" placeholder="e.g. qa-seed-001">
-                                <button class="qa-btn" onclick="applyQaSeed()">Apply Seed</button>
-                                <button class="qa-btn" onclick="clearQaSeed()">Clear Seed</button>
-                            </div>
-                        </div>
-                        <div class="qa-row">
-                            <div class="qa-label">Queue Outcome</div>
-                            <div class="qa-row-group">
-                                <select class="qa-select" id="qaOutcomeType">
-                                    <option value="triple">Triple Win</option>
-                                    <option value="double">Double Win</option>
-                                    <option value="loss">Loss</option>
-                                </select>
-                                <select class="qa-select" id="qaOutcomeSymbol">
-                                    <option value="">Auto Symbol</option>
-                                </select>
-                                <button class="qa-btn" onclick="queueQaOutcome(false)">Queue</button>
-                                <button class="qa-btn qa-btn-primary" onclick="queueQaOutcome(true)">Queue + Spin</button>
-                            </div>
-                        </div>
-                        <div class="qa-row">
-                            <div class="qa-label">Exact Reels (comma-separated)</div>
-                            <div class="qa-row-group">
-                                <input class="qa-input" id="qaExactReels" type="text" placeholder="diamond,cherry,seven">
-                                <button class="qa-btn" onclick="queueQaExactReels(false)">Queue</button>
-                                <button class="qa-btn qa-btn-primary" onclick="queueQaExactReels(true)">Queue + Spin</button>
-                            </div>
-                        </div>
-                        <div class="qa-row-group">
-                            <button class="qa-btn qa-btn-danger" onclick="resetQaSession()">Reset Balance + Stats</button>
-                            <button class="qa-btn" onclick="clearQaQueue()">Clear Queue</button>
-                        </div>
-                        <div class="qa-row-group qa-reset-options">
-                            <label class="qa-check">
-                                <input type="checkbox" id="qaResetClearSeed">
-                                <span>Clear deterministic seed on reset</span>
-                            </label>
-                        </div>
-                        <div class="qa-state-line" id="qaStateLine">seed=off | queued=0</div>
-                        <div class="qa-status" id="qaStatusLine"></div>
-                    </div>
-                </div>
+                <!-- QA tools removed from production HTML — dev-only via localhost -->
 
                 <div class="shortcut-hint">Shortcuts: press <strong>F</strong> for fullscreen, <strong>Esc</strong> to close active modal.</div>
             </div>
@@ -1822,7 +1770,7 @@
     <script src="js/ui-profile.js"></script>
     <script src="js/ui-vip.js"></script>
     <script>
-if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' || window.location.search.includes('devtools=ms2026')) {
+if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
   var s = document.createElement('script'); s.src = 'js/qa-tools.js'; document.head.appendChild(s);
 }
 </script>
