@@ -200,7 +200,7 @@ router.get('/admin/overview', authenticate, async function(req, res) {
       FROM session_summaries WHERE ended_at IS NOT NULL`;
     var avgDurationPgSql = `SELECT AVG(EXTRACT(EPOCH FROM (ended_at - started_at)) / 60) as avg_minutes
       FROM session_summaries WHERE ended_at IS NOT NULL`;
-    var avgDuration = await db.get(process.env.DATABASE_URL ? avgDurationPgSql : avgDurationSql, []);
+    var avgDuration = await db.get(db.isPg() ? avgDurationPgSql : avgDurationSql, []);
 
     // Revenue per session (deposits - withdrawals)
     var revenueSql = `SELECT
@@ -337,7 +337,7 @@ router.get('/admin/revenue', authenticate, async function(req, res) {
       GROUP BY DATE(started_at)
       ORDER BY date DESC`;
 
-    var dailyRevenue = await db.all(process.env.DATABASE_URL ? revenuePgSql : revenueSql, [thirtyDaysAgo]);
+    var dailyRevenue = await db.all(db.isPg() ? revenuePgSql : revenueSql, [thirtyDaysAgo]);
 
     // Aggregate totals
     var totalSql = `SELECT
@@ -356,7 +356,7 @@ router.get('/admin/revenue', authenticate, async function(req, res) {
       SUM(net_result) as net_result
       FROM session_summaries WHERE started_at > ?::timestamptz`;
 
-    var totals = await db.get(process.env.DATABASE_URL ? totalPgSql : totalSql, [thirtyDaysAgo]);
+    var totals = await db.get(db.isPg() ? totalPgSql : totalSql, [thirtyDaysAgo]);
 
     res.status(200).json({
       period: 'last_30_days',

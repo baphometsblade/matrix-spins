@@ -39,7 +39,7 @@ function getWhaleTierLabel(tier) {
 // Bootstrap: ensure player_ltv table exists with indexes
 async function ensureLtvTable() {
     try {
-        const isPg = process.env.DATABASE_URL ? true : false;
+        const isPg = db.isPg();
 
         if (isPg) {
             // PostgreSQL version

@@ -1580,11 +1580,8 @@
 
         // Derive RTP from game properties (simulated since not stored in game data)
         function deriveGameRTP(game) {
-            const maxPayout = (game.payouts && game.payouts.triple) || (game.rtp ? Math.round(game.rtp * 2) : 100);
-            if (maxPayout >= 200) return '96.8%';
-            if (maxPayout >= 100) return '96.5%';
-            if (maxPayout >= 70) return '96.2%';
-            return '95.8%';
+            // Server TARGET_RTP is 88% — display actual configured value
+            return '88.0%';
         }
 
 
@@ -23254,7 +23251,7 @@ function _initPayoutTransparency() {
         '<div class="payout-stat"><span class="ps-label">Total Wagered</span><span class="ps-val">$' + totalWagered.toFixed(2) + '</span></div>' +
         '<div class="payout-stat"><span class="ps-label">Total Won</span><span class="ps-val">$' + totalWon.toFixed(2) + '</span></div>' +
         '<div class="payout-stat"><span class="ps-label">Your RTP</span><span class="ps-val">' + actualRTP + '%</span></div>' +
-        '<div class="payout-stat"><span class="ps-label">Expected RTP</span><span class="ps-val">96.0%</span></div>' +
+        '<div class="payout-stat"><span class="ps-label">Expected RTP</span><span class="ps-val">88.0%</span></div>' +
         '<div class="payout-stat"><span class="ps-label">House Edge</span><span class="ps-val">4.0%</span></div>' +
         '</div>' +
         '<div class="payout-chart" id="payout-chart"></div>' +
@@ -24760,7 +24757,7 @@ function _initRTPEnforcement() {
     var badge = document.createElement('div');
     badge.id = 'rtp-enforce-badge';
     badge.className = 'rtp-enforce-badge';
-    badge.innerHTML = '<span class="rtp-e-icon">RTP</span><span class="rtp-e-val" id="rtp-e-val">96.0%</span>';
+    badge.innerHTML = '<span class="rtp-e-icon">RTP</span><span class="rtp-e-val" id="rtp-e-val">88.0%</span>';
     badge.title = 'Server-enforced Return to Player rate';
     badge.addEventListener('click', function() {
         fetch('/api/admin/analytics/rtp-stats').then(function(r) { return r.json(); }).then(function(data) {
@@ -26709,7 +26706,7 @@ function _initWelcomeBonus627() {
             var overlay = document.createElement('div');
             overlay.id = 'welcome-bonus-627';
             overlay.className = 'wb-overlay627';
-            overlay.innerHTML = '<div class="wb-inner627"><h2>Welcome to Matrix Spins!</h2><p>Start with a bonus:</p><div class="wb-offer627">$10 Free Credits</div><button class="wb-claim627" onclick="_claimWelcomeBonus627()">Claim Now</button><button class="wb-skip627" onclick="document.getElementById(this.parentElement.parentElement.id).remove()">Skip</button></div>';
+            overlay.innerHTML = '<div class="wb-inner627"><h2>Welcome to Matrix Spins!</h2><p>Start with a bonus:</p><div class="wb-offer627">$5 Free Credits</div><button class="wb-claim627" onclick="_claimWelcomeBonus627()">Claim Now</button><button class="wb-skip627" onclick="document.getElementById(this.parentElement.parentElement.id).remove()">Skip</button></div>';
             document.body.appendChild(overlay);
         }, 3000);
     }

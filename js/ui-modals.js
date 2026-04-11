@@ -2415,28 +2415,9 @@ function _cjUpdateTicker() {
 
 // Called by spin flow to contribute to pool and check for win
 function communityJackpotSpin(bet) {
-    var s = _cjGetPool();
-    s.pool = Math.min(s.pool + CJ_CONTRIBUTION, CJ_MAX);
-    // Random win check
-    var won = Math.random() < (1 / CJ_WIN_ODDS);
-    if (won) {
-        var winAmount = s.pool;
-        s.pool = CJ_SEED;
-        s.lastReset = Date.now();
-        _cjSave(s);
-        // Display celebration only — community jackpot would be server-validated
-        // No client-side balance manipulation
-        if (typeof showToast === 'function') showToast('🌐 COMMUNITY JACKPOT! +$' + Math.floor(winAmount).toLocaleString() + '!', 'bigwin');
-        // Full-screen celebration
-        var cel = document.createElement('div');
-        cel.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.85);z-index:10400;display:flex;flex-direction:column;align-items:center;justify-content:center;color:#fff;font-family:sans-serif;cursor:pointer;';
-        cel.innerHTML = '<div style="font-size:72px;margin-bottom:16px">🌐</div><div style="font-size:36px;font-weight:900;color:#f0c040">COMMUNITY JACKPOT!</div><div style="font-size:24px;margin-top:12px">You won $' + Math.floor(winAmount).toLocaleString() + '!</div><div style="font-size:13px;margin-top:24px;opacity:0.6">Tap to continue</div>';
-        cel.onclick = function() { document.body.removeChild(cel); };
-        document.body.appendChild(cel);
-    } else {
-        _cjSave(s);
-    }
-    _cjUpdateTicker();
+    // DISABLED: Was using Math.random() client-side to determine jackpot wins
+    // and showing misleading "You won $X!" celebrations without actual credit.
+    // Community jackpot would need server-side implementation to be legitimate.
 }
 
 // Init ticker on load
