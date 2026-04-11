@@ -24,7 +24,7 @@ const PROMO_TYPES = {
     WEEKEND_BONUS: {
         id: 'weekend_bonus',
         title: 'Weekend Special',
-        message: 'Deposit this weekend and get 75% bonus up to \!',
+        message: 'Deposit this weekend and get 75% bonus up to $150!',
         cta: 'Claim Bonus',
         days: [0, 6], // Sunday and Saturday
         bonusPct: 75,

@@ -474,7 +474,7 @@ ${payoutsHtml ? `
     var winAmountEl = document.getElementById('winAmount');
     var loadingEl = document.getElementById('gameLoading');
 
-    var balance = 100000; // cents (demo)
+    var balance = 0; // cents — real balance fetched from server after auth
     var spinning = false;
     var grid = [];
     var cellW, cellH;

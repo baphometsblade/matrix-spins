@@ -477,7 +477,7 @@
             if (typeof SessionRTPClient !== 'undefined' && SessionRTPClient.init) {
                 var _rtpUserId = currentUser ? currentUser.id : null;
                 var _rtpSession = 'ses_' + Date.now();
-                var _rtpBalance = typeof balance !== 'undefined' ? balance : 5000;
+                var _rtpBalance = typeof balance !== 'undefined' ? balance : 0;
                 SessionRTPClient.init(_rtpUserId, _rtpSession, _rtpBalance);
             }
             // LTV Personalization â€” tier-based UI customization
