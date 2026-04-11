@@ -1,10 +1,22 @@
+databases:
+  - name: matrix-spins-db
+    plan: starter
+    databaseName: matrix_spins
+    user: matrix_spins_user
+    region: oregon
+
 services:
   - type: web
     name: matrix-spins
     runtime: node
+    plan: standard
     buildCommand: node --version && npm install --omit=dev && echo "[BUILD] npm install OK" && node scripts/bundle-js.js && echo "[BUILD] bundle OK" && node scripts/fix-encoding.js && echo "[BUILD] complete"
     startCommand: node server/index.js
     healthCheckPath: /api/health
+    disk:
+      name: casino-data
+      mountPath: /opt/render/project/data
+      sizeGB: 1
     envVars:
       - key: NODE_ENV
         value: production
@@ -12,5 +24,11 @@ services:
         value: "20"
       - key: ALLOWED_ORIGIN
         value: https://msaart.online
-      # Secrets (JWT_SECRET, STRIPE_*, ADMIN_PASSWORD, DATABASE_URL) must be set manually
+      - key: DB_PATH
+        value: /opt/render/project/data/casino.db
+      - key: DATABASE_URL
+        fromDatabase:
+          name: matrix-spins-db
+          property: connectionString
+      # Secrets (JWT_SECRET, STRIPE_*, ADMIN_PASSWORD) must be set manually
       # in the Render dashboard — do not add them here to avoid Blueprint sync conflicts
