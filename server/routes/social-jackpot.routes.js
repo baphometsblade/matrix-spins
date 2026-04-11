@@ -339,13 +339,14 @@ router.post('/check-winner', authenticate, async function (req, res) {
         [userId, 'won', poolId]
       );
 
-      // ROUND 39: CRITICAL — Actually credit the winner's balance.
-      // Previously: pool was marked as won but winner never received funds.
+      // ROUND 39: CRITICAL — Actually credit the winner's bonus_balance.
+      // Social jackpot wins go to bonus_balance with 15x wagering (standard bonus).
+      // Revenue protection: prevents immediate withdrawal of jackpot pool funds.
       var winAmount = Math.round(current * 100) / 100;
       if (winAmount > 0) {
         await db.run(
-          'UPDATE users SET balance = COALESCE(balance, 0) + ? WHERE id = ?',
-          [winAmount, userId]
+          'UPDATE users SET bonus_balance = COALESCE(bonus_balance, 0) + ?, wagering_requirement = COALESCE(wagering_requirement, 0) + ? WHERE id = ?',
+          [winAmount, winAmount * 15, userId]
         );
 
         // Record transaction for audit trail

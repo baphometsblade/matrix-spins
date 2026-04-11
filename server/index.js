@@ -823,11 +823,11 @@ app.post('/api/contests/prizes/:id/claim', verifyToken, async (req, res) => {
             [prizeId]
         );
 
-        // Credit the prize amount to the user's bonus balance (subject to wagering)
+        // Credit the prize amount to the user's bonus balance with 15x wagering (standard bonus)
         if (prize && prize.prize_amount > 0) {
             await db.run(
-                'UPDATE users SET bonus_balance = bonus_balance + ? WHERE id = ?',
-                [prize.prize_amount, req.user.id]
+                'UPDATE users SET bonus_balance = COALESCE(bonus_balance, 0) + ?, wagering_requirement = COALESCE(wagering_requirement, 0) + ? WHERE id = ?',
+                [prize.prize_amount, prize.prize_amount * 15, req.user.id]
             );
         }
 

@@ -408,8 +408,8 @@ router.post('/user/:id/send-bonus', async (req, res) => {
             }
 
             const balanceBefore = user.balance || 0;
-            // SECURITY FIX: Admin bonuses go to bonus_balance with 5x wagering requirement
-            var wageringReq = bonusAmount * 5;
+            // Admin bonuses go to bonus_balance with 15x standard wagering (per CLAUDE.md)
+            var wageringReq = bonusAmount * 15;
 
             await db.run(
                 'UPDATE users SET bonus_balance = COALESCE(bonus_balance, 0) + ?, wagering_requirement = COALESCE(wagering_requirement, 0) + ? WHERE id = ?',
@@ -473,8 +473,8 @@ router.post('/bulk-bonus', async (req, res) => {
             if (await checkTargetSelfExclusion(userId)) continue;
 
             const balanceBefore = user.balance || 0;
-            // SECURITY FIX: Bulk bonuses go to bonus_balance with 5x wagering
-            var wageringReq = bonusAmount * 5;
+            // Bulk bonuses go to bonus_balance with 15x standard wagering (per CLAUDE.md)
+            var wageringReq = bonusAmount * 15;
 
             await db.run(
                 'UPDATE users SET bonus_balance = COALESCE(bonus_balance, 0) + ?, wagering_requirement = COALESCE(wagering_requirement, 0) + ? WHERE id = ?',

@@ -1004,7 +1004,6 @@ function renderGames() {
                         </div>
                         <div class="game-card-overlay">
                             <button class="game-overlay-play" onclick="event.stopPropagation();(window.openSlot||openSlot)('${game.id}')">PLAY NOW</button>
-                            <button class="game-overlay-demo" onclick="event.stopPropagation();(window.openSlot||openSlot)('${game.id}')">Try Demo</button>
                         </div>
                         <div class="gi-strip">
                             <span class="gi-grid">${game.gridCols}\xd7${game.gridRows}</span>

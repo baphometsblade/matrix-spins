@@ -92,7 +92,6 @@
         var btns = _el('div', 'hc-buttons');
         var gameId = g.id;
         btns.appendChild(_btn('hc-play-btn', 'PLAY NOW', function() { window.phase5PlayGame(gameId); }));
-        btns.appendChild(_btn('hc-demo-btn', 'TRY DEMO', function() { window.phase5PlayGame(gameId, true); }));
         left.appendChild(btns);
 
         // Right thumbnail - use actual game thumbnail image

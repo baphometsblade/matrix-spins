@@ -57,3 +57,5 @@ assets/backgrounds/**/*_portrait*
 dist/
 .vercel
 casino.db.bak
+test_reg.json
+CASINO-PRODUCTION-PROMPT.md

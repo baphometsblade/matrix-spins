@@ -39,8 +39,8 @@ async function purchaseBundle(userId, bundleId) {
     // Base credits go to real balance, bonus credits go to bonus_balance with wagering
     const wageringReq = bonusCredits * 15; // 15x wagering on bonus portion
 
-    await db.run(`UPDATE users SET balance = balance + ?, bonus_balance = bonus_balance + ?,
-                   wagering_requirement = wagering_requirement + ? WHERE id = ?`,
+    await db.run(`UPDATE users SET balance = balance + ?, bonus_balance = COALESCE(bonus_balance, 0) + ?,
+                   wagering_requirement = COALESCE(wagering_requirement, 0) + ? WHERE id = ?`,
         [baseCredits, bonusCredits, wageringReq, userId]);
 
     // Log the purchase transaction

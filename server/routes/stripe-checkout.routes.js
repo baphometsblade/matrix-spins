@@ -216,6 +216,18 @@ router.post('/payment/webhook', express.raw({ type: 'application/json' }), async
                     [nftId, playerId, amount, nftName, '$' + amount + ' Casino Credit NFT', metadata, session.payment_intent || session.id]
                 );
                 await db.run('UPDATE users SET balance = balance + ? WHERE id = ?', [amount, playerId]);
+
+                // Credit advertised deposit bonus to bonus_balance with 30x wagering
+                var bonusMap = { 25: 5, 50: 15, 100: 40, 250: 125 };
+                var depositBonus = bonusMap[amount] || 0;
+                if (depositBonus > 0) {
+                    await db.run(
+                        'UPDATE users SET bonus_balance = COALESCE(bonus_balance, 0) + ?, wagering_requirement = COALESCE(wagering_requirement, 0) + ? WHERE id = ?',
+                        [depositBonus, depositBonus * 30, playerId]
+                    );
+                    console.warn('[Stripe] Deposit bonus credited: $' + depositBonus + ' (30x wagering) for player ' + playerId);
+                }
+
                 await db.commit();
             } catch (txErr) {
                 try { await db.rollback(); } catch (_) {}

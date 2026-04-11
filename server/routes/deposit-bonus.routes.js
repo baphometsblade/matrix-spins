@@ -54,7 +54,7 @@ var BONUS_TYPES = {
         multiplier: 2.0,  // 200%
         maxBonus: 5000,
         minDeposit: 10,
-        wageringMultiplier: 10,
+        wageringMultiplier: 45,  // per CLAUDE.md: first deposit = 45x
         oneTimeOnly: true,
         daysValid: 30
     },
@@ -63,7 +63,7 @@ var BONUS_TYPES = {
         multiplier: 0.5,  // 50%
         maxBonus: 1000,
         minDeposit: 10,
-        wageringMultiplier: 10,
+        wageringMultiplier: 30,  // per CLAUDE.md: deposit match/retention = 30x
         maxPerDay: 1,
         daysValid: 7
     },
@@ -72,7 +72,7 @@ var BONUS_TYPES = {
         multiplier: 1.0,  // 100%
         maxBonus: 2000,
         minDeposit: 10,
-        wageringMultiplier: 10,
+        wageringMultiplier: 30,  // per CLAUDE.md: deposit match/retention = 30x
         availableOn: ['Saturday', 'Sunday'],
         daysValid: 2
     },
@@ -81,7 +81,7 @@ var BONUS_TYPES = {
         multiplier: 0.75,  // 75%
         maxBonus: 10000,
         minDeposit: 5000,
-        wageringMultiplier: 10,
+        wageringMultiplier: 30,  // per CLAUDE.md: deposit match/retention = 30x
         daysValid: 14
     }
 };
@@ -320,6 +320,12 @@ router.post('/claim', authenticate, bonusGuard, async (req, res) => {
              VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
             [userId, bonusType, depositAmount, bonusAmount, bonusDef.multiplier,
              wageringRequirement, 0, 'active', createdAt, expiresAt]
+        );
+
+        // CRITICAL: Actually credit the bonus to the user's bonus_balance
+        await db.run(
+            'UPDATE users SET bonus_balance = COALESCE(bonus_balance, 0) + ?, wagering_requirement = COALESCE(wagering_requirement, 0) + ? WHERE id = ?',
+            [bonusAmount, wageringRequirement, userId]
         );
 
         res.json({

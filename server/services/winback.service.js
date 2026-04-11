@@ -57,8 +57,8 @@ async function grantWinBackBonus(userId, amount) {
     const wageringReq = amount * WAGERING_MULTIPLIER;
 
     await db.run(
-        `UPDATE users SET bonus_balance = bonus_balance + ?,
-             wagering_requirement = wagering_requirement + ?
+        `UPDATE users SET bonus_balance = COALESCE(bonus_balance, 0) + ?,
+             wagering_requirement = COALESCE(wagering_requirement, 0) + ?
          WHERE id = ?`,
         [amount, wageringReq, userId]
     );
