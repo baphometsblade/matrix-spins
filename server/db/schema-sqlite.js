@@ -801,6 +801,7 @@ const INDEXES = [
     `CREATE INDEX IF NOT EXISTS idx_transactions_user_type_date ON transactions(user_id, type, created_at)`,
     `CREATE INDEX IF NOT EXISTS idx_spins_user_date ON spins(user_id, created_at)`,
     `CREATE INDEX IF NOT EXISTS idx_deposits_user_status ON deposits(user_id, status, created_at)`,
+    `CREATE UNIQUE INDEX IF NOT EXISTS idx_deposits_external_ref ON deposits(external_ref) WHERE external_ref IS NOT NULL`,
     `CREATE INDEX IF NOT EXISTS idx_withdrawals_user_status ON withdrawals(user_id, status, created_at)`,
     `CREATE INDEX IF NOT EXISTS idx_daily_mission_progress_user_date ON daily_mission_progress(user_id, mission_date, completed)`,
     `CREATE INDEX IF NOT EXISTS idx_spins_user_bet ON spins(user_id, bet_amount, win_amount)`,

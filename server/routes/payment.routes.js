@@ -1438,37 +1438,9 @@ router.post('/stripe/payment-intent', authenticate, async (req, res) => {
     }
 });
 
-// POST /api/payments/stripe/webhook — Stripe webhook endpoint (UNAUTHENTICATED)
-// Stripe sends events here. The body must be raw (not JSON-parsed) for signature verification.
-// Raw body parsing is configured in server/index.js with express.raw() for this specific path.
-router.post('/stripe/webhook', async (req, res) => {
-    try {
-        if (!stripeService.isAvailable()) {
-            return res.status(503).json({ error: 'Stripe is not configured' });
-        }
-
-        const signature = req.headers['stripe-signature'];
-        if (!signature) {
-            return res.status(400).json({ error: 'Missing Stripe-Signature header' });
-        }
-
-        // req.body should be a raw Buffer (configured via express.raw in index.js)
-        const rawBody = req.body;
-        if (!Buffer.isBuffer(rawBody)) {
-            console.warn('[Stripe Webhook] Body is not a Buffer — ensure express.raw() middleware is applied for this route');
-            return res.status(400).json({ error: 'Webhook body must be raw — check server middleware configuration' });
-        }
-
-        const result = await stripeService.handleWebhook(rawBody, signature);
-
-        console.log(`[Stripe Webhook] Processed: ${result.event.type} — handled: ${result.action.handled}`);
-        res.json({ received: true, event: result.event.type, handled: result.action.handled });
-    } catch (err) {
-        console.warn('[Stripe Webhook] Error:', err.message);
-        // Stripe recommends returning 400 for signature failures so it retries
-        // SECURITY: Don't leak internal error details to the network
-        res.status(400).json({ error: 'Webhook processing failed' });
-    }
-});
+// DISABLED: Duplicate webhook handler removed to prevent double-credit risk.
+// The canonical Stripe webhook is in stripe-checkout.routes.js at /api/payment/webhook.
+// It uses session.amount_total from Stripe (not the DB record) for security.
+// Only ONE webhook URL should be configured in the Stripe Dashboard.
 
 module.exports = router;
