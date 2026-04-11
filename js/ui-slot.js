@@ -4307,7 +4307,7 @@
             var offer = document.createElement('div');
             offer.className = 'gcm-offer';
             var offerRows = [
-                { label: '1st Deposit', value: '100% Match up to $1,000' },
+                { label: '1st Deposit', value: '100% Match up to $500' },
                 { label: 'Free Spins', value: '50 on top slots' },
                 { label: 'Register Bonus', value: '$5 free — no deposit!' }
             ];
@@ -17287,7 +17287,7 @@ function _initWelcomeFlow() {
     if (!overlay) return;
     overlay.innerHTML = '<div class="wf315-card">' +
         '<h2>Welcome to Matrix Spins!</h2>' +
-        '<p>Your starting balance: <strong>$5,000</strong></p>' +
+        '<p>Your starting bonus: <strong>$5 free credits</strong></p>' +
         '<ul class="wf315-steps">' +
         '<li>Pick a slot from the lobby</li>' +
         '<li>Set your bet and spin!</li>' +

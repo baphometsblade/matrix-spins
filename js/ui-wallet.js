@@ -647,7 +647,7 @@ function _renderFirstDepositBanner() {
         '<div class="wfdb-badge">\uD83C\uDF81 WELCOME OFFER</div>' +
         '<div class="wfdb-title">100% Match on Your First Deposit!</div>' +
         '<div class="wfdb-offers">' +
-            '<div class="wfdb-offer"><span class="wfdb-num">$1,000</span><span class="wfdb-lbl">Max Bonus</span></div>' +
+            '<div class="wfdb-offer"><span class="wfdb-num">$500</span><span class="wfdb-lbl">Max Bonus</span></div>' +
             '<div class="wfdb-offer"><span class="wfdb-num">50</span><span class="wfdb-lbl">Free Spins</span></div>' +
             '<div class="wfdb-offer"><span class="wfdb-num">+$5</span><span class="wfdb-lbl">No-Deposit Gift</span></div>' +
         '</div>' +
