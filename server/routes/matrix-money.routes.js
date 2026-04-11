@@ -131,9 +131,10 @@ router.post('/purchase', authenticate, async (req, res) => {
         );
         const depositId = depositResult.lastInsertRowid;
 
-        // For demo/development ONLY: auto-complete the deposit and credit balance
-        // In production, Stripe webhook confirmation handles this
-        if (!config.STRIPE_SECRET_KEY && config.NODE_ENV !== 'production') {
+        // PRODUCTION SAFETY: Never auto-credit deposits. Stripe webhook handles real payments.
+        // Previously this block ran when STRIPE_SECRET_KEY was unset in dev mode,
+        // but it's too dangerous to keep — even dev should use Stripe test keys.
+        if (false /* disabled for production — use Stripe webhooks */) {
             const user = await db.get('SELECT balance FROM users WHERE id = ?', [req.user.id]);
             const balanceBefore = user ? user.balance : 0;
 
