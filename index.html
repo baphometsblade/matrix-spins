@@ -246,7 +246,7 @@
         <span class="trust-sep">·</span>
         <span class="trust-item trust-online">
           <span class="trust-dot"></span>
-          <span id="onlineCountDisplay">1,247</span> players online
+          <span id="onlineCountDisplay">--</span> players online
         </span>
       </div>
     </div>
@@ -255,19 +255,19 @@
       <div class="jackpot-pills">
         <span class="jackpot-pill jackpot-grand" onclick="setFilter('jackpot')">
           <span class="jp-label">GRAND</span>
-          <span class="jp-amount" id="jpGrand">$124,891</span>
+          <span class="jp-amount" id="jpGrand">$0</span>
         </span>
         <span class="jackpot-pill jackpot-major" onclick="setFilter('jackpot')">
           <span class="jp-label">MAJOR</span>
-          <span class="jp-amount" id="jpMajor">$12,440</span>
+          <span class="jp-amount" id="jpMajor">$0</span>
         </span>
         <span class="jackpot-pill jackpot-minor" onclick="setFilter('jackpot')">
           <span class="jp-label">MINOR</span>
-          <span class="jp-amount" id="jpMinor">$1,892</span>
+          <span class="jp-amount" id="jpMinor">$0</span>
         </span>
         <span class="jackpot-pill jackpot-mini" onclick="setFilter('jackpot')">
           <span class="jp-label">MINI</span>
-          <span class="jp-amount" id="jpMini">$248</span>
+          <span class="jp-amount" id="jpMini">$0</span>
         </span>
       </div>
       <div class="wins-ticker-wrap">
@@ -376,7 +376,7 @@
                 </div>
                 <div class="hero-jackpot" id="heroJackpotDisplay" style="display:none">
                     <div class="hero-jackpot-label">🏆 GRAND JACKPOT</div>
-                    <div class="hero-jackpot-amount" id="heroJackpotAmount">$25,000.00</div>
+                    <div class="hero-jackpot-amount" id="heroJackpotAmount">$0.00</div>
                 </div>
             </div>
         </div>
@@ -991,7 +991,7 @@
                 <div class="jackpot-banner-inner">
                     <svg class="jackpot-banner-icon" viewBox="0 0 16 16" fill="currentColor" width="16" height="16"><path d="M8 1l1.5 3.5h3.5l-2.8 2 1 3.5L8 8.2 4.8 10l1-3.5L3 4.5h3.5z"/></svg>
                     <span class="jackpot-banner-label">JACKPOT</span>
-                    <span class="jackpot-banner-value" id="slotJackpotValue">$1,247,836</span>
+                    <span class="jackpot-banner-value" id="slotJackpotValue">$0</span>
                     <svg class="jackpot-banner-icon" viewBox="0 0 16 16" fill="currentColor" width="16" height="16"><path d="M8 1l1.5 3.5h3.5l-2.8 2 1 3.5L8 8.2 4.8 10l1-3.5L3 4.5h3.5z"/></svg>
                 </div>
             </div>
@@ -2155,8 +2155,7 @@ if ('serviceWorker' in navigator) {
     <!-- Duplicate SW registration removed -->
     <!-- IMPROVEMENT 30: Promotional Popups -->
     <script src="js/promo-popups.js"></script>
-    <!-- IMPROVEMENT 31: Social Proof Notifications -->
-    <script src="js/social-proof.js"></script>
+    <!-- Social proof removed — was fake client-side fabrication -->
     <!-- IMPROVEMENT 33: Quick Deposit FAB -->
     <script src="js/quick-deposit.js"></script>
     <!-- IMPROVEMENT 34: Jackpot Ticker -->

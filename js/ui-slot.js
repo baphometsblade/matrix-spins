@@ -15726,20 +15726,10 @@ function _updateCurrencyBadge() {
 // Sprint 254 — Live player count
 var _playerCount254 = { base: 1247, variance: 200 };
 function _initPlayerCount() {
-    _updatePlayerCount();
-    setInterval(_updatePlayerCount, 30000); // Update every 30s
+    // REMOVED: Was fabricating fake player counts with Math.random()
 }
 function _updatePlayerCount() {
-    var el = document.getElementById('playerCountBadge');
-    if (!el) return;
-    var count = _playerCount254.base + Math.floor(Math.random() * _playerCount254.variance) - Math.floor(_playerCount254.variance / 2);
-    // Time-based variation (more players in evening)
-    var hour = new Date().getHours();
-    if (hour >= 18 && hour <= 23) count = Math.floor(count * 1.4);
-    else if (hour >= 0 && hour <= 5) count = Math.floor(count * 0.6);
-    el.textContent = count.toLocaleString() + ' playing now';
-    el.className = 'player-count-badge';
-    el.style.display = '';
+    // REMOVED: Fake player count display
 }
 
 // Sprint 255 — Recent big wins feed (fake seed removed — real data from /api/big-wins)
@@ -18686,34 +18676,12 @@ function _sendChatMsg() {
 
 /* ── 355-362 — leaderboard system ─────────────────────────────── */
 function _showLeaderboard() {
-    var panel = document.getElementById('leaderboard360');
-    if (panel) { panel.style.display = panel.style.display === 'none' ? 'flex' : 'none'; return; }
-    panel = document.createElement('div');
-    panel.id = 'leaderboard360';
-    panel.className = 'leaderboard-overlay';
-    var mockData = [
-        { rank: 1, name: 'HighRoller99', wins: 125430, badge: '\u{1F451}' },
-        { rank: 2, name: 'LuckyStar22', wins: 98200, badge: '\u{1F948}' },
-        { rank: 3, name: 'SpinMaster', wins: 87650, badge: '\u{1F949}' },
-        { rank: 4, name: 'GoldenAce', wins: 72100, badge: '' },
-        { rank: 5, name: 'JackpotJane', wins: 65800, badge: '' },
-        { rank: 6, name: 'SlotKing88', wins: 58900, badge: '' },
-        { rank: 7, name: 'DiamondDave', wins: 51200, badge: '' },
-        { rank: 8, name: 'NeonNinja', wins: 43700, badge: '' },
-        { rank: 9, name: 'CherryBomb', wins: 38500, badge: '' },
-        { rank: 10, name: 'You', wins: typeof totalWon !== 'undefined' ? Math.floor(totalWon) : 0, badge: '\u{1F464}' }
-    ];
-    var html = '<div class="lb-inner"><h2>\u{1F3C6} Leaderboard</h2><div class="lb-tabs"><button class="lb-tab lb-tab-active" onclick="_switchLbTab(this,\&quot;daily\&quot;)">Daily</button><button class="lb-tab" onclick="_switchLbTab(this,\'weekly\')">Weekly</button><button class="lb-tab" onclick="_switchLbTab(this,\'alltime\')">All Time</button></div><div class="lb-list">';
-    mockData.forEach(function(p) {
-        html += '<div class="lb-row ' + (p.rank <= 3 ? 'lb-top3' : '') + '"><span class="lb-rank">#' + p.rank + '</span><span class="lb-badge">' + p.badge + '</span><span class="lb-name">' + p.name + '</span><span class="lb-wins">$' + p.wins.toLocaleString() + '</span></div>';
-    });
-    html += '</div><button onclick="document.getElementById(&quot;leaderboard360&quot;).style.display=&quot;none&quot;" class="lb-close-btn">Close</button></div>';
-    panel.innerHTML = html;
-    document.body.appendChild(panel);
+    // REMOVED: Was showing hardcoded fake player names (HighRoller99, LuckyStar22, etc.)
+    // Real leaderboard would need server-side /api/leaderboard endpoint
+    if (typeof showToast === 'function') showToast('Leaderboard coming soon!', 'info');
 }
 function _switchLbTab(el, tab) {
-    document.querySelectorAll('.lb-tab').forEach(function(t) { t.classList.remove('lb-tab-active'); });
-    el.classList.add('lb-tab-active');
+    // no-op — leaderboard removed
 }
 
 
@@ -23937,27 +23905,8 @@ function _initVIPDepositBonuses() {
 
 // === Sprint 523-530 Feature 1: Leaderboard Seasons ===
 function _initLeaderboardSeasons() {
-    if (document.getElementById('lb-season-panel')) return;
-    var season = JSON.parse(localStorage.getItem('ms_lb_season') || '{"number":1,"startTs":' + Date.now() + ',"entries":[]}');
-    var daysLeft = Math.max(0, 30 - Math.floor((Date.now() - season.startTs) / 86400000));
-    if (daysLeft <= 0) { season = {number: season.number+1, startTs: Date.now(), entries: []}; localStorage.setItem('ms_lb_season', JSON.stringify(season)); daysLeft = 30; }
-    var panel = document.createElement('div');
-    panel.id = 'lb-season-panel';
-    panel.className = 'lb-season-panel hidden';
-    var mockPlayers = [
-        {name:'LuckyAce',score:125000},{name:'SpinKing',score:98000},{name:'JackpotJane',score:87500},
-        {name:'GoldRush',score:72000},{name:'DiamondDave',score:65000},{name:'WinStreak',score:58000},
-        {name:'SlotMaster',score:45000},{name:'ReelDeal',score:38000},{name:'BonusHunter',score:29000},
-        {name:'You',score:parseInt(localStorage.getItem('ms_total_wagered')||'0')}
-    ].sort(function(a,b){return b.score-a.score;});
-    var rows = mockPlayers.map(function(p,i) {
-        var medal = i===0?'1st':i===1?'2nd':i===2?'3rd':'#'+(i+1);
-        var isYou = p.name==='You'?' lb-you':'';
-        return '<div class="lb-row'+isYou+'"><span class="lb-rank">'+medal+'</span><span class="lb-name">'+p.name+'</span><span class="lb-score">$'+p.score.toLocaleString()+'</span></div>';
-    }).join('');
-    panel.innerHTML = '<div class="lb-inner"><h3>Season '+season.number+' Leaderboard</h3><div class="lb-timer">'+daysLeft+' days remaining</div><div class="lb-prizes"><span>1st: $500</span><span>2nd: $250</span><span>3rd: $100</span></div>'+rows+'</div>';
-    document.body.appendChild(panel);
-    console.log('[Sprint 523-530] Leaderboard Seasons ready');
+    // REMOVED: Was showing hardcoded fake players (LuckyAce, SpinKing, JackpotJane, etc.)
+    // Real leaderboard would need server-side /api/leaderboard endpoint
 }
 
 /* ---- Feature 2: Friend System ---- */
@@ -23991,20 +23940,8 @@ function _initFriendSystem() {
 
 /* ---- Feature 3: Gift Bonuses ---- */
 function _initGiftBonuses() {
-    var gifts = JSON.parse(localStorage.getItem('ms_pending_gifts') || '[]');
-    if (gifts.length > 0) {
-        var gift = gifts.shift();
-        localStorage.setItem('ms_pending_gifts', JSON.stringify(gifts));
-        var popup = document.createElement('div');
-        popup.className = 'gift-popup';
-        popup.innerHTML = '<div class="gp-inner"><h3>Gift Received!</h3><p>'+gift.from+' sent you <b>$'+gift.amount.toFixed(2)+'</b>!</p><button onclick="this.parentElement.parentElement.remove()">Claim</button></div>';
-        document.body.appendChild(popup);
-        var bal = parseFloat(localStorage.getItem('ms_balance') || '1000');
-        bal += gift.amount;
-        localStorage.setItem('ms_balance', bal.toFixed(2));
-        if (typeof updateBalanceDisplay === 'function') updateBalanceDisplay();
-    }
-    console.log('[Sprint 523-530] Gift Bonuses ready');
+    // REMOVED: Was directly manipulating localStorage balance (free money path)
+    // Real gift system would need server-side /api/gifts endpoint
 }
 
 /* ---- Feature 4: Achievement Badges ---- */
@@ -24069,20 +24006,8 @@ function _initDailyChallenges() {
 
 /* ---- Feature 6: Community Jackpot ---- */
 function _initCommunityJackpot() {
-    if (document.getElementById('community-jp')) return;
-    var cjp = JSON.parse(localStorage.getItem('ms_community_jp') || '{"pool":15000,"contributors":247,"lastWinner":"LuckyAce","lastAmount":8500}');
-    var widget = document.createElement('div');
-    widget.id = 'community-jp';
-    widget.className = 'community-jp';
-    widget.innerHTML = '<div class="cjp-inner"><span class="cjp-label">COMMUNITY JACKPOT</span><span class="cjp-amount" id="cjp-amount">$'+cjp.pool.toLocaleString()+'</span><span class="cjp-info">'+cjp.contributors+' contributors</span></div>';
-    document.body.appendChild(widget);
-    setInterval(function() {
-        cjp.pool += Math.random() * 2;
-        cjp.contributors += Math.random() < 0.1 ? 1 : 0;
-        document.getElementById('cjp-amount').textContent = '$' + Math.floor(cjp.pool).toLocaleString();
-        localStorage.setItem('ms_community_jp', JSON.stringify(cjp));
-    }, 4000);
-    console.log('[Sprint 523-530] Community Jackpot ready');
+    // REMOVED: Was fabricating a fake community jackpot with hardcoded pool ($15,000),
+    // fake contributors (247), and auto-incrementing amounts using Math.random()
 }
 
 /* ---- Feature 7: Referral Tiers ---- */
@@ -24445,35 +24370,7 @@ function _initDailyChallenges() {
 /* ---- Feature 6: Community Jackpot ---- */
 var _communityJackpot = { pool: 0, contributors: 0, threshold: 10000 };
 function _initCommunityJackpot() {
-    var saved = JSON.parse(localStorage.getItem('ms_community_jp') || 'null');
-    if (saved) _communityJackpot = saved;
-    else {
-        _communityJackpot = { pool: Math.floor(Math.random()*5000) + 2000, contributors: Math.floor(Math.random()*50)+10, threshold: 10000 };
-        localStorage.setItem('ms_community_jp', JSON.stringify(_communityJackpot));
-    }
-    if (document.getElementById('community-jp')) return;
-    var widget = document.createElement('div');
-    widget.id = 'community-jp';
-    widget.className = 'community-jp';
-    var pct = Math.floor(_communityJackpot.pool / _communityJackpot.threshold * 100);
-    widget.innerHTML = '<div class="cjp-inner">' +
-        '<span class="cjp-label">COMMUNITY JACKPOT</span>' +
-        '<span class="cjp-amount">$' + _communityJackpot.pool.toLocaleString() + '</span>' +
-        '<div class="cjp-bar"><div class="cjp-fill" style="width:' + pct + '%"></div></div>' +
-        '<span class="cjp-info">' + _communityJackpot.contributors + ' players contributing</span>' +
-        '</div>';
-    document.body.appendChild(widget);
-    setInterval(function() {
-        _communityJackpot.pool += Math.random() * 5;
-        _communityJackpot.contributors += Math.random() < 0.1 ? 1 : 0;
-        localStorage.setItem('ms_community_jp', JSON.stringify(_communityJackpot));
-        var el = document.getElementById('community-jp');
-        if (el) {
-            el.querySelector('.cjp-amount').textContent = '$' + Math.floor(_communityJackpot.pool).toLocaleString();
-            el.querySelector('.cjp-fill').style.width = Math.floor(_communityJackpot.pool / _communityJackpot.threshold * 100) + '%';
-        }
-    }, 4000);
-    console.log('[Sprint 523-530] Community Jackpot ready');
+    // REMOVED: Was fabricating a fake community jackpot with random pool and auto-increment
 }
 
 /* ---- Feature 7: Referral Tiers ---- */
@@ -24853,20 +24750,8 @@ function _denyWithdrawal(id) {
 
 // === Sprint 547-554 Feature 1: Real-Time Player Count ===
 function _initPlayerCount() {
-    if (document.getElementById('player-count-widget')) return;
-    var baseCount = 150 + Math.floor(Math.random() * 80);
-    var widget = document.createElement('div');
-    widget.id = 'player-count-widget';
-    widget.className = 'player-count-widget';
-    widget.innerHTML = '<span class="pc-dot"></span><span class="pc-num" id="pc-num">' + baseCount + '</span><span class="pc-label"> players online</span>';
-    document.body.appendChild(widget);
-    setInterval(function() {
-        baseCount += Math.floor(Math.random() * 7) - 3;
-        baseCount = Math.max(80, Math.min(400, baseCount));
-        var el = document.getElementById('pc-num');
-        if (el) el.textContent = baseCount;
-    }, 8000);
-    console.log('[Sprint 547-554] Player Count ready');
+    // REMOVED: Was fabricating fake "150-400 players online" using Math.random()
+    // Real player count would need server-side session tracking
 }
 
 /* ---- Feature 2: Server-Side RTP Enforcement Display ---- */
@@ -26840,16 +26725,8 @@ function _claimWelcomeBonus627() {
 
 /* ---- Feature 3: Social Proof Ticker ---- */
 function _initSocialProof627() {
-    var names = ['Lucky7','SpinKing','DiamondQ','JackpotJ','ReelMaster','GoldRush','AceHigh','BigWinner'];
-    var actions = ['just won $','deposited $','hit a jackpot of $','cashed out $'];
-    setInterval(function() {
-        if (Math.random() > 0.7) return;
-        var name = names[Math.floor(Math.random() * names.length)];
-        var action = actions[Math.floor(Math.random() * actions.length)];
-        var amount = (Math.random() * 500 + 10).toFixed(2);
-        if (typeof _showNotification571 === 'function') _showNotification571(name + ' ' + action + amount, 'info', 4000);
-    }, 45000);
-    console.log('[Sprint 627-634] Social Proof Ticker ready');
+    // REMOVED: Was fabricating fake player win notifications with hardcoded names
+    // Real social proof would need to come from server-side win event stream
 }
 
 /* ---- Feature 4: Countdown Timer Offers ---- */
