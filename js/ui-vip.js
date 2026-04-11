@@ -131,14 +131,13 @@ function claimWeeklyReload() {
         VIP_WEEKLY_RELOAD_MAX_BONUS
     );
 
-    balance += bonusAmount;
-    if (typeof saveBalance === 'function') saveBalance();
-    if (typeof updateBalance === 'function') updateBalance();
+    // Production: VIP bonus is handled server-side.
+    // No client-side balance manipulation allowed.
 
     vipState.lastWeeklyReloadClaim = Date.now();
     saveVipState();
 
-    showToast(`Weekly reload: +$${formatMoney(bonusAmount)}!`, 'success');
+    showToast('Weekly reload claimed! Log in to see your updated balance.', 'success');
 
     // Re-render the modal if open
     const modal = document.querySelector('.vip-modal-wrapper');

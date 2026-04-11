@@ -61,28 +61,20 @@
         var _resumeBannerTimer = null;
         var _lastPlayedGameForResume = null;
 
-        // Live player count simulation
+        // Live player count — removed fake simulation; badges hidden until real data available
         var _liveCounts = {};
 
         function _seedCount(gameId, isHot) {
-            var h = 0;
-            for (var i = 0; i < gameId.length; i++) { h = (h * 31 + gameId.charCodeAt(i)) & 0xffff; }
-            var base = isHot ? (18 + h % 80) : (8 + h % 45);
-            _liveCounts[gameId] = base;
+            // No-op: fake player counts removed. Real counts not yet available per-game.
         }
 
         function _getLiveCount(gameId) {
-            return _liveCounts[gameId] || 12;
+            // Return empty string so badge renders blank (hidden via CSS when empty)
+            return '';
         }
 
         function _tickLiveCounts() {
-            Object.keys(_liveCounts).forEach(function(id) {
-                var delta = Math.floor(Math.random() * 5) - 2; // -2 to +2
-                _liveCounts[id] = Math.max(6, _liveCounts[id] + delta);
-                // Update any visible badges
-                var badge = document.querySelector('.card-players-live[data-game="' + id + '"]');
-                if (badge) badge.lastChild.nodeValue = ' ' + _liveCounts[id] + ' playing';
-            });
+            // No-op: fake count ticking removed
         }
 
 
@@ -634,10 +626,7 @@ function renderGames() {
                     else applyGameOfDayBadge();
                     // Hot/Cold badges — fire-and-forget, cosmetic only
                     fetchGameStats();
-                    // Start live-count tick once, persists across re-renders
-                    if (!window._liveCountsInterval) {
-                        window._liveCountsInterval = setInterval(_tickLiveCounts, 15000 + Math.random() * 6000);
-                    }
+                    // Live-count tick removed — no fake player counts
                     // Initial tab count badges after games load (Sprint 19)
                     setTimeout(function() { if (typeof _updateTabCounts === 'function') _updateTabCounts(); }, 0);
                     // XP level badge update (Sprint 20)
@@ -997,7 +986,7 @@ function renderGames() {
                         </div>
                         ${topTag}
                         ${jackpotBadge}
-                        <div class="card-players-live" data-game="${game.id}"> ${_getLiveCount(game.id)} playing</div>
+                        <div class="card-players-live" data-game="${game.id}" style="display:none"></div>
                         ${(function() { try { var _v = parseFloat(localStorage.getItem('personalBest_' + game.id) || '0'); if (_v > 0) { var _disp = _v >= 1000 ? ('$' + (_v/1000).toFixed(1) + 'K') : ('$' + Math.round(_v)); return '<div class="card-personal-best">\u{1F3C6} PB ' + _disp + '</div>'; } } catch(e) {} return ''; })()}
                         <div class="game-vol-badge ${volClass}" title="Volatility: ${vol}">
                             ${dotsHtml}
@@ -1562,26 +1551,25 @@ function renderGames() {
         }
 
 
-        // Track recently used names so the same player doesn't appear back-to-back
-        let _tickerRecentNames = [];
+        // Real win ticker — fetches from /api/big-wins instead of fabricating data
+        let _tickerRealWins = [];
 
-        function generateTickerMessage() {
-            // Pick a name that wasn't used in the last 5 messages
-            let name;
-            const avoidSet = new Set(_tickerRecentNames.slice(-5));
-            const available = TICKER_NAMES.filter(n => !avoidSet.has(n));
-            name = (available.length ? available : TICKER_NAMES)[Math.floor(Math.random() * (available.length || TICKER_NAMES.length))];
-            _tickerRecentNames.push(name);
-            if (_tickerRecentNames.length > 10) _tickerRecentNames.shift();
-
-            const tickerPool = games.filter(g => g.payouts && g.payouts.triple && g.payouts.double);
-            const game = tickerPool[Math.floor(Math.random() * tickerPool.length)];
-            const multiplier = Math.floor(Math.random() * game.payouts.triple) + game.payouts.double;
-            const bet = game.minBet + Math.floor(Math.random() * (game.maxBet - game.minBet) / game.minBet) * game.minBet;
-            const win = bet * multiplier;
-            return `${name} won $${win.toLocaleString()} on ${game.name}!`;
+        async function _fetchTickerWins() {
+            try {
+                const resp = await fetch('/api/big-wins');
+                if (!resp.ok) return [];
+                const data = await resp.json();
+                if (!data.wins || !Array.isArray(data.wins)) return [];
+                return data.wins.map(function(w) {
+                    var gameDef = games.find(function(g) { return g.id === w.gameId; });
+                    var gameName = gameDef ? gameDef.name : (w.gameId || 'Slot Game');
+                    var playerName = w.player || 'A player';
+                    return playerName + ' won $' + Number(w.amount).toLocaleString() + ' on ' + gameName + '!';
+                });
+            } catch (e) {
+                return [];
+            }
         }
-
 
         function startWinTicker() {
             const content = document.getElementById('tickerContent');
@@ -1590,21 +1578,28 @@ function renderGames() {
             // Clear any existing ticker interval to prevent leaks on re-init
             if (tickerInterval) clearInterval(tickerInterval);
 
-            // Build initial messages
-            let messages = [];
-            for (let i = 0; i < TICKER_INITIAL_MESSAGE_COUNT; i++) {
-                messages.push(generateTickerMessage());
-            }
+            // Fetch real wins from server, then render
+            _fetchTickerWins().then(function(messages) {
+                _tickerRealWins = messages;
+                if (_tickerRealWins.length > 0) {
+                    renderTickerContent(_tickerRealWins);
+                } else {
+                    // No real wins yet — hide ticker rather than show fake data
+                    content.textContent = '';
+                }
+            });
 
-            // Render two identical copies side-by-side for seamless loop
-            renderTickerContent(messages);
-
-            // Periodically swap in new messages (update both copies in sync)
-            tickerInterval = setInterval(() => {
-                messages.push(generateTickerMessage());
-                if (messages.length > TICKER_MAX_MESSAGES) messages.shift();
-                renderTickerContent(messages);
-            }, WIN_TICKER_INTERVAL);
+            // Periodically refresh from server
+            tickerInterval = setInterval(function() {
+                _fetchTickerWins().then(function(messages) {
+                    _tickerRealWins = messages;
+                    if (_tickerRealWins.length > 0) {
+                        renderTickerContent(_tickerRealWins);
+                    } else {
+                        content.textContent = '';
+                    }
+                });
+            }, 30000); // refresh every 30 seconds
         }
 
 

@@ -1156,19 +1156,16 @@
 
 
         async function confirmDeposit(amount) {
-            // ROUND 40: Block fake deposits for authenticated users
+            // Production: All deposits must go through the server payment system.
+            // No client-side balance manipulation allowed.
             var _depToken = typeof localStorage !== 'undefined' ? localStorage.getItem('casinoAuthToken') : null;
             if (_depToken && !_depToken.startsWith('local_')) {
                 closeDepositModal();
                 showToast('Please use the payment system to deposit.', 'error');
-                return;
+            } else {
+                closeDepositModal();
+                showToast('Please register or log in to make a deposit.', 'error');
             }
-            balance += amount;
-            updateBalance();
-            saveBalance();
-            closeDepositModal();
-            showToast(`$${amount.toLocaleString()} deposited!`, 'success');
-            playSound('win');
         }
 
 

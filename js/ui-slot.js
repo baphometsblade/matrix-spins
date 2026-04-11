@@ -15742,20 +15742,27 @@ function _updatePlayerCount() {
     el.style.display = '';
 }
 
-// Sprint 255 — Recent big wins feed
+// Sprint 255 — Recent big wins feed (fake seed removed — real data from /api/big-wins)
 var _bigWins255 = [];
-var _bigWinNames255 = ['Lucky_7s', 'Dragon888', 'SlotKing', 'NeonQueen', 'GoldRush99', 'WildAce', 'DiamondSpin', 'RoyalFlush', 'MatrixPro', 'JackpotJoe'];
 function _initBigWinsFeed() {
-    // Seed with some fake wins
-    for (var i = 0; i < 5; i++) {
-        _bigWins255.push({
-            name: _bigWinNames255[Math.floor(Math.random() * _bigWinNames255.length)],
-            amount: Math.floor(Math.random() * 5000) + 100,
-            game: ['Dragon Fortune', 'Mega Diamonds', 'Space Gems', 'Neon Nights', 'Lucky Sevens'][Math.floor(Math.random() * 5)],
-            time: Date.now() - Math.floor(Math.random() * 600000)
+    // Fetch real big wins from server instead of seeding fake data
+    fetch('/api/big-wins').then(function(resp) {
+        if (!resp.ok) return;
+        return resp.json();
+    }).then(function(data) {
+        if (!data || !data.wins || !data.wins.length) return;
+        data.wins.slice(0, 10).forEach(function(w) {
+            _bigWins255.push({
+                name: w.player || 'A player',
+                amount: w.amount || 0,
+                game: w.gameId || 'Slot Game',
+                time: w.time ? new Date(w.time).getTime() : Date.now()
+            });
         });
-    }
-    _renderBigWinsFeed();
+        _renderBigWinsFeed();
+    }).catch(function() {
+        // No real wins available — feed stays empty
+    });
 }
 function _addBigWin(winAmount, gameName) {
     if (winAmount < 50) return; // Only show wins > $50
@@ -16132,39 +16139,29 @@ function _processDeposit() {
     if (!input) return;
     var amount = parseFloat(input.value);
     if (isNaN(amount) || amount < 10) { alert('Minimum deposit is $10'); return; }
-    // ROUND 40: Block fake deposits for authenticated users.
-    // Previously: client-side balance += amount with no server/payment verification.
-    // Players could "deposit" unlimited amounts without paying.
+    // Production: All deposits must go through the server payment system.
+    // No client-side balance manipulation allowed.
     var token = typeof localStorage !== 'undefined' ? localStorage.getItem('casinoAuthToken') : null;
     if (token && !token.startsWith('local_')) {
         alert('Please use the payment system to make a deposit.');
-        return;
+    } else {
+        alert('Please register or log in to make a deposit.');
     }
-    if (typeof _trackDeposit === 'function') _trackDeposit(amount);
-    if (typeof balance !== 'undefined') balance += amount;
-    var betDisplay = document.getElementById('balanceAmount');
-    if (betDisplay) betDisplay.textContent = balance;
-    _payments267.depositHistory.push({ type: 'deposit', amount: amount, method: _selectedPayMethod267, status: 'Complete', time: Date.now() });
     _closeCashier();
-    if (typeof _checkAchievement === 'function') _checkAchievement('firstDeposit', 'First Deposit!', true);
 }
 function _processWithdrawal() {
     var input = document.getElementById('withdrawAmount');
     if (!input) return;
     var amount = parseFloat(input.value);
     if (isNaN(amount) || amount < 20) { alert('Minimum withdrawal is $20'); return; }
-    if (typeof balance !== 'undefined' && amount > balance) { alert('Insufficient balance'); return; }
-    // Check wagering requirements
-    if (_wagering269 && _wagering269.remaining > 0) {
-        alert('You have $' + _wagering269.remaining.toFixed(0) + ' wagering requirements remaining. Complete them before withdrawing.');
-        return;
+    // Production: All withdrawals must go through the server.
+    // No client-side balance manipulation allowed.
+    var token = typeof localStorage !== 'undefined' ? localStorage.getItem('casinoAuthToken') : null;
+    if (token && !token.startsWith('local_')) {
+        alert('Please use the withdrawal system in your account to request a withdrawal.');
+    } else {
+        alert('Please register or log in to request a withdrawal.');
     }
-    if (typeof balance !== 'undefined') balance -= amount;
-    var betDisplay = document.getElementById('balanceAmount');
-    if (betDisplay) betDisplay.textContent = balance;
-    _payments267.withdrawalHistory.push({ type: 'withdrawal', amount: amount, method: 'bank', status: 'Pending', time: Date.now() });
-    _payments267.pendingWithdrawals.push({ amount: amount, time: Date.now() });
-    alert('Withdrawal of $' + amount + ' requested. Processing within 24-48 hours.');
     _closeCashier();
 }
 
@@ -16235,21 +16232,9 @@ function _updateCashbackBadge() {
 }
 function _claimCashback() {
     if (_cashback270.accumulated < 5) { alert('Minimum cashback claim is $5'); return; }
-    // ROUND 40: Block client-side cashback for authenticated users
-    var _cbToken = typeof localStorage !== 'undefined' ? localStorage.getItem('casinoAuthToken') : null;
-    if (_cbToken && !_cbToken.startsWith('local_')) {
-        alert('Cashback is processed automatically by the server.');
-        return;
-    }
-    var amount = Math.floor(_cashback270.accumulated);
-    if (typeof balance !== 'undefined') balance += amount;
-    var betDisplay = document.getElementById('balanceAmount');
-    if (betDisplay) betDisplay.textContent = balance;
-    _cashback270.accumulated = 0;
-    _cashback270.losses = 0;
-    try { localStorage.setItem('matrixSpins_cashback', JSON.stringify(_cashback270)); } catch(e) {}
-    _updateCashbackBadge();
-    alert('$' + amount + ' cashback credited to your balance!');
+    // Production: Cashback is processed server-side.
+    // No client-side balance manipulation allowed.
+    alert('Cashback is processed automatically by the server. Please log in to claim.');
 }
 
 // Sprint 271 — Tournament/leaderboard system
@@ -16330,15 +16315,9 @@ function _spinBonusWheel() {
     if ((Date.now() - _bonusWheel272.lastSpin) < dayMs) { alert('Come back tomorrow for another free spin!'); return; }
     _bonusWheel272.lastSpin = Date.now();
     try { localStorage.setItem('matrixSpins_bonusWheel', JSON.stringify({ lastSpin: _bonusWheel272.lastSpin })); } catch(e) {}
-    var prize = _bonusWheel272.prizes[Math.floor(Math.random() * _bonusWheel272.prizes.length)];
-    if (prize > 0) {
-        if (typeof balance !== 'undefined') balance += prize;
-        var betDisplay = document.getElementById('balanceAmount');
-        if (betDisplay) betDisplay.textContent = balance;
-        alert('\u{1F389} You won $' + prize + ' from the Daily Bonus Wheel!');
-    } else {
-        alert('Better luck tomorrow! Spin again in 24 hours.');
-    }
+    // Production: Bonus wheel prizes must be server-validated.
+    // No client-side balance manipulation allowed.
+    alert('Spin recorded! Log in to claim your bonus wheel prize.');
     var btn = document.getElementById('bonusWheelBtn');
     if (btn) btn.style.display = 'none';
 }
@@ -16346,9 +16325,9 @@ function _spinBonusWheel() {
 // Sprint 273 — Promotional banner system
 var _promos273 = [
     { id: 'welcome', text: '\u{1F389} Welcome Bonus: 100% match up to $500 on first deposit!', type: 'welcome', active: true },
-    { id: 'weekend', text: '\u{1F525} Weekend Special: 50 Free Spins on Dragon Fortune!', type: 'promo', active: true },
+    { id: 'weekend', text: '\u{1F525} Weekend Special: 50 Free Spins on Dragon Fortune!', type: 'promo', active: (function() { var d = new Date().getDay(); return d === 0 || d === 6; })() },
     { id: 'vip', text: '\u{1F48E} VIP Exclusive: 10% weekly cashback for Gold+ members!', type: 'vip', active: true },
-    { id: 'tournament', text: '\u{1F3C6} Weekly Tournament: $10,000 prize pool - compete now!', type: 'tournament', active: true }
+    { id: 'deposit', text: '\u{1F3B0} Deposit now and get up to 75% bonus on your next deposit!', type: 'promo', active: true }
 ];
 var _promoIdx273 = 0;
 function _initPromoBanner() {
@@ -16389,15 +16368,9 @@ function _submitEmailOptIn() {
     try { localStorage.setItem('matrixSpins_userEmail', email); } catch(e) {}
     var overlay = document.getElementById('emailOptInOverlay');
     if (overlay) overlay.style.display = 'none';
-    // Award bonus for signing up — only for guest/local users
-    // ROUND 40: Authenticated users get email opt-in bonus from server
-    var _eoToken = typeof localStorage !== 'undefined' ? localStorage.getItem('casinoAuthToken') : null;
-    if (!_eoToken || _eoToken.startsWith('local_')) {
-        if (typeof balance !== 'undefined') balance += 25;
-        var betDisplay = document.getElementById('balanceAmount');
-        if (betDisplay) betDisplay.textContent = balance;
-    }
-    alert('\u{1F389} Thanks for subscribing! $25 bonus credited to your account.');
+    // Production: Email opt-in bonus is handled server-side via API.
+    // No client-side balance manipulation allowed.
+    alert('Thanks for subscribing! Register or log in to receive your bonus.');
 }
 function _dismissEmailOptIn() {
     try { localStorage.setItem('matrixSpins_emailOptIn', 'done'); } catch(e) {}
@@ -16463,14 +16436,8 @@ function _uploadKYCDoc() {
     _updateKYCBadge();
     _openKYCPanel();
     _logAuditEvent('kyc_document_uploaded');
-    // Auto-approve after 3 seconds (simulated)
-    setTimeout(function() {
-        _kyc275.level = 3;
-        _kyc275.status = 'verified';
-        try { localStorage.setItem('matrixSpins_kyc', JSON.stringify(_kyc275)); } catch(e) {}
-        _updateKYCBadge();
-        _logAuditEvent('kyc_fully_verified');
-    }, 3000);
+    // KYC documents require manual admin review — no auto-approval
+    // Admin approves via /admin panel after reviewing uploaded documents
 }
 
 // Sprint 276 — AML transaction monitoring
@@ -17002,15 +16969,14 @@ function _initDepositQuickActions() {
     el.style.display = balance < 20 ? 'flex' : 'none';
 }
 function _quickDeposit(amount) {
-    // ROUND 40: Block fake quick-deposits for authenticated users
+    // Production: All deposits must go through the server payment system.
     var token = typeof localStorage !== 'undefined' ? localStorage.getItem('casinoAuthToken') : null;
     if (token && !token.startsWith('local_')) {
         if (typeof openDepositModal === 'function') { openDepositModal(amount); }
         else { showNotification('Please use the payment system to deposit.', 'error'); }
-        return;
+    } else {
+        showNotification('Please register or log in to make a deposit.', 'error');
     }
-    if (typeof openDepositModal === 'function') { openDepositModal(amount); }
-    else { balance += amount; if (typeof updateBalance === 'function') updateBalance(); if (typeof saveState === 'function') saveState(); if (typeof showNotification === 'function') showNotification('Deposited $' + amount + '!', 'success'); }
     var el = document.getElementById('depositQuickStrip');
     if (el) el.style.display = 'none';
 }
@@ -18923,13 +18889,11 @@ function _show2FASetup() {
             '<p style="color:#888;font-size:13px;">Add an extra layer of security to your account.</p>' +
             '<div class="twofa-steps">' +
             '<div class="twofa-step"><span class="twofa-num">1</span> Download an authenticator app (Google Authenticator, Authy)</div>' +
-            '<div class="twofa-step"><span class="twofa-num">2</span> Scan the QR code below</div>' +
-            '<div class="twofa-qr" style="background:#fff;width:150px;height:150px;margin:12px auto;border-radius:8px;display:flex;align-items:center;justify-content:center;color:#333;font-size:11px;">QR Placeholder</div>' +
-            '<div class="twofa-step"><span class="twofa-num">3</span> Enter the 6-digit code</div>' +
-            '<input type="text" id="twoFACode365" maxlength="6" placeholder="000000" class="twofa-code-input">' +
+            '<div class="twofa-step" style="text-align:center;padding:20px;color:#aaa;">' +
+            '<p>Two-factor authentication is coming soon.</p>' +
+            '<p style="font-size:12px;margin-top:8px;">We are integrating authenticator app support for enhanced account security.</p>' +
             '</div>' +
-            '<button onclick="_verify2FA()" class="twofa-verify-btn">Verify & Enable</button>' +
-            '<button onclick="document.getElementById(\&quot;twoFAPanel365\&quot;).style.display=\&quot;none\&quot;" class="twofa-close-btn">Cancel</button></div>';
+            '<button onclick="document.getElementById(\&quot;twoFAPanel365\&quot;).style.display=\&quot;none\&quot;" class="twofa-close-btn" style="margin-top:12px;">Close</button></div>';
     }
     document.body.appendChild(panel);
 }
@@ -19985,14 +19949,9 @@ function _updateSocialTicker() {
     }
     ticker.innerHTML = '<div class="st-content">' + msg + '</div>';
 }
+/* Fake social activity simulation removed — real events should come from server */
 function _simulateSocialActivity() {
-    var names = ['LuckyAce', 'SpinQueen', 'GoldRush88', 'DiamondKing', 'NeonStar', 'MegaWins', 'HighRoller77'];
-    setInterval(function() {
-        var name = names[Math.floor(Math.random() * names.length)];
-        var types = ['bigwin', 'deposit', 'achievement'];
-        var type = types[Math.floor(Math.random() * types.length)];
-        _addSocialEvent(type, { player: name, amount: Math.floor(Math.random() * 500) + 10, name: 'Big Winner' });
-    }, 15000);
+    // No-op: fabricated social activity removed for production
 }
 
 
@@ -20841,15 +20800,12 @@ function _openTournamentLeaderboard() {
         el.className = 'tourney-leaderboard-overlay';
         document.body.appendChild(el);
     }
-    var fakeEntries = [
-        { name: 'LuckyAce', score: 15000 + Math.floor(Math.random()*5000) },
-        { name: 'SlotKing', score: 12000 + Math.floor(Math.random()*4000) },
-        { name: 'GoldRush', score: 9000 + Math.floor(Math.random()*3000) },
-        { name: 'YOU', score: _tournamentV2.myScore },
-        { name: 'SpinWiz', score: 5000 + Math.floor(Math.random()*2000) }
-    ].sort(function(a,b) { return b.score - a.score; });
+    // Only show the player's own score — no fake leaderboard entries
+    var entries = [
+        { name: 'YOU', score: _tournamentV2.myScore }
+    ];
     var html = '<div class="tourney-lb-card"><h3>Tournament Leaderboard</h3><ol>';
-    fakeEntries.forEach(function(e) { html += '<li class="' + (e.name === 'YOU' ? 'tourney-you' : '') + '">' + e.name + ': ' + e.score + '</li>'; });
+    entries.forEach(function(e) { html += '<li class="tourney-you">' + e.name + ': ' + e.score + '</li>'; });
     html += '</ol><button onclick="document.getElementById(&quot;tourneyLeaderboardOverlay&quot;).style.display=&quot;none&quot;">Close</button></div>';
     el.innerHTML = html;
     el.style.display = 'flex';
@@ -22672,8 +22628,9 @@ function _showOnboardingReward() {
     el.style.display = 'flex';
 }
 function _claimOnboardingReward() {
-    if (typeof balance !== 'undefined') balance += 200;
-    if (typeof updateBalanceDisplay === 'function') updateBalanceDisplay();
+    // Production: Onboarding reward is handled server-side.
+    // No client-side balance manipulation allowed.
+    if (typeof showNotification === 'function') showNotification('Bonus claimed! Check your account balance.', 'success');
     var el = document.getElementById('onboardReward');
     if (el) el.style.display = 'none';
 }
@@ -24153,34 +24110,9 @@ function _initReferralTiers() {
 }
 
 /* ---- Feature 8: Social Notifications ---- */
+/* Fake social notifications removed — real data should come from /api/big-wins */
 function _initSocialNotifications() {
-    if (document.getElementById('social-notif-container')) return;
-    var container = document.createElement('div');
-    container.id = 'social-notif-container';
-    container.className = 'social-notif-container';
-    document.body.appendChild(container);
-    var messages = [
-        'LuckyAce just won $1,250 on Diamond Rush!',
-        'SpinKing reached VIP Platinum level!',
-        'New player JackpotJane joined the community!',
-        'GoldRush triggered 25 Free Spins!',
-        'Community Jackpot is now over $15,000!',
-        'DiamondDave completed all daily challenges!',
-        'WinStreak is on a 10-win streak!',
-        'BonusHunter claimed $500 in cashback!'
-    ];
-    function showNotif() {
-        var msg = messages[Math.floor(Math.random()*messages.length)];
-        var notif = document.createElement('div');
-        notif.className = 'social-notif';
-        notif.textContent = msg;
-        container.appendChild(notif);
-        setTimeout(function() { notif.classList.add('sn-fade'); }, 4000);
-        setTimeout(function() { notif.remove(); }, 5000);
-    }
-    setInterval(showNotif, 15000);
-    setTimeout(showNotif, 5000);
-    console.log('[Sprint 523-530] Social Notifications ready');
+    // No-op: fabricated social notifications removed for production
 }
 
 
@@ -24585,16 +24517,9 @@ function _showSocialNotif(msg) {
     setTimeout(function() { notif.classList.add('social-notif-show'); }, 50);
     setTimeout(function() { notif.classList.remove('social-notif-show'); setTimeout(function() { notif.remove(); }, 300); }, 4000);
 }
+/* Duplicate _initSocialNotifications removed — fake data replaced with no-op */
 function _initSocialNotifications() {
-    var names = ['Alex','Sam','Jordan','Taylor','Casey','Morgan','Riley','Quinn'];
-    var actions = [' just won $', ' hit a jackpot of $', ' won big: $', ' cashed out $'];
-    setInterval(function() {
-        var name = names[Math.floor(Math.random()*names.length)];
-        var action = actions[Math.floor(Math.random()*actions.length)];
-        var amount = (Math.floor(Math.random()*500)+10).toFixed(2);
-        _pushSocialNotif('win', name + action + amount);
-    }, 15000 + Math.random()*15000);
-    console.log('[Sprint 523-530] Social Notifications ready');
+    // No-op: fabricated social notifications removed for production
 }
 
 
@@ -26906,12 +26831,10 @@ function _initWelcomeBonus627() {
     console.log('[Sprint 627-634] Welcome Bonus ready');
 }
 function _claimWelcomeBonus627() {
-    var bal = parseFloat(localStorage.getItem('ms_balance') || '1000');
-    bal += 10;
-    localStorage.setItem('ms_balance', bal.toFixed(2));
+    // Production: Welcome bonus is handled server-side during registration.
+    // No client-side balance manipulation allowed.
     localStorage.setItem('ms_welcome_claimed', 'true');
-    if (typeof updateBalanceDisplay === 'function') updateBalanceDisplay();
-    if (typeof _showNotification571 === 'function') _showNotification571('$10 welcome bonus credited!', 'success', 4000);
+    if (typeof _showNotification571 === 'function') _showNotification571('Register to claim your welcome bonus!', 'info', 4000);
     var el = document.getElementById('welcome-bonus-627'); if (el) el.remove();
 }
 

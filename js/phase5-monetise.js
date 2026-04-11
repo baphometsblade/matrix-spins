@@ -581,13 +581,8 @@
                 if (typeof showToast === 'function') showToast('Connection error. Please try again.', 'error');
             });
         } else {
-            // Demo mode: direct credit
-            if (typeof balance !== 'undefined') {
-                balance += amount;
-                var balEl = document.getElementById('balance');
-                if (balEl) balEl.textContent = parseFloat(balance).toFixed(2);
-            }
-            if (typeof showToast === 'function') showToast('Demo deposit: $' + amount.toFixed(2), 'success');
+            // Production: No demo deposits. Must be authenticated.
+            if (typeof showToast === 'function') showToast('Please register or log in to make a deposit.', 'error');
         }
     }
 
@@ -684,13 +679,8 @@
                 if (typeof showToast === 'function') showToast('Connection error. Please try again.', 'error');
             });
         } else {
-            // Demo mode
-            if (typeof balance !== 'undefined') {
-                balance -= amount;
-                var balEl = document.getElementById('balance');
-                if (balEl) balEl.textContent = parseFloat(balance).toFixed(2);
-            }
-            if (typeof showToast === 'function') showToast('Demo withdrawal: $' + amount.toFixed(2) + ' (Ref: ' + ref + ')', 'success');
+            // Production: No demo withdrawals. Must be authenticated.
+            if (typeof showToast === 'function') showToast('Please register or log in to request a withdrawal.', 'error');
         }
     }
 

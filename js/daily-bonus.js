@@ -163,16 +163,14 @@
         document.getElementById('dbClaimBtn').addEventListener('click', function() {
             var claimed = claimDailyBonus();
             if (claimed) {
-                // Credit demo balance
-                var bal = parseInt(getItem('demo_balance') || '100000', 10);
-                bal += claimed.bonusCents;
-                setItem('demo_balance', String(bal));
+                // Production: Daily bonus is handled server-side via API.
+                // No client-side balance manipulation allowed.
 
                 this.textContent = '✓ Claimed!';
                 this.disabled = true;
                 this.style.background = '#4CAF50';
 
-                // Notify balance display
+                // Notify balance display (server will update actual balance)
                 if (window.updateBalanceDisplay) window.updateBalanceDisplay();
 
                 setTimeout(function() { modal.remove(); }, 1200);
