@@ -171,12 +171,8 @@
                     if (balEl) balEl.textContent = parseFloat(balance).toFixed(2);
                 }
             }).catch(function() {
-                // Fallback: local credit
-                if (typeof balance !== 'undefined') {
-                    balance += reward;
-                    var balEl = document.getElementById('balance');
-                    if (balEl) balEl.textContent = parseFloat(balance).toFixed(2);
-                }
+                // No fallback — server is authoritative for balance
+                if (typeof showToast === 'function') showToast('Connection error. Please try again.', 'error');
             });
         }
         if (typeof showToast === 'function') showToast('Daily bonus claimed: $' + reward.toFixed(2) + '!', 'success');
@@ -238,10 +234,10 @@
 
         var footer = _el('div', 'p5-modal-footer');
         footer.appendChild(_btn('p5-btn p5-btn-primary', 'COLLECT $' + reward.toFixed(2), function() {
-            if (typeof balance !== 'undefined') {
-                balance += reward;
-                var balEl = document.getElementById('balance');
-                if (balEl) balEl.textContent = parseFloat(balance).toFixed(2);
+            // Win streak bonus — server-side credit only (no client-side balance manipulation)
+            var _wsToken = typeof localStorage !== 'undefined' ? localStorage.getItem('casinoAuthToken') : null;
+            if (_wsToken && !_wsToken.startsWith('local_')) {
+                fetch('/api/daily-login/claim', { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + _wsToken }, body: JSON.stringify({ type: 'streak', streak: streak }) }).then(function(r) { return r.json(); }).then(function(d) { if (d.newBalance !== undefined) { balance = d.newBalance; if (typeof updateBalance === 'function') updateBalance(); } }).catch(function() {});
             }
             if (typeof showToast === 'function') showToast('Win streak bonus: $' + reward.toFixed(2) + '!', 'success');
             overlay.parentNode.removeChild(overlay);
@@ -568,10 +564,10 @@
                 if (data.url) {
                     window.location.href = data.url; // Redirect to Stripe
                 } else if (data.success) {
-                    if (typeof balance !== 'undefined') {
-                        balance += amount;
-                        var balEl = document.getElementById('balance');
-                        if (balEl) balEl.textContent = parseFloat(balance).toFixed(2);
+                    // Use server-returned balance (authoritative), not client-side addition
+                    if (data.newBalance !== undefined && typeof balance !== 'undefined') {
+                        balance = data.newBalance;
+                        if (typeof updateBalance === 'function') updateBalance();
                     }
                     if (typeof showToast === 'function') showToast('Deposit successful: $' + amount.toFixed(2), 'success');
                 } else {

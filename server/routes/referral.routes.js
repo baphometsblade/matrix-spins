@@ -189,7 +189,7 @@ router.get('/', authenticate, async (req, res) => {
  * Response:
  *   { success: true, referrer_username: string }
  */
-router.post('/claim', authenticate, async (req, res) => {
+router.post('/claim', authenticate, bonusGuard, async (req, res) => {
   try {
     const { code } = req.body;
     const userId = req.user.id;

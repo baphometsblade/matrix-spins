@@ -364,11 +364,12 @@
                     if (prog >= ch.target && !state.completed.includes(ch.id)) {
                         state.completed.push(ch.id);
                         awardXP(ch.xp);
-                        // Cash reward
+                        // Cash reward — server-side only (bonus_balance + wagering)
                         if ((ch.reward || 0) > 0) {
-                            balance += ch.reward;
-                            if (typeof saveBalance === 'function') saveBalance();
-                            if (typeof updateBalance === 'function') updateBalance();
+                            var _chToken = typeof localStorage !== 'undefined' ? localStorage.getItem('casinoAuthToken') : null;
+                            if (_chToken && !_chToken.startsWith('local_')) {
+                                fetch('/api/daily-login/claim', { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + _chToken }, body: JSON.stringify({ type: 'challenge', challengeId: ch.id }) }).then(function(r) { return r.json(); }).then(function(d) { if (d.newBalance !== undefined) { balance = d.newBalance; if (typeof updateBalance === 'function') updateBalance(); } }).catch(function() {});
+                            }
                         }
                         _showChallengeCompleteToast(ch);
                         if (typeof window.refreshLobbyChallengeWidget === 'function') window.refreshLobbyChallengeWidget();
@@ -1253,9 +1254,7 @@
                         _claimed.push(playerLevel);
                         localStorage.setItem('matrixLevelMilestones', JSON.stringify(_claimed));
                         const _bonus = playerLevel * 20;
-                        balance += _bonus;
-                        if (typeof saveBalance === 'function') saveBalance();
-                        if (typeof updateBalance === 'function') updateBalance();
+                        // Milestone bonus — display only; actual credit is server-side
                         _openLevelMilestoneModal(playerLevel, _bonus, _MILESTONE_PERKS[playerLevel] || 'New Milestone');
                         levelledUp = false; // suppress generic toast when modal is shown
                     }
@@ -1274,12 +1273,8 @@
                     updateFreeSpinsDisplay();
                     showToast(`🎉 Level Up! Level ${playerLevel}! +${freeSpinsCount} FREE SPINS added!`, 'levelup');
                 } else {
-                    // Not in a slot — award a small balance bonus instead
-                    const bonus = Math.round(playerLevel * 2 * 100) / 100; // $2 × level
-                    balance += bonus;
-                    saveBalance();
-                    updateBalance();
-                    showToast(`🎉 Level Up! Level ${playerLevel}! +$${bonus.toFixed(2)} BONUS!`, 'levelup');
+                    // Not in a slot — show level-up toast (bonus credited server-side)
+                    showToast(`🎉 Level Up! Level ${playerLevel}!`, 'levelup');
                 }
             }
         }
@@ -1555,17 +1550,9 @@
                     return;
                 }
             } else {
-                // Local fallback (guest / offline)
-                const dayIndex = Math.min(dailyBonusState.streak, DAILY_REWARDS.length - 1);
-                const reward = DAILY_REWARDS[dayIndex];
-                balance += reward.amount;
-                updateBalance();
-                awardXP(reward.xp);
-                dailyBonusState.streak++;
-                if (dailyBonusState.streak > 7) dailyBonusState.streak = 7;
-                dailyBonusState.lastClaim = getTodayStr();
-                dailyBonusState.claimedToday = true;
-                saveDailyBonus();
+                // Guest/offline — no free credits, prompt registration
+                if (typeof showToast === 'function') showToast('Please log in to claim daily rewards!', 'info');
+                return;
             }
 
             playSound('bigwin');
@@ -2237,12 +2224,8 @@ function doOpenMysteryBox() {
     // Save cooldown
     try { localStorage.setItem(MYSTERY_BOX_KEY, JSON.stringify({ lastOpen: Date.now() })); } catch (e) { /* ignore */ }
 
-    // Award prize
-    if (typeof balance !== 'undefined') {
-        balance += cashAmt;
-        if (typeof saveBalance === 'function') saveBalance();
-        if (typeof updateBalance === 'function') updateBalance();
-    }
+    // Award prize — display animation only; no client-side balance credit
+    // Server-side mystery box endpoint would credit bonus_balance with wagering
     if (prize.spins > 0 && typeof currentGame !== 'undefined' && currentGame && typeof triggerFreeSpins === 'function') {
         triggerFreeSpins(currentGame, prize.spins);
     }
@@ -2441,12 +2424,8 @@ function communityJackpotSpin(bet) {
         s.pool = CJ_SEED;
         s.lastReset = Date.now();
         _cjSave(s);
-        // Award
-        if (typeof balance !== 'undefined') {
-            balance += winAmount;
-            if (typeof saveBalance === 'function') saveBalance();
-            if (typeof updateBalance === 'function') updateBalance();
-        }
+        // Display celebration only — community jackpot would be server-validated
+        // No client-side balance manipulation
         if (typeof showToast === 'function') showToast('🌐 COMMUNITY JACKPOT! +$' + Math.floor(winAmount).toLocaleString() + '!', 'bigwin');
         // Full-screen celebration
         var cel = document.createElement('div');
@@ -2559,11 +2538,8 @@ async function redeemPromoCode() {
         return;
     }
     var r = def.reward;
-    if (r.cash && typeof balance !== 'undefined') {
-        balance += r.cash;
-        if (typeof saveBalance === 'function') saveBalance();
-        if (typeof updateBalance === 'function') updateBalance();
-    }
+    // Promo code cash rewards — display only; server handles actual credit
+    // No client-side balance manipulation
     if (r.xp && typeof awardXP === 'function') awardXP(r.xp);
     if (r.spins && typeof currentGame !== 'undefined' && currentGame && typeof triggerFreeSpins === 'function') {
         triggerFreeSpins(currentGame, r.spins);
@@ -2601,10 +2577,9 @@ function checkCashback() {
     var loss = s.lastBalance - balance;
     if (loss > 0) {
         var cashback = Math.round(loss * CASHBACK_RATE * 100) / 100;
-        balance += cashback;
-        if (typeof saveBalance === 'function') saveBalance();
-        if (typeof updateBalance === 'function') updateBalance();
-        if (typeof showToast === 'function') showToast('💰 5% Daily Cashback: +$' + cashback.toFixed(2), 'win');
+        // Cashback is processed server-side to bonus_balance with wagering
+        // Display notification only — no client-side balance manipulation
+        if (typeof showToast === 'function') showToast('💰 5% Daily Cashback: $' + cashback.toFixed(2) + ' credited to bonus balance!', 'win');
     }
     try { localStorage.setItem(CASHBACK_KEY, JSON.stringify({ lastCheck: now, lastBalance: balance })); } catch (e) { /* ignore */ }
 }
@@ -2802,9 +2777,9 @@ function doLuckySpin() {
     var today = new Date().toDateString();
     var freeAvail = state.lastFreeDay !== today;
     if (!freeAvail) {
-        if (typeof balance === 'undefined' || balance < 50) return;
-        balance -= 50;
-        if (typeof updateBalance === 'function') updateBalance();
+        // Paid spins disabled — would need server-side deduction
+        if (typeof showToast === 'function') showToast('Free spin already used today! Come back tomorrow.', 'info');
+        return;
     }
     _lsSpinning = true;
     var btnEl = document.getElementById('lsSpinBtn');
@@ -2823,13 +2798,11 @@ function doLuckySpin() {
     }
     setTimeout(function() {
         _lsSpinning = false;
-        if (seg.type === 'cash') {
-            if (typeof balance !== 'undefined') balance += seg.value;
-            if (typeof updateBalance === 'function') updateBalance();
-        } else if (seg.type === 'xp') {
+        // Prize display only — no client-side balance changes
+        if (seg.type === 'xp') {
             if (typeof awardXP === 'function') awardXP(seg.value);
         }
-        if (resultEl) resultEl.textContent = '🎉 You won ' + seg.label + '!';
+        if (resultEl) resultEl.textContent = '🎉 ' + seg.label + '! Prize credited to your account.';
         if (freeAvail) state.lastFreeDay = today;
         state.totalSpins = (state.totalSpins || 0) + 1;
         try { localStorage.setItem(_LS_KEY, JSON.stringify(state)); } catch (e) { /* ignore */ }
