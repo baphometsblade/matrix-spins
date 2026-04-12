@@ -447,7 +447,7 @@ ${payoutsHtml ? `
 
 <div class="game-footer">
     <p>Must be 18+ to play. Gambling can be addictive. Play responsibly.</p>
-    <p><a href="/responsible-gambling.html">Responsible Gambling</a> | <a href="/terms.html">Terms</a> | <a href="/api/fair/info" class="fair-link">🔒 Provably Fair</a></p>
+    <p><a href="/responsible-gambling.html">Responsible Gambling</a> | <a href="/terms.html">Terms</a> | <a href="/provably-fair.html" class="fair-link">🔒 Game Fairness</a></p>
     <p style="margin-top:8px;">&copy; ${new Date().getFullYear()} Matrix Spins Casino</p>
 </div>
 

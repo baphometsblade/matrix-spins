@@ -22,7 +22,7 @@ router.get('/', async function(req, res) {
       spinsToday = spinsTodayRow ? (spinsTodayRow.cnt || 0) : 0;
 
       var spinsLastHourRow = await db.get(
-        "SELECT COUNT(*) as cnt FROM spins WHERE created_at >= datetime('now', '-1 hour')"
+        "SELECT COUNT(DISTINCT user_id) as cnt FROM spin_results WHERE created_at > datetime('now', '-1 hour')"
       );
       spinsLastHour = spinsLastHourRow ? (spinsLastHourRow.cnt || 0) : 0;
 
@@ -30,18 +30,6 @@ router.get('/', async function(req, res) {
       registeredUsers = usersRow ? (usersRow.cnt || 0) : 0;
     } catch(e) {
       console.warn('[SocialProof] DB stats query failed:', e.message);
-    }
-
-    // Time-of-day base for online now
-    var timeOfDayBase;
-    if (hour >= 18 && hour < 22) {
-      timeOfDayBase = 200;
-    } else if (hour >= 22 || hour < 6) {
-      timeOfDayBase = 30;
-    } else if (hour >= 12 && hour < 18) {
-      timeOfDayBase = 120;
-    } else {
-      timeOfDayBase = 60;
     }
 
     // Real online estimate: recent spinners are likely still playing

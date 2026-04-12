@@ -17891,7 +17891,7 @@ function _checkTosAcceptance() {
         '<h2 style="color:#ffd700;margin:0 0 16px;">Terms of Service</h2>' +
         '<div style="color:#ccc;font-size:13px;line-height:1.6;max-height:300px;overflow-y:auto;margin-bottom:20px;padding:12px;background:#111;border-radius:8px;">' +
         '<p><strong>1. Eligibility:</strong> You must be 18+ and in a jurisdiction where online gambling is permitted.</p>' +
-        '<p><strong>2. Fair Play:</strong> All games use certified RNG. House edge is disclosed per game.</p>' +
+        '<p><strong>2. Fair Play:</strong> All games use a server-side RNG. House edge is disclosed per game.</p>' +
         '<p><strong>3. Responsible Gambling:</strong> Set deposit limits. Self-exclude if needed. We provide tools to help.</p>' +
         '<p><strong>4. Withdrawals:</strong> Processed within 48 hours. KYC verification required for amounts over $500.</p>' +
         '<p><strong>5. Privacy:</strong> Your data is encrypted and never sold to third parties.</p>' +
@@ -18113,7 +18113,7 @@ function _checkTosAcceptance() {
         '<h2 style="color:#ffd700;margin:0 0 16px;">Terms of Service</h2>' +
         '<div style="color:#ccc;font-size:13px;line-height:1.6;max-height:300px;overflow-y:auto;margin-bottom:20px;padding:12px;background:#111;border-radius:8px;">' +
         '<p><strong>1. Eligibility:</strong> You must be 18+ and in a jurisdiction where online gambling is permitted.</p>' +
-        '<p><strong>2. Fair Play:</strong> All games use certified RNG. House edge is disclosed per game.</p>' +
+        '<p><strong>2. Fair Play:</strong> All games use a server-side RNG. House edge is disclosed per game.</p>' +
         '<p><strong>3. Responsible Gambling:</strong> Set deposit limits. Self-exclude if needed. We provide tools to help.</p>' +
         '<p><strong>4. Withdrawals:</strong> Processed within 48 hours. KYC verification required for amounts over $500.</p>' +
         '<p><strong>5. Privacy:</strong> Your data is encrypted and never sold to third parties.</p>' +
@@ -18694,8 +18694,8 @@ function _showFairVerification() {
     panel.id = 'fairPanel362';
     panel.className = 'fair-panel';
     panel.innerHTML = '<div class="fair-inner">' +
-        '<h3>Provably Fair</h3>' +
-        '<p style="color:#888;font-size:13px;">Every spin result is verifiable. We use SHA-256 hashing to ensure fairness.</p>' +
+        '<h3>Game Fairness</h3>' +
+        '<p style="color:#888;font-size:13px;">All game outcomes are determined server-side using a cryptographically secure RNG.</p>' +
         '<div class="fair-field"><label>Server Seed (Hashed)</label><code>' + (_fairSeeds.server || 'Loading...') + '</code></div>' +
         '<div class="fair-field"><label>Client Seed</label><input type="text" value="' + _fairSeeds.client + '" onchange="_fairSeeds.client=this.value" class="fair-input"></div>' +
         '<div class="fair-field"><label>Nonce</label><code>' + _fairSeeds.nonce + '</code></div>' +
@@ -23053,13 +23053,13 @@ function _initFairPlayCert() {
             '<div class="fp-section"><h4>Random Number Generation</h4>' +
             '<p>All game outcomes are determined by a cryptographically secure pseudo-random number generator (CSPRNG) using the Web Crypto API. Results cannot be predicted or manipulated.</p></div>' +
             '<div class="fp-section"><h4>House Edge Transparency</h4>' +
-            '<p>Our games maintain a house edge between 3% and 8%, which is clearly displayed. This is in line with industry standards for online slots.</p></div>' +
-            '<div class="fp-section"><h4>Provably Fair Verification</h4>' +
-            '<p>Each spin generates a server seed and client seed. You can verify any past spin result using the seed pair and our open verification algorithm.</p>' +
-            '<button id="fp-verify-btn" class="fp-btn">Verify Last 10 Spins</button>' +
+            '<p>Our platform target RTP is 88%, meaning the house edge is approximately 12%. This is displayed in each game\'s information panel.</p></div>' +
+            '<div class="fp-section"><h4>Random Number Generation</h4>' +
+            '<p>All game outcomes are determined server-side using Node.js crypto.randomBytes(), a cryptographically secure random number generator.</p>' +
+            '<button id="fp-verify-btn" class="fp-btn">View Fairness Details</button>' +
             '<div id="fp-verify-results"></div></div>' +
-            '<div class="fp-section"><h4>Independent Auditing</h4>' +
-            '<p>Game RTP and RNG are periodically audited. Audit reports are available upon request.</p></div>' +
+            '<div class="fp-section"><h4>Server-Side Determination</h4>' +
+            '<p>The game client is a renderer only. All outcomes are calculated on our servers and cannot be influenced by the player.</p></div>' +
             '<button class="fp-close" onclick="this.closest(\&quot;.fairplay-modal\&quot;).classList.add(\&quot;hidden\&quot;)">Close</button>' +
             '</div>';
         document.body.appendChild(modal);

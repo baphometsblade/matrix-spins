@@ -36,7 +36,7 @@ try {
     if (!process.env.JWT_SECRET) warnings.push('JWT_SECRET not set — using random key (sessions will not persist across restarts)');
     else if (process.env.JWT_SECRET.length < 32) errors.push('JWT_SECRET must be at least 32 characters');
     if (!process.env.ADMIN_PASSWORD) warnings.push('ADMIN_PASSWORD not set — using random password (check server logs)');
-    if (!process.env.STRIPE_WEBHOOK_SECRET && process.env.STRIPE_SECRET_KEY) warnings.push('STRIPE_WEBHOOK_SECRET not set — webhook verification disabled');
+    if (!process.env.STRIPE_WEBHOOK_SECRET && process.env.STRIPE_SECRET_KEY) errors.push('STRIPE_WEBHOOK_SECRET not set but STRIPE_SECRET_KEY is configured — webhook verification would be disabled, which allows forged payment events. Set STRIPE_WEBHOOK_SECRET or remove STRIPE_SECRET_KEY.');
     if (!process.env.DATABASE_URL) {
         warnings.push('DATABASE_URL not set — using SQLite (data may not persist across Render deploys). Set DATABASE_URL to a PostgreSQL connection string for production use.');
     }

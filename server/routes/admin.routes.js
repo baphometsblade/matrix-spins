@@ -651,9 +651,18 @@ router.post('/approve-deposit', async (req, res) => {
         const { depositId } = req.body;
         if (!depositId) return res.status(400).json({ error: 'depositId is required' });
 
+        // Atomic pre-claim: prevent two concurrent approvals from both succeeding.
+        // This UPDATE only succeeds if the deposit is still 'pending', turning the
+        // status check + update into a single atomic operation.
+        const claimResult = await db.run("UPDATE deposits SET status = 'processing' WHERE id = ? AND status = 'pending'", [depositId]);
+        if (!claimResult || claimResult.changes === 0) {
+            const existing = await db.get('SELECT status FROM deposits WHERE id = ?', [depositId]);
+            if (!existing) return res.status(404).json({ error: 'Deposit not found' });
+            return res.status(409).json({ error: `Deposit is already ${existing.status}` });
+        }
+
         const deposit = await db.get('SELECT id, user_id, amount, status, reference FROM deposits WHERE id = ?', [depositId]);
         if (!deposit) return res.status(404).json({ error: 'Deposit not found' });
-        if (deposit.status !== 'pending') return res.status(400).json({ error: `Deposit is already ${deposit.status}` });
 
         const user = await db.get('SELECT balance, bonus_balance, wagering_requirement, wagering_progress FROM users WHERE id = ?', [deposit.user_id]);
         if (!user) return res.status(404).json({ error: 'User not found' });
@@ -718,6 +727,8 @@ router.post('/approve-deposit', async (req, res) => {
             await db.commit();
         } catch (txErr) {
             await db.rollback();
+            // Revert the atomic pre-claim so the deposit can be retried
+            await db.run("UPDATE deposits SET status = 'pending' WHERE id = ? AND status = 'processing'", [depositId]);
             throw txErr;
         }
 

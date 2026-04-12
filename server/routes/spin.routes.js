@@ -1049,8 +1049,8 @@ router.post('/gamble/start', authenticate, async (req, res) => {
             return res.status(400).json({ error: 'Invalid gamble amount' });
         }
 
-        // Self-exclusion check
-        var selfExclCheck = await db.get('SELECT id FROM self_exclusions WHERE user_id = ? AND is_active = 1', [userId]);
+        // Self-exclusion check (must match main spin endpoint pattern with ends_at guard)
+        var selfExclCheck = await db.get("SELECT id FROM self_exclusions WHERE user_id = ? AND is_active = 1 AND (ends_at IS NULL OR ends_at > datetime('now'))", [userId]);
         if (selfExclCheck) {
             return res.status(403).json({ error: 'Gambling is disabled during your self-exclusion period' });
         }

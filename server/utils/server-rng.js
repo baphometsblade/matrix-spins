@@ -13,8 +13,21 @@ const crypto = require('crypto');
  * @param {number} timestamp - Unix timestamp
  * @returns {string} Hex seed string
  */
+// Per-process random secret used when RNG_SERVER_SECRET env var is missing.
+// Generated once at startup so all seeds within the same process are consistent,
+// but differs across restarts (no predictable fallback).
+let _processSecret;
+function getServerSecret() {
+  if (process.env.RNG_SERVER_SECRET) return process.env.RNG_SERVER_SECRET;
+  if (!_processSecret) {
+    _processSecret = crypto.randomBytes(64).toString('hex');
+    console.warn('[RNG] WARNING: RNG_SERVER_SECRET not set — using per-process random secret. Seed audit replay will NOT work across restarts. Set RNG_SERVER_SECRET in your environment for production.');
+  }
+  return _processSecret;
+}
+
 function generateSeed(userId, gameId, timestamp) {
-  const serverSecret = process.env.RNG_SERVER_SECRET || 'royal-slots-default-secret';
+  const serverSecret = getServerSecret();
   const data = `${serverSecret}:${userId}:${gameId}:${timestamp}`;
   return crypto.createHash('sha256').update(data).digest('hex');
 }

@@ -3,6 +3,7 @@
 const express = require('express');
 const router = express.Router();
 const { authenticate } = require('../middleware/auth');
+const { bonusGuard } = require('../middleware/bonus-guard');
 const { db } = require('../database');
 
 // Hardcoded reward catalog
@@ -227,7 +228,7 @@ router.post('/earn', authenticate, async (req, res) => {
 });
 
 // POST /api/loyalty/redeem — redeem points for a reward
-router.post('/redeem', authenticate, async (req, res) => {
+router.post('/redeem', authenticate, bonusGuard, async (req, res) => {
     try {
         await _ensureLoyaltyTables();
         var userId = req.user.id;
@@ -264,6 +265,26 @@ router.post('/redeem', authenticate, async (req, res) => {
                 'INSERT INTO loyalty_transactions (user_id, type, amount, description) VALUES (?, ?, ?, ?)',
                 [userId, 'redeem', -pointsCost, 'Redeemed for: ' + reward.name]
             );
+
+            // Deliver the reward based on type
+            switch (reward.rewardType) {
+                case 'gems':
+                    await db.run('UPDATE users SET gems = COALESCE(gems, 0) + ? WHERE id = ?', [reward.rewardValue, userId]);
+                    break;
+                case 'free_spins':
+                    await db.run('UPDATE users SET free_spin_tokens = COALESCE(free_spin_tokens, 0) + ? WHERE id = ?', [reward.rewardValue, userId]);
+                    break;
+                case 'boost':
+                    await db.run("UPDATE users SET cashback_boost_until = datetime('now', '+24 hours'), cashback_multiplier = ? WHERE id = ?", [reward.rewardValue, userId]);
+                    break;
+                case 'vip_boost':
+                    await db.run("UPDATE users SET vip_boost_until = datetime('now', '+24 hours') WHERE id = ?", [userId]);
+                    break;
+                case 'mystery':
+                    var mysteryGems = 100 + Math.floor(require('crypto').randomInt(1901)); // 100-2000
+                    await db.run('UPDATE users SET gems = COALESCE(gems, 0) + ? WHERE id = ?', [mysteryGems, userId]);
+                    break;
+            }
 
             await db.commit();
         } catch (txErr) {

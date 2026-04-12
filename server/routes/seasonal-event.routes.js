@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const { authenticate } = require('../middleware/auth');
+const { bonusGuard } = require('../middleware/bonus-guard');
 const db = require('../database');
 
 // Database setup pattern
@@ -360,7 +361,7 @@ router.get('/prizes', async (req, res) => {
 });
 
 // POST /redeem - Redeem shamrocks for a prize
-router.post('/redeem', authenticate, async (req, res) => {
+router.post('/redeem', authenticate, bonusGuard, async (req, res) => {
   try {
     const userId = req.user.id;
     const { prize_id } = req.body;
@@ -414,6 +415,28 @@ router.post('/redeem', authenticate, async (req, res) => {
     );
     if (!deductResult || deductResult.changes === 0) {
       return res.status(400).json({ error: 'Insufficient shamrocks' });
+    }
+
+    // Deliver the actual prize
+    const prizeDetails = await db.get('SELECT prize_type, prize_details FROM seasonal_event_prizes WHERE id = ?', [prize_id]);
+    if (prizeDetails) {
+      const details = JSON.parse(prizeDetails.prize_details || '{}');
+      switch (prizeDetails.prize_type) {
+        case 'free_spins':
+          await db.run('UPDATE users SET free_spin_tokens = COALESCE(free_spin_tokens, 0) + ? WHERE id = ?', [details.spins || 10, userId]);
+          break;
+        case 'bonus_cash':
+        case 'combo':
+          if (details.amount && details.amount > 0) {
+            var wageringMult = 15;
+            await db.run('UPDATE users SET bonus_balance = COALESCE(bonus_balance, 0) + ?, wagering_requirement = COALESCE(wagering_requirement, 0) + ? WHERE id = ?',
+              [details.amount, details.amount * wageringMult, userId]);
+          }
+          break;
+        case 'cosmetic':
+          // Cosmetic rewards are tracked by the redemption record itself
+          break;
+      }
     }
 
     res.json({
