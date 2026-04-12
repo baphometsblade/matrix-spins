@@ -89,7 +89,8 @@
         // MAX_RECENTLY_PLAYED — from constants.js
 
         // ===== Jackpot Ticker =====
-        let jackpotValue = JACKPOT_TICKER_BASE_VALUE + Math.floor(Math.random() * JACKPOT_TICKER_RANDOM_RANGE);
+        // Real jackpot value fetched from server via /api/jackpot/pools — no client-side fake
+        let jackpotValue = 0;
 
         // ═══════════════════════════════════════════════════════
         // SETTINGS PANEL

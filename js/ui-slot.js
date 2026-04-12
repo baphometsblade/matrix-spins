@@ -4306,7 +4306,7 @@
             var offerRows = [
                 { label: '1st Deposit', value: '100% Match up to $500' },
                 { label: 'Free Spins', value: '50 on top slots' },
-                { label: 'Register Bonus', value: '$5 free — no deposit!' }
+                { label: 'Register Bonus', value: '$5 bonus credits (wagering applies)' }
             ];
             offerRows.forEach(function(row) {
                 var r = document.createElement('div');
@@ -16234,15 +16234,7 @@ var _tournament271 = {
     myScore: 0
 };
 function _initTournament() {
-    // Seed leaderboard with bot entries
-    var names = ['DragonMaster', 'LuckyStar99', 'VegasKing', 'SlotPro420', 'NeonQueen', 'GoldRush7', 'SpinWizard', 'CryptoAce', 'JackpotHunter', 'DiamondHand'];
-    _tournament271.entries = [];
-    names.forEach(function(n, i) {
-        _tournament271.entries.push({ name: n, score: Math.floor(Math.random() * 50000) + 5000, rank: 0 });
-    });
-    _tournament271.entries.sort(function(a, b) { return b.score - a.score; });
-    _tournament271.entries.forEach(function(e, i) { e.rank = i + 1; });
-    _updateTournamentBadge();
+    /* NEUTRALIZED: Real tournament requires server endpoint — no fake bot entries */
 }
 function _updateTournamentScore(winAmount) {
     if (!_tournament271.active || !winAmount || winAmount <= 0) return;
@@ -16311,10 +16303,7 @@ function _spinBonusWheel() {
 
 // Sprint 273 — Promotional banner system
 var _promos273 = [
-    { id: 'welcome', text: '\u{1F389} Welcome Bonus: 100% match up to $500 on first deposit!', type: 'welcome', active: true },
-    { id: 'weekend', text: '\u{1F525} Weekend Special: 50 Free Spins on Dragon Fortune!', type: 'promo', active: (function() { var d = new Date().getDay(); return d === 0 || d === 6; })() },
-    { id: 'vip', text: '\u{1F48E} VIP Exclusive: 10% weekly cashback for Gold+ members!', type: 'vip', active: true },
-    { id: 'deposit', text: '\u{1F3B0} Deposit now and get up to 75% bonus on your next deposit!', type: 'promo', active: true }
+    /* NEUTRALIZED: Removed fake promo banners with unverifiable offers */
 ];
 var _promoIdx273 = 0;
 function _initPromoBanner() {
@@ -16662,20 +16651,9 @@ function _offerGamble(winAmount) {
     el.style.display = '';
 }
 function _gambleChoice(color) {
-    var win = Math.random() < 0.48; // Slight house edge (48% instead of 50%)
-    if (win) {
-        _gamble284.amount *= 2;
-        _gamble284.history.push({ result: 'win', color: color, amount: _gamble284.amount });
-        _offerGamble(_gamble284.amount);
-    } else {
-        _gamble284.history.push({ result: 'loss', color: color, amount: 0 });
-        if (typeof balance !== 'undefined') balance -= _gamble284.amount;
-        var betDisplay = document.getElementById('balanceAmount');
-        if (betDisplay) betDisplay.textContent = Math.max(0, balance);
-        var el = document.getElementById('gambleOffer');
-        if (el) { el.innerHTML = '<p class="gamble-loss">You lost $' + _gamble284.amount.toLocaleString() + '!</p>'; setTimeout(function() { el.style.display = 'none'; }, 2000); }
-        _gamble284.amount = 0;
-    }
+    /* NEUTRALIZED: Gamble feature requires server-side implementation */
+    if (typeof showToast === 'function') showToast('Gamble feature requires login', 'info');
+    return;
 }
 function _gambleCollect() {
     var el = document.getElementById('gambleOffer');
@@ -17258,18 +17236,11 @@ function _completeWelcome() {
 
 
 // Sprint 316 — Progressive Jackpot Display
-var _jackpotAmount316 = 125000 + Math.random() * 50000;
+var _jackpotAmount316 = 0;
 var _jackpotInterval316 = null;
 function _initJackpotWidget() {
-    var el = document.getElementById('jackpotWidget316');
-    if (!el) return;
-    el.style.display = 'block';
-    _updateJackpotDisplay();
-    if (_jackpotInterval316) clearInterval(_jackpotInterval316);
-    _jackpotInterval316 = setInterval(function() {
-        _jackpotAmount316 += Math.random() * 5 + 0.5;
-        _updateJackpotDisplay();
-    }, 3000);
+    /* NEUTRALIZED: Removed fake auto-incrementing jackpot amount.
+       Real jackpot values must come from server. */
 }
 function _updateJackpotDisplay() {
     var el = document.getElementById('jackpotAmount316');
@@ -19441,7 +19412,7 @@ function _checkFirstDepositBonus() {
         banner.className = 'first-deposit-banner';
         banner.innerHTML = '<div class="fdb-content">' +
             '<span class="fdb-icon">\u{1F389}</span>' +
-            '<div><strong>Welcome Bonus!</strong><br>100% match on your first deposit up to $100!</div>' +
+            '<div><strong>Welcome Bonus!</strong><br>100% match on your first deposit up to $500!</div>' +
             '<button onclick="_showDepositModal();document.getElementById(\&quot;firstDepositBanner383\&quot;).remove();" class="fdb-cta">Claim Now</button>' +
             '<button onclick="document.getElementById(\&quot;firstDepositBanner383\&quot;).remove();" class="fdb-dismiss">&times;</button></div>';
         document.body.appendChild(banner);
@@ -19456,10 +19427,10 @@ function _checkReloadBonus() {
     if (lastReload === today) return;
     var dayOfWeek = new Date().getDay();
     var bonuses = {
-        1: { pct: 25, label: 'Monday Madness: 25% reload bonus' },
-        3: { pct: 30, label: 'Midweek Boost: 30% reload bonus' },
-        5: { pct: 50, label: 'Friday Frenzy: 50% reload bonus' },
-        0: { pct: 40, label: 'Sunday Special: 40% reload bonus' }
+        1: { pct: 25, label: 'Monday: 25% reload bonus' },
+        3: { pct: 25, label: 'Midweek: 25% reload bonus' },
+        5: { pct: 25, label: 'Friday: 25% reload bonus' },
+        0: { pct: 25, label: 'Sunday: 25% reload bonus' }
     };
     var bonus = bonuses[dayOfWeek];
     if (!bonus) return;
@@ -19481,10 +19452,7 @@ function _showRewardsMarketplace() {
     panel.id = 'rewardsMarket385';
     panel.className = 'rewards-market-overlay';
     var listings = [
-        { name: 'Cosmic Jackpot #7712', rarity: 'Legendary', price: 150, seller: 'HighRoller99', color: '#ffd700' },
-        { name: 'Lucky Dragon #3341', rarity: 'Epic', price: 75, seller: 'SpinMaster', color: '#9b59b6' },
-        { name: 'Diamond Rush #9920', rarity: 'Rare', price: 35, seller: 'GoldenAce', color: '#3498db' },
-        { name: 'Phoenix Fire #2233', rarity: 'Legendary', price: 200, seller: 'JackpotJane', color: '#ffd700' }
+        /* NEUTRALIZED: Removed fake marketplace listings with fake seller names */
     ];
     var html = '<div class="rewards-market-inner"><div class="rewards-market-header"><h2>\u{1F3AA} Rewards Marketplace</h2><button onclick="document.getElementById(\&quot;rewardsMarket385\&quot;).style.display=\&quot;none\&quot;" class="rewards-market-close">&times;</button></div>';
     html += '<div class="rewards-market-grid">';
@@ -19780,17 +19748,8 @@ function _showSettings() {
 var _jackpotPool = { mini: 250, minor: 2500, major: 25000, grand: 100000 };
 var _jackpotContribution = 0.02;
 function _initJackpot() {
-    var stored = localStorage.getItem('ms_jackpot_pool');
-    if (stored) { try { _jackpotPool = JSON.parse(stored); } catch(e) {} }
-    _updateJackpotDisplay();
-    setInterval(function() {
-        _jackpotPool.mini += Math.random() * 0.5;
-        _jackpotPool.minor += Math.random() * 2;
-        _jackpotPool.major += Math.random() * 10;
-        _jackpotPool.grand += Math.random() * 50;
-        _updateJackpotDisplay();
-        localStorage.setItem('ms_jackpot_pool', JSON.stringify(_jackpotPool));
-    }, 3000);
+    /* NEUTRALIZED: Removed fake auto-incrementing jackpot ticker.
+       Real jackpot values must come from server. */
 }
 function _contributeToJackpot(betAmount) {
     var contribution = betAmount * _jackpotContribution;
@@ -19814,11 +19773,7 @@ function _updateJackpotDisplay() {
         '<div class="jt-item jt-mini"><span class="jt-label">MINI</span><span class="jt-amount">$' + _jackpotPool.mini.toLocaleString(undefined, {minimumFractionDigits:2, maximumFractionDigits:2}) + '</span></div></div>';
 }
 function _checkJackpotWin(betAmount) {
-    var rand = Math.random();
-    if (rand < 0.00001 && betAmount >= 5) { _triggerJackpot('grand'); return true; }
-    if (rand < 0.0001 && betAmount >= 2) { _triggerJackpot('major'); return true; }
-    if (rand < 0.001) { _triggerJackpot('minor'); return true; }
-    if (rand < 0.005) { _triggerJackpot('mini'); return true; }
+    /* NEUTRALIZED: Jackpot wins must be determined server-side */
     return false;
 }
 function _triggerJackpot(tier) {
@@ -20142,17 +20097,7 @@ function _initExitIntent() {
     });
 }
 function _showExitPopup() {
-    var modal = document.createElement('div');
-    modal.id = 'exitPopup407';
-    modal.className = 'exit-popup-overlay';
-    modal.innerHTML = '<div class="exit-popup-card">' +
-        '<h2>Wait! Don\'t leave empty-handed!</h2>' +
-        '<div class="exit-offer">\u{1F381} <strong>25 Free Spins</strong> just for staying!</div>' +
-        '<p style="color:#888;font-size:13px;">Plus a 50% bonus on your next deposit.</p>' +
-        '<button onclick="_awardFreeSpins(25);document.getElementById(\&quot;exitPopup407\&quot;).remove();" class="exit-claim-btn">Claim Free Spins</button>' +
-        '<button onclick="document.getElementById(\&quot;exitPopup407\&quot;).remove();" class="exit-no-btn">No thanks, I\'ll leave</button></div>';
-    document.body.appendChild(modal);
-    _trackEvent('retention', 'exit_intent_shown', 'popup', 1);
+    /* NEUTRALIZED: Removed exit intent popup with fake free spins offer */
 }
 
 
@@ -20397,16 +20342,9 @@ function _showGambleUI(amount) {
     el.style.display = 'flex';
 }
 function _doGamble(choseRed) {
-    var win = Math.random() < 0.48;
-    if (win) {
-        _gambleAmount *= 2;
-        if (typeof balance !== "undefined") balance += _gambleAmount;
-        _showGambleResult(true, _gambleAmount);
-    } else {
-        _gambleAmount = 0;
-        _showGambleResult(false, 0);
-    }
-    _gambleAvailable = false;
+    /* NEUTRALIZED: Gamble feature requires server-side implementation */
+    if (typeof showToast === 'function') showToast('Gamble feature requires login', 'info');
+    return;
 }
 function _skipGamble() {
     var el = document.getElementById('gambleOverlay');
@@ -22670,10 +22608,7 @@ function _showLowBalanceNudge() {
 
 // --- Sprint 489 — Deposit Countdown Timer ---
 function _initDepositCountdown() {
-    try {
-        if (localStorage.getItem('ms_depCountdownClaimed')) return;
-        setTimeout(_showDepositCountdown, 180000);
-    } catch(e) {}
+    /* NEUTRALIZED: Removed fake flash deposit countdown with no server backing */
 }
 function _showDepositCountdown() {
     try { if (localStorage.getItem('ms_depCountdownClaimed')) return; } catch(e) {}
@@ -23253,11 +23188,7 @@ function _tickJackpots(bet) {
     _updateJackpotDisplay();
 }
 function _checkJackpotWin() {
-    var roll = Math.random();
-    if (roll < 0.00001) return { type: 'grand', amount: _progressiveJackpot.grand };
-    if (roll < 0.0001) return { type: 'major', amount: _progressiveJackpot.major };
-    if (roll < 0.001) return { type: 'minor', amount: _progressiveJackpot.minor };
-    if (roll < 0.005) return { type: 'mini', amount: _progressiveJackpot.mini };
+    /* NEUTRALIZED: Jackpot wins must be determined server-side */
     return null;
 }
 function _updateJackpotDisplay() {
@@ -23269,25 +23200,8 @@ function _updateJackpotDisplay() {
     });
 }
 function _initProgressiveJackpot() {
-    _loadJackpots();
-    if (document.getElementById('jackpot-ticker')) return;
-    var ticker = document.createElement('div');
-    ticker.id = 'jackpot-ticker';
-    ticker.className = 'jackpot-ticker';
-    ticker.innerHTML = '<div class="jp-title">PROGRESSIVE JACKPOTS</div>' +
-        '<div class="jp-row">' +
-        '<div class="jp-item jp-grand"><span class="jp-name">GRAND</span><span class="jp-val" data-jp="grand">$' + _progressiveJackpot.grand.toFixed(2) + '</span></div>' +
-        '<div class="jp-item jp-major"><span class="jp-name">MAJOR</span><span class="jp-val" data-jp="major">$' + _progressiveJackpot.major.toFixed(2) + '</span></div>' +
-        '<div class="jp-item jp-minor"><span class="jp-name">MINOR</span><span class="jp-val" data-jp="minor">$' + _progressiveJackpot.minor.toFixed(2) + '</span></div>' +
-        '<div class="jp-item jp-mini"><span class="jp-name">MINI</span><span class="jp-val" data-jp="mini">$' + _progressiveJackpot.mini.toFixed(2) + '</span></div>' +
-        '</div>';
-    document.body.prepend(ticker);
-    setInterval(function() {
-        _progressiveJackpot.mini += 0.01; _progressiveJackpot.minor += 0.03;
-        _progressiveJackpot.major += 0.05; _progressiveJackpot.grand += 0.10;
-        _updateJackpotDisplay();
-    }, 3000);
-    console.log('[Sprint 507-514] Progressive Jackpot ready');
+    /* NEUTRALIZED: Removed fake progressive jackpot with auto-incrementing values.
+       Real progressive jackpot must be server-backed. */
 }
 
 /* ---- Feature 2: Bonus Wheel ---- */
@@ -24195,33 +24109,7 @@ function _initFocusIndicators() {
 // === Sprint 523-530 Feature 1: Leaderboard Seasons ===
 var _leaderboardSeason = { id: 'S' + new Date().getFullYear() + '-' + (new Date().getMonth()+1), endsAt: null, players: [] };
 function _initLeaderboardSeasons() {
-    if (document.getElementById('lb-season-widget')) return;
-    var now = new Date();
-    var endOfMonth = new Date(now.getFullYear(), now.getMonth()+1, 0, 23, 59, 59);
-    _leaderboardSeason.endsAt = endOfMonth.getTime();
-    var daysLeft = Math.ceil((endOfMonth - now) / 86400000);
-    var saved = JSON.parse(localStorage.getItem('ms_lb_season') || '[]');
-    if (saved.length === 0) {
-        for (var i = 0; i < 20; i++) {
-            saved.push({ name: 'Player' + (100+i), score: Math.floor(Math.random()*50000), avatar: String.fromCodePoint(0x1F600 + i) });
-        }
-    }
-    var myScore = parseInt(localStorage.getItem('ms_total_wagered') || '0');
-    saved.push({ name: 'You', score: myScore, avatar: String.fromCodePoint(0x1F451) });
-    saved.sort(function(a,b) { return b.score - a.score; });
-    localStorage.setItem('ms_lb_season', JSON.stringify(saved.slice(0,50)));
-    var widget = document.createElement('div');
-    widget.id = 'lb-season-widget';
-    widget.className = 'lb-season-widget hidden';
-    var top5 = saved.slice(0,5).map(function(p,i) {
-        return '<div class="lb-row' + (p.name==='You'?' lb-you':'') + '"><span class="lb-rank">#' + (i+1) + '</span><span class="lb-avatar">' + p.avatar + '</span><span class="lb-name">' + p.name + '</span><span class="lb-score">$' + p.score.toLocaleString() + '</span></div>';
-    }).join('');
-    widget.innerHTML = '<div class="lb-inner"><h3>Season Leaderboard</h3>' +
-        '<div class="lb-season-info"><span>Season: ' + _leaderboardSeason.id + '</span><span>' + daysLeft + ' days left</span></div>' +
-        '<div class="lb-prizes"><span>1st: $500</span><span>2nd: $250</span><span>3rd: $100</span></div>' +
-        top5 + '</div>';
-    document.body.appendChild(widget);
-    console.log('[Sprint 523-530] Leaderboard Seasons ready');
+    /* NEUTRALIZED: Real leaderboard requires server endpoint — no fake player entries */
 }
 
 /* ---- Feature 2: Friend System ---- */
@@ -24453,28 +24341,7 @@ function _showLossProtection(amount, reason) {
 
 /* ---- Feature 3: Time-Limited Offers ---- */
 function _initTimeLimitedOffers() {
-    if (document.getElementById('tlo-banner')) return;
-    var offers = [
-        { name: 'Happy Hour 2x', desc: 'Double all wins for 30 minutes!', duration: 1800000, discount: '50% OFF' },
-        { name: 'Power Deposit', desc: 'Deposit now and get 100% match!', duration: 900000, discount: '100% MATCH' },
-        { name: 'Free Spins Pack', desc: '20 free spins on any slot!', duration: 600000, discount: 'FREE' }
-    ];
-    var offer = offers[Math.floor(Math.random()*offers.length)];
-    var endTime = Date.now() + offer.duration;
-    var banner = document.createElement('div');
-    banner.id = 'tlo-banner';
-    banner.className = 'tlo-banner';
-    banner.innerHTML = '<div class="tlo-inner"><span class="tlo-badge">' + offer.discount + '</span><span class="tlo-name">' + offer.name + '</span><span class="tlo-desc">' + offer.desc + '</span><span class="tlo-timer" id="tlo-timer"></span><button class="tlo-dismiss" onclick="this.parentElement.parentElement.remove()">X</button></div>';
-    document.body.appendChild(banner);
-    var timerEl = document.getElementById('tlo-timer');
-    var timerInt = setInterval(function() {
-        var remaining = endTime - Date.now();
-        if (remaining <= 0) { banner.remove(); clearInterval(timerInt); return; }
-        var mins = Math.floor(remaining / 60000);
-        var secs = Math.floor((remaining % 60000) / 1000);
-        timerEl.textContent = mins + ':' + (secs < 10 ? '0' : '') + secs;
-    }, 1000);
-    console.log('[Sprint 539-546] Time-Limited Offers ready');
+    /* NEUTRALIZED: Removed fake time-limited offers with no server backing */
 }
 
 /* ---- Feature 4: Dynamic Pricing ---- */
@@ -25065,27 +24932,11 @@ function _showProfileCard(username) {
 /* ---- Feature 6: Tournaments v3 ---- */
 var _tournaments555 = { active: null, entries: [], endTime: 0 };
 function _initTournaments555() {
-    var saved = JSON.parse(localStorage.getItem('ms_tournaments555') || 'null');
-    if (saved && saved.endTime > Date.now()) {
-        _tournaments555 = saved;
-    } else {
-        _tournaments555 = {
-            active: { name: 'Daily Showdown', buyIn: 0, prize: 500, maxPlayers: 50 },
-            entries: _generateTournamentEntries555(),
-            endTime: Date.now() + 86400000
-        };
-        localStorage.setItem('ms_tournaments555', JSON.stringify(_tournaments555));
-    }
-    console.log('[Sprint 555-562] Tournaments v3 ready');
+    /* NEUTRALIZED: Real tournament requires server endpoint — no fake bot entries */
 }
 function _generateTournamentEntries555() {
-    var names = ['AceHigh','SlotKing','LuckyJ','SpinPro','DiamondD','GoldRush','JackpotJen','ReelDeal','WildCard','BigWinner'];
-    var entries = [];
-    for (var i = 0; i < names.length; i++) {
-        entries.push({ name: names[i], score: Math.floor(Math.random() * 5000) });
-    }
-    entries.sort(function(a, b) { return b.score - a.score; });
-    return entries;
+    /* NEUTRALIZED: No fake bot entries */
+    return [];
 }
 function _addTournamentScore555(points) {
     if (!_tournaments555.active) return;
@@ -25121,29 +24972,7 @@ function _showTournamentLeaderboard555() {
 /* ---- Feature 7: Seasonal Events ---- */
 var _seasonalEvent555 = null;
 function _initSeasonalEvents555() {
-    var month = new Date().getMonth();
-    var seasons = [
-        { name: 'Winter Wonderland', months: [11, 0, 1], multiplier: 1.5, theme: 'winter', emoji: '❄' },
-        { name: 'Spring Bloom', months: [2, 3, 4], multiplier: 1.3, theme: 'spring', emoji: '🌸' },
-        { name: 'Summer Sizzle', months: [5, 6, 7], multiplier: 1.4, theme: 'summer', emoji: '☀' },
-        { name: 'Autumn Harvest', months: [8, 9, 10], multiplier: 1.35, theme: 'autumn', emoji: '🍂' }
-    ];
-    for (var i = 0; i < seasons.length; i++) {
-        if (seasons[i].months.indexOf(month) !== -1) {
-            _seasonalEvent555 = seasons[i];
-            break;
-        }
-    }
-    if (_seasonalEvent555) {
-        var banner = document.createElement('div');
-        banner.id = 'seasonal-banner-555';
-        banner.className = 'season-banner555 season-' + _seasonalEvent555.theme;
-        banner.innerHTML = '<span>' + _seasonalEvent555.emoji + ' ' + _seasonalEvent555.name + ' — ' + _seasonalEvent555.multiplier + 'x Bonus Active! ' + _seasonalEvent555.emoji + '</span>';
-        var header = document.querySelector('.header, #game-header, header');
-        if (header) header.parentNode.insertBefore(banner, header.nextSibling);
-        else document.body.prepend(banner);
-    }
-    console.log('[Sprint 555-562] Seasonal Events ready:', _seasonalEvent555 ? _seasonalEvent555.name : 'none');
+    /* NEUTRALIZED: Removed fake seasonal multiplier banner — server does not apply these multipliers */
 }
 function _getSeasonalMultiplier555() {
     return _seasonalEvent555 ? _seasonalEvent555.multiplier : 1;
@@ -25865,9 +25694,7 @@ function _initVIPTiers587() {
 var _promoBanners587 = [];
 function _initPromoBanners() {
     _promoBanners587 = [
-        { id: 'welcome', text: 'Welcome Bonus: Deposit $50+ and get 25% extra!', condition: function() { return parseInt(localStorage.getItem('ms_total_deposits') || '0') < 3; } },
-        { id: 'weekend', text: 'Weekend Special: 2x loyalty points on all spins!', condition: function() { var d = new Date().getDay(); return d === 0 || d === 6; } },
-        { id: 'highroller', text: 'High Roller: Deposit $100+ for Diamond tier cashback!', condition: function() { return parseFloat(localStorage.getItem('ms_balance') || '0') > 500; } }
+        /* NEUTRALIZED: Removed fake promo banners with unverifiable offers */
     ];
     var active = _promoBanners587.filter(function(b) { return b.condition(); });
     if (active.length > 0) {
@@ -26696,44 +26523,13 @@ function _initSocialProof627() {
 
 /* ---- Feature 4: Countdown Timer Offers ---- */
 function _initCountdownOffers627() {
-    var offers = JSON.parse(localStorage.getItem('ms_offers627') || 'null');
-    if (!offers || Date.now() > offers.expires) {
-        offers = { text: 'Double Deposit Bonus!', expires: Date.now() + 3600000 * 3 };
-        localStorage.setItem('ms_offers627', JSON.stringify(offers));
-    }
-    if (offers.expires > Date.now()) {
-        var banner = document.createElement('div');
-        banner.id = 'countdown-offer-627';
-        banner.className = 'co-banner627';
-        var iv = setInterval(function() {
-            var r = Math.max(0, offers.expires - Date.now());
-            if (r <= 0) { clearInterval(iv); banner.remove(); return; }
-            var h = Math.floor(r / 3600000), m = Math.floor((r % 3600000) / 60000), s = Math.floor((r % 60000) / 1000);
-            banner.innerHTML = '<span>' + offers.text + '</span><strong>' + h + 'h ' + m + 'm ' + s + 's</strong>';
-        }, 1000);
-        document.body.prepend(banner);
-    }
-    console.log('[Sprint 627-634] Countdown Offers ready');
+    /* NEUTRALIZED: Removed fake countdown offer with no server backing */
 }
 
 
 /* ---- Feature 5: Exit Intent Popup ---- */
 function _initExitIntent627() {
-    var shown = false;
-    document.addEventListener('mouseout', function(e) {
-        if (shown) return;
-        if (e.clientY < 5 && e.relatedTarget == null) {
-            shown = true;
-            var bal = parseFloat(localStorage.getItem('ms_balance') || '0');
-            if (bal > 50) return;
-            var popup = document.createElement('div');
-            popup.id = 'exit-intent-627';
-            popup.className = 'ei-overlay627';
-            popup.innerHTML = '<div class="ei-inner627"><h2>Wait!</h2><p>Claim 5 free spins before you go!</p><button class="ei-claim627" onclick="localStorage.setItem(String.fromCharCode(109,115,95,102,114,101,101,95,115,112,105,110,115),5);var e=document.getElementById(String.fromCharCode(101,120,105,116,45,105,110,116,101,110,116,45,54,50,55));if(e)e.remove()">Claim</button><button class="ei-skip627" onclick="var e=document.getElementById(String.fromCharCode(101,120,105,116,45,105,110,116,101,110,116,45,54,50,55));if(e)e.remove()">No thanks</button></div>';
-            document.body.appendChild(popup);
-        }
-    });
-    console.log('[Sprint 627-634] Exit Intent ready');
+    /* NEUTRALIZED: Removed exit intent popup with fake free spins offer */
 }
 
 /* ---- Feature 6: UTM Tracking ---- */

@@ -72,9 +72,9 @@
         return Math.floor(progress);
     }
 
-    // Generate random player count (23-89)
+    // Player count removed — was fabricated. Real count requires server endpoint.
     function getRandomPlayerCount() {
-        return Math.floor(Math.random() * (89 - 23 + 1)) + 23;
+        return 0;
     }
 
     // Create event banner HTML
@@ -186,12 +186,7 @@
         scarcityText.style.cssText = 'color: #ff4444; font-weight: 700; margin-bottom: 8px; animation: pulse 1.2s ease-in-out infinite;';
         scarcityText.textContent = 'ONLY ' + formatTime(secondsRemaining) + ' REMAINING!';
 
-        var playerInfo = document.createElement('div');
-        playerInfo.style.cssText = 'color: rgba(255, 215, 0, 0.7); font-size: 11px; margin-bottom: 8px;';
-        playerInfo.textContent = playerCount + ' PLAYERS COMPETING';
-
         scarcitySection.appendChild(scarcityText);
-        scarcitySection.appendChild(playerInfo);
 
         // Progress bar
         var progressBarOuter = document.createElement('div');
