@@ -1838,12 +1838,10 @@
                 return;
             }
 
-            // Guest balance: only grant $1,000 if they have zero or no saved balance
-            // (prevents infinite-reload exploit while still giving new guests starter funds)
+            // Guest users see $0 — must register and deposit to play
             if (currentUser.isGuest && (!balance || balance <= 0)) {
-                balance = 1000;
+                balance = 0;
                 updateBalance();
-                saveBalance();
             }
 
             // Successfully authenticated â€” ensure auth-gate is removed

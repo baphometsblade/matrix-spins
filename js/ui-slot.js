@@ -14723,7 +14723,7 @@ function _initBetPresets() {
         btn.textContent = '$' + amt;
         btn.onclick = function() {
             if (typeof currentBet !== 'undefined') {
-                currentBet = Math.min(amt, balance || 5000);
+                currentBet = Math.min(amt, balance || 0);
                 var betDisplay = document.getElementById('currentBet');
                 if (betDisplay) betDisplay.textContent = currentBet;
             }
@@ -14967,7 +14967,7 @@ function _initBetPresets() {
         btn.textContent = '$' + amt;
         btn.onclick = function() {
             if (typeof currentBet !== 'undefined') {
-                currentBet = Math.min(amt, balance || 5000);
+                currentBet = Math.min(amt, balance || 0);
                 var betDisplay = document.getElementById('currentBet');
                 if (betDisplay) betDisplay.textContent = currentBet;
             }

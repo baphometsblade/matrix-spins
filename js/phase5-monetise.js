@@ -91,8 +91,8 @@
         }
         body.appendChild(grid);
 
-        if (day === 7) body.appendChild(_el('div', 'p5-daily-milestone', '\u{1F389} Week 1 Milestone! $50 Bonus!'));
-        if (day === 30) body.appendChild(_el('div', 'p5-daily-milestone', '\u{1F3C6} Month Milestone! $500 Bonus!'));
+        if (day === 7) body.appendChild(_el('div', 'p5-daily-milestone', '\u{1F389} Week 1 Milestone!'));
+        if (day === 30) body.appendChild(_el('div', 'p5-daily-milestone', '\u{1F3C6} Month Milestone!'));
 
         modal.appendChild(body);
 
