@@ -219,16 +219,11 @@ router.post('/payment/webhook', express.raw({ type: 'application/json' }), async
                 await db.run('UPDATE users SET balance = balance + ? WHERE id = ?', [amount, playerId]);
 
                 // Record in deposits table — required for wagering/withdrawal checks downstream
-                try {
-                    await db.run(
-                        `INSERT INTO deposits (user_id, amount, currency, method, status, stripe_session_id, created_at)
-                         VALUES (?, ?, ?, 'stripe_checkout', 'completed', ?, datetime('now'))`,
-                        [playerId, amount, (config.CURRENCY || 'AUD'), session.id]
-                    );
-                } catch (depErr) {
-                    // Table might not exist yet or column mismatch — log but don't fail the credit
-                    console.warn('[Stripe] deposits table INSERT failed (non-fatal):', depErr.message);
-                }
+                await db.run(
+                    `INSERT INTO deposits (user_id, amount, currency, payment_type, status, external_ref, created_at)
+                     VALUES (?, ?, ?, 'stripe_checkout', 'completed', ?, datetime('now'))`,
+                    [playerId, amount, (config.CURRENCY || 'AUD'), session.id]
+                );
 
                 // Credit advertised deposit bonus to bonus_balance with 30x wagering
                 var bonusMap = { 25: 5, 50: 15, 100: 40, 250: 125 };

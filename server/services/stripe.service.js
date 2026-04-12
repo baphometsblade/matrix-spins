@@ -305,39 +305,49 @@ async function handlePaymentSuccess(metadata, externalId, amountFromStripe, even
         bonusType = 'first_deposit_bonus';
     } else {
         bonusAmount = Math.round(Math.min(depositAmount * ((config.RELOAD_BONUS_PCT || 50) / 100), config.RELOAD_BONUS_MAX || 250) * 100) / 100;
-        wageringMult = config.RELOAD_WAGERING_MULT || 30;
+        wageringMult = config.RELOAD_WAGERING_MULT || 35;
         bonusType = 'reload_bonus';
     }
 
-    // Update user balance (atomic increment — prevents race condition if Stripe webhook fires twice)
-    await db.run('UPDATE users SET balance = balance + ? WHERE id = ?', [depositAmount, depositUserId]);
+    // Wrap balance credit + deposit completion + bonus in a single transaction
+    // to prevent partial state if server crashes mid-operation
+    await db.beginTransaction();
+    try {
+        // Update user balance (atomic increment)
+        await db.run('UPDATE users SET balance = balance + ? WHERE id = ?', [depositAmount, depositUserId]);
 
-    // Mark deposit as completed
-    await db.run(
-        "UPDATE deposits SET status = 'completed', external_ref = ?, completed_at = datetime('now') WHERE id = ?",
-        [externalId, deposit.id]
-    );
-
-    // Log the deposit transaction
-    await db.run(
-        'INSERT INTO transactions (user_id, type, amount, balance_before, balance_after, reference) VALUES (?, ?, ?, ?, ?, ?)',
-        [depositUserId, 'deposit', depositAmount, balanceBefore, balanceAfter, reference]
-    );
-
-    // Apply bonus if applicable
-    if (bonusAmount > 0) {
-        const wagerReq = Math.round(bonusAmount * wageringMult * 100) / 100;
+        // Mark deposit as completed
         await db.run(
-            'UPDATE users SET bonus_balance = COALESCE(bonus_balance, 0) + ?, wagering_requirement = COALESCE(wagering_requirement, 0) + ? WHERE id = ?',
-            [bonusAmount, wagerReq, depositUserId]
+            "UPDATE deposits SET status = 'completed', external_ref = ?, completed_at = datetime('now') WHERE id = ?",
+            [externalId, deposit.id]
         );
-        const refLabel = bonusType === 'first_deposit_bonus'
-            ? `FIRST-DEPOSIT-MATCH (${wageringMult}x wagering)`
-            : `RELOAD-MATCH (${wageringMult}x wagering)`;
+
+        // Log the deposit transaction
         await db.run(
             'INSERT INTO transactions (user_id, type, amount, balance_before, balance_after, reference) VALUES (?, ?, ?, ?, ?, ?)',
-            [depositUserId, bonusType, bonusAmount, balanceAfter, balanceAfter, refLabel]
+            [depositUserId, 'deposit', depositAmount, balanceBefore, balanceAfter, reference]
         );
+
+        // Apply bonus if applicable
+        if (bonusAmount > 0) {
+            const wagerReq = Math.round(bonusAmount * wageringMult * 100) / 100;
+            await db.run(
+                'UPDATE users SET bonus_balance = COALESCE(bonus_balance, 0) + ?, wagering_requirement = COALESCE(wagering_requirement, 0) + ? WHERE id = ?',
+                [bonusAmount, wagerReq, depositUserId]
+            );
+            const refLabel = bonusType === 'first_deposit_bonus'
+                ? `FIRST-DEPOSIT-MATCH (${wageringMult}x wagering)`
+                : `RELOAD-MATCH (${wageringMult}x wagering)`;
+            await db.run(
+                'INSERT INTO transactions (user_id, type, amount, balance_before, balance_after, reference) VALUES (?, ?, ?, ?, ?, ?)',
+                [depositUserId, bonusType, bonusAmount, balanceAfter, balanceAfter, refLabel]
+            );
+        }
+
+        await db.commit();
+    } catch (txErr) {
+        try { await db.rollback(); } catch (_) {}
+        throw txErr;
     }
 
     // Gem reward (fire-and-forget but log failures)
