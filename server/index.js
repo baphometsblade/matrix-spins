@@ -168,6 +168,7 @@ app.use(cors({
 // Stripe webhook needs the raw body (Buffer) for signature verification.
 // Mount express.raw() BEFORE express.json() so the webhook path gets raw bytes.
 app.use('/api/payment/stripe/webhook', express.raw({ type: 'application/json' }));
+app.use('/api/payment/webhook', express.raw({ type: 'application/json' }));
 // Content-Length validation for oversized payloads (early rejection at middleware layer)
 app.use((req, res, next) => {
     const contentLength = parseInt(req.headers['content-length'], 10);
