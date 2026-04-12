@@ -353,6 +353,14 @@ app.use('/api/spin', (req, res, next) => {
     if (isDegraded()) return res.status(503).json({ error: 'Service temporarily unavailable — database maintenance in progress. Please try again later.' });
     next();
 });
+app.use('/api/matrix-money', (req, res, next) => {
+    if (isDegraded()) return res.status(503).json({ error: 'Service temporarily unavailable — database maintenance in progress. Please try again later.' });
+    next();
+});
+app.use('/api/gems', (req, res, next) => {
+    if (isDegraded()) return res.status(503).json({ error: 'Service temporarily unavailable — database maintenance in progress. Please try again later.' });
+    next();
+});
 
 // Strict rate limit for deposit/withdrawal endpoints
 const paymentLimiter = rateLimit({
