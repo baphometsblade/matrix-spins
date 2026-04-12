@@ -90,8 +90,10 @@ const CSRF_EXEMPT_PATHS = [
     /^\/api\/newsletter\/subscribe$/,
     /^\/api\/newsletter\/unsubscribe$/,
     /^\/api\/auth\/logout$/,              // Logout should always work, even with stale CSRF
-    /^\/api\/payment\/stripe\/webhook$/,  // Stripe sends server-to-server; no CSRF token
-    /^\/api\/health/,                      // Health checks have no user context
+    /^\/api\/payment\/stripe\/webhook$/,    // Stripe sends server-to-server; no CSRF token
+    /^\/api\/payment\/webhook$/,            // Canonical Stripe webhook (stripe-checkout.routes.js)
+    /^\/api\/payment\/webhook\/confirm$/,   // Generic payment processor webhook (WEBHOOK_SECRET auth)
+    /^\/api\/health/,                       // Health checks have no user context
 ];
 
 /**

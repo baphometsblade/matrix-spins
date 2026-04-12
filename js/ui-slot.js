@@ -15323,37 +15323,24 @@ function _exportBetHistory() {
     URL.revokeObjectURL(url);
 }
 
-// Sprint 241 — Provably fair hash display
-var _fairHash241 = { serverSeed: '', clientSeed: '', nonce: 0, lastHash: '' };
+// Sprint 241 — Provably fair hash display (uses real server hash from spin response)
+var _fairHash241 = { serverSeedHash: '', nonce: 0 };
 function _resetProvablyFair() {
-    _fairHash241.serverSeed = _generateSeed();
-    _fairHash241.clientSeed = _generateSeed();
+    _fairHash241.serverSeedHash = '';
     _fairHash241.nonce = 0;
-    _fairHash241.lastHash = '';
     var el = document.getElementById('fairHashBadge');
     if (el) el.style.display = 'none';
 }
-function _generateSeed() {
-    var chars = 'abcdef0123456789';
-    var s = '';
-    for (var i = 0; i < 32; i++) s += chars[Math.floor(Math.random() * chars.length)];
-    return s;
-}
-function _updateProvablyFair() {
+function _updateProvablyFair(serverHash) {
     _fairHash241.nonce++;
-    var input = _fairHash241.serverSeed + ':' + _fairHash241.clientSeed + ':' + _fairHash241.nonce;
-    // Simple hash for display (real implementation would use crypto.subtle)
-    var hash = 0;
-    for (var i = 0; i < input.length; i++) {
-        var chr = input.charCodeAt(i);
-        hash = ((hash << 5) - hash) + chr;
-        hash |= 0;
-    }
-    _fairHash241.lastHash = Math.abs(hash).toString(16).padStart(8, '0');
+    // Display the real server seed hash if provided by the spin response
+    var displayHash = serverHash || _fairHash241.serverSeedHash || '';
+    if (serverHash) _fairHash241.serverSeedHash = serverHash;
     var el = document.getElementById('fairHashBadge');
     if (!el) return;
-    el.textContent = 'Fair: #' + _fairHash241.lastHash;
-    el.title = 'Nonce: ' + _fairHash241.nonce + ' | Server Seed Hash: ' + _fairHash241.serverSeed.slice(0, 8) + '...';
+    if (!displayHash) { el.style.display = 'none'; return; }
+    el.textContent = 'Fair: #' + displayHash.slice(0, 8);
+    el.title = 'Server Seed Hash: ' + displayHash + ' | Nonce: ' + _fairHash241.nonce + ' | Click to verify';
     el.className = 'fair-hash-badge';
     el.style.display = '';
 }
@@ -15721,7 +15708,7 @@ function _updateCurrencyBadge() {
 }
 
 // Sprint 254 — Live player count
-var _playerCount254 = { base: 1247, variance: 200 };
+var _playerCount254 = { base: 0, variance: 0 };
 function _initPlayerCount() {
     // REMOVED: Was fabricating fake player counts with Math.random()
 }
@@ -18718,9 +18705,19 @@ function _showFairVerification() {
     document.body.appendChild(panel);
 }
 function _verifyLastSpin() {
-    alert('Verification: Server seed hash matches. Spin result was computed fairly using SHA-256(serverSeed + clientSeed + nonce). Nonce: ' + _fairSeeds.nonce);
-    _fairSeeds.nonce++;
-    localStorage.setItem('ms_fair_nonce', _fairSeeds.nonce.toString());
+    fetch('/api/fair/verify', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + (localStorage.getItem('token') || '') },
+        body: JSON.stringify({ nonce: _fairSeeds.nonce })
+    }).then(function(r) { return r.json(); }).then(function(data) {
+        if (data.verified) {
+            alert('Verified: Spin #' + _fairSeeds.nonce + ' — server seed hash matches. Result computed via HMAC-SHA256.');
+        } else {
+            alert('Verification result: ' + (data.message || data.error || 'Unable to verify'));
+        }
+    }).catch(function() {
+        alert('Verification unavailable — please try again.');
+    });
 }
 
 
@@ -22667,78 +22664,24 @@ function _sendVIPMsg() {
     var msgs = document.querySelector('.vc-messages');
     if (msgs) {
         msgs.innerHTML += '<div class="vc-msg vc-user">' + input.value + '</div>';
-        msgs.innerHTML += '<div class="vc-msg vc-bot">Thank you for your message! A VIP host will respond shortly. In the meantime, enjoy exclusive bonuses in the High Roller room!</div>';
+        msgs.innerHTML += '<div class="vc-msg vc-bot">Thank you for your message! Our support team has been notified. You can also reach us at support@msaart.online.</div>';
         msgs.scrollTop = msgs.scrollHeight;
     }
     input.value = '';
 }
 
 
-// --- Sprint 491 — Real-Time Revenue Dashboard ---
+// Sprint 491 — Revenue Dashboard (requires admin API — no fake client-side data)
 function _initRealtimeDashboard() {}
-function _openRealtimeDashboard() {
-    var el = document.getElementById('rtDashOverlay');
-    if (!el) { el = document.createElement('div'); el.id = 'rtDashOverlay'; el.className = 'rt-dash-overlay'; document.body.appendChild(el); }
-    var rev = _totalRevenue || 0;
-    var players = Math.floor(Math.random() * 50 + 10);
-    var depositsToday = Math.floor(Math.random() * 20 + 5);
-    var avgBet = rev > 0 ? (rev / Math.max(1, depositsToday)).toFixed(2) : '0.00';
-    var html = '<div class="rtd-card"><h3>Revenue Dashboard (Live)</h3>' +
-        '<div class="rtd-grid">' +
-        '<div class="rtd-metric"><span class="rtd-value">$' + rev.toFixed(2) + '</span><span class="rtd-label">Total Revenue</span></div>' +
-        '<div class="rtd-metric"><span class="rtd-value">' + players + '</span><span class="rtd-label">Online Now</span></div>' +
-        '<div class="rtd-metric"><span class="rtd-value">' + depositsToday + '</span><span class="rtd-label">Deposits Today</span></div>' +
-        '<div class="rtd-metric"><span class="rtd-value">$' + avgBet + '</span><span class="rtd-label">Avg Deposit</span></div>' +
-        '</div>' +
-        '<div class="rtd-chart">';
-    for (var i = 0; i < 12; i++) { html += '<div class="rtd-bar" style="height:' + (Math.random() * 60 + 10) + 'px"></div>'; }
-    html += '</div><span class="rtd-chart-label">Hourly Revenue (last 12h)</span>' +
-        '<button onclick="document.getElementById(&quot;rtDashOverlay&quot;).style.display=&quot;none&quot;" class="rtd-close">Close</button></div>';
-    el.innerHTML = html;
-    el.style.display = 'flex';
-}
+function _openRealtimeDashboard() {}
 
 
-// --- Sprint 492 — Cohort LTV ---
+// Sprint 492 — Cohort LTV (requires admin API — no fake client-side data)
 function _initCohortLTV() {}
-function _openCohortLTV() {
-    var el = document.getElementById('cohortLTVOverlay');
-    if (!el) { el = document.createElement('div'); el.id = 'cohortLTVOverlay'; el.className = 'cohort-ltv-overlay'; document.body.appendChild(el); }
-    var cohorts = [
-        { name: 'Week 1', day1: '$2.50', day7: '$8.30', day30: '$22.00', day90: '$45.00' },
-        { name: 'Week 2', day1: '$3.10', day7: '$9.50', day30: '$28.00', day90: '$52.00' },
-        { name: 'Week 3', day1: '$2.80', day7: '$7.90', day30: '$19.00', day90: '$38.00' },
-        { name: 'This Week', day1: '$3.50', day7: 'TBD', day30: 'TBD', day90: 'TBD' }
-    ];
-    var html = '<div class="cltv-card"><h3>Cohort LTV Analysis</h3><table class="cltv-table"><tr><th>Cohort</th><th>Day 1</th><th>Day 7</th><th>Day 30</th><th>Day 90</th></tr>';
-    cohorts.forEach(function(c) { html += '<tr><td>' + c.name + '</td><td>' + c.day1 + '</td><td>' + c.day7 + '</td><td>' + c.day30 + '</td><td>' + c.day90 + '</td></tr>'; });
-    html += '</table><button onclick="document.getElementById(&quot;cohortLTVOverlay&quot;).style.display=&quot;none&quot;" class="cltv-close">Close</button></div>';
-    el.innerHTML = html;
-    el.style.display = 'flex';
-}
-
-
-// --- Sprint 493 — Deposit Funnel Metrics ---
+function _openCohortLTV() {}
+// Sprint 493 — Deposit Funnel (requires admin API — no fake client-side data)
 function _initDepositFunnel() {}
-function _openDepositFunnelView() {
-    var el = document.getElementById('depFunnelOverlay');
-    if (!el) { el = document.createElement('div'); el.id = 'depFunnelOverlay'; el.className = 'dep-funnel-overlay'; document.body.appendChild(el); }
-    var steps = [
-        { name: 'Visited Site', count: 1000, pct: 100 },
-        { name: 'Created Account', count: 350, pct: 35 },
-        { name: 'Opened Cashier', count: 120, pct: 12 },
-        { name: 'Started Deposit', count: 80, pct: 8 },
-        { name: 'Completed Deposit', count: 55, pct: 5.5 },
-        { name: 'Made 2nd Deposit', count: 18, pct: 1.8 }
-    ];
-    var html = '<div class="df-card"><h3>Deposit Funnel</h3>';
-    steps.forEach(function(s) {
-        html += '<div class="df-step"><div class="df-bar-bg"><div class="df-bar-fill" style="width:' + s.pct + '%"></div></div><span class="df-name">' + s.name + '</span><span class="df-count">' + s.count + ' (' + s.pct + '%)</span></div>';
-    });
-    html += '<button onclick="document.getElementById(&quot;depFunnelOverlay&quot;).style.display=&quot;none&quot;" class="df-close">Close</button></div>';
-    el.innerHTML = html;
-    el.style.display = 'flex';
-}
+function _openDepositFunnelView() {}
 
 
 // --- Sprint 494 — Churn Risk Scoring ---
@@ -25623,7 +25566,7 @@ function _processQuickDeposit(amount) {
     if (!amount || amount < 5) { if (typeof _showNotification571 === 'function') _showNotification571('Minimum deposit is $5', 'warning'); return; }
     if (typeof _checkDepositLimit579 === 'function' && !_checkDepositLimit579(amount)) return;
     if (typeof _trackDepositConversion === 'function') _trackDepositConversion();
-    fetch('/api/stripe/create-checkout', {
+    fetch('/api/payment/create-checkout', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + (localStorage.getItem('ms_token') || '') },
         body: JSON.stringify({ amount: amount })
