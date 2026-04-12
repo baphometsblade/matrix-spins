@@ -4,6 +4,7 @@ var express = require('express');
 const crypto = require('crypto');
 var db = require('../database');
 var { authenticate, requireAdmin } = require('../middleware/auth');
+var { bonusGuard } = require('../middleware/bonus-guard');
 
 var router = express.Router();
 
@@ -263,7 +264,7 @@ router.post('/contribute', authenticate, async function (req, res) {
  * Authenticated endpoint — Roll for jackpot win
  * Probability = (contribution_amount / remaining_to_target) * base_rate
  */
-router.post('/check-winner', authenticate, async function (req, res) {
+router.post('/check-winner', authenticate, bonusGuard, async function (req, res) {
   try {
     await _initTables();
 
