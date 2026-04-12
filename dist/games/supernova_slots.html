@@ -4,17 +4,17 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>Quantum Leap | Ironclad Entertainment | Matrix Spins Casino</title>
-    <meta name="description" content="Play Quantum Leap by Ironclad Entertainment at Matrix Spins Casino. RTP 93.35%, Very High volatility.">
+    <meta name="description" content="Play Quantum Leap by Ironclad Entertainment at Matrix Spins Casino. RTP 88%, Very High volatility.">
     <link rel="canonical" href="https://msaart.online/games/supernova_slots.html">
     <meta property="og:type" content="website">
     <meta property="og:title" content="Quantum Leap | Ironclad Entertainment | Matrix Spins Casino">
-    <meta property="og:description" content="Play Quantum Leap by Ironclad Entertainment at Matrix Spins Casino. RTP 93.35%, Very High volatility.">
+    <meta property="og:description" content="Play Quantum Leap by Ironclad Entertainment at Matrix Spins Casino. RTP 88%, Very High volatility.">
     <meta property="og:url" content="https://msaart.online/games/supernova_slots.html">
     <meta property="og:site_name" content="Matrix Spins Casino">
     <meta name="twitter:card" content="summary">
     <meta name="twitter:title" content="Quantum Leap | Ironclad Entertainment | Matrix Spins Casino">
-    <meta name="twitter:description" content="Play Quantum Leap by Ironclad Entertainment at Matrix Spins Casino. RTP 93.35%, Very High volatility.">
-    <script type="application/ld+json">{"@context":"https://schema.org","@type":"VideoGame","name":"Quantum Leap","description":"Quantum Leap slot game by Ironclad Entertainment. RTP: 93.35%. Play free at Matrix Spins Casino.","url":"https://msaart.online/games/supernova_slots.html","gamePlatform":"Web Browser","applicationCategory":"Game","operatingSystem":"Any","offers":{"@type":"Offer","price":"0","priceCurrency":"USD","availability":"https://schema.org/InStock"},"publisher":{"@type":"Organization","name":"Ironclad Entertainment"},"provider":{"@type":"Organization","name":"Matrix Spins Casino","url":"https://msaart.online"}}</script>
+    <meta name="twitter:description" content="Play Quantum Leap by Ironclad Entertainment at Matrix Spins Casino. RTP 88%, Very High volatility.">
+    <script type="application/ld+json">{"@context":"https://schema.org","@type":"VideoGame","name":"Quantum Leap","description":"Quantum Leap slot game by Ironclad Entertainment. RTP: 88%. Play free at Matrix Spins Casino.","url":"https://msaart.online/games/supernova_slots.html","gamePlatform":"Web Browser","applicationCategory":"Game","operatingSystem":"Any","offers":{"@type":"Offer","price":"0","priceCurrency":"USD","availability":"https://schema.org/InStock"},"publisher":{"@type":"Organization","name":"Ironclad Entertainment"},"provider":{"@type":"Organization","name":"Matrix Spins Casino","url":"https://msaart.online"}}</script>
     <script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Home","item":"https://msaart.online/"},{"@type":"ListItem","position":2,"name":"Space & Sci-Fi Slots","item":"https://msaart.online/categories/space-slots.html"},{"@type":"ListItem","position":3,"name":"Quantum Leap"}]}</script>
     <meta name="theme-color" content="#1a1209">
     <link rel="icon" type="image/svg+xml" href="/favicon.svg">
@@ -247,7 +247,7 @@
         }
         .win-label { font-size: 14px; opacity: 0.7; text-transform: uppercase; letter-spacing: 3px; }
 
-        /* Provably Fair link */
+        /* server-side RNG link */
         .fair-link {
             display: inline-flex; align-items: center; gap: 6px;
             font-size: 12px; opacity: 0.7;
@@ -305,14 +305,14 @@
     <button class="spin-btn" id="spinBtn">SPIN</button>
     <div class="balance-display">
         <div class="label">Balance</div>
-        <div class="amount" id="balanceDisplay">$1,000.00</div>
+        <div class="amount" id="balanceDisplay">$0.00</div>
     </div>
 </div>
 
 <div class="info-panel">
     <div class="info-card">
         <div class="label">RTP</div>
-        <div class="value">93.35%</div>
+        <div class="value">88%</div>
     </div>
     <div class="info-card">
         <div class="label">Volatility</div>
@@ -366,7 +366,7 @@
 
 <div class="game-footer">
     <p>Must be 18+ to play. Gambling can be addictive. Play responsibly.</p>
-    <p><a href="/responsible-gambling.html">Responsible Gambling</a> | <a href="/terms.html">Terms</a> | <a href="/provably-fair.html" class="fair-link">🔒 Provably Fair</a></p>
+    <p><a href="/responsible-gambling.html">Responsible Gambling</a> | <a href="/terms.html">Terms</a> | <a href="/provably-fair.html" class="fair-link">🔒 Game Fairness</a></p>
     <p style="margin-top:8px;">&copy; 2026 Matrix Spins Casino</p>
 </div>
 
@@ -393,7 +393,7 @@
     var winAmountEl = document.getElementById('winAmount');
     var loadingEl = document.getElementById('gameLoading');
 
-    var balance = 100000; // cents (demo)
+    var balance = 0; // fetched from server
     var spinning = false;
     var grid = [];
     var cellW, cellH;
@@ -511,56 +511,64 @@
         setTimeout(frame, 50);
     }
 
-    // Detect if API server is available (checked once on load)
+    // Server connection check — required for real-money play
     var API_AVAILABLE = false;
+    function showConnectionError() {
+        var vp = document.getElementById('gameViewport');
+        if (document.getElementById('connectionError')) return;
+        var overlay = document.createElement('div');
+        overlay.id = 'connectionError';
+        overlay.style.cssText = 'position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.85);z-index:50;flex-direction:column;gap:12px;';
+        var title = document.createElement('div');
+        title.style.cssText = 'color:#ff4444;font-size:20px;font-weight:700;';
+        title.textContent = 'Server Unavailable';
+        var msg = document.createElement('div');
+        msg.style.cssText = 'color:#ccc;font-size:14px;text-align:center;max-width:300px;';
+        msg.textContent = 'Cannot connect to game server. Please refresh the page or try again later.';
+        var btn = document.createElement('button');
+        btn.style.cssText = 'margin-top:8px;padding:10px 24px;background:#ffd700;color:#000;border:none;border-radius:8px;font-weight:700;cursor:pointer;';
+        btn.textContent = 'Refresh Page';
+        btn.addEventListener('click', function() { location.reload(); });
+        overlay.appendChild(title);
+        overlay.appendChild(msg);
+        overlay.appendChild(btn);
+        vp.appendChild(overlay);
+        spinBtn.disabled = true;
+    }
     (function checkAPI() {
         var x = new XMLHttpRequest();
         x.open('HEAD', '/api/health', true);
-        x.timeout = 1500;
-        x.onload = function() { if (x.status === 200) API_AVAILABLE = true; };
-        x.onerror = function() { API_AVAILABLE = false; };
-        x.ontimeout = function() { API_AVAILABLE = false; };
-        try { x.send(); } catch(e) {}
+        x.timeout = 3000;
+        x.onload = function() {
+            if (x.status === 200) {
+                API_AVAILABLE = true;
+                fetchServerBalance();
+            } else {
+                showConnectionError();
+            }
+        };
+        x.onerror = function() { showConnectionError(); };
+        x.ontimeout = function() { showConnectionError(); };
+        try { x.send(); } catch(e) { showConnectionError(); }
     })();
 
-    function demoSpin(betCents) {
-        var demoGrid = [];
-        for (var r = 0; r < GRID_ROWS; r++) {
-            var row = [];
-            for (var c = 0; c < GRID_COLS; c++) {
-                row.push(SYMBOLS[Math.floor(Math.random() * SYMBOLS.length)]);
-            }
-            demoGrid.push(row);
-        }
-        // Simple win check: if any row has 3+ matching, it's a win
-        var winAmount = 0;
-        for (var ri = 0; ri < demoGrid.length; ri++) {
-            var streak = 1;
-            for (var ci = 1; ci < demoGrid[ri].length; ci++) {
-                if (demoGrid[ri][ci] === demoGrid[ri][ci-1]) streak++;
-                else break;
-            }
-            if (streak >= 3) {
-                var sym = demoGrid[ri][0];
-                var idx = SYMBOLS.indexOf(sym);
-                var multiplier = (SYMBOLS.length - idx) * streak;
-                winAmount += betCents * multiplier;
-            }
-        }
-        grid = demoGrid; drawGrid(); (function() {
-            if (winAmount > 0) {
-                balance += winAmount;
+    function fetchServerBalance() {
+        var token = getToken();
+        if (!token) return;
+        fetch('/api/user/profile', {
+            headers: { 'Authorization': 'Bearer ' + token }
+        }).then(function(r) { return r.json(); })
+          .then(function(data) {
+            if (data && typeof data.balance === 'number') {
+                balance = data.balance;
+                updateBalance();
+            } else if (data && typeof data.balanceCents === 'number') {
+                balance = data.balanceCents;
                 updateBalance();
             }
-            showWin(winAmount);
-            if (window.RG && window.RG.onSpinComplete) {
-                window.RG.onSpinComplete(betCents, winAmount);
-            }
-            spinning = false;
-            spinBtn.disabled = false;
-            spinBtn.textContent = 'SPIN';
-        })();
+        }).catch(function() { /* will get balance from spin response */ });
     }
+
 
     async function doSpin() {
         if (spinning) return;
@@ -577,9 +585,14 @@
         balance -= betCents;
         updateBalance();
 
-        // If no API server, run pure client-side demo
+        // Server connection required for real-money play
         if (!API_AVAILABLE) {
-            demoSpin(betCents);
+            balance += betCents; // refund the deducted bet
+            updateBalance();
+            showConnectionError();
+            spinning = false;
+            spinBtn.disabled = false;
+            spinBtn.textContent = 'SPIN';
             return;
         }
 
@@ -601,8 +614,16 @@
             });
 
             if (!resp.ok) {
-                API_AVAILABLE = false;
-                demoSpin(betCents);
+                var errText = 'Spin failed (HTTP ' + resp.status + '). ';
+                if (resp.status === 401) errText += 'Please log in again.';
+                else if (resp.status === 402) errText += 'Insufficient balance.';
+                else errText += 'Please try again.';
+                balance += betCents; // refund the deducted bet
+                updateBalance();
+                alert(errText);
+                spinning = false;
+                spinBtn.disabled = false;
+                spinBtn.textContent = 'SPIN';
                 return;
             }
 
@@ -630,9 +651,17 @@
             });
 
         } catch (err) {
-            console.warn('[GamePage] Spin error, falling back to demo:', err.message);
-            API_AVAILABLE = false;
-            demoSpin(betCents);
+            console.error('[GamePage] Spin error:', err.message);
+            balance += betCents; // refund the deducted bet
+            updateBalance();
+            if (err.name === 'AbortError') {
+                alert('Server took too long to respond. Please try again.');
+            } else {
+                showConnectionError();
+            }
+            spinning = false;
+            spinBtn.disabled = false;
+            spinBtn.textContent = 'SPIN';
         }
     }
 
