@@ -162,19 +162,19 @@
         window.fetch = function(...args) {
             return originalFetch.apply(this, args)
                 .then(response => {
-                    // Check for 503 with maintenance flag
+                    // Check for 503 with maintenance flag or degraded-mode error
                     if (response.status === 503) {
                         response.clone().json()
                             .then(data => {
                                 if (data.maintenance === true) {
                                     showMaintenanceOverlay(data.message);
-                                    // Start polling for status updates
                                     setTimeout(checkMaintenanceStatus, MAINTENANCE_CHECK_TIMEOUT);
+                                } else if (data.error && typeof showToast === 'function') {
+                                    // Degraded mode — show a user-friendly toast instead of silent failure
+                                    showToast('Service temporarily limited. Please try again later.', 'warning');
                                 }
                             })
-                            .catch(() => {
-                                // Silently ignore JSON parse errors
-                            });
+                            .catch(() => {});
                     }
                     return response;
                 })
@@ -183,6 +183,34 @@
                     throw err;
                 });
         };
+    }
+
+    // ── Degraded Mode Banner ──────────────────────────────────────
+    var _degradedBannerId = 'degraded-mode-banner';
+
+    function showDegradedBanner() {
+        if (document.getElementById(_degradedBannerId)) return;
+        var banner = document.createElement('div');
+        banner.id = _degradedBannerId;
+        banner.style.cssText = 'position:fixed;top:0;left:0;right:0;z-index:99999;background:linear-gradient(90deg,#b45309,#d97706);color:#fff;text-align:center;padding:8px 16px;font-size:13px;font-weight:600;letter-spacing:0.5px;box-shadow:0 2px 8px rgba(0,0,0,0.3);';
+        banner.textContent = '\u26A0 Limited Mode \u2014 Deposits, withdrawals & real-money play temporarily unavailable. Free play is active.';
+        document.body.prepend(banner);
+    }
+
+    function hideDegradedBanner() {
+        var el = document.getElementById(_degradedBannerId);
+        if (el) el.remove();
+    }
+
+    function checkDegradedStatus() {
+        fetch('/api/health').then(function(r) { return r.json(); }).then(function(data) {
+            if (data.status === 'degraded') {
+                showDegradedBanner();
+                setTimeout(checkDegradedStatus, 5 * 60 * 1000);
+            } else {
+                hideDegradedBanner();
+            }
+        }).catch(function() { /* server might be fully down */ });
     }
 
     /**
@@ -194,6 +222,9 @@
 
         // Also do an initial check on page load
         checkMaintenanceStatus();
+
+        // Check for degraded mode (PG unavailable but server running)
+        setTimeout(checkDegradedStatus, 2000);
     }
 
     // Expose to window
