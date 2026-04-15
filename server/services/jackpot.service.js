@@ -104,8 +104,9 @@ async function processJackpotContribution(userId, betAmount) {
                 [wonAmount, userId, tierName]
             );
 
-            // ROUND 39: Atomic balance credit — single UPDATE, no SELECT+UPDATE race.
-            // balance_before/after logged from the same atomic operation.
+            // Credit balance (this path is used by jackpot.routes.js which
+            // does NOT credit balance itself — unlike spin.routes.js which
+            // calls checkAndAward() and handles credit with profit-floor capping)
             await db.run('UPDATE users SET balance = COALESCE(balance, 0) + ? WHERE id = ?', [wonAmount, userId]);
 
             // Log transaction (best-effort — don't block payout on log failure)
