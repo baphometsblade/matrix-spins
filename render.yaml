@@ -10,7 +10,7 @@ services:
     name: matrix-spins
     runtime: node
     plan: standard
-    buildCommand: node --version && npm install --omit=dev && echo "[BUILD] npm install OK" && node scripts/bundle-js.js && echo "[BUILD] bundle OK" && node scripts/fix-encoding.js && echo "[BUILD] complete"
+    buildCommand: echo "[BUILD] Node $(node --version)" && npm install --omit=dev 2>&1 && echo "[BUILD] npm install OK" && node scripts/bundle-js.js && echo "[BUILD] bundle OK" && node scripts/fix-encoding.js && echo "[BUILD] complete" && ls -la dist/*.min.* && echo "[BUILD] verified"
     startCommand: node server/index.js
     healthCheckPath: /api/health
     disk:
