@@ -41,7 +41,7 @@ class PgBackend {
             connectionString: connectionString,
             max: 20,
             idleTimeoutMillis: 30000,
-            connectionTimeoutMillis: 30000,
+            connectionTimeoutMillis: 15000,  // 15s — fail fast on unreachable PG
             ssl: sslSetting,
         });
 
