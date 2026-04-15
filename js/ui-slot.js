@@ -26,6 +26,9 @@
         let _bonusDroughtRounds = 0;  // number of bonuses triggered this session
         const SPIN_HISTORY_MAX = 15;
 
+        // -- Quick-stop feature state --
+        var _quickStopFired = false; // reset each spin; prevents double-fire on rapid taps
+
         // -- Loss streak deposit match offer tracking --------------
         let _consecutiveLosses = 0;
         let _lossStreakOfferShown = false; // prevent repeat toasts within same session
@@ -3120,6 +3123,17 @@
                         if (_spinB && _spinB.parentNode) _spinB.parentNode.appendChild(_ptBtn);
                     }
                 })();
+                // -- Quick-stop: tap reel area during spin to snap reels to result --
+                (function _bindQuickStop() {
+                    var _reelAreaForQuickStop = document.querySelector('.slot-reel-area');
+                    if (_reelAreaForQuickStop) {
+                        _reelAreaForQuickStop.addEventListener('click', function() {
+                            if (spinning && !freeSpinsActive && typeof _quickStopReels === 'function') {
+                                _quickStopReels();
+                            }
+                        });
+                    }
+                })();
                 // -- Touch gestures: tap or swipe-down on reels triggers spin --
                 (function attachReelTouchGesture() {
                     const reelEl = document.querySelector('.reels-container') || document.querySelector('.reels');
@@ -3489,6 +3503,12 @@
             '#a78bfa', '#fb923c', '#2dd4bf', '#f87171'
         ];
 
+        // -- Win Line Sequential Replay constants --
+        var WIN_LINE_CYCLE_DWELL = 1500; // ms per line
+        var WIN_LINE_CYCLE_LOOPS = 2;
+        var _winLineCycleTimer = null;
+        var _winLineCycleActive = false;
+
         // Build a themed set of line colours from the current game's accent colour
         function _buildPaylineColorSet(baseColor) {
             if (!baseColor) return PAYLINE_COLORS;
@@ -3497,6 +3517,85 @@
             // We'll just vary the alpha/brightness across 8 entries
             var c = baseColor;
             return [c, '#ffffff', c, '#ffe066', c, '#ffffff', c, '#ffe066'];
+        }
+
+        // -- Win Line Sequential Replay --
+        function _cycleWinLines() {
+            // Skip in turbo mode or if only 0-1 lines
+            if (window._turboSpinEnabled) return;
+            var winLines = (typeof _lastWinLines !== 'undefined') ? _lastWinLines : [];
+            if (winLines.length <= 1) return;
+
+            _winLineCycleActive = true;
+            var lineIdx = 0;
+            var loopsLeft = WIN_LINE_CYCLE_LOOPS;
+            var cols = getGridCols(currentGame);
+            var rows = getGridRows(currentGame);
+
+            function showOneLine() {
+                if (!_winLineCycleActive || loopsLeft <= 0) {
+                    _stopWinLineCycle();
+                    return;
+                }
+
+                var line = winLines[lineIdx];
+                if (!line) { _stopWinLineCycle(); return; }
+
+                // Dim all cells
+                for (var c = 0; c < cols; c++) {
+                    for (var r = 0; r < rows; r++) {
+                        var cell = document.getElementById('reel_' + c + '_' + r);
+                        if (cell) cell.classList.add('reel-cell-dim');
+                    }
+                }
+
+                // Un-dim and highlight cells on this payline
+                var positions = line.positions || line.cells || [];
+                positions.forEach(function(pos) {
+                    var c2 = pos[0] !== undefined ? pos[0] : pos.col;
+                    var r2 = pos[1] !== undefined ? pos[1] : pos.row;
+                    var cell = document.getElementById('reel_' + c2 + '_' + r2);
+                    if (cell) {
+                        cell.classList.remove('reel-cell-dim');
+                        cell.classList.add('reel-cell-win-pop');
+                    }
+                });
+
+                // Show line badge
+                var badge = document.getElementById('winLineBadge');
+                if (!badge) {
+                    badge = document.createElement('div');
+                    badge.id = 'winLineBadge';
+                    badge.className = 'win-line-badge';
+                    var reelArea = document.querySelector('.slot-reel-area');
+                    if (reelArea) reelArea.appendChild(badge);
+                }
+                var lineAmt = line.amount || line.winAmount || 0;
+                badge.textContent = 'Line ' + (lineIdx + 1) + ': +$' + lineAmt.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+                badge.style.display = 'block';
+                badge.style.opacity = '1';
+
+                lineIdx++;
+                if (lineIdx >= winLines.length) {
+                    lineIdx = 0;
+                    loopsLeft--;
+                }
+
+                _winLineCycleTimer = setTimeout(showOneLine, WIN_LINE_CYCLE_DWELL);
+            }
+
+            // Start after initial all-lines flash (2800ms)
+            _winLineCycleTimer = setTimeout(showOneLine, 2800);
+        }
+
+        function _stopWinLineCycle() {
+            _winLineCycleActive = false;
+            if (_winLineCycleTimer) { clearTimeout(_winLineCycleTimer); _winLineCycleTimer = null; }
+            // Remove dim from all cells
+            document.querySelectorAll('.reel-cell-dim').forEach(function(el) { el.classList.remove('reel-cell-dim'); });
+            document.querySelectorAll('.reel-cell-win-pop').forEach(function(el) { el.classList.remove('reel-cell-win-pop'); });
+            var badge = document.getElementById('winLineBadge');
+            if (badge) badge.style.display = 'none';
         }
 
         // Draw SVG lines through winning cell centres
@@ -3742,6 +3841,8 @@
                 try { localStorage.setItem('lastBet_' + currentGame.id, String(currentBet)); } catch(e) {}
             }
             spinning = true;
+            _quickStopFired = false; // reset quick-stop flag each spin
+            _stopWinLineCycle();
             if (typeof SoundManager !== 'undefined' && SoundManager.playSoundEvent) SoundManager.playSoundEvent('spin');
             if (typeof _startSpinTimer139 === 'function') _startSpinTimer139(); // 139
             _incrementSpinCounter(); // Sprint 48
@@ -4682,6 +4783,7 @@
                 animateBalanceRoll(oldBalance, balance, Math.min(2000, winAmount * 20));
                 saveBalance();
                 showWinAnimation(winAmount); upgradeWinGlow(winAmount);
+                _cycleWinLines();
 
                 // Apply win-cell-glow ring to winning cells based on win tier
                 (function() {
@@ -4768,6 +4870,18 @@
                         cell.style.animationDelay = '';
                     });
                 }, 600);
+
+                // Enhancement 4: Winning symbol scale pop (staggered)
+                if (_animSettingEnabled('animations')) {
+                    var _popDelay = 0;
+                    document.querySelectorAll('.reel-cell-winning, .reel-win-glow').forEach(function(cell) {
+                        setTimeout(function() {
+                            cell.classList.add('reel-cell-win-pop');
+                            setTimeout(function() { cell.classList.remove('reel-cell-win-pop'); }, 500);
+                        }, _popDelay);
+                        _popDelay += 50;
+                    });
+                }
 
                 const message = details.message || ("WIN! $" + winAmount.toLocaleString() + "!");
                 {
@@ -7101,41 +7215,81 @@
         }
 
 
+        function _upgradeBigWinTier(labelEl, overlayEl, text, tierClass) {
+            // Flash
+            var flash = document.createElement('div');
+            flash.style.cssText = 'position:absolute;inset:0;background:#fff;opacity:0.3;pointer-events:none;z-index:10401;transition:opacity 0.2s;';
+            overlayEl.appendChild(flash);
+            setTimeout(function() { flash.style.opacity = '0'; setTimeout(function() { flash.remove(); }, 200); }, 80);
+
+            // Scale pop on label
+            labelEl.style.transition = 'transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)';
+            labelEl.style.transform = 'scale(0.8)';
+            setTimeout(function() {
+                labelEl.textContent = text;
+                labelEl.className = 'bigwin-label ' + tierClass;
+                overlayEl.className = 'bigwin-overlay ' + tierClass;
+                labelEl.style.transform = 'scale(1.2)';
+                setTimeout(function() { labelEl.style.transform = 'scale(1)'; }, 150);
+            }, 100);
+        }
+
         function showBigWinCelebration(amount) {
             const multiplier = Math.round(amount / currentBet);
             const overlay = document.getElementById('bigWinOverlay');
             if (!overlay) return;
 
-            // Determine tier
+            // Determine final tier for particle count, bloom, and auto-close timing
             const isMega  = multiplier >= WIN_TIER_EPIC_THRESHOLD * 2;
             const isSuper = !isMega  && multiplier >= WIN_TIER_EPIC_THRESHOLD;
             const isBig   = !isSuper && multiplier >= WIN_TIER_MEGA_THRESHOLD;
-            const tierClass = isMega ? 'bigwin-tier-mega' : isSuper ? 'bigwin-tier-super' : isBig ? 'bigwin-tier-big' : 'bigwin-tier-nice';
 
-            // Label
+            // Start at the LOWEST qualifying tier — RAF callback escalates in real-time
             const label = document.getElementById('bigWinLabel');
-            if (isMega)       { label.textContent = '\uD83D\uDCB0 MEGA WIN!';  }
-            else if (isSuper) { label.textContent = '\u2B50 SUPER WIN!'; }
-            else if (isBig)   { label.textContent = '\uD83C\uDFB0 BIG WIN!';   }
-            else              { label.textContent = '\u2728 NICE WIN!';   }
-            label.className = 'bigwin-label ' + tierClass;
-
-            // Overlay tier class for CSS theming
-            overlay.className = 'bigwin-overlay ' + tierClass;
+            var startTier;
+            if (isBig || isSuper || isMega) {
+                label.textContent = '\uD83C\uDFB0 BIG WIN!';
+                label.className = 'bigwin-label bigwin-tier-big';
+                overlay.className = 'bigwin-overlay bigwin-tier-big';
+                startTier = 'big';
+            } else {
+                label.textContent = '\u2728 NICE WIN!';
+                label.className = 'bigwin-label bigwin-tier-nice';
+                overlay.className = 'bigwin-overlay bigwin-tier-nice';
+                startTier = 'nice';
+            }
 
             // Multiplier
             document.getElementById('bigWinMultiplier').textContent = '×' + multiplier;
 
-            // Animated amount counter
+            // Animated amount counter with real-time tier escalation
             const amountEl = document.getElementById('bigWinAmount');
             amountEl.textContent = '$0';
             if (_winCounterRaf) cancelAnimationFrame(_winCounterRaf);
             const duration = Math.min(2000, 500 + amount * 0.06);
             const startTime = performance.now();
+            var _displayedTier = startTier;
             function animateOverlayAmount(now) {
                 const t = Math.min(1, (now - startTime) / duration);
                 const ease = 1 - Math.pow(1 - t, 4);
                 amountEl.textContent = '$' + Math.round(ease * amount).toLocaleString();
+
+                // Tier upgrade checks — fire each upgrade only once as counter climbs
+                var currentMult = Math.round((ease * amount) / currentBet);
+                if (_displayedTier !== 'mega' && currentMult >= WIN_TIER_EPIC_THRESHOLD * 2) {
+                    _displayedTier = 'mega';
+                    _upgradeBigWinTier(label, overlay, '\uD83D\uDCB0 MEGA WIN!', 'bigwin-tier-mega');
+                    playProviderSound('megawin', currentGame);
+                } else if (_displayedTier !== 'super' && _displayedTier !== 'mega' && currentMult >= WIN_TIER_EPIC_THRESHOLD) {
+                    _displayedTier = 'super';
+                    _upgradeBigWinTier(label, overlay, '\u2B50 SUPER WIN!', 'bigwin-tier-super');
+                    playProviderSound('bigwin', currentGame);
+                } else if (_displayedTier !== 'big' && _displayedTier !== 'super' && _displayedTier !== 'mega' && currentMult >= WIN_TIER_MEGA_THRESHOLD) {
+                    _displayedTier = 'big';
+                    _upgradeBigWinTier(label, overlay, '\uD83C\uDFB0 BIG WIN!', 'bigwin-tier-big');
+                    playProviderSound('bigwin', currentGame);
+                }
+
                 if (t < 1) { _winCounterRaf = requestAnimationFrame(animateOverlayAmount); }
                 else { amountEl.textContent = '$' + amount.toLocaleString(); _winCounterRaf = null; }
             }
@@ -7197,7 +7351,8 @@
                 }, bloomDuration - 800);
             }
 
-            playProviderSound(isMega ? 'megawin' : 'bigwin', currentGame);
+            // Initial sound for the starting tier (RAF will fire upgrades for higher tiers)
+            playProviderSound(isBig || isSuper || isMega ? 'bigwin' : 'win', currentGame);
 
             // Auto-close after tier-dependent delay
             if (_bigWinCloseTimer) clearTimeout(_bigWinCloseTimer);
@@ -7273,6 +7428,66 @@
                     data.animFrameId = requestAnimationFrame(scrollFrame);
                 }, colIdx * 25);
             });
+        }
+
+        // Quick-stop: snap all unstopped reels to final position on user tap
+        function _quickStopReels() {
+            if (!spinning || !finalGrid) return;
+            if (typeof _quickStopFired !== 'undefined' && _quickStopFired) return;
+            _quickStopFired = true;
+
+            var cols = getGridCols(currentGame);
+            var reelData = typeof reelStripData !== 'undefined' ? reelStripData : null;
+            if (!reelData) return;
+
+            for (var c = 0; c < cols; c++) {
+                var data = reelData[c];
+                if (!data || !data.stripEl || data.colEl.classList.contains('stopped')) continue;
+
+                // Cancel the rAF scroll loop
+                data.stopped = true;
+                if (data.animFrameId) {
+                    cancelAnimationFrame(data.animFrameId);
+                    data.animFrameId = null;
+                }
+
+                // Snap to final position
+                var cellStep = data.cellH + (data.cellGap || 0);
+                var targetY = -(REEL_STRIP_BUFFER * cellStep);
+
+                data.stripEl.style.transition = 'transform 200ms ease-out';
+                data.stripEl.style.transform = 'translateY(' + targetY + 'px)';
+                data.stripEl.classList.remove('spinning', 'decelerating', 'near-miss-decel');
+                data.stripEl.classList.add('bouncing');
+                data.colEl.classList.remove('spinning', 'reel-near-miss-tension', 'reel-scatter-tension');
+                data.colEl.classList.add('stopped');
+                data.currentY = targetY;
+
+                // Remove bounce class after settle
+                (function(strip) {
+                    setTimeout(function() {
+                        strip.classList.remove('bouncing');
+                        strip.style.transition = '';
+                    }, 250);
+                })(data.stripEl);
+
+                playSound('click');
+            }
+
+            // Clear any lingering scatter tension
+            document.querySelectorAll('.reel-scatter-tension, .reel-scatter-primed').forEach(function(el) {
+                el.classList.remove('reel-scatter-tension', 'reel-scatter-primed');
+            });
+
+            // Render the final grid and trigger completion
+            currentGrid = finalGrid;
+            currentReels = typeof flattenGrid === 'function' ? flattenGrid(finalGrid) : [];
+            if (typeof renderGrid === 'function') renderGrid(finalGrid, currentGame);
+
+            // Fire the completion callback after snap animation
+            setTimeout(function() {
+                if (typeof onSpinComplete === 'function') onSpinComplete();
+            }, 250);
         }
 
         function calculateStopDelays(cols, turbo, isFree) {
@@ -7376,6 +7591,22 @@
 
                     data.colEl.classList.add('reel-stop-impact');
                     (function(col) { setTimeout(function() { col.classList.remove('reel-stop-impact'); }, 400); })(data.colEl);
+
+                    // Landing impact particles (skip in turbo, gate on quality)
+                    if (!window._turboSpinEnabled && typeof burstParticles === 'function') {
+                        var _quality = (window.appSettings && window.appSettings.animationQuality) || 'ultra';
+                        if (_quality === 'ultra' || _quality === 'high') {
+                            var _colRect = data.colEl.getBoundingClientRect();
+                            var _canvasEl = document.querySelector('.particle-canvas');
+                            if (_canvasEl) {
+                                var _canvasRect = _canvasEl.getBoundingClientRect();
+                                var _cx = (_colRect.left + _colRect.width / 2) - _canvasRect.left;
+                                var _cy = (_colRect.top + _colRect.height / 2) - _canvasRect.top;
+                                var _provKey = typeof getGameChromeStyle === 'function' ? getGameChromeStyle(currentGame) : '';
+                                burstParticles(_cx, _cy, 5, _provKey);
+                            }
+                        }
+                    }
 
                     // Add 3D landing tilt if quality supports it
                     var landQuality = (window.appSettings && window.appSettings.animationQuality) || 'ultra';
