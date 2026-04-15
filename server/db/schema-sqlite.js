@@ -816,7 +816,14 @@ const DEFERRED_INDEXES = [
     `CREATE INDEX IF NOT EXISTS idx_self_exclusions_user_active ON self_exclusions(user_id, is_active)`,
     `CREATE INDEX IF NOT EXISTS idx_self_exclusions_v2_player ON self_exclusions_v2(player_id, is_active)`,
     `CREATE INDEX IF NOT EXISTS idx_chain_transactions_player ON chain_transactions(player_id)`,
-    `CREATE INDEX IF NOT EXISTS idx_chain_transactions_status ON chain_transactions(status)`
+    `CREATE INDEX IF NOT EXISTS idx_chain_transactions_status ON chain_transactions(status)`,
+
+    // Missing indexes on frequently-queried tables (added 2026-04-15)
+    `CREATE INDEX IF NOT EXISTS idx_daily_wheel_spins_user ON daily_wheel_spins(user_id)`,
+    `CREATE INDEX IF NOT EXISTS idx_loss_insurance_user ON loss_insurance_policies(user_id)`,
+    `CREATE INDEX IF NOT EXISTS idx_slot_race_entries_user ON slot_race_entries(user_id)`,
+    `CREATE INDEX IF NOT EXISTS idx_loyalty_transactions_user_type ON loyalty_transactions(user_id, type, created_at)`,
+    `CREATE INDEX IF NOT EXISTS idx_daily_login_rewards_user ON daily_login_rewards(user_id, claimed_at)`
 ];
 
 

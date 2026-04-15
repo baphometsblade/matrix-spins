@@ -823,7 +823,14 @@ const INDEXES = [
     `CREATE INDEX IF NOT EXISTS idx_withdrawals_user_status ON withdrawals(user_id, status, created_at)`,
     `CREATE INDEX IF NOT EXISTS idx_daily_mission_progress_user_date ON daily_mission_progress(user_id, mission_date, completed)`,
     `CREATE INDEX IF NOT EXISTS idx_spins_user_bet ON spins(user_id, bet_amount, win_amount)`,
-    `CREATE INDEX IF NOT EXISTS idx_self_exclusions_user_active ON self_exclusions(user_id, is_active)`
+    `CREATE INDEX IF NOT EXISTS idx_self_exclusions_user_active ON self_exclusions(user_id, is_active)`,
+
+    // Missing indexes on frequently-queried tables (added 2026-04-15)
+    `CREATE INDEX IF NOT EXISTS idx_daily_wheel_spins_user ON daily_wheel_spins(user_id)`,
+    `CREATE INDEX IF NOT EXISTS idx_loss_insurance_user ON loss_insurance_policies(user_id)`,
+    `CREATE INDEX IF NOT EXISTS idx_slot_race_entries_user ON slot_race_entries(user_id)`,
+    `CREATE INDEX IF NOT EXISTS idx_loyalty_transactions_user_type ON loyalty_transactions(user_id, type, created_at)`,
+    `CREATE INDEX IF NOT EXISTS idx_daily_login_rewards_user ON daily_login_rewards(user_id, claimed_at)`
 ];
 
 
