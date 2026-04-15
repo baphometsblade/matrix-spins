@@ -19,6 +19,8 @@ const config = require('./config');
 
 let backend = null;
 let _degradedMode = false; // true when PG was requested but SQLite is active
+let _pgReconnectTimer = null;
+let _lastPgError = null;
 
 async function initDatabase() {
     if (config.DATABASE_URL) {
@@ -54,11 +56,14 @@ async function initDatabase() {
                 console.error('║  Fix DATABASE_URL or provision PostgreSQL to go live.        ║');
                 console.error('╚══════════════════════════════════════════════════════════════╝');
                 console.error(`[DB] PG error: ${err.message}`);
+                _lastPgError = err.message;
                 // Fall back to SQLite so the server can start
                 const SqliteBackend = require('./db/sqlite-backend');
                 backend = new SqliteBackend(config.DB_PATH);
                 await backend.init();
                 _degradedMode = true;
+                // Start background reconnection loop
+                _startPgReconnectLoop();
                 return backend;
             } else {
                 throw err;
@@ -73,6 +78,58 @@ async function initDatabase() {
  */
 function isDegraded() {
     return _degradedMode;
+}
+
+/**
+ * Returns the last PostgreSQL connection error message (for diagnostics).
+ */
+function lastPgError() {
+    return _lastPgError;
+}
+
+/**
+ * Periodically attempt to reconnect to PostgreSQL when in degraded mode.
+ * On success, swaps the backend from SQLite → PG and clears degraded flag.
+ * Checks every 5 minutes to avoid spamming a down database.
+ */
+function _startPgReconnectLoop() {
+    if (_pgReconnectTimer) return; // already running
+    var RECONNECT_INTERVAL = 5 * 60 * 1000; // 5 minutes
+
+    _pgReconnectTimer = setInterval(async function () {
+        if (!_degradedMode || !config.DATABASE_URL) {
+            clearInterval(_pgReconnectTimer);
+            _pgReconnectTimer = null;
+            return;
+        }
+        console.warn('[DB] Attempting PostgreSQL reconnection…');
+        try {
+            var PgBackend = require('./db/pg-backend');
+            var candidate = new PgBackend(config.DATABASE_URL);
+            await candidate.init();
+            // Success — swap backend
+            var oldBackend = backend;
+            backend = candidate;
+            _degradedMode = false;
+            _lastPgError = null;
+            clearInterval(_pgReconnectTimer);
+            _pgReconnectTimer = null;
+            console.warn('╔══════════════════════════════════════════════════════════════╗');
+            console.warn('║  ✓ PostgreSQL RECONNECTED — exiting degraded mode           ║');
+            console.warn('║  Money operations are now ENABLED.                          ║');
+            console.warn('╚══════════════════════════════════════════════════════════════╝');
+            // Close old SQLite backend gracefully
+            if (oldBackend && typeof oldBackend.close === 'function') {
+                try { await oldBackend.close(); } catch (_) {}
+            }
+        } catch (err) {
+            _lastPgError = err.message;
+            console.warn('[DB] PG reconnect failed: ' + err.message);
+        }
+    }, RECONNECT_INTERVAL);
+
+    // Don't keep the process alive just for reconnection attempts
+    if (_pgReconnectTimer.unref) _pgReconnectTimer.unref();
 }
 
 function getBackend() {
@@ -129,6 +186,7 @@ module.exports = {
     getBackend,
     isPg,
     isDegraded,
+    lastPgError,
     // Keep legacy alias for any code that calls getDb()
     getDb: getBackend,
     run,

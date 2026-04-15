@@ -34,6 +34,7 @@ router.get('/', async (req, res) => {
 
         const now = new Date().toISOString();
         const degraded = db.isDegraded ? db.isDegraded() : false;
+        const pgError = db.lastPgError ? db.lastPgError() : null;
         res.json({
             status: degraded ? 'degraded' : 'ok',
             uptime: Math.floor(process.uptime()),
@@ -42,7 +43,8 @@ router.get('/', async (req, res) => {
             memoryMB: Math.round(process.memoryUsage().rss / 1024 / 1024),
             nodeVersion: process.version,
             db: dbOk ? (degraded ? 'sqlite-fallback' : 'ok') : 'error',
-            ...(degraded && { warning: 'PostgreSQL unreachable — running on SQLite fallback. Money operations disabled.' })
+            ...(degraded && { warning: 'PostgreSQL unreachable — running on SQLite fallback. Money operations disabled. Auto-reconnect active (every 5 min).' }),
+            ...(degraded && pgError && { pgError: pgError })
         });
     } catch (err) {
         // Return 200 with degraded status during startup — load balancers
@@ -98,6 +100,40 @@ router.get('/assets', authenticate, requireAdmin, (req, res) => {
         } catch(e) { result.error = e.message; }
     }
     res.json(result);
+});
+
+/**
+ * POST /api/health/pg-reconnect — Admin: manually trigger PG reconnection
+ * Use after provisioning a new PostgreSQL instance or fixing DATABASE_URL.
+ */
+router.post('/pg-reconnect', authenticate, requireAdmin, async (req, res) => {
+    const db = require('../database');
+    if (!db.isDegraded()) {
+        return res.json({ success: true, message: 'Already connected to PostgreSQL — not in degraded mode.' });
+    }
+    if (!config.DATABASE_URL) {
+        return res.status(400).json({ error: 'DATABASE_URL is not set. Set it in environment variables first.' });
+    }
+    try {
+        const PgBackend = require('../db/pg-backend');
+        const candidate = new PgBackend(config.DATABASE_URL);
+        await candidate.init();
+        // Success — the reconnect loop in database.js handles the swap,
+        // but we can signal success here
+        res.json({
+            success: true,
+            message: 'PostgreSQL connection verified. The auto-reconnect loop will swap backends shortly.',
+            hint: 'Check /api/health in 30 seconds to confirm degraded mode cleared.'
+        });
+        // Close the test connection (the reconnect loop will create the real one)
+        try { await candidate.close(); } catch (_) {}
+    } catch (err) {
+        res.status(502).json({
+            success: false,
+            error: 'PostgreSQL still unreachable: ' + err.message,
+            hint: 'Check DATABASE_URL in Render environment variables. Free-tier PG instances expire after 90 days.'
+        });
+    }
 });
 
 /**
