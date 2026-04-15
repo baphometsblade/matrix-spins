@@ -522,7 +522,10 @@ router.post('/', authenticate, async (req, res) => {
                 [userId, SESSION_CAP_DURATION_HOURS]
             );
 
-            // Read current total (may be stale under extreme concurrency, but atomic UPDATE below prevents over-cap)
+            // Read current total — safe under single-instance because activeSpins
+            // blocks concurrent spins per userId. Under multi-instance load balancing,
+            // this read could be stale, allowing a user to overshoot the cap by one
+            // spin's worth (the DB counter is still clamped atomically below).
             const capRow = await db.get('SELECT total_wins FROM session_win_caps WHERE user_id = ?', [userId]);
             const sessionWins = capRow ? capRow.total_wins : 0;
             const remaining = Math.max(0, config.SESSION_WIN_CAP - sessionWins);
