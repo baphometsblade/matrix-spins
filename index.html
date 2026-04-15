@@ -412,7 +412,7 @@
                 <svg viewBox="0 0 20 20" fill="currentColor" width="16" height="16" style="vertical-align:middle;margin-right:6px;color:var(--rg-yellow-300)"><path d="M10 18c-4.4 0-7-3.1-7-6.8 0-3.3 2.3-5.8 4-7.2.4-.3 1 0 .9.5-.3 1.5.3 3 1.6 3.8.2.1.5 0 .5-.2.2-1.5.9-3.4 2.5-4.8.3-.3.8-.1.9.3.5 1.8 1.8 3.2 2.8 4.4C17.7 10 18 11.6 18 12.5 18 15.5 15.3 18 10 18z"/></svg>
                 Top Picks
             </h3>
-            <button class="section-see-all" onclick="setFilter('hot');document.getElementById('filterTabs').scrollIntoView({behavior:'smooth'})">See All ?</button>
+            <button class="section-see-all" onclick="setFilter('hot');document.getElementById('filterTabs').scrollIntoView({behavior:'smooth'})">See All →</button>
         </div>
         <div class="games-grid" id="hotGames"></div>
 
@@ -578,7 +578,6 @@
   });
   </script>
   <script src="js/lazy-thumb-fix.js"></script>
-</body> -->
 
     <!-- Slot Machine Modal • Pragmatic Play Style -->
     <div class="modal" id="slotModal">
@@ -716,14 +715,12 @@
             <span class="endurance-badge" id="enduranceBadge" style="display:none"></span>
             <span class="autoplay-badge" id="autoplayBadge" style="display:none"></span>
             <span class="sound-toggle-badge stb-on" id="soundToggleBadge" style="display:none"></span>
-            <span class="turbo-badge" id="turboBadge" style="display:none"></span>
             <span class="bookmark-badge" id="bookmarkBadge" style="display:none"></span>
             <span class="spin-countdown-badge" id="spinCountdownBadge" style="display:none"></span>
             <span class="game-comp-badge" id="gameCompBadge" style="display:none"></span>
             <div class="bet-preset-container" id="betPresetContainer"></div>
             <div class="autoplay-controls" id="autoplayControls">
                 <button class="autoplay-btn" id="autoplayBtn" onclick="_toggleAutoplay(10)">Auto</button>
-                <button class="turbo-btn" id="turboBtn" onclick="_toggleTurbo()">Turbo</button>
                 <button class="sound-btn" id="soundBtn" onclick="_toggleSound()">Sound</button>
                 <button class="bookmark-btn" id="bookmarkSaveBtn" onclick="_saveSessionBookmark()">Bookmark</button>
             </div>
@@ -884,9 +881,12 @@
                     <a href="#" onclick="_showPaytable();return false">Paytable</a> |
                     <a href="#" onclick="_openKYCPanel();return false">Verify Account</a>
                 </div>
-            </div> id="kycOverlay" style="display:none">
+            </div><!-- /.operator-footer -->
+            <div id="kycOverlay" style="display:none">
                 <div class="kyc-popup" id="kycContent"></div>
-            </div> id="nextLevelXpBar" style="display:none"><div class="xp-bar-fill"></div><span class="xp-bar-label"></span></div>
+            </div>
+        </div><!-- /.slot-modal-fullscreen -->
+    </div><!-- /#slotModal -->
             <span class="game-play-count" id="gamePlayCount" style="display:none"></span>
 
             <!-- Feature Popup Overlay -->
@@ -935,7 +935,7 @@
                 </div>
                 <div class="slot-top-right">
                     <button class="buy-bonus-btn" id="buyBonusBtn" onclick="buyBonus()" style="display:none;" title="Buy Free Spins">
-                        <span class="buy-bonus-icon">?</span>
+                        <span class="buy-bonus-icon">🎰</span>
                         <span class="buy-bonus-text">BUY BONUS</span>
                         <span class="buy-bonus-cost" id="buyBonusCost">50x</span>
                     </button>
@@ -1079,7 +1079,7 @@
                         <div class="wgt-label">GOAL $<span id="wgtTarget">0</span></div>
                         <div class="wgt-progress-wrap"><div class="wgt-progress-bar" id="wgtProgressBar" style="width:0%"></div></div>
                         <div class="wgt-pct" id="wgtPct">0%</div>
-                        <button class="wgt-dismiss" onclick="if(typeof dismissWinGoal==='function')dismissWinGoal()">?</button>
+                        <button class="wgt-dismiss" onclick="if(typeof dismissWinGoal==='function')dismissWinGoal()">✕</button>
                     </div>
                 </div>
 
@@ -1104,7 +1104,7 @@
                 <div class="bankroll-bar-row" id="bankrollBarRow" style="display:none">
                     <div class="bankroll-bar-wrap"><div class="bankroll-bar" id="bankrollBar" style="width:0%"></div></div>
                     <span class="bankroll-bar-label" id="bankrollBarLabel">Budget: $0 remaining</span>
-                    <button class="bankroll-dismiss" onclick="if(typeof dismissBankroll==='function')dismissBankroll()">?</button>
+                    <button class="bankroll-dismiss" onclick="if(typeof dismissBankroll==='function')dismissBankroll()">✕</button>
                 </div>
                 <input type="range" class="bet-range" id="betRange" min="50" max="5000" step="50" value="50" style="display:none;">
                 <div class="quick-bet-presets" id="quickBetPresets" style="display:none">
@@ -1606,9 +1606,6 @@
         </div>
     </div>
 
-    <!-- Toast Container (Pass 1) -->
-    <div id="toastContainer" class="toast-container"></div>
-
     <!-- Cashier Modal -->
     <div class="modal" id="walletModal">
         <div class="modal-content wallet-modal-content">
@@ -1814,7 +1811,7 @@ if (window.location.hostname === 'localhost' || window.location.hostname === '12
         const ctx    = canvas.getContext('2d');
 
         // Katakana + Latin + digits • classic Matrix alphabet
-        const CHARS = 'ã‚ ã‚¡ã‚¢ã‚£ã‚¤ã‚¥ã‚¦ã‚§ã‚¨ã‚©ã‚ªã‚«ã‚¬ã‚­ã‚®ã‚¯ã‚°ã‚±ã‚²ã‚³ã‚´ã‚µã‚¶ã‚·ã‚¸ã‚¹ã‚ºã‚»ã‚¼ã‚½ã‚¾ã‚¿ãƒ€ãƒãƒ‚ãƒƒãƒ„ãƒ…ãƒ†ãƒ‡ãƒˆãƒ‰ãƒŠãƒ‹ãƒŒãƒ0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ@#$%&*+=?/\\|<>';
+        const CHARS = '゠ァアィイゥウェエォオカガキギクグケゲコゴサザシジスズセゼソゾタダチヂッツヅテデトドナニヌネ0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ@#$%&*+=?/\|<>';
         const FONT_SIZE = 14;
         let columns, drops, speeds, brightness;
 
