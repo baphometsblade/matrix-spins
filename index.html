@@ -744,7 +744,6 @@
             <span class="geo-badge" id="geoBadge" style="display:none"></span>
             <span class="twofa-badge" id="twofaBadge" style="display:none" onclick="_toggle2FA()"></span>
             <span class="rate-limit-badge" id="rateLimitBadge" style="display:none"></span>
-            <div id="passwordStrengthMeter" style="display:none"></div>
             <div class="security-controls">
                 <button class="sec-btn" onclick="_openKYCPanel()">Verify ID</button>
                 <button class="sec-btn" onclick="_toggle2FA()">2FA Setup</button>
@@ -1673,7 +1672,8 @@
                     </div>
                     <div class="auth-field">
                         <label>Password</label>
-                        <input type="password" id="regPassword" placeholder="Min 6 characters" autocomplete="new-password">
+                        <input type="password" id="regPassword" placeholder="Min 8 chars, mix of letters, numbers & symbols" autocomplete="new-password" oninput="if(typeof _updatePasswordMeter==='function')_updatePasswordMeter('regPassword')">
+                        <div id="passwordStrengthMeter" class="reg-pw-meter" style="display:none;margin-top:6px"></div>
                     </div>
                     <div class="auth-field">
                         <label>Confirm Password</label>
@@ -1887,7 +1887,11 @@
             if (!username || !email || !password) { errEl.textContent = 'All fields are required'; return; }
             if (!dob) { errEl.textContent = 'Please enter your date of birth'; return; }
             if (password !== confirm) { errEl.textContent = 'Passwords do not match'; return; }
-            if (password.length < 6) { errEl.textContent = 'Password must be at least 6 characters'; return; }
+            if (password.length < 8) { errEl.textContent = 'Password must be at least 8 characters'; return; }
+            if (typeof _checkPasswordStrength === 'function') {
+                const pwStrength = _checkPasswordStrength(password);
+                if (pwStrength.score < 3) { errEl.textContent = 'Password is too weak. Mix uppercase, lowercase, numbers, and symbols.'; return; }
+            }
             const dobDate = new Date(dob);
             if (isNaN(dobDate.getTime()) || dobDate > new Date()) { errEl.textContent = 'Please enter a valid date of birth'; return; }
             const today = new Date();
@@ -1915,6 +1919,22 @@
     </script>
 
     <!-- Leaderboard + 3-tier jackpot ticker styles -->
+
+    <!-- Password strength meter (register form) -->
+    <style>
+        .reg-pw-meter { font-size: 12px; line-height: 1.4; }
+        .reg-pw-meter .pw-bar { height: 6px; background: rgba(255,255,255,0.08); border-radius: 3px; overflow: hidden; margin-bottom: 4px; }
+        .reg-pw-meter .pw-fill { height: 100%; transition: width .25s ease, background .25s ease; border-radius: 3px; }
+        .reg-pw-meter .pw-label { font-weight: 600; letter-spacing: .3px; }
+        .reg-pw-meter .pw-vweak .pw-fill, .reg-pw-meter .pw-vweak.pw-label { background: #8a1a1a; color: #ff6b6b; }
+        .reg-pw-meter .pw-weak .pw-fill, .reg-pw-meter .pw-weak.pw-label { background: #8a4a1a; color: #ff9f4f; }
+        .reg-pw-meter .pw-fair .pw-fill, .reg-pw-meter .pw-fair.pw-label { background: #8a8a1a; color: #ecec7f; }
+        .reg-pw-meter .pw-good .pw-fill, .reg-pw-meter .pw-good.pw-label { background: #4a8a1a; color: #bfec7f; }
+        .reg-pw-meter .pw-strong .pw-fill, .reg-pw-meter .pw-strong.pw-label { background: #1a8a1a; color: #7fec7f; }
+        .reg-pw-meter .pw-vstrong .pw-fill, .reg-pw-meter .pw-vstrong.pw-label { background: #1a8a4a; color: #7fecbf; }
+        .reg-pw-meter .pw-excellent .pw-fill, .reg-pw-meter .pw-excellent.pw-label { background: #1a4a8a; color: #7fbfec; }
+        .reg-pw-meter .pw-label { background: transparent !important; }
+    </style>
 
     <!-- Auth gate: hide close button when login is required -->
     <style>
