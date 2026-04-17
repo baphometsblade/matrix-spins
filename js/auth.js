@@ -286,7 +286,7 @@
         }
 
 
-        async function registerWithLocalFallback(username, email, password) {
+        async function registerWithLocalFallback(username, email, password, dateOfBirth) {
             const users = JSON.parse(localStorage.getItem(STORAGE_KEY_USERS) || '{}');
             const key = username.toLowerCase();
             if (users[key]) throw new Error('Username already taken.');
@@ -295,12 +295,13 @@
 
             const passwordHash = await hashPassword(password);
             const localId = `local_${Date.now()}`;
-            users[key] = { username, email, passwordHash, id: localId };
+            users[key] = { username, email, passwordHash, id: localId, date_of_birth: dateOfBirth || null };
             localStorage.setItem(STORAGE_KEY_USERS, JSON.stringify(users));
             applyAuthSession(`${LOCAL_TOKEN_PREFIX}${Date.now()}`, {
                 id: localId,
                 username,
                 email,
+                date_of_birth: dateOfBirth || null,
                 balance,
             });
         }
@@ -343,11 +344,12 @@
         }
 
 
-        async function register(username, email, password, referralCode) {
+        async function register(username, email, password, referralCode, dateOfBirth) {
             let serverError = null;
             try {
                 const body = { username, email, password };
                 if (referralCode) body.referralCode = referralCode;
+                if (dateOfBirth) body.date_of_birth = dateOfBirth;
                 const response = await apiRequest('/api/auth/register', {
                     method: 'POST',
                     body,
@@ -375,7 +377,7 @@
                 throw serverError;
             }
 
-            await registerWithLocalFallback(username, email, password);
+            await registerWithLocalFallback(username, email, password, dateOfBirth);
             updateAuthButton();
             document.body.classList.remove('auth-gate');
             hideAuthModal();

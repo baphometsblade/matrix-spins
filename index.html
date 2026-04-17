@@ -1679,6 +1679,10 @@
                         <label>Confirm Password</label>
                         <input type="password" id="regConfirm" placeholder="Confirm password" autocomplete="new-password">
                     </div>
+                    <div class="auth-field">
+                        <label>Date of Birth <span style="color:#64748b;font-weight:400">(must be 18+)</span></label>
+                        <input type="date" id="regDOB" autocomplete="bday" max="2999-12-31">
+                    </div>
                     <div class="auth-field" id="referralField">
                         <label>Referral Code <span style="color:#64748b;font-weight:400">(optional)</span></label>
                         <input type="text" id="regReferral" placeholder="Enter friend's code for bonus" autocomplete="off" maxlength="8" style="text-transform:uppercase">
@@ -1876,15 +1880,25 @@
             const email = document.getElementById('regEmail').value.trim();
             const password = document.getElementById('regPassword').value;
             const confirm = document.getElementById('regConfirm').value;
+            const dob = document.getElementById('regDOB').value;
             const refCode = (document.getElementById('regReferral')?.value || '').trim().toUpperCase();
             const errEl = document.getElementById('authError');
             errEl.textContent = '';
             if (!username || !email || !password) { errEl.textContent = 'All fields are required'; return; }
+            if (!dob) { errEl.textContent = 'Please enter your date of birth'; return; }
             if (password !== confirm) { errEl.textContent = 'Passwords do not match'; return; }
             if (password.length < 6) { errEl.textContent = 'Password must be at least 6 characters'; return; }
+            const dobDate = new Date(dob);
+            if (isNaN(dobDate.getTime()) || dobDate > new Date()) { errEl.textContent = 'Please enter a valid date of birth'; return; }
+            const today = new Date();
+            let age = today.getFullYear() - dobDate.getFullYear();
+            const mDiff = today.getMonth() - dobDate.getMonth();
+            if (mDiff < 0 || (mDiff === 0 && today.getDate() < dobDate.getDate())) age--;
+            if (age < 18) { errEl.textContent = 'You must be 18 or older to create an account'; return; }
+            if (age > 120) { errEl.textContent = 'Please enter a valid date of birth'; return; }
             btn.disabled = true; btn.textContent = 'CREATING ACCOUNT...';
             try {
-                await register(username, email, password, refCode || null);
+                await register(username, email, password, refCode || null, dob);
                 document.getElementById('authBtn').textContent = currentUser.username.toUpperCase();
             } catch (e) { errEl.textContent = e.message; }
             btn.disabled = false; btn.textContent = 'CREATE ACCOUNT';
