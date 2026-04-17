@@ -65,7 +65,7 @@
     <link rel="stylesheet" href="provider-chrome.css">
     <!-- Maintenance Mode Check -->
     <script src="js/maintenance-check.js"></script>
-    <link rel="stylesheet" href="styles.5e8741c3.css">
+    <link rel="stylesheet" href="styles.851332aa.css">
 </head>
 <body>
     <script src="js/error-handler.js"></script>
@@ -98,9 +98,9 @@
                 <span class="promo-sep">|</span>
                 <span class="promo-item">VIP REWARDS PROGRAM</span>
                 <span class="promo-sep">|</span>
-                <span class="promo-item">PROVABLY FAIR ï¿½ CERTIFIED RNG</span>
+                <span class="promo-item">PROVABLY FAIR · CERTIFIED RNG</span>
                 <span class="promo-sep">|</span>
-                <span class="promo-item">INSTANT PLAY ï¿½ NO DOWNLOAD REQUIRED</span>
+                <span class="promo-item">INSTANT PLAY · NO DOWNLOAD REQUIRED</span>
                 <span class="promo-sep">|</span>
                 <span class="promo-item">12 PREMIUM GAME PROVIDERS</span>
                 <span class="promo-sep">|</span>
@@ -114,9 +114,9 @@
                 <span class="promo-sep">|</span>
                 <span class="promo-item">VIP REWARDS PROGRAM</span>
                 <span class="promo-sep">|</span>
-                <span class="promo-item">PROVABLY FAIR ï¿½ CERTIFIED RNG</span>
+                <span class="promo-item">PROVABLY FAIR · CERTIFIED RNG</span>
                 <span class="promo-sep">|</span>
-                <span class="promo-item">INSTANT PLAY ï¿½ NO DOWNLOAD REQUIRED</span>
+                <span class="promo-item">INSTANT PLAY · NO DOWNLOAD REQUIRED</span>
             </div>
         </div>
     </div>
@@ -262,7 +262,7 @@
                         SPIN TO <span class="hero-highlight">WIN BIG</span>
                     </h2>
                     <p class="hero-subtitle">
-                        165+ Premium Slot Games ï¿½ Jackpots Up To $25,000 ï¿½ Instant Withdrawals
+                        165+ Premium Slot Games · Jackpots Up To $25,000 · Instant Withdrawals
                     </p>
                     <div class="hero-buttons">
                         <button class="btn btn-play" onclick="playRandomHotGame()">PLAY NOW</button>
@@ -328,8 +328,8 @@
             <button class="search-clear-btn" id="searchClearBtn" onclick="clearGameSearch()" style="display:none;">&times;</button>
             <select class="game-sort-select" id="gameSortSelect" onchange="if(typeof setSortOrder==='function')setSortOrder(this.value)" title="Sort games">
                 <option value="popular">Popular</option>
-                <option value="az">Aï¿½Z</option>
-                <option value="za">Zï¿½A</option>
+                <option value="az">A→Z</option>
+                <option value="za">Z→A</option>
                 <option value="rtp">Highest RTP</option>
                 <option value="volatile">Most Volatile</option>
                 <option value="chill">Least Volatile</option>
@@ -469,7 +469,7 @@
         </button>
     </nav>
 
-    <!-- Slot Machine Modal ï¿½ Pragmatic Play Style -->
+    <!-- Slot Machine Modal — Pragmatic Play Style -->
     <div class="modal" id="slotModal">
         <div class="modal-content slot-modal-fullscreen">
             <div class="kb-hints" id="kbHints" style="display:none"><kbd>Space</kbd> Spin &nbsp; <kbd>Esc</kbd> Close &nbsp; <kbd>T</kbd> Turbo &nbsp; <kbd>A</kbd> Auto &nbsp; <kbd>?</kbd> Help</div>
@@ -552,7 +552,6 @@
             <span class="session-timer-badge" id="sessionTimerBadge" style="display:none">0:00</span>
             <span class="volatility-badge" id="volatilityBadge" style="display:none"></span>
             <!-- Sprint 179-186 badges -->
-            <span class="avg-bet-badge" id="avgBetBadge" style="display:none"></span>
             <span class="win-streak-fire" id="winStreakFire" style="display:none"></span>
             <span class="cooldown-badge" id="cooldownBadge" style="display:none"></span>
             <span class="loss-recovery-badge" id="lossRecoveryBadge" style="display:none"></span>
@@ -582,7 +581,6 @@
             <span class="double-up-badge" id="doubleUpBadge" style="display:none"></span>
             <span class="provider-loyalty-badge" id="providerLoyaltyBadge" style="display:none"></span>
             <span class="scatter-countdown-badge" id="scatterCountdownBadge" style="display:none"></span>
-            <span class="bet-efficiency-badge" id="betEfficiencyBadge" style="display:none"></span>
             <span class="spin-rhythm-badge" id="spinRhythmBadge" style="display:none"></span>
             <span class="max-exposure-badge" id="maxExposureBadge" style="display:none"></span>
             <span class="game-diversity-badge" id="gameDiversityBadge" style="display:none"></span>
@@ -698,7 +696,6 @@
                     <button class="terms-accept-btn" onclick="_acceptTerms()">I Accept the Terms & Conditions</button>
                 </div>
             </div>
-            <div class="next-level-xp-bar"
             <span class="offline-badge" id="offlineBadge" style="display:none"></span>
             <span class="battery-badge" id="batteryBadge" style="display:none"></span>
             <button class="pwa-install-btn" id="pwaInstallBtn" style="display:none" onclick="_installPWA()">Install App</button>
@@ -752,7 +749,6 @@
                 <button class="sec-btn" onclick="_toggle2FA()">2FA Setup</button>
                 <button class="sec-btn" onclick="_exportAuditLog()">Audit Log</button>
             </div>
-            <div class="kyc-overlay"
             <span class="bonus-buy-badge" id="bonusBuyBadge" style="display:none" onclick="_buyBonus()"></span>
             <span class="scatter-pay-badge" id="scatterPayBadge" style="display:none"></span>
             <span class="wild-exp-badge" id="wildExpBadge" style="display:none"></span>
@@ -783,9 +779,11 @@
                     <a href="#" onclick="_showPaytable();return false">Paytable</a> |
                     <a href="#" onclick="_openKYCPanel();return false">Verify Account</a>
                 </div>
-            </div> id="kycOverlay" style="display:none">
+            </div>
+            <div class="kyc-overlay" id="kycOverlay" style="display:none">
                 <div class="kyc-popup" id="kycContent"></div>
-            </div> id="nextLevelXpBar" style="display:none"><div class="xp-bar-fill"></div><span class="xp-bar-label"></span></div>
+            </div>
+            <div class="next-level-xp-bar" id="nextLevelXpBar" style="display:none"><div class="xp-bar-fill"></div><span class="xp-bar-label"></span></div>
             <span class="game-play-count" id="gamePlayCount" style="display:none"></span>
 
             <!-- Feature Popup Overlay -->
@@ -825,7 +823,7 @@
 
             <!-- Top Bar: Game Info + Close -->
             <div class="demo-banner" id="demoBanner" style="display:none">
-                ?? DEMO MODE ï¿½ <span id="demoSpinsLeft">3</span> spins remaining
+                DEMO MODE · <span id="demoSpinsLeft">3</span> spins remaining
             </div>
             <div class="slot-top-bar">
                 <button class="slot-close-btn" onclick="closeSlot()" title="Back to lobby">&times;</button>
@@ -835,7 +833,7 @@
                     <div class="game-tag tag-jackpot" id="slotGameTag" style="display:none;">JACKPOT</div>
                 </div>
                 <div class="slot-top-right">
-                    <button class="buy-bonus-btn" id="buyBonusBtn" onclick="buyBonus()" style="display:none;" title="Buy Free Spins">
+                    <button class="buy-bonus-btn" id="buyBonusBtn" onclick="_buyBonus()" style="display:none;" title="Buy Free Spins">
                         <span class="buy-bonus-icon">?</span>
                         <span class="buy-bonus-text">BUY BONUS</span>
                         <span class="buy-bonus-cost" id="buyBonusCost">50x</span>
@@ -906,7 +904,7 @@
                 <!-- Cinematic: Spin toast feed -->
                 <div id="toastContainer" class="toast-container"></div>
             </div>
-            <!-- Win/Lose message display ï¿½ lives BELOW reels, not overlaid on them -->
+            <!-- Win/Lose message display — lives BELOW reels, not overlaid on them -->
             <div id="messageDisplay"></div>
 
             <div class="last-win-preview" id="lastWinPreview" style="display:none">
@@ -967,7 +965,6 @@
                     <span class="cascade-depth" id="cascadeDepth" style="display:none"></span>
                     <span class="autoplay-countdown" id="autoplayCountdown" style="display:none"></span>
                     <span class="dead-spin-counter" id="deadSpinCounter" style="display:none"></span>
-                    <span class="turbo-badge" id="turboBadge" style="display:none">&#x26A1; TURBO</span>
                     <div class="jackpot-progress" id="jackpotProgress" style="display:none"><div class="jp-fill"></div></div>
                     <span class="auto-speed-badge" id="autoSpeedBadge" style="display:none"></span>
                     <div class="scatter-progress" id="scatterProgress" style="display:none"></div>
@@ -992,8 +989,8 @@
                         <div class="slot-bar-value">$<span id="betAmount">50</span></div>
                     </div>
                     <button class="slot-bet-btn" id="betUpBtn" onclick="adjustBet(1)">&#43;</button>
-                    <button class="slot-bet-btn bet-x2-btn" onclick="doubleBet()" title="Double bet">2ï¿½</button>
-                    <button class="slot-bet-btn bet-half-btn" onclick="halveBet()" title="Halve bet">ï¿½</button>
+                    <button class="slot-bet-btn bet-x2-btn" onclick="doubleBet()" title="Double bet">2×</button>
+                    <button class="slot-bet-btn bet-half-btn" onclick="halveBet()" title="Halve bet">½</button>
                 </div>
                 <span class="bet-indicator" id="betIndicator" style="display:none">Med</span>
                 <div class="bet-tier-badge" id="betTierBadge" style="display:none">
@@ -1010,7 +1007,7 @@
                 <input type="range" class="bet-range" id="betRange" min="50" max="5000" step="50" value="50" style="display:none;">
                 <div class="quick-bet-presets" id="quickBetPresets" style="display:none">
                     <button onclick="if(typeof _quickBet==='function')_quickBet(0)" title="Minimum bet">Min</button>
-                    <button onclick="if(typeof _quickBet==='function')_quickBet(0.5)" title="Half max bet">ï¿½</button>
+                    <button onclick="if(typeof _quickBet==='function')_quickBet(0.5)" title="Half max bet">½</button>
                     <button onclick="if(typeof _quickBet==='function')_quickBet(1)" title="Maximum bet">Max</button>
                 </div>
                 <button class="bet-lock-btn" id="betLockBtn" onclick="if(typeof _toggleBetLock==='function')_toggleBetLock()" title="Lock/unlock bet">&#x1F513;</button>
@@ -1042,7 +1039,7 @@
 
                 <span class="loss-streak-badge" id="lossStreakBadge" style="display:none"></span>
 
-                <!-- SPIN Button (center, large) ï¿½ Pragmatic Play style -->
+                <!-- SPIN Button (center, large) — Pragmatic Play style -->
                 <button class="slot-spin-btn" id="spinBtn" onclick="spin()">
                     <svg class="spin-btn-icon" width="24" height="24" viewBox="0 0 24 24" fill="white">
                         <path d="M8 5v14l11-7z"/>
@@ -1076,7 +1073,7 @@
         <div class="gamble-modal">
             <div class="gamble-header">
                 <div class="gamble-title">?? GAMBLE</div>
-                <div class="gamble-subtitle">Double or Nothing ï¿½ Round <span id="gambleRound">1</span>/5</div>
+                <div class="gamble-subtitle">Double or Nothing · Round <span id="gambleRound">1</span>/5</div>
             </div>
             <div class="gamble-win-display">
                 <div class="gamble-win-label">CURRENT WIN</div>
@@ -1123,7 +1120,7 @@
             <div class="bigwin-coins" id="bigWinCoins"></div>
             <div class="bigwin-label" id="bigWinLabel">BIG WIN!</div>
             <div class="bigwin-amount" id="bigWinAmount">$0</div>
-            <div class="bigwin-multiplier" id="bigWinMultiplier">ï¿½0</div>
+            <div class="bigwin-multiplier" id="bigWinMultiplier">×0</div>
             <button class="bigwin-collect" onclick="closeBigWin()">COLLECT!</button>
         </div>
     </div>
@@ -1694,7 +1691,7 @@
                 </div>
 
                 <div class="auth-divider"><span>OR</span></div>
-                <button class="auth-guest-btn" onclick="loginAsGuest()">PLAY AS GUEST ï¿½ $1,000 FREE</button>
+                <button class="auth-guest-btn" onclick="loginAsGuest()">PLAY AS GUEST · $1,000 FREE</button>
 
                 <div class="auth-footer">
                     <p>Play responsibly. 18+ only.</p>
@@ -1766,7 +1763,7 @@
         const canvas = document.getElementById('matrixCanvas');
         const ctx    = canvas.getContext('2d');
 
-        // Katakana + Latin + digits ï¿½ classic Matrix alphabet
+        // Katakana + Latin + digits — classic Matrix alphabet
         const CHARS = '??????????????????????????????????????????????0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ@#$%&*+=?/\\|<>';
         const FONT_SIZE = 14;
         let columns, drops, speeds, brightness;
@@ -1798,7 +1795,7 @@
                 if (drops[i] > 0 && Math.random() < 0.04) {
                     ctx.fillStyle = '#e0ffe0';
                 } else {
-                    // Main column colour ï¿½ varying shades of matrix green
+                    // Main column colour — varying shades of matrix green
                     const g = brightness[i];
                     ctx.fillStyle = `rgba(0, ${g}, 20, 0.85)`;
                 }
@@ -1818,7 +1815,7 @@
             }
         }
 
-        // ~24 fps ï¿½ subtle enough not to distract
+        // ~24 fps — subtle enough not to distract
         setInterval(draw, 42);
     })();
     </script>
@@ -1945,7 +1942,7 @@
     <!-- Auth gate: hide close button when login is required -->
     <style>
         body.auth-gate #authModal .auth-close-btn { display: none !important; }
-        /* Hide all page content while auth gate is active ï¿½ show only the auth modal */
+        /* Hide all page content while auth gate is active — show only the auth modal */
         body.auth-gate > *:not(#authModal):not(.toast-container) {
             visibility: hidden !important;
             pointer-events: none !important;
@@ -2064,15 +2061,15 @@
         <div style="margin-bottom: 8px; font-size: 10px">
             Need help? Visit:
             <a href="https://www.ncpg.org" target="_blank" rel="noopener" style="color: rgba(212, 175, 55, 0.8); text-decoration: none; margin: 0 4px">NCPG</a>
-            <span style="color: rgba(255, 255, 255, 0.2)">ï¿½</span>
+            <span style="color: rgba(255, 255, 255, 0.2)" aria-hidden="true">·</span>
             <a href="https://www.gamcare.org.uk" target="_blank" rel="noopener" style="color: rgba(212, 175, 55, 0.8); text-decoration: none; margin: 0 4px">GamCare</a>
-            <span style="color: rgba(255, 255, 255, 0.2)">ï¿½</span>
+            <span style="color: rgba(255, 255, 255, 0.2)" aria-hidden="true">·</span>
             <a href="https://www.begambleaware.org" target="_blank" rel="noopener" style="color: rgba(212, 175, 55, 0.8); text-decoration: none; margin: 0 4px">BeGambleAware</a>
         </div>
 
         <!-- Copyright -->
         <div style="margin-bottom: 6px; color: rgba(255, 255, 255, 0.4)">
-            ï¿½ 2024-2026 Matrix Spins Casino. All rights reserved.
+            © 2024-2026 Matrix Spins Casino. All rights reserved.
         </div>
 
         <!-- Social Casino Disclaimer -->
@@ -2099,7 +2096,7 @@ if ('serviceWorker' in navigator) {
     
     
     
-    <script src="bundle.133059ee.js"></script>
+    <script src="bundle.03e21184.js"></script>
 </body>
 </html>
 
