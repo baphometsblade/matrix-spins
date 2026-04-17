@@ -623,6 +623,7 @@
             <span class="fair-hash-badge" id="fairHashBadge" style="display:none"></span>
             <div class="responsible-gambling-controls" id="rgControls">
                 <button class="rg-btn" onclick="_exportBetHistory()">Export History</button>
+                <button class="rg-btn" onclick="if(window.LossLimit&&LossLimit.showSettings)LossLimit.showSettings()">Loss Limits</button>
                 <button class="rg-btn rg-btn-warn" onclick="if(confirm('Activate 24h self-exclusion? You won\'t be able to play for 24 hours.')){_activateSelfExclusion(24)}">Cool-Off 24h</button>
             </div>
             <div class="rg-overlay" id="rgOverlay" style="display:none">
@@ -1730,6 +1731,7 @@
     <script src="js/loading-screen.js"></script>
     <script src="js/player-stats-ui.js"></script>
     <script src="js/win-limit.js"></script>
+    <script src="js/loss-limit.js"></script>
     
     <script src="js/cookie-consent.js"></script>
     <script src="js/perf-monitor.js"></script>

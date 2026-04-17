@@ -251,6 +251,10 @@
             if (typeof WinLimit !== 'undefined' && WinLimit.init) {
                 WinLimit.init();
             }
+            // Initialize loss limit (rolling daily/weekly/monthly net-loss caps)
+            if (typeof LossLimit !== 'undefined' && LossLimit.init) {
+                LossLimit.init();
+            }
             // Render personalized game recommendations
             if (typeof GameRecommendations !== 'undefined' && GameRecommendations.init) {
                 setTimeout(function() { GameRecommendations.init(); GameRecommendations.renderWidget(); }, 2000);

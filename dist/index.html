@@ -65,7 +65,7 @@
     <link rel="stylesheet" href="provider-chrome.css">
     <!-- Maintenance Mode Check -->
     <script src="js/maintenance-check.js"></script>
-    <link rel="stylesheet" href="styles.d5be1433.css">
+    <link rel="stylesheet" href="styles.dff20b09.css">
 </head>
 <body>
     <script src="js/error-handler.js"></script>
@@ -624,6 +624,7 @@
             <span class="fair-hash-badge" id="fairHashBadge" style="display:none"></span>
             <div class="responsible-gambling-controls" id="rgControls">
                 <button class="rg-btn" onclick="_exportBetHistory()">Export History</button>
+                <button class="rg-btn" onclick="if(window.LossLimit&&LossLimit.showSettings)LossLimit.showSettings()">Loss Limits</button>
                 <button class="rg-btn rg-btn-warn" onclick="if(confirm('Activate 24h self-exclusion? You won\'t be able to play for 24 hours.')){_activateSelfExclusion(24)}">Cool-Off 24h</button>
             </div>
             <div class="rg-overlay" id="rgOverlay" style="display:none">
@@ -1744,6 +1745,7 @@
     
     
     
+    
 
     
     
@@ -2058,7 +2060,7 @@ if ('serviceWorker' in navigator) {
     
     
     
-    <script src="bundle.c5b616b4.js"></script>
+    <script src="bundle.0652a56e.js"></script>
 </body>
 </html>
 
