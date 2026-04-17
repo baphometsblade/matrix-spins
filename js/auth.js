@@ -324,6 +324,8 @@
                 hideAuthModal();
                 showToast(`Welcome back, ${response.user.username}!`, 'success');
                 if (typeof onPostAuthInit === 'function') onPostAuthInit();
+                if (window.LoginHistory) LoginHistory.log({ type: 'login', outcome: 'success', username: response.user.username });
+                if (window.SessionClock) SessionClock.reset();
                 // Check for daily login reward after login
                 checkDailyLoginReward();
                 return;
@@ -332,15 +334,24 @@
             }
 
             if (!shouldFallbackToLocalAuth(serverError)) {
+                if (window.LoginHistory) LoginHistory.log({ type: 'login', outcome: 'failed', username: username, reason: (serverError && serverError.message) || 'server error' });
                 throw serverError;
             }
 
-            const user = await loginWithLocalFallback(username, password);
+            let user;
+            try {
+                user = await loginWithLocalFallback(username, password);
+            } catch (localError) {
+                if (window.LoginHistory) LoginHistory.log({ type: 'login', outcome: 'failed', username: username, reason: (localError && localError.message) || 'local auth failed' });
+                throw localError;
+            }
             updateAuthButton();
             document.body.classList.remove('auth-gate');
             hideAuthModal();
             showToast(`Welcome back, ${user.username}!`, 'success');
             if (typeof onPostAuthInit === 'function') onPostAuthInit();
+            if (window.LoginHistory) LoginHistory.log({ type: 'login', outcome: 'success', username: user.username });
+            if (window.SessionClock) SessionClock.reset();
         }
 
 
@@ -364,6 +375,8 @@
                 hideAuthModal();
                 showToast(`Welcome, ${response.user.username}! Your account has been created.`, 'success');
                 if (typeof onPostAuthInit === 'function') onPostAuthInit();
+                if (window.LoginHistory) LoginHistory.log({ type: 'register', outcome: 'success', username: response.user.username });
+                if (window.SessionClock) SessionClock.reset();
                 // Show welcome onboarding modal for new registrations
                 if (typeof Onboarding !== 'undefined' && Onboarding.showWelcomeModal) {
                     setTimeout(() => Onboarding.showWelcomeModal(response.user), 600);
@@ -378,6 +391,8 @@
             }
 
             await registerWithLocalFallback(username, email, password, dateOfBirth);
+            if (window.LoginHistory) LoginHistory.log({ type: 'register', outcome: 'success', username: username });
+            if (window.SessionClock) SessionClock.reset();
             updateAuthButton();
             document.body.classList.remove('auth-gate');
             hideAuthModal();
@@ -418,7 +433,10 @@
                     // Best-effort — don't block logout
                 }
             }
+            const priorUser = (typeof currentUser !== 'undefined' && currentUser) ? currentUser.username : null;
             clearAuthSession();
+            if (window.LoginHistory) LoginHistory.log({ type: 'logout', outcome: 'success', username: priorUser });
+            if (window.SessionClock) SessionClock.stop();
             updateAuthButton();
             if (typeof updateBalance === 'function') updateBalance();
             showToast('Logged out successfully.', 'info');

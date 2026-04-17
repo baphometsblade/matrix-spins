@@ -255,6 +255,14 @@
             if (typeof LossLimit !== 'undefined' && LossLimit.init) {
                 LossLimit.init();
             }
+            // Initialize wager cap (single-bet maximum, soft warning)
+            if (typeof WagerCap !== 'undefined' && WagerCap.init) {
+                WagerCap.init();
+            }
+            // Initialize continuous session clock (elapsed-play badge)
+            if (typeof SessionClock !== 'undefined' && SessionClock.init) {
+                SessionClock.init();
+            }
             // Render personalized game recommendations
             if (typeof GameRecommendations !== 'undefined' && GameRecommendations.init) {
                 setTimeout(function() { GameRecommendations.init(); GameRecommendations.renderWidget(); }, 2000);
