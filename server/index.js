@@ -8,18 +8,24 @@ const config = require('./config');
 // -- Security: warn if critical env vars are missing --
 (function checkSecurityConfig() {
     const warnings = [];
-    if (!process.env.JWT_SECRET) warnings.push('JWT_SECRET not set � using random key (sessions will not persist across restarts)');
-    if (!process.env.ADMIN_PASSWORD) warnings.push('ADMIN_PASSWORD not set � using random password (check server logs)');
-    if (!process.env.STRIPE_WEBHOOK_SECRET && process.env.STRIPE_SECRET_KEY) warnings.push('STRIPE_WEBHOOK_SECRET not set � webhook verification disabled');
+    if (!process.env.JWT_SECRET) warnings.push('JWT_SECRET not set — using random key (sessions will not persist across restarts)');
+    if (!process.env.ADMIN_PASSWORD) warnings.push('ADMIN_PASSWORD not set — using random password (check server logs)');
+    if (!process.env.STRIPE_WEBHOOK_SECRET && process.env.STRIPE_SECRET_KEY) warnings.push('STRIPE_WEBHOOK_SECRET not set — webhook verification disabled');
     if (warnings.length > 0) {
-        console.warn('\n??  SECURITY CONFIGURATION WARNINGS:');
-        warnings.forEach(w => console.warn('   � ' + w));
+        console.warn('\n⚠️  SECURITY CONFIGURATION WARNINGS:');
+        warnings.forEach(w => console.warn('   • ' + w));
         console.warn('   Set these in your .env file or Render environment variables.\n');
     }
-    // Log generated admin password so operator can use it
+    // Surface a generated admin password, but never print it verbatim in production logs.
     if (!process.env.ADMIN_PASSWORD) {
-        const config = require('./config');
-        console.log('[Security] Generated admin password for this session: ' + config.ADMIN_PASSWORD);
+        const cfg = require('./config');
+        if (process.env.NODE_ENV === 'production') {
+            const p = cfg.ADMIN_PASSWORD || '';
+            const masked = p.length >= 4 ? (p.slice(0, 2) + '***' + p.slice(-2)) : '****';
+            console.warn('[Security] A temporary admin password was generated (masked: ' + masked + '). Set ADMIN_PASSWORD via environment variables and restart; DO NOT rely on this value.');
+        } else {
+            console.log('[Security] Generated admin password for this session: ' + cfg.ADMIN_PASSWORD + ' (dev only — set ADMIN_PASSWORD in env)');
+        }
     }
 }());
 
@@ -739,12 +745,20 @@ app.use((err, req, res, _next) => {
 async function start() {
     // Production safety checks — refuse to start with insecure defaults
     if (config.NODE_ENV === 'production') {
-        if (config.JWT_SECRET === 'dev-secret-change-in-production') {
-            console.warn('[Security] FATAL: JWT_SECRET is the default dev value. Set JWT_SECRET in .env before running in production.');
+        if (config.JWT_SECRET === 'dev-secret-change-in-production' || !config.JWT_SECRET) {
+            console.error('[Security] FATAL: JWT_SECRET is missing or the default dev value. Set JWT_SECRET in the environment before running in production.');
             process.exit(1);
         }
-        if (config.ADMIN_PASSWORD === 'admin123changeme' || !config.ADMIN_PASSWORD) {
-            console.warn('[Security] WARNING: ADMIN_PASSWORD should be set via environment variable in production.');
+        if (config.ADMIN_PASSWORD === 'admin123changeme') {
+            console.error('[Security] FATAL: ADMIN_PASSWORD is the default dev value. Set ADMIN_PASSWORD in the environment before running in production.');
+            process.exit(1);
+        }
+        if (!process.env.ADMIN_PASSWORD) {
+            console.warn('[Security] WARNING: ADMIN_PASSWORD env var not set; a random password was generated. Set ADMIN_PASSWORD for stable admin access across restarts.');
+        }
+        if (process.env.STRIPE_SECRET_KEY && !process.env.STRIPE_WEBHOOK_SECRET) {
+            console.error('[Security] FATAL: STRIPE_SECRET_KEY is set but STRIPE_WEBHOOK_SECRET is missing. Webhook signature verification cannot be performed; refusing to start.');
+            process.exit(1);
         }
     }
 
