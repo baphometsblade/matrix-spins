@@ -106,7 +106,8 @@
 
 
         function updateBalance() {
-            document.getElementById('balance').textContent = formatMoney(balance);
+            const balEl = document.getElementById('balance');
+            if (balEl) balEl.textContent = formatMoney(balance);
             const slotBal = document.getElementById('slotBalance');
             if (slotBal) slotBal.textContent = formatMoney(balance);
             refreshBetControls();
@@ -229,8 +230,10 @@
                 betRange.value = validSteps.findIndex(v => Math.abs(v - currentBet) < 0.001);
             }
 
-            document.getElementById('minBet').textContent = bounds.minBet.toFixed(2);
-            document.getElementById('maxBet').textContent = currentGame.maxBet.toFixed(2);
+            const minBetEl = document.getElementById('minBet');
+            if (minBetEl) minBetEl.textContent = bounds.minBet.toFixed(2);
+            const maxBetEl = document.getElementById('maxBet');
+            if (maxBetEl) maxBetEl.textContent = currentGame.maxBet.toFixed(2);
             updateBetDisplay();
 
             const spinBtn = document.getElementById('spinBtn');

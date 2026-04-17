@@ -65,7 +65,7 @@
     <link rel="stylesheet" href="provider-chrome.css">
     <!-- Maintenance Mode Check -->
     <script src="js/maintenance-check.js"></script>
-    <link rel="stylesheet" href="styles.851332aa.css">
+    <link rel="stylesheet" href="styles.fe943e57.css">
 </head>
 <body>
     <script src="js/error-handler.js"></script>
@@ -385,9 +385,9 @@
             </h3>
             <span class="section-game-count" id="allGamesCount">165 games</span>
             <span class="games-explored-badge" id="gamesExploredBadge" style="display:none" title="Unique games you've tried"></span>
-            <div class="layout-toggle">
-                <button class="layout-btn layout-btn-active" id="layoutGridBtn" onclick="setLobbyLayout('grid')" title="Grid view">?</button>
-                <button class="layout-btn" id="layoutListBtn" onclick="setLobbyLayout('list')" title="List view">=</button>
+            <div class="layout-toggle" role="group" aria-label="Lobby layout">
+                <button class="layout-btn layout-btn-active" id="layoutGridBtn" onclick="setLobbyLayout('grid')" title="Grid view" aria-label="Grid view"><span aria-hidden="true">&#x25A6;</span></button>
+                <button class="layout-btn" id="layoutListBtn" onclick="setLobbyLayout('list')" title="List view" aria-label="List view"><span aria-hidden="true">&#x2630;</span></button>
             </div>
         </div>
         <div class="games-grid" id="allGames"></div>
@@ -1387,7 +1387,7 @@
     <div class="modal" id="settingsModal">
         <div class="modal-content" style="display:flex; align-items:center; justify-content:center; min-height:60vh;">
             <div class="settings-panel">
-                <button class="auth-close-btn" onclick="closeSettingsModal()" title="Close">&times;</button>
+                <button class="auth-close-btn" onclick="closeSettingsModal()" title="Close" aria-label="Close settings">&times;</button>
                 <h3 class="settings-title">
                     <svg viewBox="0 0 20 20" fill="currentColor" width="20" height="20" style="vertical-align:middle;margin-right:8px">
                         <path fill-rule="evenodd" d="M11.49 3.17c-.38-1.56-2.6-1.56-2.98 0a1.532 1.532 0 01-2.286.948c-1.372-.836-2.942.734-2.106 2.106.54.886.061 2.042-.947 2.287-1.561.379-1.561 2.6 0 2.978a1.532 1.532 0 01.947 2.287c-.836 1.372.734 2.942 2.106 2.106a1.532 1.532 0 012.287.947c.379 1.561 2.6 1.561 2.978 0a1.533 1.533 0 012.287-.947c1.372.836 2.942-.734 2.106-2.106a1.533 1.533 0 01.947-2.287c1.561-.379 1.561-2.6 0-2.978a1.532 1.532 0 01-.947-2.287c.836-1.372-.734-2.942-2.106-2.106a1.532 1.532 0 01-2.287-.947zM10 13a3 3 0 100-6 3 3 0 000 6z" clip-rule="evenodd"/>
@@ -1561,7 +1561,7 @@
     <div class="modal" id="walletModal">
         <div class="modal-content wallet-modal-content">
             <div class="wallet-modal">
-                <button class="modal-close-btn" onclick="hideWalletModal()" title="Close">&times;</button>
+                <button class="modal-close-btn" onclick="hideWalletModal()" title="Close" aria-label="Close wallet">&times;</button>
                 <div class="wallet-header">
                     <h2 class="wallet-title">
                         <svg viewBox="0 0 24 24" fill="currentColor" width="24" height="24"><path d="M21 18v1c0 1.1-.9 2-2 2H5c-1.11 0-2-.9-2-2V5c0-1.1.89-2 2-2h14c1.1 0 2 .9 2 2v1h-9c-1.11 0-2 .9-2 2v8c0 1.1.89 2 2 2h9zm-9-2h10V8H12v8zm4-2.5c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5z"/></svg>
@@ -1596,7 +1596,7 @@
     <div class="modal" id="authModal">
         <div class="modal-content" style="display:flex; align-items:center; justify-content:center; min-height:60vh;">
             <div class="auth-modal">
-                <button class="auth-close-btn" onclick="hideAuthModal()" title="Close">&times;</button>
+                <button class="auth-close-btn" onclick="hideAuthModal()" title="Close" aria-label="Close sign-in dialog">&times;</button>
                 <div class="auth-modal-header">
                     <div class="auth-logo">
                         <span class="auth-logo-crown" style="font-family:monospace;color:#00ff41;font-size:1.4rem;letter-spacing:-1px">&#x5B;M&#x5D;</span>
@@ -1613,11 +1613,11 @@
                 <!-- Login Form -->
                 <div id="loginForm" class="auth-form">
                     <div class="auth-field">
-                        <label>Username or Email</label>
+                        <label for="loginUsername">Username or Email</label>
                         <input type="text" id="loginUsername" placeholder="Enter username or email" autocomplete="username">
                     </div>
                     <div class="auth-field">
-                        <label>Password</label>
+                        <label for="loginPassword">Password</label>
                         <input type="password" id="loginPassword" placeholder="Enter password" autocomplete="current-password">
                     </div>
                     <button class="auth-submit" id="loginBtn" onclick="handleLogin()">SIGN IN</button>
@@ -1630,7 +1630,7 @@
                 <div id="forgotPasswordForm" class="auth-form" style="display:none;">
                     <p class="auth-forgot-desc">Enter your email and we'll send you a reset link.</p>
                     <div class="auth-field">
-                        <label>Email Address</label>
+                        <label for="forgotEmail">Email Address</label>
                         <input type="email" id="forgotEmail" placeholder="Enter your registered email" autocomplete="email">
                     </div>
                     <button class="auth-submit" onclick="handleForgotPassword()">SEND RESET LINK</button>
@@ -1643,11 +1643,11 @@
                 <div id="resetPasswordForm" class="auth-form" style="display:none;">
                     <p class="auth-forgot-desc">Enter your new password below.</p>
                     <div class="auth-field">
-                        <label>New Password</label>
+                        <label for="resetNewPassword">New Password</label>
                         <input type="password" id="resetNewPassword" placeholder="Min 6 characters" autocomplete="new-password">
                     </div>
                     <div class="auth-field">
-                        <label>Confirm New Password</label>
+                        <label for="resetConfirmPassword">Confirm New Password</label>
                         <input type="password" id="resetConfirmPassword" placeholder="Confirm new password" autocomplete="new-password">
                     </div>
                     <button class="auth-submit" onclick="handleResetPassword()">RESET PASSWORD</button>
@@ -1663,28 +1663,28 @@
                         <div style="font-size:12px;color:rgba(255,255,255,0.7);line-height:1.4;">150 Free Spins + Daily Cashback + VIP Rewards</div>
                     </div>
                     <div class="auth-field">
-                        <label>Username</label>
+                        <label for="regUsername">Username</label>
                         <input type="text" id="regUsername" placeholder="Choose a username (3-20 chars)" autocomplete="username">
                     </div>
                     <div class="auth-field">
-                        <label>Email</label>
+                        <label for="regEmail">Email</label>
                         <input type="email" id="regEmail" placeholder="Enter your email" autocomplete="email">
                     </div>
                     <div class="auth-field">
-                        <label>Password</label>
+                        <label for="regPassword">Password</label>
                         <input type="password" id="regPassword" placeholder="Min 8 chars, mix of letters, numbers & symbols" autocomplete="new-password" oninput="if(typeof _updatePasswordMeter==='function')_updatePasswordMeter('regPassword')">
                         <div id="passwordStrengthMeter" class="reg-pw-meter" style="display:none;margin-top:6px"></div>
                     </div>
                     <div class="auth-field">
-                        <label>Confirm Password</label>
+                        <label for="regConfirm">Confirm Password</label>
                         <input type="password" id="regConfirm" placeholder="Confirm password" autocomplete="new-password">
                     </div>
                     <div class="auth-field">
-                        <label>Date of Birth <span style="color:#64748b;font-weight:400">(must be 18+)</span></label>
+                        <label for="regDOB">Date of Birth <span style="color:#64748b;font-weight:400">(must be 18+)</span></label>
                         <input type="date" id="regDOB" autocomplete="bday" max="2999-12-31">
                     </div>
                     <div class="auth-field" id="referralField">
-                        <label>Referral Code <span style="color:#64748b;font-weight:400">(optional)</span></label>
+                        <label for="regReferral">Referral Code <span style="color:#64748b;font-weight:400">(optional)</span></label>
                         <input type="text" id="regReferral" placeholder="Enter friend's code for bonus" autocomplete="off" maxlength="8" style="text-transform:uppercase">
                     </div>
                     <button class="auth-submit" id="registerBtn" onclick="handleRegister()">CREATE ACCOUNT</button>
@@ -2096,7 +2096,7 @@ if ('serviceWorker' in navigator) {
     
     
     
-    <script src="bundle.03e21184.js"></script>
+    <script src="bundle.87ceebb7.js"></script>
 </body>
 </html>
 
