@@ -18558,32 +18558,86 @@ function _showGDPRPanel() {
     document.body.appendChild(panel);
 }
 function _exportGDPRData() {
-    var data = {};
-    for (var i = 0; i < localStorage.length; i++) {
-        var key = localStorage.key(i);
-        if (key.startsWith('ms_')) data[key] = localStorage.getItem(key);
+    var data = { exportedAt: new Date().toISOString(), source: 'matrix-spins', localStorage: {}, sessionStorage: {}, profile: null };
+    try {
+        for (var i = 0; i < localStorage.length; i++) {
+            var key = localStorage.key(i);
+            data.localStorage[key] = localStorage.getItem(key);
+        }
+    } catch (e) { data.localStorageError = String(e && e.message || e); }
+    try {
+        for (var j = 0; j < sessionStorage.length; j++) {
+            var sk = sessionStorage.key(j);
+            data.sessionStorage[sk] = sessionStorage.getItem(sk);
+        }
+    } catch (e) { data.sessionStorageError = String(e && e.message || e); }
+    try {
+        if (typeof currentUser !== 'undefined' && currentUser) data.profile = currentUser;
+        if (typeof stats !== 'undefined' && stats) data.stats = stats;
+        if (typeof balance !== 'undefined') data.balance = balance;
+    } catch (e) {}
+    try {
+        var blob = new Blob([JSON.stringify(data, null, 2)], {type: 'application/json'});
+        var a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = 'matrix-spins-data-export-' + new Date().toISOString().slice(0, 10) + '.json';
+        document.body.appendChild(a); a.click(); document.body.removeChild(a);
+        setTimeout(function () { URL.revokeObjectURL(a.href); }, 1000);
+        alert('Your data has been exported (' + Object.keys(data.localStorage).length + ' local keys, ' + Object.keys(data.sessionStorage).length + ' session keys, profile ' + (data.profile ? 'included' : 'not signed in') + ').');
+    } catch (e) {
+        alert('Export failed: ' + (e && e.message || e));
     }
-    var blob = new Blob([JSON.stringify(data, null, 2)], {type: 'application/json'});
-    var a = document.createElement('a');
-    a.href = URL.createObjectURL(blob);
-    a.download = 'matrix-spins-data-export.json';
-    a.click();
-    alert('Your data has been exported.');
 }
 function _requestDataDeletion() {
-    if (confirm('WARNING: This will permanently delete all your data including account, balance, and play history. This action cannot be undone.\n\nAre you absolutely sure?')) {
-        if (confirm('Last chance: Type YES to confirm deletion of all your data.')) {
-            for (var i = localStorage.length - 1; i >= 0; i--) {
-                var key = localStorage.key(i);
-                if (key.startsWith('ms_')) localStorage.removeItem(key);
-            }
-            alert('All your data has been deleted. You will be redirected.');
-            window.location.href = 'https://www.google.com';
+    if (!confirm('WARNING: This will permanently delete all your data stored on this device, including account, balance, play history, limits, and preferences. This action cannot be undone.\n\nContinue?')) return;
+    var typed = prompt('To confirm, please type DELETE in all caps:');
+    if (typed !== 'DELETE') { alert('Deletion cancelled.'); return; }
+    // Best-effort server-side deletion if logged in
+    try {
+        if (typeof apiRequest === 'function' && typeof currentUser !== 'undefined' && currentUser && !String(currentUser.id || '').startsWith('local_')) {
+            apiRequest('/api/user/delete', { method: 'POST', requireAuth: true }).catch(function () { /* best effort */ });
         }
-    }
+    } catch (e) {}
+    try { localStorage.clear(); } catch (e) {}
+    try { sessionStorage.clear(); } catch (e) {}
+    try {
+        document.cookie.split(';').forEach(function (c) {
+            var eq = c.indexOf('=');
+            var name = (eq > -1 ? c.substring(0, eq) : c).trim();
+            if (name) document.cookie = name + '=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/';
+        });
+    } catch (e) {}
+    alert('All your data on this device has been deleted. The page will now reload.');
+    try { window.location.reload(); } catch (e) { window.location.href = '/'; }
 }
 function _showPrivacySettings() {
-    alert('Privacy Settings:\n- Analytics: ' + (localStorage.getItem('ms_analytics_opt') !== 'false' ? 'Enabled' : 'Disabled') + '\n- Marketing emails: ' + (localStorage.getItem('ms_marketing_opt') !== 'false' ? 'Enabled' : 'Disabled') + '\n\nTo change settings, contact support@msaart.online');
+    var id = 'privacySettingsModal';
+    var existing = document.getElementById(id);
+    if (existing) existing.remove();
+    var analytics = localStorage.getItem('ms_analytics_opt') !== 'false';
+    var marketing = localStorage.getItem('ms_marketing_opt') !== 'false';
+    var overlay = document.createElement('div');
+    overlay.id = id;
+    overlay.className = 'gdpr-overlay';
+    overlay.innerHTML = '<div class="gdpr-inner" role="dialog" aria-modal="true" aria-labelledby="psTitle">' +
+        '<h3 id="psTitle">Privacy settings</h3>' +
+        '<p style="color:#888;font-size:13px;margin:0 0 12px">Control how your data is used. Changes apply immediately and are stored on this device.</p>' +
+        '<label style="display:flex;align-items:center;gap:10px;padding:10px 0;color:#ddd;font-size:14px;cursor:pointer"><input type="checkbox" id="psAnalytics" ' + (analytics ? 'checked' : '') + ' style="width:18px;height:18px;accent-color:#3498db"> Share anonymous analytics to help improve the product</label>' +
+        '<label style="display:flex;align-items:center;gap:10px;padding:10px 0;color:#ddd;font-size:14px;cursor:pointer"><input type="checkbox" id="psMarketing" ' + (marketing ? 'checked' : '') + ' style="width:18px;height:18px;accent-color:#3498db"> Receive marketing communications (email, in-app offers)</label>' +
+        '<p style="color:#888;font-size:12px;margin:14px 0 0">You can request a full data export or account deletion from the Privacy & Data panel at any time.</p>' +
+        '<button id="psSave" class="gdpr-close-btn" style="background:linear-gradient(135deg,#3498db,#2980b9);color:#fff;margin-top:14px">Save preferences</button>' +
+        '<button id="psClose" class="gdpr-close-btn">Close</button>' +
+    '</div>';
+    overlay.addEventListener('click', function (e) { if (e.target === overlay) overlay.remove(); });
+    document.body.appendChild(overlay);
+    document.getElementById('psSave').addEventListener('click', function () {
+        try {
+            localStorage.setItem('ms_analytics_opt', document.getElementById('psAnalytics').checked ? 'true' : 'false');
+            localStorage.setItem('ms_marketing_opt', document.getElementById('psMarketing').checked ? 'true' : 'false');
+        } catch (e) {}
+        overlay.remove();
+    });
+    document.getElementById('psClose').addEventListener('click', function () { overlay.remove(); });
 }
 
 
