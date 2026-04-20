@@ -1,21 +1,26 @@
-﻿require('dotenv').config();
+require('dotenv').config();
 
-// JWT_SECRET and ADMIN_PASSWORD MUST be stable across restarts. In development
-// we generate a random value if missing (logged as a warning from
-// server/index.js), but in production the startup check there will exit(1)
-// if JWT_SECRET is missing or too short. We keep the random fallback here
-// only so development boots without configuration.
-const _devJwt = () => require('crypto').randomBytes(64).toString('hex');
-const _devAdminPw = () => require('crypto').randomBytes(16).toString('hex');
+// In production, these MUST be set as real environment variables.
+// The server refuses to start with insecure defaults in production.
+const isProd = (process.env.NODE_ENV === 'production');
+
+function requireEnv(key, fallback) {
+    const val = process.env[key];
+    if (!val) {
+        if (isProd) {
+            console.error(`[Config] FATAL: ${key} must be set in production. Exiting.`);
+            process.exit(1);
+        }
+        return fallback;
+    }
+    return val;
+}
 
 module.exports = {
     PORT: parseInt(process.env.PORT, 10) || 3000,
-    JWT_SECRET: process.env.JWT_SECRET || _devJwt(),
-    // ROUND 36: Reduced from 7d to 4h — industry standard for financial apps.
-    // 7 days was too long; a stolen token could drain an account for a week.
-    JWT_EXPIRES_IN: '4h',
-    ADMIN_USERNAME: process.env.ADMIN_USERNAME || 'matrix',
-    ADMIN_PASSWORD: process.env.ADMIN_PASSWORD || _devAdminPw(),
+    JWT_SECRET: requireEnv('JWT_SECRET', 'dev-secret-do-not-use-in-production'),
+    JWT_EXPIRES_IN: '7d',
+    ADMIN_PASSWORD: requireEnv('ADMIN_PASSWORD', 'admin-change-me-now'),
     NODE_ENV: process.env.NODE_ENV || 'development',
     DB_PATH: process.env.DB_PATH || './casino.db',
     DATABASE_URL: process.env.DATABASE_URL || null,
@@ -23,48 +28,45 @@ module.exports = {
     // Game limits
     MAX_SPINS_PER_SECOND: 2,
     MIN_BET: 0.20,
-    MAX_BET: 1000,
-    DEFAULT_BALANCE: 5,                // Signup bonus (goes to bonus_balance with 25x wagering, not real balance)
+    MAX_BET: 50000,
+    DEFAULT_BALANCE: 0,          // New accounts start at $0 — must deposit to play
+    DEMO_BALANCE: 1000,          // Demo/guest mode balance
 
-    // House edge â€” guaranteed profit
-    TARGET_RTP: 0.88,              // 88% payout = 12% house edge (better retention, more volume)
+    // House edge — guaranteed profit
+    TARGET_RTP: 0.86,              // 86% payout = 14% house edge
     RTP_ADJUSTMENT_THRESHOLD: 0.02,
-    MAX_WIN_MULTIPLIER: 250,       // Higher potential wins = more excitement & play       // No single spin can win more than 150x bet
-    // ROUND 32: PROFIT_FLOOR raised from -100 to 0 — house should NEVER go negative.
-    // Previous value let the house lose $100 before emergency mode kicked in.
-    PROFIT_FLOOR: 0,
-    // ROUND 60: Reduced from $5K to $3K — $5K session cap was overly generous
-    SESSION_WIN_CAP: 3000,         // Max win per 24h session ($3k) — server authoritative
-    // ROUND 60: Tightened from 12% to 8% — protects house from large single-spin payouts
-    MAX_PAYOUT_PROFIT_PCT: 0.08,   // Single payout never exceeds 8% of total site profit
-    MIN_WIN_MULTIPLIER_FLOOR: 1.5, // Minimum win floor (1.5x bet) to keep game playable at low profit
+    MAX_WIN_MULTIPLIER: 200,       // No single spin can win more than 200x bet
+    PROFIT_FLOOR: -500,            // Emergency mode if house is down $500+
+    SESSION_WIN_CAP: 10000,        // Player can't win more than $10k per session
+    MAX_PAYOUT_PROFIT_PCT: 0.20,   // Single payout never exceeds 20% of total site profit
+    MIN_WIN_MULTIPLIER_FLOOR: 2,   // Minimum win floor (2x bet) to keep game playable at low profit
 
-    // Stripe integration (REQUIRED for deposits — returns 503 if unset)
+    // Stripe integration
     STRIPE_SECRET_KEY: process.env.STRIPE_SECRET_KEY || null,
     STRIPE_WEBHOOK_SECRET: process.env.STRIPE_WEBHOOK_SECRET || null,
     STRIPE_PUBLISHABLE_KEY: process.env.STRIPE_PUBLISHABLE_KEY || null,
 
     // Crypto / MetaMask integration
-    CRYPTO_WALLET_ADDRESS: process.env.CRYPTO_WALLET_ADDRESS || null,  // Owner's ETH receiving wallet
-    BTC_WALLET_ADDRESS: process.env.BTC_WALLET_ADDRESS || null,        // Owner's BTC receiving wallet
+    CRYPTO_WALLET_ADDRESS: process.env.CRYPTO_WALLET_ADDRESS || null,
+    BTC_WALLET_ADDRESS: process.env.BTC_WALLET_ADDRESS || null,
     ETH_RPC_URL: process.env.ETH_RPC_URL || 'https://cloudflare-eth.com',
-    ETH_CHAIN_ID: parseInt(process.env.ETH_CHAIN_ID, 10) || 1,         // 1 = Ethereum Mainnet
+    ETH_CHAIN_ID: parseInt(process.env.ETH_CHAIN_ID, 10) || 1,
     CRYPTO_MIN_CONFIRMATIONS: parseInt(process.env.CRYPTO_MIN_CONFIRMATIONS, 10) || 2,
     ETH_AUD_FALLBACK_RATE: parseFloat(process.env.ETH_AUD_FALLBACK_RATE) || 5000,
 
     // Payment configuration
     CURRENCY: 'AUD',
-    MIN_DEPOSIT: 2,                // Lower barrier to first deposit
-    MAX_DEPOSIT: 10000,
+    MIN_DEPOSIT: 5,
+    MAX_DEPOSIT: 100000,
     MIN_WITHDRAWAL: 20,
     MAX_WITHDRAWAL: 50000,
     WITHDRAWAL_PROCESSING_DAYS: 3,
     PAYMENT_METHODS: ['visa', 'mastercard', 'payid', 'bank_transfer', 'crypto_btc', 'crypto_eth', 'crypto_usdt'],
 
     // First-deposit bonus
-    FIRST_DEPOSIT_BONUS_PCT: 100,    // 100% match - industry standard for acquisition     // 50% match
-    FIRST_DEPOSIT_BONUS_MAX: 500,    // Higher cap attracts bigger first deposits    // cap at $200
-    FIRST_DEPOSIT_WAGERING_MULT: 45,  // Higher wagering = more house edge revenue  // 40x playthrough on first deposit bonus
+    FIRST_DEPOSIT_BONUS_PCT: 50,      // 50% match
+    FIRST_DEPOSIT_BONUS_MAX: 200,     // cap at $200
+    FIRST_DEPOSIT_WAGERING_MULT: 40,  // 40x playthrough on first deposit bonus
     RELOAD_BONUS_PCT: 25,             // 25% match on reload deposits
     RELOAD_BONUS_MAX: 100,            // cap reload bonus at $100
     RELOAD_WAGERING_MULT: 35,         // 35x playthrough on reload bonus
@@ -73,53 +75,50 @@ module.exports = {
     PASSWORD_RESET_EXPIRY_HOURS: 1,
     PASSWORD_RESET_MAX_ACTIVE: 3,
 
-    // Email / SMTP (optional â€” password reset emails require these to be set)
+    // Email / SMTP
     SMTP_HOST:   process.env.SMTP_HOST   || null,
     SMTP_PORT:   parseInt(process.env.SMTP_PORT, 10) || 587,
-    SMTP_SECURE: process.env.SMTP_SECURE === 'true',   // true = SSL/465, false = STARTTLS/587
+    SMTP_SECURE: process.env.SMTP_SECURE === 'true',
     SMTP_USER:   process.env.SMTP_USER   || null,
     SMTP_PASS:   process.env.SMTP_PASS   || null,
     SMTP_FROM:   process.env.SMTP_FROM   || '"Matrix Spins" <noreply@msaart.online>',
     ADMIN_EMAIL: process.env.ADMIN_EMAIL || null,
 
     // Jackpot pooling
-    // ROUND 58: Raised contribution to 2% and halved win chances — old 0.8% rate
-    // couldn't sustain seed amounts; jackpots were net negative for the house
-    JACKPOT_CONTRIBUTION_RATE: 0.02,    // 2% of every bet feeds jackpot pool
+    JACKPOT_CONTRIBUTION_RATE: 0.005,
     JACKPOT_TIERS: {
-        mini:  { seed: 50,    mustHitAt: 500 },
-        minor: { seed: 250,   mustHitAt: 2500 },
-        major: { seed: 1000,  mustHitAt: 15000 },
-        grand: { seed: 10000, mustHitAt: 100000 }
+        mini:  { seed: 100,   mustHitAt: 500 },
+        minor: { seed: 500,   mustHitAt: 2500 },
+        major: { seed: 2500,  mustHitAt: 15000 },
+        grand: { seed: 25000, mustHitAt: 100000 }
     },
-    JACKPOT_MINI_WIN_CHANCE: 0.0005,    // 0.05% per spin (was 0.1%)
-    JACKPOT_MINOR_WIN_CHANCE: 0.0001,   // 0.01% per spin (was 0.02%)
-    JACKPOT_MAJOR_WIN_CHANCE: 0.00002,  // 0.002% per spin (was 0.004%)
-    JACKPOT_GRAND_WIN_CHANCE: 0.0000025, // 0.00025% per spin (was 0.0005%)
+    JACKPOT_MINI_WIN_CHANCE: 0.001,
+    JACKPOT_MINOR_WIN_CHANCE: 0.0002,
+    JACKPOT_MAJOR_WIN_CHANCE: 0.00004,
+    JACKPOT_GRAND_WIN_CHANCE: 0.000005,
 
     // Loss-limit cashback
-    DAILY_LOSS_LIMIT_DEFAULT: 500,          // default daily loss limit ($)
-    // ROUND 58: Reduced from 8% to 5%, cap from $100 to $50 — old values too generous
-    LOSS_CASHBACK_RATE: 0.05,               // 5% cashback on losses when limit hit
-    LOSS_CASHBACK_MAX: 50,                   // max $50 cashback per day
-    LOSS_CASHBACK_VIP_RATES: {              // higher cashback for VIP tiers
+    DAILY_LOSS_LIMIT_DEFAULT: 500,
+    LOSS_CASHBACK_RATE: 0.05,
+    LOSS_CASHBACK_MAX: 50,
+    LOSS_CASHBACK_VIP_RATES: {
         0: 0.05, 1: 0.06, 2: 0.08,
         3: 0.10, 4: 0.12, 5: 0.15
     },
 
     // Spin-pack bundles
     SPIN_BUNDLES: [
-        { id: 'starter', name: 'Starter Pack', price: 4.99, credits: 8, bonusPct: 60, bonusWheelSpins: 0, badge: '' },
-        { id: 'silver', name: 'Silver Bundle', price: 24.99, credits: 40, bonusPct: 60, bonusWheelSpins: 1, badge: '🥈' },
-        { id: 'gold', name: 'Gold Bundle', price: 49.99, credits: 85, bonusPct: 70, bonusWheelSpins: 2, badge: '🥇' },
-        { id: 'diamond', name: 'Diamond Bundle', price: 99.99, credits: 180, bonusPct: 80, bonusWheelSpins: 3, badge: '💎' },
-        { id: 'whale', name: 'Whale Package', price: 249.99, credits: 500, bonusPct: 100, bonusWheelSpins: 5, badge: '🐋' },
+        { id: 'starter', name: 'Starter Pack',    price: 9.99,   credits: 15,  bonusPct: 50,  bonusWheelSpins: 0, badge: '' },
+        { id: 'silver',  name: 'Silver Bundle',   price: 24.99,  credits: 40,  bonusPct: 60,  bonusWheelSpins: 1, badge: '' },
+        { id: 'gold',    name: 'Gold Bundle',     price: 49.99,  credits: 85,  bonusPct: 70,  bonusWheelSpins: 2, badge: '' },
+        { id: 'diamond', name: 'Diamond Bundle',  price: 99.99,  credits: 180, bonusPct: 80,  bonusWheelSpins: 3, badge: '' },
+        { id: 'whale',   name: 'Whale Package',   price: 249.99, credits: 500, bonusPct: 100, bonusWheelSpins: 5, badge: '' },
     ],
 
     // Responsible gambling defaults
-    DEFAULT_DAILY_DEPOSIT_LIMIT: null,   // No limit by default
-    DEFAULT_SESSION_TIME_LIMIT: null,    // No limit by default
-    COOLING_OFF_PERIODS: [24, 48, 72, 168, 720], // Hours: 1d, 2d, 3d, 1w, 30d
+    DEFAULT_DAILY_DEPOSIT_LIMIT: null,
+    DEFAULT_SESSION_TIME_LIMIT: null,
+    COOLING_OFF_PERIODS: [24, 48, 72, 168, 720],
 
     // Social gifting
     GIFTING: {
@@ -142,4 +141,3 @@ module.exports = {
         DEFAULT_METRIC: 'total_wagered'
     },
 };
-

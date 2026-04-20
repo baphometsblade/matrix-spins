@@ -1,20 +1,11 @@
-const express = require('express');
+﻿const express = require('express');
 const config = require('../config');
 const { authenticate, requireAdmin } = require('../middleware/auth');
 
 const router = express.Router();
 
 /**
- * HEAD /api/health — Lightweight health ping for connection quality checks
- * Client-side _initConnectionQuality603() sends HEAD to measure latency;
- * without this handler Express returns 503 for HEAD on a GET-only route.
- */
-router.head('/', (req, res) => {
-    res.status(200).end();
-});
-
-/**
- * GET /api/health — Public health check
+ * GET /api/health â€” Public health check
  * Returns basic server status, uptime, and version
  */
 router.get('/', async (req, res) => {
@@ -25,29 +16,17 @@ router.get('/', async (req, res) => {
         const timeoutPromise = new Promise((_, reject) =>
             setTimeout(() => reject(new Error('DB ping timeout')), 25000));
 
-        let dbOk = true;
-        try {
-            await Promise.race([db.get('SELECT 1'), timeoutPromise]);
-        } catch(_) {
-            dbOk = false;
-        }
+        await Promise.race([db.get('SELECT 1'), timeoutPromise]);
 
         const now = new Date().toISOString();
-        const degraded = db.isDegraded ? db.isDegraded() : false;
-        const pgError = db.lastPgError ? db.lastPgError() : null;
         res.json({
-            status: degraded ? 'degraded' : 'ok',
+            status: 'ok',
             uptime: Math.floor(process.uptime()),
             timestamp: now,
-            version: '1.0.0',
-            memoryMB: Math.round(process.memoryUsage().rss / 1024 / 1024),
-            nodeVersion: process.version,
-            db: dbOk ? (degraded ? 'sqlite-fallback' : 'ok') : 'error',
-            ...(degraded && { warning: 'PostgreSQL unreachable — running on SQLite fallback. Money operations disabled. Auto-reconnect active (every 5 min).' }),
-            ...(degraded && pgError && { pgError: pgError })
+            version: '1.0.0'
         });
     } catch (err) {
-        // Return 200 with degraded status during startup — load balancers
+        // Return 200 with degraded status during startup â€” load balancers
         // need a 200 response; 503 causes deploy failure on PG cold starts
         if (process.uptime() < 60) {
             res.json({
@@ -58,86 +37,18 @@ router.get('/', async (req, res) => {
                 note: 'DB warming up'
             });
         } else {
-            // Always return 200 for basic health -- 503 causes Render deploy failures
-            // DB issues are logged but don't take the service offline
-            console.warn('[Health] DB check failed after startup:', err.message);
-            res.json({
-                status: 'degraded',
+            res.status(503).json({
+                status: 'error',
                 uptime: Math.floor(process.uptime()),
                 timestamp: new Date().toISOString(),
-                version: '1.0.0',
-                note: 'DB connection issue, service operational'
+                message: err.message
             });
         }
     }
 });
 
 /**
- * GET /api/health/assets — Debug: check asset directories on disk
- */
-router.get('/assets', authenticate, requireAdmin, (req, res) => {
-    const path = require('path');
-    const fs = require('fs');
-    const assetsDir = path.join(__dirname, '..', '..', 'assets');
-    const gsDir = path.join(assetsDir, 'game_symbols');
-    const result = { assetsExists: fs.existsSync(assetsDir), gameSymbolsExists: fs.existsSync(gsDir) };
-    if (result.gameSymbolsExists) {
-        try {
-            const dirs = fs.readdirSync(gsDir).slice(0, 20);
-            result.gameSymbolDirs = dirs;
-            result.totalDirs = fs.readdirSync(gsDir).length;
-            // Check first dir contents
-            if (dirs.length > 0) {
-                const firstDir = path.join(gsDir, dirs[0]);
-                result.firstDirFiles = fs.readdirSync(firstDir);
-            }
-            // Check ancient_tombs specifically
-            const atDir = path.join(gsDir, 'ancient_tombs');
-            result.ancientTombsExists = fs.existsSync(atDir);
-            if (result.ancientTombsExists) {
-                result.ancientTombsFiles = fs.readdirSync(atDir);
-            }
-        } catch(e) { result.error = e.message; }
-    }
-    res.json(result);
-});
-
-/**
- * POST /api/health/pg-reconnect — Admin: manually trigger PG reconnection
- * Use after provisioning a new PostgreSQL instance or fixing DATABASE_URL.
- */
-router.post('/pg-reconnect', authenticate, requireAdmin, async (req, res) => {
-    const db = require('../database');
-    if (!db.isDegraded()) {
-        return res.json({ success: true, message: 'Already connected to PostgreSQL — not in degraded mode.' });
-    }
-    if (!config.DATABASE_URL) {
-        return res.status(400).json({ error: 'DATABASE_URL is not set. Set it in environment variables first.' });
-    }
-    try {
-        const PgBackend = require('../db/pg-backend');
-        const candidate = new PgBackend(config.DATABASE_URL);
-        await candidate.init();
-        // Success — the reconnect loop in database.js handles the swap,
-        // but we can signal success here
-        res.json({
-            success: true,
-            message: 'PostgreSQL connection verified. The auto-reconnect loop will swap backends shortly.',
-            hint: 'Check /api/health in 30 seconds to confirm degraded mode cleared.'
-        });
-        // Close the test connection (the reconnect loop will create the real one)
-        try { await candidate.close(); } catch (_) {}
-    } catch (err) {
-        res.status(502).json({
-            success: false,
-            error: 'PostgreSQL still unreachable: ' + err.message,
-            hint: 'Check DATABASE_URL in Render environment variables. Free-tier PG instances expire after 90 days.'
-        });
-    }
-});
-
-/**
- * GET /api/health/detailed — Detailed health check (admin only)
+ * GET /api/health/detailed â€” Detailed health check (admin only)
  * Returns system info including memory, database status, user counts
  */
 router.get('/detailed', authenticate, requireAdmin, async (req, res) => {
@@ -170,10 +81,10 @@ router.get('/detailed', authenticate, requireAdmin, async (req, res) => {
         try {
             const todayStart = new Date();
             todayStart.setHours(0, 0, 0, 0);
-            const todayISO = todayStart.toISOString().slice(0, 19).replace('T', ' ');
+            const todayISO = todayStart.toISOString();
 
             const sessionResult = await db.get(
-                'SELECT COUNT(*) as count FROM users WHERE last_login >= datetime(?)',
+                'SELECT COUNT(*) as count FROM users WHERE last_login >= ?',
                 [todayISO]
             );
             activeSessionsToday = sessionResult ? sessionResult.count : 0;
@@ -204,13 +115,38 @@ router.get('/detailed', authenticate, requireAdmin, async (req, res) => {
         });
     } catch (err) {
         console.warn('[Health] Detailed health check error:', err.message);
-        // ROUND 42: Don't expose internal error messages to clients
         res.status(503).json({
             status: 'error',
             uptime: Math.floor(process.uptime()),
-            timestamp: new Date().toISOString()
+            timestamp: new Date().toISOString(),
+            message: err.message
         });
     }
 });
 
+
+/**
+ * GET /api/health/stats — Public live stats for the lobby
+ * Returns active session count (users active in last 15 min)
+ */
+router.get('/stats', async (req, res) => {
+    try {
+        const db = require('../database');
+        const cutoff = new Date(Date.now() - 15 * 60 * 1000).toISOString();
+        let activeSessions = 0;
+        try {
+            const result = await db.get(
+                "SELECT COUNT(*) as count FROM users WHERE last_login >= ?",
+                [cutoff]
+            );
+            activeSessions = result ? Math.max(result.count, 1) : 1;
+        } catch (e) {
+            activeSessions = 1;
+        }
+        res.json({ activeSessions, timestamp: new Date().toISOString() });
+    } catch (err) {
+        res.json({ activeSessions: 1, timestamp: new Date().toISOString() });
+    }
+});
 module.exports = router;
+

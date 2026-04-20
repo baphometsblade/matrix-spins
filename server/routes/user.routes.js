@@ -4,7 +4,6 @@ const crypto = require('crypto');
 const config = require('../config');
 const db = require('../database');
 const { authenticate } = require('../middleware/auth');
-const { bonusGuard } = require('../middleware/bonus-guard');
 const { sendPasswordReset } = require('../services/email.service');
 
 const router = express.Router();
@@ -35,7 +34,7 @@ router.get('/profile', authenticate, async (req, res) => {
 
         res.json({ user });
     } catch (err) {
-        console.warn('[User] Profile fetch error:', err.message);
+        console.warn('[User] Profile fetch error:', err);
         res.status(500).json({ error: 'Failed to fetch profile' });
     }
 });
@@ -71,28 +70,10 @@ router.put('/profile', authenticate, async (req, res) => {
             }
         }
 
-        // Validate display_name: length + safe characters only
+        // Validate display_name length
         if (display_name !== undefined && display_name !== null) {
-            if (typeof display_name !== 'string') {
-                return res.status(400).json({ error: 'display_name must be a string' });
-            }
-            const trimmedName = display_name.trim();
-            if (trimmedName.length === 0 || trimmedName.length > 50) {
-                return res.status(400).json({ error: 'display_name must be 1-50 characters' });
-            }
-            // Allow alphanumeric, spaces, hyphens, underscores, dots — block HTML/script chars
-            if (!/^[a-zA-Z0-9_\s\-\.]+$/.test(trimmedName)) {
-                return res.status(400).json({ error: 'display_name contains invalid characters (allowed: letters, numbers, spaces, hyphens, underscores, dots)' });
-            }
-        }
-
-        // Validate phone: digits, spaces, dashes, plus, parens only
-        if (phone !== undefined && phone !== null) {
-            if (typeof phone !== 'string' || phone.length > 20) {
-                return res.status(400).json({ error: 'phone must be 20 characters or fewer' });
-            }
-            if (phone.length > 0 && !/^[\d\s\-\+\(\)]+$/.test(phone)) {
-                return res.status(400).json({ error: 'phone contains invalid characters' });
+            if (typeof display_name !== 'string' || display_name.length > 50) {
+                return res.status(400).json({ error: 'display_name must be 50 characters or fewer' });
             }
         }
 
@@ -100,7 +81,7 @@ router.put('/profile', authenticate, async (req, res) => {
         const fields = [];
         const values = [];
 
-        if (display_name !== undefined) { fields.push('display_name = ?'); values.push(typeof display_name === 'string' ? display_name.trim() : display_name); }
+        if (display_name !== undefined) { fields.push('display_name = ?'); values.push(display_name); }
         if (phone !== undefined) { fields.push('phone = ?'); values.push(phone); }
         if (date_of_birth !== undefined) { fields.push('date_of_birth = ?'); values.push(date_of_birth); }
         if (country !== undefined) { fields.push('country = ?'); values.push(country); }
@@ -126,7 +107,7 @@ router.put('/profile', authenticate, async (req, res) => {
 
         res.json({ user: updated, message: 'Profile updated' });
     } catch (err) {
-        console.warn('[User] Profile update error:', err.message);
+        console.warn('[User] Profile update error:', err);
         res.status(500).json({ error: 'Failed to update profile' });
     }
 });
@@ -143,16 +124,6 @@ router.put('/profile/avatar', authenticate, async (req, res) => {
             return res.status(400).json({ error: 'avatar_url must be a string of 500 characters or fewer' });
         }
 
-        // Block dangerous URL schemes (javascript:, data:text/html, vbscript:, etc.)
-        // Only allow http(s):// and data:image/* URIs
-        const lowerUrl = avatar_url.toLowerCase().trim();
-        if (lowerUrl.startsWith('javascript:') || lowerUrl.startsWith('vbscript:') || lowerUrl.startsWith('data:text/')) {
-            return res.status(400).json({ error: 'avatar_url contains a disallowed protocol' });
-        }
-        if (!lowerUrl.startsWith('https://') && !lowerUrl.startsWith('http://') && !lowerUrl.startsWith('data:image/') && !lowerUrl.startsWith('/')) {
-            return res.status(400).json({ error: 'avatar_url must be a valid HTTP(S) URL, data:image URI, or site-relative path' });
-        }
-
         await db.run(
             "UPDATE users SET avatar_url = ?, updated_at = datetime('now') WHERE id = ?",
             [avatar_url, req.user.id]
@@ -160,7 +131,7 @@ router.put('/profile/avatar', authenticate, async (req, res) => {
 
         res.json({ avatar_url, message: 'Avatar updated' });
     } catch (err) {
-        console.warn('[User] Avatar update error:', err.message);
+        console.warn('[User] Avatar update error:', err);
         res.status(500).json({ error: 'Failed to update avatar' });
     }
 });
@@ -183,7 +154,7 @@ router.get('/stats', authenticate, async (req, res) => {
             res.json({ stats: null });
         }
     } catch (err) {
-        console.warn('[User] Stats fetch error:', err.message);
+        console.warn('[User] Stats fetch error:', err);
         res.status(500).json({ error: 'Failed to fetch stats' });
     }
 });
@@ -212,7 +183,7 @@ router.put('/stats', authenticate, async (req, res) => {
         );
         res.json({ message: 'Stats saved' });
     } catch (err) {
-        console.warn('[User] Stats save error:', err.message);
+        console.warn('[User] Stats save error:', err);
         res.status(500).json({ error: 'Failed to save stats' });
     }
 });
@@ -237,7 +208,7 @@ function getTodayStr() {
 }
 
 // POST /api/user/claim-daily-bonus — server-validated daily bonus
-router.post('/claim-daily-bonus', authenticate, bonusGuard, async (req, res) => {
+router.post('/claim-daily-bonus', authenticate, async (req, res) => {
     try {
         const user = await db.get(
             'SELECT id, balance, last_daily_claim, daily_streak FROM users WHERE id = ?',
@@ -263,14 +234,10 @@ router.post('/claim-daily-bonus', authenticate, bonusGuard, async (req, res) => 
         const reward = DAILY_REWARDS_SERVER[dayIndex];
         const newStreak = Math.min(streak + 1, 7);
         // Credit to bonus_balance with 15x wagering (revenue protection)
-        // IMPROVEMENT: Atomic WHERE prevents TOCTOU race — two concurrent claims both fail the second time
-        const claimResult = await db.run(
-            "UPDATE users SET bonus_balance = COALESCE(bonus_balance, 0) + ?, wagering_requirement = COALESCE(wagering_requirement, 0) + ?, last_daily_claim = ?, daily_streak = ?, updated_at = datetime('now') WHERE id = ? AND (last_daily_claim IS NULL OR last_daily_claim != ?)",
-            [reward.amount, reward.amount * 15, today, newStreak, user.id, today]
+        await db.run(
+            "UPDATE users SET bonus_balance = COALESCE(bonus_balance, 0) + ?, wagering_requirement = COALESCE(wagering_requirement, 0) + ?, last_daily_claim = ?, daily_streak = ?, updated_at = datetime('now') WHERE id = ?",
+            [reward.amount, reward.amount * 15, today, newStreak, user.id]
         );
-        if (!claimResult || claimResult.changes === 0) {
-            return res.status(400).json({ error: 'Already claimed today', claimedToday: true });
-        }
 
         await db.run(
             "INSERT INTO transactions (user_id, type, amount, description) VALUES (?, 'bonus', ?, ?)",
@@ -286,7 +253,7 @@ router.post('/claim-daily-bonus', authenticate, bonusGuard, async (req, res) => 
             newBalance: updatedDailyUser ? parseFloat(updatedDailyUser.balance) : (user.balance || 0),
         });
     } catch (err) {
-        console.warn('[User] Daily bonus error:', err.message);
+        console.warn('[User] Daily bonus error:', err);
         res.status(500).json({ error: 'Failed to claim daily bonus' });
     }
 });
@@ -309,7 +276,7 @@ const WHEEL_SEGMENTS_SERVER = [
 const WHEEL_COOLDOWN_HOURS = 4;
 
 // POST /api/user/spin-wheel — server-validated bonus wheel
-router.post('/spin-wheel', authenticate, bonusGuard, async (req, res) => {
+router.post('/spin-wheel', authenticate, async (req, res) => {
     try {
         const user = await db.get(
             'SELECT id, balance, last_wheel_spin FROM users WHERE id = ?',
@@ -328,20 +295,16 @@ router.post('/spin-wheel', authenticate, bonusGuard, async (req, res) => {
         }
 
         // Server determines the prize (RNG server-side)
-        const winIndex = Math.floor((crypto.randomBytes(4).readUInt32BE(0) / 0x100000000) * WHEEL_SEGMENTS_SERVER.length);
+        const winIndex = crypto.randomInt(WHEEL_SEGMENTS_SERVER.length);
         const seg = WHEEL_SEGMENTS_SERVER[winIndex];
 
         let newBalance = user.balance;
         if (!seg.type) {
             // Cash prize → bonus_balance with 15x wagering (revenue protection)
-            // IMPROVEMENT: Atomic WHERE prevents race — concurrent spins rejected
-            const wheelResult = await db.run(
-                "UPDATE users SET bonus_balance = COALESCE(bonus_balance, 0) + ?, wagering_requirement = COALESCE(wagering_requirement, 0) + ?, last_wheel_spin = datetime('now'), updated_at = datetime('now') WHERE id = ? AND (last_wheel_spin IS NULL OR last_wheel_spin <= datetime('now', '-' || ? || ' hours'))",
-                [seg.value, seg.value * 15, user.id, WHEEL_COOLDOWN_HOURS]
+            await db.run(
+                "UPDATE users SET bonus_balance = COALESCE(bonus_balance, 0) + ?, wagering_requirement = COALESCE(wagering_requirement, 0) + ?, last_wheel_spin = datetime('now'), updated_at = datetime('now') WHERE id = ?",
+                [seg.value, seg.value * 15, user.id]
             );
-            if (!wheelResult || wheelResult.changes === 0) {
-                return res.status(400).json({ error: 'Wheel cooldown active' });
-            }
             await db.run(
                 "INSERT INTO transactions (user_id, type, amount, description) VALUES (?, 'bonus', ?, ?)",
                 [user.id, seg.value, 'Bonus wheel prize: ' + seg.label + ' (bonus, 15x wagering)']
@@ -361,7 +324,7 @@ router.post('/spin-wheel', authenticate, bonusGuard, async (req, res) => {
             xp: seg.xp,
         });
     } catch (err) {
-        console.warn('[User] Wheel spin error:', err.message);
+        console.warn('[User] Wheel spin error:', err);
         res.status(500).json({ error: 'Failed to spin wheel' });
     }
 });
@@ -378,7 +341,7 @@ const PROMO_CODES_SERVER = {
     XPBOOST:    { type: 'daily',    cash: 0,    xp: 0,   spins: 0,  desc: '2× XP Boost (20 spins)!' },
 };
 
-router.post('/redeem-promo', authenticate, bonusGuard, async (req, res) => {
+router.post('/redeem-promo', authenticate, async (req, res) => {
     try {
         const { code } = req.body;
         if (!code || typeof code !== 'string') {
@@ -441,7 +404,7 @@ router.post('/redeem-promo', authenticate, bonusGuard, async (req, res) => {
             newBalance
         });
     } catch (err) {
-        console.warn('[User] Promo code error:', err.message);
+        console.warn('[User] Promo code error:', err);
         res.status(500).json({ error: 'Failed to redeem promo code' });
     }
 });
@@ -486,14 +449,14 @@ router.get('/referral', authenticate, async (req, res) => {
             minDeposit: REFERRAL_MIN_DEPOSIT,
         });
     } catch (err) {
-        console.warn('[User] Referral info error:', err.message);
+        console.warn('[User] Referral info error:', err);
         res.status(500).json({ error: 'Failed to fetch referral info' });
     }
 });
 
 // POST /api/user/claim-referral-bonus — called after first qualifying deposit
 // Awards bonus to both referrer and referee
-router.post('/claim-referral-bonus', authenticate, bonusGuard, async (req, res) => {
+router.post('/claim-referral-bonus', authenticate, async (req, res) => {
     try {
         const user = await db.get(
             'SELECT id, balance, referred_by, referral_bonus_paid FROM users WHERE id = ?',
@@ -538,7 +501,7 @@ router.post('/claim-referral-bonus', authenticate, bonusGuard, async (req, res) 
             newBalance: updatedRefUser ? parseFloat(updatedRefUser.balance) : (user.balance || 0),
         });
     } catch (err) {
-        console.warn('[User] Referral bonus error:', err.message);
+        console.warn('[User] Referral bonus error:', err);
         res.status(500).json({ error: 'Failed to claim referral bonus' });
     }
 });
@@ -571,7 +534,7 @@ router.get('/wagering', authenticate, async (req, res) => {
             complete: user.wagering_requirement > 0 && user.wagering_progress >= user.wagering_requirement,
         });
     } catch (err) {
-        console.warn('[User] Wagering status error:', err.message);
+        console.warn('[User] Wagering status error:', err);
         res.status(500).json({ error: 'Failed to fetch wagering status' });
     }
 });
@@ -605,7 +568,7 @@ router.post('/forfeit-bonus', authenticate, async (req, res) => {
             balance: user.balance,
         });
     } catch (err) {
-        console.warn('[User] Forfeit bonus error:', err.message);
+        console.warn('[User] Forfeit bonus error:', err);
         res.status(500).json({ error: 'Failed to forfeit bonus' });
     }
 });
@@ -638,7 +601,7 @@ router.put('/change-password', authenticate, async (req, res) => {
         }
 
         // Hash and store new password
-        const newHash = bcrypt.hashSync(new_password, 13);
+        const newHash = bcrypt.hashSync(new_password, 12);
         await db.run(
             "UPDATE users SET password_hash = ?, updated_at = datetime('now') WHERE id = ?",
             [newHash, req.user.id]
@@ -646,7 +609,7 @@ router.put('/change-password', authenticate, async (req, res) => {
 
         res.json({ message: 'Password changed successfully' });
     } catch (err) {
-        console.warn('[User] Change password error:', err.message);
+        console.warn('[User] Change password error:', err);
         res.status(500).json({ error: 'Failed to change password' });
     }
 });
@@ -682,7 +645,7 @@ router.post('/forgot-password', async (req, res) => {
         const expiresAt = new Date(Date.now() + expiryHours * 60 * 60 * 1000).toISOString();
 
         await db.run(
-            'INSERT INTO password_reset_tokens (user_id, token, expires_at) VALUES (?, ?, ?) ON CONFLICT(token) DO UPDATE SET expires_at = excluded.expires_at',
+            'INSERT INTO password_reset_tokens (user_id, token, expires_at) VALUES (?, ?, ?)',
             [user.id, token, expiresAt]
         );
 
@@ -695,9 +658,15 @@ router.post('/forgot-password', async (req, res) => {
             console.warn('[User] Failed to send password reset email:', err.message);
         });
 
+        // In dev mode also log the token so it can be tested without SMTP
+        if (config.NODE_ENV !== 'production') {
+            console.log(`[User] Password reset token for ${email}: ${token}`);
+            console.log(`[User] Reset URL: ${resetUrl}`);
+        }
+
         res.json({ message: 'If that email is registered, a password reset link has been sent.' });
     } catch (err) {
-        console.warn('[User] Forgot password error:', err.message);
+        console.warn('[User] Forgot password error:', err);
         res.status(500).json({ error: 'Failed to process password reset request' });
     }
 });
@@ -725,7 +694,7 @@ router.post('/reset-password', async (req, res) => {
         }
 
         // Hash and update password
-        const newHash = bcrypt.hashSync(new_password, 13);
+        const newHash = bcrypt.hashSync(new_password, 12);
         await db.run(
             "UPDATE users SET password_hash = ?, updated_at = datetime('now') WHERE id = ?",
             [newHash, resetRecord.user_id]
@@ -736,7 +705,7 @@ router.post('/reset-password', async (req, res) => {
 
         res.json({ message: 'Password has been reset successfully' });
     } catch (err) {
-        console.warn('[User] Reset password error:', err.message);
+        console.warn('[User] Reset password error:', err);
         res.status(500).json({ error: 'Failed to reset password' });
     }
 });
@@ -760,7 +729,7 @@ router.get('/verification', authenticate, async (req, res) => {
             verification: verification || null,
         });
     } catch (err) {
-        console.warn('[User] Verification fetch error:', err.message);
+        console.warn('[User] Verification fetch error:', err);
         res.status(500).json({ error: 'Failed to fetch verification status' });
     }
 });
@@ -804,7 +773,7 @@ router.post('/verification', authenticate, async (req, res) => {
 
         res.json({ message: 'Verification submitted', kyc_status: 'pending' });
     } catch (err) {
-        console.warn('[User] Verification submit error:', err.message);
+        console.warn('[User] Verification submit error:', err);
         res.status(500).json({ error: 'Failed to submit verification' });
     }
 });
@@ -816,8 +785,8 @@ router.post('/verification', authenticate, async (req, res) => {
 // GET /api/user/transactions — paginated transaction history
 router.get('/transactions', authenticate, async (req, res) => {
     try {
-        const page = Math.max(1, parseInt(req.query.page, 10) || 1);
-        const limit = Math.min(Math.max(1, parseInt(req.query.limit, 10) || 20), 100);
+        const page = Math.max(1, parseInt(req.query.page) || 1);
+        const limit = Math.min(Math.max(1, parseInt(req.query.limit) || 20), 100);
         const offset = (page - 1) * limit;
         const type = req.query.type || null;
 
@@ -853,7 +822,7 @@ router.get('/transactions', authenticate, async (req, res) => {
             },
         });
     } catch (err) {
-        console.warn('[User] Transactions fetch error:', err.message);
+        console.warn('[User] Transactions fetch error:', err);
         res.status(500).json({ error: 'Failed to fetch transactions' });
     }
 });
@@ -872,7 +841,7 @@ router.post('/close-account', authenticate, async (req, res) => {
 
         res.json({ message: 'Account has been closed' });
     } catch (err) {
-        console.warn('[User] Close account error:', err.message);
+        console.warn('[User] Close account error:', err);
         res.status(500).json({ error: 'Failed to close account' });
     }
 });

@@ -2,8 +2,8 @@
  * Stripe Payment Service
  *
  * Gracefully handles the case where the stripe npm package is not installed.
- * When Stripe is unavailable, all methods return appropriate errors (503).
- * No mock/simulated payments — real Stripe integration only.
+ * When Stripe is unavailable, all methods return appropriate errors and the
+ * existing mock payment flow continues to work.
  *
  * Required env vars (set in .env or environment):
  *   STRIPE_SECRET_KEY       — sk_test_... or sk_live_...
@@ -30,7 +30,7 @@ try {
                 version: '1.0.0',
             },
         });
-        console.warn('[Stripe] SDK loaded and configured');
+        console.log('[Stripe] SDK loaded and configured');
     } else {
         console.warn('[Stripe] SDK loaded but STRIPE_SECRET_KEY is not set — Stripe payments disabled');
     }
@@ -69,7 +69,7 @@ async function createCheckoutSession(userId, amount, currency, returnUrl) {
     }
 
     // Create a pending deposit record so we can match it on webhook callback
-    const reference = `DEP-STRIPE-${Date.now()}-${require('crypto').randomBytes(4).toString('hex')}`;
+    const reference = `DEP-STRIPE-${Date.now()}-${require('crypto').randomBytes(3).toString('hex')}`;
 
     const depositResult = await db.run(
         'INSERT INTO deposits (user_id, amount, currency, payment_type, status, reference) VALUES (?, ?, ?, ?, ?, ?)',
@@ -100,10 +100,6 @@ async function createCheckoutSession(userId, amount, currency, returnUrl) {
         },
         success_url: returnUrl ? `${returnUrl}?deposit=success&ref=${reference}` : undefined,
         cancel_url: returnUrl ? `${returnUrl}?deposit=cancelled&ref=${reference}` : undefined,
-    }, {
-        // Idempotency: prevents duplicate session creation on network retry.
-        // The reference is unique per user-initiated deposit attempt.
-        idempotencyKey: reference,
     });
 
     // Store the Stripe session ID as external_ref on the deposit
@@ -112,7 +108,7 @@ async function createCheckoutSession(userId, amount, currency, returnUrl) {
         [session.id, depositId]
     );
 
-    console.warn(`[Stripe] Checkout session ${session.id} created for user ${userId}, deposit ${depositId}, $${amount}`);
+    console.log(`[Stripe] Checkout session ${session.id} created for user ${userId}, deposit ${depositId}, $${amount}`);
 
     return {
         sessionId: session.id,
@@ -142,7 +138,7 @@ async function createPaymentIntent(userId, amount, currency) {
         throw new Error('Amount must be at least $0.50');
     }
 
-    const reference = `DEP-PI-${Date.now()}-${require('crypto').randomBytes(4).toString('hex')}`;
+    const reference = `DEP-PI-${Date.now()}-${require('crypto').randomBytes(3).toString('hex')}`;
 
     const depositResult = await db.run(
         'INSERT INTO deposits (user_id, amount, currency, payment_type, status, reference) VALUES (?, ?, ?, ?, ?, ?)',
@@ -159,9 +155,6 @@ async function createPaymentIntent(userId, amount, currency) {
             reference: reference,
         },
         description: `Matrix Spins deposit — user ${userId}`,
-    }, {
-        // Idempotency: prevents duplicate charge creation on network retry.
-        idempotencyKey: reference,
     });
 
     await db.run(
@@ -169,7 +162,7 @@ async function createPaymentIntent(userId, amount, currency) {
         [paymentIntent.id, depositId]
     );
 
-    console.warn(`[Stripe] PaymentIntent ${paymentIntent.id} created for user ${userId}, deposit ${depositId}, $${amount}`);
+    console.log(`[Stripe] PaymentIntent ${paymentIntent.id} created for user ${userId}, deposit ${depositId}, $${amount}`);
 
     return {
         clientSecret: paymentIntent.client_secret,
@@ -180,14 +173,194 @@ async function createPaymentIntent(userId, amount, currency) {
 }
 
 // ─── Webhook Handler ────────────────────────────────────────────────────────
-// NOTE: Stripe webhook processing is NOT done here. The active webhook handler
-// lives in server/routes/stripe-checkout.routes.js which is mounted at
-// POST /api/payment/webhook and uses the raw-body middleware configured in
-// server/index.js. The dead handleWebhook + handlePaymentSuccess helpers that
-// previously lived in this file were confusingly never called and had a
-// different bonus-calculation path (non-atomic first-deposit check); they
-// have been removed to eliminate the risk of someone wiring them in and
-// creating a parallel double-credit path.
+
+/**
+ * Verifies a Stripe webhook signature and processes the event.
+ *
+ * @param {Buffer} rawBody    — raw request body (NOT parsed JSON)
+ * @param {string} signature  — Stripe-Signature header value
+ * @returns {Promise<object>} — { event, action } describing what happened
+ */
+async function handleWebhook(rawBody, signature) {
+    if (!stripe) {
+        throw new Error('Stripe is not available');
+    }
+
+    if (!config.STRIPE_WEBHOOK_SECRET) {
+        throw new Error('STRIPE_WEBHOOK_SECRET is not configured');
+    }
+
+    // Verify the webhook signature
+    let event;
+    try {
+        event = stripe.webhooks.constructEvent(rawBody, signature, config.STRIPE_WEBHOOK_SECRET);
+    } catch (err) {
+        throw new Error(`Webhook signature verification failed: ${err.message}`);
+    }
+
+    console.log(`[Stripe Webhook] Received event: ${event.type} (${event.id})`);
+
+    let action = { type: event.type, handled: false };
+
+    switch (event.type) {
+        case 'checkout.session.completed': {
+            const session = event.data.object;
+            action = await handlePaymentSuccess(
+                session.metadata,
+                session.id,
+                session.amount_total / 100,
+                'checkout.session.completed'
+            );
+            break;
+        }
+
+        case 'payment_intent.succeeded': {
+            const intent = event.data.object;
+            action = await handlePaymentSuccess(
+                intent.metadata,
+                intent.id,
+                intent.amount_received / 100,
+                'payment_intent.succeeded'
+            );
+            break;
+        }
+
+        case 'payment_intent.payment_failed': {
+            const intent = event.data.object;
+            const reference = intent.metadata && intent.metadata.reference;
+            if (reference) {
+                await db.run(
+                    "UPDATE deposits SET status = 'failed' WHERE reference = ? AND status = 'pending'",
+                    [reference]
+                );
+                console.log(`[Stripe Webhook] Payment failed for reference ${reference}`);
+            }
+            action = { type: event.type, handled: true, reference };
+            break;
+        }
+
+        default:
+            console.log(`[Stripe Webhook] Unhandled event type: ${event.type}`);
+            action = { type: event.type, handled: false };
+    }
+
+    return { event: { id: event.id, type: event.type }, action };
+}
+
+/**
+ * Shared logic for crediting a user after successful payment.
+ * Used by both checkout.session.completed and payment_intent.succeeded.
+ */
+async function handlePaymentSuccess(metadata, externalId, amountFromStripe, eventType) {
+    const reference = metadata && metadata.reference;
+    const userId = metadata && metadata.userId ? parseInt(metadata.userId, 10) : null;
+
+    if (!reference) {
+        console.warn(`[Stripe Webhook] ${eventType} — no reference in metadata, skipping`);
+        return { type: eventType, handled: false, reason: 'no_reference' };
+    }
+
+    // Look up the pending deposit
+    const deposit = await db.get(
+        "SELECT id, user_id, amount, status FROM deposits WHERE reference = ?",
+        [reference]
+    );
+
+    if (!deposit) {
+        console.warn(`[Stripe Webhook] Deposit not found for reference ${reference}`);
+        return { type: eventType, handled: false, reason: 'deposit_not_found' };
+    }
+
+    if (deposit.status !== 'pending') {
+        console.log(`[Stripe Webhook] Deposit ${deposit.id} already ${deposit.status}, skipping duplicate`);
+        return { type: eventType, handled: true, reason: 'already_processed', depositId: deposit.id };
+    }
+
+    // Use the deposit amount from our DB (authoritative), not from Stripe, to avoid
+    // any mismatch due to currency conversion or rounding
+    const depositAmount = deposit.amount;
+    const depositUserId = deposit.user_id;
+
+    // Credit the user
+    const user = await db.get('SELECT balance, bonus_balance FROM users WHERE id = ?', [depositUserId]);
+    if (!user) {
+        console.warn(`[Stripe Webhook] User ${depositUserId} not found for deposit ${deposit.id}`);
+        return { type: eventType, handled: false, reason: 'user_not_found' };
+    }
+
+    const balanceBefore = user.balance;
+    const balanceAfter = balanceBefore + depositAmount;
+
+    // Determine bonus: first deposit or reload
+    let bonusAmount = 0;
+    let wageringMult = 0;
+    let bonusType = '';
+    const priorDeposits = await db.get(
+        "SELECT COUNT(*) as count FROM deposits WHERE user_id = ? AND status = 'completed'",
+        [depositUserId]
+    );
+    if (priorDeposits && priorDeposits.count === 0) {
+        bonusAmount = Math.min(depositAmount * (config.FIRST_DEPOSIT_BONUS_PCT / 100), config.FIRST_DEPOSIT_BONUS_MAX);
+        wageringMult = config.FIRST_DEPOSIT_WAGERING_MULT || 30;
+        bonusType = 'first_deposit_bonus';
+    } else {
+        bonusAmount = Math.min(depositAmount * ((config.RELOAD_BONUS_PCT || 50) / 100), config.RELOAD_BONUS_MAX || 250);
+        wageringMult = config.RELOAD_WAGERING_MULT || 25;
+        bonusType = 'reload_bonus';
+    }
+
+    // Update user balance
+    await db.run('UPDATE users SET balance = ? WHERE id = ?', [balanceAfter, depositUserId]);
+
+    // Mark deposit as completed
+    await db.run(
+        "UPDATE deposits SET status = 'completed', external_ref = ?, completed_at = datetime('now') WHERE id = ?",
+        [externalId, deposit.id]
+    );
+
+    // Log the deposit transaction
+    await db.run(
+        'INSERT INTO transactions (user_id, type, amount, balance_before, balance_after, reference) VALUES (?, ?, ?, ?, ?, ?)',
+        [depositUserId, 'deposit', depositAmount, balanceBefore, balanceAfter, reference]
+    );
+
+    // Apply bonus if applicable
+    if (bonusAmount > 0) {
+        const wagerReq = bonusAmount * wageringMult;
+        await db.run(
+            'UPDATE users SET bonus_balance = bonus_balance + ?, wagering_requirement = ?, wagering_progress = 0 WHERE id = ?',
+            [bonusAmount, wagerReq, depositUserId]
+        );
+        const refLabel = bonusType === 'first_deposit_bonus'
+            ? `FIRST-DEPOSIT-MATCH (${wageringMult}x wagering)`
+            : `RELOAD-MATCH (${wageringMult}x wagering)`;
+        await db.run(
+            'INSERT INTO transactions (user_id, type, amount, balance_before, balance_after, reference) VALUES (?, ?, ?, ?, ?, ?)',
+            [depositUserId, bonusType, bonusAmount, balanceAfter, balanceAfter, refLabel]
+        );
+    }
+
+    // Gem reward (fire-and-forget)
+    const depositGems = Math.max(25, Math.min(Math.floor(depositAmount * 20), 2500));
+    await db.run('UPDATE users SET gems = COALESCE(gems, 0) + ? WHERE id = ?', [depositGems, depositUserId]).catch(function() {});
+
+    // Deposit streak (fire-and-forget)
+    try {
+        require('../routes/depositstreak.routes').recordForUser(depositUserId).catch(function() {});
+    } catch (_) { /* depositstreak may not exist */ }
+
+    console.log(`[Stripe Webhook] Deposit ${deposit.id} completed — $${depositAmount} + $${bonusAmount} bonus credited to user ${depositUserId}`);
+
+    return {
+        type: eventType,
+        handled: true,
+        depositId: deposit.id,
+        userId: depositUserId,
+        amount: depositAmount,
+        bonus: bonusAmount,
+        gems: depositGems,
+    };
+}
 
 // ─── Payout (Stripe Connect) ────────────────────────────────────────────────
 
@@ -214,7 +387,7 @@ async function createPayout(userId, amount, currency, destination) {
     }
 
     const amountInCents = Math.round(amount * 100);
-    const reference = `PAY-STRIPE-${Date.now()}-${require('crypto').randomBytes(4).toString('hex')}`;
+    const reference = `PAY-STRIPE-${Date.now()}-${require('crypto').randomBytes(3).toString('hex')}`;
 
     const transfer = await stripe.transfers.create({
         amount: amountInCents,
@@ -227,7 +400,7 @@ async function createPayout(userId, amount, currency, destination) {
         description: `Matrix Spins withdrawal — user ${userId}`,
     });
 
-    console.warn(`[Stripe] Payout transfer ${transfer.id} created for user ${userId}, $${amount}`);
+    console.log(`[Stripe] Payout transfer ${transfer.id} created for user ${userId}, $${amount}`);
 
     return {
         transferId: transfer.id,
@@ -241,5 +414,6 @@ module.exports = {
     isAvailable,
     createCheckoutSession,
     createPaymentIntent,
+    handleWebhook,
     createPayout,
 };

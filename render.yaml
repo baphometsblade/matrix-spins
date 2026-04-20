@@ -1,34 +1,52 @@
-databases:
-  - name: matrix-spins-db
-    plan: starter
-    databaseName: matrix_spins
-    user: matrix_spins_user
-    region: oregon
-
 services:
   - type: web
     name: matrix-spins
     runtime: node
-    plan: standard
-    buildCommand: echo "[BUILD] Node $(node --version)" && npm install --omit=dev 2>&1 && echo "[BUILD] npm install OK" && node scripts/bundle-js.js && echo "[BUILD] bundle OK" && node scripts/fix-encoding.js && echo "[BUILD] complete" && ls -la dist/*.min.* && echo "[BUILD] verified"
+    plan: free
+    nodeVersion: "20"
+    buildCommand: npm install --omit=dev
     startCommand: node server/index.js
     healthCheckPath: /api/health
-    disk:
-      name: casino-data
-      mountPath: /opt/render/project/data
-      sizeGB: 1
     envVars:
       - key: NODE_ENV
         value: production
-      - key: NODE_VERSION
-        value: "20"
+
+      # ── Security (auto-generated unique values per deploy) ──
+      - key: JWT_SECRET
+        generateValue: true
+      - key: ADMIN_PASSWORD
+        generateValue: true
+      - key: WEBHOOK_SECRET
+        generateValue: true
+
+      # ── Site origin (Cloudflare handles www → bare domain) ──
       - key: ALLOWED_ORIGIN
         value: https://msaart.online
-      - key: DB_PATH
-        value: /opt/render/project/data/casino.db
-      - key: DATABASE_URL
-        fromDatabase:
-          name: matrix-spins-db
-          property: connectionString
-      # Secrets (JWT_SECRET, STRIPE_*, ADMIN_PASSWORD) must be set manually
-      # in the Render dashboard — do not add them here to avoid Blueprint sync conflicts
+
+      # ── Crypto wallet addresses (receive ETH/BTC deposits) ──
+      - key: CRYPTO_WALLET_ADDRESS
+        value: "0x5cee55FF03c247c1C2b4b9b4e732B087758CD863"
+      - key: BTC_WALLET_ADDRESS
+        value: "bc1qtl6rrtzcnrjycjdccm08d42u2qucu7qnz7ma0q"
+
+      # ── Stripe (set manually in Render dashboard — keep secret) ──
+      # - key: STRIPE_SECRET_KEY
+      #   value: sk_live_...
+      # - key: STRIPE_PUBLISHABLE_KEY
+      #   value: pk_live_...
+      # - key: STRIPE_WEBHOOK_SECRET
+      #   value: whsec_...
+
+      # ── Email / SMTP (optional — enables password reset emails) ──
+      # - key: SMTP_HOST
+      #   value: smtp.example.com
+      # - key: SMTP_USER
+      #   value: noreply@msaart.online
+      # - key: SMTP_PASS
+      #   value: ...
+      # - key: ADMIN_EMAIL
+      #   value: admin@msaart.online
+
+      # ── Database (optional — defaults to SQLite if not set) ──
+      # - key: DATABASE_URL
+      #   value: postgresql://...

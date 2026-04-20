@@ -42,7 +42,7 @@ async function ensureActive() {
             const now = nowIso();
             const ends = addHours(cfg.durationHours);
             await db.run(
-                "INSERT INTO tournaments (name, type, prize_pool, entry_fee, status, starts_at, ends_at) VALUES (?, ?, ?, ?, 'active', ?, ?)",
+                "INSERT INTO tournaments (name, type, prize_pool, entry_fee, status, start_date, end_date) VALUES (?, ?, ?, ?, 'active', ?, ?)",
                 [cfg.name, cfg.type, cfg.prize_pool, cfg.entry_fee, now, ends]
             );
         }
@@ -51,14 +51,14 @@ async function ensureActive() {
 
 async function getActive() {
     const rows = await db.all(
-        "SELECT t.id, t.name, t.type, t.prize_pool, t.entry_fee, t.starts_at, t.ends_at, COUNT(te.id) as entry_count FROM tournaments t LEFT JOIN tournament_entries te ON te.tournament_id = t.id WHERE t.status = 'active' AND t.ends_at > datetime('now') GROUP BY t.id ORDER BY t.type ASC"
+        "SELECT t.id, t.name, t.type, t.prize_pool, t.entry_fee, t.start_date, t.end_date, COUNT(te.id) as entry_count FROM tournaments t LEFT JOIN tournament_entries te ON te.tournament_id = t.id WHERE t.status = 'active' AND t.end_date > datetime('now') GROUP BY t.id ORDER BY t.type ASC"
     );
     return rows;
 }
 
 async function getUpcoming() {
     const rows = await db.all(
-        "SELECT id, name, type, prize_pool, entry_fee, starts_at, ends_at FROM tournaments WHERE status = 'upcoming' ORDER BY starts_at ASC LIMIT 5"
+        "SELECT id, name, type, prize_pool, entry_fee, start_date, end_date FROM tournaments WHERE status = 'upcoming' ORDER BY start_date ASC LIMIT 5"
     );
     return rows;
 }
@@ -82,24 +82,24 @@ async function submitScore(tournamentId, userId, winMult) {
         "INSERT OR IGNORE INTO tournament_entries (tournament_id, user_id) VALUES (?, ?)",
         [tournamentId, userId]
     );
-    // Update best_mult if this spin beat their record
+    // Update biggest_win if this spin beat their record
     await db.run(
-        "UPDATE tournament_entries SET best_mult = MAX(best_mult, ?), spins = spins + 1 WHERE tournament_id = ? AND user_id = ?",
+        "UPDATE tournament_entries SET biggest_win = MAX(biggest_win, ?), spins_played = spins_played + 1 WHERE tournament_id = ? AND user_id = ?",
         [winMult, tournamentId, userId]
     );
 }
 
 async function getLeaderboard(tournamentId) {
     const rows = await db.all(
-        `SELECT te.best_mult, te.spins, te.joined_at, u.username
+        `SELECT te.biggest_win, te.spins_played, te.joined_at, u.username
          FROM tournament_entries te
          JOIN users u ON te.user_id = u.id
          WHERE te.tournament_id = ?
-         ORDER BY te.best_mult DESC
+         ORDER BY te.biggest_win DESC
          LIMIT 10`,
         [tournamentId]
     );
-    return rows.map((r, i) => ({ rank: i + 1, username: r.username, best_mult: r.best_mult, spins: r.spins }));
+    return rows.map((r, i) => ({ rank: i + 1, username: r.username, biggest_win: r.biggest_win, spins: r.spins_played }));
 }
 
 async function _completeTournament(t, cfg) {
@@ -116,26 +116,18 @@ async function _completeTournament(t, cfg) {
         );
         if (!entry) continue;
         try {
-            // Atomic: credit + audit log in single transaction per winner
-            await db.beginTransaction();
-            try {
-                await db.run(
-                    "UPDATE users SET bonus_balance = COALESCE(bonus_balance, 0) + ?, wagering_requirement = COALESCE(wagering_requirement, 0) + ? WHERE id = ?",
-                    [prize, prize * 15, entry.user_id]
-                );
-                // Read actual balance AFTER credit for accurate audit trail
-                var postUpdate = await db.get("SELECT balance, bonus_balance FROM users WHERE id = ?", [entry.user_id]);
-                var balAfter = postUpdate ? Number(postUpdate.balance) + Number(postUpdate.bonus_balance || 0) : 0;
-                var balBefore = balAfter - prize;
-                await db.run(
-                    "INSERT INTO transactions (user_id, type, amount, balance_before, balance_after, reference) VALUES (?, 'tournament_prize', ?, ?, ?, ?)",
-                    [entry.user_id, prize, balBefore, balAfter, `tournament:${t.id}:rank${i + 1} (bonus, 15x wagering)`]
-                );
-                await db.commit();
-            } catch (txErr) {
-                await db.rollback().catch(function(rbErr) { console.warn('[Tournament] Rollback failed:', rbErr.message); });
-                throw txErr;
-            }
+            const user = await db.get("SELECT bonus_balance FROM users WHERE id = ?", [entry.user_id]);
+            if (!user) continue;
+            const bonusBefore = user.bonus_balance || 0;
+            // Tournament prizes go to bonus_balance with 15x wagering (not withdrawable balance)
+            await db.run(
+                "UPDATE users SET bonus_balance = COALESCE(bonus_balance, 0) + ?, wagering_requirement = COALESCE(wagering_requirement, 0) + ? WHERE id = ?",
+                [prize, prize * 15, entry.user_id]
+            );
+            await db.run(
+                "INSERT INTO transactions (user_id, type, amount, balance_before, balance_after, reference) VALUES (?, 'tournament_prize', ?, ?, ?, ?)",
+                [entry.user_id, prize, bonusBefore, bonusBefore + prize, `tournament:${t.id}:rank${i + 1}`]
+            );
         } catch (e) {
             console.warn('[Tournament] Prize credit error:', e.message);
         }
@@ -145,12 +137,12 @@ async function _completeTournament(t, cfg) {
 async function tick() {
     // Transition upcoming → active
     await db.run(
-        "UPDATE tournaments SET status = 'active' WHERE status = 'upcoming' AND starts_at <= datetime('now')"
+        "UPDATE tournaments SET status = 'active' WHERE status = 'upcoming' AND start_date <= datetime('now')"
     );
 
     // Find expired active tournaments
     const expired = await db.all(
-        "SELECT id, type FROM tournaments WHERE status = 'active' AND ends_at < datetime('now')"
+        "SELECT id, type FROM tournaments WHERE status = 'active' AND end_date < datetime('now')"
     );
     for (const t of expired) {
         const cfg = t.type === 'hourly' ? HOURLY_CONFIG : DAILY_CONFIG;
