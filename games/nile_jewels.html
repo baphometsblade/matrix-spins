@@ -399,7 +399,7 @@
 
     // Token from localStorage (set by main casino app)
     function getToken() {
-        try { return localStorage.getItem('royalslots_token') || ''; } catch(e) { return ''; }
+        try { return localStorage.getItem('casinoToken') || ''; } catch(e) { return ''; }
     }
 
     function updateBalance() {

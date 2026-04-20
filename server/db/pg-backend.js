@@ -33,9 +33,22 @@ pg.types.setTypeParser(20, function (val) { return parseInt(val, 10); });
 
 class PgBackend {
     constructor(connectionString) {
-        var sslSetting = process.env.NODE_ENV === 'production'
-            ? { rejectUnauthorized: false }   // Render / Railway require SSL
-            : false;
+        // SSL: Render/Railway's managed Postgres uses self-signed internal
+        // certs and requires `rejectUnauthorized: false`. For providers with
+        // a proper CA chain (AWS RDS, Supabase, self-hosted with Let's
+        // Encrypt), set PGSSL_CA to the CA certificate string and we will
+        // enable strict validation with that anchor.
+        var sslSetting = false;
+        if (process.env.NODE_ENV === 'production' || process.env.DATABASE_URL) {
+            if (process.env.PGSSL_CA) {
+                sslSetting = { rejectUnauthorized: true, ca: process.env.PGSSL_CA };
+            } else if (process.env.PGSSL_STRICT === 'true') {
+                sslSetting = { rejectUnauthorized: true };
+            } else {
+                // Fallback compatible with Render / Railway.
+                sslSetting = { rejectUnauthorized: false };
+            }
+        }
 
         this.pool = new Pool({
             connectionString: connectionString,

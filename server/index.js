@@ -342,32 +342,25 @@ app.use('/api/auth/admin-reset', passwordResetLimiter);
 app.use('/api/user/change-password', sensitiveAuthLimiter);
 app.use('/api/account/request-deletion', accountDeletionLimiter);
 
-// ── Degraded mode guard: block money operations when PG is unreachable ──
+// ── Degraded mode guard: block money/bonus operations when PG is unreachable ──
 const { isDegraded } = require('./database');
-app.use('/api/payment', (req, res, next) => {
+const degradedGuard = (req, res, next) => {
     if (isDegraded()) return res.status(503).json({ error: 'Service temporarily unavailable — database maintenance in progress. Please try again later.' });
     next();
-});
-app.use('/api/balance', (req, res, next) => {
-    if (isDegraded()) return res.status(503).json({ error: 'Service temporarily unavailable — database maintenance in progress. Please try again later.' });
-    next();
-});
-app.use('/api/withdrawal-enhance', (req, res, next) => {
-    if (isDegraded()) return res.status(503).json({ error: 'Service temporarily unavailable — database maintenance in progress. Please try again later.' });
-    next();
-});
-app.use('/api/spin', (req, res, next) => {
-    if (isDegraded()) return res.status(503).json({ error: 'Service temporarily unavailable — database maintenance in progress. Please try again later.' });
-    next();
-});
-app.use('/api/matrix-money', (req, res, next) => {
-    if (isDegraded()) return res.status(503).json({ error: 'Service temporarily unavailable — database maintenance in progress. Please try again later.' });
-    next();
-});
-app.use('/api/gems', (req, res, next) => {
-    if (isDegraded()) return res.status(503).json({ error: 'Service temporarily unavailable — database maintenance in progress. Please try again later.' });
-    next();
-});
+};
+app.use('/api/payment',               degradedGuard);
+app.use('/api/balance',               degradedGuard);
+app.use('/api/withdrawal-enhance',    degradedGuard);
+app.use('/api/spin',                  degradedGuard);
+app.use('/api/matrix-money',          degradedGuard);
+app.use('/api/gems',                  degradedGuard);
+app.use('/api/firstdeposit',          degradedGuard);
+app.use('/api/depositmatch',          degradedGuard);
+app.use('/api/reloadbonus',           degradedGuard);
+app.use('/api/stripe-checkout',       degradedGuard);
+app.use('/api/nft-deposit',           degradedGuard);
+app.use('/api/crypto',                degradedGuard);
+app.use('/api/bundles',               degradedGuard);
 
 // Strict rate limit for deposit/withdrawal endpoints
 const paymentLimiter = rateLimit({
