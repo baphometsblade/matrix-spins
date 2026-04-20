@@ -17,11 +17,11 @@ const config = require('../config');
 const db = require('../database');
 
 const TIERS = [
-    { min: 0,      max: 1999,   tier: 'bronze',   rarity: 'Common' },
-    { min: 2000,   max: 9999,   tier: 'silver',   rarity: 'Uncommon' },
-    { min: 10000,  max: 49999,  tier: 'gold',     rarity: 'Rare' },
-    { min: 50000,  max: 199999, tier: 'platinum', rarity: 'Epic' },
-    { min: 200000, max: Infinity, tier: 'diamond', rarity: 'Legendary' },
+    { min: 0,      max: 1999,   tier: 'bronze',   rarity: 'Common',    color: '#cd7f32', accent: '#8a5a2a' },
+    { min: 2000,   max: 9999,   tier: 'silver',   rarity: 'Uncommon',  color: '#c0c0c0', accent: '#7a7a7a' },
+    { min: 10000,  max: 49999,  tier: 'gold',     rarity: 'Rare',      color: '#ffd700', accent: '#b8860b' },
+    { min: 50000,  max: 199999, tier: 'platinum', rarity: 'Epic',      color: '#e5e4e2', accent: '#a9a9a9' },
+    { min: 200000, max: Infinity, tier: 'diamond', rarity: 'Legendary', color: '#b9f2ff', accent: '#00a2c7' },
 ];
 
 function tierFor(amountCents) {
@@ -39,12 +39,47 @@ function signMetadata(metadata) {
         .digest('hex');
 }
 
+function buildSvg({ tier, amountCents, currency, tokenId }) {
+    const short = tokenId.length > 16 ? tokenId.slice(0, 16) + '…' : tokenId;
+    const amount = (amountCents / 100).toFixed(2) + ' ' + currency.toUpperCase();
+    const title = tier.tier.toUpperCase();
+    return (
+        `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 600" role="img" aria-label="Matrix Receipt ${title}">` +
+        `<defs>` +
+            `<linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">` +
+                `<stop offset="0%" stop-color="#0d1117"/>` +
+                `<stop offset="100%" stop-color="${tier.accent}"/>` +
+            `</linearGradient>` +
+            `<linearGradient id="stroke" x1="0" y1="0" x2="1" y2="1">` +
+                `<stop offset="0%" stop-color="${tier.color}"/>` +
+                `<stop offset="100%" stop-color="${tier.accent}"/>` +
+            `</linearGradient>` +
+        `</defs>` +
+        `<rect width="600" height="600" fill="url(#bg)"/>` +
+        `<rect x="20" y="20" width="560" height="560" rx="24" fill="none" stroke="url(#stroke)" stroke-width="4"/>` +
+        `<text x="300" y="110" font-family="Helvetica,Arial,sans-serif" font-size="28" font-weight="700" fill="${tier.color}" text-anchor="middle" letter-spacing="6">MATRIX RECEIPT</text>` +
+        `<text x="300" y="170" font-family="Helvetica,Arial,sans-serif" font-size="18" fill="#e0e0e0" text-anchor="middle" letter-spacing="3">${tier.rarity.toUpperCase()} · ${title}</text>` +
+        `<circle cx="300" cy="330" r="110" fill="none" stroke="${tier.color}" stroke-width="3" opacity="0.6"/>` +
+        `<circle cx="300" cy="330" r="80" fill="${tier.accent}" opacity="0.25"/>` +
+        `<text x="300" y="340" font-family="Helvetica,Arial,sans-serif" font-size="46" font-weight="800" fill="${tier.color}" text-anchor="middle">$${(amountCents / 100).toFixed(2)}</text>` +
+        `<text x="300" y="370" font-family="Helvetica,Arial,sans-serif" font-size="14" fill="#c0c0c0" text-anchor="middle" letter-spacing="4">${currency.toUpperCase()}</text>` +
+        `<text x="300" y="500" font-family="Menlo,monospace" font-size="16" fill="${tier.color}" text-anchor="middle" opacity="0.75">${short}</text>` +
+        `<text x="300" y="550" font-family="Helvetica,Arial,sans-serif" font-size="12" fill="#7f8ca0" text-anchor="middle" letter-spacing="2">PROOF OF DEPOSIT · ${amount}</text>` +
+        `</svg>`
+    );
+}
+
+function svgDataUrl(svg) {
+    return 'data:image/svg+xml;utf8,' + encodeURIComponent(svg);
+}
+
 function buildMetadata({ tokenId, userId, depositId, amountCents, currency, tier }) {
+    const svg = buildSvg({ tier, amountCents, currency, tokenId });
     return {
         token_id: tokenId,
         name: `Matrix Receipt · ${tier.tier.toUpperCase()} · ${(amountCents / 100).toFixed(2)} ${currency.toUpperCase()}`,
         description: `Proof of deposit on Matrix Spins. Tier: ${tier.rarity}.`,
-        image: null, // UI renders a generated SVG based on tier; set a URL here once assets are hosted.
+        image: svgDataUrl(svg),
         attributes: [
             { trait_type: 'Tier', value: tier.tier },
             { trait_type: 'Rarity', value: tier.rarity },

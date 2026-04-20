@@ -131,11 +131,13 @@ app.use('/api', csrfMiddleware);
 
 /* ─── Routes ─── */
 app.use('/api/health', require('./routes/health.routes'));
+app.use('/api/stripe/config', require('./routes/stripe-config.routes'));
 app.use('/api/auth', require('./routes/auth.routes'));
 app.use('/api/balance', require('./routes/balance.routes'));
 app.use('/api/deposit', require('./routes/deposit.routes'));
 app.use('/api/nfts', require('./routes/nft.routes'));
 app.use('/api/user', require('./routes/user.routes'));
+app.use('/api/admin', require('./routes/admin.routes'));
 
 /* ─── 404 for unknown API routes ─── */
 app.use('/api', (_req, res) => {
@@ -164,6 +166,11 @@ async function start() {
     } catch (err) {
         console.error('[boot] database init failed:', err);
         process.exit(1);
+    }
+    try {
+        await require('./services/admin.service').bootstrap();
+    } catch (err) {
+        console.warn('[boot] admin bootstrap warning:', err.message);
     }
     const server = app.listen(config.PORT, () => {
         console.log(`[boot] Matrix Spins listening on :${config.PORT} (${config.NODE_ENV})`);

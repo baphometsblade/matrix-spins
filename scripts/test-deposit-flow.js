@@ -25,6 +25,8 @@ process.env.NFT_SIGNING_SECRET = 'test-nft-' + crypto.randomBytes(8).toString('h
 process.env.NODE_ENV = 'development';
 process.env.SQLITE_FILE = './server/test-data.sqlite';
 process.env.PORT = '3199';
+process.env.ADMIN_USERNAME = 'admin_test';
+process.env.ADMIN_PASSWORD = 'AdminTest!2026';
 
 try { fs.unlinkSync(process.env.SQLITE_FILE); } catch (err) { /* first run */ }
 
@@ -58,12 +60,20 @@ async function http(method, path, { token, body, csrf, rawBody } = {}) {
 
 async function main() {
     await db.initDatabase();
+    await require('../server/services/admin.service').bootstrap();
     await new Promise((resolve) => {
         const srv = app.listen(Number(process.env.PORT), resolve);
         main.server = srv;
     });
 
     console.log('[test] server up on :' + process.env.PORT);
+
+    // 0) Public stripe config
+    const stripeCfg = await http('GET', '/api/stripe/config');
+    assert.strictEqual(stripeCfg.status, 200);
+    assert.strictEqual(stripeCfg.body.enabled, true);
+    assert.strictEqual(stripeCfg.body.webhookConfigured, true);
+    console.log('[test] stripe config endpoint reports configured');
 
     // 1) CSRF token (anon)
     const csrfRes = await http('GET', '/api/csrf-token');
@@ -194,6 +204,57 @@ async function main() {
     const depRow = await db.get('SELECT status FROM deposits WHERE id = ?', [depositId]);
     assert.strictEqual(depRow.status, 'refunded');
     console.log('[test] refund flow OK — balance zeroed, deposit marked refunded');
+
+    // 10) NFT has real SVG image
+    const nftsAfter = await http('GET', '/api/nfts', { token });
+    const nft2 = nftsAfter.body.nfts[0];
+    assert.ok(nft2.metadata.image && /^data:image\/svg\+xml/.test(nft2.metadata.image), 'NFT image not a data URL');
+    console.log('[test] NFT has SVG art (' + nft2.metadata.image.length + ' bytes)');
+
+    // 11) Admin login via bootstrapped credentials + overview endpoint
+    const adminCsrf = (await http('GET', '/api/csrf-token')).body.csrfToken;
+    const adminLogin = await http('POST', '/api/auth/login', {
+        csrf: adminCsrf,
+        body: { username: 'admin_test', password: 'AdminTest!2026' },
+    });
+    assert.strictEqual(adminLogin.status, 200, 'admin login failed: ' + adminLogin.raw);
+    assert.strictEqual(adminLogin.body.user.is_admin, true);
+    const adminToken = adminLogin.body.token;
+    const overview = await http('GET', '/api/admin/overview', { token: adminToken });
+    assert.strictEqual(overview.status, 200);
+    assert.ok(overview.body.users.total >= 2, 'expected at least admin + tester');
+    assert.strictEqual(overview.body.deposits.count, 1);
+    assert.strictEqual(overview.body.refunds.count, 1);
+    console.log('[test] admin overview: ' + overview.body.users.total + ' users, ' + overview.body.deposits.count + ' paid, ' + overview.body.refunds.count + ' refunded');
+
+    // 12) Admin access denied for non-admin user
+    const denied = await http('GET', '/api/admin/overview', { token });
+    assert.strictEqual(denied.status, 403);
+    console.log('[test] non-admin blocked from /api/admin/*');
+
+    // 13) Deposit limits — read then enforce a decrease
+    const limitsBefore = await http('GET', '/api/deposit/limits', { token });
+    assert.strictEqual(limitsBefore.status, 200);
+    assert.ok(limitsBefore.body.limits.daily_cents > 0);
+    const authedCsrf2 = (await http('GET', '/api/csrf-token', { token })).body.csrfToken;
+    const decrease = await http('PUT', '/api/deposit/limits', {
+        token,
+        csrf: authedCsrf2,
+        body: { daily_cents: 1000, weekly_cents: 2000, monthly_cents: 3000 },
+    });
+    assert.strictEqual(decrease.status, 200);
+    assert.deepStrictEqual(decrease.body.limits, { daily_cents: 1000, weekly_cents: 2000, monthly_cents: 3000 });
+    console.log('[test] deposit limits decrease applied');
+
+    // 14) Deposit limit increase is rejected without cooling-off
+    const increase = await http('PUT', '/api/deposit/limits', {
+        token,
+        csrf: authedCsrf2,
+        body: { daily_cents: 999999, weekly_cents: 999999, monthly_cents: 999999 },
+    });
+    assert.strictEqual(increase.status, 200);
+    assert.ok(increase.body.rejected && increase.body.rejected.length === 3, 'increases must be rejected: ' + JSON.stringify(increase.body));
+    console.log('[test] deposit limits increases rejected (cooling-off)');
 
     console.log('\n✅ all deposit-flow assertions passed');
     main.server.close();

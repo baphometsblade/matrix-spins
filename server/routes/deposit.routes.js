@@ -18,7 +18,21 @@ const { authenticate } = require('../middleware/auth');
 const router = express.Router();
 
 const MIN_DEPOSIT_CENTS = 500;      // $5
-const MAX_DEPOSIT_CENTS = 500000;   // $5000
+const MAX_DEPOSIT_CENTS = 500000;   // $5000 per transaction hard cap
+
+async function sumDepositsSince(userId, sinceSec) {
+    const row = await db.get(
+        db.kind === 'pg'
+            ? `SELECT COALESCE(SUM(amount_cents), 0) AS total FROM deposits
+                 WHERE user_id = ? AND status IN ('paid','partial_refund')
+                   AND completed_at >= NOW() - (? * INTERVAL '1 second')`
+            : `SELECT COALESCE(SUM(amount_cents), 0) AS total FROM deposits
+                 WHERE user_id = ? AND status IN ('paid','partial_refund')
+                   AND completed_at >= datetime('now', ? || ' seconds')`,
+        db.kind === 'pg' ? [userId, sinceSec] : [userId, '-' + sinceSec]
+    );
+    return Number((row && row.total) || 0);
+}
 
 function stripeClient() {
     if (!config.STRIPE_SECRET_KEY) return null;
@@ -45,6 +59,34 @@ router.post('/checkout', authenticate, async (req, res) => {
     }
 
     try {
+        // Enforce per-user rolling-window deposit caps. These are stored
+        // per-user on the `users` table so limit changes can be audited
+        // and applied without redeploy.
+        const limits = await db.get(
+            'SELECT deposit_limit_daily_cents, deposit_limit_weekly_cents, deposit_limit_monthly_cents FROM users WHERE id = ?',
+            [req.user.id]
+        );
+        if (limits) {
+            const daily = Number(limits.deposit_limit_daily_cents || 0);
+            const weekly = Number(limits.deposit_limit_weekly_cents || 0);
+            const monthly = Number(limits.deposit_limit_monthly_cents || 0);
+            const SEC_DAY = 86400, SEC_WEEK = 7 * 86400, SEC_MONTH = 30 * 86400;
+            const [usedDaily, usedWeekly, usedMonthly] = await Promise.all([
+                sumDepositsSince(req.user.id, SEC_DAY),
+                sumDepositsSince(req.user.id, SEC_WEEK),
+                sumDepositsSince(req.user.id, SEC_MONTH),
+            ]);
+            if (daily > 0 && usedDaily + cents > daily) {
+                return res.status(403).json({ error: `Daily deposit limit reached. $${((daily - usedDaily) / 100).toFixed(2)} remaining today.` });
+            }
+            if (weekly > 0 && usedWeekly + cents > weekly) {
+                return res.status(403).json({ error: `Weekly deposit limit reached. $${((weekly - usedWeekly) / 100).toFixed(2)} remaining this week.` });
+            }
+            if (monthly > 0 && usedMonthly + cents > monthly) {
+                return res.status(403).json({ error: `Monthly deposit limit reached. $${((monthly - usedMonthly) / 100).toFixed(2)} remaining this month.` });
+            }
+        }
+
         const isPg = db.kind === 'pg';
         let depositId;
         if (isPg) {
@@ -97,6 +139,79 @@ router.post('/checkout', authenticate, async (req, res) => {
     } catch (err) {
         console.error('[deposit/checkout]', err);
         res.status(500).json({ error: 'Could not start checkout. Please try again.' });
+    }
+});
+
+router.get('/limits', authenticate, async (req, res) => {
+    try {
+        const row = await db.get(
+            'SELECT deposit_limit_daily_cents, deposit_limit_weekly_cents, deposit_limit_monthly_cents FROM users WHERE id = ?',
+            [req.user.id]
+        );
+        if (!row) return res.status(404).json({ error: 'User not found.' });
+        const [dailyUsed, weeklyUsed, monthlyUsed] = await Promise.all([
+            sumDepositsSince(req.user.id, 86400),
+            sumDepositsSince(req.user.id, 7 * 86400),
+            sumDepositsSince(req.user.id, 30 * 86400),
+        ]);
+        res.json({
+            limits: {
+                daily_cents: Number(row.deposit_limit_daily_cents),
+                weekly_cents: Number(row.deposit_limit_weekly_cents),
+                monthly_cents: Number(row.deposit_limit_monthly_cents),
+            },
+            used: {
+                daily_cents: dailyUsed,
+                weekly_cents: weeklyUsed,
+                monthly_cents: monthlyUsed,
+            },
+            remaining: {
+                daily_cents: Math.max(0, Number(row.deposit_limit_daily_cents) - dailyUsed),
+                weekly_cents: Math.max(0, Number(row.deposit_limit_weekly_cents) - weeklyUsed),
+                monthly_cents: Math.max(0, Number(row.deposit_limit_monthly_cents) - monthlyUsed),
+            },
+        });
+    } catch (err) {
+        console.error('[deposit/limits]', err);
+        res.status(500).json({ error: 'Failed to fetch limits.' });
+    }
+});
+
+router.put('/limits', authenticate, async (req, res) => {
+    // Decreases apply immediately; increases are NOT applied by this
+    // endpoint. A real cooling-off path would queue the increase with a
+    // timer — here we reject and document the policy so the UI can
+    // surface it honestly rather than pretending to save.
+    const { daily_cents, weekly_cents, monthly_cents } = req.body || {};
+    const MAX = 10000 * 100; // $10,000
+    function num(v) { const n = Number(v); return isFinite(n) && n >= 0 && n <= MAX ? Math.round(n) : null; }
+    const d = num(daily_cents), w = num(weekly_cents), m = num(monthly_cents);
+    if (d == null || w == null || m == null) return res.status(400).json({ error: 'Limits must be numbers between 0 and 1,000,000 cents.' });
+    if (d > w || w > m) return res.status(400).json({ error: 'Limits must satisfy daily ≤ weekly ≤ monthly.' });
+    try {
+        const cur = await db.get(
+            'SELECT deposit_limit_daily_cents, deposit_limit_weekly_cents, deposit_limit_monthly_cents FROM users WHERE id = ?',
+            [req.user.id]
+        );
+        if (!cur) return res.status(404).json({ error: 'User not found.' });
+        const rejected = [];
+        const applyD = d <= Number(cur.deposit_limit_daily_cents) ? d : (rejected.push('daily'), Number(cur.deposit_limit_daily_cents));
+        const applyW = w <= Number(cur.deposit_limit_weekly_cents) ? w : (rejected.push('weekly'), Number(cur.deposit_limit_weekly_cents));
+        const applyM = m <= Number(cur.deposit_limit_monthly_cents) ? m : (rejected.push('monthly'), Number(cur.deposit_limit_monthly_cents));
+        await db.run(
+            'UPDATE users SET deposit_limit_daily_cents = ?, deposit_limit_weekly_cents = ?, deposit_limit_monthly_cents = ? WHERE id = ?',
+            [applyD, applyW, applyM, req.user.id]
+        );
+        res.json({
+            limits: { daily_cents: applyD, weekly_cents: applyW, monthly_cents: applyM },
+            rejected,
+            note: rejected.length
+                ? 'Limit increases require a 24-hour cooling-off period and must be applied by an operator; only decreases were applied.'
+                : 'Limits updated.',
+        });
+    } catch (err) {
+        console.error('[deposit/limits PUT]', err);
+        res.status(500).json({ error: 'Failed to update limits.' });
     }
 });
 

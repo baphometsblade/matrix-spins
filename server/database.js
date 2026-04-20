@@ -154,6 +154,17 @@ function t() {
     return driver.kind === 'pg' ? PG_TYPES : SQLITE_TYPES;
 }
 
+async function addColumnIfMissing(table, column, typeDef) {
+    try {
+        await driver.exec(`ALTER TABLE ${table} ADD COLUMN ${column} ${typeDef}`);
+    } catch (err) {
+        // SQLite throws "duplicate column", Postgres throws "column already exists".
+        const msg = (err && err.message || '').toLowerCase();
+        if (msg.includes('duplicate column') || msg.includes('already exists')) return;
+        throw err;
+    }
+}
+
 async function migrate() {
     const T = t();
 
@@ -166,9 +177,19 @@ async function migrate() {
             date_of_birth TEXT,
             balance_cents ${driver.kind === 'pg' ? 'BIGINT' : 'INTEGER'} NOT NULL DEFAULT 0,
             is_admin ${T.bool} NOT NULL DEFAULT ${driver.kind === 'pg' ? 'false' : '0'},
+            deposit_limit_daily_cents ${driver.kind === 'pg' ? 'BIGINT' : 'INTEGER'} NOT NULL DEFAULT 50000,
+            deposit_limit_weekly_cents ${driver.kind === 'pg' ? 'BIGINT' : 'INTEGER'} NOT NULL DEFAULT 200000,
+            deposit_limit_monthly_cents ${driver.kind === 'pg' ? 'BIGINT' : 'INTEGER'} NOT NULL DEFAULT 500000,
             created_at ${T.ts}
         );
     `);
+
+    // Forward-migration for existing users — columns may not have existed
+    // on first deploy. ADD COLUMN IF NOT EXISTS is Postgres-only; sql.js
+    // throws a descriptive error on duplicates so we swallow it.
+    await addColumnIfMissing('users', 'deposit_limit_daily_cents', driver.kind === 'pg' ? 'BIGINT NOT NULL DEFAULT 50000' : 'INTEGER NOT NULL DEFAULT 50000');
+    await addColumnIfMissing('users', 'deposit_limit_weekly_cents', driver.kind === 'pg' ? 'BIGINT NOT NULL DEFAULT 200000' : 'INTEGER NOT NULL DEFAULT 200000');
+    await addColumnIfMissing('users', 'deposit_limit_monthly_cents', driver.kind === 'pg' ? 'BIGINT NOT NULL DEFAULT 500000' : 'INTEGER NOT NULL DEFAULT 500000');
 
     await driver.exec(`
         CREATE TABLE IF NOT EXISTS deposits (

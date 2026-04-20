@@ -1,0 +1,179 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Matrix Spins — Admin</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<style>
+    :root { color-scheme: dark; }
+    * { box-sizing: border-box; }
+    body { margin: 0; padding: 24px; font-family: -apple-system, Segoe UI, Roboto, sans-serif; background: #0d1117; color: #e0e0e0; }
+    h1 { margin: 0 0 4px; color: #d4af37; font-size: 22px; letter-spacing: 2px; }
+    h2 { font-size: 14px; text-transform: uppercase; color: #b8860b; margin: 28px 0 10px; letter-spacing: 2px; }
+    .sub { color: #8a8a8a; font-size: 13px; margin-bottom: 16px; }
+    .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; margin-bottom: 12px; }
+    .card { background: rgba(255,255,255,0.04); border: 1px solid rgba(212,175,55,0.25); border-radius: 10px; padding: 16px; }
+    .card .label { color: #8a8a8a; font-size: 11px; text-transform: uppercase; letter-spacing: 2px; }
+    .card .value { color: #d4af37; font-size: 26px; font-weight: 700; margin-top: 4px; }
+    table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid rgba(255,255,255,0.06); }
+    th { color: #b8860b; font-size: 11px; text-transform: uppercase; letter-spacing: 1.5px; }
+    td.mono { font-family: Menlo, monospace; color: #00d4ff; }
+    .pill { display: inline-block; padding: 2px 8px; border-radius: 999px; font-size: 11px; font-weight: 600; letter-spacing: 1px; text-transform: uppercase; }
+    .pill-paid { background: rgba(39,174,96,.2); color: #27ae60; }
+    .pill-pending { background: rgba(0,212,255,.15); color: #00d4ff; }
+    .pill-refunded { background: rgba(230,126,34,.18); color: #e67e22; }
+    .pill-partial_refund { background: rgba(230,126,34,.18); color: #e67e22; }
+    .pill-disputed, .pill-failed, .pill-expired { background: rgba(231,76,60,.18); color: #e74c3c; }
+    form#login { max-width: 360px; margin: 10vh auto 0; background: rgba(255,255,255,0.03); border: 1px solid rgba(212,175,55,0.25); border-radius: 12px; padding: 24px; }
+    form#login input { width: 100%; padding: 10px; margin: 6px 0 12px; background: rgba(255,255,255,0.06); border: 1px solid #333; border-radius: 6px; color: #fff; font-size: 14px; }
+    form#login button { width: 100%; padding: 10px; background: linear-gradient(135deg,#d4af37,#f4d03f); color: #000; font-weight: 700; border: none; border-radius: 6px; cursor: pointer; font-size: 14px; letter-spacing: 1px; }
+    .error { color: #e74c3c; font-size: 13px; margin-top: 8px; min-height: 18px; }
+    .row-actions { display: flex; gap: 8px; justify-content: flex-end; margin-bottom: 12px; }
+    .row-actions button { padding: 6px 12px; background: rgba(255,255,255,.06); color: #e0e0e0; border: 1px solid rgba(212,175,55,.3); border-radius: 6px; cursor: pointer; font-size: 12px; }
+    .row-actions button:hover { background: rgba(212,175,55,.15); }
+</style>
+</head>
+<body>
+<div id="login-wrap">
+    <form id="login" onsubmit="event.preventDefault(); doLogin();">
+        <h1>Admin sign-in</h1>
+        <p class="sub">Staff only. Credentials are set via <code>ADMIN_USERNAME</code> / <code>ADMIN_PASSWORD</code>.</p>
+        <label for="u">Username</label>
+        <input id="u" type="text" autocomplete="username" required>
+        <label for="p">Password</label>
+        <input id="p" type="password" autocomplete="current-password" required>
+        <button type="submit">Sign in</button>
+        <div class="error" id="login-error" role="alert"></div>
+    </form>
+</div>
+
+<div id="dashboard" style="display:none">
+    <h1>Matrix Spins · Admin</h1>
+    <div class="sub">Signed in as <span id="who"></span> · <a href="#" id="logout" style="color:#00d4ff;text-decoration:none">Sign out</a></div>
+
+    <div class="row-actions">
+        <button onclick="loadOverview()">Refresh</button>
+    </div>
+
+    <div class="cards" id="cards"></div>
+
+    <h2>Recent paid deposits</h2>
+    <table id="tbl-paid"><thead><tr>
+        <th>ID</th><th>User</th><th>Amount</th><th>Status</th><th>Completed</th>
+    </tr></thead><tbody></tbody></table>
+
+    <h2>Pending</h2>
+    <table id="tbl-pending"><thead><tr>
+        <th>ID</th><th>User</th><th>Amount</th><th>Status</th><th>Created</th>
+    </tr></thead><tbody></tbody></table>
+</div>
+
+<script>
+(function () {
+    'use strict';
+    const TOKEN_KEY = 'ms_admin_token';
+    function token() { return localStorage.getItem(TOKEN_KEY); }
+    function setToken(t) { t ? localStorage.setItem(TOKEN_KEY, t) : localStorage.removeItem(TOKEN_KEY); }
+
+    let csrf = null;
+    async function getCsrf() {
+        const r = await fetch('/api/csrf-token', { headers: token() ? { Authorization: 'Bearer ' + token() } : {} });
+        const d = await r.json();
+        csrf = d.csrfToken;
+        return csrf;
+    }
+
+    async function api(method, path, body) {
+        const headers = { 'Content-Type': 'application/json' };
+        if (token()) headers.Authorization = 'Bearer ' + token();
+        if (method !== 'GET') headers['X-CSRF-Token'] = await getCsrf();
+        const res = await fetch(path, { method, headers, body: body ? JSON.stringify(body) : undefined });
+        const text = await res.text();
+        let data = null;
+        try { data = text ? JSON.parse(text) : null; } catch (e) {}
+        if (!res.ok) throw Object.assign(new Error((data && data.error) || res.statusText), { status: res.status, data });
+        return data;
+    }
+
+    window.doLogin = async function () {
+        const u = document.getElementById('u').value.trim();
+        const p = document.getElementById('p').value;
+        const errEl = document.getElementById('login-error');
+        errEl.textContent = '';
+        try {
+            await getCsrf();
+            const res = await api('POST', '/api/auth/login', { username: u, password: p });
+            if (!res.user.is_admin) throw new Error('This account does not have admin privileges.');
+            setToken(res.token);
+            show('dashboard', res.user.username);
+        } catch (e) {
+            errEl.textContent = e.message || 'Sign-in failed.';
+        }
+    };
+
+    document.getElementById('logout').addEventListener('click', function (e) {
+        e.preventDefault();
+        setToken(null);
+        location.reload();
+    });
+
+    function show(which, username) {
+        document.getElementById('login-wrap').style.display = which === 'login' ? '' : 'none';
+        document.getElementById('dashboard').style.display = which === 'dashboard' ? '' : 'none';
+        if (which === 'dashboard') {
+            document.getElementById('who').textContent = username || '';
+            loadOverview();
+        }
+    }
+
+    function money(n) { return '$' + Number(n || 0).toFixed(2); }
+    function pill(status) { return '<span class="pill pill-' + status + '">' + status + '</span>'; }
+    function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' })[c]); }
+
+    window.loadOverview = async function () {
+        try {
+            const data = await api('GET', '/api/admin/overview');
+            const cards = document.getElementById('cards');
+            cards.innerHTML =
+                '<div class="card"><div class="label">Users</div><div class="value">' + data.users.total + '</div></div>' +
+                '<div class="card"><div class="label">Paid deposits</div><div class="value">' + data.deposits.count + '</div></div>' +
+                '<div class="card"><div class="label">Deposit volume</div><div class="value">' + money(data.deposits.volume) + '</div></div>' +
+                '<div class="card"><div class="label">Refunds</div><div class="value">' + data.refunds.count + ' · ' + money(data.refunds.volume) + '</div></div>';
+            fillTable('tbl-paid', data.recent_paid, ['completed_at']);
+            fillTable('tbl-pending', data.recent_pending, ['created_at']);
+        } catch (e) {
+            if (e.status === 401 || e.status === 403) { setToken(null); show('login'); return; }
+            alert('Failed to load: ' + e.message);
+        }
+    };
+
+    function fillTable(id, rows, dateKeys) {
+        const tbody = document.querySelector('#' + id + ' tbody');
+        tbody.innerHTML = rows.length === 0
+            ? '<tr><td colspan="5" style="color:#666;padding:18px;text-align:center">— nothing yet —</td></tr>'
+            : rows.map(r => {
+                const date = r.completed_at || r.created_at || '';
+                return '<tr>' +
+                    '<td class="mono">' + r.id + '</td>' +
+                    '<td>' + esc(r.username || r.user_id) + '</td>' +
+                    '<td>' + money(r.amount) + ' ' + esc((r.currency || '').toUpperCase()) + '</td>' +
+                    '<td>' + pill(r.status) + '</td>' +
+                    '<td>' + esc(String(date).replace('T',' ').slice(0,19)) + '</td>' +
+                '</tr>';
+            }).join('');
+    }
+
+    // Auto-show dashboard on reload if we still have a valid token
+    if (token()) {
+        api('GET', '/api/user/me')
+            .then(r => { if (r.user && r.user.is_admin) show('dashboard', r.user.username); else show('login'); })
+            .catch(() => { setToken(null); show('login'); });
+    } else {
+        show('login');
+    }
+})();
+</script>
+</body>
+</html>
