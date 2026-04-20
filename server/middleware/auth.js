@@ -77,6 +77,32 @@ async function authenticate(req, res, next) {
     }
 }
 
+// Optional auth — populates req.user from JWT if present but does NOT reject.
+// Used globally before CSRF middleware so req.user is available for CSRF checks.
+async function optionalAuth(req, res, next) {
+    const authHeader = req.headers.authorization;
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+        return next(); // No token — pass through silently
+    }
+    const token = authHeader.slice(7);
+    if (isBlacklisted(token)) {
+        return next(); // Blacklisted — pass through silently
+    }
+    try {
+        const payload = jwt.verify(token, config.JWT_SECRET, { algorithms: ['HS256'] });
+        const user = await db.get('SELECT id, username, email, balance, is_admin, is_banned, password_changed_at FROM users WHERE id = ?', [payload.userId]);
+        if (user && !user.is_banned) {
+            if (!user.password_changed_at || !payload.iat || payload.iat >= user.password_changed_at) {
+                req.user = user;
+                req.token = token;
+            }
+        }
+    } catch (_) {
+        // Invalid token — pass through silently
+    }
+    next();
+}
+
 // Admin-only middleware (must be used AFTER authenticate)
 function requireAdmin(req, res, next) {
     if (!req.user || !req.user.is_admin) {
@@ -85,4 +111,4 @@ function requireAdmin(req, res, next) {
     next();
 }
 
-module.exports = { authenticate, requireAdmin, blacklistToken, isBlacklisted };
+module.exports = { authenticate, optionalAuth, requireAdmin, blacklistToken, isBlacklisted };
