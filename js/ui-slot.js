@@ -16483,6 +16483,7 @@ function _showLeaderboard() {
 // Sprint 272 — Free spins bonus wheel
 var _bonusWheel272 = { spins: 0, lastSpin: 0, prizes: [5, 10, 15, 25, 50, 100, 0, 200] };
 function _initBonusWheel() {
+    if (typeof isServerAuthToken === 'function' && isServerAuthToken()) return;
     try {
         var raw = localStorage.getItem('matrixSpins_bonusWheel');
         if (raw) {
@@ -23498,6 +23499,7 @@ function _initProgressiveJackpot() {
 
 /* ---- Feature 2: Bonus Wheel ---- */
 function _initBonusWheel() {
+    if (typeof isServerAuthToken === 'function' && isServerAuthToken()) return;
     if (document.getElementById('bonus-wheel-btn')) return;
     var btn = document.createElement('button');
     btn.id = 'bonus-wheel-btn';
@@ -23566,7 +23568,7 @@ function _initBonusWheel() {
                         // Server balance is authoritative; don't modify localStorage
                         document.getElementById('wheel-result').innerHTML = 'Use the Daily Wheel for real rewards!';
                     } else {
-                        var bal = parseFloat(localStorage.getItem('ms_balance') || '1000');
+                        var bal = parseFloat(localStorage.getItem('ms_balance') || '0');
                         bal += prizes[winner];
                         localStorage.setItem('ms_balance', bal.toFixed(2));
                     }
@@ -23605,6 +23607,7 @@ function _showFreeSpinsOverlay() {
     setTimeout(function() { overlay.classList.add('fs-minimized'); }, 3000);
 }
 function _updateFreeSpins(winAmount) {
+    if (typeof isServerAuthToken === 'function' && isServerAuthToken()) return;
     if (!_freeSpinsState.active) return;
     _freeSpinsState.totalWin += winAmount * _freeSpinsState.multiplier;
     _freeSpinsState.remaining--;
@@ -23614,7 +23617,7 @@ function _updateFreeSpins(winAmount) {
     if (tw) tw.textContent = '$' + _freeSpinsState.totalWin.toFixed(2);
     if (_freeSpinsState.remaining <= 0) {
         _freeSpinsState.active = false;
-        var bal = parseFloat(localStorage.getItem('ms_balance') || '1000');
+        var bal = parseFloat(localStorage.getItem('ms_balance') || '0');
         bal += _freeSpinsState.totalWin;
         localStorage.setItem('ms_balance', bal.toFixed(2));
         if (typeof updateBalanceDisplay === 'function') updateBalanceDisplay();
@@ -23689,6 +23692,7 @@ function _initSymbolUpgrade() {
 
 // === Sprint 507-514 Feature 6: Mini-Games ===
 function _initMiniGames() {
+    if (typeof isServerAuthToken === 'function' && isServerAuthToken()) return;
     // Client-side mini-games (coin flip, dice, high card) used Math.random() for
     // outcomes and wrote to localStorage 'ms_balance' — no server involvement.
     // These were removed for production to eliminate any appearance of offering
@@ -23699,6 +23703,7 @@ function _initMiniGames() {
 
 
 function _initRiskLadder() {
+    if (typeof isServerAuthToken === 'function' && isServerAuthToken()) return;
     // Client-side Risk Ladder removed — used Math.random() for outcomes and
     // wrote to localStorage balance. The real server-side gamble feature lives
     // in /api/spin/gamble (spin.routes.js) with server-seeded RNG. If "risk
@@ -23944,7 +23949,7 @@ function _initCashbackRewards() {
         if (available < 1) return;
         cashback.claimed += available;
         localStorage.setItem('ms_cashback', JSON.stringify(cashback));
-        var bal = parseFloat(localStorage.getItem('ms_balance') || '1000');
+        var bal = parseFloat(localStorage.getItem('ms_balance') || '0');
         bal += available;
         localStorage.setItem('ms_balance', bal.toFixed(2));
         if (typeof updateBalanceDisplay === 'function') updateBalanceDisplay();
@@ -24499,7 +24504,7 @@ function _showSessionReward(amount, tier) {
     popup.innerHTML = '<div class="sr-inner"><h3>Session Reward!</h3><p>Thanks for playing! Here is <b>$' + amount.toFixed(2) + '</b></p><p class="sr-tier">Tier ' + tier + ' of ' + _sessionRewardIntervals.length + '</p><button class="sr-claim">Claim</button></div>';
     document.body.appendChild(popup);
     popup.querySelector('.sr-claim').addEventListener('click', function() {
-        var bal = parseFloat(localStorage.getItem('ms_balance') || '1000');
+        var bal = parseFloat(localStorage.getItem('ms_balance') || '0');
         bal += amount;
         localStorage.setItem('ms_balance', bal.toFixed(2));
         if (typeof updateBalanceDisplay === 'function') updateBalanceDisplay();
@@ -24532,7 +24537,7 @@ function _showLossProtection(amount, reason) {
     popup.innerHTML = '<div class="lp-inner"><h3>Loss Protection!</h3><p>' + reason + '</p><p>Bonus: <b>$' + amount.toFixed(2) + '</b></p><button class="lp-claim">Claim Bonus</button></div>';
     document.body.appendChild(popup);
     popup.querySelector('.lp-claim').addEventListener('click', function() {
-        var bal = parseFloat(localStorage.getItem('ms_balance') || '1000');
+        var bal = parseFloat(localStorage.getItem('ms_balance') || '0');
         bal += amount;
         localStorage.setItem('ms_balance', bal.toFixed(2));
         if (typeof updateBalanceDisplay === 'function') updateBalanceDisplay();
@@ -25003,7 +25008,7 @@ function _showLevelUp(level) {
     popup.innerHTML = '<h3>LEVEL UP!</h3><p>Level ' + level + '</p>';
     document.body.appendChild(popup);
     setTimeout(function() { popup.remove(); }, 3000);
-    var bal = parseFloat(localStorage.getItem('ms_balance') || '1000');
+    var bal = parseFloat(localStorage.getItem('ms_balance') || '0');
     bal += level * 2;
     localStorage.setItem('ms_balance', bal.toFixed(2));
     if (typeof updateBalanceDisplay === 'function') updateBalanceDisplay();
@@ -25064,7 +25069,7 @@ function _initDailyWheel() {
         var prizes = [5, 10, 15, 20, 25, 50, 1, 2, 3, 100];
         var winner = prizes[Math.floor(Math.random() * prizes.length)];
         localStorage.setItem('ms_daily_wheel_date', today);
-        var bal = parseFloat(localStorage.getItem('ms_balance') || '1000');
+        var bal = parseFloat(localStorage.getItem('ms_balance') || '0');
         bal += winner;
         localStorage.setItem('ms_balance', bal.toFixed(2));
         if (typeof updateBalanceDisplay === 'function') updateBalanceDisplay();
@@ -25210,7 +25215,7 @@ function _showComebackOffer555(hours) {
     document.body.appendChild(overlay);
 }
 function _claimComebackBonus555(amount) {
-    var bal = parseFloat(localStorage.getItem('ms_balance') || '1000');
+    var bal = parseFloat(localStorage.getItem('ms_balance') || '0');
     bal += amount;
     localStorage.setItem('ms_balance', bal.toFixed(2));
     if (typeof updateBalanceDisplay === 'function') updateBalanceDisplay();
@@ -25292,7 +25297,7 @@ function _initSmartBetSuggestions() {
     console.log('[Sprint 563-570] Smart Bet Suggestions ready');
 }
 function _getSmartBetSuggestion() {
-    var balance = parseFloat(localStorage.getItem('ms_balance') || '1000');
+    var balance = parseFloat(localStorage.getItem('ms_balance') || '0');
     var totalSpins = parseInt(localStorage.getItem('ms_total_spins') || '0');
     var suggestion;
     if (balance < 50) {
@@ -25395,7 +25400,7 @@ function _showLossRecoveryPopup563() {
 var _sessionAnalytics563 = { startTime: Date.now(), spins: 0, wagered: 0, won: 0, peakBalance: 0 };
 function _initSessionAnalytics563() {
     _sessionAnalytics563.startTime = Date.now();
-    _sessionAnalytics563.peakBalance = parseFloat(localStorage.getItem('ms_balance') || '1000');
+    _sessionAnalytics563.peakBalance = parseFloat(localStorage.getItem('ms_balance') || '0');
     window.addEventListener('beforeunload', _showSessionSummary563);
     console.log('[Sprint 563-570] Session Analytics ready');
 }
@@ -25665,12 +25670,12 @@ function _initCSPReporter() {
 /* ---- Feature 4: Anti-Tamper Detection ---- */
 function _initAntiTamper() {
     var _origBalance = localStorage.getItem('ms_balance');
-    var _balanceHash = _simpleHash579(_origBalance || '1000');
+    var _balanceHash = _simpleHash579(_origBalance || '0');
     localStorage.setItem('ms_balance_hash', _balanceHash);
     setInterval(function() {
         var current = localStorage.getItem('ms_balance');
         var storedHash = localStorage.getItem('ms_balance_hash');
-        var expectedHash = _simpleHash579(current || '1000');
+        var expectedHash = _simpleHash579(current || '0');
         if (storedHash && storedHash !== expectedHash) {
             console.error('[SECURITY] Balance tamper detected!');
             if (typeof _showNotification571 === 'function') {
@@ -25691,7 +25696,7 @@ function _simpleHash579(str) {
     return hash.toString(36);
 }
 function _updateBalanceHash579() {
-    var bal = localStorage.getItem('ms_balance') || '1000';
+    var bal = localStorage.getItem('ms_balance') || '0';
     localStorage.setItem('ms_balance_hash', _simpleHash579(bal));
 }
 
@@ -26446,7 +26451,7 @@ function _showTrendGraph611() {
 /* ---- Feature 3: Session Replay Summary ---- */
 var _sessionReplay611 = { events: [], startBalance: 0 };
 function _initSessionReplay() {
-    _sessionReplay611.startBalance = parseFloat(localStorage.getItem('ms_balance') || '1000');
+    _sessionReplay611.startBalance = parseFloat(localStorage.getItem('ms_balance') || '0');
     _sessionReplay611.events = [];
     console.log('[Sprint 611-618] Session Replay ready');
 }
