@@ -63,28 +63,39 @@
     }
 
     /**
-     * Wrap window.fetch to add CSRF token to mutation requests
+     * Wrap window.fetch to add CSRF token to mutation requests.
+     * Lazy-fetches a token when one isn't cached yet (pre-login flows
+     * like /register and /login need a CSRF token bound to the 'anon'
+     * user, and waiting for an explicit init() call was dropping those).
      */
     window.fetch = function(url, options) {
         options = options || {};
         const method = (options.method || 'GET').toUpperCase();
+        const isMutation = ['POST', 'PUT', 'DELETE', 'PATCH'].includes(method);
+        const isApi = typeof url === 'string' && url.indexOf('/api/') !== -1 && url.indexOf('/api/csrf-token') === -1;
 
-        // Only add CSRF token for mutations (POST, PUT, DELETE) to /api/* routes
-        if (['POST', 'PUT', 'DELETE'].includes(method) && url.includes('/api/')) {
-            // Add CSRF token header if we have one
-            if (csrfToken) {
-                options.headers = options.headers || {};
-                options.headers['X-CSRF-Token'] = csrfToken;
-            }
+        if (!isMutation || !isApi) {
+            return originalFetch.apply(this, [url, options]);
         }
 
-        return originalFetch.apply(this, [url, options]);
+        // Ensure we have a fresh token, then attach it.
+        return getToken().then(function (tok) {
+            options.headers = Object.assign({}, options.headers || {});
+            if (tok) options.headers['X-CSRF-Token'] = tok;
+            return originalFetch.call(window, url, options);
+        });
     };
+
+    function invalidate() {
+        csrfToken = null;
+        lastTokenFetchTime = null;
+    }
 
     // Expose public API
     window.CsrfHelper = {
         init,
         getToken,
+        invalidate,
     };
 
     console.warn('[CSRF] Helper loaded');

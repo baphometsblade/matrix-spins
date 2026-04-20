@@ -19086,64 +19086,100 @@ function _getNFTIcon(theme) {
     var icons = { 'Cosmic Jackpot': '\u{1F30C}', 'Golden Crown': '\u{1F451}', 'Diamond Rush': '\u{1F48E}', 'Lucky Dragon': '\u{1F409}', 'Neon Nights': '\u{1F303}', 'Royal Flush': '\u{1F0CF}', 'Crystal Palace': '\u{1F3F0}', 'Phoenix Fire': '\u{1F525}' };
     return icons[theme] || '\u{1F3B0}';
 }
-function _confirmDepositWithNFT(amount, tokenId) {
+async function _confirmDepositWithNFT(amount, _localTokenId) {
     var el = document.getElementById('nftPreview380');
     if (el) el.remove();
-    fetch('/api/payment/create-checkout', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + (typeof authToken !== 'undefined' ? authToken : '') },
-        body: JSON.stringify({ amount: amount, playerId: typeof playerId !== 'undefined' ? playerId : 'anon', nftTokenId: tokenId })
-    })
-    .then(function(r) { return r.json(); })
-    .then(function(data) {
-        if (data.url) {
-            _mintNFTLocally(tokenId, amount);
-            window.location.href = data.url;
-        } else {
-            alert('Payment error. Please try again.');
+    var token = (typeof authToken !== 'undefined') ? authToken : null;
+    if (!token) {
+        alert('Please sign in to make a deposit.');
+        if (typeof showAuthModal === 'function') showAuthModal();
+        return;
+    }
+    try {
+        // Ensure a fresh CSRF token bound to the authenticated user.
+        if (window.CsrfHelper && CsrfHelper.getToken) { await CsrfHelper.getToken(); }
+        var res = await fetch('/api/deposit/checkout', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': 'Bearer ' + token,
+            },
+            body: JSON.stringify({ amount: Number(amount), currency: 'usd' }),
+        });
+        var data = await res.json().catch(function () { return {}; });
+        if (!res.ok) {
+            alert(data.error || 'Could not start checkout. Please try again.');
+            return;
         }
-    })
-    .catch(function(e) {
-        alert('Connection error: ' + e.message);
-    });
-}
-function _mintNFTLocally(tokenId, amount) {
-    var nft = _generateNFTMetadata(amount);
-    nft.tokenId = tokenId;
-    nft.status = 'pending';
-    _nftCollection.push(nft);
-    var stored = JSON.parse(localStorage.getItem('ms_nft_collection') || '[]');
-    stored.push(nft);
-    localStorage.setItem('ms_nft_collection', JSON.stringify(stored));
+        if (!data.url) {
+            alert('Payment error: no checkout URL returned.');
+            return;
+        }
+        // Redirect to Stripe Checkout. The NFT is minted server-side when
+        // the webhook confirms payment — NEVER trust the client to mint.
+        window.location.href = data.url;
+    } catch (e) {
+        alert('Connection error: ' + (e && e.message || e));
+    }
 }
 
 
-/* ── 379-386 — NFT collection gallery ─────────────────────────── */
-function _showNFTGallery() {
-    var stored = JSON.parse(localStorage.getItem('ms_nft_collection') || '[]');
+/* ── NFT collection gallery — fetches from the server so client-side
+ *    localStorage cannot forge ownership. ───────────────────────── */
+async function _showNFTGallery() {
     var panel = document.getElementById('nftGallery381');
     if (panel) { panel.style.display = panel.style.display === 'none' ? 'flex' : 'none'; return; }
     panel = document.createElement('div');
     panel.id = 'nftGallery381';
     panel.className = 'nft-gallery-overlay';
-    var html = '<div class="nft-gallery-inner"><div class="nft-gallery-header"><h2>\u{1F3A8} My NFT Collection</h2><button onclick="document.getElementById(\&quot;nftGallery381\&quot;).style.display=\&quot;none\&quot;" class="nft-gallery-close">&times;</button></div>';
-    if (stored.length === 0) {
-        html += '<div class="nft-gallery-empty"><span>\u{1F4E6}</span><p>No NFTs yet. Make a deposit to mint your first!</p><button onclick="document.getElementById(\&quot;nftGallery381\&quot;).style.display=\&quot;none\&quot;;_showDepositModal();" class="nft-deposit-cta">Deposit Now</button></div>';
-    } else {
-        html += '<div class="nft-gallery-grid">';
-        stored.forEach(function(nft) {
-            html += '<div class="nft-gallery-card" style="border-color:' + (nft.color || '#ffd700') + '">' +
-                '<div class="nft-gallery-art" style="background:linear-gradient(135deg, ' + (nft.color || '#ffd700') + '22, #0d111788)">' +
-                '<span class="nft-gallery-icon">' + _getNFTIcon(nft.theme || '') + '</span></div>' +
-                '<div class="nft-gallery-info"><strong>' + (nft.name || 'Unknown') + '</strong>' +
-                '<span class="nft-gallery-rarity" style="color:' + (nft.color || '#ccc') + '">' + (nft.rarity || 'Common') + '</span>' +
-                '<small>' + (nft.tokenId || '') + '</small></div></div>';
-        });
-        html += '</div>';
-    }
-    html += '<div class="nft-gallery-footer"><span>Total: ' + stored.length + ' NFTs</span></div></div>';
-    panel.innerHTML = html;
+    panel.innerHTML = '<div class="nft-gallery-inner"><div class="nft-gallery-header"><h2>\u{1F3A8} My NFT Collection</h2><button onclick="document.getElementById(\'nftGallery381\').style.display=\'none\'" class="nft-gallery-close">&times;</button></div><div class="nft-gallery-loading" style="padding:40px;text-align:center;color:#888">Loading your collection&hellip;</div></div>';
     document.body.appendChild(panel);
+
+    var items = [];
+    try {
+        var token = (typeof authToken !== 'undefined') ? authToken : null;
+        if (!token) {
+            panel.querySelector('.nft-gallery-loading').innerHTML = 'Please sign in to view your NFT collection.';
+            return;
+        }
+        var res = await fetch('/api/nfts', { headers: { 'Authorization': 'Bearer ' + token } });
+        if (!res.ok) throw new Error('HTTP ' + res.status);
+        var data = await res.json();
+        items = Array.isArray(data.nfts) ? data.nfts : [];
+    } catch (e) {
+        panel.querySelector('.nft-gallery-loading').innerHTML = 'Could not load your NFTs: ' + (e && e.message || e);
+        return;
+    }
+
+    var inner = panel.querySelector('.nft-gallery-inner');
+    var body = '<div class="nft-gallery-header"><h2>\u{1F3A8} My NFT Collection</h2><button onclick="document.getElementById(\'nftGallery381\').style.display=\'none\'" class="nft-gallery-close">&times;</button></div>';
+    if (items.length === 0) {
+        body += '<div class="nft-gallery-empty"><span>\u{1F4E6}</span><p>No NFTs yet. Make a deposit to mint your first!</p><button onclick="document.getElementById(\'nftGallery381\').style.display=\'none\';_showDepositModal();" class="nft-deposit-cta">Deposit Now</button></div>';
+    } else {
+        body += '<div class="nft-gallery-grid">';
+        items.forEach(function (nft) {
+            var m = nft && nft.metadata || {};
+            var tier = (m.attributes || []).find(function (a) { return a && a.trait_type === 'Tier'; });
+            var rarity = (m.attributes || []).find(function (a) { return a && a.trait_type === 'Rarity'; });
+            var amount = (m.attributes || []).find(function (a) { return a && a.trait_type === 'Amount'; });
+            var color = { bronze:'#cd7f32', silver:'#c0c0c0', gold:'#ffd700', platinum:'#e5e4e2', diamond:'#b9f2ff' }[(tier && tier.value) || ''] || '#ffd700';
+            body += '<div class="nft-gallery-card" style="border-color:' + color + '">' +
+                '<div class="nft-gallery-art" style="background:linear-gradient(135deg,' + color + '22,#0d111788)"><span class="nft-gallery-icon">\u{1F3C6}</span></div>' +
+                '<div class="nft-gallery-info"><strong>' + _escapeHtml(m.name || 'Matrix Receipt') + '</strong>' +
+                '<span class="nft-gallery-rarity" style="color:' + color + '">' + _escapeHtml((rarity && rarity.value) || 'Common') + '</span>' +
+                '<small>' + _escapeHtml(amount && amount.value || '') + '</small>' +
+                '<small style="opacity:.6">' + _escapeHtml(nft.tokenId || '') + '</small></div></div>';
+        });
+        body += '</div>';
+    }
+    body += '<div class="nft-gallery-footer"><span>Total: ' + items.length + ' NFT' + (items.length === 1 ? '' : 's') + '</span></div>';
+    inner.innerHTML = body;
+}
+
+function _escapeHtml(s) {
+    return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
+        return ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' })[c];
+    });
 }
 
 

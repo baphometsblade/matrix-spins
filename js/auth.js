@@ -9,9 +9,10 @@
 
 
         function shouldFallbackToLocalAuth(error) {
-            if (!error) return true;
-            if (error.isNetworkError) return true;
-            if (error.status === 404 || error.status === 405) return true;
+            // Localstorage fallback is disabled now that the server is real —
+            // silently creating a shadow account whenever the API is
+            // unreachable let accounts diverge from the source of truth.
+            // Surface the error to the user instead.
             return false;
         }
 
@@ -78,6 +79,7 @@
             localStorage.removeItem(STORAGE_KEY_TOKEN);
             currentUser = null;
             localStorage.removeItem(STORAGE_KEY_USER);
+            if (window.CsrfHelper && CsrfHelper.invalidate) CsrfHelper.invalidate();
             // Reset in-memory state
             if (typeof balance !== 'undefined') balance = 0;
             if (typeof stats !== 'undefined') {
@@ -106,6 +108,11 @@
                 isGuest: Boolean(user.isGuest),
             } : null;
             localStorage.setItem(STORAGE_KEY_USER, JSON.stringify(currentUser));
+
+            // The CSRF token is bound to the current user id; on a session
+            // change, drop the cached token so the next mutation refetches
+            // one bound to the new identity.
+            if (window.CsrfHelper && CsrfHelper.invalidate) CsrfHelper.invalidate();
 
             // Restore incoming user's saved data
             if (currentUser && currentUser.id) {
@@ -402,21 +409,13 @@
 
 
         function loginAsGuest() {
-            // Create a fresh local guest session — no server auth needed
-            applyAuthSession(`${LOCAL_TOKEN_PREFIX}guest`, {
-                id: null,
-                username: 'Guest',
-                email: '',
-                isGuest: true,
-            });
-            balance = 1000;
-            updateBalance();
-            saveBalance();
-            document.body.classList.remove('auth-gate');
-            hideAuthModal();
-            updateAuthButton();
-            showToast('Playing as Guest — $1,000 loaded. Have fun!', 'success');
-            if (typeof onPostAuthInit === 'function') onPostAuthInit();
+            // Guest login previously minted a $1,000 client-side balance
+            // with no server backing — a demo shortcut, not a real account.
+            // Now that balances settle on the server via real deposits, there
+            // is no honest way to grant money here. Redirect the user to
+            // create a real account instead.
+            if (typeof switchAuthTab === 'function') switchAuthTab('register');
+            showToast('Please create an account to play. Guest mode has been removed.', 'info');
         }
 
 
