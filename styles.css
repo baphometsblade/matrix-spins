@@ -4301,32 +4301,58 @@
             background: #334155;
         }
 
+        /* Spin button — premium gold circle with physical press feel.
+           Industry standard (Stake, NetEnt, Pragmatic Play) is a round gold button. */
         .spin-btn {
-            width: 100%;
-            padding: 32px;
-            font-size: 36px;
+            width: 84px;
+            height: 84px;
+            padding: 0;
+            font-size: 16px;
             font-weight: 900;
-            background: linear-gradient(135deg, #10b981, #059669);
-            color: white;
-            border: none;
-            border-radius: 24px;
+            letter-spacing: 1px;
+            background:
+                radial-gradient(circle at 32% 28%, rgba(255,255,255,0.55) 0%, transparent 32%),
+                linear-gradient(160deg, #fff2a0 0%, #f0c832 25%, #d69e00 55%, #8b5e00 90%);
+            color: #1a0e00;
+            border: 2px solid #f0c832;
+            border-radius: 50%;
             cursor: pointer;
             position: relative;
             overflow: hidden;
-            box-shadow: 0 8px 32px rgba(16,185,129,0.4);
-            transition: all 0.3s;
+            text-transform: uppercase;
+            box-shadow:
+                0 10px 24px rgba(240,200,50,0.35),
+                0 0 0 6px rgba(240,200,50,0.08),
+                inset 0 2px 0 rgba(255,255,255,0.45),
+                inset 0 -6px 12px rgba(139,94,0,0.35);
+            transition: transform 0.18s cubic-bezier(0.22,1,0.36,1), box-shadow 0.18s ease, filter 0.18s ease;
             touch-action: manipulation;
             animation: spinBtnPulse 2s ease-in-out infinite;
+            text-shadow: 0 1px 0 rgba(255,255,255,0.45), 0 2px 2px rgba(0,0,0,0.25);
+            font-family: var(--ms-font-display, 'Oswald', 'Inter', sans-serif);
         }
 
         .spin-btn:hover:not(:disabled) {
-            transform: scale(1.02);
-            box-shadow: 0 12px 48px rgba(16,185,129,0.6);
+            transform: scale(1.05);
+            filter: brightness(1.08);
+            box-shadow:
+                0 14px 32px rgba(240,200,50,0.5),
+                0 0 0 8px rgba(240,200,50,0.12),
+                inset 0 2px 0 rgba(255,255,255,0.55),
+                inset 0 -6px 14px rgba(139,94,0,0.4);
+        }
+
+        .spin-btn:active:not(:disabled) {
+            transform: scale(0.97) translateY(2px);
+            box-shadow:
+                0 4px 10px rgba(240,200,50,0.3),
+                inset 0 3px 8px rgba(139,94,0,0.55);
         }
 
         .spin-btn:disabled {
             opacity: 0.5;
             cursor: not-allowed;
+            filter: saturate(0.4);
         }
 
         .message-display {

@@ -119,3 +119,184 @@ html body .filter-tab[data-filter="adult"].filter-tab-active {
 .games-explored-badge { background: var(--ms-violet-dim) !important; color: var(--ms-violet) !important; font-size: 11px !important; font-weight: 600 !important; padding: 2px 8px !important; border-radius: var(--ms-radius-pill) !important; }
 @media print { header, footer, #mobileBottomNav, .trust-bar, .promo-bar { display: none !important; } }
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; } }
+
+/* ═══════════════════════════════════════════════════════════════════
+   PREMIUM POLISH V4 — Industry-standard visual upgrade
+   ═══════════════════════════════════════════════════════════════════ */
+
+/* 1. Display font on all win/heading/game-title text */
+.pp-win-tier, .bigwin-label, .win-tier-epic, .win-tier-mega, .win-tier-big, .win-tier-great,
+.tourney-lb-card h3, .free-spins-title, .fs-intro-title, .jackpot-win-card h1,
+.hero-title, .page-title, .section-title, .game-card-name, .game-title-text {
+  font-family: var(--ms-font-display, 'Oswald', 'Inter', sans-serif) !important;
+  letter-spacing: 0.01em;
+}
+.pp-win-amount, .bigwin-amount, #bigWinAmount, .win-amount, #sssBest, #sssNet {
+  font-family: var(--ms-font-display, 'Oswald', 'Inter', sans-serif) !important;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.01em;
+}
+
+/* 2. Focus ring to gold (matches brand accent) */
+:focus-visible { outline: 2px solid var(--ms-gold, #f0c832) !important; outline-offset: 2px !important; border-radius: 6px; }
+
+/* 3. Reel area vignette — darkens edges to focus eye on reels */
+.slot-reel-area::after,
+.reels-container::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: radial-gradient(ellipse at center, transparent 50%, rgba(0,0,0,0.55) 100%);
+  z-index: 1;
+  mix-blend-mode: multiply;
+}
+.reels-container { position: relative; }
+/* Ensure reels themselves are above the vignette */
+.reels, .reel-column { position: relative; z-index: 2; }
+
+/* 4. 3D press effect on bet +/- buttons — tactile feel */
+#betUpBtn, #betDownBtn, .bet-up-btn, .bet-down-btn {
+  position: relative !important;
+  box-shadow:
+    0 3px 0 rgba(0,0,0,0.55),
+    inset 0 1px 0 rgba(255,255,255,0.08),
+    0 0 0 1px rgba(255,255,255,0.04) !important;
+  transition: transform 0.12s cubic-bezier(0.22,1,0.36,1), box-shadow 0.12s ease !important;
+}
+#betUpBtn:active, #betDownBtn:active, .bet-up-btn:active, .bet-down-btn:active {
+  transform: translateY(2px) scale(0.97) !important;
+  box-shadow:
+    0 1px 0 rgba(0,0,0,0.55),
+    inset 0 2px 4px rgba(0,0,0,0.45) !important;
+}
+
+/* 5. Big-win burst — conic-gradient starburst rays (was flat radial gradient) */
+.pp-win-burst {
+  background:
+    conic-gradient(
+      from 0deg,
+      transparent 0deg,
+      rgba(255,215,80,0.22) 3deg,
+      transparent 6deg,
+      rgba(255,215,80,0.12) 12deg,
+      transparent 15deg,
+      rgba(255,215,80,0.22) 18deg,
+      transparent 21deg,
+      rgba(255,215,80,0.12) 27deg,
+      transparent 30deg
+    ) !important;
+  background-size: 100% 100% !important;
+  opacity: 0.95 !important;
+  animation: ppBurstRotate 9s linear infinite !important;
+}
+@keyframes ppBurstRotate {
+  0% { transform: rotate(0deg) scale(1); }
+  50% { transform: rotate(180deg) scale(1.12); }
+  100% { transform: rotate(360deg) scale(1); }
+}
+
+/* 6. Game-card hover lift — deeper shadow, subtle upward movement */
+.game-card:hover, .slot-card:hover, .game-tile:hover {
+  transform: translateY(-6px) !important;
+  box-shadow:
+    0 18px 40px rgba(0,0,0,0.55),
+    0 0 0 1px rgba(240,200,50,0.25),
+    0 0 28px rgba(240,200,50,0.18) !important;
+}
+
+/* 7. Game-card name overlay — gradient from bottom (Stake/LeoVegas pattern) */
+.game-card .game-info, .game-card .game-card-info {
+  position: absolute !important;
+  bottom: 0 !important;
+  left: 0 !important; right: 0 !important;
+  padding: 20px 12px 10px !important;
+  background: linear-gradient(to top, rgba(0,0,0,0.92) 0%, rgba(0,0,0,0.7) 40%, transparent 100%) !important;
+  pointer-events: none !important;
+  z-index: 3 !important;
+}
+.game-card .game-card-name, .game-card .game-name-text {
+  color: #fff !important;
+  font-size: 14px !important;
+  font-weight: 700 !important;
+  line-height: 1.2 !important;
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  text-shadow: 0 1px 3px rgba(0,0,0,0.8) !important;
+  letter-spacing: 0.01em !important;
+}
+.game-card .game-card-studio, .game-card .game-provider-text {
+  color: rgba(255,215,80,0.85) !important;
+  font-size: 10px !important;
+  font-weight: 600 !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.08em !important;
+  margin-top: 2px !important;
+}
+
+/* 8. Reel cell subtle inner shadow — creates depth inside the cabinet */
+.reel-cell {
+  box-shadow: inset 0 2px 6px rgba(0,0,0,0.3), inset 0 -1px 2px rgba(255,255,255,0.03) !important;
+  background: rgba(0,0,0,0.15) !important;
+}
+
+/* 9. Big-win overlay amount gets a heftier gold gradient + glow */
+#bigWinAmount, .bigwin-amount, .pp-win-amount {
+  background: linear-gradient(180deg, #fff3a0 0%, #ffd700 45%, #e0a800 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  filter: drop-shadow(0 0 18px rgba(255,215,0,0.6)) drop-shadow(0 4px 8px rgba(0,0,0,0.5));
+  font-weight: 700 !important;
+  letter-spacing: -0.01em !important;
+}
+
+/* 10. Spin button rests inside a subtle "recessed" housing for depth cue */
+.slot-bottom-bar .spin-btn-wrap,
+.slot-controls-area .spin-btn-wrap {
+  position: relative;
+}
+.slot-bottom-bar .spin-btn-wrap::before,
+.slot-controls-area .spin-btn-wrap::before {
+  content: '';
+  position: absolute;
+  inset: -8px;
+  border-radius: 50%;
+  background: radial-gradient(circle at center, rgba(240,200,50,0.08) 0%, transparent 70%);
+  pointer-events: none;
+  z-index: -1;
+}
+
+/* 11. Ambient "casino floor" background glow behind slot modal */
+.slot-modal-fullscreen::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(ellipse 80% 50% at 50% 20%, rgba(240,200,50,0.05) 0%, transparent 60%),
+    radial-gradient(ellipse 60% 40% at 50% 100%, rgba(0,0,0,0.6) 0%, transparent 70%);
+  z-index: 0;
+}
+
+/* 12. Smoother game-card shimmer on hover (light sweep) */
+.game-card::after {
+  content: '';
+  position: absolute;
+  top: 0; left: -100%;
+  width: 60%; height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.08), transparent);
+  transition: left 0.7s ease;
+  pointer-events: none;
+  z-index: 4;
+  opacity: 0;
+}
+.game-card:hover::after { left: 150%; opacity: 1; }
+
+/* 13. Tabular nums on ALL balance/bet/win displays so digits align */
+#balanceAmount, #balanceDisplay, #slotBalance, #currentBet,
+.balance-display, .win-amount-display, .bet-display, .sss-value {
+  font-variant-numeric: tabular-nums !important;
+  font-feature-settings: "tnum" 1 !important;
+}

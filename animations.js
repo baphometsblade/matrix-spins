@@ -303,7 +303,9 @@ function triggerScreenShake(intensity) {
     if (quality !== 'ultra' && quality !== 'high') return;
     if (quality === 'high' && intensity === 'epic') return; // only mega+ on high
 
-    const modal = document.getElementById('slotMachineModal');
+    // The actual slot modal ID is `slotModal` (not `slotMachineModal`).
+    // Previous code silently no-oped for all big wins.
+    const modal = document.getElementById('slotModal') || document.querySelector('.slot-modal-fullscreen');
     if (!modal) return;
 
     const cls = 'screen-shake-' + intensity;

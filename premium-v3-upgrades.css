@@ -2,8 +2,8 @@
    MATRIX SPINS — PREMIUM V3 UPGRADES
    ============================================================ */
 .game-card{overflow:hidden;transition:transform .28s cubic-bezier(.22,1,.36,1),box-shadow .28s cubic-bezier(.22,1,.36,1)!important;border:1px solid rgba(255,255,255,.04)!important;position:relative}
-.game-card .game-card-art{height:120px!important;min-height:120px!important;overflow:hidden;position:relative}
-.game-card .card-anim-preview{width:100%!important;height:100%!important;min-height:120px!important;background-size:cover!important;background-position:center!important;transition:transform .4s cubic-bezier(.22,1,.36,1),filter .4s ease!important}
+.game-card .game-card-art{aspect-ratio:2 / 3;height:auto!important;min-height:0!important;overflow:hidden;position:relative}
+.game-card .card-anim-preview{width:100%!important;height:100%!important;background-size:cover!important;background-position:center!important;transition:transform .4s cubic-bezier(.22,1,.36,1),filter .4s ease!important}
 .game-card .game-card-art img[src=""]{display:none!important}
 .game-card .game-card-art img:not([src=""]){width:100%;height:100%;object-fit:cover}
 .game-card:hover{transform:translateY(-6px) scale(1.02)!important;box-shadow:0 12px 40px rgba(0,0,0,.5),0 0 0 1px rgba(212,168,83,.15),0 0 30px rgba(212,168,83,.08)!important;border-color:rgba(212,168,83,.2)!important;z-index:5}

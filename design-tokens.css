@@ -51,7 +51,9 @@
 
   /* Typography */
   --ms-font-body: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  --ms-font-display: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  /* Oswald is a condensed sans used for wins, tournament banners, and game titles.
+     Single biggest premium signal — generic Inter headings read as SaaS, not casino. */
+  --ms-font-display: 'Oswald', 'Inter', 'Segoe UI', sans-serif;
   --ms-font-mono: 'JetBrains Mono', 'SF Mono', 'Cascadia Code', 'Consolas', monospace;
 
   /* Spacing */

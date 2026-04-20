@@ -549,17 +549,10 @@
             modal.style.setProperty('--slot-stripe-angle', vars.stripeAngle);
             modal.style.setProperty('--slot-chrome-image', 'none');
 
-            const chromeImagePath = `assets/ui/slot_chrome/${game.id}_chrome.png`;
-            const chromeProbe = new Image();
-            chromeProbe.onload = function() {
-                modal.style.setProperty('--slot-chrome-image', `url('${chromeImagePath}')`);
-                chromeProbe.onload = chromeProbe.onerror = null; // dereference for GC
-            };
-            chromeProbe.onerror = function() {
-                modal.style.setProperty('--slot-chrome-image', 'none');
-                chromeProbe.onload = chromeProbe.onerror = null; // dereference for GC
-            };
-            chromeProbe.src = chromeImagePath;
+            // assets/ui/slot_chrome/ is gitignored and doesn't exist in production — the
+            // per-game chrome image probe previously fired a 404 on every slot open.
+            // The chrome look is instead driven by CSS gradients via --slot-* custom props
+            // set above, which gives every game its themed frame without the HTTP miss.
         }
 
 
@@ -5851,14 +5844,16 @@
                             <div class="pp-win-multiplier">${multiplier.toFixed(1)}x</div>
                         </div>
                     </div>`;
-                // Animated counter — count up to final amount
+                // Animated counter — dramatic count-up that starts fast, decelerates
+                // sharply near the final value to create the "struggling to reach the
+                // top" feel of Pragmatic Play / Push Gaming big-win counters.
                 const amtEl = document.getElementById('ppWinAmount');
                 if (amtEl) {
-                    const dur = Math.min(2500, 800 + multiplier * 30);
+                    const dur = Math.min(4000, 600 + multiplier * 60);
                     const t0 = performance.now();
                     (function tick(now) {
                         const p = Math.min((now - t0) / dur, 1);
-                        const eased = 1 - Math.pow(1 - p, 2.5);
+                        const eased = 1 - Math.pow(1 - p, 4); // steeper deceleration
                         amtEl.textContent = '$' + (eased * amount).toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
                         if (p < 1) requestAnimationFrame(tick);
                     })(performance.now());
