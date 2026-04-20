@@ -544,7 +544,7 @@
 
     document.body.appendChild(state.container);
 
-    addMessage('👋 Hi! How can I help you today?', false);
+    addMessage('👋 Hi! I\'m an automated FAQ assistant — not a live agent. I can answer common questions about deposits, withdrawals, wagering, RTP, and more. For account issues or anything I can\'t answer, email support@msaart.online.', false);
 
     console.log('[SupportChat] Initialized successfully');
   }

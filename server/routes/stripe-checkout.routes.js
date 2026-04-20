@@ -234,15 +234,35 @@ router.post('/payment/webhook', express.raw({ type: 'application/json' }), async
                     [playerId, amount, (config.CURRENCY || 'AUD'), session.id]
                 );
 
-                // Credit advertised deposit bonus to bonus_balance with 30x wagering
-                var bonusMap = { 25: 5, 50: 15, 100: 40, 250: 125 };
-                var depositBonus = bonusMap[amount] || 0;
+                // Compute deposit bonus from config, with atomic first-deposit detection.
+                // Previous hardcoded map { 25: 5, 50: 15, 100: 40, 250: 125 } gave different
+                // bonuses than the reload/firstdeposit routes did — unified here.
+                var priorCompletedDeposits = await db.get(
+                    "SELECT COUNT(*) as count FROM deposits WHERE user_id = ? AND status = 'completed' AND external_ref != ?",
+                    [playerId, session.id]
+                );
+                var isFirstDeposit = !priorCompletedDeposits || priorCompletedDeposits.count === 0;
+                var bonusPct = isFirstDeposit
+                    ? (config.FIRST_DEPOSIT_BONUS_PCT || 100)
+                    : (config.RELOAD_BONUS_PCT || 50);
+                var bonusMax = isFirstDeposit
+                    ? (config.FIRST_DEPOSIT_BONUS_MAX || 500)
+                    : (config.RELOAD_BONUS_MAX || 250);
+                var wageringMult = isFirstDeposit
+                    ? (config.FIRST_DEPOSIT_WAGERING_MULT || 45)
+                    : (config.RELOAD_WAGERING_MULT || 30);
+                var depositBonus = Math.round(Math.min(amount * (bonusPct / 100), bonusMax) * 100) / 100;
                 if (depositBonus > 0) {
                     await db.run(
                         'UPDATE users SET bonus_balance = COALESCE(bonus_balance, 0) + ?, wagering_requirement = COALESCE(wagering_requirement, 0) + ? WHERE id = ?',
-                        [depositBonus, depositBonus * 30, playerId]
+                        [depositBonus, Math.round(depositBonus * wageringMult * 100) / 100, playerId]
                     );
-                    console.warn('[Stripe] Deposit bonus credited: $' + depositBonus + ' (30x wagering) for player ' + playerId);
+                    var bonusType = isFirstDeposit ? 'first_deposit_bonus' : 'reload_bonus';
+                    await db.run(
+                        'INSERT INTO transactions (user_id, type, amount, balance_before, balance_after, reference) VALUES (?, ?, ?, ?, ?, ?)',
+                        [playerId, bonusType, depositBonus, 0, 0, (isFirstDeposit ? 'FIRST-DEPOSIT' : 'RELOAD') + '-MATCH (' + wageringMult + 'x wagering)']
+                    );
+                    console.warn('[Stripe] ' + bonusType + ' credited: $' + depositBonus + ' (' + wageringMult + 'x wagering) for player ' + playerId);
                 }
 
                 await db.commit();

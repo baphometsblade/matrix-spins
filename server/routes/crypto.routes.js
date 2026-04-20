@@ -305,43 +305,52 @@ router.post('/verify-deposit', authenticate, async (req, res) => {
 
         const reference = generateReference('CRYPTO');
 
-        // Create deposit record as completed (on-chain verification = payment confirmed)
-        await db.run(
-            "INSERT INTO deposits (user_id, amount, currency, payment_type, status, reference, external_ref, created_at, completed_at) VALUES (?, ?, ?, ?, 'completed', ?, ?, datetime('now'), datetime('now'))",
-            [req.user.id, audAmount, config.CURRENCY, 'crypto_eth', reference, txHashLower]
-        );
-
-        // ROUND 61: Atomic balance update — old read-then-write was vulnerable to race conditions
+        // Wrap deposit INSERT + balance UPDATE + transaction log in a single DB transaction
+        // so a crash mid-way can't leave the deposit recorded without a balance credit
+        // (which would be blocked from retry by the idempotency check above).
         const userBefore = await db.get('SELECT balance FROM users WHERE id = ?', [req.user.id]);
         const oldBalance = parseFloat(userBefore.balance) || 0;
+        const newBalance = oldBalance + audAmount;
 
-        await db.run('UPDATE users SET balance = balance + ? WHERE id = ?', [audAmount, req.user.id]);
-
-        // Record transaction
-        await db.run(
-            "INSERT INTO transactions (user_id, type, amount, balance_before, balance_after, reference, created_at) VALUES (?, 'deposit', ?, ?, ?, ?, datetime('now'))",
-            [req.user.id, audAmount, oldBalance, oldBalance + audAmount, reference]
-        );
-
-        // ── NFT ledger: record crypto deposit as NFT sale (fire-and-forget) ──
-        mintOnDeposit(db, { userId: req.user.id, amount: audAmount, depositId: null, paymentType: 'crypto_eth', reference: reference, currency: config.CURRENCY }).catch(function(e) { console.warn('[Crypto] mintOnDeposit error:', e.message || e); });
-
-        // Award gems based on deposit amount
+        // Compute gems before the transaction so the amount is stable
         let gemsAwarded = 0;
         if (audAmount >= 100) gemsAwarded = 2500;
         else if (audAmount >= 50) gemsAwarded = 1000;
         else if (audAmount >= 5) gemsAwarded = 100;
 
-        if (gemsAwarded > 0) {
+        await db.beginTransaction();
+        try {
+            // Create deposit record as completed (on-chain verification = payment confirmed)
             await db.run(
-                'UPDATE users SET gems = COALESCE(gems, 0) + ? WHERE id = ?',
-                [gemsAwarded, req.user.id]
+                "INSERT INTO deposits (user_id, amount, currency, payment_type, status, reference, external_ref, created_at, completed_at) VALUES (?, ?, ?, ?, 'completed', ?, ?, datetime('now'), datetime('now'))",
+                [req.user.id, audAmount, config.CURRENCY, 'crypto_eth', reference, txHashLower]
             );
+
+            await db.run('UPDATE users SET balance = balance + ? WHERE id = ?', [audAmount, req.user.id]);
+
+            await db.run(
+                "INSERT INTO transactions (user_id, type, amount, balance_before, balance_after, reference, created_at) VALUES (?, 'deposit', ?, ?, ?, ?, datetime('now'))",
+                [req.user.id, audAmount, oldBalance, newBalance, reference]
+            );
+
+            if (gemsAwarded > 0) {
+                await db.run(
+                    'UPDATE users SET gems = COALESCE(gems, 0) + ? WHERE id = ?',
+                    [gemsAwarded, req.user.id]
+                );
+            }
+
+            await db.commit();
+        } catch (txErr) {
+            try { await db.rollback(); } catch (_) { /* best-effort */ }
+            console.warn('[Crypto] Deposit transaction failed — rolled back:', txErr.message);
+            return res.status(500).json({ error: 'Deposit credit failed — transaction rolled back. Please try again.' });
         }
 
-        console.log(`[Crypto] Deposit verified: user=${req.user.id} tx=${txHashLower} eth=${ethValue.toFixed(6)} aud=$${audAmount.toFixed(2)} ref=${reference}`);
+        // ── NFT ledger: record crypto deposit as NFT sale (fire-and-forget, runs after commit) ──
+        mintOnDeposit(db, { userId: req.user.id, amount: audAmount, depositId: null, paymentType: 'crypto_eth', reference: reference, currency: config.CURRENCY }).catch(function(e) { console.warn('[Crypto] mintOnDeposit error:', e.message || e); });
 
-        const newBalance = oldBalance + audAmount;
+        console.warn('[Crypto] Deposit verified:', JSON.stringify({ user: req.user.id, tx: txHashLower, eth: ethValue.toFixed(6), aud: audAmount.toFixed(2), ref: reference }));
 
         res.json({
             message: `Deposit of $${audAmount.toFixed(2)} AUD confirmed!`,

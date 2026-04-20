@@ -186,12 +186,9 @@ router.post('/register', async (req, res) => {
         const startBalance = config.DEFAULT_BALANCE;
         const SIGNUP_WAGERING_MULT = 25;
 
-        // Ensure date_of_birth column exists (idempotent — safe to call repeatedly)
-        try { await db.run('ALTER TABLE users ADD COLUMN date_of_birth TEXT'); } catch (_) { /* already exists */ }
-        try { await db.run('ALTER TABLE users ADD COLUMN registration_ip TEXT'); } catch (_) { /* already exists */ }
-        try { await db.run('ALTER TABLE users ADD COLUMN terms_accepted_at TEXT'); } catch (_) { /* already exists */ }
-
-        // Store DOB as ISO date (YYYY-MM-DD) for audit trail and future age re-verification
+        // Store DOB as ISO date (YYYY-MM-DD) for audit trail and future age re-verification.
+        // The date_of_birth, registration_ip, and terms_accepted_at columns are declared in
+        // the canonical schema (server/db/schema-sqlite.js + schema-pg.js USER_MIGRATIONS).
         const dobIso = dob.toISOString().slice(0, 10);
         const nowIso = new Date().toISOString();
 

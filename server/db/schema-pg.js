@@ -840,6 +840,8 @@ const USER_MIGRATIONS = [
     ['avatar_url', 'TEXT'],
     ['phone', 'TEXT'],
     ['date_of_birth', 'TEXT'],
+    ['registration_ip', 'TEXT'],
+    ['terms_accepted_at', 'TEXT'],
     ['country', 'TEXT'],
     ['currency', "TEXT DEFAULT 'AUD'"],
     ['email_verified', 'INTEGER DEFAULT 0'],

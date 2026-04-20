@@ -804,19 +804,23 @@ router.get('/pending-withdrawals', async (req, res) => {
     }
 });
 
-// POST /api/admin/approve-withdrawal — Process and approve a pending withdrawal
-// Enforces 24h cooling-off period — withdrawals cannot be approved until 24h after creation
+// POST /api/admin/approve-withdrawal — Process and approve a pending withdrawal.
+// Enforces a 24h cooling-off period — withdrawals cannot be approved until 24h after creation.
+// The previous `forceApprove` bypass was removed: allowing any admin to skip the AML
+// cooling-off window without a secondary approval or audit trail was a material
+// insider-risk vector. Use the dedicated `/api/admin/reject-withdrawal` endpoint to
+// cancel a withdrawal during the cooling-off window if needed.
 router.post('/approve-withdrawal', async (req, res) => {
     try {
-        const { withdrawalId, forceApprove } = req.body;
+        const { withdrawalId } = req.body;
         if (!withdrawalId) return res.status(400).json({ error: 'withdrawalId is required' });
 
         const wd = await db.get('SELECT id, user_id, amount, status, created_at, account_created_at FROM withdrawals WHERE id = ?', [withdrawalId]);
         if (!wd) return res.status(404).json({ error: 'Withdrawal not found' });
         if (wd.status !== 'pending') return res.status(400).json({ error: `Withdrawal is already ${wd.status}` });
 
-        // 24h cooling-off enforcement (admin can override with forceApprove)
-        if (!forceApprove && wd.created_at) {
+        // 24h cooling-off enforcement (hard — no bypass)
+        if (wd.created_at) {
             var createdTime = new Date(wd.created_at).getTime();
             var hoursSince = (Date.now() - createdTime) / (1000 * 60 * 60);
             if (hoursSince < 24) {
@@ -830,11 +834,20 @@ router.post('/approve-withdrawal', async (req, res) => {
             }
         }
 
-        // Mark as completed (balance was already deducted at request time)
-        await db.run(
-            "UPDATE withdrawals SET status = 'completed', processed_at = datetime('now'), admin_note = 'Approved by admin' WHERE id = ?",
+        // Atomic approve — prevents two admins both approving the same withdrawal.
+        var approveResult = await db.run(
+            "UPDATE withdrawals SET status = 'completed', processed_at = datetime('now'), admin_note = 'Approved by admin' WHERE id = ? AND status = 'pending'",
             [withdrawalId]
         );
+        if (!approveResult || approveResult.changes === 0) {
+            return res.status(409).json({ error: 'Withdrawal was already processed by another admin' });
+        }
+
+        // Audit log (best-effort)
+        await db.run(
+            "INSERT INTO admin_audit_log (admin_id, action, target_user_id, details, created_at) VALUES (?, 'approve_withdrawal', ?, ?, datetime('now'))",
+            [req.user.id, wd.user_id, JSON.stringify({ withdrawalId, amount: wd.amount })]
+        ).catch(function(_) { /* audit table may not exist in older envs */ });
 
         res.json({ message: 'Withdrawal approved and ready for payout', withdrawalId, amount: wd.amount });
     } catch (err) {

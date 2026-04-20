@@ -15704,41 +15704,26 @@ function _updateLoyaltyBadge() {
     el.className = 'loyalty-badge';
     el.style.display = '';
 }
-function _redeemLoyaltyPoints(amount) {
-    if (_loyalty245.points < amount) { alert('Not enough loyalty points!'); return false; }
-    _loyalty245.points -= amount;
-    var bonus = Math.floor(amount / 100); // 100 points = $1
-    if (typeof balance !== 'undefined') balance += bonus;
-    try { localStorage.setItem('matrixSpins_loyalty', JSON.stringify(_loyalty245)); } catch(e) {}
-    _updateLoyaltyBadge();
-    return true;
+function _redeemLoyaltyPoints(_amount) {
+    // Client-side loyalty points redemption removed — the real loyalty shop lives at
+    // /api/loyaltyshop/redeem and credits bonus_balance with wagering. This Sprint 245
+    // localStorage-based version awarded balance that disappeared on reload.
+    if (typeof showToast === 'function') {
+        showToast('Visit the in-game Loyalty Shop to redeem points.', 'info');
+    }
+    return false;
 }
 
 // Sprint 246 — Daily login bonus
 function _checkDailyBonus() {
+    // Client-side daily bonus removed — the real daily login bonus is awarded by the
+    // server via /api/daily-login/claim which credits bonus_balance with wagering
+    // requirements and enforces self-exclusion. This legacy localStorage-based
+    // version awarded display-only balance that disappeared on reload.
     try {
-        var raw = localStorage.getItem('matrixSpins_dailyBonus');
-        var data = raw ? JSON.parse(raw) : { lastClaim: 0, streak: 0 };
-        var now = Date.now();
-        var dayMs = 86400000;
-        var lastDay = Math.floor(data.lastClaim / dayMs);
-        var today = Math.floor(now / dayMs);
-        if (today > lastDay) {
-            var streak = (today - lastDay === 1) ? data.streak + 1 : 1;
-            var bonus = Math.min(50 + (streak * 10), 200); // $50 base + $10 per streak day, max $200
-            if (typeof balance !== 'undefined') balance += bonus;
-            var betDisplay = document.getElementById('balanceAmount');
-            if (betDisplay) betDisplay.textContent = (typeof balance !== 'undefined') ? balance : '';
-            localStorage.setItem('matrixSpins_dailyBonus', JSON.stringify({ lastClaim: now, streak: streak }));
-            var el = document.getElementById('dailyBonusBadge');
-            if (el) {
-                el.textContent = 'Daily Bonus: +$' + bonus + ' (Day ' + streak + ')';
-                el.className = 'daily-bonus-badge db-claimed';
-                el.style.display = '';
-                setTimeout(function() { el.style.display = 'none'; }, 5000);
-            }
-        }
-    } catch(e) {}
+        var el = document.getElementById('dailyBonusBadge');
+        if (el) el.style.display = 'none';
+    } catch(_e) {}
 }
 
 // Sprint 247 — Referral code display
@@ -20136,40 +20121,41 @@ function _updateSocialTicker() {
     ticker.innerHTML = '<div class="st-content">' + msg + '</div>';
 }
 /* ── 395-402 — friend system ──────────────────────────────────── */
+// Friends system was localStorage-only with no server backing — any "friend" added
+// existed only on this device, and gift buttons produced fake confirmations.
+// Pointing users at the working referral system (which credits real bonuses to
+// both parties server-side) instead of a fake friend list.
 var _friendsList = [];
-function _initFriends() {
-    var stored = localStorage.getItem('ms_friends');
-    if (stored) { try { _friendsList = JSON.parse(stored); } catch(e) {} }
-}
+function _initFriends() { /* no-op — friends system replaced by referral code flow */ }
 function _showFriendsPanel() {
     var panel = document.getElementById('friendsPanel397');
     if (panel) { panel.style.display = panel.style.display === 'none' ? 'flex' : 'none'; return; }
     panel = document.createElement('div');
     panel.id = 'friendsPanel397';
     panel.className = 'friends-overlay';
-    var html = '<div class="friends-inner"><div class="friends-header"><h2>\u{1F465} Friends</h2><button onclick="document.getElementById(\&quot;friendsPanel397\&quot;).style.display=\&quot;none\&quot;" class="friends-close">&times;</button></div>';
-    html += '<div class="friends-add"><input type="text" id="friendInput397" placeholder="Enter friend code..." class="friend-input"><button onclick="_addFriend()" class="friend-add-btn">Add</button></div>';
-    html += '<div class="friends-list">';
-    if (_friendsList.length === 0) {
-        html += '<div class="friends-empty">No friends yet. Share your code: <strong>' + (_referralCode || 'N/A') + '</strong></div>';
-    } else {
-        _friendsList.forEach(function(f) {
-            html += '<div class="friend-row"><span class="friend-avatar">\u{1F464}</span><div><strong>' + f.name + '</strong><small>Last active: ' + (f.lastActive || 'Unknown') + '</small></div><button onclick="_sendGift(\&quot;&quot; + f.id + &quot;\&quot;)" class="friend-gift-btn">\u{1F381} Gift</button></div>';
-        });
-    }
-    html += '</div></div>';
-    panel.innerHTML = html;
+    var refCode = (typeof _referralCode !== 'undefined' && _referralCode) ? _referralCode : 'Load your profile to view code';
+    panel.innerHTML =
+        '<div class="friends-inner">' +
+        '<div class="friends-header"><h2>\u{1F465} Invite Friends</h2>' +
+        '<button onclick="document.getElementById(\'friendsPanel397\').style.display=\'none\'" class="friends-close">&times;</button>' +
+        '</div>' +
+        '<div style="padding:20px;color:#e0e0e0;line-height:1.6;">' +
+        '<p>Share your referral code with a friend. When they sign up and make their first deposit, you both get a bonus credited to your accounts.</p>' +
+        '<div style="background:rgba(251,191,36,0.1);border:1px solid rgba(251,191,36,0.4);border-radius:8px;padding:16px;margin-top:16px;text-align:center;">' +
+        '<div style="font-size:12px;color:#94a3b8;text-transform:uppercase;letter-spacing:1px;">Your code</div>' +
+        '<div style="font-size:24px;font-weight:900;color:#fbbf24;letter-spacing:2px;margin-top:4px;" id="refCodeDisplay397"></div>' +
+        '</div>' +
+        '<p style="font-size:13px;color:#94a3b8;margin-top:16px;">Referral bonuses are credited automatically — no friend list to maintain.</p>' +
+        '</div></div>';
     document.body.appendChild(panel);
+    // Use textContent for the referral code to avoid any HTML injection
+    var _codeEl = document.getElementById('refCodeDisplay397');
+    if (_codeEl) _codeEl.textContent = refCode;
 }
 function _addFriend() {
-    var input = document.getElementById('friendInput397');
-    var code = input.value.trim();
-    if (!code) return;
-    _friendsList.push({ id: code, name: 'Player_' + code.substring(0, 6), lastActive: 'Just now' });
-    localStorage.setItem('ms_friends', JSON.stringify(_friendsList));
-    input.value = '';
-    document.getElementById('friendsPanel397').remove();
-    _showFriendsPanel();
+    // no-op — friends are onboarded via the referral code flow above. Previous
+    // localStorage-based implementation produced fake friend entries visible only
+    // on this device.
 }
 // Friends panel gift button now defers to the canonical _sendGift(amount)
 // below which posts to /api/gifts/send. Previous dead _sendGift(friendId)
@@ -20963,15 +20949,41 @@ function _openTournamentLeaderboard() {
         el.className = 'tourney-leaderboard-overlay';
         document.body.appendChild(el);
     }
-    // Only show the player's own score — no fake leaderboard entries
-    var entries = [
-        { name: 'YOU', score: _tournamentV2.myScore }
-    ];
-    var html = '<div class="tourney-lb-card"><h3>Tournament Leaderboard</h3><ol>';
-    entries.forEach(function(e) { html += '<li class="tourney-you">' + e.name + ': ' + e.score + '</li>'; });
-    html += '</ol><button onclick="document.getElementById(&quot;tourneyLeaderboardOverlay&quot;).style.display=&quot;none&quot;">Close</button></div>';
-    el.innerHTML = html;
-    el.style.display = 'flex';
+    // Fetch real tournament standings from the server leaderboard endpoint.
+    // If none exist (no active tournament), fall back to showing the player's
+    // own score with an honest "tournaments coming soon" message rather than
+    // a single-player fake leaderboard.
+    var token = (typeof localStorage !== 'undefined') ? localStorage.getItem('casinoToken') : null;
+    var headers = token ? { 'Authorization': 'Bearer ' + token } : {};
+    fetch('/api/leaderboard/weekly', { credentials: 'include', headers: headers })
+        .then(function(r) { return r.ok ? r.json() : { entries: [] }; })
+        .then(function(data) {
+            var entries = (data && data.entries) || [];
+            var myScoreLine = 'Your score: ' + (Number(_tournamentV2.myScore) || 0);
+            var html = '<div class="tourney-lb-card"><h3>Tournament Leaderboard</h3>';
+            if (entries.length > 0) {
+                html += '<ol>';
+                entries.slice(0, 20).forEach(function(e, i) {
+                    var medal = i === 0 ? '\u{1F947}' : i === 1 ? '\u{1F948}' : i === 2 ? '\u{1F949}' : '#' + (i + 1);
+                    var masked = String(e.maskedUser || e.name || '').replace(/[<>]/g, '');
+                    var score = Number(e.score || e.winAmount || 0);
+                    html += '<li>' + medal + ' ' + masked + ': ' + score.toLocaleString() + '</li>';
+                });
+                html += '</ol>';
+                html += '<div class="tourney-you">' + myScoreLine + '</div>';
+            } else {
+                html += '<p style="color:#94a3b8">No active tournament this week. ' + myScoreLine + '.</p>';
+            }
+            html += '<button onclick="document.getElementById(\'tourneyLeaderboardOverlay\').style.display=\'none\'">Close</button></div>';
+            el.innerHTML = html;
+            el.style.display = 'flex';
+        })
+        .catch(function() {
+            el.innerHTML = '<div class="tourney-lb-card"><h3>Tournament Leaderboard</h3>' +
+                '<p style="color:#ef4444">Leaderboard unavailable right now.</p>' +
+                '<button onclick="document.getElementById(\'tourneyLeaderboardOverlay\').style.display=\'none\'">Close</button></div>';
+            el.style.display = 'flex';
+        });
 }
 
 
