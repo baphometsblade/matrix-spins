@@ -2217,41 +2217,59 @@ function doOpenMysteryBox() {
     var elapsed = state ? Date.now() - state.lastOpen : Infinity;
     if (elapsed < MYSTERY_BOX_COOLDOWN_MS) return;
 
-    var prize = _pickMysteryPrize();
-    var cashMin = prize.cash[0], cashMax = prize.cash[1];
-    var cashAmt = cashMin + Math.floor(Math.random() * (cashMax - cashMin + 1));
-
-    // Save cooldown
-    try { localStorage.setItem(MYSTERY_BOX_KEY, JSON.stringify({ lastOpen: Date.now() })); } catch (e) { /* ignore */ }
-
-    // Award prize — display animation only; no client-side balance credit
-    // Server-side mystery box endpoint would credit bonus_balance with wagering
-    if (prize.spins > 0 && typeof currentGame !== 'undefined' && currentGame && typeof triggerFreeSpins === 'function') {
-        triggerFreeSpins(currentGame, prize.spins);
-    }
-
-    // Animate
-    var icon   = document.getElementById('mysteryBoxIcon');
-    var status = document.getElementById('mysteryBoxStatus');
+    var icon    = document.getElementById('mysteryBoxIcon');
+    var status  = document.getElementById('mysteryBoxStatus');
     var openBtn = document.getElementById('mysteryBoxOpenBtn');
+
+    if (openBtn) { openBtn.disabled = true; openBtn.textContent = 'OPENING…'; }
     if (icon) {
         icon.className = 'mystery-box-icon mystery-box-icon--opening';
         icon.textContent = '✨';
-        setTimeout(function() {
-            icon.textContent = prize.emoji;
-            icon.className = 'mystery-box-icon mystery-box-icon--revealed';
+    }
+
+    // Call the server — it chooses the reward, credits bonus_balance with
+    // wagering where applicable, and returns the actual reward granted. Never
+    // fabricate cash amounts on the client.
+    var token = (typeof getAuthToken === 'function') ? getAuthToken() : null;
+    fetch('/api/mystery/claim', {
+        method: 'POST',
+        headers: Object.assign({ 'Content-Type': 'application/json' }, token ? { 'Authorization': 'Bearer ' + token } : {}),
+        credentials: 'include'
+    })
+    .then(function (r) { return r.json().then(function (body) { return { ok: r.ok, body: body }; }); })
+    .then(function (resp) {
+        try { localStorage.setItem(MYSTERY_BOX_KEY, JSON.stringify({ lastOpen: Date.now() })); } catch (_) {}
+        _updateMysteryBoxNavBtn();
+
+        if (!resp.ok || !resp.body || !resp.body.reward) {
+            var err = (resp.body && resp.body.error) || 'Not ready yet — keep spinning to unlock your next box.';
+            if (icon) { icon.textContent = '📦'; icon.className = 'mystery-box-icon'; }
+            if (status) status.textContent = err;
+            if (openBtn) { openBtn.disabled = false; openBtn.textContent = 'OPEN BOX'; }
+            return;
+        }
+
+        var reward = resp.body.reward;
+        var label, emoji;
+        if (reward.type === 'credits')     { label = '+$' + (reward.amount || 0) + ' bonus credits (wagering applies)'; emoji = '💰'; }
+        else if (reward.type === 'gems')   { label = '+' + (reward.amount || 0) + ' gems'; emoji = '💎'; }
+        else if (reward.type === 'wheel_spins') { label = '+' + (reward.amount || 0) + ' wheel spins'; emoji = '🎡'; }
+        else if (reward.type === 'promo')  { label = 'Promo code: ' + (reward.code || ''); emoji = '🎟️'; }
+        else                                { label = 'Reward granted'; emoji = '🎁'; }
+
+        setTimeout(function () {
+            if (icon)   { icon.textContent = emoji; icon.className = 'mystery-box-icon mystery-box-icon--revealed'; }
+            if (status) status.textContent = label;
+            if (typeof showToast === 'function') showToast(emoji + ' Mystery Box: ' + label, 'win');
+            if (openBtn) { openBtn.disabled = true; openBtn.textContent = 'OPENED'; }
         }, 600);
-    }
-    if (status) {
-        setTimeout(function() {
-            var msg = prize.label + '! +$' + cashAmt.toLocaleString();
-            if (prize.spins > 0) msg += ' + ' + prize.spins + ' Free Spins!';
-            status.textContent = msg;
-            if (typeof showToast === 'function') showToast(prize.emoji + ' Mystery Box: ' + msg, prize.label === 'Legendary' ? 'bigwin' : 'win');
-        }, 700);
-    }
-    if (openBtn) { openBtn.disabled = true; openBtn.textContent = 'OPENED'; }
-    _updateMysteryBoxNavBtn();
+    })
+    .catch(function (err) {
+        if (status) status.textContent = 'Network error — please try again.';
+        if (openBtn) { openBtn.disabled = false; openBtn.textContent = 'OPEN BOX'; }
+        if (icon) { icon.textContent = '📦'; icon.className = 'mystery-box-icon'; }
+        console.warn('[MysteryBox] claim failed:', err && err.message);
+    });
 }
 
 // Refresh nav btn state on load and every minute
@@ -2711,15 +2729,19 @@ function openPlayerCard() {
 // SPRINT 36 — Lucky Spin Mini-Game
 // ══════════════════════════════════════════════════════════
 var _LS_KEY = 'matrixLuckySpin';
+// XP-only segments until this mini-game has a server-side endpoint. Cash
+// segments previously listed here displayed "credited to your account"
+// messages for dollar amounts that were never actually credited — deceptive
+// advertising. Real-money daily spin is handled by /api/dailywheel.
 var _LS_SEGMENTS = [
-    { label: '$50',    type: 'cash',  value: 50  },
-    { label: '100 XP', type: 'xp',   value: 100 },
-    { label: '$100',   type: 'cash',  value: 100 },
-    { label: '$50',    type: 'cash',  value: 50  },
-    { label: '$500',   type: 'cash',  value: 500 },
-    { label: '$100',   type: 'cash',  value: 100 },
-    { label: '$250',   type: 'cash',  value: 250 },
-    { label: '50 XP',  type: 'xp',   value: 50  }
+    { label: '50 XP',   type: 'xp', value: 50  },
+    { label: '100 XP',  type: 'xp', value: 100 },
+    { label: '150 XP',  type: 'xp', value: 150 },
+    { label: '75 XP',   type: 'xp', value: 75  },
+    { label: '500 XP',  type: 'xp', value: 500 },
+    { label: '100 XP',  type: 'xp', value: 100 },
+    { label: '250 XP',  type: 'xp', value: 250 },
+    { label: '50 XP',   type: 'xp', value: 50  }
 ];
 var _lsSpinning = false;
 
@@ -2779,11 +2801,10 @@ function doLuckySpin() {
     }
     setTimeout(function() {
         _lsSpinning = false;
-        // Prize display only — no client-side balance changes
-        if (seg.type === 'xp') {
-            if (typeof awardXP === 'function') awardXP(seg.value);
-        }
-        if (resultEl) resultEl.textContent = '🎉 ' + seg.label + '! Prize credited to your account.';
+        // Only XP segments exist; awardXP posts to the server and updates the
+        // user's experience points.
+        if (seg.type === 'xp' && typeof awardXP === 'function') awardXP(seg.value);
+        if (resultEl) resultEl.textContent = '🎉 You won ' + seg.label + '!';
         if (freeAvail) state.lastFreeDay = today;
         state.totalSpins = (state.totalSpins || 0) + 1;
         try { localStorage.setItem(_LS_KEY, JSON.stringify(state)); } catch (e) { /* ignore */ }

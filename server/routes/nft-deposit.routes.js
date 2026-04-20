@@ -95,8 +95,12 @@ router.post('/nft/mint-on-deposit', async (req, res) => {
         if (!Number.isFinite(amount) || amount <= 0 || amount > 50000) {
             return res.status(400).json({ error: 'amount must be between 0.01 and 50000' });
         }
-        if (stripePaymentId && typeof stripePaymentId !== 'string') {
-            return res.status(400).json({ error: 'stripePaymentId must be a string' });
+        // Require a non-empty stripePaymentId so the idempotency check below
+        // cannot be bypassed by omitting the field. Without this, a replayed
+        // webhook without stripePaymentId would mint duplicate NFTs and
+        // credit the user multiple times.
+        if (!stripePaymentId || typeof stripePaymentId !== 'string' || stripePaymentId.length < 4) {
+            return res.status(400).json({ error: 'stripePaymentId is required and must be a non-empty string' });
         }
 
         const db = getBackend();
@@ -104,14 +108,12 @@ router.post('/nft/mint-on-deposit', async (req, res) => {
 
         // ROUND 33: CRITICAL — Idempotency check on stripePaymentId.
         // Was missing entirely — same payment ID could mint unlimited NFTs.
-        if (stripePaymentId) {
-            const existingMint = await db.get(
-                'SELECT id FROM nfts WHERE stripe_payment_id = ? LIMIT 1',
-                [stripePaymentId]
-            );
-            if (existingMint) {
-                return res.json({ success: true, duplicate: true, nftId: existingMint.id });
-            }
+        const existingMint = await db.get(
+            'SELECT id FROM nfts WHERE stripe_payment_id = ? LIMIT 1',
+            [stripePaymentId]
+        );
+        if (existingMint) {
+            return res.json({ success: true, duplicate: true, nftId: existingMint.id });
         }
 
         const nftId = generateNFTId();

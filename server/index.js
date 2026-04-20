@@ -33,14 +33,21 @@ try {
 (function checkSecurityConfig() {
     const errors = [];
     const warnings = [];
-    if (!process.env.JWT_SECRET) warnings.push('JWT_SECRET not set — using random key (sessions will not persist across restarts)');
+    // JWT_SECRET — required in production, stable across restarts.
+    if (!process.env.JWT_SECRET) errors.push('JWT_SECRET not set — every restart would invalidate all sessions. Set a 32+ character secret in environment variables.');
     else if (process.env.JWT_SECRET.length < 32) errors.push('JWT_SECRET must be at least 32 characters');
-    if (!process.env.ADMIN_PASSWORD) warnings.push('ADMIN_PASSWORD not set — using random password (check server logs)');
+    // ADMIN_PASSWORD — required in production; a random per-restart value locks the admin out.
+    if (!process.env.ADMIN_PASSWORD) errors.push('ADMIN_PASSWORD not set — a random per-restart password would lock the admin account on every redeploy. Set a strong ADMIN_PASSWORD.');
+    else if (process.env.ADMIN_PASSWORD === 'admin123changeme' || process.env.ADMIN_PASSWORD.length < 12) errors.push('ADMIN_PASSWORD is weak or default. Use a random 16+ character password.');
     if (!process.env.STRIPE_WEBHOOK_SECRET && process.env.STRIPE_SECRET_KEY) errors.push('STRIPE_WEBHOOK_SECRET not set but STRIPE_SECRET_KEY is configured — webhook verification would be disabled, which allows forged payment events. Set STRIPE_WEBHOOK_SECRET or remove STRIPE_SECRET_KEY.');
+    if (!process.env.RNG_SERVER_SECRET) warnings.push('RNG_SERVER_SECRET not set — using random key (provably-fair seed chain will reset on every deploy).');
     if (!process.env.DATABASE_URL) {
         warnings.push('DATABASE_URL not set — using SQLite (data may not persist across Render deploys). Set DATABASE_URL to a PostgreSQL connection string for production use.');
     }
-    // In production, JWT_SECRET too short is fatal
+    if (process.env.STRIPE_SECRET_KEY && !process.env.APP_URL && !process.env.ALLOWED_ORIGIN) {
+        warnings.push('APP_URL / ALLOWED_ORIGIN not set — Stripe checkout redirects and CORS will fall back to the hardcoded msaart.online domain.');
+    }
+    // Fatal in production
     if (config.NODE_ENV === 'production' && errors.length > 0) {
         console.error('\n  FATAL SECURITY ERRORS:');
         errors.forEach(e => console.error('   x ' + e));
@@ -167,7 +174,7 @@ app.use(cors({
 }));
 // Stripe webhook needs the raw body (Buffer) for signature verification.
 // Mount express.raw() BEFORE express.json() so the webhook path gets raw bytes.
-app.use('/api/payment/stripe/webhook', express.raw({ type: 'application/json' }));
+// The canonical path is /api/payment/webhook (handler in payment.routes.js).
 app.use('/api/payment/webhook', express.raw({ type: 'application/json' }));
 // Content-Length validation for oversized payloads (early rejection at middleware layer)
 app.use((req, res, next) => {

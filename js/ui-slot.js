@@ -2337,15 +2337,44 @@
                 if (jackpotBannerEl) {
                     const isJackpotGame = currentGame && (currentGame.jackpot || currentGame.tag === 'JACKPOT' || currentGame.tag === 'MEGA');
                     if (isJackpotGame) {
-                        if (jackpotValueEl) jackpotValueEl.textContent = '$' + jackpotValue.toLocaleString();
                         jackpotBannerEl.style.display = '';
+                        if (jackpotValueEl) jackpotValueEl.textContent = 'Loading…';
                         if (_slotJackpotTickInterval) clearInterval(_slotJackpotTickInterval);
-                        _slotJackpotTickInterval = setInterval(function() {
-                            jackpotValue += Math.floor(Math.random() * (JACKPOT_TICKER_INCREMENT_MAX - JACKPOT_TICKER_INCREMENT_MIN + 1) + JACKPOT_TICKER_INCREMENT_MIN);
-                            if (jackpotValueEl) jackpotValueEl.textContent = '$' + jackpotValue.toLocaleString();
-                        }, JACKPOT_TICKER_INTERVAL);
+
+                        // Pull the real jackpot pool from the server. Never
+                        // fabricate a value client-side; the old Math.random()
+                        // ticker was replaced because it displayed numbers that
+                        // had no relation to the actual prize pool.
+                        function _fetchAndShowJackpot() {
+                            fetch('/api/jackpot/status', { credentials: 'include' })
+                                .then(function (r) { return r.ok ? r.json() : null; })
+                                .then(function (data) {
+                                    if (!jackpotValueEl) return;
+                                    if (data && typeof data.grand === 'number') {
+                                        jackpotValue = data.grand;
+                                    } else if (data && data.pools && typeof data.pools.grand === 'number') {
+                                        jackpotValue = data.pools.grand;
+                                    } else if (data && typeof data.pool_amount === 'number') {
+                                        jackpotValue = data.pool_amount;
+                                    }
+                                    if (typeof jackpotValue === 'number' && jackpotValue > 0) {
+                                        jackpotValueEl.textContent = '$' + jackpotValue.toLocaleString();
+                                    } else if (jackpotValueEl) {
+                                        jackpotValueEl.textContent = '';
+                                        jackpotBannerEl.style.display = 'none';
+                                    }
+                                })
+                                .catch(function () {
+                                    if (jackpotValueEl) jackpotValueEl.textContent = '';
+                                    jackpotBannerEl.style.display = 'none';
+                                });
+                        }
+                        _fetchAndShowJackpot();
+                        // Poll every 20s for a live pool value
+                        _slotJackpotTickInterval = setInterval(_fetchAndShowJackpot, 20000);
                     } else {
                         jackpotBannerEl.style.display = 'none';
+                        if (_slotJackpotTickInterval) { clearInterval(_slotJackpotTickInterval); _slotJackpotTickInterval = null; }
                     }
                 }
 
@@ -15386,13 +15415,11 @@ function _updateAchievements(winAmount, betAmount) {
 // ═══════════════════════════ Sprint 235-242 ═══════════════════════════
 // Industry Standards & Responsible Gambling Compliance
 
-// Sprint 235 — RTP display (theoretical return-to-player)
-var _rtpData235 = {
-    classic_slots: 96.5, fruit_frenzy: 95.8, mega_diamonds: 97.1,
-    wild_west: 96.2, ocean_treasures: 95.5, space_gems: 96.8,
-    egyptian_gold: 95.9, lucky_sevens: 96.0, dragon_fortune: 97.3,
-    neon_nights: 96.4, default: 96.0
-};
+// Sprint 235 — RTP display (theoretical return-to-player).
+// Must reflect the server's actual TARGET_RTP (see server/config.js). Per-game
+// fabricated values previously shown here (96.5, 97.1, ...) contradicted the
+// real 88% and constituted misleading advertising of game odds.
+var _RTP_ACTUAL = 88.0;
 function _resetRTPDisplay() {
     var el = document.getElementById('rtpDisplayBadge');
     if (el) el.style.display = 'none';
@@ -15400,10 +15427,8 @@ function _resetRTPDisplay() {
 function _updateRTPDisplay() {
     var el = document.getElementById('rtpDisplayBadge');
     if (!el) return;
-    var game = (typeof currentGame !== 'undefined') ? currentGame : 'default';
-    var rtp = _rtpData235[game] || _rtpData235['default'];
-    el.textContent = 'RTP: ' + rtp.toFixed(1) + '%';
-    el.className = 'rtp-display-badge' + (rtp >= 97 ? ' rtp-high' : rtp >= 96 ? ' rtp-mid' : ' rtp-low');
+    el.textContent = 'RTP: ' + _RTP_ACTUAL.toFixed(1) + '%';
+    el.className = 'rtp-display-badge rtp-low';
     el.style.display = '';
 }
 

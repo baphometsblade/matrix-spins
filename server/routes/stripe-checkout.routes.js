@@ -4,15 +4,17 @@ const router = express.Router();
 const config = require('../config');
 const { authenticate } = require('../middleware/auth');
 
-// Deposit price mapping — Stripe Price IDs from env or defaults
-// Set STRIPE_PRICE_5, STRIPE_PRICE_10 etc. in env to override
+// Deposit price mapping — Stripe Price IDs from env only (no hardcoded
+// fallbacks because a test-mode price ID would break live-mode checkout with
+// "No such price" errors). When an env var is missing for a given preset
+// amount we fall through to dynamic price_data construction below.
 const DEPOSIT_PRICES = {
-    5:   process.env.STRIPE_PRICE_5   || 'price_1TE4GlEs7PHC7HDVUEhFXd1w',
-    10:  process.env.STRIPE_PRICE_10  || 'price_1TE4GzEs7PHC7HDVA1e8ftkO',
-    25:  process.env.STRIPE_PRICE_25  || 'price_1TE4H0Es7PHC7HDVwbmnJyEg',
-    50:  process.env.STRIPE_PRICE_50  || 'price_1TE4H1Es7PHC7HDV9Ei4fdpz',
-    100: process.env.STRIPE_PRICE_100 || 'price_1TE4H2Es7PHC7HDVR6YXlofT',
-    250: process.env.STRIPE_PRICE_250 || 'price_1TE4H3Es7PHC7HDVHDwmeiB5'
+    5:   process.env.STRIPE_PRICE_5   || null,
+    10:  process.env.STRIPE_PRICE_10  || null,
+    25:  process.env.STRIPE_PRICE_25  || null,
+    50:  process.env.STRIPE_PRICE_50  || null,
+    100: process.env.STRIPE_PRICE_100 || null,
+    250: process.env.STRIPE_PRICE_250 || null
 };
 
 // Deposit limits

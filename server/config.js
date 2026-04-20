@@ -1,13 +1,21 @@
 ﻿require('dotenv').config();
 
+// JWT_SECRET and ADMIN_PASSWORD MUST be stable across restarts. In development
+// we generate a random value if missing (logged as a warning from
+// server/index.js), but in production the startup check there will exit(1)
+// if JWT_SECRET is missing or too short. We keep the random fallback here
+// only so development boots without configuration.
+const _devJwt = () => require('crypto').randomBytes(64).toString('hex');
+const _devAdminPw = () => require('crypto').randomBytes(16).toString('hex');
+
 module.exports = {
     PORT: parseInt(process.env.PORT, 10) || 3000,
-    JWT_SECRET: process.env.JWT_SECRET || require('crypto').randomBytes(64).toString('hex'),
+    JWT_SECRET: process.env.JWT_SECRET || _devJwt(),
     // ROUND 36: Reduced from 7d to 4h — industry standard for financial apps.
     // 7 days was too long; a stolen token could drain an account for a week.
     JWT_EXPIRES_IN: '4h',
     ADMIN_USERNAME: process.env.ADMIN_USERNAME || 'matrix',
-    ADMIN_PASSWORD: process.env.ADMIN_PASSWORD || require('crypto').randomBytes(16).toString('hex'),
+    ADMIN_PASSWORD: process.env.ADMIN_PASSWORD || _devAdminPw(),
     NODE_ENV: process.env.NODE_ENV || 'development',
     DB_PATH: process.env.DB_PATH || './casino.db',
     DATABASE_URL: process.env.DATABASE_URL || null,

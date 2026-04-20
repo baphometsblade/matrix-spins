@@ -26,15 +26,14 @@
     var RNG_BUFFER_SIZE = 256;
 
     function _fillRngBuffer() {
-        if (window.crypto && window.crypto.getRandomValues) {
-            _rngBuffer = new Uint32Array(RNG_BUFFER_SIZE);
-            window.crypto.getRandomValues(_rngBuffer);
-        } else {
-            _rngBuffer = new Uint32Array(RNG_BUFFER_SIZE);
-            for (var i = 0; i < RNG_BUFFER_SIZE; i++) {
-                _rngBuffer[i] = (Math.random() * 0xFFFFFFFF) >>> 0;
-            }
+        // Require a cryptographic RNG — server spins are authoritative for
+        // real-money, but we will not silently fall back to Math.random()
+        // because it is predictable in V8 and would violate project Rule #7.
+        if (!window.crypto || !window.crypto.getRandomValues) {
+            throw new Error('crypto.getRandomValues unavailable — browser unsupported for real-money play');
         }
+        _rngBuffer = new Uint32Array(RNG_BUFFER_SIZE);
+        window.crypto.getRandomValues(_rngBuffer);
         _rngIndex = 0;
     }
 
