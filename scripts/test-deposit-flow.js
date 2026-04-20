@@ -318,6 +318,68 @@ async function main() {
     assert.strictEqual(afterDel.status, 404);
     console.log('[test] account deletion works; post-delete /me returns 404');
 
+    // 19) PATCH /api/user/me — update display_name + email
+    const reg2 = await http('POST', '/api/auth/register', {
+        csrf,
+        body: {
+            username: 'patchy_' + Date.now(),
+            email: 'patchy_' + Date.now() + '@example.com',
+            password: 'Str0ngP@ss!!',
+            date_of_birth: '1990-01-01',
+        },
+    });
+    assert.strictEqual(reg2.status, 201);
+    const t2 = reg2.body.token;
+    const csrf2 = (await http('GET', '/api/csrf-token', { token: t2 })).body.csrfToken;
+    const patch = await http('PATCH', '/api/user/me', {
+        token: t2, csrf: csrf2,
+        body: { display_name: 'Patchy McTest' },
+    });
+    assert.strictEqual(patch.status, 200, 'patch failed: ' + patch.raw);
+    assert.strictEqual(patch.body.user.display_name, 'Patchy McTest');
+    const badPatch = await http('PATCH', '/api/user/me', {
+        token: t2, csrf: csrf2,
+        body: { email: 'not-an-email' },
+    });
+    assert.strictEqual(badPatch.status, 400);
+    console.log('[test] PATCH /api/user/me updates display_name, rejects bad email');
+
+    // 20) Account lockout after 5 failed logins
+    const lockUsername = reg2.body.user.username;
+    for (let i = 0; i < 5; i++) {
+        const r = await http('POST', '/api/auth/login', {
+            csrf, body: { username: lockUsername, password: 'wrong_pw_' + i },
+        });
+        assert.strictEqual(r.status, 401, 'failed attempt ' + i + ' unexpected status: ' + r.status);
+    }
+    const locked = await http('POST', '/api/auth/login', {
+        csrf, body: { username: lockUsername, password: 'Str0ngP@ss!!' },
+    });
+    assert.strictEqual(locked.status, 429, 'lockout did not trigger: ' + locked.status + ' ' + locked.raw);
+    console.log('[test] account lockout triggers after 5 failed attempts');
+
+    // 21) GET /api/user/login-history contains register + failures
+    const history = await http('GET', '/api/user/login-history', { token: t2 });
+    assert.strictEqual(history.status, 200);
+    assert.ok(history.body.events.length >= 6, 'expected ≥6 events, got ' + history.body.events.length);
+    const types = new Set(history.body.events.map(e => e.type + ':' + e.outcome));
+    assert.ok(types.has('register:success'));
+    assert.ok(types.has('login:failed'));
+    console.log('[test] login-history returns ' + history.body.events.length + ' events for user');
+
+    // 22) /api/admin/login-events accessible to admin, blocked for regular user
+    const adminEvts = await http('GET', '/api/admin/login-events', { token: adminToken });
+    assert.strictEqual(adminEvts.status, 200);
+    assert.ok(adminEvts.body.events.length > 0);
+    const userDenied = await http('GET', '/api/admin/login-events', { token: t2 });
+    assert.strictEqual(userDenied.status, 403);
+    console.log('[test] /api/admin/login-events: admin ok, user 403');
+
+    // 23) Response carries X-Request-Id header
+    const headerProbe = await fetch('http://localhost:3199/api/health');
+    assert.ok(headerProbe.headers.get('x-request-id'), 'missing X-Request-Id header');
+    console.log('[test] X-Request-Id set on responses');
+
     console.log('\n✅ all deposit-flow assertions passed');
     main.server.close();
     await db.close();

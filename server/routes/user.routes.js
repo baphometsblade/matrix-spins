@@ -3,31 +3,106 @@
 const express = require('express');
 const db = require('../database');
 const { authenticate } = require('../middleware/auth');
+const authEvents = require('../services/auth-events.service');
 
 const router = express.Router();
+
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+function userPublic(u) {
+    return {
+        id: u.id,
+        username: u.username,
+        email: u.email,
+        display_name: u.display_name || null,
+        date_of_birth: u.date_of_birth,
+        balance: Number(u.balance_cents || 0) / 100,
+        balance_cents: Number(u.balance_cents || 0),
+        is_admin: !!u.is_admin,
+        created_at: u.created_at,
+    };
+}
 
 router.get('/me', authenticate, async (req, res) => {
     try {
         const user = await db.get(
-            'SELECT id, username, email, date_of_birth, balance_cents, is_admin, created_at FROM users WHERE id = ?',
+            'SELECT id, username, email, display_name, date_of_birth, balance_cents, is_admin, created_at FROM users WHERE id = ?',
             [req.user.id]
         );
         if (!user) return res.status(404).json({ error: 'User not found.' });
-        res.json({
-            user: {
-                id: user.id,
-                username: user.username,
-                email: user.email,
-                date_of_birth: user.date_of_birth,
-                balance: Number(user.balance_cents || 0) / 100,
-                balance_cents: Number(user.balance_cents || 0),
-                is_admin: !!user.is_admin,
-                created_at: user.created_at,
-            },
-        });
+        res.json({ user: userPublic(user) });
     } catch (err) {
         console.error('[user/me]', err);
         res.status(500).json({ error: 'Failed to fetch user.' });
+    }
+});
+
+router.patch('/me', authenticate, async (req, res) => {
+    const { email, display_name } = req.body || {};
+    const updates = [];
+    const params = [];
+
+    if (email !== undefined) {
+        if (typeof email !== 'string' || !EMAIL_RE.test(email.trim())) {
+            return res.status(400).json({ error: 'Please provide a valid email address.' });
+        }
+        const conflict = await db.get(
+            'SELECT id FROM users WHERE lower(email) = lower(?) AND id <> ?',
+            [email.trim(), req.user.id]
+        );
+        if (conflict) return res.status(409).json({ error: 'That email is already in use.' });
+        updates.push('email = ?');
+        params.push(email.trim());
+    }
+    if (display_name !== undefined) {
+        if (display_name !== null) {
+            if (typeof display_name !== 'string') return res.status(400).json({ error: 'display_name must be a string.' });
+            const name = display_name.trim();
+            if (name.length > 40) return res.status(400).json({ error: 'display_name must be ≤ 40 characters.' });
+            if (name && !/^[\p{L}\p{N} ._-]{1,40}$/u.test(name)) {
+                return res.status(400).json({ error: 'display_name contains unsupported characters.' });
+            }
+            updates.push('display_name = ?');
+            params.push(name || null);
+        } else {
+            updates.push('display_name = NULL');
+        }
+    }
+
+    if (updates.length === 0) return res.status(400).json({ error: 'No valid fields to update.' });
+    params.push(req.user.id);
+
+    try {
+        await db.run('UPDATE users SET ' + updates.join(', ') + ' WHERE id = ?', params);
+        const updated = await db.get(
+            'SELECT id, username, email, display_name, date_of_birth, balance_cents, is_admin, created_at FROM users WHERE id = ?',
+            [req.user.id]
+        );
+        await authEvents.log({ userId: req.user.id, username: req.user.username, eventType: 'profile_update', outcome: 'success', req });
+        res.json({ user: userPublic(updated) });
+    } catch (err) {
+        console.error('[user/me PATCH]', err);
+        res.status(500).json({ error: 'Failed to update profile.' });
+    }
+});
+
+router.get('/login-history', authenticate, async (req, res) => {
+    try {
+        const rows = await authEvents.recentForUser(req.user.id, req.query.limit || 50);
+        res.json({
+            events: rows.map(r => ({
+                id: r.id,
+                type: r.event_type,
+                outcome: r.outcome,
+                ip: r.ip,
+                user_agent: r.user_agent,
+                reason: r.reason,
+                at: r.created_at,
+            })),
+        });
+    } catch (err) {
+        console.error('[user/login-history]', err);
+        res.status(500).json({ error: 'Failed to fetch history.' });
     }
 });
 

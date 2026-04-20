@@ -7,6 +7,7 @@ const config = require('../config');
 const db = require('../database');
 const { signToken, authenticate } = require('../middleware/auth');
 const email = require('../services/email.service');
+const authEvents = require('../services/auth-events.service');
 
 const router = express.Router();
 
@@ -98,9 +99,11 @@ router.post('/register', async (req, res) => {
 
         const user = await db.get('SELECT * FROM users WHERE id = ?', [userId]);
         const token = signToken(user);
+        await authEvents.log({ userId: user.id, username: user.username, eventType: 'register', outcome: 'success', req });
         res.status(201).json({ token, user: publicUser(user) });
     } catch (err) {
         console.error('[auth/register]', err);
+        await authEvents.log({ username, eventType: 'register', outcome: 'failed', reason: err.message, req });
         res.status(500).json({ error: 'Could not create account. Please try again.' });
     }
 });
@@ -110,22 +113,34 @@ router.post('/login', async (req, res) => {
     if (typeof username !== 'string' || typeof password !== 'string') {
         return res.status(400).json({ error: 'Username and password are required.' });
     }
+
+    // Account lockout: refuse the attempt before touching the hash so
+    // a brute-force burst can't keep bcrypt pegged. Window is per-username.
+    if (await authEvents.isLockedOut(username)) {
+        await authEvents.log({ username, eventType: 'login', outcome: 'locked_out', req });
+        return res.status(429).json({ error: 'Too many failed attempts. Try again in 15 minutes.' });
+    }
+
     try {
         const user = await db.get(
             'SELECT * FROM users WHERE lower(username) = lower(?) OR lower(email) = lower(?) LIMIT 1',
             [username, username]
         );
         if (!user) {
+            await authEvents.log({ username, eventType: 'login', outcome: 'failed', reason: 'unknown_user', req });
             return res.status(401).json({ error: 'Invalid credentials.' });
         }
         const ok = await bcrypt.compare(password, user.password_hash);
         if (!ok) {
+            await authEvents.log({ userId: user.id, username: user.username, eventType: 'login', outcome: 'failed', reason: 'bad_password', req });
             return res.status(401).json({ error: 'Invalid credentials.' });
         }
         const token = signToken(user);
+        await authEvents.log({ userId: user.id, username: user.username, eventType: 'login', outcome: 'success', req });
         res.json({ token, user: publicUser(user) });
     } catch (err) {
         console.error('[auth/login]', err);
+        await authEvents.log({ username, eventType: 'login', outcome: 'error', reason: err.message, req });
         res.status(500).json({ error: 'Login failed. Please try again.' });
     }
 });
@@ -141,9 +156,10 @@ router.get('/me', authenticate, async (req, res) => {
     }
 });
 
-router.post('/logout', authenticate, (_req, res) => {
+router.post('/logout', authenticate, async (req, res) => {
     // Tokens are stateless JWTs — the client just forgets them. We still
     // respond 200 so the client flow can confirm.
+    await authEvents.log({ userId: req.user.id, username: req.user.username, eventType: 'logout', outcome: 'success', req });
     res.json({ ok: true });
 });
 
@@ -161,6 +177,7 @@ router.post('/change-password', authenticate, async (req, res) => {
         if (!ok) return res.status(401).json({ error: 'Current password is incorrect.' });
         const hash = await bcrypt.hash(new_password, 12);
         await db.run('UPDATE users SET password_hash = ? WHERE id = ?', [hash, user.id]);
+        await authEvents.log({ userId: user.id, username: user.username, eventType: 'password_change', outcome: 'success', req });
         res.json({ ok: true });
     } catch (err) {
         console.error('[auth/change-password]', err);
@@ -219,6 +236,7 @@ router.post('/reset-password', async (req, res) => {
         const hash = await bcrypt.hash(new_password, 12);
         await db.run('UPDATE users SET password_hash = ? WHERE id = ?', [hash, row.user_id]);
         await db.run('UPDATE password_resets SET used_at = ? WHERE id = ?', [nowIso(), row.id]);
+        await authEvents.log({ userId: row.user_id, eventType: 'password_reset', outcome: 'success', req });
         res.json({ ok: true });
     } catch (err) {
         console.error('[auth/reset-password]', err);

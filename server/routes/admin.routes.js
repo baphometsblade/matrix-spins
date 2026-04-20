@@ -3,10 +3,33 @@
 const express = require('express');
 const db = require('../database');
 const { authenticate, requireAdmin } = require('../middleware/auth');
+const authEvents = require('../services/auth-events.service');
 
 const router = express.Router();
 
 router.use(authenticate, requireAdmin);
+
+router.get('/login-events', async (req, res) => {
+    try {
+        const rows = await authEvents.recentAll(req.query.limit || 100);
+        res.json({
+            events: rows.map(r => ({
+                id: r.id,
+                user_id: r.user_id,
+                username: r.username,
+                type: r.event_type,
+                outcome: r.outcome,
+                ip: r.ip,
+                user_agent: r.user_agent,
+                reason: r.reason,
+                at: r.created_at,
+            })),
+        });
+    } catch (err) {
+        console.error('[admin/login-events]', err);
+        res.status(500).json({ error: 'Failed to fetch events.' });
+    }
+});
 
 router.get('/overview', async (_req, res) => {
     try {

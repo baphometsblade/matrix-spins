@@ -259,6 +259,25 @@ async function migrate() {
         );
     `);
     await driver.exec(`CREATE INDEX IF NOT EXISTS idx_password_resets_user ON password_resets (user_id);`);
+
+    await addColumnIfMissing('users', 'display_name', 'TEXT');
+
+    await driver.exec(`
+        CREATE TABLE IF NOT EXISTS auth_events (
+            id ${T.pk},
+            user_id ${driver.kind === 'pg' ? 'INTEGER' : 'INTEGER'},
+            username TEXT,
+            event_type TEXT NOT NULL,
+            outcome TEXT NOT NULL,
+            ip TEXT,
+            user_agent TEXT,
+            reason TEXT,
+            created_at ${T.ts}
+        );
+    `);
+    await driver.exec(`CREATE INDEX IF NOT EXISTS idx_auth_events_user ON auth_events (user_id);`);
+    await driver.exec(`CREATE INDEX IF NOT EXISTS idx_auth_events_username ON auth_events (username);`);
+    await driver.exec(`CREATE INDEX IF NOT EXISTS idx_auth_events_created ON auth_events (created_at);`);
 }
 
 async function initDatabase() {

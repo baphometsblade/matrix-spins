@@ -47,6 +47,11 @@ const { maintenanceMiddleware } = require('./middleware/maintenance');
 const app = express();
 app.set('trust proxy', 1);
 
+// Per-request correlation id + access log. Mounted first so every
+// subsequent middleware has req.id available and every response body
+// (including error bodies) already has X-Request-Id set.
+app.use(require('./middleware/request-log'));
+
 /* ─── Security headers ─── */
 app.use(helmet({
     contentSecurityPolicy: {
