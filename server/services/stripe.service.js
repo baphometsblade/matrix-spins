@@ -100,6 +100,10 @@ async function createCheckoutSession(userId, amount, currency, returnUrl) {
         },
         success_url: returnUrl ? `${returnUrl}?deposit=success&ref=${reference}` : undefined,
         cancel_url: returnUrl ? `${returnUrl}?deposit=cancelled&ref=${reference}` : undefined,
+    }, {
+        // Idempotency: prevents duplicate session creation on network retry.
+        // The reference is unique per user-initiated deposit attempt.
+        idempotencyKey: reference,
     });
 
     // Store the Stripe session ID as external_ref on the deposit
@@ -155,6 +159,9 @@ async function createPaymentIntent(userId, amount, currency) {
             reference: reference,
         },
         description: `Matrix Spins deposit — user ${userId}`,
+    }, {
+        // Idempotency: prevents duplicate charge creation on network retry.
+        idempotencyKey: reference,
     });
 
     await db.run(

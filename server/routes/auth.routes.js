@@ -113,7 +113,8 @@ router.post('/register', async (req, res) => {
             return res.status(400).json({ error: 'Username, email, and password are required' });
         }
 
-        // Age verification (18+ required for gambling)
+        // Age verification (18+ required for gambling) — uses UTC-safe
+        // calculateAge() helper to correctly handle leap years and timezone edge cases.
         if (!dateOfBirth || typeof dateOfBirth !== 'string') {
             return res.status(400).json({ error: 'Date of birth is required' });
         }
@@ -121,11 +122,16 @@ router.post('/register', async (req, res) => {
         if (isNaN(dob.getTime())) {
             return res.status(400).json({ error: 'Invalid date of birth' });
         }
-        const ageDiff = Date.now() - dob.getTime();
-        const ageDate = new Date(ageDiff);
-        const age = Math.abs(ageDate.getUTCFullYear() - 1970);
+        // Reject future dates and unreasonable past dates (pre-1900)
+        if (dob > new Date() || dob < new Date('1900-01-01')) {
+            return res.status(400).json({ error: 'Invalid date of birth' });
+        }
+        const age = calculateAge(dob);
         if (age < 18) {
             return res.status(403).json({ error: 'You must be 18 or older to register' });
+        }
+        if (age > 120) {
+            return res.status(400).json({ error: 'Invalid date of birth' });
         }
 
         // Terms & conditions acceptance required
@@ -180,10 +186,19 @@ router.post('/register', async (req, res) => {
         const startBalance = config.DEFAULT_BALANCE;
         const SIGNUP_WAGERING_MULT = 25;
 
+        // Ensure date_of_birth column exists (idempotent — safe to call repeatedly)
+        try { await db.run('ALTER TABLE users ADD COLUMN date_of_birth TEXT'); } catch (_) { /* already exists */ }
+        try { await db.run('ALTER TABLE users ADD COLUMN registration_ip TEXT'); } catch (_) { /* already exists */ }
+        try { await db.run('ALTER TABLE users ADD COLUMN terms_accepted_at TEXT'); } catch (_) { /* already exists */ }
+
+        // Store DOB as ISO date (YYYY-MM-DD) for audit trail and future age re-verification
+        const dobIso = dob.toISOString().slice(0, 10);
+        const nowIso = new Date().toISOString();
+
         // Signup bonus goes to bonus_balance with wagering requirement (prevents bot farm withdrawals)
         const result = await db.run(
-            'INSERT INTO users (username, email, password_hash, balance, bonus_balance, wagering_requirement, referral_code, referred_by, email_verified) VALUES (?, ?, ?, 0, ?, ?, ?, ?, ?)',
-            [username, email, passwordHash, startBalance, startBalance * SIGNUP_WAGERING_MULT, newReferralCode, referrerId, 0]
+            'INSERT INTO users (username, email, password_hash, balance, bonus_balance, wagering_requirement, referral_code, referred_by, email_verified, date_of_birth, registration_ip, terms_accepted_at) VALUES (?, ?, ?, 0, ?, ?, ?, ?, ?, ?, ?, ?)',
+            [username, email, passwordHash, startBalance, startBalance * SIGNUP_WAGERING_MULT, newReferralCode, referrerId, 0, dobIso, clientIp, nowIso]
         );
 
         const userId = result.lastInsertRowid;

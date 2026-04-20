@@ -341,6 +341,8 @@ router.post('/verify-deposit', authenticate, async (req, res) => {
 
         console.log(`[Crypto] Deposit verified: user=${req.user.id} tx=${txHashLower} eth=${ethValue.toFixed(6)} aud=$${audAmount.toFixed(2)} ref=${reference}`);
 
+        const newBalance = oldBalance + audAmount;
+
         res.json({
             message: `Deposit of $${audAmount.toFixed(2)} AUD confirmed!`,
             deposit: {

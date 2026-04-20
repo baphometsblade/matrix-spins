@@ -912,10 +912,30 @@ function loadCooloff() {
 }
 
 function activateCooloff(hours) {
-    var until = Date.now() + (hours * 3600000);
-    rgSet('cooloff', { hours: hours, until: until, activated: Date.now() });
-    showToast('Cool-off period activated for ' + hours + ' hour' + (hours > 1 ? 's' : ''));
-    loadCooloff();
+    // Cool-off must be server-enforced. Map hours → server cool-off type.
+    var type = hours <= 1 ? 'cooloff_1h' : hours <= 6 ? 'cooloff_6h' : hours <= 12 ? 'cooloff_12h' : 'cooloff_24h';
+    var token = (typeof localStorage !== 'undefined') ? localStorage.getItem('casinoToken') : null;
+    if (!token) { showToast('Please log in to activate a cool-off period.', 'warning'); return; }
+    fetch('/api/self-exclusion/activate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+        body: JSON.stringify({ type: type, reason: 'User-initiated cool-off (' + hours + 'h)' })
+    })
+    .then(function(r) { return r.json().then(function(b) { return { ok: r.ok, body: b }; }); })
+    .then(function(resp) {
+        if (!resp.ok || !resp.body || resp.body.error) {
+            showToast('Could not activate cool-off: ' + ((resp.body && resp.body.error) || 'server error'), 'error');
+            return;
+        }
+        var until = Date.now() + (hours * 3600000);
+        rgSet('cooloff', { hours: hours, until: until, activated: Date.now() });
+        showToast('Cool-off period activated for ' + hours + ' hour' + (hours > 1 ? 's' : '') + ' — server-enforced.');
+        loadCooloff();
+    })
+    .catch(function(e) {
+        showToast('Could not reach server. Cool-off not activated.', 'error');
+        console.warn('[RG] Cool-off API error:', e.message);
+    });
 }
 
 loadCooloff();
@@ -961,11 +981,46 @@ function closeModal() {
 function executeExclusion() {
     if (!pendingExclusion) return;
     var days = pendingExclusion.days;
-    var until = days === -1 ? Infinity : Date.now() + (days * 86400000);
-    rgSet('self_exclusion', { days: days, until: until, activated: Date.now() });
-    closeModal();
-    showToast('Self-exclusion activated: ' + pendingExclusion.label);
-    loadExclusion();
+    var label = pendingExclusion.label;
+    // Map UI days → server self-exclusion type
+    var type;
+    if (days === -1) type = 'permanent';
+    else if (days <= 1) type = 'cooldown_24h';
+    else if (days <= 7) type = 'cooldown_7d';
+    else if (days <= 30) type = 'cooldown_30d';
+    else type = 'cooldown_30d'; // fallback
+    var token = (typeof localStorage !== 'undefined') ? localStorage.getItem('casinoToken') : null;
+    if (!token) { showToast('Please log in to activate self-exclusion.', 'warning'); closeModal(); return; }
+    fetch('/api/self-exclusion/activate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+        body: JSON.stringify({ type: type, reason: 'User-initiated self-exclusion (' + label + ')' })
+    })
+    .then(function(r) { return r.json().then(function(b) { return { ok: r.ok, body: b }; }); })
+    .then(function(resp) {
+        if (!resp.ok || !resp.body || resp.body.error) {
+            showToast('Could not activate self-exclusion: ' + ((resp.body && resp.body.error) || 'server error'), 'error');
+            closeModal();
+            return;
+        }
+        var until = days === -1 ? Infinity : Date.now() + (days * 86400000);
+        rgSet('self_exclusion', { days: days, until: until, activated: Date.now() });
+        closeModal();
+        showToast('Self-exclusion activated: ' + label + ' — server-enforced.');
+        loadExclusion();
+        // For permanent exclusion, log the user out
+        if (days === -1) {
+            setTimeout(function() {
+                try { localStorage.removeItem('casinoToken'); localStorage.removeItem('casinoUser'); } catch(_) {}
+                window.location.href = '/';
+            }, 2500);
+        }
+    })
+    .catch(function(e) {
+        showToast('Could not reach server. Self-exclusion not activated.', 'error');
+        console.warn('[RG] Self-exclusion API error:', e.message);
+        closeModal();
+    });
 }
 
 loadExclusion();

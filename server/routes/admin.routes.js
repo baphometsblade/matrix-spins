@@ -878,6 +878,95 @@ router.post('/reject-withdrawal', async (req, res) => {
 });
 
 
+// ═══════════════════════════════════════════════════════════
+//  KYC VERIFICATION — Admin approval (required for withdrawals > $2,000)
+// ═══════════════════════════════════════════════════════════
+
+// GET /api/admin/kyc-pending — List users with pending KYC verification
+router.get('/kyc-pending', async (req, res) => {
+    try {
+        const pending = await db.all(`
+            SELECT u.id, u.username, u.email, u.date_of_birth, u.kyc_status,
+                   v.document_type, v.submitted_at, v.notes
+            FROM users u
+            INNER JOIN user_verification v ON v.user_id = u.id
+            WHERE v.status = 'pending'
+            ORDER BY v.submitted_at ASC
+            LIMIT 200
+        `);
+        res.json({ pending: pending || [] });
+    } catch (err) {
+        console.warn('[Admin] KYC pending list error:', err.message);
+        res.status(500).json({ error: 'Failed to load pending verifications' });
+    }
+});
+
+// POST /api/admin/kyc-approve — Approve a user's KYC verification
+router.post('/kyc-approve', async (req, res) => {
+    try {
+        const { userId, notes } = req.body;
+        if (!userId) return res.status(400).json({ error: 'userId is required' });
+
+        const user = await db.get('SELECT id, username, kyc_status FROM users WHERE id = ?', [userId]);
+        if (!user) return res.status(404).json({ error: 'User not found' });
+
+        await db.run(
+            "UPDATE user_verification SET status = 'verified', verified_at = datetime('now'), notes = ? WHERE user_id = ?",
+            [notes || null, userId]
+        );
+        await db.run(
+            "UPDATE users SET kyc_status = 'verified', updated_at = datetime('now') WHERE id = ?",
+            [userId]
+        );
+
+        // Audit log
+        await db.run(
+            "INSERT INTO admin_audit_log (admin_id, action, target_user_id, details, created_at) VALUES (?, 'kyc_approve', ?, ?, datetime('now'))",
+            [req.user.id, userId, JSON.stringify({ notes: notes || null })]
+        ).catch(function(_) { /* audit table may not exist in older envs */ });
+
+        console.warn(`[Admin] KYC approved for user ${userId} (${user.username}) by admin ${req.user.id}`);
+        res.json({ success: true, userId, kyc_status: 'verified' });
+    } catch (err) {
+        console.warn('[Admin] KYC approve error:', err.message);
+        res.status(500).json({ error: 'Failed to approve KYC' });
+    }
+});
+
+// POST /api/admin/kyc-reject — Reject a user's KYC verification
+router.post('/kyc-reject', async (req, res) => {
+    try {
+        const { userId, reason } = req.body;
+        if (!userId) return res.status(400).json({ error: 'userId is required' });
+        if (!reason || typeof reason !== 'string' || reason.trim().length < 5) {
+            return res.status(400).json({ error: 'A rejection reason of at least 5 characters is required' });
+        }
+
+        const user = await db.get('SELECT id, username FROM users WHERE id = ?', [userId]);
+        if (!user) return res.status(404).json({ error: 'User not found' });
+
+        await db.run(
+            "UPDATE user_verification SET status = 'rejected', notes = ?, verified_at = datetime('now') WHERE user_id = ?",
+            [reason.trim(), userId]
+        );
+        await db.run(
+            "UPDATE users SET kyc_status = 'rejected', updated_at = datetime('now') WHERE id = ?",
+            [userId]
+        );
+
+        await db.run(
+            "INSERT INTO admin_audit_log (admin_id, action, target_user_id, details, created_at) VALUES (?, 'kyc_reject', ?, ?, datetime('now'))",
+            [req.user.id, userId, JSON.stringify({ reason: reason.trim() })]
+        ).catch(function(_) { /* audit table may not exist */ });
+
+        console.warn(`[Admin] KYC rejected for user ${userId} (${user.username}) — reason: ${reason.trim()}`);
+        res.json({ success: true, userId, kyc_status: 'rejected', reason: reason.trim() });
+    } catch (err) {
+        console.warn('[Admin] KYC reject error:', err.message);
+        res.status(500).json({ error: 'Failed to reject KYC' });
+    }
+});
+
 // GET /api/admin/lapsed-players — Detect inactive players for re-engagement campaigns
 router.get('/lapsed-players', async (req, res) => {
     try {

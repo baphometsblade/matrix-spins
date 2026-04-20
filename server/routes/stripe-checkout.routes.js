@@ -78,6 +78,11 @@ router.post('/payment/create-checkout', authenticate, async (req, res) => {
             }];
         }
 
+        // Idempotency key scoped to player + amount + minute-bucket, preventing
+        // double-charge if the client retries within a minute of a network blip.
+        const minuteBucket = Math.floor(Date.now() / 60000);
+        const idempotencyKey = `checkout-${playerId}-${amountNum}-${minuteBucket}`;
+
         const session = await stripe.checkout.sessions.create({
             payment_method_types: ['card'],
             line_items: lineItems,
@@ -89,6 +94,8 @@ router.post('/payment/create-checkout', authenticate, async (req, res) => {
                 amount: amountNum.toString(),
                 player_id: String(playerId) // From authenticated session, not request body
             }
+        }, {
+            idempotencyKey: idempotencyKey
         });
 
         res.json({ sessionId: session.id, url: session.url });
@@ -247,8 +254,11 @@ router.post('/payment/webhook', express.raw({ type: 'application/json' }), async
             console.warn('[Stripe+NFT] Minted ' + nftId + ' for player ' + playerId + ': $' + amount);
         } catch (dbErr) {
             console.error('[Stripe] NFT mint/credit error:', dbErr.message);
-            // Transaction rollback ensures NFT + credit are atomic — if either failed,
-            // both are rolled back and the webhook can be retried safely by Stripe.
+            // CRITICAL: Must return 5xx so Stripe retries. If we return 2xx here,
+            // Stripe marks the webhook as delivered and NEVER retries, leaving the
+            // user charged with no credit. Transaction was rolled back above, so
+            // a retried webhook will process cleanly.
+            return res.status(500).json({ error: 'Internal processing error — Stripe will retry.' });
         }
     }
 

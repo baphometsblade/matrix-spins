@@ -93,29 +93,13 @@ router.post('/withdrawals/:id/approve', async (req, res) => {
             );
         }
 
-        // Initiate Stripe payout if configured
-        let stripePayoutId = null;
-        if (config.STRIPE_SECRET_KEY) {
-            try {
-                const stripe = require('stripe')(config.STRIPE_SECRET_KEY);
-                // Create a payout from the Stripe account balance
-                const payout = await stripe.payouts.create({
-                    amount: Math.round(wd.amount * 100), // cents
-                    currency: (config.CURRENCY || 'AUD').toLowerCase(),
-                    description: `Casino withdrawal ${id} for user ${wd.user_id}`,
-                    metadata: {
-                        withdrawal_id: id,
-                        user_id: String(wd.user_id),
-                        nft_id: wd.nft_id || 'none'
-                    }
-                });
-                stripePayoutId = payout.id;
-                console.warn(`[Admin WD] Stripe payout created: ${payout.id}`);
-            } catch (stripeErr) {
-                console.warn('[Admin WD] Stripe payout failed:', stripeErr.message);
-                // Still approve the withdrawal � admin can process manually
-            }
-        }
+        // Withdrawal payout is performed manually by admin (bank transfer, etc.).
+        // The removed stripe.payouts.create() call was misleading: without a
+        // `destination` connected account it would send funds from the Stripe
+        // balance to the HOUSE bank, not to the user. Real payout to a user
+        // requires either a Stripe Connect connected account (stripe.transfers.create)
+        // or a manual off-Stripe bank transfer, which is the current operational model.
+        const stripePayoutId = null;
 
         // Atomic: only approve if still pending (prevents TOCTOU double-approval by concurrent admins)
         const approveResult = await db.run(

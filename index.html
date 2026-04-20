@@ -1729,9 +1729,19 @@
                         <label>Confirm Password</label>
                         <input type="password" id="regConfirm" placeholder="Confirm password" autocomplete="new-password">
                     </div>
+                    <div class="auth-field">
+                        <label>Date of Birth <span style="color:#f59e0b">(18+ only)</span></label>
+                        <input type="date" id="regDob" autocomplete="bday" max="2008-04-20" required>
+                    </div>
                     <div class="auth-field" id="referralField">
                         <label>Referral Code <span style="color:#64748b;font-weight:400">(optional)</span></label>
                         <input type="text" id="regReferral" placeholder="Enter friend's code for bonus" autocomplete="off" maxlength="8" style="text-transform:uppercase">
+                    </div>
+                    <div class="auth-field" style="display:flex;align-items:flex-start;gap:8px;margin-top:4px;">
+                        <input type="checkbox" id="regAcceptTerms" style="margin-top:4px;cursor:pointer;" required>
+                        <label for="regAcceptTerms" style="font-size:12px;line-height:1.4;color:rgba(255,255,255,0.75);cursor:pointer;">
+                            I am 18 or older and accept the <a href="terms.html" target="_blank" rel="noopener" style="color:#fbbf24">Terms &amp; Conditions</a> and <a href="privacy.html" target="_blank" rel="noopener" style="color:#fbbf24">Privacy Policy</a>.
+                        </label>
                     </div>
                     <button class="auth-submit" id="registerBtn" onclick="handleRegister()">CREATE ACCOUNT</button>
                 </div>
@@ -1932,15 +1942,26 @@ if (window.location.hostname === 'localhost' || window.location.hostname === '12
             const email = document.getElementById('regEmail').value.trim();
             const password = document.getElementById('regPassword').value;
             const confirm = document.getElementById('regConfirm').value;
+            const dob = document.getElementById('regDob').value;
+            const acceptTerms = document.getElementById('regAcceptTerms').checked;
             const refCode = (document.getElementById('regReferral')?.value || '').trim().toUpperCase();
             const errEl = document.getElementById('authError');
             errEl.textContent = '';
             if (!username || !email || !password) { errEl.textContent = 'All fields are required'; return; }
             if (password !== confirm) { errEl.textContent = 'Passwords do not match'; return; }
             if (password.length < 6) { errEl.textContent = 'Password must be at least 6 characters'; return; }
+            if (!dob) { errEl.textContent = 'Date of birth is required'; return; }
+            if (!acceptTerms) { errEl.textContent = 'You must accept the Terms & Conditions and Privacy Policy'; return; }
+            // Client-side 18+ check (server re-validates)
+            const dobDate = new Date(dob);
+            const today = new Date();
+            let age = today.getUTCFullYear() - dobDate.getUTCFullYear();
+            const m = today.getUTCMonth() - dobDate.getUTCMonth();
+            if (m < 0 || (m === 0 && today.getUTCDate() < dobDate.getUTCDate())) age--;
+            if (age < 18) { errEl.textContent = 'You must be 18 or older to register'; return; }
             btn.disabled = true; btn.textContent = 'CREATING ACCOUNT...';
             try {
-                await register(username, email, password, refCode || null);
+                await register(username, email, password, refCode || null, dob, acceptTerms);
                 document.getElementById('authBtn').textContent = currentUser.username.toUpperCase();
             } catch (e) { errEl.textContent = e.message; }
             btn.disabled = false; btn.textContent = 'CREATE ACCOUNT';

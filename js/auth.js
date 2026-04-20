@@ -352,44 +352,29 @@
         }
 
 
-        async function register(username, email, password, referralCode) {
-            let serverError = null;
-            try {
-                const body = { username, email, password };
-                if (referralCode) body.referralCode = referralCode;
-                const response = await apiRequest('/api/auth/register', {
-                    method: 'POST',
-                    body,
-                    requireAuth: false
-                });
-                if (!response.token || !response.user) {
-                    throw new Error('Invalid registration response from server.');
-                }
-                applyAuthSession(response.token, response.user);
-                updateAuthButton();
-                document.body.classList.remove('auth-gate');
-                hideAuthModal();
-                showToast(`Welcome, ${response.user.username}! Your account has been created.`, 'success');
-                if (typeof onPostAuthInit === 'function') onPostAuthInit();
-                // Show welcome onboarding modal for new registrations
-                if (typeof Onboarding !== 'undefined' && Onboarding.showWelcomeModal) {
-                    setTimeout(() => Onboarding.showWelcomeModal(response.user), 600);
-                }
-                return;
-            } catch (error) {
-                serverError = error;
+        async function register(username, email, password, referralCode, dateOfBirth, acceptTerms) {
+            // Server-only registration — no local fallback for real-money compliance.
+            // DOB and T&C acceptance are legally required and cannot be short-circuited
+            // by a client-side fallback path.
+            const body = { username, email, password, dateOfBirth, acceptTerms };
+            if (referralCode) body.referralCode = referralCode;
+            const response = await apiRequest('/api/auth/register', {
+                method: 'POST',
+                body,
+                requireAuth: false
+            });
+            if (!response.token || !response.user) {
+                throw new Error('Registration failed. Please try again or contact support.');
             }
-
-            if (!shouldFallbackToLocalAuth(serverError)) {
-                throw serverError;
-            }
-
-            await registerWithLocalFallback(username, email, password);
+            applyAuthSession(response.token, response.user);
             updateAuthButton();
             document.body.classList.remove('auth-gate');
             hideAuthModal();
-            showToast(`Welcome, ${username}! Your account has been created.`, 'success');
+            showToast(`Welcome, ${response.user.username}! Your account has been created.`, 'success');
             if (typeof onPostAuthInit === 'function') onPostAuthInit();
+            if (typeof Onboarding !== 'undefined' && Onboarding.showWelcomeModal) {
+                setTimeout(() => Onboarding.showWelcomeModal(response.user), 600);
+            }
         }
 
 

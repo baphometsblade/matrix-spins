@@ -14568,29 +14568,12 @@ function _resetMiniJackpot() {
     if (el) { el.textContent = 'Mini JP: $0.00'; el.className = 'mini-jackpot-badge'; el.style.display = ''; }
 }
 function _updateMiniJackpot(betAmount) {
-    if (!betAmount || betAmount <= 0) return;
-    _miniJackpot213 += betAmount * 0.01; // 1% contribution
+    // Client-side mini-jackpot was awarding real balance via Math.random() with no server
+    // verification — removed for production (real jackpots are handled server-side via
+    // /api/spin jackpot_hit and the jackpot_pool table). This function is kept as a no-op
+    // stub for any remaining call sites.
     var el = document.getElementById('miniJackpotBadge');
-    if (!el) return;
-    // Random trigger: 0.5% chance per spin when pool > $1
-    if (_miniJackpot213 >= 1 && Math.random() < 0.005) {
-        var winAmt = _miniJackpot213;
-        _miniJackpotWins213++;
-        // Award to balance
-        if (typeof balance !== 'undefined') balance += winAmt;
-        if (typeof updateBalance === 'function') updateBalance();
-        el.textContent = '\u{1F389} MINI JP WON: $' + winAmt.toFixed(2) + '!';
-        el.className = 'mini-jackpot-badge mjp-won';
-        _miniJackpot213 = 0;
-        setTimeout(function() {
-            el.textContent = 'Mini JP: $0.00';
-            el.className = 'mini-jackpot-badge';
-        }, 4000);
-    } else {
-        el.textContent = 'Mini JP: $' + _miniJackpot213.toFixed(2);
-        el.className = 'mini-jackpot-badge' + (_miniJackpot213 >= 10 ? ' mjp-high' : _miniJackpot213 >= 5 ? ' mjp-mid' : '');
-    }
-    el.style.display = '';
+    if (el) el.style.display = 'none';
 }
 
 // Sprint 214: Keyboard hint badge (reminds about shortcuts)
@@ -18770,9 +18753,19 @@ function _showBroadcastBanner(msg, type) {
     var banner = document.createElement('div');
     banner.className = 'broadcast-banner';
     banner.style.borderColor = colors[type] || colors.info;
-    banner.innerHTML = '<span class="bc-icon">' + (type === 'promo' ? '\u{1F389}' : type === 'warning' ? '\u26A0' : '\u{2139}') + '</span>' +
-        '<span>' + msg + '</span>' +
-        '<button onclick="this.parentElement.remove()" style="background:none;border:none;color:#ffd700;cursor:pointer;font-size:16px;margin-left:auto;">&times;</button>';
+    // Build banner with textContent for untrusted msg to prevent stored XSS via admin broadcast
+    var _bcIcon = document.createElement('span');
+    _bcIcon.className = 'bc-icon';
+    _bcIcon.textContent = type === 'promo' ? '\u{1F389}' : type === 'warning' ? '\u26A0' : '\u{2139}';
+    banner.appendChild(_bcIcon);
+    var _bcMsg = document.createElement('span');
+    _bcMsg.textContent = String(msg || '');
+    banner.appendChild(_bcMsg);
+    var _bcClose = document.createElement('button');
+    _bcClose.style.cssText = 'background:none;border:none;color:#ffd700;cursor:pointer;font-size:16px;margin-left:auto;';
+    _bcClose.textContent = '\u00D7';
+    _bcClose.addEventListener('click', function() { banner.remove(); });
+    banner.appendChild(_bcClose);
     document.body.insertBefore(banner, document.body.firstChild);
     setTimeout(function() { if (banner.parentElement) banner.remove(); }, 30000);
 }
@@ -20081,13 +20074,12 @@ function _checkJackpotWin(betAmount) {
     /* NEUTRALIZED: Jackpot wins must be determined server-side */
     return false;
 }
-function _triggerJackpot(tier) {
-    var amount = _jackpotPool[tier];
-    if (typeof credits !== 'undefined') credits += amount;
-    _showJackpotWin(tier, amount);
-    _jackpotPool[tier] = tier === 'grand' ? 50000 : tier === 'major' ? 10000 : tier === 'minor' ? 1000 : 100;
-    localStorage.setItem('ms_jackpot_pool', JSON.stringify(_jackpotPool));
-    _checkAchievement('jackpot');
+function _triggerJackpot(_tier) {
+    // Client-side jackpot trigger removed — real jackpots are awarded server-side
+    // via the /api/spin jackpot_hit flow (spin.routes.js) against the jackpot_pool
+    // DB table. The _jackpotPool display here is decorative only; this function
+    // previously credited the client-side 'credits' variable which could mislead
+    // the player with balance that disappears on reload.
 }
 function _showJackpotWin(tier, amount) {
     // FIX: Remove any existing jackpot overlay to prevent stacking
@@ -21181,15 +21173,16 @@ function _openLoyaltyExchange() {
     el.innerHTML = html;
     el.style.display = 'flex';
 }
-function _redeemLoyalty(idx, cost, coins) {
-    if (_loyaltyPtsV2 < cost) return;
-    _loyaltyPtsV2 -= cost;
-    try { localStorage.setItem('ms_loyaltyPtsV2', _loyaltyPtsV2.toString()); } catch(e) {}
-    if (coins > 0) {
-        if (typeof balance !== 'undefined') balance += coins;
-        if (typeof updateBalanceDisplay === 'function') updateBalanceDisplay();
+function _redeemLoyalty(_idx, _cost, _coins) {
+    // Client-side loyalty exchange removed — the real loyalty shop is at the
+    // server /api/loyaltyshop endpoints with proper point accounting and
+    // bonus_balance credits. This localStorage-only version would award
+    // "balance" that disappears on reload.
+    var el = document.getElementById('loyaltyExchangeOverlay');
+    if (el) el.style.display = 'none';
+    if (typeof showToast === 'function') {
+        showToast('Visit the in-game Loyalty Shop to redeem your points.', 'info');
     }
-    _openLoyaltyExchange();
 }
 
 
@@ -23175,10 +23168,25 @@ function _initKYCVerification() {
         if (!name || !dob || !country || !idtype) { alert('Please fill all fields'); return; }
         var age = Math.floor((Date.now() - new Date(dob).getTime()) / 31557600000);
         if (age < 18) { alert('You must be 18 or older to play.'); return; }
-        kycData = { verified: true, name: name, dob: dob, country: country, idtype: idtype, ts: Date.now() };
-        localStorage.setItem('ms_kyc', JSON.stringify(kycData));
-        panel.querySelector('.kyc-status').innerHTML = '<span class="kyc-ok">\u2705 Verified — ' + name + '</span>';
-        if (typeof _logAuditEvent === 'function') _logAuditEvent('kyc_verified', { name: name, country: country });
+        // Submit to server KYC verification endpoint — admin approval required to
+        // reach 'verified' status. This client-side submission just marks 'pending'.
+        var token = localStorage.getItem('casinoToken');
+        if (!token) { alert('Please log in first.'); return; }
+        fetch('/api/user/verification', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+            body: JSON.stringify({ document_type: idtype, full_name: name, date_of_birth: dob, country: country })
+        })
+        .then(function(r) { return r.json().then(function(b) { return { ok: r.ok, body: b }; }); })
+        .then(function(resp) {
+            if (!resp.ok) {
+                alert('Verification submission failed: ' + ((resp.body && resp.body.error) || 'server error'));
+                return;
+            }
+            panel.querySelector('.kyc-status').innerHTML = '<span class="kyc-pending">\u23F3 Pending admin review — we\'ll email you when approved.</span>';
+            if (typeof _logAuditEvent === 'function') _logAuditEvent('kyc_submitted', { country: country });
+        })
+        .catch(function(e) { alert('Network error submitting verification.'); console.warn('[KYC] submit error:', e.message); });
     });
     console.log('[Sprint 499-506] KYC Verification ready');
 }
@@ -23233,7 +23241,13 @@ function _initGeoRestriction() {
             if (restricted) {
                 var warn = document.createElement('div');
                 warn.className = 'geo-restrict-banner';
-                warn.innerHTML = '\u26A0\uFE0F Online gambling may not be legal in your jurisdiction (' + data.country_name + '). Play at your own risk.';
+                // Use textContent with icon prefix to avoid XSS via third-party API response
+                var _geoWarnIcon = document.createElement('span');
+                _geoWarnIcon.textContent = '\u26A0\uFE0F ';
+                warn.appendChild(_geoWarnIcon);
+                var _geoWarnText = document.createElement('span');
+                _geoWarnText.textContent = 'Online gambling may not be legal in your jurisdiction (' + String(data.country_name || 'unknown') + '). Play at your own risk.';
+                warn.appendChild(_geoWarnText);
                 document.body.prepend(warn);
             }
             if (typeof _logAuditEvent === 'function') _logAuditEvent('geo_check', { country: data.country_code, region: region, restricted: restricted });
@@ -23668,111 +23682,20 @@ function _initSymbolUpgrade() {
 
 // === Sprint 507-514 Feature 6: Mini-Games ===
 function _initMiniGames() {
-    if (document.getElementById('minigame-btn')) return;
-    var btn = document.createElement('button');
-    btn.id = 'minigame-btn';
-    btn.className = 'minigame-btn';
-    btn.textContent = 'Mini-Games';
-    btn.addEventListener('click', function() {
-        var modal = document.createElement('div');
-        modal.className = 'minigame-modal'; modal.id = 'minigame-modal';
-        modal.innerHTML = '<div class="mg-inner"><h3>Mini-Games</h3>' +
-            '<div class="mg-grid">' +
-            '<div class="mg-card" data-game="coin"><div class="mg-icon">Coin</div><span>Coin Flip</span></div>' +
-            '<div class="mg-card" data-game="dice"><div class="mg-icon">Dice</div><span>Dice Roll</span></div>' +
-            '<div class="mg-card" data-game="cards"><div class="mg-icon">Cards</div><span>High Card</span></div>' +
-            '</div><div id="mg-play-area" class="mg-play-area"></div>' +
-            '<button class="mg-close" onclick="document.getElementById(\&quot;minigame-modal\&quot;).remove()">Close</button></div>';
-        document.body.appendChild(modal);
-        modal.querySelectorAll('.mg-card').forEach(function(card) {
-            card.addEventListener('click', function() {
-                var game = this.dataset.game;
-                var area = document.getElementById('mg-play-area');
-                if (game === 'coin') {
-                    area.innerHTML = '<h4>Coin Flip - Bet $10</h4><button class="mg-choice" data-side="heads">Heads</button><button class="mg-choice" data-side="tails">Tails</button><div id="mg-result"></div>';
-                    area.querySelectorAll('.mg-choice').forEach(function(b) {
-                        b.addEventListener('click', function() {
-                            var pick = this.dataset.side;
-                            var result = Math.random() < 0.48 ? pick : (pick === 'heads' ? 'tails' : 'heads');
-                            var won = result === pick;
-                            document.getElementById('mg-result').innerHTML = '<p>' + result.toUpperCase() + ' - ' + (won ? 'Won $10!' : 'Lost $10') + '</p>';
-                            var bal = parseFloat(localStorage.getItem('ms_balance') || '1000');
-                            bal += won ? 10 : -10;
-                            localStorage.setItem('ms_balance', bal.toFixed(2));
-                            if (typeof updateBalanceDisplay === 'function') updateBalanceDisplay();
-                        });
-                    });
-                } else if (game === 'dice') {
-                    area.innerHTML = '<h4>Dice Roll - Over 7 wins! Bet $10</h4><button id="mg-roll">Roll</button><div id="mg-result"></div>';
-                    document.getElementById('mg-roll').addEventListener('click', function() {
-                        var d1 = Math.floor(Math.random()*6)+1, d2 = Math.floor(Math.random()*6)+1, total = d1+d2;
-                        var won = total > 7;
-                        document.getElementById('mg-result').innerHTML = d1+'+'+d2+'='+total+' '+(won?'Won $15!':'Lost $10');
-                        var bal = parseFloat(localStorage.getItem('ms_balance') || '1000');
-                        bal += won ? 15 : -10;
-                        localStorage.setItem('ms_balance', bal.toFixed(2));
-                        if (typeof updateBalanceDisplay === 'function') updateBalanceDisplay();
-                    });
-                } else if (game === 'cards') {
-                    var dealerCard = Math.floor(Math.random()*13)+1;
-                    area.innerHTML = '<h4>High Card - Dealer: '+dealerCard+' Bet $10</h4><button id="mg-draw">Draw</button><div id="mg-result"></div>';
-                    document.getElementById('mg-draw').addEventListener('click', function() {
-                        var yourCard = Math.floor(Math.random()*13)+1;
-                        var won = yourCard > dealerCard;
-                        document.getElementById('mg-result').innerHTML = 'Your card: '+yourCard+' '+(won?'Won $15!':(yourCard===dealerCard?'Push!':'Lost $10'));
-                        var bal = parseFloat(localStorage.getItem('ms_balance') || '1000');
-                        bal += won ? 15 : (yourCard===dealerCard?0:-10);
-                        localStorage.setItem('ms_balance', bal.toFixed(2));
-                        if (typeof updateBalanceDisplay === 'function') updateBalanceDisplay();
-                    });
-                }
-            });
-        });
-    });
-    document.body.appendChild(btn);
-    console.log('[Sprint 507-514] Mini-Games ready');
+    // Client-side mini-games (coin flip, dice, high card) used Math.random() for
+    // outcomes and wrote to localStorage 'ms_balance' — no server involvement.
+    // These were removed for production to eliminate any appearance of offering
+    // real-money side games that bypass the server-authoritative RTP system.
+    // If side games are desired, they must be implemented server-side like the
+    // main slot spin route.
 }
 
 
-// === Sprint 507-514 Feature 7: Risk Ladder ===
 function _initRiskLadder() {
-    if (document.getElementById('risk-ladder-btn')) return;
-    var btn = document.createElement('button');
-    btn.id = 'risk-ladder-btn';
-    btn.className = 'risk-ladder-btn hidden';
-    btn.innerHTML = 'Risk Ladder';
-    btn.addEventListener('click', function() {
-        var winAmount = parseFloat(localStorage.getItem('ms_last_win') || '0');
-        if (winAmount <= 0) { alert('Win something first!'); return; }
-        var modal = document.createElement('div');
-        modal.className = 'risk-ladder-modal'; modal.id = 'risk-ladder-modal';
-        var steps = [1,1.5,2,3,5,10];
-        var current = 0, currentAmount = winAmount;
-        var html = '<div class="rl-inner"><h3>Risk Ladder</h3><p>Start: $' + winAmount.toFixed(2) + '</p><div class="rl-steps">';
-        steps.forEach(function(s,i){html+='<div class="rl-step" data-step="'+i+'">x'+s+' ($'+(winAmount*s).toFixed(2)+')</div>';});
-        html += '</div><div class="rl-current">Current: $<span id="rl-current-val">'+currentAmount.toFixed(2)+'</span></div>';
-        html += '<button id="rl-gamble" class="rl-btn">Gamble</button><button id="rl-collect" class="rl-btn-collect">Collect</button><div id="rl-result"></div></div>';
-        modal.innerHTML = html;
-        document.body.appendChild(modal);
-        document.getElementById('rl-gamble').addEventListener('click', function() {
-            if (current >= steps.length-1) return;
-            if (Math.random() < 0.45) {
-                current++; currentAmount = winAmount * steps[current];
-                document.getElementById('rl-current-val').textContent = currentAmount.toFixed(2);
-            } else {
-                document.getElementById('rl-result').innerHTML = 'Lost!';
-                this.disabled = true; currentAmount = 0;
-            }
-        });
-        document.getElementById('rl-collect').addEventListener('click', function() {
-            var bal = parseFloat(localStorage.getItem('ms_balance')||'1000');
-            bal += currentAmount; localStorage.setItem('ms_balance', bal.toFixed(2));
-            if (typeof updateBalanceDisplay === 'function') updateBalanceDisplay();
-            modal.remove();
-        });
-    });
-    document.body.appendChild(btn);
-    console.log('[Sprint 507-514] Risk Ladder ready');
+    // Client-side Risk Ladder removed — used Math.random() for outcomes and
+    // wrote to localStorage balance. The real server-side gamble feature lives
+    // in /api/spin/gamble (spin.routes.js) with server-seeded RNG. If "risk
+    // ladder" is desired as a feature it must be implemented server-side.
 }
 
 /* ---- Feature 8: Megaways Engine ---- */
@@ -27008,16 +26931,17 @@ function _showRebateOffer(rebateAmount, netLoss) {
     document.body.appendChild(el);
     setTimeout(function() { if (el.parentNode) el.remove(); }, 20000);
 }
-function _claimRebate637(amount) {
-    _lossRebate637.lastRebate = Date.now();
-    _lossRebate637.sessionLosses = 0;
-    _lossRebate637.sessionWins = 0;
-    localStorage.setItem('ms_rebate', JSON.stringify({ lastRebate: _lossRebate637.lastRebate }));
-    if (typeof balance !== 'undefined') balance += amount;
-    if (typeof _updateBalanceDisplay === 'function') _updateBalanceDisplay();
+function _claimRebate637(_amount) {
+    // Client-side cashback credit removed — real cashback is available via the
+    // server `/api/losscashback` and `/api/cashback/claim` endpoints which credit
+    // bonus_balance with proper wagering requirements. This client-side path was
+    // not fraud-exploitable (server balance is authoritative) but created fake
+    // "balance updated" UX that would disappear on page reload.
     var el = document.getElementById('rebateOffer637');
     if (el) el.remove();
-    if (typeof _showNotification571 === 'function') _showNotification571('💸 Cashback: +$' + amount.toFixed(2), 'success');
+    if (typeof _showNotification571 === 'function') {
+        _showNotification571('Cashback available — see Promotions for your loss rebate.', 'info');
+    }
 }
 
 // === Feature 4: Deposit Streak Bonuses (638) ===
@@ -27046,22 +26970,12 @@ function _initDepositStreak638() {
 function _checkDepositStreak638() {
     _updateDepositStreakBadge();
 }
-function _recordDeposit638(amount) {
-    var today = new Date().toDateString();
-    if (_depositStreak638.lastDeposit !== today) {
-        _depositStreak638.streak++;
-        _depositStreak638.lastDeposit = today;
-        localStorage.setItem('ms_depstreak', JSON.stringify({ streak: _depositStreak638.streak, lastDeposit: today }));
-        var bonus = _getDepositBonus638();
-        if (bonus > 0) {
-            var bonusAmount = Math.round(amount * bonus * 100) / 100;
-            if (typeof balance !== 'undefined') balance += bonusAmount;
-            if (typeof _updateBalanceDisplay === 'function') _updateBalanceDisplay();
-            if (typeof _showNotification571 === 'function') {
-                _showNotification571('🔥 Streak Day ' + _depositStreak638.streak + ' Bonus: +$' + bonusAmount.toFixed(2), 'success');
-            }
-        }
-    }
+function _recordDeposit638(_amount) {
+    // Client-side deposit streak bonus removed — the real deposit-streak bonus
+    // is awarded server-side via the /api/depositstreak endpoint after a
+    // confirmed Stripe payment, and credits bonus_balance with proper wagering.
+    // The client-side localStorage tracker was updating display only; leaving
+    // it here would award fake "streak bonuses" that disappear on reload.
     _updateDepositStreakBadge();
 }
 function _getDepositBonus638() {
