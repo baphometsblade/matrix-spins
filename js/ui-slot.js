@@ -19182,40 +19182,168 @@ function _escapeHtml(s) {
     });
 }
 
+(function _injectDepositToastStyles() {
+    if (document.getElementById('depositToastStyles')) return;
+    var css =
+        '.deposit-success-toast,.deposit-cancelled-toast,.deposit-pending-toast{position:fixed;top:24px;right:24px;background:rgba(13,17,23,.94);color:#e0e0e0;border-radius:10px;padding:14px 18px;box-shadow:0 8px 28px rgba(0,0,0,.55);z-index:10001;max-width:380px;font-size:14px;line-height:1.4;transform:translateY(-12px);opacity:0;transition:transform .3s ease, opacity .3s ease;border:1px solid rgba(212,175,55,.4)}' +
+        '.deposit-success-toast.ds-show,.deposit-pending-toast.ds-show{transform:translateY(0);opacity:1}' +
+        '.deposit-success-toast{border-color:#27ae60}' +
+        '.deposit-cancelled-toast{opacity:1;transform:translateY(0);border-color:#e67e22}' +
+        '.deposit-pending-toast{border-color:#00d4ff}' +
+        '.ds-content{display:flex;gap:12px;align-items:flex-start}' +
+        '.ds-icon{font-size:22px;line-height:1}' +
+        '.dp-spinner{display:inline-block;width:14px;height:14px;border:2px solid rgba(0,212,255,.3);border-top-color:#00d4ff;border-radius:50%;margin-right:8px;animation:dpSpin 1s linear infinite;vertical-align:middle}' +
+        '@keyframes dpSpin{to{transform:rotate(360deg)}}' +
+        '@media (prefers-reduced-motion:reduce){.dp-spinner{animation:none}}';
+    var el = document.createElement('style');
+    el.id = 'depositToastStyles';
+    el.textContent = css;
+    document.head.appendChild(el);
+})();
 
-/* ── 379-386 — deposit success/cancel handler ─────────────────── */
-function _checkDepositReturn() {
-    var params = new URLSearchParams(window.location.search);
-    var status = params.get('deposit');
-    var amount = params.get('amount');
-    if (status === 'success' && amount) {
-        _showDepositSuccess(parseFloat(amount));
-        var stored = JSON.parse(localStorage.getItem('ms_nft_collection') || '[]');
-        var pending = stored.find(function(n) { return n.status === 'pending'; });
-        if (pending) pending.status = 'minted';
-        localStorage.setItem('ms_nft_collection', JSON.stringify(stored));
-        window.history.replaceState({}, '', window.location.pathname);
-    } else if (status === 'cancelled') {
+
+/* ── Deposit return handler — runs on page load, polls the real
+ *    deposit endpoint for the webhook to fulfill, refreshes balance
+ *    and shows the minted receipt. ─────────────────────────────── */
+async function _checkDepositReturn() {
+    var hash = window.location.hash || '';
+    var successMatch = hash.match(/deposit-success=(\d+)/);
+    var cancelMatch = hash.match(/deposit-cancel=(\d+)/);
+    var searchMatch = (window.location.search || '').match(/[?&]deposit=(success|cancelled)/);
+
+    if (cancelMatch || (searchMatch && searchMatch[1] === 'cancelled')) {
         _showDepositCancelled();
-        window.history.replaceState({}, '', window.location.pathname);
+        history.replaceState({}, '', window.location.pathname);
+        return;
+    }
+    if (!successMatch && !(searchMatch && searchMatch[1] === 'success')) return;
+
+    var depositId = successMatch ? Number(successMatch[1]) : null;
+    history.replaceState({}, '', window.location.pathname);
+
+    var token = (typeof authToken !== 'undefined') ? authToken : null;
+    if (!token) {
+        // User returned to a new tab/anon session — invite them to sign in.
+        alert('Please sign in to see your deposit status and mint receipt.');
+        if (typeof showAuthModal === 'function') showAuthModal();
+        return;
+    }
+
+    var pendingToast = _showDepositPending();
+    var deposit = null;
+    try {
+        deposit = await _pollDepositStatus(depositId, token, { maxTries: 30, intervalMs: 2000 });
+    } catch (err) {
+        if (pendingToast && pendingToast.remove) pendingToast.remove();
+        _showDepositError('Deposit is taking longer than expected. Check your email — if you were charged, your balance and NFT will appear shortly.');
+        return;
+    }
+    if (pendingToast && pendingToast.remove) pendingToast.remove();
+
+    if (!deposit) {
+        _showDepositError('Could not verify deposit status. Please refresh.');
+        return;
+    }
+    if (deposit.status === 'paid') {
+        await _refreshBalanceFromServer(token);
+        var nft = await _fetchLatestNFT(token, depositId);
+        _showDepositSuccess(Number(deposit.amount || 0), nft);
+    } else if (deposit.status === 'expired' || deposit.status === 'failed') {
+        _showDepositError('Deposit ' + deposit.status + '. No charge was made.');
+    } else {
+        _showDepositError('Deposit is still pending. Your balance and NFT will update automatically once the payment clears.');
     }
 }
-function _showDepositSuccess(amount) {
+
+async function _pollDepositStatus(depositId, token, opts) {
+    var max = (opts && opts.maxTries) || 30;
+    var interval = (opts && opts.intervalMs) || 2000;
+    for (var i = 0; i < max; i++) {
+        var res = await fetch('/api/deposit/' + depositId, { headers: { 'Authorization': 'Bearer ' + token } });
+        if (res.ok) {
+            var data = await res.json().catch(function () { return null; });
+            if (data && data.deposit) {
+                if (data.deposit.status !== 'pending') return data.deposit;
+            }
+        }
+        await new Promise(function (r) { setTimeout(r, interval); });
+    }
+    var last = await fetch('/api/deposit/' + depositId, { headers: { 'Authorization': 'Bearer ' + token } });
+    return last.ok ? (await last.json()).deposit : null;
+}
+
+async function _refreshBalanceFromServer(token) {
+    try {
+        var r = await fetch('/api/balance', { headers: { 'Authorization': 'Bearer ' + token } });
+        if (!r.ok) return;
+        var data = await r.json();
+        if (typeof balance !== 'undefined') {
+            balance = Number(data.balance || 0);
+            if (typeof saveBalance === 'function') saveBalance();
+            if (typeof updateBalance === 'function') updateBalance();
+        }
+    } catch (err) { /* swallow */ }
+}
+
+async function _fetchLatestNFT(token, depositId) {
+    try {
+        var r = await fetch('/api/nfts', { headers: { 'Authorization': 'Bearer ' + token } });
+        if (!r.ok) return null;
+        var data = await r.json();
+        if (!data.nfts || !data.nfts.length) return null;
+        // NFTs are sorted newest-first by the server; find one whose metadata
+        // references this deposit if possible, otherwise the freshest entry.
+        var match = data.nfts.find(function (n) {
+            var meta = n && n.metadata || {};
+            var attr = (meta.attributes || []).find(function (a) { return a && a.trait_type === 'Deposit ID'; });
+            return attr && String(attr.value) === String(depositId);
+        });
+        return match || data.nfts[0];
+    } catch (err) { return null; }
+}
+
+function _showDepositPending() {
+    var toast = document.createElement('div');
+    toast.className = 'deposit-pending-toast';
+    toast.setAttribute('role', 'status');
+    toast.innerHTML = '<span class="dp-spinner" aria-hidden="true"></span> Confirming your deposit…';
+    document.body.appendChild(toast);
+    setTimeout(function () { toast.classList.add('ds-show'); }, 50);
+    return toast;
+}
+
+function _showDepositSuccess(amount, nft) {
     var toast = document.createElement('div');
     toast.className = 'deposit-success-toast';
+    toast.setAttribute('role', 'status');
+    var nftLine = '';
+    if (nft && nft.metadata) {
+        var tier = (nft.metadata.attributes || []).find(function (a) { return a && a.trait_type === 'Tier'; });
+        nftLine = '<br><small>Receipt NFT minted: ' + _escapeHtml((tier && tier.value) || 'standard') + ' · ' + _escapeHtml(nft.tokenId || '') + '</small>';
+    }
     toast.innerHTML = '<div class="ds-content"><span class="ds-icon">\u2705</span>' +
-        '<div><strong>Deposit Successful!</strong><br>$' + amount.toFixed(2) + ' added to your account<br><small>Your NFT has been minted!</small></div></div>';
+        '<div><strong>Deposit Successful</strong><br>$' + amount.toFixed(2) + ' credited to your account' + nftLine + '</div></div>';
     document.body.appendChild(toast);
-    setTimeout(function() { toast.classList.add('ds-show'); }, 50);
-    setTimeout(function() { toast.remove(); }, 8000);
-    if (typeof credits !== 'undefined') credits += amount;
+    setTimeout(function () { toast.classList.add('ds-show'); }, 50);
+    setTimeout(function () { toast.remove(); }, 10000);
 }
+
 function _showDepositCancelled() {
     var toast = document.createElement('div');
     toast.className = 'deposit-cancelled-toast';
+    toast.setAttribute('role', 'status');
     toast.innerHTML = '<span>\u274C</span> Deposit cancelled. No charges were made.';
     document.body.appendChild(toast);
-    setTimeout(function() { toast.remove(); }, 5000);
+    setTimeout(function () { toast.remove(); }, 5000);
+}
+
+function _showDepositError(msg) {
+    var toast = document.createElement('div');
+    toast.className = 'deposit-cancelled-toast';
+    toast.setAttribute('role', 'alert');
+    toast.innerHTML = '<span>\u26A0\uFE0F</span> ' + _escapeHtml(msg);
+    document.body.appendChild(toast);
+    setTimeout(function () { toast.remove(); }, 12000);
 }
 
 

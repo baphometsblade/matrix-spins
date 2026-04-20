@@ -20,7 +20,8 @@ const cors = require('cors');
 const rateLimit = require('express-rate-limit');
 
 const config = require('./config');
-const { initDatabase } = require('./database');
+const db = require('./database');
+const { initDatabase } = db;
 const sanitize = require('./middleware/sanitize');
 const userRateLimit = require('./middleware/user-ratelimit');
 const { csrfMiddleware, getCsrfTokenHandler } = require('./middleware/csrf');
@@ -169,11 +170,17 @@ async function start() {
         console.log(`[boot] Stripe: ${config.hasStripe ? 'configured' : 'missing (deposits disabled)'}, webhook: ${config.hasWebhookSecret ? 'configured' : 'missing'}`);
     });
     ['SIGTERM', 'SIGINT'].forEach(sig => {
-        process.on(sig, () => {
+        process.on(sig, async () => {
             console.log(`[boot] ${sig} received, shutting down`);
-            server.close(() => process.exit(0));
+            server.close(async () => {
+                try { await db.close(); } catch (err) { console.warn('[boot] db close warning:', err.message); }
+                process.exit(0);
+            });
             setTimeout(() => process.exit(1), 10000).unref();
         });
+    });
+    process.on('unhandledRejection', err => {
+        console.error('[boot] unhandled promise rejection:', err);
     });
 }
 

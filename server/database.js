@@ -202,6 +202,30 @@ async function migrate() {
     `);
 
     await driver.exec(`CREATE INDEX IF NOT EXISTS idx_nft_user ON nft_receipts (user_id);`);
+
+    await driver.exec(`
+        CREATE TABLE IF NOT EXISTS processed_webhook_events (
+            id ${T.pk},
+            provider TEXT NOT NULL,
+            event_id TEXT NOT NULL,
+            event_type TEXT,
+            processed_at ${T.ts}
+        );
+    `);
+    await driver.exec(`CREATE UNIQUE INDEX IF NOT EXISTS idx_webhook_provider_event ON processed_webhook_events (provider, event_id);`);
+
+    await driver.exec(`
+        CREATE TABLE IF NOT EXISTS refunds (
+            id ${T.pk},
+            deposit_id ${driver.kind === 'pg' ? 'INTEGER' : 'INTEGER'} NOT NULL,
+            user_id ${driver.kind === 'pg' ? 'INTEGER' : 'INTEGER'} NOT NULL,
+            amount_cents ${driver.kind === 'pg' ? 'BIGINT' : 'INTEGER'} NOT NULL,
+            provider_ref TEXT UNIQUE,
+            reason TEXT,
+            created_at ${T.ts}
+        );
+    `);
+    await driver.exec(`CREATE INDEX IF NOT EXISTS idx_refunds_deposit ON refunds (deposit_id);`);
 }
 
 async function initDatabase() {
@@ -231,4 +255,5 @@ module.exports = {
     get: (sql, params) => { guard(); return driver.get(sql, params); },
     all: (sql, params) => { guard(); return driver.all(sql, params); },
     exec: (sql) => { guard(); return driver.exec(sql); },
+    close: () => driver && driver.close ? driver.close() : Promise.resolve(),
 };

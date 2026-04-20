@@ -7,6 +7,8 @@
                     "build":  "node scripts/bundle-js.js",
                     "start":  "node scripts/bundle-js.js \u0026\u0026 node server/index.js",
                     "dev":  "node server/index.js",
+                    "test":  "node scripts/test-deposit-flow.js",
+                    "test:deposit":  "node scripts/test-deposit-flow.js",
                     "qa:regression":  "node scripts/qa_regression.js",
                     "gen:symbols":  "py -3.10 scripts/generate_sdxl_symbols.py --force",
                     "gen:assets":  "py -3.10 scripts/generate_sdxl_assets.py --all --quality ultra --force",
