@@ -1,0 +1,11 @@
+node_modules/
+.env
+.env.local
+.env.*.local
+*.log
+.DS_Store
+
+# Local SQLite files — we do NOT commit databases
+server/data.sqlite
+server/*.sqlite
+server/*.sqlite-journal

@@ -1,0 +1,234 @@
+'use strict';
+
+/**
+ * Database abstraction.
+ * Uses Postgres (node-postgres) when DATABASE_URL is set; falls back to
+ * a local SQLite file via sql.js for dev and single-instance deploys.
+ *
+ * Exposes a unified {run, get, all, exec} interface that both drivers
+ * respect, plus initDatabase() to apply schema migrations.
+ */
+
+const fs = require('fs');
+const path = require('path');
+const config = require('./config');
+
+let driver = null;
+let ready = false;
+let readyPromise = null;
+
+/* ────── Postgres driver ────── */
+
+function makePgDriver() {
+    const { Pool } = require('pg');
+    const pool = new Pool({
+        connectionString: config.DATABASE_URL,
+        ssl: /sslmode=require/.test(config.DATABASE_URL) ? { rejectUnauthorized: false } : false,
+        max: 10,
+    });
+
+    // Convert "?" parameter placeholders (SQLite style) into "$1, $2..." for pg.
+    function rewrite(sql) {
+        let i = 0;
+        return sql.replace(/\?/g, () => '$' + (++i));
+    }
+
+    return {
+        kind: 'pg',
+        async run(sql, params = []) {
+            const r = await pool.query(rewrite(sql), params);
+            return { changes: r.rowCount, lastID: null };
+        },
+        async get(sql, params = []) {
+            const r = await pool.query(rewrite(sql), params);
+            return r.rows[0] || null;
+        },
+        async all(sql, params = []) {
+            const r = await pool.query(rewrite(sql), params);
+            return r.rows;
+        },
+        async exec(sql) {
+            await pool.query(sql);
+        },
+        async close() { await pool.end(); },
+    };
+}
+
+/* ────── SQLite (sql.js) driver ────── */
+
+function makeSqliteDriver() {
+    const initSqlJs = require('sql.js');
+    let db = null;
+    let sqljs = null;
+    const filePath = path.resolve(config.SQLITE_FILE);
+    let writeScheduled = false;
+
+    function scheduleWrite() {
+        if (writeScheduled) return;
+        writeScheduled = true;
+        setImmediate(() => {
+            writeScheduled = false;
+            try {
+                const data = db.export();
+                fs.mkdirSync(path.dirname(filePath), { recursive: true });
+                fs.writeFileSync(filePath, Buffer.from(data));
+            } catch (err) {
+                console.warn('[db] sqlite write failed:', err.message);
+            }
+        });
+    }
+
+    async function ensureLoaded() {
+        if (db) return;
+        sqljs = await initSqlJs();
+        if (fs.existsSync(filePath)) {
+            const bytes = fs.readFileSync(filePath);
+            db = new sqljs.Database(bytes);
+        } else {
+            db = new sqljs.Database();
+        }
+    }
+
+    function rowsOf(stmt) {
+        const out = [];
+        while (stmt.step()) out.push(stmt.getAsObject());
+        stmt.free();
+        return out;
+    }
+
+    return {
+        kind: 'sqlite',
+        async run(sql, params = []) {
+            await ensureLoaded();
+            const stmt = db.prepare(sql);
+            stmt.bind(params);
+            stmt.step();
+            const changes = db.getRowsModified();
+            stmt.free();
+            scheduleWrite();
+            return { changes, lastID: null };
+        },
+        async get(sql, params = []) {
+            await ensureLoaded();
+            const stmt = db.prepare(sql);
+            stmt.bind(params);
+            const row = stmt.step() ? stmt.getAsObject() : null;
+            stmt.free();
+            return row;
+        },
+        async all(sql, params = []) {
+            await ensureLoaded();
+            const stmt = db.prepare(sql);
+            stmt.bind(params);
+            return rowsOf(stmt);
+        },
+        async exec(sql) {
+            await ensureLoaded();
+            db.exec(sql);
+            scheduleWrite();
+        },
+        async close() {
+            if (db) { db.close(); db = null; }
+        },
+    };
+}
+
+/* ────── Initialization + schema ────── */
+
+const PG_TYPES = {
+    pk: 'SERIAL PRIMARY KEY',
+    bigintPk: 'BIGSERIAL PRIMARY KEY',
+    ts: 'TIMESTAMPTZ DEFAULT NOW()',
+    json: 'JSONB',
+    bool: 'BOOLEAN',
+};
+const SQLITE_TYPES = {
+    pk: 'INTEGER PRIMARY KEY AUTOINCREMENT',
+    bigintPk: 'INTEGER PRIMARY KEY AUTOINCREMENT',
+    ts: "TEXT DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now'))",
+    json: 'TEXT',
+    bool: 'INTEGER',
+};
+
+function t() {
+    return driver.kind === 'pg' ? PG_TYPES : SQLITE_TYPES;
+}
+
+async function migrate() {
+    const T = t();
+
+    await driver.exec(`
+        CREATE TABLE IF NOT EXISTS users (
+            id ${T.pk},
+            username TEXT UNIQUE NOT NULL,
+            email TEXT UNIQUE,
+            password_hash TEXT NOT NULL,
+            date_of_birth TEXT,
+            balance_cents ${driver.kind === 'pg' ? 'BIGINT' : 'INTEGER'} NOT NULL DEFAULT 0,
+            is_admin ${T.bool} NOT NULL DEFAULT ${driver.kind === 'pg' ? 'false' : '0'},
+            created_at ${T.ts}
+        );
+    `);
+
+    await driver.exec(`
+        CREATE TABLE IF NOT EXISTS deposits (
+            id ${T.pk},
+            user_id ${driver.kind === 'pg' ? 'INTEGER' : 'INTEGER'} NOT NULL,
+            provider TEXT NOT NULL,
+            provider_ref TEXT UNIQUE,
+            amount_cents ${driver.kind === 'pg' ? 'BIGINT' : 'INTEGER'} NOT NULL,
+            currency TEXT NOT NULL DEFAULT 'usd',
+            status TEXT NOT NULL DEFAULT 'pending',
+            created_at ${T.ts},
+            completed_at ${driver.kind === 'pg' ? 'TIMESTAMPTZ' : 'TEXT'}
+        );
+    `);
+
+    await driver.exec(`CREATE INDEX IF NOT EXISTS idx_deposits_user ON deposits (user_id);`);
+
+    await driver.exec(`
+        CREATE TABLE IF NOT EXISTS nft_receipts (
+            id ${T.pk},
+            user_id ${driver.kind === 'pg' ? 'INTEGER' : 'INTEGER'} NOT NULL,
+            deposit_id ${driver.kind === 'pg' ? 'INTEGER' : 'INTEGER'} NOT NULL UNIQUE,
+            token_id TEXT UNIQUE NOT NULL,
+            provider TEXT NOT NULL DEFAULT 'db',
+            chain TEXT,
+            contract_address TEXT,
+            metadata ${T.json} NOT NULL,
+            signature TEXT NOT NULL,
+            minted_at ${T.ts}
+        );
+    `);
+
+    await driver.exec(`CREATE INDEX IF NOT EXISTS idx_nft_user ON nft_receipts (user_id);`);
+}
+
+async function initDatabase() {
+    if (readyPromise) return readyPromise;
+    readyPromise = (async () => {
+        if (config.DATABASE_URL) {
+            driver = makePgDriver();
+            console.log('[db] using Postgres');
+        } else {
+            driver = makeSqliteDriver();
+            console.log('[db] using SQLite at ' + path.resolve(config.SQLITE_FILE));
+        }
+        await migrate();
+        ready = true;
+    })();
+    return readyPromise;
+}
+
+function guard() {
+    if (!ready) throw new Error('Database not initialized yet');
+}
+
+module.exports = {
+    initDatabase,
+    get kind() { return driver && driver.kind; },
+    run: (sql, params) => { guard(); return driver.run(sql, params); },
+    get: (sql, params) => { guard(); return driver.get(sql, params); },
+    all: (sql, params) => { guard(); return driver.all(sql, params); },
+    exec: (sql) => { guard(); return driver.exec(sql); },
+};
