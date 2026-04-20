@@ -54,4 +54,32 @@ router.get('/deposits', authenticate, async (req, res) => {
     }
 });
 
+router.delete('/', authenticate, async (req, res) => {
+    // Hard-deletes the user row; deposits and NFT receipts are retained
+    // so refunds and accounting can still resolve, but user_id is
+    // anonymized (0) so no PII persists. Matches the GDPR "right to
+    // erasure" pattern used by regulated platforms.
+    const { confirm_username } = req.body || {};
+    try {
+        const user = await db.get('SELECT username FROM users WHERE id = ?', [req.user.id]);
+        if (!user) return res.status(404).json({ error: 'User not found.' });
+        if (confirm_username !== user.username) {
+            return res.status(400).json({ error: 'To confirm deletion, send { "confirm_username": "<your username>" }.' });
+        }
+        const isPg = db.kind === 'pg';
+        // Detach deposits and NFTs (keep the rows for accounting, drop PII)
+        await db.run('UPDATE deposits SET user_id = 0 WHERE user_id = ?', [req.user.id]);
+        await db.run('UPDATE nft_receipts SET user_id = 0 WHERE user_id = ?', [req.user.id]);
+        await db.run('DELETE FROM password_resets WHERE user_id = ?', [req.user.id]);
+        await db.run('DELETE FROM refunds WHERE user_id = ?', [req.user.id]);
+        await db.run('DELETE FROM users WHERE id = ?', [req.user.id]);
+        console.log('[user/delete] account ' + req.user.id + ' deleted');
+        res.json({ ok: true });
+        void isPg;
+    } catch (err) {
+        console.error('[user/delete]', err);
+        res.status(500).json({ error: 'Failed to delete account.' });
+    }
+});
+
 module.exports = router;

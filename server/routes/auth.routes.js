@@ -2,11 +2,23 @@
 
 const express = require('express');
 const bcrypt = require('bcryptjs');
+const crypto = require('crypto');
 const config = require('../config');
 const db = require('../database');
 const { signToken, authenticate } = require('../middleware/auth');
+const email = require('../services/email.service');
 
 const router = express.Router();
+
+const RESET_TOKEN_BYTES = 32;
+const RESET_TTL_MS = 60 * 60 * 1000; // 1 hour
+
+function hashResetToken(token) {
+    return crypto.createHash('sha256').update(token).digest('hex');
+}
+
+function nowIso() { return new Date().toISOString(); }
+function expiryIso() { return new Date(Date.now() + RESET_TTL_MS).toISOString(); }
 
 const USERNAME_RE = /^[a-zA-Z0-9_.-]{3,32}$/;
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -133,6 +145,85 @@ router.post('/logout', authenticate, (_req, res) => {
     // Tokens are stateless JWTs — the client just forgets them. We still
     // respond 200 so the client flow can confirm.
     res.json({ ok: true });
+});
+
+router.post('/change-password', authenticate, async (req, res) => {
+    const { current_password, new_password } = req.body || {};
+    if (typeof current_password !== 'string' || typeof new_password !== 'string') {
+        return res.status(400).json({ error: 'Current and new passwords are required.' });
+    }
+    if (new_password.length < 8) return res.status(400).json({ error: 'New password must be at least 8 characters.' });
+    if (new_password === current_password) return res.status(400).json({ error: 'New password must differ from the current one.' });
+    try {
+        const user = await db.get('SELECT * FROM users WHERE id = ?', [req.user.id]);
+        if (!user) return res.status(404).json({ error: 'User not found.' });
+        const ok = await bcrypt.compare(current_password, user.password_hash);
+        if (!ok) return res.status(401).json({ error: 'Current password is incorrect.' });
+        const hash = await bcrypt.hash(new_password, 12);
+        await db.run('UPDATE users SET password_hash = ? WHERE id = ?', [hash, user.id]);
+        res.json({ ok: true });
+    } catch (err) {
+        console.error('[auth/change-password]', err);
+        res.status(500).json({ error: 'Failed to change password.' });
+    }
+});
+
+router.post('/forgot-password', async (req, res) => {
+    const { email: emailAddr } = req.body || {};
+    // Always respond 200 to avoid revealing which emails are registered.
+    const okResponse = { ok: true, message: 'If an account exists for that email, a reset link has been sent.' };
+    if (typeof emailAddr !== 'string' || !emailAddr.trim()) return res.json(okResponse);
+    try {
+        const user = await db.get('SELECT * FROM users WHERE lower(email) = lower(?)', [emailAddr.trim()]);
+        if (!user) return res.json(okResponse); // silent no-op
+
+        const rawToken = crypto.randomBytes(RESET_TOKEN_BYTES).toString('hex');
+        const tokenHash = hashResetToken(rawToken);
+        await db.run(
+            'INSERT INTO password_resets (user_id, token_hash, expires_at) VALUES (?, ?, ?)',
+            [user.id, tokenHash, expiryIso()]
+        );
+        const resetUrl = config.PUBLIC_URL + '/#reset-password=' + rawToken;
+        const result = await email.sendPasswordResetLink({
+            to: user.email,
+            username: user.username,
+            resetUrl,
+        });
+        if (result && result.skipped && result.reason === 'no-smtp' && config.NODE_ENV !== 'production') {
+            // Surface the link in dev/test so operators can test the flow
+            // without real SMTP. Never in production.
+            return res.json(Object.assign({}, okResponse, { devResetUrl: resetUrl }));
+        }
+        res.json(okResponse);
+    } catch (err) {
+        console.error('[auth/forgot-password]', err);
+        // Still return ok to not leak existence
+        res.json(okResponse);
+    }
+});
+
+router.post('/reset-password', async (req, res) => {
+    const { token, new_password } = req.body || {};
+    if (typeof token !== 'string' || typeof new_password !== 'string') {
+        return res.status(400).json({ error: 'Token and new_password are required.' });
+    }
+    if (new_password.length < 8) return res.status(400).json({ error: 'Password must be at least 8 characters.' });
+    try {
+        const tokenHash = hashResetToken(token);
+        const row = await db.get('SELECT * FROM password_resets WHERE token_hash = ?', [tokenHash]);
+        if (!row) return res.status(400).json({ error: 'Reset link is invalid or has already been used.' });
+        if (row.used_at) return res.status(400).json({ error: 'Reset link has already been used.' });
+        if (new Date(row.expires_at).getTime() < Date.now()) {
+            return res.status(400).json({ error: 'Reset link has expired. Request a new one.' });
+        }
+        const hash = await bcrypt.hash(new_password, 12);
+        await db.run('UPDATE users SET password_hash = ? WHERE id = ?', [hash, row.user_id]);
+        await db.run('UPDATE password_resets SET used_at = ? WHERE id = ?', [nowIso(), row.id]);
+        res.json({ ok: true });
+    } catch (err) {
+        console.error('[auth/reset-password]', err);
+        res.status(500).json({ error: 'Failed to reset password.' });
+    }
 });
 
 module.exports = router;

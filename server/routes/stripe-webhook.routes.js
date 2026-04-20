@@ -12,6 +12,7 @@ const express = require('express');
 const config = require('../config');
 const db = require('../database');
 const nftService = require('../services/nft.service');
+const email = require('../services/email.service');
 
 const router = express.Router();
 
@@ -123,12 +124,33 @@ async function handleCheckoutCompleted(session) {
         [Number(deposit.amount_cents), deposit.user_id]
     );
 
-    await nftService.mintFor({
+    const receipt = await nftService.mintFor({
         userId: deposit.user_id,
         depositId: deposit.id,
         amountCents: Number(deposit.amount_cents),
         currency: deposit.currency,
     });
+
+    // Send the receipt email. Never block the webhook ack on email
+    // delivery — if SMTP is down, Stripe must still see 200 so it
+    // doesn't retry the fulfilled deposit.
+    try {
+        const user = await db.get('SELECT username, email FROM users WHERE id = ?', [deposit.user_id]);
+        if (user && user.email) {
+            const tier = (receipt && receipt.metadata && (receipt.metadata.attributes || []).find(a => a.trait_type === 'Tier'));
+            await email.sendDepositReceipt({
+                to: user.email,
+                username: user.username,
+                amount: Number(deposit.amount_cents) / 100,
+                currency: deposit.currency,
+                depositId: deposit.id,
+                tier: tier && tier.value,
+                tokenId: receipt && receipt.tokenId,
+            });
+        }
+    } catch (err) {
+        console.warn('[stripe-webhook] receipt email failed (non-fatal):', err.message);
+    }
 
     console.log(`[stripe-webhook] deposit ${depositId} fulfilled for user ${deposit.user_id} (+${deposit.amount_cents} ${deposit.currency})`);
 }

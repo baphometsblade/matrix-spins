@@ -546,7 +546,7 @@
                 return;
             }
             try {
-                await apiRequest('/api/user/forgot-password', {
+                await apiRequest('/api/auth/forgot-password', {
                     method: 'POST',
                     body: { email }
                 });
@@ -606,8 +606,8 @@
             const confirmPwd = (document.getElementById('resetConfirmPassword')?.value || '');
             const errEl = document.getElementById('authError');
 
-            if (!newPwd || newPwd.length < 6) {
-                if (errEl) errEl.textContent = 'Password must be at least 6 characters.';
+            if (!newPwd || newPwd.length < 8) {
+                if (errEl) errEl.textContent = 'Password must be at least 8 characters.';
                 return;
             }
             if (newPwd !== confirmPwd) {
@@ -620,7 +620,7 @@
             }
 
             try {
-                await apiRequest('/api/user/reset-password', {
+                await apiRequest('/api/auth/reset-password', {
                     method: 'POST',
                     body: { token: _pendingResetToken, new_password: newPwd }
                 });
@@ -636,11 +636,21 @@
          * Returns true if the reset flow was activated (caller should skip normal auth gate).
          */
         function checkResetTokenOnLoad() {
+            // Accept either "#reset-password=<token>" (server redirect format)
+            // or "?resetToken=<token>" (legacy).
+            const hashMatch = (window.location.hash || '').match(/reset-password=([A-Za-z0-9._-]+)/);
             const urlParams = new URLSearchParams(window.location.search);
-            const token = urlParams.get('resetToken');
+            const token = (hashMatch && hashMatch[1]) || urlParams.get('resetToken');
             if (!token) return false;
             _pendingResetToken = token;
             showAuthModal();
             showResetPassword(true);
+            // Clean the URL so the token isn't re-applied on a refresh.
+            try {
+                const url = new URL(window.location);
+                url.searchParams.delete('resetToken');
+                url.hash = '';
+                window.history.replaceState({}, '', url);
+            } catch (err) { /* non-fatal */ }
             return true;
         }

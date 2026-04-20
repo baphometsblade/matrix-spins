@@ -27,6 +27,8 @@ process.env.SQLITE_FILE = './server/test-data.sqlite';
 process.env.PORT = '3199';
 process.env.ADMIN_USERNAME = 'admin_test';
 process.env.ADMIN_PASSWORD = 'AdminTest!2026';
+process.env.SMTP_CAPTURE = '1';
+process.env.PUBLIC_URL = 'http://localhost:3199';
 
 try { fs.unlinkSync(process.env.SQLITE_FILE); } catch (err) { /* first run */ }
 
@@ -255,6 +257,66 @@ async function main() {
     assert.strictEqual(increase.status, 200);
     assert.ok(increase.body.rejected && increase.body.rejected.length === 3, 'increases must be rejected: ' + JSON.stringify(increase.body));
     console.log('[test] deposit limits increases rejected (cooling-off)');
+
+    // 15) Email service captured a deposit receipt
+    const emailSvc = require('../server/services/email.service');
+    const mails = emailSvc.getCaptured();
+    const receiptMail = mails.find(m => /deposit/i.test(m.subject));
+    assert.ok(receiptMail, 'no deposit-receipt email captured');
+    assert.ok(/\$25\.00/.test(receiptMail.text), 'receipt email missing amount');
+    console.log('[test] deposit receipt email sent ("' + receiptMail.subject + '")');
+
+    // 16) Change password (authed)
+    const meCsrf = (await http('GET', '/api/csrf-token', { token })).body.csrfToken;
+    const cp = await http('POST', '/api/auth/change-password', {
+        token, csrf: meCsrf,
+        body: { current_password: 'Str0ngP@ss!!', new_password: 'Str0ngP@ss!!v2' },
+    });
+    assert.strictEqual(cp.status, 200, 'change-password failed: ' + cp.raw);
+    // Old password should now fail
+    const oldLogin = await http('POST', '/api/auth/login', { csrf, body: { username: reg.body.user.username, password: 'Str0ngP@ss!!' } });
+    assert.strictEqual(oldLogin.status, 401);
+    console.log('[test] change password works, old password rejected');
+
+    // 17) Forgot + reset password round-trip
+    emailSvc.clearCaptured();
+    const fp = await http('POST', '/api/auth/forgot-password', { csrf, body: { email: reg.body.user.email } });
+    assert.strictEqual(fp.status, 200);
+    // SMTP_CAPTURE=1 should have recorded the reset email
+    const resetMail = emailSvc.getCaptured().find(m => /reset/i.test(m.subject));
+    assert.ok(resetMail, 'reset email not captured');
+    const tokenMatch = resetMail.text.match(/reset-password=([A-Fa-f0-9]+)/);
+    assert.ok(tokenMatch, 'reset email missing token URL: ' + resetMail.text.slice(0, 200));
+    const resetToken = tokenMatch[1];
+    const rp = await http('POST', '/api/auth/reset-password', {
+        csrf,
+        body: { token: resetToken, new_password: 'ResetP@ss2026' },
+    });
+    assert.strictEqual(rp.status, 200, 'reset-password failed: ' + rp.raw);
+    // Used token cannot be reused
+    const rpReplay = await http('POST', '/api/auth/reset-password', {
+        csrf,
+        body: { token: resetToken, new_password: 'Other!Pass1' },
+    });
+    assert.strictEqual(rpReplay.status, 400);
+    const newLogin = await http('POST', '/api/auth/login', { csrf, body: { username: reg.body.user.username, password: 'ResetP@ss2026' } });
+    assert.strictEqual(newLogin.status, 200);
+    console.log('[test] forgot/reset password round-trip works, token single-use');
+
+    // 18) Account deletion with confirmation
+    const delToken = newLogin.body.token;
+    const delCsrf = (await http('GET', '/api/csrf-token', { token: delToken })).body.csrfToken;
+    const delNoConfirm = await http('DELETE', '/api/user', { token: delToken, csrf: delCsrf, body: {} });
+    assert.strictEqual(delNoConfirm.status, 400);
+    const del = await http('DELETE', '/api/user', {
+        token: delToken, csrf: delCsrf,
+        body: { confirm_username: reg.body.user.username },
+    });
+    assert.strictEqual(del.status, 200, 'delete failed: ' + del.raw);
+    // Old JWT is still technically valid (stateless) but the user row is gone
+    const afterDel = await http('GET', '/api/user/me', { token: delToken });
+    assert.strictEqual(afterDel.status, 404);
+    console.log('[test] account deletion works; post-delete /me returns 404');
 
     console.log('\n✅ all deposit-flow assertions passed');
     main.server.close();

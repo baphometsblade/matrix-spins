@@ -247,6 +247,18 @@ async function migrate() {
         );
     `);
     await driver.exec(`CREATE INDEX IF NOT EXISTS idx_refunds_deposit ON refunds (deposit_id);`);
+
+    await driver.exec(`
+        CREATE TABLE IF NOT EXISTS password_resets (
+            id ${T.pk},
+            user_id ${driver.kind === 'pg' ? 'INTEGER' : 'INTEGER'} NOT NULL,
+            token_hash TEXT UNIQUE NOT NULL,
+            expires_at ${driver.kind === 'pg' ? 'TIMESTAMPTZ' : 'TEXT'} NOT NULL,
+            used_at ${driver.kind === 'pg' ? 'TIMESTAMPTZ' : 'TEXT'},
+            created_at ${T.ts}
+        );
+    `);
+    await driver.exec(`CREATE INDEX IF NOT EXISTS idx_password_resets_user ON password_resets (user_id);`);
 }
 
 async function initDatabase() {
