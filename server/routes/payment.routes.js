@@ -1023,12 +1023,9 @@ router.post('/self-exclude', authenticate, async (req, res) => {
 // ═══════════════════════════════════════════════════
 
 // POST /api/payments/admin/approve-deposit — admin-only: approve a pending deposit and credit balance
-router.post('/admin/approve-deposit', authenticate, async (req, res) => {
+const { requireAdmin: _payReqAdmin } = require('../middleware/auth');
+router.post('/admin/approve-deposit', authenticate, _payReqAdmin, async (req, res) => {
     try {
-        if (!req.user.is_admin) {
-            return res.status(403).json({ error: 'Admin access required' });
-        }
-
         const { depositId } = req.body;
         if (!depositId) {
             return res.status(400).json({ error: 'depositId is required' });

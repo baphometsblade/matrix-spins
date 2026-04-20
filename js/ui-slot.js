@@ -2698,7 +2698,7 @@
     _initLanguage();           // 387-394 — language
     _initAccessibility();      // 387-394 — a11y
     _initJackpot();            // 395-402 — jackpot
-    _simulateSocialActivity(); // 395-402 — social
+    // Social activity ticker removed — previously showed fabricated wins
     _initFriends();            // 395-402 — friends
     _initSEO();                // 403-410 — seo
     _initAnalytics();          // 403-410 — analytics
@@ -18875,13 +18875,59 @@ function _sendChatMsg() {
 
 
 /* ── 355-362 — leaderboard system ─────────────────────────────── */
+// Fetches real data from /api/leaderboard/bigwins (masked usernames, no PII).
+// Earlier stub showed a "coming soon" toast but the server endpoints have
+// been live for a while.
 function _showLeaderboard() {
-    // REMOVED: Was showing hardcoded fake player names (HighRoller99, LuckyStar22, etc.)
-    // Real leaderboard would need server-side /api/leaderboard endpoint
-    if (typeof showToast === 'function') showToast('Leaderboard coming soon!', 'info');
+    var overlay = document.getElementById('leaderboardOverlay');
+    if (!overlay) {
+        overlay = document.createElement('div');
+        overlay.id = 'leaderboardOverlay';
+        overlay.className = 'lb-overlay';
+        overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.9);display:flex;align-items:center;justify-content:center;z-index:99990;padding:16px;';
+        var content = document.createElement('div');
+        content.id = 'leaderboardContent';
+        content.style.cssText = 'background:#0f172a;border:1px solid #f9ca2444;border-radius:14px;padding:28px;max-width:520px;width:100%;color:#e0e0e0;max-height:85vh;overflow-y:auto;';
+        overlay.appendChild(content);
+        document.body.appendChild(overlay);
+        overlay.addEventListener('click', function (e) { if (e.target === overlay) overlay.style.display = 'none'; });
+    }
+    var content = overlay.querySelector('#leaderboardContent');
+    content.textContent = 'Loading leaderboard…';
+    overlay.style.display = 'flex';
+
+    fetch('/api/leaderboard/bigwins', { credentials: 'include' })
+        .then(function (r) { return r.ok ? r.json() : { entries: [] }; })
+        .then(function (data) {
+            var entries = (data && data.entries) || [];
+            var parts = ['<h3 style="color:#f9ca24;margin:0 0 16px;">🏆 Top Wins</h3>'];
+            if (!entries.length) {
+                parts.push('<p style="color:#94a3b8;">No wins recorded yet. Be the first!</p>');
+            } else {
+                parts.push('<div class="lb-entries" style="display:flex;flex-direction:column;gap:8px;">');
+                entries.slice(0, 15).forEach(function (e) {
+                    var medal = e.rank === 1 ? '🥇' : e.rank === 2 ? '🥈' : e.rank === 3 ? '🥉' : '#' + e.rank;
+                    var mult = (Number(e.multiplier) || 0).toFixed(1) + 'x';
+                    var win  = '$' + (Number(e.winAmount) || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+                    parts.push(
+                        '<div class="lb-entry" style="display:flex;justify-content:space-between;padding:8px 12px;background:rgba(255,255,255,0.04);border-radius:8px;">' +
+                        '<span>' + medal + ' ' + String(e.maskedUser || '').replace(/[<>]/g, '') + '</span>' +
+                        '<span style="color:#f9ca24;">' + win + ' (' + mult + ')</span>' +
+                        '</div>'
+                    );
+                });
+                parts.push('</div>');
+            }
+            parts.push('<button onclick="document.getElementById(\'leaderboardOverlay\').style.display=\'none\'" style="margin-top:20px;width:100%;padding:10px;background:linear-gradient(135deg,#fbbf24,#f59e0b);color:#000;border:none;border-radius:8px;font-weight:700;cursor:pointer;">Close</button>');
+            content.innerHTML = parts.join('');
+        })
+        .catch(function () {
+            content.innerHTML = '<p style="color:#ef4444;">Failed to load leaderboard.</p>' +
+                '<button onclick="document.getElementById(\'leaderboardOverlay\').style.display=\'none\'" style="margin-top:20px;width:100%;padding:10px;background:#334155;color:#fff;border:none;border-radius:8px;cursor:pointer;">Close</button>';
+        });
 }
-function _switchLbTab(el, tab) {
-    // no-op — leaderboard removed
+function _switchLbTab(_el, _tab) {
+    // Tabs not wired yet — single bigwins view for now
 }
 
 
@@ -19616,8 +19662,14 @@ function _confirmDeposit(amount) {
 }
 /* Legacy stubs for backward compat */
 function _confirmDepositLegacy(a, t) { _confirmDeposit(a); }
-function _showCollectionGallery() { _showRewardsGallery(); }
-function _showRewardsGallery() { /* Rewards gallery placeholder */ }
+// "My Rewards" button — defers to the achievements panel which has a real
+// backing endpoint at /api/achievements. Previous placeholder did nothing.
+function _showCollectionGallery() {
+    if (typeof _showAchievementsPanel === 'function') { _showAchievementsPanel(); return; }
+    if (typeof showProfileModal === 'function') { showProfileModal(); return; }
+    if (typeof showToast === 'function') showToast('Open your profile to view achievements.', 'info');
+}
+function _showRewardsGallery() { _showCollectionGallery(); }
 function _showDepositPreview(a) { _showDepositConfirmation(a); }
 function _getRewardIcon() { return ''; }
 
@@ -20091,12 +20143,6 @@ function _updateSocialTicker() {
     }
     ticker.innerHTML = '<div class="st-content">' + msg + '</div>';
 }
-/* Fake social activity simulation removed — real events should come from server */
-function _simulateSocialActivity() {
-    // No-op: fabricated social activity removed for production
-}
-
-
 /* ── 395-402 — friend system ──────────────────────────────────── */
 var _friendsList = [];
 function _initFriends() {
@@ -20133,9 +20179,10 @@ function _addFriend() {
     document.getElementById('friendsPanel397').remove();
     _showFriendsPanel();
 }
-function _sendGift(friendId) {
-    alert('Sent 10 free spins to your friend! They\'ll receive them next time they log in.');
-}
+// Friends panel gift button now defers to the canonical _sendGift(amount)
+// below which posts to /api/gifts/send. Previous dead _sendGift(friendId)
+// stub showed a fabricated "Sent 10 free spins" alert without server
+// interaction; removed to avoid user confusion.
 
 
 /* ── 395-402 — scratch card mini-game ─────────────────────────── */
@@ -20963,11 +21010,36 @@ function _sendGift(amount) {
     var recipient = document.getElementById('giftRecipient');
     if (!recipient || !recipient.value.trim()) { alert('Enter a username'); return; }
     if (typeof balance !== 'undefined' && balance < amount) { alert('Insufficient balance'); return; }
-    if (typeof balance !== 'undefined') balance -= amount;
-    if (typeof updateBalanceDisplay === 'function') updateBalanceDisplay();
+
+    var toUsername = recipient.value.trim();
+    var token = (typeof getAuthToken === 'function') ? getAuthToken() : (localStorage.getItem('casinoToken') || '');
+    var headers = { 'Content-Type': 'application/json' };
+    if (token) headers.Authorization = 'Bearer ' + token;
+
     var el = document.getElementById('giftSendOverlay');
-    if (el) el.innerHTML = '<div class="gift-card gift-sent"><h3>Gift Sent!</h3><p>' + amount + ' coins sent to ' + recipient.value + '</p></div>';
-    setTimeout(function() { if (el) el.style.display = 'none'; }, 2500);
+    if (el) el.innerHTML = '<div class="gift-card"><h3>Sending…</h3></div>';
+
+    fetch('/api/gifts/send', {
+        method: 'POST',
+        headers: headers,
+        credentials: 'include',
+        body: JSON.stringify({ toUsername: toUsername, amount: amount })
+    })
+    .then(function (r) { return r.json().then(function (body) { return { ok: r.ok, body: body }; }); })
+    .then(function (resp) {
+        if (!resp.ok || !resp.body || resp.body.error) {
+            var msg = (resp.body && resp.body.error) || 'Could not send gift.';
+            if (el) el.innerHTML = '<div class="gift-card"><h3>Gift failed</h3><p>' + String(msg).replace(/[<>]/g, '') + '</p><button onclick="document.getElementById(\'giftSendOverlay\').style.display=\'none\'" class="gift-close">Close</button></div>';
+            return;
+        }
+        // Server has already deducted — refresh balance from server
+        if (typeof fetchBalance === 'function') fetchBalance();
+        if (el) el.innerHTML = '<div class="gift-card gift-sent"><h3>Gift Sent!</h3><p>$' + amount + ' sent to ' + toUsername + '</p></div>';
+        setTimeout(function () { if (el) el.style.display = 'none'; }, 2500);
+    })
+    .catch(function () {
+        if (el) el.innerHTML = '<div class="gift-card"><h3>Network error</h3><button onclick="document.getElementById(\'giftSendOverlay\').style.display=\'none\'" class="gift-close">Close</button></div>';
+    });
 }
 
 

@@ -347,18 +347,6 @@ const TICKER_INITIAL_MESSAGE_COUNT = 5;
 /** Maximum ticker messages before oldest is dropped */
 const TICKER_MAX_MESSAGES = 8;
 
-/** Jackpot ticker base starting value */
-const JACKPOT_TICKER_BASE_VALUE = 1247836;
-
-/** Jackpot ticker random range added to base on init */
-const JACKPOT_TICKER_RANDOM_RANGE = 50000;
-
-/** Jackpot ticker minimum increment per tick */
-const JACKPOT_TICKER_INCREMENT_MIN = 3;
-
-/** Jackpot ticker maximum increment per tick */
-const JACKPOT_TICKER_INCREMENT_MAX = 50;
-
 /** Mobile touch minimum swipe distance threshold (px) */
 const MIN_SWIPE_DISTANCE = 50;
 

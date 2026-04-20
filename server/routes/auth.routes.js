@@ -29,7 +29,27 @@ function validatePassword(password) {
     if (!/[A-Z]/.test(password)) issues.push('an uppercase letter');
     if (!/[a-z]/.test(password)) issues.push('a lowercase letter');
     if (!/[0-9]/.test(password)) issues.push('a number');
+    if (!/[^A-Za-z0-9]/.test(password)) issues.push('a special character');
     return issues;
+}
+
+/**
+ * Calculate age from date-of-birth, matching the standard calendar algorithm
+ * (handles timezone/birthday edge cases correctly — a person born 2008-04-20
+ * is 18 on 2026-04-20 regardless of timezone).
+ */
+function calculateAge(dob, today) {
+    today = today || new Date();
+    let age = today.getUTCFullYear() - dob.getUTCFullYear();
+    const m = today.getUTCMonth() - dob.getUTCMonth();
+    if (m < 0 || (m === 0 && today.getUTCDate() < dob.getUTCDate())) age--;
+    return age;
+}
+
+/** Hash a token so its plaintext is never stored. The plaintext lives only
+ *  in the verification/reset email sent to the user. */
+function hashToken(token) {
+    return crypto.createHash('sha256').update(String(token)).digest('hex');
 }
 
 /** Generate an 8-char uppercase alphanumeric referral code */
