@@ -819,6 +819,57 @@ async function main() {
     assert.ok(/report-uri\s*\/api\/csp-report/i.test(cspHeader), 'CSP header missing report-uri: ' + cspHeader.slice(0, 200));
     console.log('[test] CSP header includes report-uri=/api/csp-report');
 
+    // 47) Maintenance sweep deletes used + expired password_resets
+    const maintenance = require('../server/services/maintenance.service');
+    // Seed: an expired and a used token for some user.
+    const seedUser = await db.get('SELECT id FROM users ORDER BY id DESC LIMIT 1');
+    const expiredIso = new Date(Date.now() - 60 * 60 * 1000).toISOString();
+    const usedIso = new Date().toISOString();
+    const pastExpiry = new Date(Date.now() - 60 * 1000).toISOString();
+    await db.run(
+        'INSERT INTO password_resets (user_id, token_hash, expires_at) VALUES (?, ?, ?)',
+        [seedUser.id, 'expired_hash_' + Date.now(), pastExpiry]
+    );
+    await db.run(
+        'INSERT INTO password_resets (user_id, token_hash, expires_at, used_at) VALUES (?, ?, ?, ?)',
+        [seedUser.id, 'used_hash_' + Date.now(), expiredIso, usedIso]
+    );
+    const before = await db.get('SELECT COUNT(*) AS n FROM password_resets');
+    const summary = await maintenance.runOnce();
+    assert.ok(summary.used_rows_deleted >= 1, 'used tokens not swept: ' + JSON.stringify(summary));
+    assert.ok(summary.expired_rows_deleted >= 1, 'expired tokens not swept: ' + JSON.stringify(summary));
+    const after = await db.get('SELECT COUNT(*) AS n FROM password_resets');
+    assert.ok(Number(after.n) < Number(before.n), 'password_resets row count did not decrease');
+    console.log('[test] maintenance sweep deletes used + expired password_resets');
+
+    // 48) CSV exports start with a UTF-8 BOM for Excel compatibility.
+    //     Node's .text() strips BOM by default, so inspect raw bytes.
+    const userCsv = await fetch('http://localhost:3199/api/user/deposits.csv', {
+        headers: { Authorization: 'Bearer ' + adminToken },
+    });
+    const userCsvBytes = new Uint8Array(await userCsv.arrayBuffer());
+    assert.strictEqual(userCsvBytes[0], 0xEF);
+    assert.strictEqual(userCsvBytes[1], 0xBB);
+    assert.strictEqual(userCsvBytes[2], 0xBF);
+    const adminCsv2 = await fetch('http://localhost:3199/api/admin/deposits.csv', {
+        headers: { Authorization: 'Bearer ' + adminToken },
+    });
+    const adminCsv2Bytes = new Uint8Array(await adminCsv2.arrayBuffer());
+    assert.strictEqual(adminCsv2Bytes[0], 0xEF);
+    assert.strictEqual(adminCsv2Bytes[1], 0xBB);
+    assert.strictEqual(adminCsv2Bytes[2], 0xBF);
+    console.log('[test] CSV exports begin with UTF-8 BOM (EF BB BF)');
+
+    // 49) Admin user-detail endpoint returns full context
+    const detail = await http('GET', '/api/admin/users/' + seedUser.id + '/detail', { token: adminToken });
+    assert.strictEqual(detail.status, 200);
+    assert.ok(detail.body.user && detail.body.user.id === seedUser.id);
+    assert.ok(detail.body.balance && typeof detail.body.balance.actual_cents === 'number');
+    assert.ok(Array.isArray(detail.body.recent_deposits));
+    assert.ok(Array.isArray(detail.body.recent_events));
+    assert.ok(!('password_hash' in detail.body.user), 'password_hash must not leak into admin detail');
+    console.log('[test] /api/admin/users/:id/detail returns full context without secrets');
+
     console.log('\n✅ all deposit-flow assertions passed');
     main.server.close();
     await db.close();

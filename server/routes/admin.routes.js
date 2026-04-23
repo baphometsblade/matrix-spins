@@ -434,10 +434,98 @@ router.get('/deposits.csv', async (req, res) => {
         ].map(csvEscape).join(',')).join('\n');
         res.setHeader('Content-Type', 'text/csv; charset=utf-8');
         res.setHeader('Content-Disposition', 'attachment; filename="deposits-' + new Date().toISOString().slice(0, 10) + '.csv"');
-        res.send(header + body + '\n');
+        // Prepend a UTF-8 BOM so Excel (Windows) doesn't interpret the
+        // file as Windows-1252 and mojibake unicode characters.
+        res.send('﻿' + header + body + '\n');
     } catch (err) {
         console.error('[admin/deposits.csv]', err);
         res.status(500).json({ error: 'Export failed.' });
+    }
+});
+
+/**
+ * GET /api/admin/users/:id/detail
+ *
+ * Single-round-trip support lookup. Returns profile + ledger
+ * components + deposit history + refund history + balance adjustments
+ * + 2FA status + NFT count + recent auth events. Password hash, TOTP
+ * secret, and recovery-code hashes are NEVER returned.
+ */
+router.get('/users/:id/detail', async (req, res) => {
+    const userId = parseInt(req.params.id, 10);
+    if (!isFinite(userId) || userId <= 0) return res.status(400).json({ error: 'Invalid user id.' });
+    try {
+        const user = await db.get(
+            `SELECT id, username, email, display_name, date_of_birth, balance_cents, is_admin,
+                    deposit_limit_daily_cents, deposit_limit_weekly_cents, deposit_limit_monthly_cents,
+                    token_version, created_at
+               FROM users WHERE id = ?`,
+            [userId]
+        );
+        if (!user) return res.status(404).json({ error: 'User not found.' });
+
+        const [paidRow, refundsRow, adjRow, depositRows, refundRows, adjustmentRows, twofa, recoveryCount, nftCount, events] = await Promise.all([
+            db.get(`SELECT COALESCE(SUM(amount_cents), 0) AS total FROM deposits WHERE user_id = ? AND status IN ('paid','partial_refund')`, [userId]),
+            db.get('SELECT COALESCE(SUM(amount_cents), 0) AS total FROM refunds WHERE user_id = ?', [userId]),
+            db.get('SELECT COALESCE(SUM(delta_cents), 0) AS total FROM balance_adjustments WHERE user_id = ?', [userId]),
+            db.all(`SELECT id, amount_cents, currency, status, provider, provider_ref, created_at, completed_at
+                      FROM deposits WHERE user_id = ? ORDER BY id DESC LIMIT 50`, [userId]),
+            db.all(`SELECT id, deposit_id, amount_cents, provider_ref, reason, created_at
+                      FROM refunds WHERE user_id = ? ORDER BY id DESC LIMIT 50`, [userId]),
+            db.all(`SELECT id, admin_username, delta_cents, balance_after_cents, reason, created_at
+                      FROM balance_adjustments WHERE user_id = ? ORDER BY id DESC LIMIT 50`, [userId]),
+            db.get(`SELECT enabled, created_at, enabled_at FROM user_totp_secrets WHERE user_id = ?`, [userId]),
+            db.get(`SELECT COUNT(*) AS n FROM user_recovery_codes WHERE user_id = ? AND used_at IS NULL`, [userId]),
+            db.get(`SELECT COUNT(*) AS n FROM nft_receipts WHERE user_id = ?`, [userId]),
+            db.all(`SELECT id, event_type, outcome, ip, user_agent, reason, created_at
+                      FROM auth_events WHERE user_id = ? ORDER BY id DESC LIMIT 30`, [userId]),
+        ]);
+
+        const paid = Number((paidRow && paidRow.total) || 0);
+        const refunded = Number((refundsRow && refundsRow.total) || 0);
+        const adjusted = Number((adjRow && adjRow.total) || 0);
+        const expected = paid - refunded + adjusted;
+        const actual = Number(user.balance_cents || 0);
+
+        res.json({
+            user: {
+                id: user.id,
+                username: user.username,
+                email: user.email,
+                display_name: user.display_name,
+                date_of_birth: user.date_of_birth,
+                is_admin: !!user.is_admin,
+                token_version: user.token_version,
+                created_at: user.created_at,
+            },
+            balance: {
+                actual_cents: actual,
+                expected_cents: expected,
+                drift_cents: actual - expected,
+                paid_cents: paid,
+                refunded_cents: refunded,
+                adjusted_cents: adjusted,
+            },
+            limits: {
+                daily_cents: Number(user.deposit_limit_daily_cents || 0),
+                weekly_cents: Number(user.deposit_limit_weekly_cents || 0),
+                monthly_cents: Number(user.deposit_limit_monthly_cents || 0),
+            },
+            two_factor: {
+                enabled: !!(twofa && twofa.enabled),
+                configured_at: twofa && twofa.created_at,
+                enabled_at: twofa && twofa.enabled_at,
+                recovery_codes_remaining: Number((recoveryCount && recoveryCount.n) || 0),
+            },
+            nft_count: Number((nftCount && nftCount.n) || 0),
+            recent_deposits: depositRows,
+            recent_refunds: refundRows,
+            recent_adjustments: adjustmentRows,
+            recent_events: events,
+        });
+    } catch (err) {
+        console.error('[admin/users/:id/detail]', err);
+        res.status(500).json({ error: 'Failed to fetch user detail.' });
     }
 });
 

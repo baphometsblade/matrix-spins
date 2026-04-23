@@ -149,7 +149,8 @@ router.get('/deposits.csv', authenticate, async (req, res) => {
         ].map(csvEscape).join(',')).join('\n');
         res.setHeader('Content-Type', 'text/csv; charset=utf-8');
         res.setHeader('Content-Disposition', 'attachment; filename="my-deposits-' + new Date().toISOString().slice(0, 10) + '.csv"');
-        res.send(header + body + '\n');
+        // UTF-8 BOM so Excel on Windows doesn't read this as Windows-1252.
+        res.send('﻿' + header + body + '\n');
     } catch (err) {
         console.error('[user/deposits.csv]', err);
         res.status(500).json({ error: 'Export failed.' });
