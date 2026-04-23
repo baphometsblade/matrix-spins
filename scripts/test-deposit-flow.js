@@ -682,6 +682,47 @@ async function main() {
     assert.strictEqual(missing.status, 404);
     console.log('[test] unknown .html paths 404 cleanly');
 
+    // 39) Stripe dispute.created flags the deposit without touching balance
+    const openDispute = {
+        id: 'evt_dispute_open_' + crypto.randomBytes(6).toString('hex'),
+        object: 'event',
+        type: 'charge.dispute.created',
+        data: { object: { id: 'du_test_' + Date.now(), charge: 'ch_test_' + Date.now(), reason: 'fraudulent' } },
+        created: Math.floor(Date.now() / 1000),
+    };
+    // Insert a matching deposit so the handler can find it.
+    await db.run(
+        `INSERT INTO deposits (user_id, provider, provider_ref, amount_cents, currency, status) VALUES (?, ?, ?, ?, ?, ?)`,
+        [1, 'stripe', openDispute.data.object.charge, 5000, 'usd', 'paid']
+    );
+    const openBody = JSON.stringify(openDispute);
+    const openRes = await fetch('http://localhost:3199/api/payment/stripe/webhook', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Stripe-Signature': signPayload(openBody, STRIPE_WEBHOOK_SECRET) },
+        body: openBody,
+    });
+    assert.strictEqual(openRes.status, 200);
+    const flagged = await db.get(`SELECT status FROM deposits WHERE provider_ref = ?`, [openDispute.data.object.charge]);
+    assert.strictEqual(flagged.status, 'dispute_pending', 'dispute.created did not flag deposit: ' + flagged.status);
+
+    // Dispute won → flag resets to paid
+    const closed = {
+        id: 'evt_dispute_close_' + crypto.randomBytes(6).toString('hex'),
+        object: 'event',
+        type: 'charge.dispute.closed',
+        data: { object: { id: openDispute.data.object.id, charge: openDispute.data.object.charge, status: 'won' } },
+        created: Math.floor(Date.now() / 1000),
+    };
+    const closedBody = JSON.stringify(closed);
+    await fetch('http://localhost:3199/api/payment/stripe/webhook', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Stripe-Signature': signPayload(closedBody, STRIPE_WEBHOOK_SECRET) },
+        body: closedBody,
+    });
+    const restored = await db.get(`SELECT status FROM deposits WHERE provider_ref = ?`, [openDispute.data.object.charge]);
+    assert.strictEqual(restored.status, 'paid', 'dispute.closed (won) did not restore status: ' + restored.status);
+    console.log('[test] dispute.created flags deposit; dispute.closed (won) restores it');
+
     console.log('\n✅ all deposit-flow assertions passed');
     main.server.close();
     await db.close();

@@ -1,5 +1,5 @@
 /* Royal Slots Casino - Bundled JavaScript */
-/* Generated: 2026-04-23T11:03:31.299Z */
+/* Generated: 2026-04-23T11:09:27.546Z */
 
 
 /* â”€â”€â”€ shared/game-definitions.js (2/55) â”€â”€â”€ */
@@ -59921,6 +59921,66 @@ setInterval(function() {
 // APP MODULE
 // ═══════════════════════════════════════════════════════
 
+        // Short-circuit the many feature-poll fetches to endpoints that
+        // don't exist on the real server, so the browser Network tab
+        // stays clean and users aren't greeted with 30 red 404s. Every
+        // path below returns a synthetic 404 locally WITHOUT hitting the
+        // wire. Remove the entry when you ship the corresponding endpoint.
+        (function installGhostEndpointSink() {
+            if (typeof window === 'undefined' || !window.fetch) return;
+            if (window._ghostEndpointSinkInstalled) return;
+            window._ghostEndpointSinkInstalled = true;
+            var GHOSTS = [
+                '/api/user/return-status',
+                '/api/user/loss-streak-offer',
+                '/api/user/weekend-cashback',
+                '/api/user/comeback-bonus',
+                '/api/user/claim-comeback-bonus',
+                '/api/birthday/status',
+                '/api/birthday/claim',
+                '/api/levelupbonus/status',
+                '/api/levelupbonus/claim',
+                '/api/milestones/status',
+                '/api/milestones/claim',
+                '/api/spinstreak/status',
+                '/api/spinstreak/tick',
+                '/api/winstreak/status',
+                '/api/streak',
+                '/api/subscription/status',
+                '/api/subscription/claim-daily',
+                '/api/gifts/inbox',
+                '/api/gifts/send',
+                '/api/tournament/record',
+                '/api/tournaments',
+                '/api/tournaments/active',
+                '/api/xpshop/sync-xp',
+                '/api/notifications',
+                '/api/achievements/check',
+                '/api/mystery',
+                '/api/mystery/claim',
+            ];
+            var origFetch = window.fetch.bind(window);
+            window.fetch = function (url, opts) {
+                var path = null;
+                try {
+                    if (typeof url === 'string') path = url;
+                    else if (url && url.url) path = url.url;
+                } catch (err) { /* ignore */ }
+                if (path) {
+                    var bare = path.replace(/^https?:\/\/[^/]+/, '').split('?')[0];
+                    for (var i = 0; i < GHOSTS.length; i++) {
+                        var g = GHOSTS[i];
+                        if (bare === g || bare.indexOf(g + '/') === 0) {
+                            return Promise.resolve(new Response(
+                                JSON.stringify({ error: 'Endpoint not implemented.' }),
+                                { status: 404, headers: { 'Content-Type': 'application/json' } }
+                            ));
+                        }
+                    }
+                }
+                return origFetch(url, opts);
+            };
+        })();
 
         // Initialize (base — called by initAllSystems)
         function initBase() {

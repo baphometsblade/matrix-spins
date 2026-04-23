@@ -45,7 +45,9 @@ In the Stripe Dashboard → Developers → Webhooks:
    - `checkout.session.async_payment_failed`
    - `checkout.session.expired`
    - `charge.refunded`
+   - `charge.dispute.created`
    - `charge.dispute.funds_withdrawn`
+   - `charge.dispute.closed`
 3. Copy the signing secret (`whsec_…`) into `STRIPE_WEBHOOK_SECRET` on Render.
 4. Redeploy so the env var is picked up.
 

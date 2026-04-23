@@ -67,8 +67,14 @@ router.post('/', async (req, res) => {
             case 'charge.refunded':
                 await handleChargeRefunded(event.data.object);
                 break;
+            case 'charge.dispute.created':
+                await handleDisputeCreated(event.data.object);
+                break;
             case 'charge.dispute.funds_withdrawn':
                 await handleDisputeWithdrawn(event.data.object);
+                break;
+            case 'charge.dispute.closed':
+                await handleDisputeClosed(event.data.object);
                 break;
             default:
                 // Unhandled event types are still ACKed so Stripe stops retrying.
@@ -131,6 +137,47 @@ async function handleChargeRefunded(charge) {
     const newStatus = refundedCents >= Number(deposit.amount_cents) ? 'refunded' : 'partial_refund';
     await db.run(`UPDATE deposits SET status = ? WHERE id = ?`, [newStatus, deposit.id]);
     console.log(`[stripe-webhook] refund of ${delta} applied to deposit ${deposit.id} (user ${deposit.user_id})`);
+}
+
+async function handleDisputeCreated(dispute) {
+    // A dispute has been opened. The funds are NOT yet withdrawn (that's
+    // a separate event), but we flag the deposit so admin sees it on
+    // the dashboard immediately. Balance is not touched here — only
+    // charge.dispute.funds_withdrawn actually deducts.
+    const chargeId = dispute.charge;
+    if (!chargeId) return;
+    const deposit = await db.get('SELECT * FROM deposits WHERE provider_ref = ?', [chargeId]);
+    if (!deposit) {
+        // Fall back to session lookup for charges that went through
+        // Checkout — Stripe may reference the session id or the charge id.
+        const byCharge = await findDepositForCharge(dispute);
+        if (!byCharge) {
+            console.warn('[stripe-webhook] dispute.created: no matching deposit for charge', chargeId);
+            return;
+        }
+        await db.run(`UPDATE deposits SET status = 'dispute_pending' WHERE id = ? AND status <> 'disputed'`, [byCharge.id]);
+        console.log(`[stripe-webhook] dispute opened against deposit ${byCharge.id} (charge ${chargeId}, reason ${dispute.reason || 'unknown'})`);
+        return;
+    }
+    await db.run(`UPDATE deposits SET status = 'dispute_pending' WHERE id = ? AND status <> 'disputed'`, [deposit.id]);
+    console.log(`[stripe-webhook] dispute opened against deposit ${deposit.id} (charge ${chargeId}, reason ${dispute.reason || 'unknown'})`);
+}
+
+async function handleDisputeClosed(dispute) {
+    // Fires with status = won | lost | warning_closed. Don't touch
+    // balance — funds_withdrawn already did for losses; wins leave the
+    // original balance credit intact. Just log the outcome.
+    const chargeId = dispute.charge;
+    if (!chargeId) return;
+    const deposit = await db.get('SELECT id FROM deposits WHERE provider_ref = ?', [chargeId]);
+    if (deposit) {
+        // If the deposit is currently flagged dispute_pending and the
+        // dispute was won, restore it to paid.
+        if (dispute.status === 'won') {
+            await db.run(`UPDATE deposits SET status = 'paid' WHERE id = ? AND status = 'dispute_pending'`, [deposit.id]);
+        }
+        console.log(`[stripe-webhook] dispute ${dispute.id} closed (${dispute.status}) for deposit ${deposit.id}`);
+    }
 }
 
 async function handleDisputeWithdrawn(dispute) {
