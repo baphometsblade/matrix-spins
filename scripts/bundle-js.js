@@ -55,6 +55,33 @@ function ensureDir(dir) {
     }
 }
 
+/**
+ * Remove stale bundle.<hash>.js / styles.<hash>.css in DIST_DIR that
+ * aren't the ones we just wrote. Without this the repo collects a new
+ * ~3.6 MB bundle on every rebuild. Keep `keep` files total (current +
+ * N backups) so a deploy rollback still has something to reference.
+ */
+function pruneStaleBundles(currentJs, currentCss, keep = 1) {
+    try {
+        const entries = fs.readdirSync(DIST_DIR);
+        function prune(re, keepName) {
+            const matches = entries
+                .filter(f => re.test(f) && f !== keepName)
+                .map(f => ({ f, m: fs.statSync(path.join(DIST_DIR, f)).mtimeMs }))
+                .sort((a, b) => b.m - a.m);
+            // Keep the N most recent OLD files in addition to the current one.
+            matches.slice(Math.max(0, keep - 1)).forEach(({ f }) => {
+                try { fs.unlinkSync(path.join(DIST_DIR, f)); log(`pruned ${f}`); }
+                catch (e) { warn(`could not prune ${f}: ${e.message}`); }
+            });
+        }
+        prune(/^bundle\.[a-f0-9]+\.js$/, currentJs);
+        prune(/^styles\.[a-f0-9]+\.css$/, currentCss);
+    } catch (err) {
+        warn('prune failed: ' + err.message);
+    }
+}
+
 function readFile(filePath) {
     try {
         return fs.readFileSync(filePath, 'utf8');
@@ -220,6 +247,18 @@ function generateDistIndex(jsInfo, cssInfo, originalHtml) {
         distHtml = distHtml.replace(regex, '');
     });
 
+    // Strip any remaining <link rel=stylesheet> whose target file
+    // doesn't exist on disk — otherwise the deployed HTML references
+    // 404s (or, worse, SPA-fallback HTML masquerading as CSS).
+    distHtml = distHtml.replace(/<link\s+rel=["']stylesheet["']\s+href=["']([^"']+)["']\s*>/gi, (match, href) => {
+        if (/^https?:\/\//.test(href)) return match; // external, keep
+        const local = path.join(ROOT_DIR, href.replace(/^\//, ''));
+        const inDist = path.join(DIST_DIR, href.replace(/^\//, ''));
+        if (fs.existsSync(local) || fs.existsSync(inDist)) return match;
+        warn(`dropped <link> to missing file: ${href}`);
+        return '';
+    });
+
     // Add single CSS link before the last CSS link location (in head)
     const headClosingIndex = distHtml.indexOf('</head>');
     if (headClosingIndex !== -1) {
@@ -235,6 +274,19 @@ function generateDistIndex(jsInfo, cssInfo, originalHtml) {
         if (!isEarly) {
             distHtml = distHtml.replace(scriptTag, '');
         }
+    });
+
+    // Drop any remaining <script src="..."> whose file is not on disk —
+    // these are ghost references (the bundler's "Could not read file"
+    // warnings above) that would 404 or, under the SPA fallback, serve
+    // index.html with a text/html content-type.
+    distHtml = distHtml.replace(/<script\s+src=["']([^"']+)["']\s*><\/script>/gi, (match, src) => {
+        if (/^https?:\/\//.test(src)) return match;
+        const local = path.join(ROOT_DIR, src.replace(/^\//, ''));
+        const inDist = path.join(DIST_DIR, src.replace(/^\//, ''));
+        if (fs.existsSync(local) || fs.existsSync(inDist)) return match;
+        warn(`dropped <script> to missing file: ${src}`);
+        return '';
     });
 
     // Add bundle script reference before body close
@@ -253,10 +305,25 @@ function generateDistIndex(jsInfo, cssInfo, originalHtml) {
 }
 
 /**
- * Copy static assets (manifest.json, favicon.svg, etc.)
+ * Copy static assets (manifest.json, favicon.svg, etc.) and early-load
+ * scripts that must stay separate from the bundle.
  */
 function copyStaticAssets() {
     log('Copying static assets...');
+
+    // Early scripts live in js/ but the dist server needs them at
+    // dist/js/<name>.js so the early <script src="js/..."> tags resolve.
+    EARLY_SCRIPTS.forEach(rel => {
+        const src = path.join(ROOT_DIR, rel);
+        const dst = path.join(DIST_DIR, rel);
+        if (fs.existsSync(src)) {
+            ensureDir(path.dirname(dst));
+            fs.copyFileSync(src, dst);
+            log(`copied ${rel}`);
+        } else {
+            warn(`early script missing: ${rel}`);
+        }
+    });
 
     const staticFiles = ['manifest.json', 'favicon.svg'];
 
@@ -293,6 +360,11 @@ function main() {
 
         // Step 5: Copy static assets
         copyStaticAssets();
+
+        // Step 6: Prune stale bundle.*.js / styles.*.css — keeps the
+        // current ones and discards older hash-named versions so the
+        // repo does not accumulate a fresh 3.6MB bundle every commit.
+        pruneStaleBundles(jsInfo.bundleFile, cssInfo.cssFile, 1);
 
         console.log('');
         log('âœ… Bundling complete!');

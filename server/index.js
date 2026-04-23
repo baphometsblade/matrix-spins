@@ -141,7 +141,16 @@ app.use('/api', (_req, res) => {
 /* ─── Static frontend ─── */
 const DIST_DIR = path.join(__dirname, '..', 'dist');
 app.use(express.static(DIST_DIR, { maxAge: '1y', index: false }));
-app.get('*', (_req, res) => {
+
+// Anything that looks like a static asset (has a file extension) and
+// wasn't served above must 404 — NOT fall through to index.html. Serving
+// index.html's HTML with a .css/.js/.png URL masks real broken-reference
+// bugs and can confuse browsers' MIME-sniffing.
+const ASSET_EXT_RE = /\.(?:css|js|mjs|map|png|jpe?g|webp|gif|svg|ico|woff2?|ttf|otf|eot|mp3|mp4|webm|ogg|json|xml|pdf)$/i;
+app.get('*', (req, res) => {
+    if (ASSET_EXT_RE.test(req.path)) {
+        return res.status(404).send('Not found.');
+    }
     res.sendFile(path.join(DIST_DIR, 'index.html'));
 });
 

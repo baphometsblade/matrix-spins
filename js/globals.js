@@ -17,19 +17,30 @@
             }
         })();
 
-        // Legacy shared asset templates (used only as fallback for old CSS symbols)
+        // Symbol fallback — inline SVGs so the client never 404s on
+        // missing assets/ui/sym_*.png files. Each SVG is a small,
+        // self-contained icon with a tier-colored fill; the real art
+        // pipeline (scripts/generate_sdxl_symbols.py) can still publish
+        // PNGs into dist/assets/ui/ later and override these via CSS
+        // if needed.
+        function _svgSymbol(fill, bg, glyph) {
+            return '<svg class="reel-symbol-img" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">' +
+                '<rect width="64" height="64" rx="10" fill="' + bg + '"/>' +
+                '<text x="32" y="42" text-anchor="middle" font-family="Helvetica,Arial,sans-serif" font-size="34" font-weight="700" fill="' + fill + '">' + glyph + '</text>' +
+            '</svg>';
+        }
         const assetTemplates = {
-            diamond: `<img class="reel-symbol-img" src="assets/ui/sym_diamond.png" alt="Diamond" draggable="false">`,
-            cherry: `<img class="reel-symbol-img" src="assets/ui/sym_cherry.png" alt="Cherry" draggable="false">`,
-            seven: `<img class="reel-symbol-img" src="assets/ui/sym_seven.png" alt="Seven" draggable="false">`,
-            crown: `<img class="reel-symbol-img" src="assets/ui/sym_seven.png" alt="Crown" draggable="false">`,
-            star: `<img class="reel-symbol-img" src="assets/ui/sym_star.png" alt="Star" draggable="false">`,
-            bell: `<img class="reel-symbol-img" src="assets/ui/sym_bell.png" alt="Bell" draggable="false">`,
-            coin: `<img class="reel-symbol-img" src="assets/ui/sym_diamond.png" alt="Coin" draggable="false">`,
-            bar: `<img class="reel-symbol-img" src="assets/ui/sym_bar.png" alt="BAR" draggable="false">`,
-            clover: `<img class="reel-symbol-img" src="assets/ui/sym_star.png" alt="Clover" draggable="false">`,
-            watermelon: `<img class="reel-symbol-img" src="assets/ui/sym_watermelon.png" alt="Watermelon" draggable="false">`,
-            lemon: `<img class="reel-symbol-img" src="assets/ui/sym_lemon.png" alt="Lemon" draggable="false">`
+            diamond:    _svgSymbol('#9af2ff', '#143747', '◆'),
+            cherry:     _svgSymbol('#ff6060', '#3a0d0d', '♥'),
+            seven:      _svgSymbol('#ffd700', '#3a1a00', '7'),
+            crown:      _svgSymbol('#ffd700', '#2a1d00', '♛'),
+            star:       _svgSymbol('#ffeb3b', '#1a1805', '★'),
+            bell:       _svgSymbol('#ffca28', '#2a1800', '⍾'),
+            coin:       _svgSymbol('#ffcc33', '#2a1c00', '$'),
+            bar:        _svgSymbol('#e0e0e0', '#141414', 'BAR'),
+            clover:     _svgSymbol('#3ad68c', '#06281a', '☘'),
+            watermelon: _svgSymbol('#ff6f91', '#1a2a13', '\u{1F349}'),
+            lemon:      _svgSymbol('#ffe066', '#2a2805', '\u{1F34B}')
         };
         // DEFAULT_BALANCE, DEFAULT_STATS, SLOT_SYMBOLS, ACHIEVEMENTS — from constants.js
 

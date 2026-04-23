@@ -1,8 +1,8 @@
 /* Royal Slots Casino - Bundled JavaScript */
-/* Generated: 2026-04-20T06:57:41.164Z */
+/* Generated: 2026-04-23T08:11:20.903Z */
 
 
-/* â”€â”€â”€ shared/game-definitions.js (2/56) â”€â”€â”€ */
+/* â”€â”€â”€ shared/game-definitions.js (2/55) â”€â”€â”€ */
 // Shared Game Definitions — used by both server and client
 const games = [
     { id: 'sugar_rush', name: 'Candy Cascade 1000', provider: 'GoldenEdge Gaming', tag: 'HOT', tagClass: 'tag-hot', thumbnail: 'assets/thumbnails/sugar_rush.png', bgGradient: 'linear-gradient(135deg, #ff6fd8 0%, #f7a531 100%)',
@@ -776,7 +776,7 @@ payouts: { triple: 195, double: 19, wildTriple: 290, scatterPay: 5, payline3: 19
 // Node.js CommonJS export — browser clients ignore this (module is undefined in browser scope)
 if (typeof module !== 'undefined') module.exports = games;
 
-/* â”€â”€â”€ js/globals.js (8/56) â”€â”€â”€ */
+/* â”€â”€â”€ js/globals.js (8/55) â”€â”€â”€ */
         // Game data loaded from shared/game-definitions.js
         // (60 game definitions moved to separate module)
 
@@ -796,19 +796,30 @@ if (typeof module !== 'undefined') module.exports = games;
             }
         })();
 
-        // Legacy shared asset templates (used only as fallback for old CSS symbols)
+        // Symbol fallback — inline SVGs so the client never 404s on
+        // missing assets/ui/sym_*.png files. Each SVG is a small,
+        // self-contained icon with a tier-colored fill; the real art
+        // pipeline (scripts/generate_sdxl_symbols.py) can still publish
+        // PNGs into dist/assets/ui/ later and override these via CSS
+        // if needed.
+        function _svgSymbol(fill, bg, glyph) {
+            return '<svg class="reel-symbol-img" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">' +
+                '<rect width="64" height="64" rx="10" fill="' + bg + '"/>' +
+                '<text x="32" y="42" text-anchor="middle" font-family="Helvetica,Arial,sans-serif" font-size="34" font-weight="700" fill="' + fill + '">' + glyph + '</text>' +
+            '</svg>';
+        }
         const assetTemplates = {
-            diamond: `<img class="reel-symbol-img" src="assets/ui/sym_diamond.png" alt="Diamond" draggable="false">`,
-            cherry: `<img class="reel-symbol-img" src="assets/ui/sym_cherry.png" alt="Cherry" draggable="false">`,
-            seven: `<img class="reel-symbol-img" src="assets/ui/sym_seven.png" alt="Seven" draggable="false">`,
-            crown: `<img class="reel-symbol-img" src="assets/ui/sym_seven.png" alt="Crown" draggable="false">`,
-            star: `<img class="reel-symbol-img" src="assets/ui/sym_star.png" alt="Star" draggable="false">`,
-            bell: `<img class="reel-symbol-img" src="assets/ui/sym_bell.png" alt="Bell" draggable="false">`,
-            coin: `<img class="reel-symbol-img" src="assets/ui/sym_diamond.png" alt="Coin" draggable="false">`,
-            bar: `<img class="reel-symbol-img" src="assets/ui/sym_bar.png" alt="BAR" draggable="false">`,
-            clover: `<img class="reel-symbol-img" src="assets/ui/sym_star.png" alt="Clover" draggable="false">`,
-            watermelon: `<img class="reel-symbol-img" src="assets/ui/sym_watermelon.png" alt="Watermelon" draggable="false">`,
-            lemon: `<img class="reel-symbol-img" src="assets/ui/sym_lemon.png" alt="Lemon" draggable="false">`
+            diamond:    _svgSymbol('#9af2ff', '#143747', '◆'),
+            cherry:     _svgSymbol('#ff6060', '#3a0d0d', '♥'),
+            seven:      _svgSymbol('#ffd700', '#3a1a00', '7'),
+            crown:      _svgSymbol('#ffd700', '#2a1d00', '♛'),
+            star:       _svgSymbol('#ffeb3b', '#1a1805', '★'),
+            bell:       _svgSymbol('#ffca28', '#2a1800', '⍾'),
+            coin:       _svgSymbol('#ffcc33', '#2a1c00', '$'),
+            bar:        _svgSymbol('#e0e0e0', '#141414', 'BAR'),
+            clover:     _svgSymbol('#3ad68c', '#06281a', '☘'),
+            watermelon: _svgSymbol('#ff6f91', '#1a2a13', '\u{1F349}'),
+            lemon:      _svgSymbol('#ffe066', '#2a2805', '\u{1F34B}')
         };
         // DEFAULT_BALANCE, DEFAULT_STATS, SLOT_SYMBOLS, ACHIEVEMENTS — from constants.js
 
@@ -1118,7 +1129,7 @@ if (typeof module !== 'undefined') module.exports = games;
             return loadFavorites().includes(gameId);
         }
 
-/* â”€â”€â”€ js/particle-engine.js (9/56) â”€â”€â”€ */
+/* â”€â”€â”€ js/particle-engine.js (9/55) â”€â”€â”€ */
 /**
  * ============================================================
  * Casino App — Canvas Particle Engine
@@ -2183,7 +2194,7 @@ function destroyParticleEngine() {
     _particleEngineInstance = null;
 }
 
-/* â”€â”€â”€ js/auth.js (10/56) â”€â”€â”€ */
+/* â”€â”€â”€ js/auth.js (10/55) â”€â”€â”€ */
 // ═══════════════════════════════════════════════════════
 // AUTH MODULE
 // ═══════════════════════════════════════════════════════
@@ -2503,11 +2514,20 @@ function destroyParticleEngine() {
         async function login(username, password) {
             let serverError = null;
             try {
-                const response = await apiRequest('/api/auth/login', {
+                let response = await apiRequest('/api/auth/login', {
                     method: 'POST',
                     body: { username, password },
                     requireAuth: false
                 });
+                if (response && response.requires_2fa && response.challenge) {
+                    const code = await _prompt2FACode(response.user && response.user.username);
+                    if (!code) throw new Error('Sign-in cancelled.');
+                    response = await apiRequest('/api/auth/login/2fa', {
+                        method: 'POST',
+                        body: { challenge: response.challenge, code: code },
+                        requireAuth: false
+                    });
+                }
                 if (!response.token || !response.user) {
                     throw new Error('Invalid login response from server.');
                 }
@@ -2732,7 +2752,7 @@ function destroyParticleEngine() {
                 return;
             }
             try {
-                await apiRequest('/api/user/forgot-password', {
+                await apiRequest('/api/auth/forgot-password', {
                     method: 'POST',
                     body: { email }
                 });
@@ -2792,8 +2812,8 @@ function destroyParticleEngine() {
             const confirmPwd = (document.getElementById('resetConfirmPassword')?.value || '');
             const errEl = document.getElementById('authError');
 
-            if (!newPwd || newPwd.length < 6) {
-                if (errEl) errEl.textContent = 'Password must be at least 6 characters.';
+            if (!newPwd || newPwd.length < 8) {
+                if (errEl) errEl.textContent = 'Password must be at least 8 characters.';
                 return;
             }
             if (newPwd !== confirmPwd) {
@@ -2806,7 +2826,7 @@ function destroyParticleEngine() {
             }
 
             try {
-                await apiRequest('/api/user/reset-password', {
+                await apiRequest('/api/auth/reset-password', {
                     method: 'POST',
                     body: { token: _pendingResetToken, new_password: newPwd }
                 });
@@ -2822,16 +2842,60 @@ function destroyParticleEngine() {
          * Returns true if the reset flow was activated (caller should skip normal auth gate).
          */
         function checkResetTokenOnLoad() {
+            // Accept either "#reset-password=<token>" (server redirect format)
+            // or "?resetToken=<token>" (legacy).
+            const hashMatch = (window.location.hash || '').match(/reset-password=([A-Za-z0-9._-]+)/);
             const urlParams = new URLSearchParams(window.location.search);
-            const token = urlParams.get('resetToken');
+            const token = (hashMatch && hashMatch[1]) || urlParams.get('resetToken');
             if (!token) return false;
             _pendingResetToken = token;
             showAuthModal();
             showResetPassword(true);
+            // Clean the URL so the token isn't re-applied on a refresh.
+            try {
+                const url = new URL(window.location);
+                url.searchParams.delete('resetToken');
+                url.hash = '';
+                window.history.replaceState({}, '', url);
+            } catch (err) { /* non-fatal */ }
             return true;
         }
 
-/* â”€â”€â”€ js/spin-engine.js (11/56) â”€â”€â”€ */
+
+        // Prompts the user for a TOTP code during login when 2FA is enabled.
+        // Returns a Promise<string|null> — null if the user cancels.
+        function _prompt2FACode(username) {
+            return new Promise(function (resolve) {
+                var existing = document.getElementById('loginTfaOverlay');
+                if (existing) existing.remove();
+                var overlay = document.createElement('div');
+                overlay.id = 'loginTfaOverlay';
+                overlay.className = 'tfa-overlay';
+                overlay.innerHTML = '<div class="tfa-inner" role="dialog" aria-modal="true">' +
+                    '<div class="tfa-title">Enter your authenticator code</div>' +
+                    '<p class="tfa-sub">' + (username ? 'Welcome back, ' + username + '. ' : '') + 'Enter the 6-digit code from your authenticator app, or a recovery code.</p>' +
+                    '<input type="text" id="loginTfaCode" class="tfa-input" maxlength="16" autocomplete="one-time-code" placeholder="6-digit code or recovery code">' +
+                    '<div class="tfa-actions">' +
+                        '<button class="tfa-btn tfa-btn-primary" type="button" data-action="ok">Verify</button>' +
+                        '<button class="tfa-btn" type="button" data-action="cancel">Cancel</button>' +
+                    '</div>' +
+                    '<div id="loginTfaErr" class="tfa-err" role="alert"></div>' +
+                '</div>';
+                document.body.appendChild(overlay);
+                setTimeout(function () { var i = document.getElementById('loginTfaCode'); if (i) i.focus(); }, 50);
+                var input = overlay.querySelector('#loginTfaCode');
+                function finish(value) { overlay.remove(); resolve(value); }
+                overlay.querySelector('[data-action="ok"]').addEventListener('click', function () {
+                    var v = (input.value || '').trim();
+                    if (!v) { overlay.querySelector('#loginTfaErr').textContent = 'Please enter a code.'; return; }
+                    finish(v);
+                });
+                overlay.querySelector('[data-action="cancel"]').addEventListener('click', function () { finish(null); });
+                input.addEventListener('keydown', function (e) { if (e.key === 'Enter') overlay.querySelector('[data-action="ok"]').click(); });
+            });
+        }
+
+/* â”€â”€â”€ js/spin-engine.js (11/55) â”€â”€â”€ */
 // ═══════════════════════════════════════════════════════
 // SPIN-ENGINE MODULE
 // ═══════════════════════════════════════════════════════
@@ -3026,7 +3090,7 @@ function destroyParticleEngine() {
             return null;
         }
 
-/* â”€â”€â”€ js/win-logic.js (12/56) â”€â”€â”€ */
+/* â”€â”€â”€ js/win-logic.js (12/55) â”€â”€â”€ */
 // ═══════════════════════════════════════════════════════
 // WIN-LOGIC MODULE
 // ═══════════════════════════════════════════════════════
@@ -4509,7 +4573,7 @@ function destroyParticleEngine() {
             });
         }
 
-/* â”€â”€â”€ js/ui-lobby.js (13/56) â”€â”€â”€ */
+/* â”€â”€â”€ js/ui-lobby.js (13/55) â”€â”€â”€ */
 // ═══════════════════════════════════════════════════════
 // UI-LOBBY MODULE
 // ═══════════════════════════════════════════════════════
@@ -4549,30 +4613,29 @@ function destroyParticleEngine() {
         var _resumeBannerTimer = null;
         var _lastPlayedGameForResume = null;
 
-        // Live player count simulation
-        var _liveCounts = {};
+        // Live player counts were previously fabricated per-game from
+        // a hash of the game id + random ±2 drift every 15s. Stripped
+        // out — the badges won't render until there's a real metrics
+        // endpoint that returns concurrent players per game. Keep the
+        // function signatures as no-ops so callers don't crash.
+        function _seedCount(_gameId, _isHot) { /* no-op: no fake data */ }
+        function _getLiveCount(_gameId) { return null; }
+        function _tickLiveCounts() { /* no-op: no fake data */ }
 
-        function _seedCount(gameId, isHot) {
-            var h = 0;
-            for (var i = 0; i < gameId.length; i++) { h = (h * 31 + gameId.charCodeAt(i)) & 0xffff; }
-            var base = isHot ? (18 + h % 80) : (8 + h % 45);
-            _liveCounts[gameId] = base;
-        }
 
-        function _getLiveCount(gameId) {
-            return _liveCounts[gameId] || 12;
-        }
-
-        function _tickLiveCounts() {
-            Object.keys(_liveCounts).forEach(function(id) {
-                var delta = Math.floor(Math.random() * 5) - 2; // -2 to +2
-                _liveCounts[id] = Math.max(6, _liveCounts[id] + delta);
-                // Update any visible badges
-                var badge = document.querySelector('.card-players-live[data-game="' + id + '"]');
-                if (badge) badge.lastChild.nodeValue = ' ' + _liveCounts[id] + ' playing';
-            });
-        }
-
+        // Procedural monogram styles for game cards whose thumbnail
+        // PNG doesn't exist (i.e. every card — the art pipeline is not
+        // wired up). Injected once.
+        (function injectMonogramStyles() {
+            if (document.getElementById('gameCardMonogramStyles')) return;
+            var css =
+                '.game-card .game-card-monogram{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-family:Helvetica,Arial,sans-serif;font-size:80px;font-weight:800;line-height:1;letter-spacing:-3px;opacity:.82;text-shadow:0 4px 24px rgba(0,0,0,.55);pointer-events:none;user-select:none}' +
+                '.game-card .game-card-monogram::after{content:"";position:absolute;inset:0;background:radial-gradient(ellipse at 30% 25%,rgba(255,255,255,.18),transparent 55%);pointer-events:none}';
+            var s = document.createElement('style');
+            s.id = 'gameCardMonogramStyles';
+            s.textContent = css;
+            (document.head || document.documentElement).appendChild(s);
+        })();
 
         // ═══════════════════════════════════════════════════════
         // LOADING SKELETONS
@@ -5126,10 +5189,6 @@ function renderGames() {
                     else applyGameOfDayBadge();
                     // Hot/Cold badges — fire-and-forget, cosmetic only
                     fetchGameStats();
-                    // Start live-count tick once, persists across re-renders
-                    if (!window._liveCountsInterval) {
-                        window._liveCountsInterval = setInterval(_tickLiveCounts, 15000 + Math.random() * 6000);
-                    }
                     // Initial tab count badges after games load (Sprint 19)
                     setTimeout(function() { if (typeof _updateTabCounts === 'function') _updateTabCounts(); }, 0);
                     // XP level badge update (Sprint 20)
@@ -5394,13 +5453,23 @@ function renderGames() {
 
         function createGameCard(game) {
             const { hotIds: _hotIds, newIds: _newIds } = _getHotNewCached();
-            // Thumbnails are lazy-loaded via IntersectionObserver (_initLazyThumbnails).
-            // data-bg stores the URL; the observer applies it only when the card is visible.
-            const hasThumbnail = !!game.thumbnail;
+            // Each game has a bgGradient + accentColor in its definition;
+            // we render those directly. The PNG thumbnails referenced in
+            // shared/game-definitions.js point at assets/thumbnails/X.png
+            // which have never been published; rather than 404 every card,
+            // we render a procedural gradient panel with the game's initial
+            // letter as a decorative overlay. Real art can be re-enabled
+            // by populating dist/assets/thumbnails/ and flipping the
+            // useThumbnail flag below.
+            const useThumbnail = false;
+            const hasThumbnail = useThumbnail && !!game.thumbnail;
             const thumbStyle = hasThumbnail
                 ? `background: #1a2332;`
                 : `background: ${game.bgGradient};`;
             const thumbDataBg = hasThumbnail ? ` data-bg="${game.thumbnail}"` : '';
+            const procMonogram = !hasThumbnail
+                ? `<div class="game-card-monogram" aria-hidden="true" style="color:${game.accentColor || '#fff'}">${(game.name || game.id || '?').trim().charAt(0).toUpperCase()}</div>`
+                : '';
             const isJackpot = game.tag === 'JACKPOT' || game.tagClass === 'tag-jackpot';
             const isHot  = game.tag === 'HOT'  || game.tagClass === 'tag-hot';
             const isNew  = game.tag === 'NEW'  || game.tagClass === 'tag-new';
@@ -5472,13 +5541,11 @@ function renderGames() {
                 <div class="game-card${isHot ? ' game-card-hot' : ''}${isJackpot ? ' game-card-jackpot' : ''}${gameDayCardClass}" onclick="try{if(typeof _compareMode!=='undefined'&&_compareMode){_addToCompare('${game.id}');this.classList.toggle('compare-selected',typeof _compareGames!=='undefined'&&_compareGames.indexOf('${game.id}')>=0);}else{(window.openSlot||openSlot)('${game.id}');}}catch(e){console.warn('Game click error:',e.message);}" style="position:relative" data-game-name="${(game.name || game.id || '').toLowerCase()}" data-game-id="${(game.id || '').toLowerCase()}">
                     <button class="fav-btn${favored ? ' fav-active' : ''}" data-game-id="${game.id}" title="${favored ? 'Remove from favourites' : 'Add to favourites'}" onclick="event.stopPropagation(); (function(btn){var nowFav=toggleFavorite('${game.id}'); btn.textContent=nowFav?'\u2764\uFE0F':'\u2661'; btn.title=nowFav?'Remove from favourites':'Add to favourites'; btn.classList.add('fav-active'); setTimeout(function(){btn.classList.remove('fav-active');},350); updateFavTabBadge();})(this)">${favIcon}</button>
                     <div class="game-thumbnail" style="${thumbStyle}"${thumbDataBg}>
-                        ${!game.thumbnail && game.asset ? (assetTemplates[game.asset] || '') : ''}
-                        <div class="card-anim-preview" style="background-image:url('assets/backgrounds/slots/${game.id}_bg.webp')" onerror="this.classList.add('hidden')">
-                            <span class="preview-badge">&#9654; PREVIEW</span>
-                        </div>
+                        ${!hasThumbnail && game.asset ? (assetTemplates[game.asset] || '') : ''}
+                        ${procMonogram}
                         ${topTag}
                         ${jackpotBadge}
-                        <div class="card-players-live" data-game="${game.id}"> ${_getLiveCount(game.id)} playing</div>
+                        <!-- card-players-live badge removed: no real per-game concurrency source -->
                         ${(function() { try { var _v = parseFloat(localStorage.getItem('personalBest_' + game.id) || '0'); if (_v > 0) { var _disp = _v >= 1000 ? ('$' + (_v/1000).toFixed(1) + 'K') : ('$' + Math.round(_v)); return '<div class="card-personal-best">\u{1F3C6} PB ' + _disp + '</div>'; } } catch(e) {} return ''; })()}
                         <div class="game-vol-badge ${volClass}" title="Volatility: ${vol}">
                             ${dotsHtml}
@@ -12203,7 +12270,7 @@ function renderGameStatsWidget() {
     });
 }
 
-/* â”€â”€â”€ js/search-autocomplete.js (14/56) â”€â”€â”€ */
+/* â”€â”€â”€ js/search-autocomplete.js (14/55) â”€â”€â”€ */
 (function() {
   'use strict';
 
@@ -12476,7 +12543,7 @@ function renderGameStatsWidget() {
   };
 })();
 
-/* â”€â”€â”€ js/slot-gui-engine.js (15/56) â”€â”€â”€ */
+/* â”€â”€â”€ js/slot-gui-engine.js (15/55) â”€â”€â”€ */
 (function() {
     'use strict';
 
@@ -13118,7 +13185,7 @@ function renderGameStatsWidget() {
     };
 })();
 
-/* â”€â”€â”€ js/ui-slot.js (16/56) â”€â”€â”€ */
+/* â”€â”€â”€ js/ui-slot.js (16/55) â”€â”€â”€ */
 ﻿// -------------------------------------------------------
 // UI-SLOT MODULE
 // -------------------------------------------------------
@@ -14397,7 +14464,9 @@ function renderGameStatsWidget() {
         }
 
 
-        // Derive RTP from game properties (simulated since not stored in game data)
+        // Rough theoretical RTP bucket derived from the game's own
+        // payout table. This is a label for the info panel only — not
+        // a live-measured RTP from real play.
         function deriveGameRTP(game) {
             const maxPayout = (game.payouts && game.payouts.triple) || (game.rtp ? Math.round(game.rtp * 2) : 100);
             if (maxPayout >= 200) return '96.8%';
@@ -22309,67 +22378,15 @@ function renderGameStatsWidget() {
         }
 
         // ----------------------------------------------------------
-        // SPRINT 37 — Demo Mode
+        // Demo Mode — REMOVED. Previously temporarily swapped the user's
+        // balance with a hardcoded $10,000 and let them spin 3 times.
+        // Replaced with no-ops so any stale call site degrades safely:
+        // the real balance is authoritative and never mutated here.
         // ----------------------------------------------------------
         var _demoMode = false;
         var _demoSpinsLeft = 0;
-        var _demoRealBalance = 0;
-
-        // Override openSlot to support demo mode: openSlot(gameId, { demo: true })
-        (function() {
-            var _origOpenSlot = typeof openSlot === 'function' ? openSlot : null;
-            if (!_origOpenSlot) return;
-            openSlot = function(gameId, opts) {
-                _demoMode = !!(opts && opts.demo);
-                if (_demoMode) {
-                    _demoSpinsLeft = 3;
-                    _demoRealBalance = typeof balance !== 'undefined' ? balance : 0;
-                    balance = 10000;
-                    if (typeof updateBalance === 'function') updateBalance();
-                } else {
-                    _demoMode = false;
-                }
-                _origOpenSlot(gameId);
-                // Show/hide demo banner
-                var banner = document.getElementById('demoBanner');
-                var spansEl = document.getElementById('demoSpinsLeft');
-                if (banner) banner.style.display = _demoMode ? 'flex' : 'none';
-                if (spansEl) spansEl.textContent = _demoSpinsLeft;
-            };
-        })();
-
-        function _demoOnSpinEnd() {
-            if (!_demoMode) return;
-            _demoSpinsLeft--;
-            var spansEl = document.getElementById('demoSpinsLeft');
-            if (spansEl) spansEl.textContent = _demoSpinsLeft;
-            if (_demoSpinsLeft <= 0) {
-                // Show demo end modal
-                var modal = document.getElementById('demoEndModal');
-                if (modal) modal.classList.add('active');
-            }
-        }
-
-        function exitDemoMode(playForReal) {
-            // Restore real balance (don't saveBalance during demo)
-            if (_demoMode) {
-                balance = _demoRealBalance;
-                if (typeof updateBalance === 'function') updateBalance();
-                if (typeof saveBalance === 'function') saveBalance();
-            }
-            _demoMode = false;
-            _demoSpinsLeft = 0;
-            _demoRealBalance = 0;
-            var banner = document.getElementById('demoBanner');
-            if (banner) banner.style.display = 'none';
-            var modal = document.getElementById('demoEndModal');
-            if (modal) modal.classList.remove('active');
-            if (playForReal) {
-                // Stay in slot with real balance
-            } else {
-                if (typeof closeSlot === 'function') closeSlot();
-            }
-        }
+        function _demoOnSpinEnd() { /* no-op: demo mode removed */ }
+        function exitDemoMode() { /* no-op: demo mode removed */ }
 
         // ----------------------------------------------------------
         // SPRINT 38 — Session Time Tracker
@@ -28431,15 +28448,10 @@ function _updatePlayerCount() {
 var _bigWins255 = [];
 var _bigWinNames255 = ['Lucky_7s', 'Dragon888', 'SlotKing', 'NeonQueen', 'GoldRush99', 'WildAce', 'CryptoSpin', 'RoyalFlush', 'MatrixPro', 'JackpotJoe'];
 function _initBigWinsFeed() {
-    // Seed with some fake wins
-    for (var i = 0; i < 5; i++) {
-        _bigWins255.push({
-            name: _bigWinNames255[Math.floor(Math.random() * _bigWinNames255.length)],
-            amount: Math.floor(Math.random() * 5000) + 100,
-            game: ['Dragon Fortune', 'Mega Diamonds', 'Space Gems', 'Neon Nights', 'Lucky Sevens'][Math.floor(Math.random() * 5)],
-            time: Date.now() - Math.floor(Math.random() * 600000)
-        });
-    }
+    // Was seeding the feed with 5 hardcoded fake wins from a random-name
+    // list. Removed — the feed now renders whatever real wins the user's
+    // own session produces (via _addBigWin). If a server-side "recent
+    // wins" endpoint ships later, wire the fetch here.
     _renderBigWinsFeed();
 }
 function _addBigWin(winAmount, gameName) {
@@ -29022,19 +29034,12 @@ function _initBonusWheel() {
     if (el) el.style.display = canSpin ? '' : 'none';
 }
 function _spinBonusWheel() {
-    var dayMs = 86400000;
-    if ((Date.now() - _bonusWheel272.lastSpin) < dayMs) { alert('Come back tomorrow for another free spin!'); return; }
-    _bonusWheel272.lastSpin = Date.now();
-    try { localStorage.setItem('matrixSpins_bonusWheel', JSON.stringify({ lastSpin: _bonusWheel272.lastSpin })); } catch(e) {}
-    var prize = _bonusWheel272.prizes[Math.floor(Math.random() * _bonusWheel272.prizes.length)];
-    if (prize > 0) {
-        if (typeof balance !== 'undefined') balance += prize;
-        var betDisplay = document.getElementById('balanceAmount');
-        if (betDisplay) betDisplay.textContent = balance;
-        alert('\u{1F389} You won $' + prize + ' from the Daily Bonus Wheel!');
-    } else {
-        alert('Better luck tomorrow! Spin again in 24 hours.');
-    }
+    // The bonus wheel previously credited the user's displayed balance
+    // purely on the client — a free-money path that desynced the UI
+    // from the real server balance. Removed. When a real bonus-claim
+    // endpoint exists (server-side validated cool-down + credit), wire
+    // it here with a POST to /api/bonus/daily.
+    alert('Daily bonus rewards will be available once bonus-claim is wired to the real backend.');
     var btn = document.getElementById('bonusWheelBtn');
     if (btn) btn.style.display = 'none';
 }
@@ -29155,14 +29160,9 @@ function _uploadKYCDoc() {
     _updateKYCBadge();
     _openKYCPanel();
     _logAuditEvent('kyc_document_uploaded');
-    // Auto-approve after 3 seconds (simulated)
-    setTimeout(function() {
-        _kyc275.level = 3;
-        _kyc275.status = 'verified';
-        try { localStorage.setItem('matrixSpins_kyc', JSON.stringify(_kyc275)); } catch(e) {}
-        _updateKYCBadge();
-        _logAuditEvent('kyc_fully_verified');
-    }, 3000);
+    // The previous 3-second "auto-approve" fake has been removed.
+    // Verification status only changes when a real KYC provider's
+    // webhook flips it; until that's wired, documents stay pending.
 }
 
 // Sprint 276 — AML transaction monitoring
@@ -29262,14 +29262,22 @@ function _checkRateLimit() {
     return true;
 }
 
-// Sprint 280 — Two-factor authentication UI
-var _twofa280 = { enabled: false, secret: '' };
-function _init2FA() {
-    try {
-        var raw = localStorage.getItem('matrixSpins_2fa');
-        if (raw) _twofa280 = JSON.parse(raw);
-    } catch(e) {}
+// Real RFC 6238 TOTP 2FA — talks to /api/auth/2fa/* on the server.
+// The client never stores a secret; all verification happens server-side.
+var _twofa280 = { enabled: false, configured: false, recovery_codes_remaining: 0 };
+async function _init2FA() {
+    await _refresh2FAStatus();
     _update2FABadge();
+}
+async function _refresh2FAStatus() {
+    try {
+        var token = (typeof authToken !== 'undefined') ? authToken : null;
+        if (!token) return;
+        var res = await fetch('/api/auth/2fa/status', { headers: { Authorization: 'Bearer ' + token } });
+        if (!res.ok) return;
+        _twofa280 = await res.json();
+        _update2FABadge();
+    } catch (err) { /* offline; badge stays as-is */ }
 }
 function _update2FABadge() {
     var el = document.getElementById('twofaBadge');
@@ -29284,18 +29292,138 @@ function _update2FABadge() {
     el.style.display = '';
 }
 function _toggle2FA() {
-    _twofa280.enabled = !_twofa280.enabled;
-    if (_twofa280.enabled) {
-        var chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ234567';
-        _twofa280.secret = '';
-        for (var i = 0; i < 16; i++) _twofa280.secret += chars[Math.floor(Math.random() * chars.length)];
-        _logAuditEvent('2fa_enabled');
-        alert('2FA enabled! Your backup code: ' + _twofa280.secret + '\n\nSave this code securely.');
-    } else {
-        _logAuditEvent('2fa_disabled');
+    var token = (typeof authToken !== 'undefined') ? authToken : null;
+    if (!token) { if (typeof showAuthModal === 'function') showAuthModal(); return; }
+    if (_twofa280.enabled) _open2FADisablePanel();
+    else _open2FASetupPanel();
+}
+
+function _twofaApi(method, path, body) {
+    var token = (typeof authToken !== 'undefined') ? authToken : null;
+    return fetch(path, {
+        method: method,
+        headers: Object.assign({ 'Content-Type': 'application/json' }, token ? { Authorization: 'Bearer ' + token } : {}),
+        body: body ? JSON.stringify(body) : undefined,
+    }).then(async function (r) {
+        var data = null; try { data = await r.json(); } catch (e) {}
+        if (!r.ok) { var err = new Error((data && data.error) || r.statusText); err.status = r.status; throw err; }
+        return data;
+    });
+}
+
+async function _open2FASetupPanel() {
+    var overlay = _ensureTwofaOverlay();
+    var inner = overlay.querySelector('.tfa-inner');
+    inner.innerHTML = '<div class="tfa-title">Enable two-factor authentication</div><p class="tfa-sub">Loading your QR code&hellip;</p>';
+    var data;
+    try { data = await _twofaApi('POST', '/api/auth/2fa/setup'); }
+    catch (e) { inner.innerHTML = '<div class="tfa-title">2FA setup</div><p class="tfa-err">' + _escapeHtml(e.message) + '</p><button class="tfa-btn" onclick="_close2FA()">Close</button>'; return; }
+    inner.innerHTML =
+        '<div class="tfa-title">Enable two-factor authentication</div>' +
+        '<p class="tfa-sub">Scan the QR code with Google Authenticator, 1Password, Authy, Bitwarden or any other TOTP app. Then enter the 6-digit code it shows.</p>' +
+        '<div class="tfa-qr">' + data.qr_svg + '</div>' +
+        '<div class="tfa-secret-label">Or enter this secret manually:</div>' +
+        '<div class="tfa-secret"><code>' + _escapeHtml(data.secret) + '</code><button class="tfa-copy" type="button" onclick="navigator.clipboard&amp;&amp;navigator.clipboard.writeText(\'' + data.secret + '\')">Copy</button></div>' +
+        '<input type="text" id="tfaSetupCode" class="tfa-input" maxlength="6" inputmode="numeric" pattern="[0-9]{6}" placeholder="6-digit code" autocomplete="one-time-code">' +
+        '<div class="tfa-actions"><button class="tfa-btn tfa-btn-primary" onclick="_confirm2FAEnable()">Enable</button><button class="tfa-btn" onclick="_close2FA()">Cancel</button></div>' +
+        '<div id="tfaSetupErr" class="tfa-err" role="alert"></div>';
+    setTimeout(function () { var i = document.getElementById('tfaSetupCode'); if (i) i.focus(); }, 100);
+}
+
+async function _confirm2FAEnable() {
+    var codeEl = document.getElementById('tfaSetupCode');
+    var errEl = document.getElementById('tfaSetupErr');
+    if (!codeEl) return;
+    var code = (codeEl.value || '').trim();
+    errEl.textContent = '';
+    if (!/^\d{6}$/.test(code)) { errEl.textContent = 'Enter the 6-digit code from your authenticator app.'; return; }
+    try {
+        var data = await _twofaApi('POST', '/api/auth/2fa/enable', { code: code });
+        _show2FARecoveryCodes(data.recovery_codes || []);
+        await _refresh2FAStatus();
+    } catch (e) { errEl.textContent = e.message || 'Could not enable 2FA.'; }
+}
+
+function _show2FARecoveryCodes(codes) {
+    var inner = document.querySelector('#twofaOverlay .tfa-inner');
+    if (!inner) return;
+    var listHtml = codes.map(function (c) { return '<li><code>' + _escapeHtml(c) + '</code></li>'; }).join('');
+    inner.innerHTML =
+        '<div class="tfa-title">Save your recovery codes</div>' +
+        '<p class="tfa-sub">Each code works <strong>once</strong> in place of a TOTP code. Store them somewhere safe &mdash; you won\'t see them again.</p>' +
+        '<ol class="tfa-recovery">' + listHtml + '</ol>' +
+        '<div class="tfa-actions">' +
+            '<button class="tfa-btn" onclick="navigator.clipboard&amp;&amp;navigator.clipboard.writeText(' + JSON.stringify(codes.join('\n')) + ')">Copy all</button>' +
+            '<button class="tfa-btn tfa-btn-primary" onclick="_close2FA()">I\'ve saved these</button>' +
+        '</div>';
+}
+
+function _open2FADisablePanel() {
+    var overlay = _ensureTwofaOverlay();
+    var inner = overlay.querySelector('.tfa-inner');
+    inner.innerHTML =
+        '<div class="tfa-title">Disable two-factor authentication</div>' +
+        '<p class="tfa-sub">Confirm your password and a current 6-digit code (or a recovery code) to turn 2FA off.</p>' +
+        '<input type="password" id="tfaDisPw" class="tfa-input" placeholder="Password" autocomplete="current-password">' +
+        '<input type="text" id="tfaDisCode" class="tfa-input" placeholder="6-digit code or recovery code" autocomplete="one-time-code">' +
+        '<div class="tfa-actions"><button class="tfa-btn tfa-btn-danger" onclick="_confirm2FADisable()">Disable 2FA</button><button class="tfa-btn" onclick="_close2FA()">Cancel</button></div>' +
+        '<div id="tfaDisErr" class="tfa-err" role="alert"></div>';
+}
+
+async function _confirm2FADisable() {
+    var pw = document.getElementById('tfaDisPw');
+    var code = document.getElementById('tfaDisCode');
+    var errEl = document.getElementById('tfaDisErr');
+    errEl.textContent = '';
+    if (!pw || !code) return;
+    try {
+        await _twofaApi('POST', '/api/auth/2fa/disable', { password: pw.value, code: code.value.trim() });
+        await _refresh2FAStatus();
+        _close2FA();
+    } catch (e) { errEl.textContent = e.message || 'Could not disable 2FA.'; }
+}
+
+function _ensureTwofaOverlay() {
+    var el = document.getElementById('twofaOverlay');
+    if (el) { el.style.display = 'flex'; return el; }
+    el = document.createElement('div');
+    el.id = 'twofaOverlay';
+    el.className = 'tfa-overlay';
+    el.innerHTML = '<div class="tfa-inner" role="dialog" aria-modal="true"></div>';
+    el.addEventListener('click', function (e) { if (e.target === el) _close2FA(); });
+    document.body.appendChild(el);
+    if (!document.getElementById('tfaStyles')) {
+        var css =
+            '.tfa-overlay{position:fixed;inset:0;background:rgba(0,0,0,.8);display:flex;align-items:center;justify-content:center;z-index:10001}' +
+            '.tfa-inner{background:#0d1117;border:1px solid rgba(212,175,55,.4);border-radius:12px;padding:24px;max-width:420px;width:92%;max-height:90vh;overflow:auto;color:#e0e0e0}' +
+            '.tfa-title{color:#d4af37;font-size:18px;font-weight:700;margin-bottom:8px}' +
+            '.tfa-sub{color:#8a8a8a;font-size:13px;line-height:1.5;margin-bottom:14px}' +
+            '.tfa-qr{background:#fff;padding:8px;border-radius:8px;display:flex;justify-content:center;margin:8px 0 16px}' +
+            '.tfa-qr svg{width:100%;height:auto;max-width:240px}' +
+            '.tfa-secret-label{font-size:12px;color:#8a8a8a;margin-bottom:4px}' +
+            '.tfa-secret{display:flex;gap:8px;align-items:center;margin-bottom:14px;background:rgba(255,255,255,.04);border:1px solid #333;border-radius:6px;padding:8px}' +
+            '.tfa-secret code{font-family:Menlo,monospace;font-size:13px;color:#00d4ff;word-break:break-all;flex:1}' +
+            '.tfa-copy,.tfa-btn{background:rgba(255,255,255,.08);color:#e0e0e0;border:1px solid #333;border-radius:6px;padding:8px 14px;cursor:pointer;font-size:13px;font-weight:600;letter-spacing:.4px}' +
+            '.tfa-copy:hover,.tfa-btn:hover{border-color:#d4af37;background:rgba(212,175,55,.12)}' +
+            '.tfa-input{width:100%;padding:10px;background:rgba(255,255,255,.06);border:1px solid #333;border-radius:6px;color:#fff;font-size:14px;box-sizing:border-box;margin-bottom:10px}' +
+            '.tfa-input:focus{outline:none;border-color:#d4af37}' +
+            '.tfa-actions{display:flex;gap:10px;justify-content:flex-end;margin-top:4px}' +
+            '.tfa-btn-primary{background:linear-gradient(135deg,#d4af37,#f4d03f);color:#000;border-color:#d4af37}' +
+            '.tfa-btn-primary:hover{transform:translateY(-1px);box-shadow:0 4px 14px rgba(212,175,55,.5)}' +
+            '.tfa-btn-danger{background:rgba(231,76,60,.15);color:#ff9f9f;border-color:#e74c3c}' +
+            '.tfa-btn-danger:hover{background:rgba(231,76,60,.25)}' +
+            '.tfa-err{color:#ff9f9f;font-size:13px;margin-top:10px;min-height:18px}' +
+            '.tfa-recovery{list-style:decimal;padding-left:24px;margin:8px 0 14px;column-count:2;gap:8px}' +
+            '.tfa-recovery li{font-family:Menlo,monospace;font-size:13px;padding:4px 0}' +
+            '.tfa-recovery code{color:#00d4ff;letter-spacing:.5px}';
+        var s = document.createElement('style'); s.id = 'tfaStyles'; s.textContent = css; document.head.appendChild(s);
     }
-    try { localStorage.setItem('matrixSpins_2fa', JSON.stringify(_twofa280)); } catch(e) {}
-    _update2FABadge();
+    return el;
+}
+
+function _close2FA() {
+    var el = document.getElementById('twofaOverlay');
+    if (el) el.style.display = 'none';
 }
 
 // Sprint 281 — Password strength meter
@@ -31394,23 +31522,15 @@ function _showLeaderboard() {
     panel = document.createElement('div');
     panel.id = 'leaderboard360';
     panel.className = 'leaderboard-overlay';
-    var mockData = [
-        { rank: 1, name: 'HighRoller99', wins: 125430, badge: '\u{1F451}' },
-        { rank: 2, name: 'LuckyStar22', wins: 98200, badge: '\u{1F948}' },
-        { rank: 3, name: 'SpinMaster', wins: 87650, badge: '\u{1F949}' },
-        { rank: 4, name: 'GoldenAce', wins: 72100, badge: '' },
-        { rank: 5, name: 'JackpotJane', wins: 65800, badge: '' },
-        { rank: 6, name: 'SlotKing88', wins: 58900, badge: '' },
-        { rank: 7, name: 'DiamondDave', wins: 51200, badge: '' },
-        { rank: 8, name: 'NeonNinja', wins: 43700, badge: '' },
-        { rank: 9, name: 'CherryBomb', wins: 38500, badge: '' },
-        { rank: 10, name: 'You', wins: typeof totalWon !== 'undefined' ? Math.floor(totalWon) : 0, badge: '\u{1F464}' }
-    ];
-    var html = '<div class="lb-inner"><h2>\u{1F3C6} Leaderboard</h2><div class="lb-tabs"><button class="lb-tab lb-tab-active" onclick="_switchLbTab(this,\&quot;daily\&quot;)">Daily</button><button class="lb-tab" onclick="_switchLbTab(this,\'weekly\')">Weekly</button><button class="lb-tab" onclick="_switchLbTab(this,\'alltime\')">All Time</button></div><div class="lb-list">';
-    mockData.forEach(function(p) {
-        html += '<div class="lb-row ' + (p.rank <= 3 ? 'lb-top3' : '') + '"><span class="lb-rank">#' + p.rank + '</span><span class="lb-badge">' + p.badge + '</span><span class="lb-name">' + p.name + '</span><span class="lb-wins">$' + p.wins.toLocaleString() + '</span></div>';
-    });
-    html += '</div><button onclick="document.getElementById(&quot;leaderboard360&quot;).style.display=&quot;none&quot;" class="lb-close-btn">Close</button></div>';
+    // Leaderboard rendering from hardcoded fake data has been removed.
+    // When a real /api/leaderboard endpoint ships, fetch and render it
+    // here. Until then, display an empty-state so users are never shown
+    // fabricated rankings.
+    var html = '<div class="lb-inner"><h2>\u{1F3C6} Leaderboard</h2>' +
+        '<div class="lb-empty" style="padding:40px 20px;color:#8a8a8a;text-align:center">' +
+        'Leaderboards will appear once real play data is collected.' +
+        '</div>' +
+        '<button onclick="document.getElementById(&quot;leaderboard360&quot;).style.display=&quot;none&quot;" class="lb-close-btn">Close</button></div>';
     panel.innerHTML = html;
     document.body.appendChild(panel);
 }
@@ -31802,24 +31922,17 @@ function _showCryptoConnect() {
     panel.id = 'cryptoPanel369';
     panel.className = 'crypto-overlay';
     panel.innerHTML = '<div class="crypto-inner">' +
-        '<h3>Connect Crypto Wallet</h3>' +
-        '<p style="color:#888;font-size:13px;">Deposit and withdraw using cryptocurrency. Fast, secure, and anonymous.</p>' +
-        '<div class="crypto-wallets">' +
-        '<button onclick="_connectWallet(\&quot;metamask\&quot;)" class="crypto-wallet-btn"><span>\u{1F98A}</span> MetaMask</button>' +
-        '<button onclick="_connectWallet(\&quot;walletconnect\&quot;)" class="crypto-wallet-btn"><span>\u{1F517}</span> WalletConnect</button>' +
-        '<button onclick="_connectWallet(\&quot;coinbase\&quot;)" class="crypto-wallet-btn"><span>\u{1F4B0}</span> Coinbase Wallet</button>' +
-        '</div>' +
-        '<div class="crypto-supported"><small>Supported: BTC, ETH, USDT, USDC, SOL, DOGE</small></div>' +
+        '<h3>Crypto wallet</h3>' +
+        '<p style="color:#8a8a8a;font-size:13px;line-height:1.5">On-chain wallet connection is not wired up yet. Deposits via Stripe (card) are available from the main Deposit button.</p>' +
         '<button onclick="document.getElementById(&quot;cryptoPanel369&quot;).style.display=&quot;none&quot;" class="crypto-close-btn">Close</button>' +
         '</div>';
     document.body.appendChild(panel);
 }
-function _connectWallet(provider) {
-    console.log('[Crypto] Connecting via', provider);
-    _cryptoWallet = { connected: true, address: '0x' + Math.random().toString(16).slice(2,12) + '...', chain: 'ETH' };
-    localStorage.setItem('ms_crypto_wallet', JSON.stringify(_cryptoWallet));
-    alert('Wallet connected! Address: ' + _cryptoWallet.address);
-    document.getElementById('cryptoPanel369').style.display = 'none';
+function _connectWallet(_provider) {
+    // Was generating a fake 0x address via Math.random() and storing it
+    // as if a real MetaMask connection had succeeded. Removed — no
+    // on-chain integration exists until ethers/viem is wired here.
+    alert('Crypto wallet connection is not yet available. Please use the Deposit button for card payments.');
 }
 
 
@@ -32303,40 +32416,168 @@ function _escapeHtml(s) {
     });
 }
 
+(function _injectDepositToastStyles() {
+    if (document.getElementById('depositToastStyles')) return;
+    var css =
+        '.deposit-success-toast,.deposit-cancelled-toast,.deposit-pending-toast{position:fixed;top:24px;right:24px;background:rgba(13,17,23,.94);color:#e0e0e0;border-radius:10px;padding:14px 18px;box-shadow:0 8px 28px rgba(0,0,0,.55);z-index:10001;max-width:380px;font-size:14px;line-height:1.4;transform:translateY(-12px);opacity:0;transition:transform .3s ease, opacity .3s ease;border:1px solid rgba(212,175,55,.4)}' +
+        '.deposit-success-toast.ds-show,.deposit-pending-toast.ds-show{transform:translateY(0);opacity:1}' +
+        '.deposit-success-toast{border-color:#27ae60}' +
+        '.deposit-cancelled-toast{opacity:1;transform:translateY(0);border-color:#e67e22}' +
+        '.deposit-pending-toast{border-color:#00d4ff}' +
+        '.ds-content{display:flex;gap:12px;align-items:flex-start}' +
+        '.ds-icon{font-size:22px;line-height:1}' +
+        '.dp-spinner{display:inline-block;width:14px;height:14px;border:2px solid rgba(0,212,255,.3);border-top-color:#00d4ff;border-radius:50%;margin-right:8px;animation:dpSpin 1s linear infinite;vertical-align:middle}' +
+        '@keyframes dpSpin{to{transform:rotate(360deg)}}' +
+        '@media (prefers-reduced-motion:reduce){.dp-spinner{animation:none}}';
+    var el = document.createElement('style');
+    el.id = 'depositToastStyles';
+    el.textContent = css;
+    document.head.appendChild(el);
+})();
 
-/* ── 379-386 — deposit success/cancel handler ─────────────────── */
-function _checkDepositReturn() {
-    var params = new URLSearchParams(window.location.search);
-    var status = params.get('deposit');
-    var amount = params.get('amount');
-    if (status === 'success' && amount) {
-        _showDepositSuccess(parseFloat(amount));
-        var stored = JSON.parse(localStorage.getItem('ms_nft_collection') || '[]');
-        var pending = stored.find(function(n) { return n.status === 'pending'; });
-        if (pending) pending.status = 'minted';
-        localStorage.setItem('ms_nft_collection', JSON.stringify(stored));
-        window.history.replaceState({}, '', window.location.pathname);
-    } else if (status === 'cancelled') {
+
+/* ── Deposit return handler — runs on page load, polls the real
+ *    deposit endpoint for the webhook to fulfill, refreshes balance
+ *    and shows the minted receipt. ─────────────────────────────── */
+async function _checkDepositReturn() {
+    var hash = window.location.hash || '';
+    var successMatch = hash.match(/deposit-success=(\d+)/);
+    var cancelMatch = hash.match(/deposit-cancel=(\d+)/);
+    var searchMatch = (window.location.search || '').match(/[?&]deposit=(success|cancelled)/);
+
+    if (cancelMatch || (searchMatch && searchMatch[1] === 'cancelled')) {
         _showDepositCancelled();
-        window.history.replaceState({}, '', window.location.pathname);
+        history.replaceState({}, '', window.location.pathname);
+        return;
+    }
+    if (!successMatch && !(searchMatch && searchMatch[1] === 'success')) return;
+
+    var depositId = successMatch ? Number(successMatch[1]) : null;
+    history.replaceState({}, '', window.location.pathname);
+
+    var token = (typeof authToken !== 'undefined') ? authToken : null;
+    if (!token) {
+        // User returned to a new tab/anon session — invite them to sign in.
+        alert('Please sign in to see your deposit status and mint receipt.');
+        if (typeof showAuthModal === 'function') showAuthModal();
+        return;
+    }
+
+    var pendingToast = _showDepositPending();
+    var deposit = null;
+    try {
+        deposit = await _pollDepositStatus(depositId, token, { maxTries: 30, intervalMs: 2000 });
+    } catch (err) {
+        if (pendingToast && pendingToast.remove) pendingToast.remove();
+        _showDepositError('Deposit is taking longer than expected. Check your email — if you were charged, your balance and NFT will appear shortly.');
+        return;
+    }
+    if (pendingToast && pendingToast.remove) pendingToast.remove();
+
+    if (!deposit) {
+        _showDepositError('Could not verify deposit status. Please refresh.');
+        return;
+    }
+    if (deposit.status === 'paid') {
+        await _refreshBalanceFromServer(token);
+        var nft = await _fetchLatestNFT(token, depositId);
+        _showDepositSuccess(Number(deposit.amount || 0), nft);
+    } else if (deposit.status === 'expired' || deposit.status === 'failed') {
+        _showDepositError('Deposit ' + deposit.status + '. No charge was made.');
+    } else {
+        _showDepositError('Deposit is still pending. Your balance and NFT will update automatically once the payment clears.');
     }
 }
-function _showDepositSuccess(amount) {
+
+async function _pollDepositStatus(depositId, token, opts) {
+    var max = (opts && opts.maxTries) || 30;
+    var interval = (opts && opts.intervalMs) || 2000;
+    for (var i = 0; i < max; i++) {
+        var res = await fetch('/api/deposit/' + depositId, { headers: { 'Authorization': 'Bearer ' + token } });
+        if (res.ok) {
+            var data = await res.json().catch(function () { return null; });
+            if (data && data.deposit) {
+                if (data.deposit.status !== 'pending') return data.deposit;
+            }
+        }
+        await new Promise(function (r) { setTimeout(r, interval); });
+    }
+    var last = await fetch('/api/deposit/' + depositId, { headers: { 'Authorization': 'Bearer ' + token } });
+    return last.ok ? (await last.json()).deposit : null;
+}
+
+async function _refreshBalanceFromServer(token) {
+    try {
+        var r = await fetch('/api/balance', { headers: { 'Authorization': 'Bearer ' + token } });
+        if (!r.ok) return;
+        var data = await r.json();
+        if (typeof balance !== 'undefined') {
+            balance = Number(data.balance || 0);
+            if (typeof saveBalance === 'function') saveBalance();
+            if (typeof updateBalance === 'function') updateBalance();
+        }
+    } catch (err) { /* swallow */ }
+}
+
+async function _fetchLatestNFT(token, depositId) {
+    try {
+        var r = await fetch('/api/nfts', { headers: { 'Authorization': 'Bearer ' + token } });
+        if (!r.ok) return null;
+        var data = await r.json();
+        if (!data.nfts || !data.nfts.length) return null;
+        // NFTs are sorted newest-first by the server; find one whose metadata
+        // references this deposit if possible, otherwise the freshest entry.
+        var match = data.nfts.find(function (n) {
+            var meta = n && n.metadata || {};
+            var attr = (meta.attributes || []).find(function (a) { return a && a.trait_type === 'Deposit ID'; });
+            return attr && String(attr.value) === String(depositId);
+        });
+        return match || data.nfts[0];
+    } catch (err) { return null; }
+}
+
+function _showDepositPending() {
+    var toast = document.createElement('div');
+    toast.className = 'deposit-pending-toast';
+    toast.setAttribute('role', 'status');
+    toast.innerHTML = '<span class="dp-spinner" aria-hidden="true"></span> Confirming your deposit…';
+    document.body.appendChild(toast);
+    setTimeout(function () { toast.classList.add('ds-show'); }, 50);
+    return toast;
+}
+
+function _showDepositSuccess(amount, nft) {
     var toast = document.createElement('div');
     toast.className = 'deposit-success-toast';
+    toast.setAttribute('role', 'status');
+    var nftLine = '';
+    if (nft && nft.metadata) {
+        var tier = (nft.metadata.attributes || []).find(function (a) { return a && a.trait_type === 'Tier'; });
+        nftLine = '<br><small>Receipt NFT minted: ' + _escapeHtml((tier && tier.value) || 'standard') + ' · ' + _escapeHtml(nft.tokenId || '') + '</small>';
+    }
     toast.innerHTML = '<div class="ds-content"><span class="ds-icon">\u2705</span>' +
-        '<div><strong>Deposit Successful!</strong><br>$' + amount.toFixed(2) + ' added to your account<br><small>Your NFT has been minted!</small></div></div>';
+        '<div><strong>Deposit Successful</strong><br>$' + amount.toFixed(2) + ' credited to your account' + nftLine + '</div></div>';
     document.body.appendChild(toast);
-    setTimeout(function() { toast.classList.add('ds-show'); }, 50);
-    setTimeout(function() { toast.remove(); }, 8000);
-    if (typeof credits !== 'undefined') credits += amount;
+    setTimeout(function () { toast.classList.add('ds-show'); }, 50);
+    setTimeout(function () { toast.remove(); }, 10000);
 }
+
 function _showDepositCancelled() {
     var toast = document.createElement('div');
     toast.className = 'deposit-cancelled-toast';
+    toast.setAttribute('role', 'status');
     toast.innerHTML = '<span>\u274C</span> Deposit cancelled. No charges were made.';
     document.body.appendChild(toast);
-    setTimeout(function() { toast.remove(); }, 5000);
+    setTimeout(function () { toast.remove(); }, 5000);
+}
+
+function _showDepositError(msg) {
+    var toast = document.createElement('div');
+    toast.className = 'deposit-cancelled-toast';
+    toast.setAttribute('role', 'alert');
+    toast.innerHTML = '<span>\u26A0\uFE0F</span> ' + _escapeHtml(msg);
+    document.body.appendChild(toast);
+    setTimeout(function () { toast.remove(); }, 12000);
 }
 
 
@@ -32792,13 +33033,9 @@ function _updateSocialTicker() {
     ticker.innerHTML = '<div class="st-content">' + msg + '</div>';
 }
 function _simulateSocialActivity() {
-    var names = ['LuckyAce', 'SpinQueen', 'GoldRush88', 'DiamondKing', 'NeonStar', 'MegaWins', 'CryptoSpinner'];
-    setInterval(function() {
-        var name = names[Math.floor(Math.random() * names.length)];
-        var types = ['bigwin', 'deposit', 'achievement'];
-        var type = types[Math.floor(Math.random() * types.length)];
-        _addSocialEvent(type, { player: name, amount: Math.floor(Math.random() * 500) + 10, name: 'Big Winner' });
-    }, 15000);
+    // Removed. Previously injected fake deposits/big-wins/achievements
+    // from a hardcoded name list every 15s. The social feed is now
+    // populated only by real events emitted from real endpoints.
 }
 
 
@@ -33715,16 +33952,12 @@ function _openTournamentLeaderboard() {
         el.className = 'tourney-leaderboard-overlay';
         document.body.appendChild(el);
     }
-    var fakeEntries = [
-        { name: 'LuckyAce', score: 15000 + Math.floor(Math.random()*5000) },
-        { name: 'SlotKing', score: 12000 + Math.floor(Math.random()*4000) },
-        { name: 'GoldRush', score: 9000 + Math.floor(Math.random()*3000) },
-        { name: 'YOU', score: _tournamentV2.myScore },
-        { name: 'SpinWiz', score: 5000 + Math.floor(Math.random()*2000) }
-    ].sort(function(a,b) { return b.score - a.score; });
-    var html = '<div class="tourney-lb-card"><h3>Tournament Leaderboard</h3><ol>';
-    fakeEntries.forEach(function(e) { html += '<li class="' + (e.name === 'YOU' ? 'tourney-you' : '') + '">' + e.name + ': ' + e.score + '</li>'; });
-    html += '</ol><button onclick="document.getElementById(&quot;tourneyLeaderboardOverlay&quot;).style.display=&quot;none&quot;">Close</button></div>';
+    // Hardcoded fake competitors have been removed. Until a real
+    // tournament backend exists, show only the player's own score.
+    var html = '<div class="tourney-lb-card"><h3>Tournament Leaderboard</h3>' +
+        '<ol><li class="tourney-you">YOU: ' + _tournamentV2.myScore + '</li></ol>' +
+        '<p style="color:#8a8a8a;font-size:12px">Ranked standings will appear when real tournament data is available.</p>' +
+        '<button onclick="document.getElementById(&quot;tourneyLeaderboardOverlay&quot;).style.display=&quot;none&quot;">Close</button></div>';
     el.innerHTML = html;
     el.style.display = 'flex';
 }
@@ -36854,18 +37087,12 @@ function _initLeaderboardSeasons() {
     var panel = document.createElement('div');
     panel.id = 'lb-season-panel';
     panel.className = 'lb-season-panel hidden';
-    var mockPlayers = [
-        {name:'LuckyAce',score:125000},{name:'SpinKing',score:98000},{name:'JackpotJane',score:87500},
-        {name:'GoldRush',score:72000},{name:'DiamondDave',score:65000},{name:'WinStreak',score:58000},
-        {name:'SlotMaster',score:45000},{name:'ReelDeal',score:38000},{name:'BonusHunter',score:29000},
-        {name:'You',score:parseInt(localStorage.getItem('ms_total_wagered')||'0')}
-    ].sort(function(a,b){return b.score-a.score;});
-    var rows = mockPlayers.map(function(p,i) {
-        var medal = i===0?'1st':i===1?'2nd':i===2?'3rd':'#'+(i+1);
-        var isYou = p.name==='You'?' lb-you':'';
-        return '<div class="lb-row'+isYou+'"><span class="lb-rank">'+medal+'</span><span class="lb-name">'+p.name+'</span><span class="lb-score">$'+p.score.toLocaleString()+'</span></div>';
-    }).join('');
-    panel.innerHTML = '<div class="lb-inner"><h3>Season '+season.number+' Leaderboard</h3><div class="lb-timer">'+daysLeft+' days remaining</div><div class="lb-prizes"><span>1st: $500</span><span>2nd: $250</span><span>3rd: $100</span></div>'+rows+'</div>';
+    // Season leaderboard previously mixed 9 hardcoded fake players with
+    // the real user's score. Dropped — show only the user's own tally
+    // until a real multi-user ranking endpoint exists.
+    var myScore = parseInt(localStorage.getItem('ms_total_wagered') || '0', 10) || 0;
+    var rows = '<div class="lb-row lb-you"><span class="lb-rank">#1</span><span class="lb-name">You</span><span class="lb-score">$' + myScore.toLocaleString() + '</span></div>';
+    panel.innerHTML = '<div class="lb-inner"><h3>Season '+season.number+' Leaderboard</h3><div class="lb-timer">'+daysLeft+' days remaining</div><div class="lb-prizes"><span>1st: $500</span><span>2nd: $250</span><span>3rd: $100</span></div>'+rows+'<p style="color:#8a8a8a;font-size:12px;margin-top:10px">Other players appear once real standings are collected.</p></div>';
     document.body.appendChild(panel);
     console.log('[Sprint 523-530] Leaderboard Seasons ready');
 }
@@ -38049,30 +38276,12 @@ function _initPrestigeRanks() {
     console.log('[Sprint 555-562] Prestige Ranks ready');
 }
 
-/* ---- Feature 3: Daily Spin Wheel v2 ---- */
-function _initDailyWheel() {
-    var lastSpin = localStorage.getItem('ms_daily_wheel_date');
-    var today = new Date().toISOString().slice(0, 10);
-    if (lastSpin === today) return;
-    if (document.getElementById('daily-wheel-prompt')) return;
-    var prompt555 = document.createElement('div');
-    prompt555.id = 'daily-wheel-prompt';
-    prompt555.className = 'daily-wheel-prompt';
-    prompt555.innerHTML = '<div class="dw-inner555"><h3>Daily Free Spin!</h3><p>Spin the wheel for a free reward!</p><button class="dw-spin555" id="dw-spin555-btn">SPIN NOW</button></div>';
-    document.body.appendChild(prompt555);
-    document.getElementById('dw-spin555-btn').addEventListener('click', function() {
-        var prizes = [5, 10, 15, 20, 25, 50, 1, 2, 3, 100];
-        var winner = prizes[Math.floor(Math.random() * prizes.length)];
-        localStorage.setItem('ms_daily_wheel_date', today);
-        var bal = parseFloat(localStorage.getItem('ms_balance') || '1000');
-        bal += winner;
-        localStorage.setItem('ms_balance', bal.toFixed(2));
-        if (typeof updateBalanceDisplay === 'function') updateBalanceDisplay();
-        prompt555.innerHTML = '<div class="dw-inner555"><h3>You won $' + winner + '!</h3><p>Come back tomorrow for another free spin!</p><button class="dw-close555" onclick="document.getElementById(&quot;daily-wheel-prompt&quot;).remove()">Nice!</button></div>';
-        if (typeof _addXP === 'function') _addXP(10);
-    });
-    console.log('[Sprint 555-562] Daily Wheel v2 ready');
-}
+/* ---- Feature 3: Daily Spin Wheel v2 ----
+ * Previously showed a daily "free spin" prompt that credited ms_balance
+ * in localStorage with a random prize. That was free money with no
+ * server backing — removed. The init now no-ops until a real
+ * bonus-claim endpoint is wired. */
+function _initDailyWheel() { /* no-op: fake bonus credit removed */ }
 
 /* ---- Feature 4: Streak Multiplier v2 ---- */
 var _streakMult555 = { count: 0, multiplier: 1 };
@@ -40729,7 +40938,7 @@ function _logAudit658(event, data) {
 }
 window._logAudit658 = _logAudit658;
 
-/* â”€â”€â”€ js/ui-modals.js (17/56) â”€â”€â”€ */
+/* â”€â”€â”€ js/ui-modals.js (17/55) â”€â”€â”€ */
 // ═══════════════════════════════════════════════════════
 // UI-MODALS MODULE
 // ═══════════════════════════════════════════════════════
@@ -43962,7 +44171,7 @@ function settingsSetSessionLimit(val) {
     });
 }
 
-/* â”€â”€â”€ js/ui-wallet.js (18/56) â”€â”€â”€ */
+/* â”€â”€â”€ js/ui-wallet.js (18/55) â”€â”€â”€ */
 // ═══════════════════════════════════════════════════════
 // WALLET / CASHIER MODULE
 // ═══════════════════════════════════════════════════════
@@ -45429,9 +45638,22 @@ function walletUpdateCryptoSection(payType) {
 
 /**
  * Render the MetaMask connect + deposit UI.
+ *
+ * Short-circuited: the previous implementation relied on a
+ * `cryptoConnectWallet`/`cryptoSendDeposit`/`cryptoPollDeposit` pipeline
+ * that never existed on this codebase, so clicking the buttons threw a
+ * ReferenceError. Until an honest ethers/viem integration is wired in,
+ * we render a plain "not yet available" notice pointing users to the
+ * Stripe card flow from the main Deposit button.
  */
 async function walletRenderMetaMaskSection(container) {
-    // Check if ethers.js is available
+    container.innerHTML = '' +
+        '<div style="padding:16px;border:1px solid rgba(255,215,0,0.25);border-radius:10px;background:rgba(255,215,0,0.05);margin-bottom:12px;text-align:center;">' +
+            '<div style="font-size:0.95rem;color:#e0e0e0;margin-bottom:6px;">On-chain crypto deposits are not yet enabled.</div>' +
+            '<div style="font-size:0.8rem;color:#8a8a8a;">Use the card / Stripe Checkout flow from the Deposit button. This panel will be activated once a real on-chain integration ships.</div>' +
+        '</div>';
+    return;
+    // Unreachable — kept so the rest of the (now dead) file still parses.
     if (typeof cryptoIsEthersLoaded === 'undefined' || !cryptoIsEthersLoaded()) {
         container.innerHTML = `
             <div style="padding:16px;border:1px solid rgba(255,100,100,0.3);border-radius:10px;background:rgba(255,50,50,0.08);margin-bottom:12px;text-align:center;">
@@ -51402,7 +51624,7 @@ async function _saveLimits(modal, token, formOverlay) {
     }
 }
 
-/* â”€â”€â”€ js/ui-profile.js (19/56) â”€â”€â”€ */
+/* â”€â”€â”€ js/ui-profile.js (19/55) â”€â”€â”€ */
 // ═══════════════════════════════════════════════════════
 // PROFILE / ACCOUNT MODULE
 // ═══════════════════════════════════════════════════════
@@ -57172,7 +57394,7 @@ function renderLossStreakWidget() {
     return widget;
 }
 
-/* â”€â”€â”€ js/ui-vip.js (20/56) â”€â”€â”€ */
+/* â”€â”€â”€ js/ui-vip.js (20/55) â”€â”€â”€ */
 // =====================================================================
 // VIP / LOYALTY REWARDS MODULE
 // =====================================================================
@@ -59091,7 +59313,7 @@ setInterval(function() {
     }
 }, 30000);
 
-/* â”€â”€â”€ js/qa-tools.js (21/56) â”€â”€â”€ */
+/* â”€â”€â”€ js/qa-tools.js (21/55) â”€â”€â”€ */
 // ═══════════════════════════════════════════════════════
 // QA-TOOLS MODULE
 // ═══════════════════════════════════════════════════════
@@ -59472,7 +59694,7 @@ setInterval(function() {
             return JSON.stringify(payload);
         }
 
-/* â”€â”€â”€ js/session-rtp-client.js (22/56) â”€â”€â”€ */
+/* â”€â”€â”€ js/session-rtp-client.js (22/55) â”€â”€â”€ */
 'use strict';
 
 /**
@@ -59694,7 +59916,7 @@ setInterval(function() {
   }
 })();
 
-/* â”€â”€â”€ js/app.js (23/56) â”€â”€â”€ */
+/* â”€â”€â”€ js/app.js (23/55) â”€â”€â”€ */
 // ═══════════════════════════════════════════════════════
 // APP MODULE
 // ═══════════════════════════════════════════════════════
@@ -59883,6 +60105,11 @@ setInterval(function() {
         // Post-auth initialization — runs after login or on page load if already authenticated
         function onPostAuthInit() {
             checkDailyBonusReset();
+            // Refresh balance from the server immediately on auth —
+            // server is the source of truth for deposited funds.
+            if (typeof _refreshBalanceFromServer === 'function') {
+                _refreshBalanceFromServer(authToken).catch(function () { /* ignore */ });
+            }
             // Load stats from server (overrides localStorage if server has data)
             _loadServerStats();
             // Popups and engagement features only for verified (registered) users — not guests
@@ -61581,6 +61808,16 @@ setInterval(function() {
 
         window.addEventListener('DOMContentLoaded', initAllSystems);
 
+        // Refresh balance when the tab regains focus. Common after
+        // a Stripe deposit completes in another tab — without this
+        // the credited balance wouldn't show until a manual refresh.
+        window.addEventListener('focus', function () {
+            if (!authToken) return;
+            if (typeof _refreshBalanceFromServer === 'function') {
+                _refreshBalanceFromServer(authToken).catch(function () { /* ignore */ });
+            }
+        });
+
         document.addEventListener('keydown', function (e) {
             // Don't trigger if typing in an input
             if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
@@ -61829,7 +62066,7 @@ setInterval(function() {
             document.body.appendChild(overlay);
         }
 
-/* â”€â”€â”€ js/ui-premium-effects.js (24/56) â”€â”€â”€ */
+/* â”€â”€â”€ js/ui-premium-effects.js (24/55) â”€â”€â”€ */
 /**
  * ui-premium-effects.js
  * Premium micro-interaction effects for Matrix Spins Casino
@@ -62073,7 +62310,7 @@ setInterval(function() {
 
 })();
 
-/* â”€â”€â”€ js/legal-terms.js (25/56) â”€â”€â”€ */
+/* â”€â”€â”€ js/legal-terms.js (25/55) â”€â”€â”€ */
 /**
  * Legal Terms & Conditions Module
  * Matrix Spins Casino - msaart.online
@@ -62471,7 +62708,7 @@ window.showMatrixMoneyInfo = () => LegalTerms.showMatrixMoneyInfo();
     }
 })();
 
-/* â”€â”€â”€ js/matrix-money.js (26/56) â”€â”€â”€ */
+/* â”€â”€â”€ js/matrix-money.js (26/55) â”€â”€â”€ */
 /**
  * Matrix Money System Module
  * Matrix Spins Casino - msaart.online
@@ -63085,7 +63322,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 });
 
-/* â”€â”€â”€ js/session-timeout.js (27/56) â”€â”€â”€ */
+/* â”€â”€â”€ js/session-timeout.js (27/55) â”€â”€â”€ */
 (function() {
   'use strict';
 
@@ -63406,7 +63643,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 })();
 
-/* â”€â”€â”€ js/support-chat.js (28/56) â”€â”€â”€ */
+/* â”€â”€â”€ js/support-chat.js (28/55) â”€â”€â”€ */
 (function() {
   'use strict';
 
@@ -63973,7 +64210,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 })();
 
-/* â”€â”€â”€ js/self-exclusion.js (29/56) â”€â”€â”€ */
+/* â”€â”€â”€ js/self-exclusion.js (29/55) â”€â”€â”€ */
 /**
  * Self-Exclusion UI Module for Matrix Spins Casino
  * Responsible gambling feature — lets users voluntarily exclude themselves from play.
@@ -64133,7 +64370,7 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 })();
 
-/* â”€â”€â”€ js/loading-screen.js (30/56) â”€â”€â”€ */
+/* â”€â”€â”€ js/loading-screen.js (30/55) â”€â”€â”€ */
 /**
  * Loading Screen Module
  * Displays a stylish loading overlay with rotating tips when opening games
@@ -64437,7 +64674,7 @@ window.LoadingScreen = (function() {
 
 })();
 
-/* â”€â”€â”€ js/player-stats-ui.js (31/56) â”€â”€â”€ */
+/* â”€â”€â”€ js/player-stats-ui.js (31/55) â”€â”€â”€ */
 (function() {
   'use strict';
 
@@ -64934,7 +65171,7 @@ window.LoadingScreen = (function() {
   };
 })();
 
-/* â”€â”€â”€ js/win-limit.js (32/56) â”€â”€â”€ */
+/* â”€â”€â”€ js/win-limit.js (32/55) â”€â”€â”€ */
 ﻿/**
  * Win Limit Safety Feature
  * Responsible gambling tool to set session win limits and auto-cashout prompts
@@ -65580,7 +65817,7 @@ window.WinLimit = (function () {
 })();
 
 
-/* â”€â”€â”€ js/loss-limit.js (33/56) â”€â”€â”€ */
+/* â”€â”€â”€ js/loss-limit.js (33/55) â”€â”€â”€ */
 /**
  * Loss Limit Safety Feature
  * Net-loss caps over rolling daily / weekly / monthly windows.
@@ -65891,7 +66128,7 @@ window.LossLimit = (function () {
   document.head.appendChild(el);
 })();
 
-/* â”€â”€â”€ js/wager-cap.js (34/56) â”€â”€â”€ */
+/* â”€â”€â”€ js/wager-cap.js (34/55) â”€â”€â”€ */
 /**
  * Wager Cap (single-bet maximum)
  * Player-controlled cap on individual bet amounts — distinct from
@@ -66080,7 +66317,7 @@ window.WagerCap = (function () {
   document.head.appendChild(el);
 })();
 
-/* â”€â”€â”€ js/login-history.js (35/56) â”€â”€â”€ */
+/* â”€â”€â”€ js/login-history.js (35/55) â”€â”€â”€ */
 /**
  * Login History Tracker
  * Premium account-security feature: persistent local log of auth events
@@ -66261,7 +66498,7 @@ window.LoginHistory = (function () {
   document.head.appendChild(el);
 })();
 
-/* â”€â”€â”€ js/session-clock.js (36/56) â”€â”€â”€ */
+/* â”€â”€â”€ js/session-clock.js (36/55) â”€â”€â”€ */
 /**
  * Session Clock
  * Continuous elapsed-session display — companion to session-timeout.js
@@ -66406,7 +66643,7 @@ window.SessionClock = (function () {
   document.head.appendChild(el);
 })();
 
-/* â”€â”€â”€ js/cookie-consent.js (37/56) â”€â”€â”€ */
+/* â”€â”€â”€ js/cookie-consent.js (37/55) â”€â”€â”€ */
 /**
  * Cookie Consent Manager
  * Implements GDPR/CCPA compliant cookie consent banner with preference management
@@ -66980,7 +67217,7 @@ window.SessionClock = (function () {
 
 })();
 
-/* â”€â”€â”€ js/perf-monitor.js (38/56) â”€â”€â”€ */
+/* â”€â”€â”€ js/perf-monitor.js (38/55) â”€â”€â”€ */
 /**
  * Performance Monitoring Module (IIFE)
  * Collects Core Web Vitals and page performance metrics
@@ -67211,7 +67448,7 @@ if (document.readyState === 'loading') {
     window.PerfMonitor.init();
 }
 
-/* â”€â”€â”€ js/bankroll-calculator.js (39/56) â”€â”€â”€ */
+/* â”€â”€â”€ js/bankroll-calculator.js (39/55) â”€â”€â”€ */
 // ═══════════════════════════════════════════════════════════════════════════════════════
 // BANKROLL MANAGEMENT CALCULATOR
 // A responsible gambling tool to help players manage their bankroll effectively
@@ -67800,7 +68037,7 @@ if (document.readyState === 'loading') {
 
 })();
 
-/* â”€â”€â”€ js/i18n.js (40/56) â”€â”€â”€ */
+/* â”€â”€â”€ js/i18n.js (40/55) â”€â”€â”€ */
 (function() {
   'use strict';
 
@@ -68061,7 +68298,7 @@ if (document.readyState === 'loading') {
 
 })();
 
-/* â”€â”€â”€ js/game-history.js (41/56) â”€â”€â”€ */
+/* â”€â”€â”€ js/game-history.js (41/55) â”€â”€â”€ */
 /**
  * Game History / Spin History Viewer
  * IIFE module: window.GameHistory = { show(), init() }
@@ -68768,7 +69005,7 @@ if (document.readyState === 'loading') {
 
 })();
 
-/* â”€â”€â”€ js/player-chat.js (42/56) â”€â”€â”€ */
+/* â”€â”€â”€ js/player-chat.js (42/55) â”€â”€â”€ */
 (function() {
   'use strict';
 
@@ -69434,7 +69671,7 @@ if (document.readyState === 'loading') {
   };
 })();
 
-/* â”€â”€â”€ js/sound-settings.js (43/56) â”€â”€â”€ */
+/* â”€â”€â”€ js/sound-settings.js (43/55) â”€â”€â”€ */
 // ═══════════════════════════════════════════════════════════════════════════
 // Sound Settings UI Module — Casino Dark Theme with Gold Accents
 // ═══════════════════════════════════════════════════════════════════════════
@@ -69955,7 +70192,7 @@ if (document.readyState === 'loading') {
 
 })();
 
-/* â”€â”€â”€ js/keyboard-shortcuts.js (44/56) â”€â”€â”€ */
+/* â”€â”€â”€ js/keyboard-shortcuts.js (44/55) â”€â”€â”€ */
 /**
  * Keyboard Shortcuts Module
  * Provides keyboard shortcuts for the Royal Slots Casino game
@@ -70415,7 +70652,7 @@ if (document.readyState === 'loading') {
   console.warn('KeyboardShortcuts module loaded');
 })();
 
-/* â”€â”€â”€ js/csrf-helper.js (45/56) â”€â”€â”€ */
+/* â”€â”€â”€ js/csrf-helper.js (45/55) â”€â”€â”€ */
 /**
  * CSRF Token Helper
  * Manages CSRF tokens and automatically injects them into fetch requests
@@ -70519,7 +70756,7 @@ if (document.readyState === 'loading') {
     console.warn('[CSRF] Helper loaded');
 })();
 
-/* â”€â”€â”€ js/reality-check.js (46/56) â”€â”€â”€ */
+/* â”€â”€â”€ js/reality-check.js (46/55) â”€â”€â”€ */
 ﻿// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 // REALITY CHECK TIMER - Responsible Gambling Feature
 // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
@@ -71105,7 +71342,7 @@ window.RealityCheck = (function() {
 console.warn('[RealityCheck] Module loaded â€” call window.RealityCheck.init() to start');
 
 
-/* â”€â”€â”€ js/slot-events.js (47/56) â”€â”€â”€ */
+/* â”€â”€â”€ js/slot-events.js (47/55) â”€â”€â”€ */
 /**
  * Slot Events Widget
  * Limited-time FOMO slot events system with animated banners and scarcity indicators
@@ -71499,7 +71736,7 @@ console.warn('[RealityCheck] Module loaded â€” call window.RealityCheck.ini
 
 })();
 
-/* â”€â”€â”€ js/admin-analytics.js (48/56) â”€â”€â”€ */
+/* â”€â”€â”€ js/admin-analytics.js (48/55) â”€â”€â”€ */
 /**
  * Admin Revenue Analytics Dashboard
  * Real-time metrics, player activity, feature performance
@@ -71928,7 +72165,7 @@ console.warn('[RealityCheck] Module loaded â€” call window.RealityCheck.ini
 
 })();
 
-/* â”€â”€â”€ js/ultra-premium-slot.js (54/56) â”€â”€â”€ */
+/* â”€â”€â”€ js/ultra-premium-slot.js (53/55) â”€â”€â”€ */
 /**
  * ultra-premium-slot.js v2.0
  * Industry-Standard Per-Game Visual Engine for Matrix Spins Casino
@@ -72985,7 +73222,7 @@ var fn = BG_RENDERERS[bgType] || BG_RENDERERS.shine;
 
 })();
 
-/* â”€â”€â”€ js/upx-integration.js (55/56) â”€â”€â”€ */
+/* â”€â”€â”€ js/upx-integration.js (54/55) â”€â”€â”€ */
 /* ================================================================
    UPX Integration Layer  v1.0
    Wires ultra-premium-slot.js (UPX) into the casino game flow.

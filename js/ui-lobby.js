@@ -47,6 +47,20 @@
         function _tickLiveCounts() { /* no-op: no fake data */ }
 
 
+        // Procedural monogram styles for game cards whose thumbnail
+        // PNG doesn't exist (i.e. every card — the art pipeline is not
+        // wired up). Injected once.
+        (function injectMonogramStyles() {
+            if (document.getElementById('gameCardMonogramStyles')) return;
+            var css =
+                '.game-card .game-card-monogram{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-family:Helvetica,Arial,sans-serif;font-size:80px;font-weight:800;line-height:1;letter-spacing:-3px;opacity:.82;text-shadow:0 4px 24px rgba(0,0,0,.55);pointer-events:none;user-select:none}' +
+                '.game-card .game-card-monogram::after{content:"";position:absolute;inset:0;background:radial-gradient(ellipse at 30% 25%,rgba(255,255,255,.18),transparent 55%);pointer-events:none}';
+            var s = document.createElement('style');
+            s.id = 'gameCardMonogramStyles';
+            s.textContent = css;
+            (document.head || document.documentElement).appendChild(s);
+        })();
+
         // ═══════════════════════════════════════════════════════
         // LOADING SKELETONS
         // ═══════════════════════════════════════════════════════
@@ -863,13 +877,23 @@ function renderGames() {
 
         function createGameCard(game) {
             const { hotIds: _hotIds, newIds: _newIds } = _getHotNewCached();
-            // Thumbnails are lazy-loaded via IntersectionObserver (_initLazyThumbnails).
-            // data-bg stores the URL; the observer applies it only when the card is visible.
-            const hasThumbnail = !!game.thumbnail;
+            // Each game has a bgGradient + accentColor in its definition;
+            // we render those directly. The PNG thumbnails referenced in
+            // shared/game-definitions.js point at assets/thumbnails/X.png
+            // which have never been published; rather than 404 every card,
+            // we render a procedural gradient panel with the game's initial
+            // letter as a decorative overlay. Real art can be re-enabled
+            // by populating dist/assets/thumbnails/ and flipping the
+            // useThumbnail flag below.
+            const useThumbnail = false;
+            const hasThumbnail = useThumbnail && !!game.thumbnail;
             const thumbStyle = hasThumbnail
                 ? `background: #1a2332;`
                 : `background: ${game.bgGradient};`;
             const thumbDataBg = hasThumbnail ? ` data-bg="${game.thumbnail}"` : '';
+            const procMonogram = !hasThumbnail
+                ? `<div class="game-card-monogram" aria-hidden="true" style="color:${game.accentColor || '#fff'}">${(game.name || game.id || '?').trim().charAt(0).toUpperCase()}</div>`
+                : '';
             const isJackpot = game.tag === 'JACKPOT' || game.tagClass === 'tag-jackpot';
             const isHot  = game.tag === 'HOT'  || game.tagClass === 'tag-hot';
             const isNew  = game.tag === 'NEW'  || game.tagClass === 'tag-new';
@@ -941,10 +965,8 @@ function renderGames() {
                 <div class="game-card${isHot ? ' game-card-hot' : ''}${isJackpot ? ' game-card-jackpot' : ''}${gameDayCardClass}" onclick="try{if(typeof _compareMode!=='undefined'&&_compareMode){_addToCompare('${game.id}');this.classList.toggle('compare-selected',typeof _compareGames!=='undefined'&&_compareGames.indexOf('${game.id}')>=0);}else{(window.openSlot||openSlot)('${game.id}');}}catch(e){console.warn('Game click error:',e.message);}" style="position:relative" data-game-name="${(game.name || game.id || '').toLowerCase()}" data-game-id="${(game.id || '').toLowerCase()}">
                     <button class="fav-btn${favored ? ' fav-active' : ''}" data-game-id="${game.id}" title="${favored ? 'Remove from favourites' : 'Add to favourites'}" onclick="event.stopPropagation(); (function(btn){var nowFav=toggleFavorite('${game.id}'); btn.textContent=nowFav?'\u2764\uFE0F':'\u2661'; btn.title=nowFav?'Remove from favourites':'Add to favourites'; btn.classList.add('fav-active'); setTimeout(function(){btn.classList.remove('fav-active');},350); updateFavTabBadge();})(this)">${favIcon}</button>
                     <div class="game-thumbnail" style="${thumbStyle}"${thumbDataBg}>
-                        ${!game.thumbnail && game.asset ? (assetTemplates[game.asset] || '') : ''}
-                        <div class="card-anim-preview" style="background-image:url('assets/backgrounds/slots/${game.id}_bg.webp')" onerror="this.classList.add('hidden')">
-                            <span class="preview-badge">&#9654; PREVIEW</span>
-                        </div>
+                        ${!hasThumbnail && game.asset ? (assetTemplates[game.asset] || '') : ''}
+                        ${procMonogram}
                         ${topTag}
                         ${jackpotBadge}
                         <!-- card-players-live badge removed: no real per-game concurrency source -->
