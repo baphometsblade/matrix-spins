@@ -313,7 +313,7 @@ function generateDistIndex(jsInfo, cssInfo, originalHtml) {
  */
 function writeAssetManifest() {
     const assetsDir = path.join(DIST_DIR, 'assets');
-    const manifest = { thumbnails: [], symbols: [], generated_at: new Date().toISOString() };
+    const manifest = { thumbnails: [], symbols: [], gameSymbols: {}, generated_at: new Date().toISOString() };
     function listDir(sub) {
         const dir = path.join(assetsDir, sub);
         if (!fs.existsSync(dir)) return [];
@@ -323,9 +323,20 @@ function writeAssetManifest() {
     }
     manifest.thumbnails = listDir('thumbnails');
     manifest.symbols = listDir('ui').filter(f => /^sym_/i.test(f));
+    // Per-game reel symbols: dist/assets/game_symbols/<gameId>/<symbol>.{webp|png}
+    const gameSymDir = path.join(assetsDir, 'game_symbols');
+    if (fs.existsSync(gameSymDir)) {
+        for (const gameId of fs.readdirSync(gameSymDir)) {
+            const gameDir = path.join(gameSymDir, gameId);
+            if (!fs.statSync(gameDir).isDirectory()) continue;
+            const files = fs.readdirSync(gameDir).filter(f => /\.(png|webp|svg)$/i.test(f)).sort();
+            if (files.length) manifest.gameSymbols[gameId] = files;
+        }
+    }
     const dst = path.join(DIST_DIR, 'asset-manifest.json');
     fs.writeFileSync(dst, JSON.stringify(manifest, null, 2));
-    log(`wrote asset-manifest.json (${manifest.thumbnails.length} thumbnails, ${manifest.symbols.length} symbols)`);
+    const gameSymbolCount = Object.values(manifest.gameSymbols).reduce((a, v) => a + v.length, 0);
+    log(`wrote asset-manifest.json (${manifest.thumbnails.length} thumbnails, ${manifest.symbols.length} symbols, ${gameSymbolCount} game-symbols across ${Object.keys(manifest.gameSymbols).length} games)`);
     return manifest;
 }
 

@@ -1,5 +1,602 @@
 {
-  "thumbnails": [],
-  "symbols": [],
-  "generated_at": "2026-04-23T13:09:23.870Z"
+  "thumbnails": [
+    "agent_zero.svg",
+    "big_bamboo.svg",
+    "big_top_bonanza.svg",
+    "black_ops_heist.svg",
+    "book_dead.svg",
+    "buffalo_extreme.svg",
+    "buffalo_mega.svg",
+    "buffalo_stampede.svg",
+    "castle_siege.svg",
+    "cleopatra_gold.svg",
+    "crystal_shrine.svg",
+    "dead_alive.svg",
+    "diamond_vault.svg",
+    "dog_house_mega.svg",
+    "dragon_coins.svg",
+    "dragon_megafire.svg",
+    "elvis_frog.svg",
+    "eternal_romance.svg",
+    "extra_chilli.svg",
+    "fire_hole.svg",
+    "galactic_raiders.svg",
+    "gates_olympus.svg",
+    "gemhalla.svg",
+    "gems_bonanza.svg",
+    "gold_crown_club.svg",
+    "gold_rush_frog.svg",
+    "golden_fortune.svg",
+    "golden_jaguar.svg",
+    "grand_prix_rush.svg",
+    "great_rhino.svg",
+    "hot_chillies.svg",
+    "immortal_blood.svg",
+    "inferno_fiesta.svg",
+    "jungle_fury.svg",
+    "madame_destiny.svg",
+    "mega_diamond_rush.svg",
+    "mega_safari.svg",
+    "monaco_million.svg",
+    "money_train.svg",
+    "mystic_wolf.svg",
+    "neon_viper.svg",
+    "norse_vaults.svg",
+    "olympian_gods.svg",
+    "olympus_dream.svg",
+    "phoenix_rising.svg",
+    "pots_olympus.svg",
+    "power_crown.svg",
+    "quantum_burst.svg",
+    "reactoonz.svg",
+    "rockstar_wild.svg",
+    "rome_eternal.svg",
+    "san_quentin.svg",
+    "starburst_xxl.svg",
+    "starlight_princess.svg",
+    "sugar_rush.svg",
+    "sweet_bonanza.svg",
+    "thunder_hero.svg",
+    "tombstone_reload.svg",
+    "vault_coins.svg",
+    "viking_voyage.svg",
+    "volcano_riches.svg",
+    "wanted_dead.svg",
+    "wild_west_rush.svg",
+    "wolf_gold.svg",
+    "world_cup_glory.svg"
+  ],
+  "symbols": [
+    "sym_bar.svg",
+    "sym_bell.svg",
+    "sym_cherry.svg",
+    "sym_diamond.svg",
+    "sym_lemon.svg",
+    "sym_seven.svg",
+    "sym_star.svg",
+    "sym_watermelon.svg"
+  ],
+  "gameSymbols": {
+    "agent_zero": [
+      "s1_gadget.svg",
+      "s2_briefcase.svg",
+      "s3_gun_silencer.svg",
+      "s4_tuxedo.svg",
+      "s5_target.svg",
+      "wild_agent.svg"
+    ],
+    "big_bamboo": [
+      "s1_bamboo_shoot.svg",
+      "s2_panda.svg",
+      "s3_temple_bell.svg",
+      "s4_jade_frog.svg",
+      "s5_golden_bamboo.svg",
+      "wild_bamboo.svg"
+    ],
+    "big_top_bonanza": [
+      "s1_juggling_balls.svg",
+      "s2_tightrope.svg",
+      "s3_acrobat.svg",
+      "s4_clown.svg",
+      "s5_ringmaster.svg",
+      "wild_big_top.svg"
+    ],
+    "black_ops_heist": [
+      "s1_lock_pick.svg",
+      "s2_night_vision.svg",
+      "s3_vault_door.svg",
+      "s4_detonator.svg",
+      "s5_heist_crew.svg",
+      "wild_ghost.svg"
+    ],
+    "book_dead": [
+      "s1_ankh.svg",
+      "s2_scarab.svg",
+      "s3_eye.svg",
+      "s4_pharaoh.svg",
+      "s5_anubis.svg",
+      "wild_book.svg"
+    ],
+    "buffalo_extreme": [
+      "s1_eagle.svg",
+      "s2_cougar.svg",
+      "s3_wolf_hw.svg",
+      "s4_buffalo.svg",
+      "s5_coin_gold.svg",
+      "wild_bison.svg"
+    ],
+    "buffalo_mega": [
+      "s1_prairie_flower.svg",
+      "s2_coyote.svg",
+      "s3_eagle_bk.svg",
+      "s4_mustang.svg",
+      "s5_buffalo_king.svg",
+      "wild_thunder.svg"
+    ],
+    "buffalo_stampede": [
+      "s1_cactus.svg",
+      "s2_horseshoe_gold.svg",
+      "s3_cowboy_hat.svg",
+      "s4_buffalo.svg",
+      "s5_sunset_diamond.svg",
+      "wild_stampede.svg"
+    ],
+    "castle_siege": [
+      "s1_catapult.svg",
+      "s2_shield.svg",
+      "s3_crossbow.svg",
+      "s4_siege_tower.svg",
+      "s5_king_knight.svg",
+      "wild_sword.svg"
+    ],
+    "cleopatra_gold": [
+      "s1_lotus.svg",
+      "s2_ibis.svg",
+      "s3_cartouche.svg",
+      "s4_gold_mask.svg",
+      "s5_cleopatra.svg",
+      "wild_asp.svg"
+    ],
+    "crystal_shrine": [
+      "s1_quartz.svg",
+      "s2_amethyst.svg",
+      "s3_topaz.svg",
+      "s4_sapphire.svg",
+      "s5_crystal_titan.svg",
+      "wild_prism.svg"
+    ],
+    "dead_alive": [
+      "s1_cowboy_boots.svg",
+      "s2_hat_western.svg",
+      "s3_gun_holster.svg",
+      "s4_saloon.svg",
+      "s5_sheriff_star.svg",
+      "wild_dead.svg"
+    ],
+    "diamond_vault": [
+      "s1_sapphire.svg",
+      "s2_ruby.svg",
+      "s3_emerald_cut.svg",
+      "s4_black_diamond.svg",
+      "s5_crown_jewel.svg",
+      "wild_vault.svg"
+    ],
+    "dog_house_mega": [
+      "s1_bone.svg",
+      "s2_collar.svg",
+      "s3_paw.svg",
+      "s4_doberman.svg",
+      "s5_bulldog.svg",
+      "wild_doghouse.svg"
+    ],
+    "dragon_coins": [
+      "s1_fan.svg",
+      "s2_lantern.svg",
+      "s3_koi.svg",
+      "s4_tiger.svg",
+      "s5_dragon.svg",
+      "wild_pearl.svg"
+    ],
+    "dragon_megafire": [
+      "s1_coin_dragon.svg",
+      "s2_scroll.svg",
+      "s3_pagoda.svg",
+      "s4_fire_dragon.svg",
+      "s5_imperial_seal.svg",
+      "wild_megafire.svg"
+    ],
+    "elvis_frog": [
+      "s1_dice.svg",
+      "s2_cocktail.svg",
+      "s3_neon_sign.svg",
+      "s4_showgirl.svg",
+      "s5_frog_elvis.svg",
+      "wild_vegas.svg"
+    ],
+    "eternal_romance": [
+      "s1_candle.svg",
+      "s2_rose.svg",
+      "s3_amber.svg",
+      "s4_michael.svg",
+      "s5_sarah.svg",
+      "wild_vampire.svg"
+    ],
+    "extra_chilli": [
+      "s1_jalapeno.svg",
+      "s2_habanero.svg",
+      "s3_ghost_pepper.svg",
+      "s4_carolina_reaper.svg",
+      "s5_fire_crystal.svg",
+      "wild_extra.svg"
+    ],
+    "fire_hole": [
+      "s1_pickaxe.svg",
+      "s2_mine_cart.svg",
+      "s3_tnt.svg",
+      "s4_lantern_mine.svg",
+      "s5_gold_vein.svg",
+      "wild_xbomb.svg"
+    ],
+    "galactic_raiders": [
+      "s1_asteroid.svg",
+      "s2_alien_pod.svg",
+      "s3_laser_cannon.svg",
+      "s4_ufo.svg",
+      "s5_alien_queen.svg",
+      "wild_spaceship.svg"
+    ],
+    "gates_olympus": [
+      "s1_chalice.svg",
+      "s2_ring.svg",
+      "s3_hourglass.svg",
+      "s4_crown.svg",
+      "s5_lightning.svg",
+      "wild_zeus.svg"
+    ],
+    "gemhalla": [
+      "s1_axe.svg",
+      "s2_horn.svg",
+      "s3_beer.svg",
+      "s4_helmet.svg",
+      "s5_shield_gem.svg",
+      "wild_rune.svg"
+    ],
+    "gems_bonanza": [
+      "s1_emerald.svg",
+      "s2_sapphire.svg",
+      "s3_ruby.svg",
+      "s4_topaz.svg",
+      "s5_diamond_gem.svg",
+      "wild_prism.svg"
+    ],
+    "gold_crown_club": [
+      "s1_champagne.svg",
+      "s2_diamond_ring.svg",
+      "s3_luxury_watch.svg",
+      "s4_gold_bar.svg",
+      "s5_crown.svg",
+      "wild_vault_key.svg"
+    ],
+    "gold_rush_frog": [
+      "s1_pickaxe.svg",
+      "s2_lantern.svg",
+      "s3_dynamite.svg",
+      "s4_nugget.svg",
+      "s5_frog_gold.svg",
+      "wild_frog.svg"
+    ],
+    "golden_fortune": [
+      "s1_champagne.svg",
+      "s2_yacht.svg",
+      "s3_watch.svg",
+      "s4_ring_gold.svg",
+      "s5_limo.svg",
+      "wild_fortune.svg"
+    ],
+    "golden_jaguar": [
+      "s1_jungle_leaf.svg",
+      "s2_tribal_mask.svg",
+      "s3_snake_idol.svg",
+      "s4_jaguar_paw.svg",
+      "s5_golden_idol.svg",
+      "wild_jaguar.svg"
+    ],
+    "grand_prix_rush": [
+      "s1_pit_crew.svg",
+      "s2_racing_glove.svg",
+      "s3_f1_helmet.svg",
+      "s4_podium.svg",
+      "s5_checkered_flag.svg",
+      "wild_race_car.svg"
+    ],
+    "great_rhino": [
+      "s1_flamingo.svg",
+      "s2_crocodile.svg",
+      "s3_gorilla.svg",
+      "s4_rhino.svg",
+      "s5_savanna_gem.svg",
+      "wild_rhino.svg"
+    ],
+    "hot_chillies": [
+      "s1_taco.svg",
+      "s2_maracas.svg",
+      "s3_sombrero.svg",
+      "s4_chilli.svg",
+      "s5_hot_7.svg",
+      "wild_chilli.svg"
+    ],
+    "immortal_blood": [
+      "s1_castle.svg",
+      "s2_blood_rose.svg",
+      "s3_wolf_moon.svg",
+      "s4_vampire_lady.svg",
+      "s5_immortal_ring.svg",
+      "wild_immortal.svg"
+    ],
+    "inferno_fiesta": [
+      "s1_firecracker.svg",
+      "s2_pinata.svg",
+      "s3_flame_skull.svg",
+      "s4_fire_rose.svg",
+      "s5_inferno_gem.svg",
+      "wild_fire_dancer.svg"
+    ],
+    "jungle_fury": [
+      "s1_vine.svg",
+      "s2_tribal_drum.svg",
+      "s3_panther.svg",
+      "s4_gorilla.svg",
+      "s5_jungle_king.svg",
+      "wild_jungle_spirit.svg"
+    ],
+    "madame_destiny": [
+      "s1_candle.svg",
+      "s2_potion.svg",
+      "s3_crystal_ball.svg",
+      "s4_tarot.svg",
+      "s5_mystic_eye.svg",
+      "wild_destiny.svg"
+    ],
+    "mega_diamond_rush": [
+      "s1_ruby.svg",
+      "s2_emerald.svg",
+      "s3_sapphire.svg",
+      "s4_topaz.svg",
+      "s5_mega_diamond.svg",
+      "wild_diamond_cutter.svg"
+    ],
+    "mega_safari": [
+      "s1_zebra.svg",
+      "s2_giraffe.svg",
+      "s3_elephant.svg",
+      "s4_lion_king.svg",
+      "s5_safari_diamond.svg",
+      "wild_safari.svg"
+    ],
+    "monaco_million": [
+      "s1_yacht.svg",
+      "s2_roulette.svg",
+      "s3_penthouse.svg",
+      "s4_supercar.svg",
+      "s5_billionaire.svg",
+      "wild_casino_chip.svg"
+    ],
+    "money_train": [
+      "s1_dynamite_mt.svg",
+      "s2_pistol.svg",
+      "s3_wanted_poster.svg",
+      "s4_sheriff.svg",
+      "s5_train.svg",
+      "wild_locomotive.svg"
+    ],
+    "mystic_wolf": [
+      "s1_paw_print.svg",
+      "s2_moon_rune.svg",
+      "s3_wolf_cub.svg",
+      "s4_alpha_wolf.svg",
+      "s5_blood_moon.svg",
+      "wild_spirit_wolf.svg"
+    ],
+    "neon_viper": [
+      "s1_pixel_byte.svg",
+      "s2_circuit.svg",
+      "s3_laser_eye.svg",
+      "s4_cyber_fang.svg",
+      "s5_viper_boss.svg",
+      "wild_neon.svg"
+    ],
+    "norse_vaults": [
+      "s1_rune_stone.svg",
+      "s2_mjolnir.svg",
+      "s3_longship.svg",
+      "s4_valkyrie.svg",
+      "s5_odin.svg",
+      "wild_yggdrasil.svg"
+    ],
+    "olympian_gods": [
+      "s1_harp.svg",
+      "s2_helmet.svg",
+      "s3_pegasus.svg",
+      "s4_olive_branch.svg",
+      "s5_golden_apple.svg",
+      "wild_olympian.svg"
+    ],
+    "olympus_dream": [
+      "s1_hera.svg",
+      "s2_athena.svg",
+      "s3_apollo.svg",
+      "s4_ares_god.svg",
+      "s5_zeus_orb.svg",
+      "wild_dream.svg"
+    ],
+    "phoenix_rising": [
+      "s1_ash.svg",
+      "s2_feather.svg",
+      "s3_flame_wing.svg",
+      "s4_rebirth_gem.svg",
+      "s5_phoenix_egg.svg",
+      "wild_phoenix.svg"
+    ],
+    "pots_olympus": [
+      "s1_trophy.svg",
+      "s2_apollo.svg",
+      "s3_poseidon.svg",
+      "s4_zeus.svg",
+      "s5_parthenon.svg",
+      "wild_bolt.svg"
+    ],
+    "power_crown": [
+      "s1_scepter.svg",
+      "s2_orb.svg",
+      "s3_crown_jewel.svg",
+      "s4_throne.svg",
+      "s5_royal_crown.svg",
+      "wild_crown.svg"
+    ],
+    "quantum_burst": [
+      "s1_atom.svg",
+      "s2_electron.svg",
+      "s3_proton.svg",
+      "s4_neutron.svg",
+      "s5_plasma_orb.svg",
+      "wild_quantum.svg"
+    ],
+    "reactoonz": [
+      "s1_blob_green.svg",
+      "s2_blob_blue.svg",
+      "s3_blob_pink.svg",
+      "s4_blob_yellow.svg",
+      "s5_blob_red.svg",
+      "wild_gargantoon.svg"
+    ],
+    "rockstar_wild": [
+      "s1_guitar_pick.svg",
+      "s2_drumstick.svg",
+      "s3_electric_guitar.svg",
+      "s4_amp.svg",
+      "s5_rock_legend.svg",
+      "wild_lightning_guitar.svg"
+    ],
+    "rome_eternal": [
+      "s1_laurel_wreath.svg",
+      "s2_roman_sword.svg",
+      "s3_colosseum.svg",
+      "s4_legionnaire.svg",
+      "s5_julius_caesar.svg",
+      "wild_roman_eagle.svg"
+    ],
+    "san_quentin": [
+      "s1_handcuffs.svg",
+      "s2_key_ring.svg",
+      "s3_guard.svg",
+      "s4_razor_wire.svg",
+      "s5_freedom_gem.svg",
+      "wild_quentin.svg"
+    ],
+    "starburst_xxl": [
+      "s1_gem_red.svg",
+      "s2_gem_blue.svg",
+      "s3_gem_green.svg",
+      "s4_gem_yellow.svg",
+      "s5_gem_purple.svg",
+      "wild_star.svg"
+    ],
+    "starlight_princess": [
+      "s1_crystal_heart.svg",
+      "s2_magic_wand.svg",
+      "s3_tiara.svg",
+      "s4_moon_orb.svg",
+      "s5_star_crystal.svg",
+      "wild_empress.svg"
+    ],
+    "sugar_rush": [
+      "s1_lollipop.svg",
+      "s2_gummy_bear.svg",
+      "s3_candy_cane.svg",
+      "s4_cupcake.svg",
+      "s5_diamond_candy.svg",
+      "wild_sugar.svg"
+    ],
+    "sweet_bonanza": [
+      "s1_candy_heart.svg",
+      "s2_star_candy.svg",
+      "s3_lollipop_swirl.svg",
+      "s4_cotton_candy.svg",
+      "s5_bomb_candy.svg",
+      "wild_rainbow.svg"
+    ],
+    "thunder_hero": [
+      "s1_power_ring.svg",
+      "s2_cape.svg",
+      "s3_lightning_fist.svg",
+      "s4_hero_mask.svg",
+      "s5_storm_titan.svg",
+      "wild_thunder_bolt.svg"
+    ],
+    "tombstone_reload": [
+      "s1_boots.svg",
+      "s2_revolver.svg",
+      "s3_wanted.svg",
+      "s4_outlaw.svg",
+      "s5_bounty_skull.svg",
+      "wild_tombstone.svg"
+    ],
+    "vault_coins": [
+      "s1_safe.svg",
+      "s2_briefcase.svg",
+      "s3_stack_cash.svg",
+      "s4_gold_bar.svg",
+      "s5_vault_door.svg",
+      "wild_vault.svg"
+    ],
+    "viking_voyage": [
+      "s1_axe.svg",
+      "s2_horn.svg",
+      "s3_rune.svg",
+      "s4_longship.svg",
+      "s5_odin_eye.svg",
+      "wild_viking.svg"
+    ],
+    "volcano_riches": [
+      "s1_obsidian.svg",
+      "s2_lava_gem.svg",
+      "s3_fire_ruby.svg",
+      "s4_magma_crystal.svg",
+      "s5_volcano_heart.svg",
+      "wild_eruption.svg"
+    ],
+    "wanted_dead": [
+      "s1_colt.svg",
+      "s2_train.svg",
+      "s3_gold_pan.svg",
+      "s4_bandit.svg",
+      "s5_wanted_star.svg",
+      "wild_wanted.svg"
+    ],
+    "wild_west_rush": [
+      "s1_cactus.svg",
+      "s2_lasso.svg",
+      "s3_horseshoe.svg",
+      "s4_revolver.svg",
+      "s5_sheriff_badge.svg",
+      "wild_outlaw.svg"
+    ],
+    "wolf_gold": [
+      "s1_feather.svg",
+      "s2_paw.svg",
+      "s3_eagle.svg",
+      "s4_totem.svg",
+      "s5_moon.svg",
+      "wild_wolf.svg"
+    ],
+    "world_cup_glory": [
+      "s1_football_boot.svg",
+      "s2_stadium.svg",
+      "s3_trophy_cup.svg",
+      "s4_goal_net.svg",
+      "s5_champion.svg",
+      "wild_golden_ball.svg"
+    ]
+  },
+  "generated_at": "2026-04-23T13:22:15.573Z"
 }

@@ -881,25 +881,15 @@ function renderGames() {
 
         function createGameCard(game) {
             const { hotIds: _hotIds, newIds: _newIds } = _getHotNewCached();
-            // Each card shows the real PNG thumbnail (assets/thumbnails/
-            // <id>.png) if it has been published to dist/, OR falls back to
-            // a procedural gradient + monogram. The <img onerror> handler
-            // hides the image and reveals the monogram so a missing PNG
-            // degrades silently — no broken-image icon, no console noise,
-            // and no flag to flip when real art lands.
+            // Card thumbnail: real file at assets/thumbnails/<id>.svg
+            // produced by scripts/generate-assets.js from the game's
+            // bgGradient + accentColor + name + tag. gradient background
+            // stays as a CSS fallback for the split second before the
+            // image decodes.
             const thumbStyle = `background: ${game.bgGradient || '#1a2332'};`;
-            const thumbSrc = game.thumbnail ? String(game.thumbnail) : '';
-            const procMonogram = `<div class="game-card-monogram" aria-hidden="true" style="color:${game.accentColor || '#fff'}">${(game.name || game.id || '?').trim().charAt(0).toUpperCase()}</div>`;
-            // Only emit the <img> tag if the asset manifest confirms the
-            // file is actually present — skips the 404 round-trip for
-            // cards whose real thumbnail hasn't shipped yet. The onerror
-            // handler hides a broken image silently as a second safety.
-            const thumbBasename = thumbSrc ? thumbSrc.replace(/^.*\//, '') : '';
-            const manifest = (window.__assetManifest && window.__assetManifest.thumbnails) || null;
-            const hasRealThumb = !!(manifest && manifest.has && thumbBasename && manifest.has(thumbBasename));
-            const imgTag = hasRealThumb
-                ? `<img class="game-card-thumb" src="${thumbSrc}" alt="" loading="lazy" decoding="async" onerror="this.style.display='none';">`
-                : '';
+            const thumbUrl = 'assets/thumbnails/' + game.id + '.svg';
+            const imgTag = `<img class="game-card-thumb" src="${thumbUrl}" alt="${(game.name || '').replace(/"/g, '&quot;')}" loading="lazy" decoding="async">`;
+            const procMonogram = '';
             const isJackpot = game.tag === 'JACKPOT' || game.tagClass === 'tag-jackpot';
             const isHot  = game.tag === 'HOT'  || game.tagClass === 'tag-hot';
             const isNew  = game.tag === 'NEW'  || game.tagClass === 'tag-new';

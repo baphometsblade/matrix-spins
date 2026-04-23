@@ -304,48 +304,51 @@
                 (_bonusDrought >= 60 ? ' stat-drought-hot' :
                  _bonusDrought >= 30 ? ' stat-drought-warn' : '');
         }
-        // Build symbol image HTML for any game symbol
+        // Reel symbols are real files under dist/assets/game_symbols/<gameId>/.
+        // The generator (scripts/generate-assets.js) writes one SVG per
+        // declared symbol in shared/game-definitions.js, so the URL
+        // always resolves. Prefer animated webp if the build shipped one.
         function getSymbolHtml(symbolName, gameId) {
-            var useAnimated = window.appSettings &&
-                window.appSettings.animationQuality !== 'low' &&
-                window.appSettings.animationQuality !== 'off';
-
-            var txtFallback = 'var sp=document.createElement(\\\'span\\\');sp.className=\\\'reel-symbol-text\\\';sp.textContent=this.alt;this.parentNode.replaceChild(sp,this)';
-            if (useAnimated) {
-                return '<img class="reel-symbol-img reel-symbol-animated" ' +
-                    'src="assets/game_symbols/' + gameId + '/' + symbolName + '.webp" ' +
-                    'alt="' + symbolName + '" draggable="false" ' +
-                    'onerror="this.onerror=function(){&quot; + txtFallback + &quot;};this.src=\&quot;assets/game_symbols/&quot; + gameId + &quot;/&quot; + symbolName + &quot;.png\&quot;;this.classList.remove(\&quot;reel-symbol-animated\&quot;);">';
+            var manifest = window.__assetManifest && window.__assetManifest.gameSymbols;
+            var files = manifest && manifest.get ? manifest.get(gameId) : null;
+            var quality = (window.appSettings && window.appSettings.animationQuality) || 'ultra';
+            var useAnimated = quality !== 'low' && quality !== 'off';
+            var ext = 'svg';
+            if (files && files.has) {
+                if (useAnimated && files.has(symbolName + '.webp')) ext = 'webp';
+                else if (files.has(symbolName + '.png')) ext = 'png';
+                else if (files.has(symbolName + '.svg')) ext = 'svg';
             }
-            return '<img class="reel-symbol-img" src="assets/game_symbols/' + gameId + '/' + symbolName + '.png" alt="' + symbolName + '" draggable="false" onerror="&quot; + txtFallback + &quot;">';
+            var cls = ext === 'webp' ? 'reel-symbol-img reel-symbol-animated' : 'reel-symbol-img';
+            return '<img class="' + cls + '" ' +
+                'src="assets/game_symbols/' + gameId + '/' + symbolName + '.' + ext + '" ' +
+                'alt="' + symbolName + '" draggable="false">';
         }
 
 
-        /** Preload animated WebP assets for the current game (with lifecycle management) */
-        var _preloadCache = [];  // Track active preload images for cancellation
+        /** Preload animated WebP assets for the current game (with lifecycle management).
+         * Manifest-aware: only fires preload requests for files the build
+         * actually published into dist/assets/game_symbols/. With no art
+         * shipped this is a no-op, so there's no burst of 404s on game open. */
+        var _preloadCache = [];
         function preloadAnimatedAssets(game) {
-            // Cancel any in-flight preloads from a previous game
-            _preloadCache.forEach(function(img) { img.src = ''; });
+            _preloadCache.forEach(function (img) { img.src = ''; });
             _preloadCache = [];
-
             if (!game) return;
             var quality = (window.appSettings && window.appSettings.animationQuality) || 'ultra';
             if (quality === 'low' || quality === 'off') return;
 
-            // Preload animated symbols
+            var manifest = window.__assetManifest && window.__assetManifest.gameSymbols;
+            var files = manifest && manifest.get ? manifest.get(game.id) : null;
+            if (!files || !files.size) return; // nothing to preload — procedural SVG path
+
             if (game.symbols) {
-                game.symbols.forEach(function(sym) {
+                game.symbols.forEach(function (sym) {
+                    if (!files.has(sym + '.webp')) return;
                     var img = new Image();
                     img.src = 'assets/game_symbols/' + game.id + '/' + sym + '.webp';
                     _preloadCache.push(img);
                 });
-            }
-
-            // Preload animated background
-            if (quality !== 'low') {
-                var bgImg = new Image();
-                bgImg.src = 'assets/backgrounds/slots/' + game.id + '_bg.webp';
-                _preloadCache.push(bgImg);
             }
         }
 

@@ -926,11 +926,23 @@ async function main() {
     const manifest = await manifestRes.json();
     assert.ok(Array.isArray(manifest.thumbnails));
     assert.ok(Array.isArray(manifest.symbols));
+    assert.ok(typeof manifest.gameSymbols === 'object');
     assert.ok(typeof manifest.generated_at === 'string');
-    // The repo has no assets/ tree — manifest should be empty.
-    assert.strictEqual(manifest.thumbnails.length, 0);
-    assert.strictEqual(manifest.symbols.length, 0);
-    console.log('[test] /asset-manifest.json reflects what is actually in dist/assets/');
+    // Generator writes one thumbnail per game + 8 UI symbols + per-game reel symbols.
+    assert.ok(manifest.thumbnails.length >= 1, 'expected at least one thumbnail in manifest');
+    assert.ok(manifest.symbols.length >= 1, 'expected at least one ui symbol in manifest');
+    assert.ok(Object.keys(manifest.gameSymbols).length >= 1, 'expected at least one gameSymbols entry');
+    // Spot-check: sugar_rush.svg should be present as a thumbnail and
+    // its reel symbols should be listed under gameSymbols.sugar_rush.
+    assert.ok(manifest.thumbnails.includes('sugar_rush.svg'));
+    assert.ok(manifest.gameSymbols.sugar_rush);
+    assert.ok(manifest.gameSymbols.sugar_rush.includes('s1_lollipop.svg'));
+    assert.ok(manifest.gameSymbols.sugar_rush.includes('wild_sugar.svg'));
+    // And that the files themselves actually serve as SVG.
+    const oneThumb = await fetch('http://localhost:3199/assets/thumbnails/sugar_rush.svg');
+    assert.strictEqual(oneThumb.status, 200);
+    assert.ok(/svg/.test(oneThumb.headers.get('content-type') || ''));
+    console.log('[test] /asset-manifest.json reports ' + manifest.thumbnails.length + ' thumbnails, ' + Object.keys(manifest.gameSymbols).length + ' games with reel symbols, and real files serve');
 
     // 54–57) Email verification gates first deposit
     emailSvc.clearCaptured();

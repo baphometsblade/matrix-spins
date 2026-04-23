@@ -7,7 +7,7 @@
         // and procedural fallbacks otherwise, with zero 404s either way.
         // Populated asynchronously on boot; until it resolves the client
         // behaves as if no real assets exist.
-        window.__assetManifest = { thumbnails: new Set(), symbols: new Set(), loaded: false };
+        window.__assetManifest = { thumbnails: new Set(), symbols: new Set(), gameSymbols: new Map(), loaded: false };
         (function loadAssetManifest() {
             fetch('/asset-manifest.json', { cache: 'no-store' })
                 .then(function (r) { return r.ok ? r.json() : null; })
@@ -15,6 +15,13 @@
                     if (!m) return;
                     window.__assetManifest.thumbnails = new Set(m.thumbnails || []);
                     window.__assetManifest.symbols = new Set(m.symbols || []);
+                    // gameSymbols: { '<gameId>': ['s1_lollipop.webp', 's1_lollipop.png', ...] }
+                    // Normalise to Map<gameId, Set<filename>> for O(1) lookup.
+                    var gs = new Map();
+                    Object.keys(m.gameSymbols || {}).forEach(function (gid) {
+                        gs.set(gid, new Set(m.gameSymbols[gid] || []));
+                    });
+                    window.__assetManifest.gameSymbols = gs;
                     window.__assetManifest.loaded = true;
                     // Nudge the lobby to re-render so any already-rendered
                     // cards pick up their newly-available real art.
