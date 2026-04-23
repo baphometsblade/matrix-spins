@@ -1,0 +1,9 @@
+# Matrix Spins
+# https://www.robotstxt.org/robotstxt.html
+
+User-agent: *
+Disallow: /admin.html
+Disallow: /account.html
+Disallow: /api/
+
+Sitemap: /sitemap.xml

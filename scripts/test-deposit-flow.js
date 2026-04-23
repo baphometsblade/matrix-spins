@@ -768,6 +768,28 @@ async function main() {
     assert.ok(!('password_hash' in exp.user), 'password_hash must not be exported');
     console.log('[test] /api/user/export.json returns full record with no secrets');
 
+    // 43) Enhanced /api/health reports the new operational fields
+    const health = await fetch('http://localhost:3199/api/health');
+    assert.strictEqual(health.status, 200);
+    const h = await health.json();
+    assert.strictEqual(h.status, 'ok');
+    assert.ok(typeof h.uptime_seconds === 'number');
+    assert.ok(typeof h.memory_mb === 'number');
+    assert.ok(typeof h.db_ping_ms === 'number');
+    assert.ok(typeof h.users === 'number' && h.users >= 1);
+    assert.ok(typeof h.paid_deposits === 'number');
+    assert.ok(typeof h.webhook_events_processed === 'number' && h.webhook_events_processed >= 1);
+    assert.ok(h.reconciler && typeof h.reconciler === 'object');
+    console.log('[test] /api/health reports uptime, memory, db latency, counts, reconciler');
+
+    // 44) /robots.txt is served and disallows admin + api
+    const robots = await fetch('http://localhost:3199/robots.txt');
+    assert.strictEqual(robots.status, 200);
+    const robotsText = await robots.text();
+    assert.ok(/Disallow:\s*\/admin\.html/i.test(robotsText));
+    assert.ok(/Disallow:\s*\/api\//i.test(robotsText));
+    console.log('[test] /robots.txt disallows /admin.html and /api/');
+
     console.log('\n✅ all deposit-flow assertions passed');
     main.server.close();
     await db.close();

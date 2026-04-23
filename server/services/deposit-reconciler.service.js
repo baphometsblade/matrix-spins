@@ -86,24 +86,41 @@ async function reconcileOnce() {
     if (!config.hasStripe) return { skipped: 'no_stripe' };
     const Stripe = require('stripe');
     const stripe = new Stripe(config.STRIPE_SECRET_KEY);
-    const candidates = await pendingCandidates();
-    const results = [];
-    for (const row of candidates) {
-        try {
-            results.push(await reconcileOne(stripe, row));
-        } catch (err) {
-            console.warn('[reconciler] error on deposit ' + row.id + ':', err.message);
-            results.push({ id: row.id, action: 'error', error: err.message });
+    const startedAt = new Date().toISOString();
+    lastTick = { startedAt: startedAt, finishedAt: null, count: 0, summary: null, error: null };
+    try {
+        const candidates = await pendingCandidates();
+        const results = [];
+        for (const row of candidates) {
+            try {
+                results.push(await reconcileOne(stripe, row));
+            } catch (err) {
+                console.warn('[reconciler] error on deposit ' + row.id + ':', err.message);
+                results.push({ id: row.id, action: 'error', error: err.message });
+            }
         }
-    }
-    if (results.length) {
         const summary = results.reduce((acc, r) => { acc[r.action] = (acc[r.action] || 0) + 1; return acc; }, {});
-        console.log('[reconciler] processed ' + results.length + ' pending deposits: ' + JSON.stringify(summary));
+        if (results.length) {
+            console.log('[reconciler] processed ' + results.length + ' pending deposits: ' + JSON.stringify(summary));
+        }
+        lastTick = { startedAt: startedAt, finishedAt: new Date().toISOString(), count: results.length, summary: summary, error: null };
+        return { count: results.length, results };
+    } catch (err) {
+        lastTick = { startedAt: startedAt, finishedAt: new Date().toISOString(), count: 0, summary: null, error: err.message };
+        throw err;
     }
-    return { count: results.length, results };
 }
 
 let scheduled = null;
+let lastTick = { startedAt: null, finishedAt: null, count: 0, summary: null, error: null };
+
+function getStatus() {
+    return {
+        scheduled: !!scheduled,
+        enabled: process.env.STRIPE_RECONCILE_DISABLED !== '1' && config.hasStripe,
+        last_tick: lastTick,
+    };
+}
 
 function scheduleReconciler() {
     if (process.env.STRIPE_RECONCILE_DISABLED === '1') {
@@ -126,4 +143,4 @@ function stopReconciler() {
     if (scheduled) { scheduled.stop(); scheduled = null; }
 }
 
-module.exports = { reconcileOnce, scheduleReconciler, stopReconciler, MIN_AGE_SECONDS, MAX_AGE_SECONDS };
+module.exports = { reconcileOnce, scheduleReconciler, stopReconciler, getStatus, MIN_AGE_SECONDS, MAX_AGE_SECONDS };
