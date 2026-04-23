@@ -1,0 +1,12 @@
+# Matrix Spins security disclosure
+# https://datatracker.ietf.org/doc/html/rfc9116
+
+Contact: mailto:security@msaart.online
+Preferred-Languages: en
+Canonical: https://msaart.online/.well-known/security.txt
+Policy: https://msaart.online/responsible-gambling.html
+Hiring: https://msaart.online/
+
+# Please do not run automated scans against production infrastructure.
+# If you find a vulnerability that affects balances, authentication,
+# or NFT receipts, report it by email. We will respond within 72 hours.

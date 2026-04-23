@@ -110,6 +110,10 @@ router.post('/checkout', authenticate, async (req, res) => {
         const successUrl = config.PUBLIC_URL + '/#deposit-success=' + depositId;
         const cancelUrl = config.PUBLIC_URL + '/#deposit-cancel=' + depositId;
 
+        // Idempotency key prevents duplicate Stripe sessions on double-
+        // click, network retry, or a client re-POST after success. Bound
+        // to our own deposit id so every (user, deposit) pair maps to
+        // exactly one Checkout Session, even under retries.
         const session = await stripe.checkout.sessions.create({
             mode: 'payment',
             payment_method_types: ['card'],
@@ -131,6 +135,8 @@ router.post('/checkout', authenticate, async (req, res) => {
             }],
             success_url: successUrl,
             cancel_url: cancelUrl,
+        }, {
+            idempotencyKey: 'ms_deposit_' + depositId,
         });
 
         await db.run('UPDATE deposits SET provider_ref = ? WHERE id = ?', [session.id, depositId]);

@@ -120,6 +120,12 @@
         <div class="msg" id="pw-msg"></div>
     </form>
     <div class="card">
+        <div class="label" style="margin-bottom:8px">Download my data</div>
+        <p style="font-size:13px">Full JSON export of everything the server stores about your account: profile, deposits, refunds, receipt NFTs, balance adjustments, account activity, and 2FA status. Password and recovery-code hashes are not included.</p>
+        <button class="secondary" type="button" onclick="downloadMyExport()">Download JSON</button>
+        <div class="msg" id="export-msg"></div>
+    </div>
+    <div class="card">
         <div class="label" style="margin-bottom:8px">Account deletion</div>
         <p style="font-size:13px">This removes your account from our servers. Deposits remain in the ledger for accounting but are detached from your PII.</p>
         <button class="danger" type="button" onclick="deleteAccount()">Delete my account</button>
@@ -377,6 +383,25 @@
             }
             await loadLimits();
         } catch (e) { msg.className = 'msg err'; msg.textContent = e.message; }
+    };
+
+    window.downloadMyExport = async function () {
+        const msg = document.getElementById('export-msg');
+        msg.className = 'msg'; msg.textContent = 'Preparing…';
+        try {
+            const res = await fetch('/api/user/export.json', { headers: { Authorization: 'Bearer ' + token() } });
+            if (!res.ok) throw new Error('HTTP ' + res.status);
+            const blob = await res.blob();
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'matrix-spins-data-' + (state.user && state.user.username || 'export') + '.json';
+            document.body.appendChild(a); a.click(); document.body.removeChild(a);
+            setTimeout(() => URL.revokeObjectURL(url), 1000);
+            msg.className = 'msg ok'; msg.textContent = 'Downloaded.';
+        } catch (e) {
+            msg.className = 'msg err'; msg.textContent = e.message;
+        }
     };
 
     window.downloadMyCsv = async function () {

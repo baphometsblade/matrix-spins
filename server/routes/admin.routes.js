@@ -442,6 +442,71 @@ router.get('/deposits.csv', async (req, res) => {
 });
 
 /**
+ * GET /api/admin/audit/balances?user_id=N
+ *
+ * Compares every user's stored balance_cents against the ledger
+ * derived from deposits + refunds + adjustments. Returns any drift.
+ * The expected formula is:
+ *
+ *   expected = SUM(paid_and_partial_refund deposits)
+ *            - SUM(refunds)
+ *            + SUM(adjustments)
+ *
+ * Drift of zero for every user means our money is real money.
+ * Run this on a schedule or before every accounting close.
+ */
+router.get('/audit/balances', async (req, res) => {
+    const userIdFilter = req.query.user_id ? parseInt(req.query.user_id, 10) : null;
+    try {
+        const whereUser = userIdFilter ? ' WHERE id = ?' : '';
+        const params = userIdFilter ? [userIdFilter] : [];
+        const users = await db.all(
+            'SELECT id, username, email, balance_cents FROM users' + whereUser + ' ORDER BY id',
+            params
+        );
+        const out = [];
+        for (const u of users) {
+            const paidRow = await db.get(
+                `SELECT COALESCE(SUM(amount_cents), 0) AS total FROM deposits
+                  WHERE user_id = ? AND status IN ('paid', 'partial_refund')`,
+                [u.id]
+            );
+            const refundsRow = await db.get(
+                'SELECT COALESCE(SUM(amount_cents), 0) AS total FROM refunds WHERE user_id = ?',
+                [u.id]
+            );
+            const adjRow = await db.get(
+                'SELECT COALESCE(SUM(delta_cents), 0) AS total FROM balance_adjustments WHERE user_id = ?',
+                [u.id]
+            );
+            const paid = Number((paidRow && paidRow.total) || 0);
+            const refunded = Number((refundsRow && refundsRow.total) || 0);
+            const adjusted = Number((adjRow && adjRow.total) || 0);
+            const expected = paid - refunded + adjusted;
+            const actual = Number(u.balance_cents || 0);
+            const drift = actual - expected;
+            if (drift !== 0 || userIdFilter) {
+                out.push({
+                    user_id: u.id,
+                    username: u.username,
+                    email: u.email,
+                    expected_cents: expected,
+                    actual_cents: actual,
+                    drift_cents: drift,
+                    paid_cents: paid,
+                    refunded_cents: refunded,
+                    adjusted_cents: adjusted,
+                });
+            }
+        }
+        res.json({ count: out.length, drifted: out });
+    } catch (err) {
+        console.error('[admin/audit/balances]', err);
+        res.status(500).json({ error: 'Audit failed.' });
+    }
+});
+
+/**
  * POST /api/admin/reconcile-now
  * Triggers an immediate pending-deposit reconciliation pass against
  * Stripe. Same code path as the scheduled cron.

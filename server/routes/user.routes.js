@@ -179,6 +179,96 @@ router.get('/deposits', authenticate, async (req, res) => {
     }
 });
 
+/**
+ * GET /api/user/export.json
+ *
+ * GDPR-style full export of everything the server holds about the
+ * signed-in user. Authed; streams the whole payload inline. Clients
+ * use this for "download my data" in the account page.
+ *
+ * Secrets are redacted:
+ *   - password_hash never appears
+ *   - recovery code hashes are omitted; counts are surfaced
+ *   - TOTP secret is never returned
+ *   - only safe columns from auth_events are included
+ */
+router.get('/export.json', authenticate, async (req, res) => {
+    try {
+        const user = await db.get(
+            `SELECT id, username, email, display_name, date_of_birth, balance_cents, is_admin,
+                    deposit_limit_daily_cents, deposit_limit_weekly_cents, deposit_limit_monthly_cents,
+                    created_at
+               FROM users WHERE id = ?`,
+            [req.user.id]
+        );
+        if (!user) return res.status(404).json({ error: 'User not found.' });
+
+        const [deposits, refunds, nfts, adjustments, events, twofa, recoveryCount] = await Promise.all([
+            db.all(
+                `SELECT id, provider, provider_ref, amount_cents, currency, status, created_at, completed_at
+                   FROM deposits WHERE user_id = ? ORDER BY id DESC`,
+                [req.user.id]
+            ),
+            db.all(
+                `SELECT id, deposit_id, amount_cents, provider_ref, reason, created_at
+                   FROM refunds WHERE user_id = ? ORDER BY id DESC`,
+                [req.user.id]
+            ),
+            db.all(
+                `SELECT id, token_id, provider, chain, contract_address, metadata, signature, minted_at
+                   FROM nft_receipts WHERE user_id = ? ORDER BY id DESC`,
+                [req.user.id]
+            ),
+            db.all(
+                `SELECT id, admin_username, delta_cents, balance_after_cents, reason, created_at
+                   FROM balance_adjustments WHERE user_id = ? ORDER BY id DESC`,
+                [req.user.id]
+            ),
+            db.all(
+                `SELECT id, event_type, outcome, ip, user_agent, reason, created_at
+                   FROM auth_events WHERE user_id = ? ORDER BY id DESC LIMIT 500`,
+                [req.user.id]
+            ),
+            db.get(
+                `SELECT enabled, created_at, enabled_at FROM user_totp_secrets WHERE user_id = ?`,
+                [req.user.id]
+            ),
+            db.get(
+                `SELECT COUNT(*) AS n FROM user_recovery_codes WHERE user_id = ? AND used_at IS NULL`,
+                [req.user.id]
+            ),
+        ]);
+
+        res.setHeader('Content-Type', 'application/json; charset=utf-8');
+        res.setHeader('Content-Disposition', 'attachment; filename="matrix-spins-data-' + user.username + '-' + new Date().toISOString().slice(0, 10) + '.json"');
+        res.json({
+            exported_at: new Date().toISOString(),
+            user: user,
+            deposits: deposits.map(d => ({ ...d, amount: Number(d.amount_cents) / 100 })),
+            refunds: refunds.map(r => ({ ...r, amount: Number(r.amount_cents) / 100 })),
+            nft_receipts: nfts.map(n => ({
+                ...n,
+                metadata: typeof n.metadata === 'string' ? JSON.parse(n.metadata) : n.metadata,
+            })),
+            balance_adjustments: adjustments.map(a => ({
+                ...a,
+                delta: Number(a.delta_cents) / 100,
+                balance_after: Number(a.balance_after_cents) / 100,
+            })),
+            account_activity: events,
+            two_factor: {
+                enabled: !!(twofa && twofa.enabled),
+                configured_at: twofa && twofa.created_at,
+                enabled_at: twofa && twofa.enabled_at,
+                recovery_codes_remaining: Number((recoveryCount && recoveryCount.n) || 0),
+            },
+        });
+    } catch (err) {
+        console.error('[user/export.json]', err);
+        res.status(500).json({ error: 'Export failed.' });
+    }
+});
+
 router.delete('/', authenticate, async (req, res) => {
     // Hard-deletes the user row; deposits and NFT receipts are retained
     // so refunds and accounting can still resolve, but user_id is

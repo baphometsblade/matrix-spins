@@ -723,6 +723,51 @@ async function main() {
     assert.strictEqual(restored.status, 'paid', 'dispute.closed (won) did not restore status: ' + restored.status);
     console.log('[test] dispute.created flags deposit; dispute.closed (won) restores it');
 
+    // 40) /.well-known/security.txt renders with the expected Contact field
+    const sec = await fetch('http://localhost:3199/.well-known/security.txt');
+    assert.strictEqual(sec.status, 200);
+    const secText = await sec.text();
+    assert.ok(/^Contact:/m.test(secText), 'security.txt missing Contact field');
+    assert.ok(/Canonical:/.test(secText), 'security.txt missing Canonical');
+    console.log('[test] /.well-known/security.txt serves RFC 9116 body');
+
+    // 41) Balance audit endpoint reports drift when we pinch balance
+    //     directly (bypassing deposits/refunds/adjustments ledgers).
+    //     Pick a user with no activity and bump their balance in raw SQL.
+    const auditUser = await http('POST', '/api/auth/register', {
+        csrf: (await http('GET', '/api/csrf-token')).body.csrfToken,
+        body: {
+            username: 'audit_' + Date.now(),
+            email: 'audit_' + Date.now() + '@example.com',
+            password: 'Str0ngP@ss!!',
+            date_of_birth: '1990-01-01',
+        },
+    });
+    assert.strictEqual(auditUser.status, 201);
+    const auditUid = auditUser.body.user.id;
+    // Bypass the audit trail deliberately.
+    await db.run('UPDATE users SET balance_cents = ? WHERE id = ?', [777, auditUid]);
+    const audit = await http('GET', '/api/admin/audit/balances', { token: adminToken });
+    assert.strictEqual(audit.status, 200);
+    const drifted = audit.body.drifted.find(d => d.user_id === auditUid);
+    assert.ok(drifted, 'audit did not detect the drift we just created');
+    assert.strictEqual(drifted.drift_cents, 777);
+    console.log('[test] balance-audit detects ledger drift');
+
+    // 42) Full GDPR user export contains profile + deposits + nfts + activity
+    const exportRes = await fetch('http://localhost:3199/api/user/export.json', {
+        headers: { Authorization: 'Bearer ' + auditUser.body.token },
+    });
+    assert.strictEqual(exportRes.status, 200);
+    const exp = await exportRes.json();
+    assert.ok(exp.user && exp.user.username === auditUser.body.user.username);
+    assert.ok(Array.isArray(exp.deposits));
+    assert.ok(Array.isArray(exp.nft_receipts));
+    assert.ok(Array.isArray(exp.account_activity));
+    assert.ok(exp.two_factor);
+    assert.ok(!('password_hash' in exp.user), 'password_hash must not be exported');
+    console.log('[test] /api/user/export.json returns full record with no secrets');
+
     console.log('\n✅ all deposit-flow assertions passed');
     main.server.close();
     await db.close();
