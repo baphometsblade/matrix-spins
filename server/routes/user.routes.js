@@ -271,6 +271,128 @@ router.get('/export.json', authenticate, async (req, res) => {
     }
 });
 
+/**
+ * GET/PUT /api/user/stats — per-user gameplay stats blob.
+ *
+ * The client keeps its running counters (spins, wins, wager, etc.) in
+ * localStorage and syncs the whole object here so sessions carry across
+ * devices. We don't interpret the shape on the server — we validate a
+ * size cap, store it, and give it back on read.
+ */
+router.get('/stats', authenticate, async (req, res) => {
+    try {
+        const row = await db.get('SELECT stats_json, updated_at FROM user_stats WHERE user_id = ?', [req.user.id]);
+        if (!row) return res.json({ stats: null, updated_at: null });
+        let stats;
+        try { stats = JSON.parse(row.stats_json); } catch { stats = null; }
+        res.json({ stats, updated_at: row.updated_at });
+    } catch (err) {
+        console.error('[user/stats GET]', err);
+        res.status(500).json({ error: 'Failed to fetch stats.' });
+    }
+});
+
+router.put('/stats', authenticate, async (req, res) => {
+    const body = req.body || {};
+    const stats = body.stats;
+    if (!stats || typeof stats !== 'object' || Array.isArray(stats)) {
+        return res.status(400).json({ error: 'stats must be an object.' });
+    }
+    let json;
+    try { json = JSON.stringify(stats); }
+    catch { return res.status(400).json({ error: 'stats must be JSON-serializable.' }); }
+    if (json.length > 64 * 1024) {
+        return res.status(413).json({ error: 'stats payload too large (max 64 KB).' });
+    }
+    try {
+        const existing = await db.get('SELECT user_id FROM user_stats WHERE user_id = ?', [req.user.id]);
+        if (existing) {
+            await db.run(
+                "UPDATE user_stats SET stats_json = ?, updated_at = " +
+                (db.kind === 'pg' ? "now()" : "strftime('%Y-%m-%d %H:%M:%f','now')") +
+                " WHERE user_id = ?",
+                [json, req.user.id]
+            );
+        } else {
+            await db.run(
+                'INSERT INTO user_stats (user_id, stats_json) VALUES (?, ?)',
+                [req.user.id, json]
+            );
+        }
+        res.json({ ok: true });
+    } catch (err) {
+        console.error('[user/stats PUT]', err);
+        res.status(500).json({ error: 'Failed to save stats.' });
+    }
+});
+
+/**
+ * GET /api/user/return-status — "is this a returning user?"
+ *
+ * Honest signal only: derived from real auth history and deposit totals.
+ * - isReturn is true when the previous successful login happened 7+
+ *   days ago (ignoring the current session).
+ * - offerTier is seeded by lifetime completed-deposit volume. Platinum
+ *   ≥ $1,000, gold ≥ $250, silver ≥ $50, otherwise bronze.
+ * The client uses the tier to theme the welcome-back overlay; it never
+ * affects balances or bonuses.
+ */
+router.get('/return-status', authenticate, async (req, res) => {
+    try {
+        const prev = await db.get(
+            `SELECT created_at FROM auth_events
+              WHERE user_id = ? AND event_type = 'login' AND outcome = 'success'
+              ORDER BY id DESC LIMIT 1 OFFSET 1`,
+            [req.user.id]
+        );
+        let isReturn = false;
+        let daysAway = 0;
+        if (prev && prev.created_at) {
+            const prevMs = new Date(prev.created_at).getTime();
+            if (Number.isFinite(prevMs)) {
+                daysAway = Math.floor((Date.now() - prevMs) / 86400000);
+                isReturn = daysAway >= 7;
+            }
+        }
+
+        const agg = await db.get(
+            `SELECT COALESCE(SUM(amount_cents), 0) AS total
+               FROM deposits WHERE user_id = ? AND status = 'completed'`,
+            [req.user.id]
+        );
+        const cents = Number((agg && agg.total) || 0);
+        let offerTier = 'bronze';
+        if (cents >= 100000) offerTier = 'platinum';
+        else if (cents >= 25000) offerTier = 'gold';
+        else if (cents >= 5000) offerTier = 'silver';
+
+        res.json({
+            isReturn,
+            daysAway,
+            offerTier,
+            lifetimeDepositCents: cents,
+        });
+    } catch (err) {
+        console.error('[user/return-status]', err);
+        res.status(500).json({ error: 'Failed to fetch return status.' });
+    }
+});
+
+/**
+ * GET /api/user/loss-streak-offer — compensatory-offer eligibility.
+ *
+ * This build settles wagers client-side and does not yet persist round
+ * results to the server, so we don't have a real loss-streak signal to
+ * act on. We report the only honest answer — { eligible: false } — and
+ * the client's handler already treats that as "show nothing." When
+ * server-side bet accounting lands, the real rule (e.g. "4+ consecutive
+ * losing sessions totaling ≥ $50 net loss in the last 24h") replaces
+ * this body.
+ */
+router.get('/loss-streak-offer', authenticate, async (_req, res) => {
+    res.json({ eligible: false, offer: null });
+});
+
 router.delete('/', authenticate, async (req, res) => {
     // Hard-deletes the user row; deposits and NFT receipts are retained
     // so refunds and accounting can still resolve, but user_id is

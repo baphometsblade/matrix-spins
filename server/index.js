@@ -179,6 +179,12 @@ app.use('/api', (_req, res) => {
 
 /* ─── Static frontend ─── */
 const DIST_DIR = path.join(__dirname, '..', 'dist');
+
+// Some browsers (and scrapers) auto-request /favicon.ico even when the
+// page only declares an SVG icon. Redirect to the real asset instead
+// of letting it 404 — keeps the access log and devtools clean.
+app.get('/favicon.ico', (_req, res) => res.redirect(301, '/favicon.svg'));
+
 app.use(express.static(DIST_DIR, { maxAge: '1y', index: false }));
 
 // Anything that looks like a static asset (has a file extension) and

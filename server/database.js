@@ -341,6 +341,18 @@ async function migrate() {
         );
     `);
     await driver.exec(`CREATE INDEX IF NOT EXISTS idx_balance_adjustments_user ON balance_adjustments (user_id);`);
+
+    // Per-user game stats blob. The client keeps its running counters in
+    // localStorage and periodically syncs the whole object up here so
+    // session/device switches don't lose history. One row per user;
+    // last_updated helps admin audits.
+    await driver.exec(`
+        CREATE TABLE IF NOT EXISTS user_stats (
+            user_id ${driver.kind === 'pg' ? 'INTEGER' : 'INTEGER'} PRIMARY KEY,
+            stats_json TEXT NOT NULL,
+            updated_at ${T.ts}
+        );
+    `);
 }
 
 async function initDatabase() {

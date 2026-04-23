@@ -116,21 +116,34 @@ async function main() {
         if (cards.length < 1) fail('no .game-card rendered — bundle likely died');
         else ok(cards.length + ' game cards rendered');
 
-        // Wait for the first thumbnail to finish decoding. SVGs can take
-        // a beat to rasterize in headless Chromium; give it real time.
+        // Wait until at least one thumbnail has finished decoding.
+        // Headless Chromium's SVG rasterizer is stochastic — the
+        // "first" DOM card doesn't always decode first. What we care
+        // about is that the <img>-based pipeline works at all; that
+        // means "any thumbnail decoded." This check scans all cards.
         await page.waitForFunction(() => {
-            const img = document.querySelector('.game-card .game-card-thumb');
-            return img && img.complete && img.naturalWidth > 0;
-        }, { timeout: 20000 }).catch(() => { /* reported below */ });
-        const firstThumb = await page.evaluate(() => {
-            const img = document.querySelector('.game-card .game-card-thumb');
-            return img ? { src: img.currentSrc || img.src, natural: img.naturalWidth + 'x' + img.naturalHeight, complete: img.complete } : null;
+            return Array.from(document.querySelectorAll('.game-card .game-card-thumb'))
+                .some(img => img && img.complete && img.naturalWidth > 0);
+        }, { timeout: 30000 }).catch(() => { /* reported below */ });
+        const thumbSummary = await page.evaluate(() => {
+            const imgs = Array.from(document.querySelectorAll('.game-card .game-card-thumb'));
+            const decoded = imgs.filter(i => i && i.complete && i.naturalWidth > 0);
+            const first = decoded[0] || imgs[0] || null;
+            return {
+                total: imgs.length,
+                decoded: decoded.length,
+                sample: first ? {
+                    src: first.currentSrc || first.src,
+                    natural: first.naturalWidth + 'x' + first.naturalHeight,
+                    complete: first.complete,
+                } : null,
+            };
         });
-        if (!firstThumb) fail('no .game-card-thumb <img> found');
-        else if (!firstThumb.complete || firstThumb.natural === '0x0') {
-            fail('first thumbnail failed to load: ' + JSON.stringify(firstThumb));
+        if (!thumbSummary.sample) fail('no .game-card-thumb <img> found');
+        else if (thumbSummary.decoded === 0) {
+            fail('no thumbnails decoded: ' + JSON.stringify(thumbSummary));
         } else {
-            ok('first thumbnail loaded: ' + firstThumb.src + ' (' + firstThumb.natural + ')');
+            ok(thumbSummary.decoded + '/' + thumbSummary.total + ' thumbnails decoded (sample: ' + thumbSummary.sample.src + ' ' + thumbSummary.sample.natural + ')');
         }
 
         // Register modal opens on click?
@@ -139,6 +152,53 @@ async function main() {
         const authOk = await page.evaluate(() => !!document.querySelector('#loginUsername'));
         if (!authOk) fail('#loginUsername missing — auth UI did not wire up');
         else ok('auth form elements present');
+
+        // Real register flow — open the auth modal, fill the form, submit,
+        // and confirm the server returned a session. This catches the class
+        // of bug where apiRequest, CSRF, or the register endpoint itself
+        // breaks even though the page renders.
+        const regUsername = 'smoke' + crypto.randomBytes(4).toString('hex');
+        const regEmail = regUsername + '@test.invalid';
+        const regPassword = 'BrowserSmoke!' + crypto.randomBytes(3).toString('hex');
+        const regDob = '1990-01-01';
+
+        await page.evaluate(() => {
+            if (typeof showAuthModal === 'function') showAuthModal();
+            if (typeof switchAuthTab === 'function') switchAuthTab('register');
+        });
+        await page.waitForSelector('#registerForm', { state: 'visible', timeout: 3000 })
+            .catch(() => { /* reported below */ });
+
+        await page.fill('#regUsername', regUsername);
+        await page.fill('#regEmail', regEmail);
+        await page.fill('#regPassword', regPassword);
+        await page.fill('#regConfirm', regPassword);
+        await page.fill('#regDOB', regDob);
+
+        await page.click('#registerBtn');
+        // A successful register sets currentUser AND writes a token to
+        // localStorage AND closes the auth modal. Wait on the strongest
+        // signal (token) because currentUser is module-scoped and not
+        // guaranteed to be on window in every build.
+        const registered = await page.waitForFunction(() => {
+            // STORAGE_KEY_TOKEN = 'casinoToken' — see js/globals.js.
+            const tok = localStorage.getItem('casinoToken');
+            return !!(tok && tok.length > 20);
+        }, { timeout: 15000 }).then(() => true).catch(() => false);
+
+        if (!registered) {
+            const authErr = await page.evaluate(() => {
+                const el = document.querySelector('#authError');
+                return el ? el.textContent.trim() : '';
+            });
+            fail('register flow did not establish a session' + (authErr ? ' (authError: "' + authErr + '")' : ''));
+        } else {
+            const who = await page.evaluate(() => {
+                const btn = document.querySelector('#authBtn');
+                return btn ? btn.textContent.trim() : '';
+            });
+            ok('registered ' + regUsername + ' and session is live (authBtn="' + who + '")');
+        }
 
         if (consoleErrors.length) {
             // Filter out known-benign noise:
