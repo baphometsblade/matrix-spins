@@ -210,11 +210,23 @@ router.get('/deposits', async (req, res) => {
 
 router.get('/users', async (req, res) => {
     const limit = Math.max(1, Math.min(200, parseInt(req.query.limit, 10) || 50));
+    const q = typeof req.query.q === 'string' ? req.query.q.trim() : '';
     try {
-        const rows = await db.all(
-            'SELECT id, username, email, balance_cents, is_admin, created_at FROM users ORDER BY id DESC LIMIT ?',
-            [limit]
-        );
+        let rows;
+        if (q) {
+            const like = '%' + q.replace(/[%_]/g, '\\$&') + '%';
+            rows = await db.all(
+                `SELECT id, username, email, balance_cents, is_admin, created_at FROM users
+                  WHERE lower(username) LIKE lower(?) OR lower(email) LIKE lower(?)
+               ORDER BY id DESC LIMIT ?`,
+                [like, like, limit]
+            );
+        } else {
+            rows = await db.all(
+                'SELECT id, username, email, balance_cents, is_admin, created_at FROM users ORDER BY id DESC LIMIT ?',
+                [limit]
+            );
+        }
         res.json({
             users: rows.map(r => ({
                 id: r.id,
@@ -229,6 +241,74 @@ router.get('/users', async (req, res) => {
     } catch (err) {
         console.error('[admin/users]', err);
         res.status(500).json({ error: 'Failed to list users.' });
+    }
+});
+
+/**
+ * GET /api/admin/search?q=<query>
+ * Cross-table lookup. Matches users by username/email and deposits by
+ * id (numeric) or provider_ref (Stripe session id like "cs_…").
+ */
+router.get('/search', async (req, res) => {
+    const q = (typeof req.query.q === 'string' ? req.query.q : '').trim();
+    if (!q) return res.json({ users: [], deposits: [] });
+    try {
+        const like = '%' + q.replace(/[%_]/g, '\\$&') + '%';
+        const numericId = /^\d+$/.test(q) ? parseInt(q, 10) : null;
+        const userRows = await db.all(
+            `SELECT id, username, email, balance_cents, is_admin, created_at FROM users
+              WHERE lower(username) LIKE lower(?) OR lower(email) LIKE lower(?)
+           ORDER BY id DESC LIMIT 20`,
+            [like, like]
+        );
+        const depRows = await db.all(
+            `SELECT d.id, d.user_id, u.username, d.amount_cents, d.currency, d.status,
+                    d.provider_ref, d.created_at, d.completed_at
+               FROM deposits d LEFT JOIN users u ON u.id = d.user_id
+              WHERE d.id = ? OR lower(d.provider_ref) LIKE lower(?)
+           ORDER BY d.id DESC LIMIT 20`,
+            [numericId == null ? -1 : numericId, like]
+        );
+        res.json({
+            users: userRows.map(r => ({
+                id: r.id,
+                username: r.username,
+                email: r.email,
+                balance: Number(r.balance_cents || 0) / 100,
+                is_admin: !!r.is_admin,
+                created_at: r.created_at,
+            })),
+            deposits: depRows.map(r => ({
+                id: r.id,
+                user_id: r.user_id,
+                username: r.username,
+                amount: Number(r.amount_cents) / 100,
+                currency: r.currency,
+                status: r.status,
+                provider_ref: r.provider_ref,
+                created_at: r.created_at,
+                completed_at: r.completed_at,
+            })),
+        });
+    } catch (err) {
+        console.error('[admin/search]', err);
+        res.status(500).json({ error: 'Search failed.' });
+    }
+});
+
+/**
+ * POST /api/admin/reconcile-now
+ * Triggers an immediate pending-deposit reconciliation pass against
+ * Stripe. Same code path as the scheduled cron.
+ */
+router.post('/reconcile-now', async (_req, res) => {
+    try {
+        const reconciler = require('../services/deposit-reconciler.service');
+        const out = await reconciler.reconcileOnce();
+        res.json(out);
+    } catch (err) {
+        console.error('[admin/reconcile-now]', err);
+        res.status(500).json({ error: err.message || 'Reconciliation failed.' });
     }
 });
 

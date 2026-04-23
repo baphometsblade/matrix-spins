@@ -13,6 +13,7 @@ const config = require('../config');
 const db = require('../database');
 const nftService = require('../services/nft.service');
 const email = require('../services/email.service');
+const { fulfillCheckoutSession, markDepositStatusBySession } = require('../services/deposit-fulfillment.service');
 
 const router = express.Router();
 
@@ -55,13 +56,13 @@ router.post('/', async (req, res) => {
         switch (event.type) {
             case 'checkout.session.completed':
             case 'checkout.session.async_payment_succeeded':
-                await handleCheckoutCompleted(event.data.object);
+                await fulfillCheckoutSession(event.data.object);
                 break;
             case 'checkout.session.expired':
-                await markDepositStatus(event.data.object, 'expired');
+                await markDepositStatusBySession(event.data.object, 'expired');
                 break;
             case 'checkout.session.async_payment_failed':
-                await markDepositStatus(event.data.object, 'failed');
+                await markDepositStatusBySession(event.data.object, 'failed');
                 break;
             case 'charge.refunded':
                 await handleChargeRefunded(event.data.object);
@@ -89,80 +90,8 @@ router.post('/', async (req, res) => {
     }
 });
 
-async function handleCheckoutCompleted(session) {
-    const depositId = Number(session.client_reference_id || (session.metadata && session.metadata.deposit_id));
-    if (!depositId) {
-        console.warn('[stripe-webhook] session without deposit_id', session.id);
-        return;
-    }
-    if (session.payment_status && session.payment_status !== 'paid') {
-        console.warn('[stripe-webhook] session not paid yet:', session.id, session.payment_status);
-        return;
-    }
-
-    const deposit = await db.get('SELECT * FROM deposits WHERE id = ?', [depositId]);
-    if (!deposit) {
-        console.warn('[stripe-webhook] no deposit row for id', depositId);
-        return;
-    }
-    if (deposit.status === 'paid') return; // already credited on a previous delivery
-
-    const isPg = db.kind === 'pg';
-    const flip = await db.run(
-        isPg
-            ? `UPDATE deposits SET status = ?, completed_at = NOW(), provider_ref = COALESCE(provider_ref, ?) WHERE id = ? AND status <> 'paid'`
-            : `UPDATE deposits SET status = ?, completed_at = strftime('%Y-%m-%dT%H:%M:%fZ','now'), provider_ref = COALESCE(provider_ref, ?) WHERE id = ? AND status <> 'paid'`,
-        ['paid', session.id, depositId]
-    );
-    if (!flip || flip.changes === 0) {
-        // Another worker already flipped it — safe to skip.
-        return;
-    }
-
-    await db.run(
-        'UPDATE users SET balance_cents = balance_cents + ? WHERE id = ?',
-        [Number(deposit.amount_cents), deposit.user_id]
-    );
-
-    const receipt = await nftService.mintFor({
-        userId: deposit.user_id,
-        depositId: deposit.id,
-        amountCents: Number(deposit.amount_cents),
-        currency: deposit.currency,
-    });
-
-    // Send the receipt email. Never block the webhook ack on email
-    // delivery — if SMTP is down, Stripe must still see 200 so it
-    // doesn't retry the fulfilled deposit.
-    try {
-        const user = await db.get('SELECT username, email FROM users WHERE id = ?', [deposit.user_id]);
-        if (user && user.email) {
-            const tier = (receipt && receipt.metadata && (receipt.metadata.attributes || []).find(a => a.trait_type === 'Tier'));
-            await email.sendDepositReceipt({
-                to: user.email,
-                username: user.username,
-                amount: Number(deposit.amount_cents) / 100,
-                currency: deposit.currency,
-                depositId: deposit.id,
-                tier: tier && tier.value,
-                tokenId: receipt && receipt.tokenId,
-            });
-        }
-    } catch (err) {
-        console.warn('[stripe-webhook] receipt email failed (non-fatal):', err.message);
-    }
-
-    console.log(`[stripe-webhook] deposit ${depositId} fulfilled for user ${deposit.user_id} (+${deposit.amount_cents} ${deposit.currency})`);
-}
-
-async function markDepositStatus(session, status) {
-    const depositId = Number(session.client_reference_id || (session.metadata && session.metadata.deposit_id));
-    if (!depositId) return;
-    await db.run(
-        `UPDATE deposits SET status = ? WHERE id = ? AND status = 'pending'`,
-        [status, depositId]
-    );
-}
+// Fulfillment + status-mark live in services/deposit-fulfillment.service
+// so the reconciler cron and the webhook share one code path.
 
 async function handleChargeRefunded(charge) {
     const deposit = await findDepositForCharge(charge);

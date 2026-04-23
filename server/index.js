@@ -175,6 +175,11 @@ async function start() {
     } catch (err) {
         console.warn('[boot] admin bootstrap warning:', err.message);
     }
+    try {
+        require('./services/deposit-reconciler.service').scheduleReconciler();
+    } catch (err) {
+        console.warn('[boot] reconciler schedule warning:', err.message);
+    }
     const server = app.listen(config.PORT, () => {
         console.log(`[boot] Matrix Spins listening on :${config.PORT} (${config.NODE_ENV})`);
         console.log(`[boot] Stripe: ${config.hasStripe ? 'configured' : 'missing (deposits disabled)'}, webhook: ${config.hasWebhookSecret ? 'configured' : 'missing'}`);

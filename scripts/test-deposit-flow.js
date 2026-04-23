@@ -568,6 +568,37 @@ async function main() {
     assert.strictEqual(afterRevoke.status, 401);
     console.log('[test] admin session revoke invalidates existing tokens');
 
+    // 33) Admin search by username + by deposit id
+    const searchByUser = await http('GET', '/api/admin/search?q=alice', { token: adminToken });
+    // alice was the original tester; if that user was deleted earlier, fall back to admin
+    const searchByAdmin = await http('GET', '/api/admin/search?q=admin', { token: adminToken });
+    assert.strictEqual(searchByAdmin.status, 200);
+    assert.ok(searchByAdmin.body.users.length >= 1, 'admin search by username returned no users');
+    const searchByDepId = await http('GET', '/api/admin/search?q=1', { token: adminToken });
+    assert.strictEqual(searchByDepId.status, 200);
+    assert.ok(searchByDepId.body.deposits.length >= 1, 'admin search by deposit id returned no rows');
+    void searchByUser;
+    console.log('[test] admin search by user + deposit id works');
+
+    // 34) Reconciler: insert a stale pending deposit, run reconcile-now
+    //     with our test Stripe key. Stripe will reject the request (fake
+    //     key), but the endpoint must still return 200 with per-deposit
+    //     "fetch_failed" entries — proving the reconcile path runs and
+    //     handles per-row errors gracefully.
+    await db.run(
+        `INSERT INTO deposits (user_id, provider, provider_ref, amount_cents, currency, status, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)`,
+        [1, 'stripe', 'cs_test_stale_' + Date.now(), 1500, 'usd', 'pending',
+         new Date(Date.now() - 30 * 60 * 1000).toISOString()]
+    );
+    const reconcile = await http('POST', '/api/admin/reconcile-now', {
+        token: adminToken, csrf: adminAuthedCsrf, body: {},
+    });
+    assert.strictEqual(reconcile.status, 200, 'reconcile-now failed: ' + reconcile.raw);
+    assert.ok(reconcile.body && Array.isArray(reconcile.body.results), 'reconcile response missing results array');
+    // At least the stale row we inserted should have been considered.
+    assert.ok(reconcile.body.count >= 1, 'reconciler did not pick up stale pending deposit');
+    console.log('[test] reconcile-now ran the cron path on demand (' + reconcile.body.count + ' candidates)');
+
     console.log('\n✅ all deposit-flow assertions passed');
     main.server.close();
     await db.close();

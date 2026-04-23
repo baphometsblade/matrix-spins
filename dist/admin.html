@@ -58,9 +58,18 @@
 
     <div class="row-actions">
         <button onclick="loadOverview()">Refresh</button>
+        <button onclick="reconcileNow()" title="Ask Stripe what happened to every pending deposit older than 10 minutes">Reconcile pending</button>
     </div>
 
     <div class="cards" id="cards"></div>
+
+    <div class="search-row" style="display:flex;gap:8px;align-items:center;margin:18px 0 8px">
+        <input id="search-q" type="search" placeholder="Search by username, email, deposit id, or Stripe session id…"
+               style="flex:1;padding:8px 12px;background:rgba(255,255,255,.06);border:1px solid #333;border-radius:6px;color:#fff;font-size:13px"
+               oninput="onSearchInput()" autocomplete="off">
+        <button onclick="document.getElementById('search-q').value='';renderSearch({users:[],deposits:[]})">Clear</button>
+    </div>
+    <div id="search-results" style="margin-bottom:18px"></div>
 
     <h2>Recent paid deposits</h2>
     <table id="tbl-paid"><thead><tr>
@@ -188,6 +197,74 @@
             });
         });
     }
+
+    // Search — debounced
+    let _searchTimer = null;
+    window.onSearchInput = function () {
+        const v = document.getElementById('search-q').value.trim();
+        if (_searchTimer) clearTimeout(_searchTimer);
+        if (!v) { renderSearch({ users: [], deposits: [] }); return; }
+        _searchTimer = setTimeout(async () => {
+            try {
+                const data = await api('GET', '/api/admin/search?q=' + encodeURIComponent(v));
+                renderSearch(data);
+            } catch (e) {
+                document.getElementById('search-results').innerHTML = '<div style="color:#ff9f9f;font-size:13px">Search failed: ' + esc(e.message) + '</div>';
+            }
+        }, 250);
+    };
+
+    window.renderSearch = function (data) {
+        const target = document.getElementById('search-results');
+        const users = data.users || [];
+        const deposits = data.deposits || [];
+        if (users.length === 0 && deposits.length === 0) { target.innerHTML = ''; return; }
+        let html = '';
+        if (users.length) {
+            html += '<h2>Users (' + users.length + ')</h2>' +
+                '<table><thead><tr><th>ID</th><th>Username</th><th>Email</th><th>Balance</th><th>Joined</th></tr></thead><tbody>' +
+                users.map(u => '<tr>' +
+                    '<td class="mono">' + u.id + '</td>' +
+                    '<td>' + esc(u.username) + (u.is_admin ? ' <span class="pill pill-paid">admin</span>' : '') + '</td>' +
+                    '<td>' + esc(u.email || '') + '</td>' +
+                    '<td>' + money(u.balance) + '</td>' +
+                    '<td>' + esc(String(u.created_at || '').replace('T',' ').slice(0,19)) + '</td>' +
+                '</tr>').join('') +
+                '</tbody></table>';
+        }
+        if (deposits.length) {
+            html += '<h2>Deposits (' + deposits.length + ')</h2>' +
+                '<table><thead><tr><th>ID</th><th>User</th><th>Amount</th><th>Status</th><th>Stripe ref</th><th>When</th></tr></thead><tbody>' +
+                deposits.map(d => '<tr>' +
+                    '<td class="mono">' + d.id + '</td>' +
+                    '<td>' + esc(d.username || d.user_id) + '</td>' +
+                    '<td>' + money(d.amount) + ' ' + esc((d.currency || '').toUpperCase()) + '</td>' +
+                    '<td>' + pill(d.status) + '</td>' +
+                    '<td class="mono" style="font-size:11px">' + esc(d.provider_ref || '') + '</td>' +
+                    '<td>' + esc(String(d.completed_at || d.created_at || '').replace('T',' ').slice(0,19)) + '</td>' +
+                '</tr>').join('') +
+                '</tbody></table>';
+        }
+        target.innerHTML = html;
+    };
+
+    // Reconcile pending deposits manually
+    window.reconcileNow = async function () {
+        const btn = event && event.target;
+        if (btn) { btn.disabled = true; btn.textContent = 'Reconciling…'; }
+        try {
+            const r = await api('POST', '/api/admin/reconcile-now');
+            const summary = r.results
+                ? r.results.reduce((acc, x) => { acc[x.action] = (acc[x.action] || 0) + 1; return acc; }, {})
+                : {};
+            alert('Reconciled ' + (r.count || 0) + ' deposits. ' + (Object.keys(summary).length ? JSON.stringify(summary) : ''));
+            loadOverview();
+        } catch (e) {
+            alert('Reconcile failed: ' + e.message);
+        } finally {
+            if (btn) { btn.disabled = false; btn.textContent = 'Reconcile pending'; }
+        }
+    };
 
     // Auto-show dashboard on reload if we still have a valid token
     if (token()) {
