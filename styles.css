@@ -1728,6 +1728,13 @@
             position: relative;
             overflow: hidden;
             touch-action: manipulation;
+            max-width: 100%;
+            box-sizing: border-box;
+        }
+
+        /* Reels row never overflows its container horizontally */
+        .reels {
+            max-width: 100%;
         }
 
         /* Subtle frame shine on top edge (like real slots) */

@@ -780,14 +780,17 @@ const REEL_BOUNCE_MAX = 28;
 /** Near-miss reel slowdown speed multiplier (0-1, lower = slower) */
 const REEL_NEARMISS_SPEED_MULT = 0.35;
 
-/** Cell dimensions lookup by grid config (height in px, gap in px) */
+/** Cell dimensions lookup by grid config (width+height in px, gap in px).
+ *  Width is required so the runtime rescaler can fit cells to the
+ *  horizontal axis on mobile and preserve aspect ratio. */
 const REEL_CELL_DIMS = {
-    '3x3': { h: 140, gap: 4 },
-    '5x3': { h: 100, gap: 3 },
-    '5x4': { h: 85,  gap: 3 },
-    '5x5': { h: 80,  gap: 2 },
-    '6x5': { h: 72,  gap: 2 },
-    '7x7': { h: 58,  gap: 2 }
+    '3x3': { w: 140, h: 140, gap: 4 },
+    '3x1': { w: 180, h: 180, gap: 4 },
+    '5x3': { w: 110, h: 100, gap: 3 },
+    '5x4': { w: 100, h: 85,  gap: 3 },
+    '5x5': { w: 95,  h: 80,  gap: 2 },
+    '6x5': { w: 85,  h: 72,  gap: 2 },
+    '7x7': { w: 68,  h: 58,  gap: 2 }
 };
 
 /** Template class names for slot UI templates */

@@ -430,7 +430,7 @@
         // Get cell dimensions for a game's grid config
         function getCellDims(game) {
             const key = `${getGridCols(game)}x${getGridRows(game)}`;
-            return REEL_CELL_DIMS[key] || { h: 80, gap: 2 };
+            return REEL_CELL_DIMS[key] || { w: 85, h: 80, gap: 2 };
         }
 
 
@@ -637,9 +637,11 @@
         }
 
 
-        // Rescale reel cells to fit the actual available height of .slot-reel-area.
-        // Measures from the REEL AREA parent (not the container, which may already be
-        // flex-shrunk and give a misleadingly small number).
+        // Rescale reel cells to fit the actual available size of .slot-reel-area.
+        // Fits cells to BOTH width and height constraints (whichever is tighter)
+        // while preserving the designed aspect ratio. This makes the grid scale
+        // smoothly on every viewport from 320px mobile up to desktop, so the slot
+        // modal never needs horizontal scrolling.
         // Called on open (double-RAF) and on window resize (debounced).
         function rescaleReelGridToFit(game) {
             if (!reelStripData || !reelStripData.length) return;
@@ -647,48 +649,74 @@
             const container = document.querySelector('.reels-container');
             if (!container) return;
 
+            const cols = getGridCols(game);
             const rows = getGridRows(game);
             const dims = getCellDims(game);
             const gap  = dims.gap;
+            const designedW = dims.w || dims.h; // fallback for legacy configs
+            const designedH = dims.h;
+            const aspect = designedW / designedH;
 
-            // Measure from .slot-reel-area (the actual bounding box), not the
-            // container — the container may already be flex-shrunk to a smaller
-            // height than the reel columns inside it.
             const reelArea = document.querySelector('.slot-reel-area');
             if (!reelArea) return;
 
             const areaCS = window.getComputedStyle(reelArea);
             const cCS    = window.getComputedStyle(container);
 
+            // Available vertical space in the reel area, minus its own padding
             const areaH = reelArea.clientHeight
                         - (parseFloat(areaCS.paddingTop)    || 0)
                         - (parseFloat(areaCS.paddingBottom) || 0);
+            const areaW = reelArea.clientWidth
+                        - (parseFloat(areaCS.paddingLeft)  || 0)
+                        - (parseFloat(areaCS.paddingRight) || 0);
 
-            // Subtract container padding + border from both sides
-            const containerInsets = (parseFloat(cCS.paddingTop)        || 0)
-                                  + (parseFloat(cCS.paddingBottom)      || 0)
-                                  + (parseFloat(cCS.borderTopWidth)     || 0)
-                                  + (parseFloat(cCS.borderBottomWidth)  || 0);
+            // Subtract container padding + border from both dimensions
+            const vInsets = (parseFloat(cCS.paddingTop)       || 0)
+                          + (parseFloat(cCS.paddingBottom)    || 0)
+                          + (parseFloat(cCS.borderTopWidth)   || 0)
+                          + (parseFloat(cCS.borderBottomWidth)|| 0);
+            const hInsets = (parseFloat(cCS.paddingLeft)      || 0)
+                          + (parseFloat(cCS.paddingRight)     || 0)
+                          + (parseFloat(cCS.borderLeftWidth)  || 0)
+                          + (parseFloat(cCS.borderRightWidth) || 0);
 
-            const availH = areaH - containerInsets;
+            const availH = areaH - vInsets;
+            const availW = areaW - hInsets;
 
-            // Clamp to designed size; minimum 36px so symbols stay readable on small mobiles
-            const minCellH = window.innerHeight < 600 ? 36 : 44;
-            const scaledCellH    = Math.min(dims.h, Math.max(minCellH, Math.floor((availH - (rows - 1) * gap) / rows)));
+            // Cell height candidates from each axis
+            const cellHFromHeight = Math.floor((availH - (rows - 1) * gap) / rows);
+            const cellWFromWidth  = Math.floor((availW - (cols - 1) * gap) / cols);
+            const cellHFromWidth  = Math.floor(cellWFromWidth / aspect);
+
+            // Pick the smallest so cells fit on BOTH axes; cap at designed size.
+            // Minimum 30px keeps symbols readable on very small phones.
+            const minCellH = window.innerHeight < 600 ? 30 : 40;
+            const scaledCellH = Math.max(
+                minCellH,
+                Math.min(designedH, cellHFromHeight, cellHFromWidth)
+            );
+            const scaledCellW = Math.max(
+                Math.floor(minCellH * aspect),
+                Math.round(scaledCellH * aspect)
+            );
+
             const scaledVisibleH = rows * scaledCellH + (rows - 1) * gap;
 
             for (let i = 0; i < reelStripData.length; i++) {
                 const rd = reelStripData[i];
-                if (rd.cellH === scaledCellH) continue;  // already correct — skip
+                if (rd.cellH === scaledCellH && rd.cellW === scaledCellW) continue;
 
                 // Resize the visible column window
                 rd.colEl.style.height = scaledVisibleH + 'px';
+                rd.colEl.style.width  = scaledCellW + 'px';
+                rd.colEl.style.flex   = '0 0 ' + scaledCellW + 'px';
 
-                // Resize every cell in the strip (buffer + visible rows)
-                // Also enforce marginBottom=0 to cancel any CSS margin that would
-                // corrupt the cell-pitch arithmetic (total strip height calculation
-                // assumes pitch = cellH + gap only, with no extra bottom margin).
+                // Resize every cell in the strip (buffer + visible rows).
+                // marginBottom=0 keeps the cell-pitch arithmetic correct
+                // (total strip height assumes pitch = cellH + gap, no extra margin).
                 rd.stripEl.querySelectorAll('.reel-cell').forEach((cell, ci) => {
+                    cell.style.width       = scaledCellW + 'px';
                     cell.style.height      = scaledCellH + 'px';
                     cell.style.minHeight   = scaledCellH + 'px';
                     cell.style.marginBottom = '0px';
@@ -700,6 +728,7 @@
                 const newTotalH   = rd.totalCells * (scaledCellH + gap) - gap;
 
                 rd.cellH    = scaledCellH;
+                rd.cellW    = scaledCellW;
                 rd.visibleH = scaledVisibleH;
                 rd.totalH   = newTotalH;
                 rd.currentY = newInitialY;
