@@ -93,6 +93,26 @@ async function sendDepositReceipt({ to, username, amount, currency, depositId, t
     return send({ to, subject, text, html });
 }
 
+async function sendWelcome({ to, username }) {
+    const subject = 'Welcome to Matrix Spins';
+    const text = [
+        'Hi ' + (username || 'there') + ',',
+        '',
+        'Your Matrix Spins account is ready. Every deposit mints a signed receipt NFT to your collection — higher amounts unlock higher tiers (bronze, silver, gold, platinum, diamond).',
+        '',
+        'We strongly recommend enabling two-factor authentication on your security page.',
+        '',
+        '— Matrix Spins',
+    ].join('\n');
+    const html = '<div style="font-family:Helvetica,Arial,sans-serif;max-width:480px;margin:auto;padding:24px;background:#0d1117;color:#e0e0e0;border-radius:12px">' +
+        '<h1 style="color:#d4af37;margin:0 0 8px;font-size:20px;letter-spacing:2px">MATRIX SPINS</h1>' +
+        '<p>Hi ' + escapeHtml(username || 'there') + ',</p>' +
+        '<p>Your account is ready. Every deposit mints a signed receipt NFT to your collection — higher amounts unlock higher tiers (bronze, silver, gold, platinum, diamond).</p>' +
+        '<p style="margin-top:16px;color:#8a8a8a;font-size:13px">We strongly recommend enabling two-factor authentication on your security page.</p>' +
+    '</div>';
+    return send({ to, subject, text, html });
+}
+
 async function sendPasswordResetLink({ to, username, resetUrl }) {
     const subject = 'Reset your Matrix Spins password';
     const text = [
@@ -120,6 +140,6 @@ function escapeHtml(s) {
     return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' })[c]);
 }
 
-module.exports = { send, sendDepositReceipt, sendPasswordResetLink, getCaptured, clearCaptured, hasTransport };
+module.exports = { send, sendDepositReceipt, sendPasswordResetLink, sendWelcome, getCaptured, clearCaptured, hasTransport };
 // Suppress unused-var lint while still importing config
 void config;

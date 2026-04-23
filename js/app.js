@@ -186,6 +186,11 @@
         // Post-auth initialization — runs after login or on page load if already authenticated
         function onPostAuthInit() {
             checkDailyBonusReset();
+            // Refresh balance from the server immediately on auth —
+            // server is the source of truth for deposited funds.
+            if (typeof _refreshBalanceFromServer === 'function') {
+                _refreshBalanceFromServer(authToken).catch(function () { /* ignore */ });
+            }
             // Load stats from server (overrides localStorage if server has data)
             _loadServerStats();
             // Popups and engagement features only for verified (registered) users — not guests
@@ -1883,6 +1888,16 @@
         // ═══════════════════════════════════════════════════════
 
         window.addEventListener('DOMContentLoaded', initAllSystems);
+
+        // Refresh balance when the tab regains focus. Common after
+        // a Stripe deposit completes in another tab — without this
+        // the credited balance wouldn't show until a manual refresh.
+        window.addEventListener('focus', function () {
+            if (!authToken) return;
+            if (typeof _refreshBalanceFromServer === 'function') {
+                _refreshBalanceFromServer(authToken).catch(function () { /* ignore */ });
+            }
+        });
 
         document.addEventListener('keydown', function (e) {
             // Don't trigger if typing in an input

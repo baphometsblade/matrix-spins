@@ -264,9 +264,11 @@ async function main() {
     assert.ok(increase.body.rejected && increase.body.rejected.length === 3, 'increases must be rejected: ' + JSON.stringify(increase.body));
     console.log('[test] deposit limits increases rejected (cooling-off)');
 
-    // 15) Email service captured a deposit receipt
+    // 15) Email service captured a deposit receipt AND a welcome email
     const emailSvc = require('../server/services/email.service');
     const mails = emailSvc.getCaptured();
+    const welcomeMail = mails.find(m => /welcome/i.test(m.subject));
+    assert.ok(welcomeMail, 'no welcome email captured on register');
     const receiptMail = mails.find(m => /deposit/i.test(m.subject));
     assert.ok(receiptMail, 'no deposit-receipt email captured');
     assert.ok(/\$25\.00/.test(receiptMail.text), 'receipt email missing amount');

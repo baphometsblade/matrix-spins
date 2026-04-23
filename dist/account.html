@@ -1,0 +1,391 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>My account — Matrix Spins</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<style>
+    :root { color-scheme: dark; }
+    * { box-sizing: border-box; }
+    body { margin: 0; padding: 24px; font-family: -apple-system, Segoe UI, Roboto, sans-serif; background: #0d1117; color: #e0e0e0; line-height: 1.45; }
+    .wrap { max-width: 900px; margin: 0 auto; }
+    h1 { color: #d4af37; font-size: 22px; letter-spacing: 2px; margin: 0 0 4px; }
+    .sub { color: #8a8a8a; font-size: 13px; margin-bottom: 24px; }
+    a { color: #00d4ff; text-decoration: none; }
+    .tabs { display: flex; gap: 4px; border-bottom: 1px solid rgba(212,175,55,.2); margin-bottom: 20px; flex-wrap: wrap; }
+    .tab { background: none; border: none; color: #8a8a8a; padding: 10px 16px; cursor: pointer; font-size: 13px; text-transform: uppercase; letter-spacing: 1px; border-bottom: 2px solid transparent; }
+    .tab.active { color: #d4af37; border-bottom-color: #d4af37; }
+    .tab:hover { color: #e0e0e0; }
+    section { display: none; }
+    section.active { display: block; }
+    .card { background: rgba(255,255,255,0.04); border: 1px solid rgba(212,175,55,0.25); border-radius: 10px; padding: 16px 18px; margin-bottom: 12px; }
+    .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; margin-bottom: 12px; }
+    .label { color: #8a8a8a; font-size: 11px; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 4px; }
+    .value { color: #d4af37; font-size: 22px; font-weight: 700; }
+    form .row { display: flex; flex-direction: column; gap: 6px; margin-bottom: 12px; }
+    label.inline { color: #d4af37; font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; }
+    input, button { font: inherit; }
+    input[type=text],input[type=email],input[type=password],input[type=number] { width: 100%; padding: 10px; background: rgba(255,255,255,.06); border: 1px solid #333; border-radius: 6px; color: #fff; font-size: 14px; }
+    input:focus { outline: none; border-color: #d4af37; }
+    button.primary { background: linear-gradient(135deg,#d4af37,#f4d03f); color: #000; border: none; border-radius: 6px; padding: 10px 18px; font-weight: 700; cursor: pointer; letter-spacing: .5px; }
+    button.primary:hover { transform: translateY(-1px); box-shadow: 0 4px 14px rgba(212,175,55,.5); }
+    button.secondary { background: rgba(255,255,255,.08); color: #e0e0e0; border: 1px solid #333; border-radius: 6px; padding: 10px 18px; cursor: pointer; }
+    button.secondary:hover { border-color: #d4af37; }
+    button.danger { background: rgba(231,76,60,.15); color: #ff9f9f; border: 1px solid #e74c3c; border-radius: 6px; padding: 10px 18px; cursor: pointer; }
+    .msg { min-height: 20px; font-size: 13px; color: #8a8a8a; margin-top: 8px; }
+    .msg.err { color: #ff9f9f; }
+    .msg.ok { color: #7fec7f; }
+    table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid rgba(255,255,255,.06); }
+    th { color: #b8860b; font-size: 11px; text-transform: uppercase; letter-spacing: 1.5px; }
+    td.mono { font-family: Menlo, monospace; color: #00d4ff; }
+    .pill { display: inline-block; padding: 2px 8px; border-radius: 999px; font-size: 11px; font-weight: 600; letter-spacing: 1px; text-transform: uppercase; }
+    .pill-paid { background: rgba(39,174,96,.2); color: #27ae60; }
+    .pill-pending { background: rgba(0,212,255,.15); color: #00d4ff; }
+    .pill-refunded, .pill-partial_refund { background: rgba(230,126,34,.18); color: #e67e22; }
+    .pill-disputed, .pill-failed, .pill-expired { background: rgba(231,76,60,.18); color: #e74c3c; }
+    .pill-success { background: rgba(39,174,96,.2); color: #27ae60; }
+    .pill-failed, .pill-locked_out { background: rgba(231,76,60,.18); color: #e74c3c; }
+    .pill-challenge { background: rgba(251,191,36,.15); color: #fbbf24; }
+    .nft-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 12px; }
+    .nft { background: rgba(255,255,255,.03); border: 1px solid rgba(212,175,55,.25); border-radius: 10px; padding: 12px; text-align: center; }
+    .nft .art { background: #000; border-radius: 6px; margin-bottom: 10px; }
+    .nft .art img, .nft .art svg { display: block; width: 100%; height: auto; }
+    .nft .name { font-size: 13px; font-weight: 700; color: #d4af37; margin-bottom: 2px; }
+    .nft .meta { font-size: 11px; color: #8a8a8a; font-family: Menlo, monospace; word-break: break-all; }
+    .empty { padding: 40px 20px; text-align: center; color: #666; }
+    .bar { height: 6px; background: rgba(255,255,255,.08); border-radius: 3px; overflow: hidden; margin: 6px 0; }
+    .bar-fill { height: 100%; background: linear-gradient(90deg, #27ae60, #2ecc71); transition: width .3s; }
+    .bar-fill.warn { background: linear-gradient(90deg, #f39c12, #f1c40f); }
+    .bar-fill.crit { background: linear-gradient(90deg, #c0392b, #e74c3c); }
+    .signed-in-as { color: #8a8a8a; font-size: 13px; }
+    .signed-in-as strong { color: #00d4ff; }
+</style>
+</head>
+<body>
+<div class="wrap">
+<h1>My account</h1>
+<div class="sub" id="signed-in-as">Checking session&hellip;</div>
+
+<div id="login-wrap" style="display:none">
+    <div class="card" style="max-width:360px">
+        <p>Please <a href="/#login">sign in from the main app</a> first. This page uses your existing session token.</p>
+    </div>
+</div>
+
+<div id="main" style="display:none">
+<div class="tabs" role="tablist">
+    <button class="tab active" data-tab="overview">Overview</button>
+    <button class="tab" data-tab="profile">Profile</button>
+    <button class="tab" data-tab="security">Security</button>
+    <button class="tab" data-tab="limits">Limits</button>
+    <button class="tab" data-tab="deposits">Deposits</button>
+    <button class="tab" data-tab="receipts">Receipt NFTs</button>
+    <button class="tab" data-tab="activity">Activity</button>
+</div>
+
+<section id="overview" class="active">
+    <div class="cards">
+        <div class="card"><div class="label">Balance</div><div class="value" id="ov-balance">$0.00</div></div>
+        <div class="card"><div class="label">Receipt NFTs</div><div class="value" id="ov-nfts">0</div></div>
+        <div class="card"><div class="label">Deposits</div><div class="value" id="ov-deposits">0</div></div>
+        <div class="card"><div class="label">2FA</div><div class="value" id="ov-2fa">—</div></div>
+    </div>
+    <div class="card"><p>Make a deposit to credit your balance and mint a new receipt NFT. The tier scales with the amount.</p></div>
+</section>
+
+<section id="profile">
+    <form class="card" onsubmit="event.preventDefault();saveProfile()">
+        <div class="row"><label class="inline" for="pf-username">Username</label><input type="text" id="pf-username" disabled></div>
+        <div class="row"><label class="inline" for="pf-email">Email</label><input type="email" id="pf-email" autocomplete="email"></div>
+        <div class="row"><label class="inline" for="pf-display">Display name</label><input type="text" id="pf-display" maxlength="40"></div>
+        <button class="primary" type="submit">Save changes</button>
+        <div class="msg" id="pf-msg"></div>
+    </form>
+</section>
+
+<section id="security">
+    <div class="card">
+        <div class="label">Two-factor authentication</div>
+        <p id="sec-2fa-status">Checking&hellip;</p>
+        <p style="color:#8a8a8a;font-size:13px">The 2FA setup dialog lives on the main app. Open it from the security controls there.</p>
+    </div>
+    <form class="card" onsubmit="event.preventDefault();changePassword()">
+        <div class="label" style="margin-bottom:8px">Change password</div>
+        <div class="row"><label class="inline" for="pw-current">Current password</label><input type="password" id="pw-current" autocomplete="current-password"></div>
+        <div class="row"><label class="inline" for="pw-new">New password (min 8)</label><input type="password" id="pw-new" autocomplete="new-password"></div>
+        <div class="row"><label class="inline" for="pw-confirm">Confirm new password</label><input type="password" id="pw-confirm" autocomplete="new-password"></div>
+        <button class="primary" type="submit">Update password</button>
+        <div class="msg" id="pw-msg"></div>
+    </form>
+    <div class="card">
+        <div class="label" style="margin-bottom:8px">Account deletion</div>
+        <p style="font-size:13px">This removes your account from our servers. Deposits remain in the ledger for accounting but are detached from your PII.</p>
+        <button class="danger" type="button" onclick="deleteAccount()">Delete my account</button>
+        <div class="msg" id="del-msg"></div>
+    </div>
+</section>
+
+<section id="limits">
+    <form class="card" onsubmit="event.preventDefault();saveLimits()">
+        <div class="label" style="margin-bottom:8px">Deposit limits</div>
+        <p style="font-size:13px;color:#8a8a8a">Decreases apply immediately. Increases require operator approval and a 24-hour cool-down (submit the form; the server will tell you what was rejected).</p>
+        <div class="row"><label class="inline" for="lm-daily">Daily ($)</label><input type="number" id="lm-daily" min="0" step="1"></div>
+        <div id="lm-daily-used" class="msg"></div>
+        <div class="bar"><div class="bar-fill" id="lm-daily-bar"></div></div>
+        <div class="row"><label class="inline" for="lm-weekly">Weekly ($)</label><input type="number" id="lm-weekly" min="0" step="1"></div>
+        <div id="lm-weekly-used" class="msg"></div>
+        <div class="bar"><div class="bar-fill" id="lm-weekly-bar"></div></div>
+        <div class="row"><label class="inline" for="lm-monthly">Monthly ($)</label><input type="number" id="lm-monthly" min="0" step="1"></div>
+        <div id="lm-monthly-used" class="msg"></div>
+        <div class="bar"><div class="bar-fill" id="lm-monthly-bar"></div></div>
+        <button class="primary" type="submit">Save limits</button>
+        <div class="msg" id="lm-msg"></div>
+    </form>
+</section>
+
+<section id="deposits">
+    <table id="tbl-deposits"><thead><tr>
+        <th>ID</th><th>Amount</th><th>Status</th><th>Created</th><th>Completed</th>
+    </tr></thead><tbody></tbody></table>
+</section>
+
+<section id="receipts">
+    <div id="nft-grid" class="nft-grid"></div>
+</section>
+
+<section id="activity">
+    <table id="tbl-activity"><thead><tr>
+        <th>Event</th><th>Outcome</th><th>IP</th><th>Device</th><th>When</th>
+    </tr></thead><tbody></tbody></table>
+</section>
+</div>
+</div>
+
+<script>
+(function () {
+    'use strict';
+    var TOKEN_KEYS = ['casinoToken', 'ms_admin_token'];
+    function token() { for (var i = 0; i < TOKEN_KEYS.length; i++) { var t = localStorage.getItem(TOKEN_KEYS[i]); if (t) return t; } return null; }
+    var csrf = null;
+    async function getCsrf() {
+        var r = await fetch('/api/csrf-token', { headers: token() ? { Authorization: 'Bearer ' + token() } : {} });
+        csrf = (await r.json()).csrfToken; return csrf;
+    }
+    async function api(method, path, body) {
+        var headers = { 'Content-Type': 'application/json' };
+        if (token()) headers.Authorization = 'Bearer ' + token();
+        if (method !== 'GET') headers['X-CSRF-Token'] = await getCsrf();
+        var res = await fetch(path, { method: method, headers: headers, body: body ? JSON.stringify(body) : undefined });
+        var text = await res.text();
+        var data = null; try { data = text ? JSON.parse(text) : null; } catch (e) {}
+        if (!res.ok) throw Object.assign(new Error((data && data.error) || res.statusText), { status: res.status, data: data });
+        return data;
+    }
+    function money(n) { return '$' + Number(n || 0).toFixed(2); }
+    function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' })[c]; }); }
+    function pill(status) { return '<span class="pill pill-' + esc(status) + '">' + esc(status) + '</span>'; }
+    function deviceOf(ua) {
+        ua = String(ua || '');
+        if (/iPhone/.test(ua)) return 'iPhone';
+        if (/iPad/.test(ua)) return 'iPad';
+        if (/Android/.test(ua)) return 'Android';
+        if (/Windows/.test(ua)) return 'Windows';
+        if (/Mac OS X/.test(ua)) return 'Mac';
+        if (/Linux/.test(ua)) return 'Linux';
+        return 'Unknown';
+    }
+
+    var state = { user: null };
+
+    document.querySelectorAll('.tab').forEach(function (t) {
+        t.addEventListener('click', function () {
+            document.querySelectorAll('.tab').forEach(function (x) { x.classList.remove('active'); });
+            document.querySelectorAll('section').forEach(function (s) { s.classList.remove('active'); });
+            t.classList.add('active');
+            document.getElementById(t.dataset.tab).classList.add('active');
+        });
+    });
+
+    async function boot() {
+        if (!token()) { document.getElementById('login-wrap').style.display = ''; document.getElementById('signed-in-as').textContent = 'Not signed in.'; return; }
+        try {
+            var me = await api('GET', '/api/user/me');
+            state.user = me.user;
+            document.getElementById('signed-in-as').innerHTML = 'Signed in as <strong>' + esc(me.user.username) + '</strong>.';
+            document.getElementById('main').style.display = '';
+            document.getElementById('pf-username').value = me.user.username;
+            document.getElementById('pf-email').value = me.user.email || '';
+            document.getElementById('pf-display').value = me.user.display_name || '';
+            document.getElementById('ov-balance').textContent = money(me.user.balance);
+            await Promise.all([loadOverview(), loadDeposits(), loadNfts(), loadLimits(), loadActivity(), load2FA()]);
+        } catch (e) {
+            document.getElementById('signed-in-as').innerHTML = 'Session invalid or expired. <a href="/">Sign in again</a>.';
+            document.getElementById('login-wrap').style.display = '';
+        }
+    }
+
+    async function loadOverview() {
+        try {
+            var [bal, deps, nfts, tfa] = await Promise.all([
+                api('GET', '/api/balance'),
+                api('GET', '/api/user/deposits'),
+                api('GET', '/api/nfts'),
+                api('GET', '/api/auth/2fa/status'),
+            ]);
+            document.getElementById('ov-balance').textContent = money(bal.balance);
+            document.getElementById('ov-deposits').textContent = deps.deposits.length;
+            document.getElementById('ov-nfts').textContent = nfts.nfts.length;
+            document.getElementById('ov-2fa').textContent = tfa.enabled ? 'Enabled' : 'Off';
+        } catch (e) { /* partial failure is ok here */ }
+    }
+
+    async function loadDeposits() {
+        try {
+            var data = await api('GET', '/api/user/deposits');
+            var tbody = document.querySelector('#tbl-deposits tbody');
+            tbody.innerHTML = data.deposits.length === 0
+                ? '<tr><td colspan="5" class="empty">No deposits yet.</td></tr>'
+                : data.deposits.map(function (d) {
+                    return '<tr>' +
+                        '<td class="mono">#' + d.id + '</td>' +
+                        '<td>' + money(d.amount) + ' ' + esc((d.currency||'').toUpperCase()) + '</td>' +
+                        '<td>' + pill(d.status) + '</td>' +
+                        '<td>' + esc(String(d.created_at || '').replace('T',' ').slice(0,19)) + '</td>' +
+                        '<td>' + esc(String(d.completed_at || '').replace('T',' ').slice(0,19)) + '</td>' +
+                    '</tr>';
+                }).join('');
+        } catch (e) { /* ignore */ }
+    }
+
+    async function loadNfts() {
+        try {
+            var data = await api('GET', '/api/nfts');
+            var grid = document.getElementById('nft-grid');
+            grid.innerHTML = data.nfts.length === 0
+                ? '<div class="empty">No receipt NFTs yet. Make a deposit to mint your first.</div>'
+                : data.nfts.map(function (n) {
+                    var m = n.metadata || {};
+                    var tier = (m.attributes || []).find(function (a) { return a.trait_type === 'Tier'; });
+                    var amt = (m.attributes || []).find(function (a) { return a.trait_type === 'Amount'; });
+                    return '<div class="nft">' +
+                        '<div class="art">' + (m.image ? '<img alt="' + esc(m.name || '') + '" src="' + esc(m.image) + '">' : '') + '</div>' +
+                        '<div class="name">' + esc((tier && tier.value) || 'Receipt') + '</div>' +
+                        '<div>' + esc((amt && amt.value) || '') + '</div>' +
+                        '<div class="meta">' + esc(n.tokenId) + '</div>' +
+                    '</div>';
+                }).join('');
+        } catch (e) { /* ignore */ }
+    }
+
+    async function loadLimits() {
+        try {
+            var data = await api('GET', '/api/deposit/limits');
+            document.getElementById('lm-daily').value = (data.limits.daily_cents / 100) | 0;
+            document.getElementById('lm-weekly').value = (data.limits.weekly_cents / 100) | 0;
+            document.getElementById('lm-monthly').value = (data.limits.monthly_cents / 100) | 0;
+            function setBar(prefix, used, limit) {
+                var pct = limit > 0 ? Math.min(100, (used / limit) * 100) : 0;
+                var bar = document.getElementById('lm-' + prefix + '-bar');
+                bar.style.width = pct.toFixed(1) + '%';
+                bar.className = 'bar-fill' + (pct >= 100 ? ' crit' : pct >= 75 ? ' warn' : '');
+                document.getElementById('lm-' + prefix + '-used').textContent = 'Used ' + money(used/100) + ' of ' + money(limit/100);
+            }
+            setBar('daily',   data.used.daily_cents,   data.limits.daily_cents);
+            setBar('weekly',  data.used.weekly_cents,  data.limits.weekly_cents);
+            setBar('monthly', data.used.monthly_cents, data.limits.monthly_cents);
+        } catch (e) { /* ignore */ }
+    }
+
+    async function loadActivity() {
+        try {
+            var data = await api('GET', '/api/user/login-history');
+            var tbody = document.querySelector('#tbl-activity tbody');
+            tbody.innerHTML = data.events.length === 0
+                ? '<tr><td colspan="5" class="empty">No account activity yet.</td></tr>'
+                : data.events.slice(0, 50).map(function (e) {
+                    return '<tr>' +
+                        '<td>' + esc(e.type) + '</td>' +
+                        '<td>' + pill(e.outcome) + '</td>' +
+                        '<td class="mono">' + esc(e.ip || '—') + '</td>' +
+                        '<td>' + esc(deviceOf(e.user_agent)) + '</td>' +
+                        '<td>' + esc(String(e.at || '').replace('T',' ').slice(0,19)) + '</td>' +
+                    '</tr>';
+                }).join('');
+        } catch (e) { /* ignore */ }
+    }
+
+    async function load2FA() {
+        try {
+            var data = await api('GET', '/api/auth/2fa/status');
+            document.getElementById('sec-2fa-status').innerHTML = data.enabled
+                ? 'Enabled' + (data.recovery_codes_remaining ? ' · ' + data.recovery_codes_remaining + ' recovery codes remaining' : '')
+                : 'Not enabled.';
+        } catch (e) { /* ignore */ }
+    }
+
+    window.saveProfile = async function () {
+        var msg = document.getElementById('pf-msg'); msg.className = 'msg'; msg.textContent = '';
+        try {
+            var payload = {};
+            var email = document.getElementById('pf-email').value.trim();
+            var display = document.getElementById('pf-display').value.trim();
+            if (email && email !== state.user.email) payload.email = email;
+            payload.display_name = display || null;
+            await api('PATCH', '/api/user/me', payload);
+            msg.className = 'msg ok'; msg.textContent = 'Saved.';
+        } catch (e) { msg.className = 'msg err'; msg.textContent = e.message; }
+    };
+
+    window.changePassword = async function () {
+        var msg = document.getElementById('pw-msg'); msg.className = 'msg'; msg.textContent = '';
+        var cur = document.getElementById('pw-current').value;
+        var nw = document.getElementById('pw-new').value;
+        var cn = document.getElementById('pw-confirm').value;
+        if (nw !== cn) { msg.className = 'msg err'; msg.textContent = 'New passwords do not match.'; return; }
+        try {
+            await api('POST', '/api/auth/change-password', { current_password: cur, new_password: nw });
+            msg.className = 'msg ok'; msg.textContent = 'Password updated.';
+            document.getElementById('pw-current').value = '';
+            document.getElementById('pw-new').value = '';
+            document.getElementById('pw-confirm').value = '';
+        } catch (e) { msg.className = 'msg err'; msg.textContent = e.message; }
+    };
+
+    window.saveLimits = async function () {
+        var msg = document.getElementById('lm-msg'); msg.className = 'msg'; msg.textContent = '';
+        try {
+            var payload = {
+                daily_cents: Math.round(Number(document.getElementById('lm-daily').value) * 100),
+                weekly_cents: Math.round(Number(document.getElementById('lm-weekly').value) * 100),
+                monthly_cents: Math.round(Number(document.getElementById('lm-monthly').value) * 100),
+            };
+            var res = await api('PUT', '/api/deposit/limits', payload);
+            if (res.rejected && res.rejected.length) {
+                msg.className = 'msg'; msg.textContent = (res.note || 'Some limits were not applied.') + ' (rejected: ' + res.rejected.join(', ') + ')';
+            } else {
+                msg.className = 'msg ok'; msg.textContent = 'Limits saved.';
+            }
+            await loadLimits();
+        } catch (e) { msg.className = 'msg err'; msg.textContent = e.message; }
+    };
+
+    window.deleteAccount = async function () {
+        var msg = document.getElementById('del-msg'); msg.className = 'msg'; msg.textContent = '';
+        if (!state.user) return;
+        var confirmName = prompt('This is irreversible. Type your username (' + state.user.username + ') to confirm:');
+        if (confirmName !== state.user.username) { msg.textContent = 'Cancelled.'; return; }
+        try {
+            await api('DELETE', '/api/user', { confirm_username: state.user.username });
+            TOKEN_KEYS.forEach(function (k) { localStorage.removeItem(k); });
+            alert('Your account has been deleted.');
+            location.href = '/';
+        } catch (e) { msg.className = 'msg err'; msg.textContent = e.message; }
+    };
+
+    boot();
+})();
+</script>
+</body>
+</html>

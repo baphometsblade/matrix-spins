@@ -6,7 +6,7 @@ const crypto = require('crypto');
 const config = require('../config');
 const db = require('../database');
 const { signToken, sign2faChallenge, authenticate, verifyTokenString } = require('../middleware/auth');
-const email = require('../services/email.service');
+const mailer = require('../services/email.service');
 const authEvents = require('../services/auth-events.service');
 const { verifyTotpOrRecovery, currentSecret } = require('./twofa.routes');
 
@@ -101,6 +101,14 @@ router.post('/register', async (req, res) => {
         const user = await db.get('SELECT * FROM users WHERE id = ?', [userId]);
         const token = signToken(user);
         await authEvents.log({ userId: user.id, username: user.username, eventType: 'register', outcome: 'success', req });
+        // Fire-and-forget welcome email. A failure here must not impede
+        // account creation — the user is already logged in by the time
+        // this promise resolves.
+        if (user.email) {
+            mailer.sendWelcome({ to: user.email, username: user.username }).catch(function (err) {
+                console.warn('[auth/register] welcome email failed:', err && err.message);
+            });
+        }
         res.status(201).json({ token, user: publicUser(user) });
     } catch (err) {
         console.error('[auth/register]', err);
@@ -238,7 +246,7 @@ router.post('/forgot-password', async (req, res) => {
             [user.id, tokenHash, expiryIso()]
         );
         const resetUrl = config.PUBLIC_URL + '/#reset-password=' + rawToken;
-        await email.sendPasswordResetLink({
+        await mailer.sendPasswordResetLink({
             to: user.email,
             username: user.username,
             resetUrl,
