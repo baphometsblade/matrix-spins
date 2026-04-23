@@ -790,6 +790,35 @@ async function main() {
     assert.ok(/Disallow:\s*\/api\//i.test(robotsText));
     console.log('[test] /robots.txt disallows /admin.html and /api/');
 
+    // 45) CSP reporter accepts legacy csp-report payload and returns 204
+    const cspRes1 = await fetch('http://localhost:3199/api/csp-report', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/csp-report' },
+        body: JSON.stringify({
+            'csp-report': {
+                'document-uri': 'https://example.com/',
+                'violated-directive': 'script-src',
+                'blocked-uri': 'https://evil.example/inject.js',
+            },
+        }),
+    });
+    assert.strictEqual(cspRes1.status, 204);
+
+    // Reporting-API array envelope
+    const cspRes2 = await fetch('http://localhost:3199/api/csp-report', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/reports+json' },
+        body: JSON.stringify([{ documentURL: 'https://example.com/', effectiveDirective: 'img-src', blockedURL: 'data:image/png;base64,xxx' }]),
+    });
+    assert.strictEqual(cspRes2.status, 204);
+    console.log('[test] /api/csp-report accepts legacy + Reporting-API bodies and returns 204');
+
+    // 46) CSP header on the main HTML carries report-uri
+    const indexRes = await fetch('http://localhost:3199/');
+    const cspHeader = indexRes.headers.get('content-security-policy') || '';
+    assert.ok(/report-uri\s*\/api\/csp-report/i.test(cspHeader), 'CSP header missing report-uri: ' + cspHeader.slice(0, 200));
+    console.log('[test] CSP header includes report-uri=/api/csp-report');
+
     console.log('\n✅ all deposit-flow assertions passed');
     main.server.close();
     await db.close();

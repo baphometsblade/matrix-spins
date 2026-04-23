@@ -40,6 +40,12 @@ app.set('trust proxy', 1);
 // (including error bodies) already has X-Request-Id set.
 app.use(require('./middleware/request-log'));
 
+// Response timeout — default 30s, longer budget for the Stripe webhook.
+app.use(require('./middleware/request-timeout')({
+    defaultMs: 30000,
+    paths: { '/api/payment/stripe/webhook': 60000, '/api/admin/reconcile-now': 120000 },
+}));
+
 /* ─── Security headers ─── */
 app.use(helmet({
     contentSecurityPolicy: {
@@ -55,6 +61,7 @@ app.use(helmet({
             frameAncestors: ["'none'"],
             baseUri: ["'self'"],
             formAction: ["'self'"],
+            reportUri: ['/api/csp-report'],
         },
     },
     strictTransportSecurity: { maxAge: 31536000, includeSubDomains: true, preload: true },
@@ -75,7 +82,33 @@ app.use(cors({ origin: corsOrigin }));
 /* ─── Body parsing ─── */
 // Stripe webhook needs the raw body BEFORE express.json() runs.
 app.use('/api/payment/stripe/webhook', express.raw({ type: 'application/json' }));
+// CSP reports arrive as application/csp-report or application/reports+json.
+app.use('/api/csp-report', express.json({ type: ['application/csp-report', 'application/reports+json', 'application/json'], limit: '32kb' }));
 app.use(express.json({ limit: '1mb' }));
+
+// CSP violation reporter — logs each violation line, rate-limited so
+// an attacker can't use it as a log-flood vector.
+const cspReportLimiter = rateLimit({
+    windowMs: 60 * 1000, max: 60, standardHeaders: true, legacyHeaders: false,
+    message: { error: 'Too many CSP reports.' },
+});
+app.post('/api/csp-report', cspReportLimiter, (req, res) => {
+    try {
+        const body = req.body || {};
+        // Normalize across the legacy "csp-report" and the newer Reporting-API array envelope.
+        const reports = Array.isArray(body) ? body : (body['csp-report'] ? [body['csp-report']] : [body]);
+        reports.slice(0, 5).forEach(r => {
+            console.warn('[csp-violation]',
+                'doc=' + (r['document-uri'] || r['documentURL'] || '?'),
+                'violated=' + (r['violated-directive'] || r['effectiveDirective'] || '?'),
+                'blocked=' + (r['blocked-uri'] || r['blockedURL'] || '?'),
+                'source=' + (r['source-file'] || r['sourceFile'] || '?') + ':' + (r['line-number'] || r['lineNumber'] || '?'));
+        });
+    } catch (err) {
+        console.warn('[csp-violation] could not parse report:', err.message);
+    }
+    res.status(204).end();
+});
 
 /* ─── Cross-cutting middleware ─── */
 app.use(sanitize);
