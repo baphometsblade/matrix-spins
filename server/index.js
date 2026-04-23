@@ -142,6 +142,20 @@ app.use('/api/matrix-money/purchase', paymentLimiter);
 app.use('/api/matrix-money/withdraw', paymentLimiter);
 app.use('/api/gifts/send', paymentLimiter);
 
+// ── Jurisdictional compliance: geo-block money-handling endpoints ──
+// Inert unless ALLOWED_COUNTRIES or BLOCKED_COUNTRIES is set in env.
+// See server/middleware/geo-block.js for docs.
+const { geoBlock } = require('./middleware/geo-block');
+app.use('/api/auth/register',           geoBlock);
+app.use('/api/payment/deposit',         geoBlock);
+app.use('/api/payment/withdraw',        geoBlock);
+app.use('/api/payment/create-checkout', geoBlock);
+app.use('/api/crypto/verify-deposit',   geoBlock);
+app.use('/api/balance/deposit',         geoBlock);
+app.use('/api/bundles/purchase',        geoBlock);
+app.use('/api/matrix-money/purchase',   geoBlock);
+app.use('/api/withdrawal-enhance',      geoBlock);
+
 // Per-user payment limit: 5 requests per minute per authenticated user
 const userPaymentLimit = userRateLimit({ maxRequests: 5, windowMs: 60000 });
 app.use('/api/payment/deposit', userPaymentLimit);
@@ -782,6 +796,33 @@ async function start() {
     await megawheelService.initSchema();
 
     // Feedback tables auto-initialize on module load
+
+    // ── Launch readiness self-check ──
+    // In production, warn loudly (but don't hard-crash) when money-handling
+    // features are enabled without the keys required to operate them.
+    // The existing config.requireEnv already hard-crashes on missing JWT_SECRET
+    // and ADMIN_PASSWORD. This block covers payment keys and compliance env.
+    if (config.NODE_ENV === 'production') {
+        const warnings = [];
+        if (!config.STRIPE_SECRET_KEY || !/^sk_live_/.test(config.STRIPE_SECRET_KEY)) {
+            warnings.push('STRIPE_SECRET_KEY is missing or not a live key — card deposits will fail.');
+        }
+        if (!config.STRIPE_WEBHOOK_SECRET) {
+            warnings.push('STRIPE_WEBHOOK_SECRET is missing — webhooks cannot be verified; deposits will not credit.');
+        }
+        if (!process.env.ALLOWED_COUNTRIES && !process.env.BLOCKED_COUNTRIES) {
+            warnings.push('No ALLOWED_COUNTRIES or BLOCKED_COUNTRIES set — geo-blocking is OFF. Payments accepted from every jurisdiction.');
+        }
+        if (!process.env.DATABASE_URL) {
+            warnings.push('DATABASE_URL missing — running on SQLite. Production requires managed PostgreSQL for durability.');
+        }
+        if (warnings.length) {
+            console.warn('\n' + '⚠'.repeat(25));
+            console.warn('  LAUNCH READINESS WARNINGS');
+            warnings.forEach(w => console.warn('   • ' + w));
+            console.warn('⚠'.repeat(25) + '\n');
+        }
+    }
 
     app.listen(config.PORT, () => {
         console.log(`\n${'='.repeat(50)}`);

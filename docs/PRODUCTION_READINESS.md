@@ -1,14 +1,47 @@
 # Matrix Spins Casino — Production Readiness Report
 
-**Date:** 2026-04-20
-**Status:** Code-level changes complete. Business/legal decisions outstanding.
+**Date:** 2026-04-24
+**Status:** Code-level changes complete — including geo-blocking + launch self-check.
+Business/legal decisions remain outstanding and CANNOT be fixed in code.
+
+> **⚠️ DO NOT flip Stripe into live mode until every item in § 🚫 below is resolved.**
+> Taking real-money wagers without a valid gambling licence in the player's
+> jurisdiction is a criminal offence in most countries, including Australia.
 
 ## Summary
 
-This session completed a comprehensive audit of the Casino codebase for real-money
-readiness. All code-level BLOCKING and HIGH-severity issues identified have been
-fixed in commits on `master`. The site can now legally and technically process
-real payments once the remaining business-level items below are resolved.
+All code-level BLOCKING issues have been fixed in commits on `master`. The site
+is **technically** ready to process real payments. It is **not legally** ready
+until every non-code item in § 🚫 is done.
+
+## ✅ Pre-launch switch checklist
+
+Work top to bottom. Do not skip.
+
+1. **Obtain a gambling licence** valid in every country on your `ALLOWED_COUNTRIES` list.
+   Evidence = the licence certificate PDF and a written legal opinion.
+2. **Obtain Stripe Gaming approval** — standard Stripe accounts are not permitted
+   to process real-money wagers. Apply at <https://stripe.com/gb/contact/sales>.
+3. **AUSTRAC registration** (if operating from Australia) or equivalent FIU
+   registration in your jurisdiction.
+4. **Select & integrate a KYC vendor** (Jumio/Onfido/Veriff/GreenID). The
+   current admin-manual KYC flow does not scale past a few dozen players per day.
+5. **Set production env vars** on Render (Settings → Environment):
+   - `ALLOWED_COUNTRIES` — ISO-2 codes matching your licence
+   - `GEO_FAIL_MODE=closed` (recommended once you verify ipapi is reliable)
+   - `STRIPE_SECRET_KEY=sk_live_…` (**not** `sk_test_…`)
+   - `STRIPE_WEBHOOK_SECRET=whsec_…`
+   - `DATABASE_URL=postgresql://…` (managed Postgres, not SQLite)
+   - `JWT_SECRET` (64 chars random)
+   - `ADMIN_PASSWORD` (strong, unique)
+6. **Put real DPO name + registered business address into** `terms.html` and
+   `responsible-gambling.html`.
+7. **Verify Stripe webhook endpoint** is registered in the Stripe dashboard
+   pointing to `https://msaart.online/api/payment/stripe/webhook`.
+8. **Test a $5 deposit + $5 withdrawal** end-to-end with a real card before
+   opening to the public.
+9. **Boot the server and read the launch-readiness warnings** printed at
+   startup. All four warnings should be absent.
 
 ## ✅ Code-level fixes shipped
 
@@ -26,6 +59,9 @@ real payments once the remaining business-level items below are resolved.
 | T&C | Currency changed USD→AUD throughout; minimum withdrawal $10→$20; AU Gambling Help Online 1800 858 858 added; BetStop self-exclusion register referenced; governing law & IGA 2001 jurisdiction clause added |
 | Client-side fake money | Removed (neutralized to no-op stubs): Mini Jackpot 213, Loss Rebate 637, Deposit Streak 638, Loyalty Exchange V2, Mini-Games (coin/dice/cards), Risk Ladder, second `_jackpotPool`. All real bonuses are server-side via the existing `/api/*` routes |
 | KYC submission | Client-side KYC form now submits to real `/api/user/verification` endpoint (was localStorage-only) |
+| Geo-blocking | Added `server/middleware/geo-block.js` — allowlist/denylist model via `ALLOWED_COUNTRIES` / `BLOCKED_COUNTRIES` env vars. Wired into register, deposit, withdraw, crypto-verify, bundle-purchase, withdrawal-enhance. 24 h LRU cache, fail-open by default, configurable via `GEO_FAIL_MODE=closed` |
+| Launch self-check | Server prints prominent warnings at boot in production if `STRIPE_SECRET_KEY` is missing/non-live, `STRIPE_WEBHOOK_SECRET` is missing, no geo env is configured, or `DATABASE_URL` is missing. Does not block startup — operators need to see the warnings in logs |
+| Deposit limits | Already implemented via `user_limits` table (daily/weekly/monthly caps). Enforced in `payment.routes.js:74-116` before Stripe Checkout session creation |
 
 ## 🚫 Business-level items outstanding — cannot be fixed in code
 
