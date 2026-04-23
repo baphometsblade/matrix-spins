@@ -4,6 +4,16 @@ const express = require('express');
 const db = require('../database');
 const { authenticate } = require('../middleware/auth');
 const authEvents = require('../services/auth-events.service');
+const mailer = require('../services/email.service');
+
+function reqIp(req) {
+    const fwd = req && req.headers && req.headers['x-forwarded-for'];
+    if (fwd) return String(fwd).split(',')[0].trim();
+    return (req && req.ip) || null;
+}
+function reqUa(req) {
+    return (req && req.headers && req.headers['user-agent']) || null;
+}
 
 const router = express.Router();
 
@@ -73,12 +83,24 @@ router.patch('/me', authenticate, async (req, res) => {
     params.push(req.user.id);
 
     try {
+        const before = await db.get('SELECT email, username FROM users WHERE id = ?', [req.user.id]);
         await db.run('UPDATE users SET ' + updates.join(', ') + ' WHERE id = ?', params);
         const updated = await db.get(
             'SELECT id, username, email, display_name, date_of_birth, balance_cents, is_admin, created_at FROM users WHERE id = ?',
             [req.user.id]
         );
         await authEvents.log({ userId: req.user.id, username: req.user.username, eventType: 'profile_update', outcome: 'success', req });
+        // If the email address changed, alert BOTH addresses — the old
+        // one so a compromised account surfaces the change, the new
+        // one so we don't rely solely on a potentially-attacker inbox.
+        if (before && before.email && email !== undefined && email.trim() && email.trim().toLowerCase() !== String(before.email).toLowerCase()) {
+            for (const to of new Set([before.email, email.trim()])) {
+                mailer.sendSecurityAlert({
+                    to: to, username: req.user.username, event: 'email_change',
+                    ip: reqIp(req), userAgent: reqUa(req),
+                }).catch(function (err) { console.warn('[user/me] email alert failed:', err && err.message); });
+            }
+        }
         res.json({ user: userPublic(updated) });
     } catch (err) {
         console.error('[user/me PATCH]', err);

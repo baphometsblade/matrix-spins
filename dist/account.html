@@ -345,8 +345,13 @@
         var cn = document.getElementById('pw-confirm').value;
         if (nw !== cn) { msg.className = 'msg err'; msg.textContent = 'New passwords do not match.'; return; }
         try {
-            await api('POST', '/api/auth/change-password', { current_password: cur, new_password: nw });
-            msg.className = 'msg ok'; msg.textContent = 'Password updated.';
+            var r = await api('POST', '/api/auth/change-password', { current_password: cur, new_password: nw });
+            // Server issues a fresh JWT because token_version was bumped;
+            // swap it in so this page keeps working.
+            if (r && r.token) {
+                for (var i = 0; i < TOKEN_KEYS.length; i++) { if (localStorage.getItem(TOKEN_KEYS[i])) { localStorage.setItem(TOKEN_KEYS[i], r.token); break; } }
+            }
+            msg.className = 'msg ok'; msg.textContent = 'Password updated. All other sessions have been signed out.';
             document.getElementById('pw-current').value = '';
             document.getElementById('pw-new').value = '';
             document.getElementById('pw-confirm').value = '';

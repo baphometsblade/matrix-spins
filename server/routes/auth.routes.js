@@ -5,10 +5,19 @@ const bcrypt = require('bcryptjs');
 const crypto = require('crypto');
 const config = require('../config');
 const db = require('../database');
-const { signToken, sign2faChallenge, authenticate, verifyTokenString } = require('../middleware/auth');
+const { signToken, sign2faChallenge, authenticate, verifyTokenString, bumpTokenVersion } = require('../middleware/auth');
 const mailer = require('../services/email.service');
 const authEvents = require('../services/auth-events.service');
 const { verifyTotpOrRecovery, currentSecret } = require('./twofa.routes');
+
+function reqIp(req) {
+    const fwd = req && req.headers && req.headers['x-forwarded-for'];
+    if (fwd) return String(fwd).split(',')[0].trim();
+    return (req && req.ip) || null;
+}
+function reqUa(req) {
+    return (req && req.headers && req.headers['user-agent']) || null;
+}
 
 const router = express.Router();
 
@@ -222,8 +231,18 @@ router.post('/change-password', authenticate, async (req, res) => {
         if (!ok) return res.status(401).json({ error: 'Current password is incorrect.' });
         const hash = await bcrypt.hash(new_password, 12);
         await db.run('UPDATE users SET password_hash = ? WHERE id = ?', [hash, user.id]);
+        await bumpTokenVersion(user.id);
         await authEvents.log({ userId: user.id, username: user.username, eventType: 'password_change', outcome: 'success', req });
-        res.json({ ok: true });
+        if (user.email) {
+            mailer.sendSecurityAlert({
+                to: user.email, username: user.username, event: 'password_change',
+                ip: reqIp(req), userAgent: reqUa(req),
+            }).catch(function (err) { console.warn('[auth/change-password] alert email failed:', err && err.message); });
+        }
+        // The current JWT is invalidated by the token_version bump, so
+        // issue a fresh one so this endpoint doesn't lock the caller out.
+        const fresh = await db.get('SELECT * FROM users WHERE id = ?', [user.id]);
+        res.json({ ok: true, token: signToken(fresh) });
     } catch (err) {
         console.error('[auth/change-password]', err);
         res.status(500).json({ error: 'Failed to change password.' });
@@ -279,7 +298,17 @@ router.post('/reset-password', async (req, res) => {
         const hash = await bcrypt.hash(new_password, 12);
         await db.run('UPDATE users SET password_hash = ? WHERE id = ?', [hash, row.user_id]);
         await db.run('UPDATE password_resets SET used_at = ? WHERE id = ?', [nowIso(), row.id]);
+        await bumpTokenVersion(row.user_id);
         await authEvents.log({ userId: row.user_id, eventType: 'password_reset', outcome: 'success', req });
+        try {
+            const u = await db.get('SELECT username, email FROM users WHERE id = ?', [row.user_id]);
+            if (u && u.email) {
+                mailer.sendSecurityAlert({
+                    to: u.email, username: u.username, event: 'password_reset',
+                    ip: reqIp(req), userAgent: reqUa(req),
+                }).catch(function (err) { console.warn('[auth/reset-password] alert email failed:', err && err.message); });
+            }
+        } catch (err) { /* ignore */ }
         res.json({ ok: true });
     } catch (err) {
         console.error('[auth/reset-password]', err);

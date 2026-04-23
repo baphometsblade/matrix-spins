@@ -2,10 +2,11 @@
 
 const jwt = require('jsonwebtoken');
 const config = require('../config');
+const db = require('../database');
 
 function signToken(user) {
     return jwt.sign(
-        { id: user.id, username: user.username, is_admin: !!user.is_admin },
+        { id: user.id, username: user.username, is_admin: !!user.is_admin, tv: Number(user.token_version || 0) },
         config.JWT_SECRET,
         { expiresIn: '30d' }
     );
@@ -13,7 +14,7 @@ function signToken(user) {
 
 function sign2faChallenge(user) {
     return jwt.sign(
-        { id: user.id, username: user.username, pending_2fa: true },
+        { id: user.id, username: user.username, pending_2fa: true, tv: Number(user.token_version || 0) },
         config.JWT_SECRET,
         { expiresIn: '5m' }
     );
@@ -27,7 +28,34 @@ function verifyTokenString(token) {
     }
 }
 
-function authenticate(req, res, next) {
+// Cache each user's current token_version briefly so we don't hit the
+// DB on every authenticated request. A bump (password change, 2FA
+// disable, admin revoke) invalidates the cache synchronously via
+// invalidateTokenVersionCache(userId).
+const TV_CACHE_TTL_MS = 30 * 1000;
+const tvCache = new Map(); // userId -> { version, expiresAt }
+
+function invalidateTokenVersionCache(userId) {
+    tvCache.delete(Number(userId));
+}
+
+async function currentTokenVersion(userId) {
+    const now = Date.now();
+    const cached = tvCache.get(userId);
+    if (cached && cached.expiresAt > now) return cached.version;
+    try {
+        const row = await db.get('SELECT token_version FROM users WHERE id = ?', [userId]);
+        const v = row ? Number(row.token_version || 0) : null;
+        if (v != null) tvCache.set(userId, { version: v, expiresAt: now + TV_CACHE_TTL_MS });
+        return v;
+    } catch (err) {
+        // If the DB is unavailable we must fail closed on authenticated
+        // requests rather than accept potentially-stale tokens.
+        return null;
+    }
+}
+
+async function authenticate(req, res, next) {
     const header = req.headers.authorization || '';
     const token = header.startsWith('Bearer ') ? header.slice(7) : null;
     const payload = token ? verifyTokenString(token) : null;
@@ -39,15 +67,28 @@ function authenticate(req, res, next) {
     if (payload.pending_2fa) {
         return res.status(401).json({ error: 'Complete 2FA to continue.' });
     }
+    const currentTv = await currentTokenVersion(payload.id);
+    if (currentTv == null || Number(payload.tv || 0) !== currentTv) {
+        return res.status(401).json({ error: 'Session revoked. Sign in again.' });
+    }
     req.user = payload;
     next();
 }
 
-function authenticateOptional(req, res, next) {
+async function authenticateOptional(req, _res, next) {
     const header = req.headers.authorization || '';
     const token = header.startsWith('Bearer ') ? header.slice(7) : null;
     const payload = token ? verifyTokenString(token) : null;
-    if (payload) req.user = payload;
+    if (payload && !payload.pending_2fa) {
+        const currentTv = await currentTokenVersion(payload.id);
+        if (currentTv != null && Number(payload.tv || 0) === currentTv) {
+            req.user = payload;
+        }
+    } else if (payload && payload.pending_2fa) {
+        // Don't populate req.user for pending_2fa tokens, but also don't
+        // reject at this layer — the /login/2fa endpoint verifies the
+        // challenge explicitly.
+    }
     next();
 }
 
@@ -58,4 +99,18 @@ function requireAdmin(req, res, next) {
     next();
 }
 
-module.exports = { authenticate, authenticateOptional, requireAdmin, signToken, sign2faChallenge, verifyTokenString };
+async function bumpTokenVersion(userId) {
+    await db.run('UPDATE users SET token_version = token_version + 1 WHERE id = ?', [userId]);
+    invalidateTokenVersionCache(userId);
+}
+
+module.exports = {
+    authenticate,
+    authenticateOptional,
+    requireAdmin,
+    signToken,
+    sign2faChallenge,
+    verifyTokenString,
+    bumpTokenVersion,
+    invalidateTokenVersionCache,
+};

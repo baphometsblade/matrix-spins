@@ -140,6 +140,47 @@ function escapeHtml(s) {
     return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' })[c]);
 }
 
-module.exports = { send, sendDepositReceipt, sendPasswordResetLink, sendWelcome, getCaptured, clearCaptured, hasTransport };
+async function sendSecurityAlert({ to, username, event, ip, userAgent }) {
+    const eventLabel = {
+        password_change: 'Your Matrix Spins password was changed',
+        password_reset: 'Your Matrix Spins password was reset',
+        email_change: 'Your Matrix Spins email address was changed',
+        twofa_enabled: 'Two-factor authentication was turned ON',
+        twofa_disabled: 'Two-factor authentication was turned OFF',
+        session_revoked: 'All Matrix Spins sessions were signed out',
+    }[event] || 'A security change was made to your Matrix Spins account';
+    const subject = eventLabel;
+    const when = new Date().toISOString();
+    const ctx = [
+        'When: ' + when,
+        ip ? 'IP: ' + ip : null,
+        userAgent ? 'Device: ' + userAgent : null,
+    ].filter(Boolean).join('\n');
+    const text = [
+        'Hi ' + (username || 'there') + ',',
+        '',
+        eventLabel + '.',
+        '',
+        ctx,
+        '',
+        'If this was you, no action is required.',
+        'If you did not do this, reset your password immediately and contact support.',
+        '',
+        '— Matrix Spins',
+    ].join('\n');
+    const html = '<div style="font-family:Helvetica,Arial,sans-serif;max-width:480px;margin:auto;padding:24px;background:#0d1117;color:#e0e0e0;border-radius:12px">' +
+        '<h1 style="color:#d4af37;margin:0 0 8px;font-size:18px">Security alert</h1>' +
+        '<p style="margin:0 0 12px">' + escapeHtml(eventLabel) + '.</p>' +
+        '<div style="background:rgba(255,255,255,0.04);border:1px solid rgba(212,175,55,0.25);border-radius:8px;padding:12px;font-size:13px;color:#b0b0b0;margin:12px 0">' +
+            '<div>When: ' + escapeHtml(when) + '</div>' +
+            (ip ? '<div>IP: ' + escapeHtml(ip) + '</div>' : '') +
+            (userAgent ? '<div style="word-break:break-all">Device: ' + escapeHtml(userAgent) + '</div>' : '') +
+        '</div>' +
+        '<p style="color:#8a8a8a;font-size:13px">If this was you, no action is required. If not, reset your password immediately.</p>' +
+    '</div>';
+    return send({ to, subject, text, html });
+}
+
+module.exports = { send, sendDepositReceipt, sendPasswordResetLink, sendWelcome, sendSecurityAlert, getCaptured, clearCaptured, hasTransport };
 // Suppress unused-var lint while still importing config
 void config;

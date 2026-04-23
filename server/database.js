@@ -180,6 +180,7 @@ async function migrate() {
             deposit_limit_daily_cents ${driver.kind === 'pg' ? 'BIGINT' : 'INTEGER'} NOT NULL DEFAULT 50000,
             deposit_limit_weekly_cents ${driver.kind === 'pg' ? 'BIGINT' : 'INTEGER'} NOT NULL DEFAULT 200000,
             deposit_limit_monthly_cents ${driver.kind === 'pg' ? 'BIGINT' : 'INTEGER'} NOT NULL DEFAULT 500000,
+            token_version INTEGER NOT NULL DEFAULT 0,
             created_at ${T.ts}
         );
     `);
@@ -190,6 +191,9 @@ async function migrate() {
     await addColumnIfMissing('users', 'deposit_limit_daily_cents', driver.kind === 'pg' ? 'BIGINT NOT NULL DEFAULT 50000' : 'INTEGER NOT NULL DEFAULT 50000');
     await addColumnIfMissing('users', 'deposit_limit_weekly_cents', driver.kind === 'pg' ? 'BIGINT NOT NULL DEFAULT 200000' : 'INTEGER NOT NULL DEFAULT 200000');
     await addColumnIfMissing('users', 'deposit_limit_monthly_cents', driver.kind === 'pg' ? 'BIGINT NOT NULL DEFAULT 500000' : 'INTEGER NOT NULL DEFAULT 500000');
+    // token_version bumps invalidate every JWT issued before the bump
+    // (e.g. password change, 2FA disable, admin-triggered revoke).
+    await addColumnIfMissing('users', 'token_version', driver.kind === 'pg' ? 'INTEGER NOT NULL DEFAULT 0' : 'INTEGER NOT NULL DEFAULT 0');
 
     await driver.exec(`
         CREATE TABLE IF NOT EXISTS deposits (

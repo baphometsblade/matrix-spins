@@ -2,12 +2,92 @@
 
 const express = require('express');
 const db = require('../database');
-const { authenticate, requireAdmin } = require('../middleware/auth');
+const config = require('../config');
+const { authenticate, requireAdmin, bumpTokenVersion } = require('../middleware/auth');
 const authEvents = require('../services/auth-events.service');
 
 const router = express.Router();
 
 router.use(authenticate, requireAdmin);
+
+/**
+ * POST /api/admin/deposits/:id/refund
+ *
+ * Initiates a Stripe refund for a paid deposit. Stripe then fires the
+ * charge.refunded webhook which our existing handler processes
+ * (decrements balance, flips deposit status, records refunds row).
+ * This endpoint does NOT mutate balance directly — it only instructs
+ * Stripe to refund, and trusts the webhook as the source of truth.
+ */
+router.post('/deposits/:id/refund', async (req, res) => {
+    const depositId = parseInt(req.params.id, 10);
+    if (!isFinite(depositId) || depositId <= 0) return res.status(400).json({ error: 'Invalid deposit id.' });
+    const { amount_cents, reason } = req.body || {};
+    try {
+        const deposit = await db.get('SELECT * FROM deposits WHERE id = ?', [depositId]);
+        if (!deposit) return res.status(404).json({ error: 'Deposit not found.' });
+        if (deposit.status !== 'paid' && deposit.status !== 'partial_refund') {
+            return res.status(400).json({ error: 'Only paid or partial_refund deposits can be refunded (status: ' + deposit.status + ').' });
+        }
+        if (!config.hasStripe) return res.status(503).json({ error: 'Stripe not configured.' });
+        if (!deposit.provider_ref) return res.status(400).json({ error: 'No provider reference on deposit; cannot refund.' });
+
+        const Stripe = require('stripe');
+        const stripe = new Stripe(config.STRIPE_SECRET_KEY);
+        // Retrieve the Checkout Session to find the payment_intent id.
+        const session = await stripe.checkout.sessions.retrieve(deposit.provider_ref);
+        if (!session || !session.payment_intent) {
+            return res.status(400).json({ error: 'Could not resolve payment intent for this deposit.' });
+        }
+        const refundParams = { payment_intent: session.payment_intent };
+        if (isFinite(Number(amount_cents)) && Number(amount_cents) > 0) {
+            refundParams.amount = Number(amount_cents);
+        }
+        if (reason && typeof reason === 'string') {
+            // Stripe reason is enumerated; default to requested_by_customer.
+            refundParams.reason = ['duplicate', 'fraudulent', 'requested_by_customer'].includes(reason) ? reason : 'requested_by_customer';
+        }
+        const refund = await stripe.refunds.create(refundParams);
+        await authEvents.log({
+            userId: deposit.user_id,
+            eventType: 'admin_refund',
+            outcome: 'success',
+            reason: 'admin=' + (req.user && req.user.username) + ' deposit=' + depositId + ' refund=' + refund.id,
+            req,
+        });
+        res.json({ ok: true, refund_id: refund.id, status: refund.status, amount: Number(refund.amount || 0) / 100 });
+    } catch (err) {
+        console.error('[admin/refund]', err);
+        res.status(500).json({ error: err.message || 'Refund failed.' });
+    }
+});
+
+/**
+ * POST /api/admin/users/:id/revoke-sessions
+ *
+ * Bumps the user's token_version so every existing JWT is immediately
+ * invalidated. Useful when an account is compromised.
+ */
+router.post('/users/:id/revoke-sessions', async (req, res) => {
+    const userId = parseInt(req.params.id, 10);
+    if (!isFinite(userId) || userId <= 0) return res.status(400).json({ error: 'Invalid user id.' });
+    try {
+        const user = await db.get('SELECT id FROM users WHERE id = ?', [userId]);
+        if (!user) return res.status(404).json({ error: 'User not found.' });
+        await bumpTokenVersion(userId);
+        await authEvents.log({
+            userId: userId,
+            eventType: 'session_revoke',
+            outcome: 'success',
+            reason: 'admin=' + (req.user && req.user.username),
+            req,
+        });
+        res.json({ ok: true });
+    } catch (err) {
+        console.error('[admin/revoke-sessions]', err);
+        res.status(500).json({ error: 'Failed to revoke sessions.' });
+    }
+});
 
 router.get('/login-events', async (req, res) => {
     try {

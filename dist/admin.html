@@ -33,6 +33,9 @@
     .row-actions { display: flex; gap: 8px; justify-content: flex-end; margin-bottom: 12px; }
     .row-actions button { padding: 6px 12px; background: rgba(255,255,255,.06); color: #e0e0e0; border: 1px solid rgba(212,175,55,.3); border-radius: 6px; cursor: pointer; font-size: 12px; }
     .row-actions button:hover { background: rgba(212,175,55,.15); }
+    .row-refund { padding: 5px 10px; font-size: 11px; background: rgba(231,76,60,.15); color: #ff9f9f; border: 1px solid #e74c3c; border-radius: 4px; cursor: pointer; }
+    .row-refund:hover { background: rgba(231,76,60,.25); }
+    .row-refund:disabled { opacity: .5; cursor: wait; }
 </style>
 </head>
 <body>
@@ -61,12 +64,12 @@
 
     <h2>Recent paid deposits</h2>
     <table id="tbl-paid"><thead><tr>
-        <th>ID</th><th>User</th><th>Amount</th><th>Status</th><th>Completed</th>
+        <th>ID</th><th>User</th><th>Amount</th><th>Status</th><th>Completed</th><th></th>
     </tr></thead><tbody></tbody></table>
 
     <h2>Pending</h2>
     <table id="tbl-pending"><thead><tr>
-        <th>ID</th><th>User</th><th>Amount</th><th>Status</th><th>Created</th>
+        <th>ID</th><th>User</th><th>Amount</th><th>Status</th><th>Created</th><th></th>
     </tr></thead><tbody></tbody></table>
 </div>
 
@@ -151,18 +154,39 @@
 
     function fillTable(id, rows, dateKeys) {
         const tbody = document.querySelector('#' + id + ' tbody');
+        const canRefund = id === 'tbl-paid';
         tbody.innerHTML = rows.length === 0
-            ? '<tr><td colspan="5" style="color:#666;padding:18px;text-align:center">— nothing yet —</td></tr>'
+            ? '<tr><td colspan="6" style="color:#666;padding:18px;text-align:center">— nothing yet —</td></tr>'
             : rows.map(r => {
                 const date = r.completed_at || r.created_at || '';
+                const refundBtn = (canRefund && r.status === 'paid')
+                    ? '<button class="row-refund" data-id="' + r.id + '" data-amt="' + r.amount + '">Refund</button>'
+                    : '';
                 return '<tr>' +
                     '<td class="mono">' + r.id + '</td>' +
                     '<td>' + esc(r.username || r.user_id) + '</td>' +
                     '<td>' + money(r.amount) + ' ' + esc((r.currency || '').toUpperCase()) + '</td>' +
                     '<td>' + pill(r.status) + '</td>' +
                     '<td>' + esc(String(date).replace('T',' ').slice(0,19)) + '</td>' +
+                    '<td>' + refundBtn + '</td>' +
                 '</tr>';
             }).join('');
+        tbody.querySelectorAll('.row-refund').forEach(btn => {
+            btn.addEventListener('click', async function () {
+                const id = this.dataset.id;
+                const amt = this.dataset.amt;
+                if (!confirm('Refund deposit #' + id + ' for $' + amt + '? This cannot be undone.')) return;
+                this.disabled = true; this.textContent = 'Refunding…';
+                try {
+                    const res = await api('POST', '/api/admin/deposits/' + id + '/refund', { reason: 'requested_by_customer' });
+                    alert('Refund initiated: ' + res.refund_id + ' (status: ' + res.status + '). Balance updates via webhook.');
+                    loadOverview();
+                } catch (e) {
+                    alert('Refund failed: ' + e.message);
+                    this.disabled = false; this.textContent = 'Refund';
+                }
+            });
+        });
     }
 
     // Auto-show dashboard on reload if we still have a valid token

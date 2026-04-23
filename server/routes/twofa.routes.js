@@ -30,9 +30,19 @@ const bcrypt = require('bcryptjs');
 const QRCode = require('qrcode');
 const config = require('../config');
 const db = require('../database');
-const { authenticate } = require('../middleware/auth');
+const { authenticate, bumpTokenVersion } = require('../middleware/auth');
 const totp = require('../services/totp.service');
 const authEvents = require('../services/auth-events.service');
+const mailer = require('../services/email.service');
+
+function reqIp(req) {
+    const fwd = req && req.headers && req.headers['x-forwarded-for'];
+    if (fwd) return String(fwd).split(',')[0].trim();
+    return (req && req.ip) || null;
+}
+function reqUa(req) {
+    return (req && req.headers && req.headers['user-agent']) || null;
+}
 
 const router = express.Router();
 
@@ -158,6 +168,15 @@ router.post('/enable', authenticate, async (req, res) => {
             );
         }
         await authEvents.log({ userId: req.user.id, username: req.user.username, eventType: '2fa_enable', outcome: 'success', req });
+        try {
+            const u = await db.get('SELECT username, email FROM users WHERE id = ?', [req.user.id]);
+            if (u && u.email) {
+                mailer.sendSecurityAlert({
+                    to: u.email, username: u.username, event: 'twofa_enabled',
+                    ip: reqIp(req), userAgent: reqUa(req),
+                }).catch(function (err) { console.warn('[2fa/enable] alert email failed:', err && err.message); });
+            }
+        } catch (err) { /* ignore */ }
         res.json({ ok: true, recovery_codes: recovery });
     } catch (err) {
         console.error('[2fa/enable]', err);
@@ -177,8 +196,23 @@ router.post('/disable', authenticate, async (req, res) => {
         if (!verdict.ok) return res.status(401).json({ error: 'Code does not match.' });
         await db.run('DELETE FROM user_totp_secrets WHERE user_id = ?', [req.user.id]);
         await db.run('DELETE FROM user_recovery_codes WHERE user_id = ?', [req.user.id]);
+        // Disabling 2FA is a sensitive action — invalidate every other
+        // session too in case the disable was performed by an attacker
+        // who had phished the current token + one-time code.
+        await bumpTokenVersion(req.user.id);
         await authEvents.log({ userId: req.user.id, username: req.user.username, eventType: '2fa_disable', outcome: 'success', reason: verdict.via, req });
-        res.json({ ok: true });
+        try {
+            if (user && user.email) {
+                mailer.sendSecurityAlert({
+                    to: user.email, username: user.username, event: 'twofa_disabled',
+                    ip: reqIp(req), userAgent: reqUa(req),
+                }).catch(function (err) { console.warn('[2fa/disable] alert email failed:', err && err.message); });
+            }
+        } catch (err) { /* ignore */ }
+        // Issue a fresh token so the caller isn't immediately logged out.
+        const fresh = await db.get('SELECT * FROM users WHERE id = ?', [req.user.id]);
+        const { signToken } = require('../middleware/auth');
+        res.json({ ok: true, token: signToken(fresh) });
     } catch (err) {
         console.error('[2fa/disable]', err);
         res.status(500).json({ error: 'Failed to disable 2FA.' });

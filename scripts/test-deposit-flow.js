@@ -500,6 +500,74 @@ async function main() {
     assert.ok(!login4.body.requires_2fa);
     console.log('[test] 2FA disable removes the challenge requirement');
 
+    // 29) Session invalidation: changing the password invalidates the old token
+    const emailSvcSec = require('../server/services/email.service');
+    emailSvcSec.clearCaptured();
+    const secCsrf = (await http('GET', '/api/csrf-token')).body.csrfToken;
+    const regSec = await http('POST', '/api/auth/register', {
+        csrf: secCsrf,
+        body: {
+            username: 'sec_' + Date.now(),
+            email: 'sec_' + Date.now() + '@example.com',
+            password: 'Str0ngP@ss!!',
+            date_of_birth: '1990-01-01',
+        },
+    });
+    assert.strictEqual(regSec.status, 201);
+    const origToken = regSec.body.token;
+    const secCsrf2 = (await http('GET', '/api/csrf-token', { token: origToken })).body.csrfToken;
+    const cpRes = await http('POST', '/api/auth/change-password', {
+        token: origToken, csrf: secCsrf2,
+        body: { current_password: 'Str0ngP@ss!!', new_password: 'Str0ngP@ss!!v2' },
+    });
+    assert.strictEqual(cpRes.status, 200, 'change-password failed: ' + cpRes.raw);
+    assert.ok(cpRes.body.token, 'change-password did not return a fresh token');
+    // Original token is now invalid
+    const stale = await http('GET', '/api/user/me', { token: origToken });
+    assert.strictEqual(stale.status, 401, 'original token should be invalidated');
+    assert.ok(/revoked/i.test(stale.body.error || ''), 'expected revoke message');
+    // Fresh token works
+    const freshMe = await http('GET', '/api/user/me', { token: cpRes.body.token });
+    assert.strictEqual(freshMe.status, 200);
+    // Security-alert email captured
+    const pwMail = emailSvcSec.getCaptured().find(m => /password.*changed/i.test(m.subject));
+    assert.ok(pwMail, 'password-change security email not captured');
+    console.log('[test] password change invalidates old JWT + emails user');
+
+    // 30) Email change alerts BOTH addresses
+    emailSvcSec.clearCaptured();
+    const newEmail = 'secnew_' + Date.now() + '@example.com';
+    const freshCsrf = (await http('GET', '/api/csrf-token', { token: cpRes.body.token })).body.csrfToken;
+    const patchEmail = await http('PATCH', '/api/user/me', {
+        token: cpRes.body.token, csrf: freshCsrf,
+        body: { email: newEmail },
+    });
+    assert.strictEqual(patchEmail.status, 200);
+    const alerts = emailSvcSec.getCaptured().filter(m => /email.*changed/i.test(m.subject));
+    assert.strictEqual(alerts.length, 2, 'expected email-change alerts to old and new addresses');
+    console.log('[test] email-change alerts both old and new addresses');
+
+    // 31) Admin refund endpoint resolves deposit → payment_intent → refund.
+    //     We can't actually call Stripe here, but we can assert 400 when
+    //     the deposit is in the wrong status and 404 for a bad id.
+    //     CSRF token must be issued under the admin's session.
+    const adminAuthedCsrf = (await http('GET', '/api/csrf-token', { token: adminToken })).body.csrfToken;
+    const notFound = await http('POST', '/api/admin/deposits/99999/refund', { token: adminToken, csrf: adminAuthedCsrf, body: {} });
+    assert.strictEqual(notFound.status, 404);
+    const badStatus = await http('POST', '/api/admin/deposits/1/refund', { token: adminToken, csrf: adminAuthedCsrf, body: {} });
+    // Deposit #1 from the earlier flow is in 'refunded' status → 400
+    assert.strictEqual(badStatus.status, 400);
+    console.log('[test] admin refund rejects bad id + wrong-status deposits');
+
+    // 32) Admin revoke-sessions bumps token_version (invalidates all tokens).
+    const revoke = await http('POST', '/api/admin/users/' + freshMe.body.user.id + '/revoke-sessions', {
+        token: adminToken, csrf: adminAuthedCsrf, body: {},
+    });
+    assert.strictEqual(revoke.status, 200);
+    const afterRevoke = await http('GET', '/api/user/me', { token: cpRes.body.token });
+    assert.strictEqual(afterRevoke.status, 401);
+    console.log('[test] admin session revoke invalidates existing tokens');
+
     console.log('\n✅ all deposit-flow assertions passed');
     main.server.close();
     await db.close();
