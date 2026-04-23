@@ -444,6 +444,71 @@ router.get('/deposits.csv', async (req, res) => {
 });
 
 /**
+ * GET /api/admin/webhook-events?type=<filter>&limit=<n>
+ * Lists recent processed Stripe webhook events.
+ */
+router.get('/webhook-events', async (req, res) => {
+    const limit = Math.max(1, Math.min(500, parseInt(req.query.limit, 10) || 100));
+    const typeFilter = typeof req.query.type === 'string' && req.query.type.trim() ? req.query.type.trim() : null;
+    try {
+        let rows;
+        if (typeFilter) {
+            rows = await db.all(
+                `SELECT id, provider, event_id, event_type, processed_at
+                   FROM processed_webhook_events WHERE event_type = ? ORDER BY id DESC LIMIT ?`,
+                [typeFilter, limit]
+            );
+        } else {
+            rows = await db.all(
+                `SELECT id, provider, event_id, event_type, processed_at
+                   FROM processed_webhook_events ORDER BY id DESC LIMIT ?`,
+                [limit]
+            );
+        }
+        res.json({ events: rows });
+    } catch (err) {
+        console.error('[admin/webhook-events]', err);
+        res.status(500).json({ error: 'Failed to fetch webhook events.' });
+    }
+});
+
+/**
+ * POST /api/admin/users/:id/unlock
+ * Clears the recent failed-login + locked_out auth_events so a customer
+ * can sign in again without waiting out the 15-minute lockout window.
+ * Writes an audit row noting which operator unlocked them.
+ */
+router.post('/users/:id/unlock', async (req, res) => {
+    const userId = parseInt(req.params.id, 10);
+    if (!isFinite(userId) || userId <= 0) return res.status(400).json({ error: 'Invalid user id.' });
+    try {
+        const user = await db.get('SELECT id, username FROM users WHERE id = ?', [userId]);
+        if (!user) return res.status(404).json({ error: 'User not found.' });
+        const sinceIso = new Date(Date.now() - 60 * 60 * 1000).toISOString(); // last hour
+        const r = await db.run(
+            `DELETE FROM auth_events
+              WHERE lower(username) = lower(?)
+                AND event_type = 'login'
+                AND outcome IN ('failed','locked_out')
+                AND created_at >= ?`,
+            [user.username, sinceIso]
+        );
+        await authEvents.log({
+            userId: user.id,
+            username: user.username,
+            eventType: 'admin_unlock',
+            outcome: 'success',
+            reason: 'admin=' + (req.user && req.user.username) + ' cleared=' + (r && r.changes || 0),
+            req,
+        });
+        res.json({ ok: true, cleared: (r && r.changes) || 0 });
+    } catch (err) {
+        console.error('[admin/unlock]', err);
+        res.status(500).json({ error: 'Unlock failed.' });
+    }
+});
+
+/**
  * GET /api/admin/users/:id/detail
  *
  * Single-round-trip support lookup. Returns profile + ledger

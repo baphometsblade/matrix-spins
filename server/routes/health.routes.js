@@ -51,6 +51,12 @@ router.get('/', async (_req, res) => {
     } catch (err) {
         out.reconciler = { error: err.message };
     }
+    try {
+        const maintenance = require('../services/maintenance.service');
+        out.maintenance = maintenance.getStatus();
+    } catch (err) {
+        out.maintenance = { error: err.message };
+    }
 
     res.json(out);
 });

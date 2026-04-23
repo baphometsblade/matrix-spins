@@ -870,6 +870,53 @@ async function main() {
     assert.ok(!('password_hash' in detail.body.user), 'password_hash must not leak into admin detail');
     console.log('[test] /api/admin/users/:id/detail returns full context without secrets');
 
+    // 50) Webhook events admin viewer
+    const events = await http('GET', '/api/admin/webhook-events?limit=50', { token: adminToken });
+    assert.strictEqual(events.status, 200);
+    assert.ok(Array.isArray(events.body.events));
+    assert.ok(events.body.events.length >= 1, 'expected at least one processed event from the happy-path flow');
+    assert.ok(events.body.events[0].event_type);
+    const filtered = await http('GET', '/api/admin/webhook-events?type=checkout.session.completed', { token: adminToken });
+    assert.strictEqual(filtered.status, 200);
+    assert.ok(filtered.body.events.every(e => e.event_type === 'checkout.session.completed'));
+    console.log('[test] /api/admin/webhook-events lists + filters by type');
+
+    // 51) Admin unlock clears recent failed-login + locked_out entries
+    const lockVictim = 'lock_victim_' + Date.now();
+    const seedCsrf = (await http('GET', '/api/csrf-token')).body.csrfToken;
+    await http('POST', '/api/auth/register', {
+        csrf: seedCsrf,
+        body: {
+            username: lockVictim,
+            email: lockVictim + '@example.com',
+            password: 'Str0ngP@ss!!',
+            date_of_birth: '1990-01-01',
+        },
+    });
+    // Fire 5 bad logins → locked out
+    for (let i = 0; i < 5; i++) {
+        await http('POST', '/api/auth/login', { csrf: seedCsrf, body: { username: lockVictim, password: 'wrong_' + i } });
+    }
+    const nowLocked = await http('POST', '/api/auth/login', { csrf: seedCsrf, body: { username: lockVictim, password: 'Str0ngP@ss!!' } });
+    assert.strictEqual(nowLocked.status, 429, 'lockout precondition failed');
+    const unlockRes = await http('POST', '/api/admin/users/' + (await db.get('SELECT id FROM users WHERE username = ?', [lockVictim])).id + '/unlock', {
+        token: adminToken, csrf: adminAuthedCsrf, body: {},
+    });
+    assert.strictEqual(unlockRes.status, 200);
+    assert.ok(unlockRes.body.cleared >= 5, 'expected ≥5 lockout entries cleared: ' + JSON.stringify(unlockRes.body));
+    // Now the login works again
+    const afterUnlock = await http('POST', '/api/auth/login', { csrf: seedCsrf, body: { username: lockVictim, password: 'Str0ngP@ss!!' } });
+    assert.strictEqual(afterUnlock.status, 200, 'login still locked after admin unlock: ' + afterUnlock.raw);
+    console.log('[test] admin unlock clears failed-login events and ends the lockout');
+
+    // 52) Maintenance status surfaces on /api/health after a sweep
+    await require('../server/services/maintenance.service').runOnce();
+    const h2 = await fetch('http://localhost:3199/api/health');
+    const h2body = await h2.json();
+    assert.ok(h2body.maintenance && typeof h2body.maintenance === 'object');
+    assert.ok(h2body.maintenance.last_run && h2body.maintenance.last_run.startedAt);
+    console.log('[test] /api/health includes maintenance last_run after a sweep');
+
     console.log('\n✅ all deposit-flow assertions passed');
     main.server.close();
     await db.close();

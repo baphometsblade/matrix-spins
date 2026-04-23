@@ -36,10 +36,12 @@
     .row-refund { padding: 5px 10px; font-size: 11px; background: rgba(231,76,60,.15); color: #ff9f9f; border: 1px solid #e74c3c; border-radius: 4px; cursor: pointer; }
     .row-refund:hover { background: rgba(231,76,60,.25); }
     .row-refund:disabled { opacity: .5; cursor: wait; }
-    .row-adjust, .row-revoke { padding: 5px 10px; font-size: 11px; background: rgba(212,175,55,.1); color: #d4af37; border: 1px solid rgba(212,175,55,.45); border-radius: 4px; cursor: pointer; margin-right: 4px; }
-    .row-adjust:hover, .row-revoke:hover { background: rgba(212,175,55,.22); }
+    .row-adjust, .row-revoke, .row-unlock { padding: 5px 10px; font-size: 11px; background: rgba(212,175,55,.1); color: #d4af37; border: 1px solid rgba(212,175,55,.45); border-radius: 4px; cursor: pointer; margin-right: 4px; }
+    .row-adjust:hover, .row-revoke:hover, .row-unlock:hover { background: rgba(212,175,55,.22); }
     .row-revoke { border-color: #e74c3c; color: #ff9f9f; background: rgba(231,76,60,.1); }
     .row-revoke:hover { background: rgba(231,76,60,.22); }
+    .row-unlock { border-color: #27ae60; color: #7fec7f; background: rgba(39,174,96,.1); }
+    .row-unlock:hover { background: rgba(39,174,96,.22); }
 </style>
 </head>
 <body>
@@ -85,6 +87,13 @@
     <table id="tbl-pending"><thead><tr>
         <th>ID</th><th>User</th><th>Amount</th><th>Status</th><th>Created</th><th></th>
     </tr></thead><tbody></tbody></table>
+
+    <h2 style="display:flex;align-items:center;gap:12px">Stripe webhook events
+        <button class="row-actions-inline" id="btn-load-events" style="margin-left:auto;padding:5px 10px;font-size:11px;background:rgba(255,255,255,.08);color:#e0e0e0;border:1px solid #333;border-radius:4px;cursor:pointer">Load recent</button>
+    </h2>
+    <table id="tbl-events"><thead><tr>
+        <th>DB id</th><th>Stripe event id</th><th>Type</th><th>Processed</th>
+    </tr></thead><tbody><tr><td colspan="4" style="color:#666;padding:18px;text-align:center">— click Load recent —</td></tr></tbody></table>
 </div>
 
 <script>
@@ -235,6 +244,7 @@
                     '<td>' + money(u.balance) + '</td>' +
                     '<td>' + esc(String(u.created_at || '').replace('T',' ').slice(0,19)) + '</td>' +
                     '<td><button class="row-adjust" data-id="' + u.id + '" data-username="' + esc(u.username) + '">Adjust</button> ' +
+                        '<button class="row-unlock" data-id="' + u.id + '">Unlock</button> ' +
                         '<button class="row-revoke" data-id="' + u.id + '">Revoke sessions</button></td>' +
                 '</tr>').join('') +
                 '</tbody></table>';
@@ -260,7 +270,19 @@
         target.querySelectorAll('.row-revoke').forEach(btn => {
             btn.addEventListener('click', () => revokeSessions(btn.dataset.id));
         });
+        target.querySelectorAll('.row-unlock').forEach(btn => {
+            btn.addEventListener('click', () => unlockUser(btn.dataset.id));
+        });
     };
+
+    async function unlockUser(userId) {
+        try {
+            const r = await api('POST', '/api/admin/users/' + userId + '/unlock');
+            alert('Cleared ' + r.cleared + ' failed-login / lockout event(s). User can sign in immediately.');
+        } catch (e) {
+            alert('Unlock failed: ' + e.message);
+        }
+    }
 
     async function adjustBalance(userId, username) {
         const input = prompt('Adjust balance for ' + username + '\n\nEnter a signed amount in dollars (e.g. 10.50 to credit, -5 to debit):');
@@ -311,6 +333,28 @@
             if (btn) { btn.disabled = false; btn.textContent = 'Reconcile pending'; }
         }
     };
+
+    // Load recent Stripe webhook events into the events table.
+    document.getElementById('btn-load-events').addEventListener('click', async function () {
+        const btn = this;
+        btn.disabled = true; btn.textContent = 'Loading…';
+        try {
+            const data = await api('GET', '/api/admin/webhook-events?limit=100');
+            const tbody = document.querySelector('#tbl-events tbody');
+            tbody.innerHTML = data.events.length === 0
+                ? '<tr><td colspan="4" style="color:#666;padding:18px;text-align:center">— no events processed yet —</td></tr>'
+                : data.events.map(e => '<tr>' +
+                    '<td class="mono">' + e.id + '</td>' +
+                    '<td class="mono" style="font-size:11px">' + esc(e.event_id) + '</td>' +
+                    '<td>' + esc(e.event_type || '') + '</td>' +
+                    '<td>' + esc(String(e.processed_at || '').replace('T',' ').slice(0,19)) + '</td>' +
+                '</tr>').join('');
+        } catch (e) {
+            alert('Failed to load events: ' + e.message);
+        } finally {
+            btn.disabled = false; btn.textContent = 'Reload';
+        }
+    });
 
     // Fetch a text endpoint with bearer auth and trigger a file download.
     window.downloadCsv = async function (path, filename) {
