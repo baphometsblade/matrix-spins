@@ -1,6 +1,41 @@
         // Game data loaded from shared/game-definitions.js
         // (60 game definitions moved to separate module)
 
+        // ═══════════════════════════════════════════════════════
+        // ═══ GLOBAL CONSTANTS (shared across modules) ═══
+        // These used to live in constants.js which was never committed;
+        // modules still reference them, so they're defined here at the
+        // top of the bundle before anyone reads them. Using `var` so
+        // accidental redeclaration in another bundled file is tolerated.
+        // ═══════════════════════════════════════════════════════
+        var STORAGE_KEY_TOKEN           = 'casinoToken';
+        var STORAGE_KEY_USER            = 'casinoUser';
+        var STORAGE_KEY_USERS           = 'casinoUsers';
+        var STORAGE_KEY_SESSION         = 'casinoSession';
+        var STORAGE_KEY_BALANCE         = 'casinoBalance';
+        var STORAGE_KEY_SETTINGS        = 'casinoSettings';
+        var STORAGE_KEY_STATS           = 'casinoStats';
+        var STORAGE_KEY_XP              = 'casinoXP';
+        var STORAGE_KEY_DAILY_BONUS     = 'casinoDailyBonus';
+        var STORAGE_KEY_DAILY_GOAL      = 'casinoDailyGoal';
+        var STORAGE_KEY_BONUS_WHEEL     = 'casinoBonusWheel';
+        var STORAGE_KEY_FAVORITES       = 'casinoFavorites';
+        var STORAGE_KEY_RECENTLY_PLAYED = 'casinoRecentlyPlayed';
+        var STORAGE_KEY_VIP             = 'casinoVIP';
+        var STORAGE_KEY_HALL_OF_FAME    = 'matrixHallOfFame';
+        var STORAGE_KEY_WEEKLY_MISSIONS = 'matrixWeeklyMissions';
+        var STORAGE_KEY_NOTIFICATIONS   = 'matrixNotifications';
+        var STORAGE_KEY_LOGIN_STREAK    = 'matrixLoginStreak';
+        var STORAGE_KEY_INTERVAL        = 'matrixRealityCheckInterval';
+        var JACKPOT_TICKER_BASE_VALUE = 125000;
+        var JACKPOT_TICKER_RANDOM_RANGE = 50000;
+
+        var DEFAULT_BALANCE = 0;
+        var DEFAULT_BET     = 1;
+        var DEFAULT_STATS   = { totalSpins: 0, totalWagered: 0, totalWon: 0, biggestWin: 0 };
+        // Base reel symbol set used when a game doesn't define its own.
+        var SLOT_SYMBOLS = ['diamond', 'cherry', 'seven', 'crown', 'star', 'bell', 'coin', 'bar', 'clover', 'watermelon', 'lemon'];
+        // `createDefaultStats` is redefined below with the richer per-game map.
 
         // ═══════════════════════════════════════════════════════
         // ═══ LOCAL AUTH SYSTEM (localStorage-based, no server) ═══

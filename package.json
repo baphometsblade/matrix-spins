@@ -10,6 +10,7 @@
         "dev": "node server/index.js",
         "test": "node scripts/test-deposit-flow.js",
         "test:deposit": "node scripts/test-deposit-flow.js",
+        "test:browser": "node scripts/test-browser.js",
         "preflight": "node scripts/preflight.js",
         "probe:assets": "node scripts/probe-assets.js",
         "qa:regression": "node scripts/qa_regression.js",

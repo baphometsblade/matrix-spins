@@ -32,43 +32,34 @@
                 .catch(function () { /* 404 = no manifest yet; fallbacks stay */ });
         })();
 
-        // Short-circuit the many feature-poll fetches to endpoints that
-        // don't exist on the real server, so the browser Network tab
-        // stays clean and users aren't greeted with 30 red 404s. Every
-        // path below returns a synthetic 404 locally WITHOUT hitting the
-        // wire. Remove the entry when you ship the corresponding endpoint.
+        // Short-circuit every /api/ call that isn't backed by a real
+        // endpoint on this server. The legacy client pings dozens of
+        // feature endpoints on boot; without this every deployed page
+        // would paint the Network tab red. We allowlist real paths and
+        // synth a 404 locally (no network round-trip) for the rest.
         (function installGhostEndpointSink() {
             if (typeof window === 'undefined' || !window.fetch) return;
             if (window._ghostEndpointSinkInstalled) return;
             window._ghostEndpointSinkInstalled = true;
-            var GHOSTS = [
-                '/api/user/return-status',
-                '/api/user/loss-streak-offer',
-                '/api/user/weekend-cashback',
-                '/api/user/comeback-bonus',
-                '/api/user/claim-comeback-bonus',
-                '/api/birthday/status',
-                '/api/birthday/claim',
-                '/api/levelupbonus/status',
-                '/api/levelupbonus/claim',
-                '/api/milestones/status',
-                '/api/milestones/claim',
-                '/api/spinstreak/status',
-                '/api/spinstreak/tick',
-                '/api/winstreak/status',
-                '/api/streak',
-                '/api/subscription/status',
-                '/api/subscription/claim-daily',
-                '/api/gifts/inbox',
-                '/api/gifts/send',
-                '/api/tournament/record',
-                '/api/tournaments',
-                '/api/tournaments/active',
-                '/api/xpshop/sync-xp',
-                '/api/notifications',
-                '/api/achievements/check',
-                '/api/mystery',
-                '/api/mystery/claim',
+            // Prefixes of endpoints that actually exist on the server.
+            // Every other /api/* request is sunk with a synthetic 404.
+            var REAL = [
+                '/api/health',
+                '/api/csrf-token',
+                '/api/csp-report',
+                '/api/stripe/config',
+                '/api/auth/',
+                '/api/balance',
+                '/api/deposit',
+                '/api/payment/stripe/webhook',
+                '/api/nfts',
+                '/api/user/me',
+                '/api/user/deposits',
+                '/api/user/deposits.csv',
+                '/api/user/login-history',
+                '/api/user/export.json',
+                '/api/user',          // DELETE /api/user (account deletion)
+                '/api/admin/',
             ];
             var origFetch = window.fetch.bind(window);
             window.fetch = function (url, opts) {
@@ -79,9 +70,12 @@
                 } catch (err) { /* ignore */ }
                 if (path) {
                     var bare = path.replace(/^https?:\/\/[^/]+/, '').split('?')[0];
-                    for (var i = 0; i < GHOSTS.length; i++) {
-                        var g = GHOSTS[i];
-                        if (bare === g || bare.indexOf(g + '/') === 0) {
+                    if (bare.indexOf('/api/') === 0) {
+                        var hit = false;
+                        for (var i = 0; i < REAL.length; i++) {
+                            if (bare === REAL[i] || bare.indexOf(REAL[i]) === 0) { hit = true; break; }
+                        }
+                        if (!hit) {
                             return Promise.resolve(new Response(
                                 JSON.stringify({ error: 'Endpoint not implemented.' }),
                                 { status: 404, headers: { 'Content-Type': 'application/json' } }

@@ -84,7 +84,7 @@
   };
   Object.assign(PROFILES, PROFILES3);
 
-  // 93 additional unique game profiles — PROFILES4
+  // 93 additional unique game profiles ï¿½ PROFILES4
   var PROFILES4 = {
     san_quentin:         { bgType:"dark_vignette",chrome:"dark_iron",    winFX:"lightning_strike",coins:["\uD83D\uDD12","\u26A1","\u2728","\uD83D\uDCB0"], anticipation:"dark_pulse",  intro:"dark" ,accentColor:"#696969",reelStyle:"turbo",ambientFx:"ash"},
     big_bamboo:          { bgType:"deep_jungle",  chrome:"bamboo",       winFX:"tropical_pop", coins:["\uD83C\uDF8B","\uD83C\uDF3F","\u2728","\uD83D\uDCB0"],       anticipation:"jungle_drum", intro:"jungle" ,accentColor:"#7CB342",reelStyle:"wave",ambientFx:"leaves"},
@@ -727,7 +727,11 @@ var fn = BG_RENDERERS[bgType] || BG_RENDERERS.shine;
     if(document.getElementById('upx-anim-css')) return;
     var s=document.createElement('style'); s.id='upx-anim-css';
     s.textContent = [
-      @keyframes upx-shimmer-sweep{from{left:-100%}to{left:100%}},@keyframes upx-shimmer-pulse{from{opacity:0;transform:scale(0.8)}to{opacity:1;transform:scale(1)}},'@keyframes upx-bw-in{from{transform:scale(0.5);opacity:0}to{transform:scale(1);opacity:1}}','@keyframes upx-bw-pulse{from{transform:scale(1);filter:brightness(1)}to{transform:scale(1.05);filter:brightness(1.3)}}','@keyframes upx-bw-coins{from{transform:translateY(0) scale(1)}to{transform:translateY(-8px) scale(1.1)}}',
+      '@keyframes upx-shimmer-sweep{from{left:-100%}to{left:100%}}',
+      '@keyframes upx-shimmer-pulse{from{opacity:0;transform:scale(0.8)}to{opacity:1;transform:scale(1)}}',
+      '@keyframes upx-bw-in{from{transform:scale(0.5);opacity:0}to{transform:scale(1);opacity:1}}',
+      '@keyframes upx-bw-pulse{from{transform:scale(1);filter:brightness(1)}to{transform:scale(1.05);filter:brightness(1.3)}}',
+      '@keyframes upx-bw-coins{from{transform:translateY(0) scale(1)}to{transform:translateY(-8px) scale(1.1)}}',
       '@keyframes upx-fsi-pop{from{transform:scale(0.3) rotate(-10deg);opacity:0}to{transform:scale(1) rotate(0);opacity:1}}',
       '@keyframes upx-shake{0%,100%{transform:translate(0,0)}20%{transform:translate(var(--upx-shake-mag),0)}40%{transform:translate(calc(-1*var(--upx-shake-mag)),0)}60%{transform:translate(0,var(--upx-shake-mag))}80%{transform:translate(0,calc(-1*var(--upx-shake-mag)))}}',
       '@keyframes upx-antic-pulse{from{opacity:0.7}to{opacity:1}}',
@@ -786,56 +790,56 @@ var fn = BG_RENDERERS[bgType] || BG_RENDERERS.shine;
       '.upx-anticipation-wild_pulse{filter:brightness(1.5) drop-shadow(0 0 15px #ff6347);animation:upx-antic-wild 0.3s ease-in-out infinite alternate}',
       '.upx-anticipation-lava_glow{filter:brightness(1.3) drop-shadow(0 0 20px #ff4500) drop-shadow(0 0 10px #ff0000);animation:upx-antic-fire 0.4s ease-in-out infinite alternate}',
       '.upx-anticipation-crystal_ring{filter:brightness(1.6) drop-shadow(0 0 12px #e0e0ff) drop-shadow(0 0 20px #9370db);animation:upx-antic-pulse 0.5s ease-in-out infinite alternate}',
-      '.upx-anticipation-candy_pulse{filter:brightness(1.4) drop-shadow(0 0 12px #ff69b4) drop-shadow(0 0 8px #ff1493);animation:upx-antic-candy 0.4s ease-in-out infinite}'
-        '@keyframes upx-win-gold-glow{from{filter:brightness(1) drop-shadow(0 0 8px #FFD700)}to{filter:brightness(1.5) drop-shadow(0 0 20px #FFA500) drop-shadow(0 0 8px #FFD700)}}','
-        '@keyframes upx-win-ice-shimmer{from{filter:saturate(1) drop-shadow(0 0 6px #B0E0E6)}to{filter:saturate(1.8) drop-shadow(0 0 18px #87CEEB) drop-shadow(0 0 10px #E0FFFF)}}','
-        '@keyframes upx-win-red-pulse{from{filter:brightness(1) drop-shadow(0 0 8px #FF0000)}to{filter:brightness(1.4) drop-shadow(0 0 18px #FF6347) drop-shadow(0 0 8px #DC143C)}}','
-        '@keyframes upx-win-diamond-sparkle{from{filter:brightness(1.2) drop-shadow(0 0 8px #FFFFFF)}to{filter:brightness(1.6) drop-shadow(0 0 20px #B0E0E6) drop-shadow(0 0 10px #87CEEB)}}','
-        '@keyframes upx-win-candy-bounce{0%{transform:scale(1) translateY(0);filter:brightness(1)}50%{transform:scale(1.1) translateY(-3px);filter:brightness(1.3) drop-shadow(0 0 10px #FF1493)}100%{transform:scale(1) translateY(0);filter:brightness(1)}}','
-        '@keyframes upx-win-colorful-pulse{0%{filter:brightness(1) hue-rotate(0deg) drop-shadow(0 0 8px #FF00FF)}33%{filter:brightness(1.3) hue-rotate(120deg) drop-shadow(0 0 15px #00FF00)}66%{filter:brightness(1.3) hue-rotate(240deg) drop-shadow(0 0 15px #0000FF)}100%{filter:brightness(1) hue-rotate(360deg) drop-shadow(0 0 8px #FF00FF)}}','
-        '@keyframes upx-win-electric-bolt{0%{filter:brightness(1) drop-shadow(0 0 5px #FFFF00)}50%{filter:brightness(2) drop-shadow(0 0 20px #FFFFFF) drop-shadow(0 0 15px #87CEEB)}100%{filter:brightness(1) drop-shadow(0 0 5px #FFFF00)}}','
-        '@keyframes upx-win-dust-shake{0%{filter:brightness(1.1) sepia(0) drop-shadow(0 0 6px #A9A9A9)}50%{transform:translate(1px,-1px);filter:brightness(1.2) sepia(0.3) drop-shadow(0 0 12px #D3D3D3)}100%{filter:brightness(1.1) sepia(0) drop-shadow(0 0 6px #A9A9A9)}}','
-        '@keyframes upx-win-fire-glow{from{filter:brightness(1.2) drop-shadow(0 0 8px #FF4500)}to{filter:brightness(1.5) drop-shadow(0 0 18px #FF6347) drop-shadow(0 0 10px #FFA500)}}','
-        '@keyframes upx-win-pink-flutter{0%{transform:rotateZ(-2deg);filter:brightness(1.1) drop-shadow(0 0 8px #FFB6D9)}50%{transform:rotateZ(2deg);filter:brightness(1.3) drop-shadow(0 0 12px #FF69B4)}100%{transform:rotateZ(-2deg);filter:brightness(1.1) drop-shadow(0 0 8px #FFB6D9)}}','
-        '@keyframes upx-win-silver-glow{from{filter:brightness(1) drop-shadow(0 0 8px #C0C0C0)}to{filter:brightness(1.4) drop-shadow(0 0 18px #FFFFFF) drop-shadow(0 0 10px #E0E0FF)}}','
-        '@keyframes upx-win-golden-glow{from{filter:brightness(1.1) drop-shadow(0 0 8px #FFD700)}to{filter:brightness(1.5) drop-shadow(0 0 20px #FFA500) drop-shadow(0 0 10px #FF8C00)}}','
-        '@keyframes upx-win-blue-pulse{from{filter:brightness(1) drop-shadow(0 0 8px #0077BE)}to{filter:brightness(1.4) drop-shadow(0 0 18px #00BFFF) drop-shadow(0 0 8px #87CEEB)}}','
-        '@keyframes upx-win-blue-shimmer{from{filter:saturate(1) drop-shadow(0 0 8px #00BFFF)}to{filter:saturate(1.6) drop-shadow(0 0 18px #00CED1) drop-shadow(0 0 10px #87CEEB)}}','
-        '@keyframes upx-win-yellow-sparkle{0%{filter:brightness(1.3) drop-shadow(0 0 10px #FFEE88)}50%{filter:brightness(1.6) drop-shadow(0 0 18px #FFD700) drop-shadow(0 0 8px #FFA500)}100%{filter:brightness(1.3) drop-shadow(0 0 10px #FFEE88)}}','
-        '@keyframes upx-win-purple-pulse{from{filter:brightness(1) drop-shadow(0 0 8px #9370DB)}to{filter:brightness(1.4) drop-shadow(0 0 18px #BA55D3) drop-shadow(0 0 8px #DA70D6)}}','
-        '@keyframes upx-win-green-flutter{0%{transform:rotateZ(-1.5deg);filter:brightness(1.1) drop-shadow(0 0 8px #32CD32)}50%{transform:rotateZ(1.5deg);filter:brightness(1.3) drop-shadow(0 0 14px #00AA00)}100%{transform:rotateZ(-1.5deg);filter:brightness(1.1) drop-shadow(0 0 8px #32CD32)}}','
-        '@keyframes upx-win-orange-glow{from{filter:brightness(1.2) drop-shadow(0 0 8px #FF8C00)}to{filter:brightness(1.5) drop-shadow(0 0 18px #FF6347) drop-shadow(0 0 10px #FFB300)}}','
-        '@keyframes upx-win-green-pulse{from{filter:brightness(1) drop-shadow(0 0 8px #00AA00)}to{filter:brightness(1.4) drop-shadow(0 0 18px #32CD32) drop-shadow(0 0 8px #00FF00)}}','
-        '@keyframes upx-win-cyan-sparkle{0%{filter:brightness(1.3) drop-shadow(0 0 10px #00FFFF)}50%{filter:brightness(1.6) drop-shadow(0 0 18px #00CED1) drop-shadow(0 0 8px #87CEEB)}100%{filter:brightness(1.3) drop-shadow(0 0 10px #00FFFF)}}','
-        '@keyframes upx-win-gray-pulse{from{filter:brightness(0.9) drop-shadow(0 0 8px #808080)}to{filter:brightness(1.3) drop-shadow(0 0 16px #A9A9A9) drop-shadow(0 0 8px #D3D3D3)}}','
-        '@keyframes upx-win-rainbow-pulse{0%{filter:brightness(1) hue-rotate(0deg) drop-shadow(0 0 10px #FF0000)}25%{filter:brightness(1.2) hue-rotate(90deg) drop-shadow(0 0 14px #FFFF00)}50%{filter:brightness(1.2) hue-rotate(180deg) drop-shadow(0 0 14px #00FF00)}75%{filter:brightness(1.2) hue-rotate(270deg) drop-shadow(0 0 14px #0000FF)}100%{filter:brightness(1) hue-rotate(360deg) drop-shadow(0 0 10px #FF0000)}}','
-        '@keyframes upx-win-cyan-shimmer{from{filter:saturate(1) drop-shadow(0 0 8px #00FFFF)}to{filter:saturate(1.7) drop-shadow(0 0 18px #00CED1) drop-shadow(0 0 10px #B0E0E6)}}','
-        '@keyframes upx-win-brown-pulse{from{filter:brightness(0.95) drop-shadow(0 0 8px #8B4513)}to{filter:brightness(1.3) drop-shadow(0 0 16px #CD853F) drop-shadow(0 0 8px #DAA520)}}','
-        '@keyframes upx-win-neon-pulse{0%{filter:brightness(1.4) drop-shadow(0 0 12px #FF00FF)}50%{filter:brightness(1.8) drop-shadow(0 0 20px #00FFFF)}100%{filter:brightness(1.4) drop-shadow(0 0 12px #FF00FF)}}'
-        '.upx-win-gold-glow{animation:upx-win-gold-glow 0.6s ease-in-out infinite alternate}',,
-        '.upx-win-ice-shimmer{animation:upx-win-ice-shimmer 0.6s ease-in-out infinite alternate}',,
-        '.upx-win-red-pulse{animation:upx-win-red-pulse 0.5s ease-in-out infinite alternate}',,
-        '.upx-win-diamond-sparkle{animation:upx-win-diamond-sparkle 0.6s ease-in-out infinite}',,
-        '.upx-win-candy-bounce{animation:upx-win-candy-bounce 0.5s ease-in-out infinite}',,
-        '.upx-win-colorful-pulse{animation:upx-win-colorful-pulse 0.8s ease-in-out infinite}',,
-        '.upx-win-electric-bolt{animation:upx-win-electric-bolt 0.4s linear infinite}',,
-        '.upx-win-dust-shake{animation:upx-win-dust-shake 0.5s ease-in-out infinite}',,
-        '.upx-win-fire-glow{animation:upx-win-fire-glow 0.6s ease-in-out infinite alternate}',,
-        '.upx-win-pink-flutter{animation:upx-win-pink-flutter 0.5s ease-in-out infinite}',,
-        '.upx-win-silver-glow{animation:upx-win-silver-glow 0.6s ease-in-out infinite alternate}',,
-        '.upx-win-golden-glow{animation:upx-win-golden-glow 0.6s ease-in-out infinite alternate}',,
-        '.upx-win-blue-pulse{animation:upx-win-blue-pulse 0.5s ease-in-out infinite alternate}',,
-        '.upx-win-blue-shimmer{animation:upx-win-blue-shimmer 0.6s ease-in-out infinite alternate}',,
-        '.upx-win-yellow-sparkle{animation:upx-win-yellow-sparkle 0.7s ease-in-out infinite}',,
-        '.upx-win-purple-pulse{animation:upx-win-purple-pulse 0.5s ease-in-out infinite alternate}',,
-        '.upx-win-green-flutter{animation:upx-win-green-flutter 0.5s ease-in-out infinite}',,
-        '.upx-win-orange-glow{animation:upx-win-orange-glow 0.6s ease-in-out infinite alternate}',,
-        '.upx-win-green-pulse{animation:upx-win-green-pulse 0.5s ease-in-out infinite alternate}',,
-        '.upx-win-cyan-sparkle{animation:upx-win-cyan-sparkle 0.7s ease-in-out infinite}',,
-        '.upx-win-gray-pulse{animation:upx-win-gray-pulse 0.5s ease-in-out infinite alternate}',,
-        '.upx-win-rainbow-pulse{animation:upx-win-rainbow-pulse 1s ease-in-out infinite}',,
-        '.upx-win-cyan-shimmer{animation:upx-win-cyan-shimmer 0.6s ease-in-out infinite alternate}',,
-        '.upx-win-brown-pulse{animation:upx-win-brown-pulse 0.5s ease-in-out infinite alternate}',,
+      '.upx-anticipation-candy_pulse{filter:brightness(1.4) drop-shadow(0 0 12px #ff69b4) drop-shadow(0 0 8px #ff1493);animation:upx-antic-candy 0.4s ease-in-out infinite}',
+      '@keyframes upx-win-gold-glow{from{filter:brightness(1) drop-shadow(0 0 8px #FFD700)}to{filter:brightness(1.5) drop-shadow(0 0 20px #FFA500) drop-shadow(0 0 8px #FFD700)}}',
+        '@keyframes upx-win-ice-shimmer{from{filter:saturate(1) drop-shadow(0 0 6px #B0E0E6)}to{filter:saturate(1.8) drop-shadow(0 0 18px #87CEEB) drop-shadow(0 0 10px #E0FFFF)}}',
+        '@keyframes upx-win-red-pulse{from{filter:brightness(1) drop-shadow(0 0 8px #FF0000)}to{filter:brightness(1.4) drop-shadow(0 0 18px #FF6347) drop-shadow(0 0 8px #DC143C)}}',
+        '@keyframes upx-win-diamond-sparkle{from{filter:brightness(1.2) drop-shadow(0 0 8px #FFFFFF)}to{filter:brightness(1.6) drop-shadow(0 0 20px #B0E0E6) drop-shadow(0 0 10px #87CEEB)}}',
+        '@keyframes upx-win-candy-bounce{0%{transform:scale(1) translateY(0);filter:brightness(1)}50%{transform:scale(1.1) translateY(-3px);filter:brightness(1.3) drop-shadow(0 0 10px #FF1493)}100%{transform:scale(1) translateY(0);filter:brightness(1)}}',
+        '@keyframes upx-win-colorful-pulse{0%{filter:brightness(1) hue-rotate(0deg) drop-shadow(0 0 8px #FF00FF)}33%{filter:brightness(1.3) hue-rotate(120deg) drop-shadow(0 0 15px #00FF00)}66%{filter:brightness(1.3) hue-rotate(240deg) drop-shadow(0 0 15px #0000FF)}100%{filter:brightness(1) hue-rotate(360deg) drop-shadow(0 0 8px #FF00FF)}}',
+        '@keyframes upx-win-electric-bolt{0%{filter:brightness(1) drop-shadow(0 0 5px #FFFF00)}50%{filter:brightness(2) drop-shadow(0 0 20px #FFFFFF) drop-shadow(0 0 15px #87CEEB)}100%{filter:brightness(1) drop-shadow(0 0 5px #FFFF00)}}',
+        '@keyframes upx-win-dust-shake{0%{filter:brightness(1.1) sepia(0) drop-shadow(0 0 6px #A9A9A9)}50%{transform:translate(1px,-1px);filter:brightness(1.2) sepia(0.3) drop-shadow(0 0 12px #D3D3D3)}100%{filter:brightness(1.1) sepia(0) drop-shadow(0 0 6px #A9A9A9)}}',
+        '@keyframes upx-win-fire-glow{from{filter:brightness(1.2) drop-shadow(0 0 8px #FF4500)}to{filter:brightness(1.5) drop-shadow(0 0 18px #FF6347) drop-shadow(0 0 10px #FFA500)}}',
+        '@keyframes upx-win-pink-flutter{0%{transform:rotateZ(-2deg);filter:brightness(1.1) drop-shadow(0 0 8px #FFB6D9)}50%{transform:rotateZ(2deg);filter:brightness(1.3) drop-shadow(0 0 12px #FF69B4)}100%{transform:rotateZ(-2deg);filter:brightness(1.1) drop-shadow(0 0 8px #FFB6D9)}}',
+        '@keyframes upx-win-silver-glow{from{filter:brightness(1) drop-shadow(0 0 8px #C0C0C0)}to{filter:brightness(1.4) drop-shadow(0 0 18px #FFFFFF) drop-shadow(0 0 10px #E0E0FF)}}',
+        '@keyframes upx-win-golden-glow{from{filter:brightness(1.1) drop-shadow(0 0 8px #FFD700)}to{filter:brightness(1.5) drop-shadow(0 0 20px #FFA500) drop-shadow(0 0 10px #FF8C00)}}',
+        '@keyframes upx-win-blue-pulse{from{filter:brightness(1) drop-shadow(0 0 8px #0077BE)}to{filter:brightness(1.4) drop-shadow(0 0 18px #00BFFF) drop-shadow(0 0 8px #87CEEB)}}',
+        '@keyframes upx-win-blue-shimmer{from{filter:saturate(1) drop-shadow(0 0 8px #00BFFF)}to{filter:saturate(1.6) drop-shadow(0 0 18px #00CED1) drop-shadow(0 0 10px #87CEEB)}}',
+        '@keyframes upx-win-yellow-sparkle{0%{filter:brightness(1.3) drop-shadow(0 0 10px #FFEE88)}50%{filter:brightness(1.6) drop-shadow(0 0 18px #FFD700) drop-shadow(0 0 8px #FFA500)}100%{filter:brightness(1.3) drop-shadow(0 0 10px #FFEE88)}}',
+        '@keyframes upx-win-purple-pulse{from{filter:brightness(1) drop-shadow(0 0 8px #9370DB)}to{filter:brightness(1.4) drop-shadow(0 0 18px #BA55D3) drop-shadow(0 0 8px #DA70D6)}}',
+        '@keyframes upx-win-green-flutter{0%{transform:rotateZ(-1.5deg);filter:brightness(1.1) drop-shadow(0 0 8px #32CD32)}50%{transform:rotateZ(1.5deg);filter:brightness(1.3) drop-shadow(0 0 14px #00AA00)}100%{transform:rotateZ(-1.5deg);filter:brightness(1.1) drop-shadow(0 0 8px #32CD32)}}',
+        '@keyframes upx-win-orange-glow{from{filter:brightness(1.2) drop-shadow(0 0 8px #FF8C00)}to{filter:brightness(1.5) drop-shadow(0 0 18px #FF6347) drop-shadow(0 0 10px #FFB300)}}',
+        '@keyframes upx-win-green-pulse{from{filter:brightness(1) drop-shadow(0 0 8px #00AA00)}to{filter:brightness(1.4) drop-shadow(0 0 18px #32CD32) drop-shadow(0 0 8px #00FF00)}}',
+        '@keyframes upx-win-cyan-sparkle{0%{filter:brightness(1.3) drop-shadow(0 0 10px #00FFFF)}50%{filter:brightness(1.6) drop-shadow(0 0 18px #00CED1) drop-shadow(0 0 8px #87CEEB)}100%{filter:brightness(1.3) drop-shadow(0 0 10px #00FFFF)}}',
+        '@keyframes upx-win-gray-pulse{from{filter:brightness(0.9) drop-shadow(0 0 8px #808080)}to{filter:brightness(1.3) drop-shadow(0 0 16px #A9A9A9) drop-shadow(0 0 8px #D3D3D3)}}',
+        '@keyframes upx-win-rainbow-pulse{0%{filter:brightness(1) hue-rotate(0deg) drop-shadow(0 0 10px #FF0000)}25%{filter:brightness(1.2) hue-rotate(90deg) drop-shadow(0 0 14px #FFFF00)}50%{filter:brightness(1.2) hue-rotate(180deg) drop-shadow(0 0 14px #00FF00)}75%{filter:brightness(1.2) hue-rotate(270deg) drop-shadow(0 0 14px #0000FF)}100%{filter:brightness(1) hue-rotate(360deg) drop-shadow(0 0 10px #FF0000)}}',
+        '@keyframes upx-win-cyan-shimmer{from{filter:saturate(1) drop-shadow(0 0 8px #00FFFF)}to{filter:saturate(1.7) drop-shadow(0 0 18px #00CED1) drop-shadow(0 0 10px #B0E0E6)}}',
+        '@keyframes upx-win-brown-pulse{from{filter:brightness(0.95) drop-shadow(0 0 8px #8B4513)}to{filter:brightness(1.3) drop-shadow(0 0 16px #CD853F) drop-shadow(0 0 8px #DAA520)}}',
+        '@keyframes upx-win-neon-pulse{0%{filter:brightness(1.4) drop-shadow(0 0 12px #FF00FF)}50%{filter:brightness(1.8) drop-shadow(0 0 20px #00FFFF)}100%{filter:brightness(1.4) drop-shadow(0 0 12px #FF00FF)}}',
+        '.upx-win-gold-glow{animation:upx-win-gold-glow 0.6s ease-in-out infinite alternate}',
+        '.upx-win-ice-shimmer{animation:upx-win-ice-shimmer 0.6s ease-in-out infinite alternate}',
+        '.upx-win-red-pulse{animation:upx-win-red-pulse 0.5s ease-in-out infinite alternate}',
+        '.upx-win-diamond-sparkle{animation:upx-win-diamond-sparkle 0.6s ease-in-out infinite}',
+        '.upx-win-candy-bounce{animation:upx-win-candy-bounce 0.5s ease-in-out infinite}',
+        '.upx-win-colorful-pulse{animation:upx-win-colorful-pulse 0.8s ease-in-out infinite}',
+        '.upx-win-electric-bolt{animation:upx-win-electric-bolt 0.4s linear infinite}',
+        '.upx-win-dust-shake{animation:upx-win-dust-shake 0.5s ease-in-out infinite}',
+        '.upx-win-fire-glow{animation:upx-win-fire-glow 0.6s ease-in-out infinite alternate}',
+        '.upx-win-pink-flutter{animation:upx-win-pink-flutter 0.5s ease-in-out infinite}',
+        '.upx-win-silver-glow{animation:upx-win-silver-glow 0.6s ease-in-out infinite alternate}',
+        '.upx-win-golden-glow{animation:upx-win-golden-glow 0.6s ease-in-out infinite alternate}',
+        '.upx-win-blue-pulse{animation:upx-win-blue-pulse 0.5s ease-in-out infinite alternate}',
+        '.upx-win-blue-shimmer{animation:upx-win-blue-shimmer 0.6s ease-in-out infinite alternate}',
+        '.upx-win-yellow-sparkle{animation:upx-win-yellow-sparkle 0.7s ease-in-out infinite}',
+        '.upx-win-purple-pulse{animation:upx-win-purple-pulse 0.5s ease-in-out infinite alternate}',
+        '.upx-win-green-flutter{animation:upx-win-green-flutter 0.5s ease-in-out infinite}',
+        '.upx-win-orange-glow{animation:upx-win-orange-glow 0.6s ease-in-out infinite alternate}',
+        '.upx-win-green-pulse{animation:upx-win-green-pulse 0.5s ease-in-out infinite alternate}',
+        '.upx-win-cyan-sparkle{animation:upx-win-cyan-sparkle 0.7s ease-in-out infinite}',
+        '.upx-win-gray-pulse{animation:upx-win-gray-pulse 0.5s ease-in-out infinite alternate}',
+        '.upx-win-rainbow-pulse{animation:upx-win-rainbow-pulse 1s ease-in-out infinite}',
+        '.upx-win-cyan-shimmer{animation:upx-win-cyan-shimmer 0.6s ease-in-out infinite alternate}',
+        '.upx-win-brown-pulse{animation:upx-win-brown-pulse 0.5s ease-in-out infinite alternate}',
         '.upx-win-neon-pulse{animation:upx-win-neon-pulse 0.5s ease-in-out infinite}'
     ].join('');
     document.head.appendChild(s);
@@ -843,7 +847,7 @@ var fn = BG_RENDERERS[bgType] || BG_RENDERERS.shine;
 
   
   /* =============================================================
-     AMBIENT PARTICLE SYSTEM — continuous low-intensity particles
+     AMBIENT PARTICLE SYSTEM ï¿½ continuous low-intensity particles
      ============================================================= */
   var _ambientParticles = [];
   var _ambientCanvas = null;
@@ -924,11 +928,11 @@ var fn = BG_RENDERERS[bgType] || BG_RENDERERS.shine;
   }
 
   /* =============================================================
-     REEL STYLE — applies unique spin animation CSS per profile
+     REEL STYLE ï¿½ applies unique spin animation CSS per profile
      ============================================================= */
   
   /* =============================================================
-     SYMBOL WIN ANIMATIONS — per-game profile winning symbol FX
+     SYMBOL WIN ANIMATIONS ï¿½ per-game profile winning symbol FX
      Maps winFX types to CSS animation classes for .winning-symbol
      ============================================================= */
   var SYMBOL_WIN_ANIMS = {
@@ -1003,7 +1007,7 @@ var fn = BG_RENDERERS[bgType] || BG_RENDERERS.shine;
   }
 
     /* =============================================================
-     WINNING SYMBOL ANIMATIONS — applies profile-themed FX to winning symbols
+     WINNING SYMBOL ANIMATIONS ï¿½ applies profile-themed FX to winning symbols
      ============================================================= */
   function animateWinSymbols(container, profile) {
     if (!container || !profile) return;

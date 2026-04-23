@@ -61,6 +61,12 @@ app.use(helmet({
             frameAncestors: ["'none'"],
             baseUri: ["'self'"],
             formAction: ["'self'"],
+            // The legacy lobby + slot code relies on hundreds of inline
+            // onclick="…" handlers. Blocking them via the modern
+            // script-src-attr default kills every button. Until the UI
+            // is rewritten to delegate via addEventListener, we allow
+            // inline attribute handlers.
+            scriptSrcAttr: ["'unsafe-inline'"],
             reportUri: ['/api/csp-report'],
         },
     },

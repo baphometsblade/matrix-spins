@@ -49,6 +49,23 @@ function contentHash(content) {
         .substring(0, 8);
 }
 
+/**
+ * Run `node --check` on the output bundle. The browser parses the
+ * concatenated JS as one script — a syntax error anywhere kills
+ * every module after it. `node --check` catches that at build time
+ * instead of on the deployed site. Throws on failure so the npm
+ * script surfaces a non-zero exit.
+ */
+function verifyBundleParses(bundlePath) {
+    const { spawnSync } = require('child_process');
+    const result = spawnSync(process.execPath, ['--check', bundlePath], { encoding: 'utf8' });
+    if (result.status !== 0) {
+        const stderr = (result.stderr || '').split('\n').slice(0, 5).join('\n');
+        throw new Error('bundle ' + path.basename(bundlePath) + ' failed node --check:\n' + stderr);
+    }
+    log('bundle parsed OK');
+}
+
 function ensureDir(dir) {
     if (!fs.existsSync(dir)) {
         fs.mkdirSync(dir, { recursive: true });
@@ -179,6 +196,9 @@ function bundleJavaScript() {
     ensureDir(DIST_DIR);
     fs.writeFileSync(bundlePath, bundleContent, 'utf8');
     log(`âœ“ Created bundle: ${bundleFileName} (${(bundleContent.length / 1024).toFixed(2)} KB)`);
+    // A syntax error anywhere in the concatenated bundle kills every
+    // module after it in the browser. Fail the build loudly here.
+    verifyBundleParses(bundlePath);
 
     // Write early scripts (keep in original location references)
     const earlyScriptRefs = earlyScripts.map(script => ({

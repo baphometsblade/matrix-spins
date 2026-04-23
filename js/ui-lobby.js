@@ -3048,7 +3048,7 @@ async function _renderFeaturedSpotlight() {
 
     var card = document.createElement('div');
     card.className = 'featured-card';
-    card.style.backgroundImage = 'url(\'assets/thumbnails/' + game.id + '.png\')';
+    card.style.backgroundImage = 'url(\'assets/thumbnails/' + game.id + '.svg\')';
     card.setAttribute('data-game-id', game.id);
     card.title = game.name;
 
