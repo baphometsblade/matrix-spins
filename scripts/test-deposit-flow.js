@@ -380,6 +380,117 @@ async function main() {
     assert.ok(headerProbe.headers.get('x-request-id'), 'missing X-Request-Id header');
     console.log('[test] X-Request-Id set on responses');
 
+    // 24-28) Real TOTP 2FA lifecycle
+    const totp = require('../server/services/totp.service');
+    // Fresh user for the 2FA scenario so we don't step on the locked-out one.
+    const csrf2fa = (await http('GET', '/api/csrf-token')).body.csrfToken;
+    const regTfa = await http('POST', '/api/auth/register', {
+        csrf: csrf2fa,
+        body: {
+            username: 'tfa_' + Date.now(),
+            email: 'tfa_' + Date.now() + '@example.com',
+            password: 'Str0ngP@ss!!',
+            date_of_birth: '1990-01-01',
+        },
+    });
+    assert.strictEqual(regTfa.status, 201);
+    const tfaToken = regTfa.body.token;
+    const tfaUsername = regTfa.body.user.username;
+    const tfaCsrf = (await http('GET', '/api/csrf-token', { token: tfaToken })).body.csrfToken;
+
+    // 2FA status before setup
+    const st0 = await http('GET', '/api/auth/2fa/status', { token: tfaToken });
+    assert.strictEqual(st0.status, 200);
+    assert.strictEqual(st0.body.enabled, false);
+    assert.strictEqual(st0.body.configured, false);
+
+    // Setup
+    const setup = await http('POST', '/api/auth/2fa/setup', { token: tfaToken, csrf: tfaCsrf, body: {} });
+    assert.strictEqual(setup.status, 200, 'setup failed: ' + setup.raw);
+    assert.ok(/^[A-Z2-7]+$/.test(setup.body.secret), 'secret not base32');
+    assert.ok(setup.body.otpauth_url.startsWith('otpauth://totp/'));
+    console.log('[test] 2FA setup returned secret + otpauth URL');
+
+    // Wrong code rejected
+    const wrongEnable = await http('POST', '/api/auth/2fa/enable', {
+        token: tfaToken, csrf: tfaCsrf, body: { code: '000000' },
+    });
+    assert.strictEqual(wrongEnable.status, 401);
+
+    // Correct code enables 2FA and returns recovery codes
+    const code = totp.generateTOTP(setup.body.secret);
+    const enable = await http('POST', '/api/auth/2fa/enable', {
+        token: tfaToken, csrf: tfaCsrf, body: { code },
+    });
+    assert.strictEqual(enable.status, 200, 'enable failed: ' + enable.raw);
+    assert.strictEqual(enable.body.ok, true);
+    assert.strictEqual(enable.body.recovery_codes.length, 10);
+    assert.ok(/^[A-Z0-9]{4}-[A-Z0-9]{4}-[A-Z0-9]{4}$/.test(enable.body.recovery_codes[0]));
+    const recoveryCodes = enable.body.recovery_codes;
+    console.log('[test] 2FA enabled, 10 recovery codes issued');
+
+    // Login now returns a challenge instead of a full token
+    const login1 = await http('POST', '/api/auth/login', {
+        csrf: csrf2fa, body: { username: tfaUsername, password: 'Str0ngP@ss!!' },
+    });
+    assert.strictEqual(login1.status, 200);
+    assert.strictEqual(login1.body.requires_2fa, true);
+    assert.ok(login1.body.challenge);
+    assert.ok(!login1.body.token);
+
+    // The challenge token cannot be used for normal endpoints
+    const probe = await http('GET', '/api/user/me', { token: login1.body.challenge });
+    assert.strictEqual(probe.status, 401);
+    console.log('[test] login returns challenge; challenge token blocked on normal routes');
+
+    // /login/2fa with the correct TOTP unlocks
+    const complete = await http('POST', '/api/auth/login/2fa', {
+        csrf: csrf2fa,
+        body: { challenge: login1.body.challenge, code: totp.generateTOTP(setup.body.secret) },
+    });
+    assert.strictEqual(complete.status, 200, 'login/2fa failed: ' + complete.raw);
+    assert.strictEqual(complete.body.via, 'totp');
+    assert.ok(complete.body.token);
+    console.log('[test] login/2fa with TOTP unlocks real session');
+
+    // A recovery code also unlocks, and is single-use
+    const login2 = await http('POST', '/api/auth/login', {
+        csrf: csrf2fa, body: { username: tfaUsername, password: 'Str0ngP@ss!!' },
+    });
+    const recCode = recoveryCodes[0];
+    const complete2 = await http('POST', '/api/auth/login/2fa', {
+        csrf: csrf2fa,
+        body: { challenge: login2.body.challenge, code: recCode },
+    });
+    assert.strictEqual(complete2.status, 200);
+    assert.strictEqual(complete2.body.via, 'recovery');
+    // Same recovery code replayed — rejected
+    const login3 = await http('POST', '/api/auth/login', {
+        csrf: csrf2fa, body: { username: tfaUsername, password: 'Str0ngP@ss!!' },
+    });
+    const recReplay = await http('POST', '/api/auth/login/2fa', {
+        csrf: csrf2fa, body: { challenge: login3.body.challenge, code: recCode },
+    });
+    assert.strictEqual(recReplay.status, 401);
+    console.log('[test] recovery code unlocks once then is single-use');
+
+    // Disable requires password + code
+    const disableWrong = await http('POST', '/api/auth/2fa/disable', {
+        token: complete.body.token, csrf: tfaCsrf, body: { password: 'wrong', code: totp.generateTOTP(setup.body.secret) },
+    });
+    assert.strictEqual(disableWrong.status, 401);
+    const disableOk = await http('POST', '/api/auth/2fa/disable', {
+        token: complete.body.token, csrf: tfaCsrf, body: { password: 'Str0ngP@ss!!', code: totp.generateTOTP(setup.body.secret) },
+    });
+    assert.strictEqual(disableOk.status, 200);
+    // After disable, login returns a real token directly again
+    const login4 = await http('POST', '/api/auth/login', {
+        csrf: csrf2fa, body: { username: tfaUsername, password: 'Str0ngP@ss!!' },
+    });
+    assert.ok(login4.body.token, 'after disable, login should return token directly');
+    assert.ok(!login4.body.requires_2fa);
+    console.log('[test] 2FA disable removes the challenge requirement');
+
     console.log('\n✅ all deposit-flow assertions passed');
     main.server.close();
     await db.close();

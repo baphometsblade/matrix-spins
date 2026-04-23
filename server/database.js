@@ -278,6 +278,27 @@ async function migrate() {
     await driver.exec(`CREATE INDEX IF NOT EXISTS idx_auth_events_user ON auth_events (user_id);`);
     await driver.exec(`CREATE INDEX IF NOT EXISTS idx_auth_events_username ON auth_events (username);`);
     await driver.exec(`CREATE INDEX IF NOT EXISTS idx_auth_events_created ON auth_events (created_at);`);
+
+    await driver.exec(`
+        CREATE TABLE IF NOT EXISTS user_totp_secrets (
+            user_id ${driver.kind === 'pg' ? 'INTEGER PRIMARY KEY' : 'INTEGER PRIMARY KEY'},
+            secret TEXT NOT NULL,
+            enabled ${T.bool} NOT NULL DEFAULT ${driver.kind === 'pg' ? 'false' : '0'},
+            created_at ${T.ts},
+            enabled_at ${driver.kind === 'pg' ? 'TIMESTAMPTZ' : 'TEXT'}
+        );
+    `);
+
+    await driver.exec(`
+        CREATE TABLE IF NOT EXISTS user_recovery_codes (
+            id ${T.pk},
+            user_id ${driver.kind === 'pg' ? 'INTEGER' : 'INTEGER'} NOT NULL,
+            code_hash TEXT UNIQUE NOT NULL,
+            used_at ${driver.kind === 'pg' ? 'TIMESTAMPTZ' : 'TEXT'},
+            created_at ${T.ts}
+        );
+    `);
+    await driver.exec(`CREATE INDEX IF NOT EXISTS idx_recovery_codes_user ON user_recovery_codes (user_id);`);
 }
 
 async function initDatabase() {

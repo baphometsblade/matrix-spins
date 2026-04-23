@@ -5,9 +5,10 @@ const bcrypt = require('bcryptjs');
 const crypto = require('crypto');
 const config = require('../config');
 const db = require('../database');
-const { signToken, authenticate } = require('../middleware/auth');
+const { signToken, sign2faChallenge, authenticate, verifyTokenString } = require('../middleware/auth');
 const email = require('../services/email.service');
 const authEvents = require('../services/auth-events.service');
+const { verifyTotpOrRecovery, currentSecret } = require('./twofa.routes');
 
 const router = express.Router();
 
@@ -135,6 +136,16 @@ router.post('/login', async (req, res) => {
             await authEvents.log({ userId: user.id, username: user.username, eventType: 'login', outcome: 'failed', reason: 'bad_password', req });
             return res.status(401).json({ error: 'Invalid credentials.' });
         }
+
+        // If this user has 2FA enabled, return a short-lived challenge
+        // instead of a full session token.
+        const totpRow = await currentSecret(user.id);
+        if (totpRow && totpRow.enabled) {
+            const challenge = sign2faChallenge(user);
+            await authEvents.log({ userId: user.id, username: user.username, eventType: 'login', outcome: 'challenge', req });
+            return res.json({ requires_2fa: true, challenge, user: { id: user.id, username: user.username } });
+        }
+
         const token = signToken(user);
         await authEvents.log({ userId: user.id, username: user.username, eventType: 'login', outcome: 'success', req });
         res.json({ token, user: publicUser(user) });
@@ -142,6 +153,32 @@ router.post('/login', async (req, res) => {
         console.error('[auth/login]', err);
         await authEvents.log({ username, eventType: 'login', outcome: 'error', reason: err.message, req });
         res.status(500).json({ error: 'Login failed. Please try again.' });
+    }
+});
+
+router.post('/login/2fa', async (req, res) => {
+    const { challenge, code } = req.body || {};
+    if (typeof challenge !== 'string' || typeof code !== 'string') {
+        return res.status(400).json({ error: 'Challenge and code are required.' });
+    }
+    const payload = verifyTokenString(challenge);
+    if (!payload || !payload.pending_2fa || !payload.id) {
+        return res.status(401).json({ error: 'Invalid or expired 2FA challenge. Sign in again.' });
+    }
+    try {
+        const user = await db.get('SELECT * FROM users WHERE id = ?', [payload.id]);
+        if (!user) return res.status(404).json({ error: 'User not found.' });
+        const verdict = await verifyTotpOrRecovery(user.id, code);
+        if (!verdict.ok) {
+            await authEvents.log({ userId: user.id, username: user.username, eventType: 'login', outcome: 'failed', reason: '2fa_wrong_code', req });
+            return res.status(401).json({ error: 'Code does not match.' });
+        }
+        const token = signToken(user);
+        await authEvents.log({ userId: user.id, username: user.username, eventType: 'login', outcome: 'success', reason: verdict.via, req });
+        res.json({ token, user: publicUser(user), via: verdict.via });
+    } catch (err) {
+        console.error('[auth/login/2fa]', err);
+        res.status(500).json({ error: '2FA verification failed.' });
     }
 });
 

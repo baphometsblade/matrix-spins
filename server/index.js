@@ -138,6 +138,7 @@ app.use('/api', csrfMiddleware);
 app.use('/api/health', require('./routes/health.routes'));
 app.use('/api/stripe/config', require('./routes/stripe-config.routes'));
 app.use('/api/auth', require('./routes/auth.routes'));
+app.use('/api/auth/2fa', require('./routes/twofa.routes').router);
 app.use('/api/balance', require('./routes/balance.routes'));
 app.use('/api/deposit', require('./routes/deposit.routes'));
 app.use('/api/nfts', require('./routes/nft.routes'));

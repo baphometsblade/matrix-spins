@@ -11,6 +11,14 @@ function signToken(user) {
     );
 }
 
+function sign2faChallenge(user) {
+    return jwt.sign(
+        { id: user.id, username: user.username, pending_2fa: true },
+        config.JWT_SECRET,
+        { expiresIn: '5m' }
+    );
+}
+
 function verifyTokenString(token) {
     try {
         return jwt.verify(token, config.JWT_SECRET);
@@ -25,6 +33,11 @@ function authenticate(req, res, next) {
     const payload = token ? verifyTokenString(token) : null;
     if (!payload) {
         return res.status(401).json({ error: 'Authentication required' });
+    }
+    // pending_2fa tokens only allow the /login/2fa endpoint; everything
+    // else must wait for a full session token.
+    if (payload.pending_2fa) {
+        return res.status(401).json({ error: 'Complete 2FA to continue.' });
     }
     req.user = payload;
     next();
@@ -45,4 +58,4 @@ function requireAdmin(req, res, next) {
     next();
 }
 
-module.exports = { authenticate, authenticateOptional, requireAdmin, signToken, verifyTokenString };
+module.exports = { authenticate, authenticateOptional, requireAdmin, signToken, sign2faChallenge, verifyTokenString };
