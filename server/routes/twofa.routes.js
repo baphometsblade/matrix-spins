@@ -27,6 +27,7 @@
 const express = require('express');
 const crypto = require('crypto');
 const bcrypt = require('bcryptjs');
+const QRCode = require('qrcode');
 const config = require('../config');
 const db = require('../database');
 const { authenticate } = require('../middleware/auth');
@@ -121,7 +122,11 @@ router.post('/setup', authenticate, async (req, res) => {
         }
         const issuer = 'Matrix Spins';
         const url = totp.otpauthUrl({ issuer, account: user.email || user.username, secretBase32: secret });
-        res.json({ secret, otpauth_url: url });
+        // Render the otpauth URL as an SVG QR on the server so the
+        // client doesn't need a QR library and the secret never
+        // leaves our origin via a third-party QR service.
+        const qrSvg = await QRCode.toString(url, { type: 'svg', errorCorrectionLevel: 'M', margin: 1, width: 240 });
+        res.json({ secret, otpauth_url: url, qr_svg: qrSvg });
     } catch (err) {
         console.error('[2fa/setup]', err);
         res.status(500).json({ error: 'Failed to generate 2FA secret.' });

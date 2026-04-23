@@ -1464,9 +1464,22 @@ function walletUpdateCryptoSection(payType) {
 
 /**
  * Render the MetaMask connect + deposit UI.
+ *
+ * Short-circuited: the previous implementation relied on a
+ * `cryptoConnectWallet`/`cryptoSendDeposit`/`cryptoPollDeposit` pipeline
+ * that never existed on this codebase, so clicking the buttons threw a
+ * ReferenceError. Until an honest ethers/viem integration is wired in,
+ * we render a plain "not yet available" notice pointing users to the
+ * Stripe card flow from the main Deposit button.
  */
 async function walletRenderMetaMaskSection(container) {
-    // Check if ethers.js is available
+    container.innerHTML = '' +
+        '<div style="padding:16px;border:1px solid rgba(255,215,0,0.25);border-radius:10px;background:rgba(255,215,0,0.05);margin-bottom:12px;text-align:center;">' +
+            '<div style="font-size:0.95rem;color:#e0e0e0;margin-bottom:6px;">On-chain crypto deposits are not yet enabled.</div>' +
+            '<div style="font-size:0.8rem;color:#8a8a8a;">Use the card / Stripe Checkout flow from the Deposit button. This panel will be activated once a real on-chain integration ships.</div>' +
+        '</div>';
+    return;
+    // Unreachable — kept so the rest of the (now dead) file still parses.
     if (typeof cryptoIsEthersLoaded === 'undefined' || !cryptoIsEthersLoaded()) {
         container.innerHTML = `
             <div style="padding:16px;border:1px solid rgba(255,100,100,0.3);border-radius:10px;background:rgba(255,50,50,0.08);margin-bottom:12px;text-align:center;">

@@ -415,6 +415,7 @@ async function main() {
     assert.strictEqual(setup.status, 200, 'setup failed: ' + setup.raw);
     assert.ok(/^[A-Z2-7]+$/.test(setup.body.secret), 'secret not base32');
     assert.ok(setup.body.otpauth_url.startsWith('otpauth://totp/'));
+    assert.ok(setup.body.qr_svg && setup.body.qr_svg.startsWith('<svg'), '2FA setup did not return an SVG QR: ' + String(setup.body.qr_svg).slice(0, 60));
     console.log('[test] 2FA setup returned secret + otpauth URL');
 
     // Wrong code rejected

@@ -16074,14 +16074,22 @@ function _checkRateLimit() {
     return true;
 }
 
-// Sprint 280 — Two-factor authentication UI
-var _twofa280 = { enabled: false, secret: '' };
-function _init2FA() {
-    try {
-        var raw = localStorage.getItem('matrixSpins_2fa');
-        if (raw) _twofa280 = JSON.parse(raw);
-    } catch(e) {}
+// Real RFC 6238 TOTP 2FA — talks to /api/auth/2fa/* on the server.
+// The client never stores a secret; all verification happens server-side.
+var _twofa280 = { enabled: false, configured: false, recovery_codes_remaining: 0 };
+async function _init2FA() {
+    await _refresh2FAStatus();
     _update2FABadge();
+}
+async function _refresh2FAStatus() {
+    try {
+        var token = (typeof authToken !== 'undefined') ? authToken : null;
+        if (!token) return;
+        var res = await fetch('/api/auth/2fa/status', { headers: { Authorization: 'Bearer ' + token } });
+        if (!res.ok) return;
+        _twofa280 = await res.json();
+        _update2FABadge();
+    } catch (err) { /* offline; badge stays as-is */ }
 }
 function _update2FABadge() {
     var el = document.getElementById('twofaBadge');
@@ -16096,18 +16104,138 @@ function _update2FABadge() {
     el.style.display = '';
 }
 function _toggle2FA() {
-    _twofa280.enabled = !_twofa280.enabled;
-    if (_twofa280.enabled) {
-        var chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ234567';
-        _twofa280.secret = '';
-        for (var i = 0; i < 16; i++) _twofa280.secret += chars[Math.floor(Math.random() * chars.length)];
-        _logAuditEvent('2fa_enabled');
-        alert('2FA enabled! Your backup code: ' + _twofa280.secret + '\n\nSave this code securely.');
-    } else {
-        _logAuditEvent('2fa_disabled');
+    var token = (typeof authToken !== 'undefined') ? authToken : null;
+    if (!token) { if (typeof showAuthModal === 'function') showAuthModal(); return; }
+    if (_twofa280.enabled) _open2FADisablePanel();
+    else _open2FASetupPanel();
+}
+
+function _twofaApi(method, path, body) {
+    var token = (typeof authToken !== 'undefined') ? authToken : null;
+    return fetch(path, {
+        method: method,
+        headers: Object.assign({ 'Content-Type': 'application/json' }, token ? { Authorization: 'Bearer ' + token } : {}),
+        body: body ? JSON.stringify(body) : undefined,
+    }).then(async function (r) {
+        var data = null; try { data = await r.json(); } catch (e) {}
+        if (!r.ok) { var err = new Error((data && data.error) || r.statusText); err.status = r.status; throw err; }
+        return data;
+    });
+}
+
+async function _open2FASetupPanel() {
+    var overlay = _ensureTwofaOverlay();
+    var inner = overlay.querySelector('.tfa-inner');
+    inner.innerHTML = '<div class="tfa-title">Enable two-factor authentication</div><p class="tfa-sub">Loading your QR code&hellip;</p>';
+    var data;
+    try { data = await _twofaApi('POST', '/api/auth/2fa/setup'); }
+    catch (e) { inner.innerHTML = '<div class="tfa-title">2FA setup</div><p class="tfa-err">' + _escapeHtml(e.message) + '</p><button class="tfa-btn" onclick="_close2FA()">Close</button>'; return; }
+    inner.innerHTML =
+        '<div class="tfa-title">Enable two-factor authentication</div>' +
+        '<p class="tfa-sub">Scan the QR code with Google Authenticator, 1Password, Authy, Bitwarden or any other TOTP app. Then enter the 6-digit code it shows.</p>' +
+        '<div class="tfa-qr">' + data.qr_svg + '</div>' +
+        '<div class="tfa-secret-label">Or enter this secret manually:</div>' +
+        '<div class="tfa-secret"><code>' + _escapeHtml(data.secret) + '</code><button class="tfa-copy" type="button" onclick="navigator.clipboard&amp;&amp;navigator.clipboard.writeText(\'' + data.secret + '\')">Copy</button></div>' +
+        '<input type="text" id="tfaSetupCode" class="tfa-input" maxlength="6" inputmode="numeric" pattern="[0-9]{6}" placeholder="6-digit code" autocomplete="one-time-code">' +
+        '<div class="tfa-actions"><button class="tfa-btn tfa-btn-primary" onclick="_confirm2FAEnable()">Enable</button><button class="tfa-btn" onclick="_close2FA()">Cancel</button></div>' +
+        '<div id="tfaSetupErr" class="tfa-err" role="alert"></div>';
+    setTimeout(function () { var i = document.getElementById('tfaSetupCode'); if (i) i.focus(); }, 100);
+}
+
+async function _confirm2FAEnable() {
+    var codeEl = document.getElementById('tfaSetupCode');
+    var errEl = document.getElementById('tfaSetupErr');
+    if (!codeEl) return;
+    var code = (codeEl.value || '').trim();
+    errEl.textContent = '';
+    if (!/^\d{6}$/.test(code)) { errEl.textContent = 'Enter the 6-digit code from your authenticator app.'; return; }
+    try {
+        var data = await _twofaApi('POST', '/api/auth/2fa/enable', { code: code });
+        _show2FARecoveryCodes(data.recovery_codes || []);
+        await _refresh2FAStatus();
+    } catch (e) { errEl.textContent = e.message || 'Could not enable 2FA.'; }
+}
+
+function _show2FARecoveryCodes(codes) {
+    var inner = document.querySelector('#twofaOverlay .tfa-inner');
+    if (!inner) return;
+    var listHtml = codes.map(function (c) { return '<li><code>' + _escapeHtml(c) + '</code></li>'; }).join('');
+    inner.innerHTML =
+        '<div class="tfa-title">Save your recovery codes</div>' +
+        '<p class="tfa-sub">Each code works <strong>once</strong> in place of a TOTP code. Store them somewhere safe &mdash; you won\'t see them again.</p>' +
+        '<ol class="tfa-recovery">' + listHtml + '</ol>' +
+        '<div class="tfa-actions">' +
+            '<button class="tfa-btn" onclick="navigator.clipboard&amp;&amp;navigator.clipboard.writeText(' + JSON.stringify(codes.join('\n')) + ')">Copy all</button>' +
+            '<button class="tfa-btn tfa-btn-primary" onclick="_close2FA()">I\'ve saved these</button>' +
+        '</div>';
+}
+
+function _open2FADisablePanel() {
+    var overlay = _ensureTwofaOverlay();
+    var inner = overlay.querySelector('.tfa-inner');
+    inner.innerHTML =
+        '<div class="tfa-title">Disable two-factor authentication</div>' +
+        '<p class="tfa-sub">Confirm your password and a current 6-digit code (or a recovery code) to turn 2FA off.</p>' +
+        '<input type="password" id="tfaDisPw" class="tfa-input" placeholder="Password" autocomplete="current-password">' +
+        '<input type="text" id="tfaDisCode" class="tfa-input" placeholder="6-digit code or recovery code" autocomplete="one-time-code">' +
+        '<div class="tfa-actions"><button class="tfa-btn tfa-btn-danger" onclick="_confirm2FADisable()">Disable 2FA</button><button class="tfa-btn" onclick="_close2FA()">Cancel</button></div>' +
+        '<div id="tfaDisErr" class="tfa-err" role="alert"></div>';
+}
+
+async function _confirm2FADisable() {
+    var pw = document.getElementById('tfaDisPw');
+    var code = document.getElementById('tfaDisCode');
+    var errEl = document.getElementById('tfaDisErr');
+    errEl.textContent = '';
+    if (!pw || !code) return;
+    try {
+        await _twofaApi('POST', '/api/auth/2fa/disable', { password: pw.value, code: code.value.trim() });
+        await _refresh2FAStatus();
+        _close2FA();
+    } catch (e) { errEl.textContent = e.message || 'Could not disable 2FA.'; }
+}
+
+function _ensureTwofaOverlay() {
+    var el = document.getElementById('twofaOverlay');
+    if (el) { el.style.display = 'flex'; return el; }
+    el = document.createElement('div');
+    el.id = 'twofaOverlay';
+    el.className = 'tfa-overlay';
+    el.innerHTML = '<div class="tfa-inner" role="dialog" aria-modal="true"></div>';
+    el.addEventListener('click', function (e) { if (e.target === el) _close2FA(); });
+    document.body.appendChild(el);
+    if (!document.getElementById('tfaStyles')) {
+        var css =
+            '.tfa-overlay{position:fixed;inset:0;background:rgba(0,0,0,.8);display:flex;align-items:center;justify-content:center;z-index:10001}' +
+            '.tfa-inner{background:#0d1117;border:1px solid rgba(212,175,55,.4);border-radius:12px;padding:24px;max-width:420px;width:92%;max-height:90vh;overflow:auto;color:#e0e0e0}' +
+            '.tfa-title{color:#d4af37;font-size:18px;font-weight:700;margin-bottom:8px}' +
+            '.tfa-sub{color:#8a8a8a;font-size:13px;line-height:1.5;margin-bottom:14px}' +
+            '.tfa-qr{background:#fff;padding:8px;border-radius:8px;display:flex;justify-content:center;margin:8px 0 16px}' +
+            '.tfa-qr svg{width:100%;height:auto;max-width:240px}' +
+            '.tfa-secret-label{font-size:12px;color:#8a8a8a;margin-bottom:4px}' +
+            '.tfa-secret{display:flex;gap:8px;align-items:center;margin-bottom:14px;background:rgba(255,255,255,.04);border:1px solid #333;border-radius:6px;padding:8px}' +
+            '.tfa-secret code{font-family:Menlo,monospace;font-size:13px;color:#00d4ff;word-break:break-all;flex:1}' +
+            '.tfa-copy,.tfa-btn{background:rgba(255,255,255,.08);color:#e0e0e0;border:1px solid #333;border-radius:6px;padding:8px 14px;cursor:pointer;font-size:13px;font-weight:600;letter-spacing:.4px}' +
+            '.tfa-copy:hover,.tfa-btn:hover{border-color:#d4af37;background:rgba(212,175,55,.12)}' +
+            '.tfa-input{width:100%;padding:10px;background:rgba(255,255,255,.06);border:1px solid #333;border-radius:6px;color:#fff;font-size:14px;box-sizing:border-box;margin-bottom:10px}' +
+            '.tfa-input:focus{outline:none;border-color:#d4af37}' +
+            '.tfa-actions{display:flex;gap:10px;justify-content:flex-end;margin-top:4px}' +
+            '.tfa-btn-primary{background:linear-gradient(135deg,#d4af37,#f4d03f);color:#000;border-color:#d4af37}' +
+            '.tfa-btn-primary:hover{transform:translateY(-1px);box-shadow:0 4px 14px rgba(212,175,55,.5)}' +
+            '.tfa-btn-danger{background:rgba(231,76,60,.15);color:#ff9f9f;border-color:#e74c3c}' +
+            '.tfa-btn-danger:hover{background:rgba(231,76,60,.25)}' +
+            '.tfa-err{color:#ff9f9f;font-size:13px;margin-top:10px;min-height:18px}' +
+            '.tfa-recovery{list-style:decimal;padding-left:24px;margin:8px 0 14px;column-count:2;gap:8px}' +
+            '.tfa-recovery li{font-family:Menlo,monospace;font-size:13px;padding:4px 0}' +
+            '.tfa-recovery code{color:#00d4ff;letter-spacing:.5px}';
+        var s = document.createElement('style'); s.id = 'tfaStyles'; s.textContent = css; document.head.appendChild(s);
     }
-    try { localStorage.setItem('matrixSpins_2fa', JSON.stringify(_twofa280)); } catch(e) {}
-    _update2FABadge();
+    return el;
+}
+
+function _close2FA() {
+    var el = document.getElementById('twofaOverlay');
+    if (el) el.style.display = 'none';
 }
 
 // Sprint 281 — Password strength meter

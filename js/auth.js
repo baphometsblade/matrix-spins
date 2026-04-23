@@ -317,11 +317,20 @@
         async function login(username, password) {
             let serverError = null;
             try {
-                const response = await apiRequest('/api/auth/login', {
+                let response = await apiRequest('/api/auth/login', {
                     method: 'POST',
                     body: { username, password },
                     requireAuth: false
                 });
+                if (response && response.requires_2fa && response.challenge) {
+                    const code = await _prompt2FACode(response.user && response.user.username);
+                    if (!code) throw new Error('Sign-in cancelled.');
+                    response = await apiRequest('/api/auth/login/2fa', {
+                        method: 'POST',
+                        body: { challenge: response.challenge, code: code },
+                        requireAuth: false
+                    });
+                }
                 if (!response.token || !response.user) {
                     throw new Error('Invalid login response from server.');
                 }
@@ -653,4 +662,38 @@
                 window.history.replaceState({}, '', url);
             } catch (err) { /* non-fatal */ }
             return true;
+        }
+
+
+        // Prompts the user for a TOTP code during login when 2FA is enabled.
+        // Returns a Promise<string|null> — null if the user cancels.
+        function _prompt2FACode(username) {
+            return new Promise(function (resolve) {
+                var existing = document.getElementById('loginTfaOverlay');
+                if (existing) existing.remove();
+                var overlay = document.createElement('div');
+                overlay.id = 'loginTfaOverlay';
+                overlay.className = 'tfa-overlay';
+                overlay.innerHTML = '<div class="tfa-inner" role="dialog" aria-modal="true">' +
+                    '<div class="tfa-title">Enter your authenticator code</div>' +
+                    '<p class="tfa-sub">' + (username ? 'Welcome back, ' + username + '. ' : '') + 'Enter the 6-digit code from your authenticator app, or a recovery code.</p>' +
+                    '<input type="text" id="loginTfaCode" class="tfa-input" maxlength="16" autocomplete="one-time-code" placeholder="6-digit code or recovery code">' +
+                    '<div class="tfa-actions">' +
+                        '<button class="tfa-btn tfa-btn-primary" type="button" data-action="ok">Verify</button>' +
+                        '<button class="tfa-btn" type="button" data-action="cancel">Cancel</button>' +
+                    '</div>' +
+                    '<div id="loginTfaErr" class="tfa-err" role="alert"></div>' +
+                '</div>';
+                document.body.appendChild(overlay);
+                setTimeout(function () { var i = document.getElementById('loginTfaCode'); if (i) i.focus(); }, 50);
+                var input = overlay.querySelector('#loginTfaCode');
+                function finish(value) { overlay.remove(); resolve(value); }
+                overlay.querySelector('[data-action="ok"]').addEventListener('click', function () {
+                    var v = (input.value || '').trim();
+                    if (!v) { overlay.querySelector('#loginTfaErr').textContent = 'Please enter a code.'; return; }
+                    finish(v);
+                });
+                overlay.querySelector('[data-action="cancel"]').addEventListener('click', function () { finish(null); });
+                input.addEventListener('keydown', function (e) { if (e.key === 'Enter') overlay.querySelector('[data-action="ok"]').click(); });
+            });
         }
