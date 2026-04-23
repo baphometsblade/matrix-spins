@@ -98,8 +98,8 @@ async function createCheckoutSession(userId, amount, currency, returnUrl) {
             depositId: String(depositId),
             reference: reference,
         },
-        success_url: returnUrl ? `${returnUrl}?deposit=success&ref=${reference}` : undefined,
-        cancel_url: returnUrl ? `${returnUrl}?deposit=cancelled&ref=${reference}` : undefined,
+        success_url: `${returnUrl || config.ALLOWED_ORIGIN || "https://msaart.online"}?deposit=success&ref=${reference}`,
+        cancel_url: `${returnUrl || config.ALLOWED_ORIGIN || "https://msaart.online"}?deposit=cancelled&ref=${reference}`,
     });
 
     // Store the Stripe session ID as external_ref on the deposit
