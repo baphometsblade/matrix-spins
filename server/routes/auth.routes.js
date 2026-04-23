@@ -238,16 +238,14 @@ router.post('/forgot-password', async (req, res) => {
             [user.id, tokenHash, expiryIso()]
         );
         const resetUrl = config.PUBLIC_URL + '/#reset-password=' + rawToken;
-        const result = await email.sendPasswordResetLink({
+        await email.sendPasswordResetLink({
             to: user.email,
             username: user.username,
             resetUrl,
         });
-        if (result && result.skipped && result.reason === 'no-smtp' && config.NODE_ENV !== 'production') {
-            // Surface the link in dev/test so operators can test the flow
-            // without real SMTP. Never in production.
-            return res.json(Object.assign({}, okResponse, { devResetUrl: resetUrl }));
-        }
+        // Whether or not the message actually left the building is NOT
+        // reported to the client — revealing success would leak which
+        // emails are registered. Send failures are logged server-side.
         res.json(okResponse);
     } catch (err) {
         console.error('[auth/forgot-password]', err);

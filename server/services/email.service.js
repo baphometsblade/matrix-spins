@@ -13,17 +13,19 @@
 
 const config = require('../config');
 
-const SMTP_HOST = process.env.SMTP_HOST || '';
-const SMTP_PORT = parseInt(process.env.SMTP_PORT, 10) || 587;
-const SMTP_USER = process.env.SMTP_USER || '';
-const SMTP_PASS = process.env.SMTP_PASS || '';
-const SMTP_FROM = process.env.SMTP_FROM || (SMTP_USER ? ('Matrix Spins <' + SMTP_USER + '>') : 'Matrix Spins <no-reply@example.com>');
-const CAPTURE = String(process.env.SMTP_CAPTURE || '0') === '1';
+const SMTP_HOST = config.SMTP_HOST;
+const SMTP_PORT = config.SMTP_PORT || 587;
+const SMTP_USER = config.SMTP_USER;
+const SMTP_PASS = config.SMTP_PASS;
+const SMTP_FROM = config.SMTP_FROM;
+// Capture mode is ONLY honored in non-production and exists so the
+// integration test can inspect outgoing mail without real SMTP.
+const CAPTURE = config.NODE_ENV !== 'production' && String(process.env.SMTP_CAPTURE || '0') === '1';
 
 const captured = [];
 let transporter = null;
 
-function hasTransport() { return !!SMTP_HOST; }
+function hasTransport() { return config.hasSmtp; }
 
 function getTransport() {
     if (!hasTransport()) return null;
@@ -45,14 +47,16 @@ async function send({ to, subject, text, html }) {
         return { captured: true };
     }
     if (!hasTransport()) {
-        console.log('[email] SMTP not configured — skipping "' + subject + '" to ' + to);
+        // Config already refuses to start in production with SMTP unset.
+        // In dev, log loudly so it's obvious the email did not send.
+        console.warn('[email] SMTP is not configured — dropping message "' + subject + '" to ' + to);
         return { skipped: true, reason: 'no-smtp' };
     }
     try {
         const info = await getTransport().sendMail({ from: SMTP_FROM, to, subject, text, html });
         return { ok: true, messageId: info.messageId };
     } catch (err) {
-        console.warn('[email] send failed:', err.message);
+        console.error('[email] send failed to ' + to + ':', err.message);
         return { ok: false, error: err.message };
     }
 }

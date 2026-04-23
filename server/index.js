@@ -28,21 +28,9 @@ const { csrfMiddleware, getCsrfTokenHandler } = require('./middleware/csrf');
 const { authenticate, authenticateOptional } = require('./middleware/auth');
 const { maintenanceMiddleware } = require('./middleware/maintenance');
 
-/* ─── Startup safety ─── */
-(function productionSafety() {
-    if (config.NODE_ENV !== 'production') return;
-    const errs = [];
-    if (!process.env.JWT_SECRET) errs.push('JWT_SECRET is required in production.');
-    if (!process.env.ADMIN_PASSWORD) errs.push('ADMIN_PASSWORD is required in production.');
-    if (process.env.STRIPE_SECRET_KEY && !process.env.STRIPE_WEBHOOK_SECRET) {
-        errs.push('STRIPE_SECRET_KEY is set but STRIPE_WEBHOOK_SECRET is missing; webhook signatures cannot be verified.');
-    }
-    if (errs.length) {
-        console.error('[Security] Refusing to start in production with insecure config:');
-        errs.forEach(e => console.error('  • ' + e));
-        process.exit(1);
-    }
-})();
+// config.js performs all required-env checks at require-time and
+// process.exits with a clear error if anything critical is missing
+// — in every environment, with no silent fallbacks.
 
 const app = express();
 app.set('trust proxy', 1);

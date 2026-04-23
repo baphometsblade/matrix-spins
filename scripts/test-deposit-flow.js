@@ -18,17 +18,23 @@ const assert = require('assert');
 const fs = require('fs');
 
 const STRIPE_WEBHOOK_SECRET = 'whsec_test_' + crypto.randomBytes(12).toString('hex');
+// Every required env var is set here — the server's config.js refuses
+// to start if any are missing, with no fallbacks.
+process.env.NODE_ENV = 'development';
+process.env.PORT = '3199';
+process.env.PUBLIC_URL = 'http://localhost:3199';
+process.env.ALLOWED_ORIGIN = 'http://localhost:3199';
 process.env.STRIPE_SECRET_KEY = 'sk_test_' + crypto.randomBytes(16).toString('hex');
+process.env.STRIPE_PUBLISHABLE_KEY = 'pk_test_' + crypto.randomBytes(16).toString('hex');
 process.env.STRIPE_WEBHOOK_SECRET = STRIPE_WEBHOOK_SECRET;
 process.env.JWT_SECRET = 'test-jwt-secret-' + crypto.randomBytes(8).toString('hex');
 process.env.NFT_SIGNING_SECRET = 'test-nft-' + crypto.randomBytes(8).toString('hex');
-process.env.NODE_ENV = 'development';
 process.env.SQLITE_FILE = './server/test-data.sqlite';
-process.env.PORT = '3199';
 process.env.ADMIN_USERNAME = 'admin_test';
 process.env.ADMIN_PASSWORD = 'AdminTest!2026';
+// SMTP left unset on purpose; email.service captures via SMTP_CAPTURE
+// so the test can assert on outbound mail without a real SMTP server.
 process.env.SMTP_CAPTURE = '1';
-process.env.PUBLIC_URL = 'http://localhost:3199';
 
 try { fs.unlinkSync(process.env.SQLITE_FILE); } catch (err) { /* first run */ }
 
