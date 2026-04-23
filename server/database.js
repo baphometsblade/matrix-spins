@@ -192,6 +192,12 @@ async function migrate() {
     await addColumnIfMissing('users', 'deposit_limit_daily_cents', driver.kind === 'pg' ? 'BIGINT NOT NULL DEFAULT 50000' : 'INTEGER NOT NULL DEFAULT 50000');
     await addColumnIfMissing('users', 'deposit_limit_weekly_cents', driver.kind === 'pg' ? 'BIGINT NOT NULL DEFAULT 200000' : 'INTEGER NOT NULL DEFAULT 200000');
     await addColumnIfMissing('users', 'deposit_limit_monthly_cents', driver.kind === 'pg' ? 'BIGINT NOT NULL DEFAULT 500000' : 'INTEGER NOT NULL DEFAULT 500000');
+
+    // Responsible-gambling self-exclusion. An ISO timestamp (NULL = not
+    // excluded). While now() < this timestamp the user cannot log in or
+    // deposit. Once set, it can only be shortened by an operator (never
+    // by the user themselves) — encoded in the self-exclude route.
+    await addColumnIfMissing('users', 'self_excluded_until', driver.kind === 'pg' ? 'TIMESTAMPTZ' : 'TEXT');
     // token_version bumps invalidate every JWT issued before the bump
     // (e.g. password change, 2FA disable, admin-triggered revoke).
     await addColumnIfMissing('users', 'token_version', driver.kind === 'pg' ? 'INTEGER NOT NULL DEFAULT 0' : 'INTEGER NOT NULL DEFAULT 0');

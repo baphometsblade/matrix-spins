@@ -1,5 +1,5 @@
 /* Royal Slots Casino - Bundled JavaScript */
-/* Generated: 2026-04-23T14:02:28.525Z */
+/* Generated: 2026-04-23T14:13:49.313Z */
 
 
 /* â”€â”€â”€ shared/game-definitions.js (2/55) â”€â”€â”€ */
@@ -53621,7 +53621,7 @@ async function selfExclude(hours) {
     if (!confirmed) return;
 
     try {
-        await apiRequest('/api/payment/self-exclude', {
+        await apiRequest('/api/user/self-exclude', {
             method: 'POST',
             requireAuth: true,
             body: { hours }

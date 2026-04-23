@@ -2,7 +2,7 @@
 
 const express = require('express');
 const db = require('../database');
-const { authenticate } = require('../middleware/auth');
+const { authenticate, bumpTokenVersion } = require('../middleware/auth');
 const authEvents = require('../services/auth-events.service');
 const mailer = require('../services/email.service');
 
@@ -391,6 +391,92 @@ router.get('/return-status', authenticate, async (req, res) => {
  */
 router.get('/loss-streak-offer', authenticate, async (_req, res) => {
     res.json({ eligible: false, offer: null });
+});
+
+/**
+ * Self-exclusion ("take a break"). Responsible-gambling feature.
+ *
+ * POST /api/user/self-exclude { hours }
+ *   Sets users.self_excluded_until = now() + hours. Active exclusions
+ *   can only be extended — never shortened or cancelled — by the user;
+ *   only an operator may lift one. Session is also invalidated so the
+ *   user gets logged out immediately.
+ *
+ * GET /api/user/self-exclusion
+ *   Returns { active, until, seconds_remaining } — used by the client
+ *   to render the overlay and block bets.
+ */
+const SELF_EXCLUDE_CHOICES_HOURS = [24, 48, 72, 168, 336, 720, 2160, 4320, 8760];
+
+router.post('/self-exclude', authenticate, async (req, res) => {
+    const hours = Number((req.body || {}).hours);
+    if (!Number.isFinite(hours) || !SELF_EXCLUDE_CHOICES_HOURS.includes(hours)) {
+        return res.status(400).json({
+            error: 'hours must be one of: ' + SELF_EXCLUDE_CHOICES_HOURS.join(', '),
+            allowed_hours: SELF_EXCLUDE_CHOICES_HOURS,
+        });
+    }
+    try {
+        const current = await db.get(
+            'SELECT self_excluded_until, token_version FROM users WHERE id = ?',
+            [req.user.id]
+        );
+        if (!current) return res.status(404).json({ error: 'User not found.' });
+
+        const nowMs = Date.now();
+        const requestedMs = nowMs + hours * 3600 * 1000;
+        const existingMs = current.self_excluded_until ? Date.parse(current.self_excluded_until) : 0;
+        // Can only extend. If the user asks for 24h while already excluded
+        // for 7 days, we keep the longer exclusion.
+        const effectiveMs = Math.max(requestedMs, existingMs || 0);
+        const untilIso = new Date(effectiveMs).toISOString();
+
+        await db.run(
+            'UPDATE users SET self_excluded_until = ? WHERE id = ?',
+            [untilIso, req.user.id]
+        );
+        // Bumping token_version (with cache invalidation) kicks every
+        // device currently signed into this account — including the one
+        // that just made this call. The client will get 401 on its next
+        // authed request.
+        await bumpTokenVersion(req.user.id);
+
+        await authEvents.log({
+            userId: req.user.id, username: req.user.username,
+            eventType: 'self_exclude', outcome: 'success', req,
+            reason: 'hours=' + hours + ' until=' + untilIso,
+        });
+
+        res.json({
+            ok: true,
+            self_exclusion: {
+                active: true,
+                until: untilIso,
+                seconds_remaining: Math.max(0, Math.round((effectiveMs - nowMs) / 1000)),
+            },
+        });
+    } catch (err) {
+        console.error('[user/self-exclude]', err);
+        res.status(500).json({ error: 'Failed to set self-exclusion.' });
+    }
+});
+
+router.get('/self-exclusion', authenticate, async (req, res) => {
+    try {
+        const row = await db.get('SELECT self_excluded_until FROM users WHERE id = ?', [req.user.id]);
+        const untilIso = row && row.self_excluded_until;
+        const untilMs = untilIso ? Date.parse(untilIso) : 0;
+        const nowMs = Date.now();
+        const active = Number.isFinite(untilMs) && untilMs > nowMs;
+        res.json({
+            active,
+            until: active ? new Date(untilMs).toISOString() : null,
+            seconds_remaining: active ? Math.round((untilMs - nowMs) / 1000) : 0,
+        });
+    } catch (err) {
+        console.error('[user/self-exclusion]', err);
+        res.status(500).json({ error: 'Failed to fetch self-exclusion.' });
+    }
 });
 
 router.delete('/', authenticate, async (req, res) => {

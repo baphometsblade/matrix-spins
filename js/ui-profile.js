@@ -2146,7 +2146,7 @@ async function selfExclude(hours) {
     if (!confirmed) return;
 
     try {
-        await apiRequest('/api/payment/self-exclude', {
+        await apiRequest('/api/user/self-exclude', {
             method: 'POST',
             requireAuth: true,
             body: { hours }

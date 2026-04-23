@@ -62,9 +62,26 @@ router.post('/checkout', authenticate, async (req, res) => {
         // Gate first deposit behind a verified email. We keep this here
         // rather than at a middleware layer so the error message is
         // specific and the rest of the deposit route is a single flow.
-        const verificationCheck = await db.get('SELECT email_verified FROM users WHERE id = ?', [req.user.id]);
+        const verificationCheck = await db.get(
+            'SELECT email_verified, self_excluded_until FROM users WHERE id = ?',
+            [req.user.id]
+        );
         if (!verificationCheck || !verificationCheck.email_verified) {
             return res.status(403).json({ error: 'Please verify your email address before making a deposit. Check your inbox for the confirmation link.', code: 'email_unverified' });
+        }
+        // Self-exclusion gate. A user who hit "take a break" should not
+        // even see the Checkout session — they will be rejected at login
+        // too, but a session established before exclusion could still
+        // try to deposit until the JWT expires, so check here as well.
+        if (verificationCheck.self_excluded_until) {
+            const untilMs = Date.parse(verificationCheck.self_excluded_until);
+            if (Number.isFinite(untilMs) && untilMs > Date.now()) {
+                return res.status(403).json({
+                    error: 'Your account is self-excluded until ' + new Date(untilMs).toISOString() + '.',
+                    code: 'self_excluded',
+                    until: new Date(untilMs).toISOString(),
+                });
+            }
         }
         // Enforce per-user rolling-window deposit caps. These are stored
         // per-user on the `users` table so limit changes can be audited
