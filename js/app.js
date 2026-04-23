@@ -2,6 +2,29 @@
 // APP MODULE
 // ═══════════════════════════════════════════════════════
 
+        // Asset manifest — lists files actually present in dist/assets/
+        // so the lobby can render real thumbnails/symbols when they ship
+        // and procedural fallbacks otherwise, with zero 404s either way.
+        // Populated asynchronously on boot; until it resolves the client
+        // behaves as if no real assets exist.
+        window.__assetManifest = { thumbnails: new Set(), symbols: new Set(), loaded: false };
+        (function loadAssetManifest() {
+            fetch('/asset-manifest.json', { cache: 'no-store' })
+                .then(function (r) { return r.ok ? r.json() : null; })
+                .then(function (m) {
+                    if (!m) return;
+                    window.__assetManifest.thumbnails = new Set(m.thumbnails || []);
+                    window.__assetManifest.symbols = new Set(m.symbols || []);
+                    window.__assetManifest.loaded = true;
+                    // Nudge the lobby to re-render so any already-rendered
+                    // cards pick up their newly-available real art.
+                    try {
+                        if (typeof renderGames === 'function' && typeof currentFilter !== 'undefined') renderGames();
+                    } catch (err) { /* non-fatal */ }
+                })
+                .catch(function () { /* 404 = no manifest yet; fallbacks stay */ });
+        })();
+
         // Short-circuit the many feature-poll fetches to endpoints that
         // don't exist on the real server, so the browser Network tab
         // stays clean and users aren't greeted with 30 red 404s. Every

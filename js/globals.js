@@ -17,31 +17,57 @@
             }
         })();
 
-        // Symbol fallback — inline SVGs so the client never 404s on
-        // missing assets/ui/sym_*.png files. Each SVG is a small,
-        // self-contained icon with a tier-colored fill; the real art
-        // pipeline (scripts/generate_sdxl_symbols.py) can still publish
-        // PNGs into dist/assets/ui/ later and override these via CSS
-        // if needed.
-        function _svgSymbol(fill, bg, glyph) {
-            return '<svg class="reel-symbol-img" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">' +
+        // Each reel symbol tries the real PNG at assets/ui/sym_<name>.png
+        // and, if missing, falls back to an inline SVG rendered from its
+        // own colors + glyph via onerror. Drop PNGs into dist/assets/ui/
+        // later and every card picks them up without a code change.
+        function _svgSymbolHtml(fill, bg, glyph) {
+            // data-URL so an <img src="…"> can render it, allowing one uniform
+            // tag shape across the loaded-PNG and fallback cases.
+            const svg = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">' +
                 '<rect width="64" height="64" rx="10" fill="' + bg + '"/>' +
                 '<text x="32" y="42" text-anchor="middle" font-family="Helvetica,Arial,sans-serif" font-size="34" font-weight="700" fill="' + fill + '">' + glyph + '</text>' +
             '</svg>';
+            return 'data:image/svg+xml;utf8,' + encodeURIComponent(svg);
         }
-        const assetTemplates = {
-            diamond:    _svgSymbol('#9af2ff', '#143747', '◆'),
-            cherry:     _svgSymbol('#ff6060', '#3a0d0d', '♥'),
-            seven:      _svgSymbol('#ffd700', '#3a1a00', '7'),
-            crown:      _svgSymbol('#ffd700', '#2a1d00', '♛'),
-            star:       _svgSymbol('#ffeb3b', '#1a1805', '★'),
-            bell:       _svgSymbol('#ffca28', '#2a1800', '⍾'),
-            coin:       _svgSymbol('#ffcc33', '#2a1c00', '$'),
-            bar:        _svgSymbol('#e0e0e0', '#141414', 'BAR'),
-            clover:     _svgSymbol('#3ad68c', '#06281a', '☘'),
-            watermelon: _svgSymbol('#ff6f91', '#1a2a13', '\u{1F349}'),
-            lemon:      _svgSymbol('#ffe066', '#2a2805', '\u{1F34B}')
+        function _symTag(name, alt, svgUrl) {
+            // Ask the asset manifest whether a real sym_<name>.png shipped;
+            // if yes use it, otherwise start with the inline SVG data-URL
+            // (so no 404 on the wire). The onerror handler is a second
+            // safety net in case the manifest is stale or a file is
+            // deleted between deploys.
+            var manifest = window.__assetManifest && window.__assetManifest.symbols;
+            var hasReal = !!(manifest && manifest.has && manifest.has('sym_' + name + '.png'));
+            var src = hasReal ? ('assets/ui/sym_' + name + '.png') : svgUrl;
+            return '<img class="reel-symbol-img" src="' + src + '" alt="' + alt + '" draggable="false" ' +
+                (hasReal ? 'onerror="this.onerror=null;this.src=\'' + svgUrl.replace(/'/g, '&apos;') + '\';"' : '') +
+                '>';
+        }
+        // Static symbol config; the <img> tag is built lazily on access
+        // so it can read the freshest asset manifest every time.
+        const _SYMBOL_CONFIG = {
+            diamond:    { file: 'diamond',    alt: 'Diamond',    fill: '#9af2ff', bg: '#143747', glyph: '◆' },
+            cherry:     { file: 'cherry',     alt: 'Cherry',     fill: '#ff6060', bg: '#3a0d0d', glyph: '♥' },
+            seven:      { file: 'seven',      alt: 'Seven',      fill: '#ffd700', bg: '#3a1a00', glyph: '7' },
+            crown:      { file: 'seven',      alt: 'Crown',      fill: '#ffd700', bg: '#2a1d00', glyph: '♛' },
+            star:       { file: 'star',       alt: 'Star',       fill: '#ffeb3b', bg: '#1a1805', glyph: '★' },
+            bell:       { file: 'bell',       alt: 'Bell',       fill: '#ffca28', bg: '#2a1800', glyph: '⍾' },
+            coin:       { file: 'diamond',    alt: 'Coin',       fill: '#ffcc33', bg: '#2a1c00', glyph: '$' },
+            bar:        { file: 'bar',        alt: 'BAR',        fill: '#e0e0e0', bg: '#141414', glyph: 'BAR' },
+            clover:     { file: 'star',       alt: 'Clover',     fill: '#3ad68c', bg: '#06281a', glyph: '☘' },
+            watermelon: { file: 'watermelon', alt: 'Watermelon', fill: '#ff6f91', bg: '#1a2a13', glyph: '\u{1F349}' },
+            lemon:      { file: 'lemon',      alt: 'Lemon',      fill: '#ffe066', bg: '#2a2805', glyph: '\u{1F34B}' }
         };
+        const assetTemplates = new Proxy({}, {
+            get: function (_t, name) {
+                const cfg = _SYMBOL_CONFIG[name];
+                if (!cfg) return undefined;
+                return _symTag(cfg.file, cfg.alt, _svgSymbolHtml(cfg.fill, cfg.bg, cfg.glyph));
+            },
+            has: function (_t, name) { return Object.prototype.hasOwnProperty.call(_SYMBOL_CONFIG, name); },
+            ownKeys: function () { return Object.keys(_SYMBOL_CONFIG); },
+            getOwnPropertyDescriptor: function () { return { enumerable: true, configurable: true }; },
+        });
         // DEFAULT_BALANCE, DEFAULT_STATS, SLOT_SYMBOLS, ACHIEVEMENTS — from constants.js
 
         let currentFilter = 'all';

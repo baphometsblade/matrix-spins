@@ -53,8 +53,12 @@
         (function injectMonogramStyles() {
             if (document.getElementById('gameCardMonogramStyles')) return;
             var css =
-                '.game-card .game-card-monogram{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-family:Helvetica,Arial,sans-serif;font-size:80px;font-weight:800;line-height:1;letter-spacing:-3px;opacity:.82;text-shadow:0 4px 24px rgba(0,0,0,.55);pointer-events:none;user-select:none}' +
-                '.game-card .game-card-monogram::after{content:"";position:absolute;inset:0;background:radial-gradient(ellipse at 30% 25%,rgba(255,255,255,.18),transparent 55%);pointer-events:none}';
+                '.game-card .game-card-monogram{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-family:Helvetica,Arial,sans-serif;font-size:80px;font-weight:800;line-height:1;letter-spacing:-3px;opacity:.82;text-shadow:0 4px 24px rgba(0,0,0,.55);pointer-events:none;user-select:none;z-index:1}' +
+                '.game-card .game-card-monogram::after{content:"";position:absolute;inset:0;background:radial-gradient(ellipse at 30% 25%,rgba(255,255,255,.18),transparent 55%);pointer-events:none}' +
+                // When a real PNG loads it covers the monogram naturally
+                // via z-index. When it fails, onerror hides it and the
+                // monogram underneath remains visible.
+                '.game-card .game-card-thumb{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:2;background:transparent;display:block}';
             var s = document.createElement('style');
             s.id = 'gameCardMonogramStyles';
             s.textContent = css;
@@ -877,22 +881,24 @@ function renderGames() {
 
         function createGameCard(game) {
             const { hotIds: _hotIds, newIds: _newIds } = _getHotNewCached();
-            // Each game has a bgGradient + accentColor in its definition;
-            // we render those directly. The PNG thumbnails referenced in
-            // shared/game-definitions.js point at assets/thumbnails/X.png
-            // which have never been published; rather than 404 every card,
-            // we render a procedural gradient panel with the game's initial
-            // letter as a decorative overlay. Real art can be re-enabled
-            // by populating dist/assets/thumbnails/ and flipping the
-            // useThumbnail flag below.
-            const useThumbnail = false;
-            const hasThumbnail = useThumbnail && !!game.thumbnail;
-            const thumbStyle = hasThumbnail
-                ? `background: #1a2332;`
-                : `background: ${game.bgGradient};`;
-            const thumbDataBg = hasThumbnail ? ` data-bg="${game.thumbnail}"` : '';
-            const procMonogram = !hasThumbnail
-                ? `<div class="game-card-monogram" aria-hidden="true" style="color:${game.accentColor || '#fff'}">${(game.name || game.id || '?').trim().charAt(0).toUpperCase()}</div>`
+            // Each card shows the real PNG thumbnail (assets/thumbnails/
+            // <id>.png) if it has been published to dist/, OR falls back to
+            // a procedural gradient + monogram. The <img onerror> handler
+            // hides the image and reveals the monogram so a missing PNG
+            // degrades silently — no broken-image icon, no console noise,
+            // and no flag to flip when real art lands.
+            const thumbStyle = `background: ${game.bgGradient || '#1a2332'};`;
+            const thumbSrc = game.thumbnail ? String(game.thumbnail) : '';
+            const procMonogram = `<div class="game-card-monogram" aria-hidden="true" style="color:${game.accentColor || '#fff'}">${(game.name || game.id || '?').trim().charAt(0).toUpperCase()}</div>`;
+            // Only emit the <img> tag if the asset manifest confirms the
+            // file is actually present — skips the 404 round-trip for
+            // cards whose real thumbnail hasn't shipped yet. The onerror
+            // handler hides a broken image silently as a second safety.
+            const thumbBasename = thumbSrc ? thumbSrc.replace(/^.*\//, '') : '';
+            const manifest = (window.__assetManifest && window.__assetManifest.thumbnails) || null;
+            const hasRealThumb = !!(manifest && manifest.has && thumbBasename && manifest.has(thumbBasename));
+            const imgTag = hasRealThumb
+                ? `<img class="game-card-thumb" src="${thumbSrc}" alt="" loading="lazy" decoding="async" onerror="this.style.display='none';">`
                 : '';
             const isJackpot = game.tag === 'JACKPOT' || game.tagClass === 'tag-jackpot';
             const isHot  = game.tag === 'HOT'  || game.tagClass === 'tag-hot';
@@ -964,8 +970,9 @@ function renderGames() {
             return `
                 <div class="game-card${isHot ? ' game-card-hot' : ''}${isJackpot ? ' game-card-jackpot' : ''}${gameDayCardClass}" onclick="try{if(typeof _compareMode!=='undefined'&&_compareMode){_addToCompare('${game.id}');this.classList.toggle('compare-selected',typeof _compareGames!=='undefined'&&_compareGames.indexOf('${game.id}')>=0);}else{(window.openSlot||openSlot)('${game.id}');}}catch(e){console.warn('Game click error:',e.message);}" style="position:relative" data-game-name="${(game.name || game.id || '').toLowerCase()}" data-game-id="${(game.id || '').toLowerCase()}">
                     <button class="fav-btn${favored ? ' fav-active' : ''}" data-game-id="${game.id}" title="${favored ? 'Remove from favourites' : 'Add to favourites'}" onclick="event.stopPropagation(); (function(btn){var nowFav=toggleFavorite('${game.id}'); btn.textContent=nowFav?'\u2764\uFE0F':'\u2661'; btn.title=nowFav?'Remove from favourites':'Add to favourites'; btn.classList.add('fav-active'); setTimeout(function(){btn.classList.remove('fav-active');},350); updateFavTabBadge();})(this)">${favIcon}</button>
-                    <div class="game-thumbnail" style="${thumbStyle}"${thumbDataBg}>
-                        ${!hasThumbnail && game.asset ? (assetTemplates[game.asset] || '') : ''}
+                    <div class="game-thumbnail" style="${thumbStyle}">
+                        ${game.asset ? (assetTemplates[game.asset] || '') : ''}
+                        ${imgTag}
                         ${procMonogram}
                         ${topTag}
                         ${jackpotBadge}

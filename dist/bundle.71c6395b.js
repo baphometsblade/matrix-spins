@@ -1,5 +1,5 @@
 /* Royal Slots Casino - Bundled JavaScript */
-/* Generated: 2026-04-23T12:51:14.981Z */
+/* Generated: 2026-04-23T12:57:55.994Z */
 
 
 /* â”€â”€â”€ shared/game-definitions.js (2/55) â”€â”€â”€ */
@@ -796,31 +796,57 @@ if (typeof module !== 'undefined') module.exports = games;
             }
         })();
 
-        // Symbol fallback — inline SVGs so the client never 404s on
-        // missing assets/ui/sym_*.png files. Each SVG is a small,
-        // self-contained icon with a tier-colored fill; the real art
-        // pipeline (scripts/generate_sdxl_symbols.py) can still publish
-        // PNGs into dist/assets/ui/ later and override these via CSS
-        // if needed.
-        function _svgSymbol(fill, bg, glyph) {
-            return '<svg class="reel-symbol-img" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">' +
+        // Each reel symbol tries the real PNG at assets/ui/sym_<name>.png
+        // and, if missing, falls back to an inline SVG rendered from its
+        // own colors + glyph via onerror. Drop PNGs into dist/assets/ui/
+        // later and every card picks them up without a code change.
+        function _svgSymbolHtml(fill, bg, glyph) {
+            // data-URL so an <img src="…"> can render it, allowing one uniform
+            // tag shape across the loaded-PNG and fallback cases.
+            const svg = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">' +
                 '<rect width="64" height="64" rx="10" fill="' + bg + '"/>' +
                 '<text x="32" y="42" text-anchor="middle" font-family="Helvetica,Arial,sans-serif" font-size="34" font-weight="700" fill="' + fill + '">' + glyph + '</text>' +
             '</svg>';
+            return 'data:image/svg+xml;utf8,' + encodeURIComponent(svg);
         }
-        const assetTemplates = {
-            diamond:    _svgSymbol('#9af2ff', '#143747', '◆'),
-            cherry:     _svgSymbol('#ff6060', '#3a0d0d', '♥'),
-            seven:      _svgSymbol('#ffd700', '#3a1a00', '7'),
-            crown:      _svgSymbol('#ffd700', '#2a1d00', '♛'),
-            star:       _svgSymbol('#ffeb3b', '#1a1805', '★'),
-            bell:       _svgSymbol('#ffca28', '#2a1800', '⍾'),
-            coin:       _svgSymbol('#ffcc33', '#2a1c00', '$'),
-            bar:        _svgSymbol('#e0e0e0', '#141414', 'BAR'),
-            clover:     _svgSymbol('#3ad68c', '#06281a', '☘'),
-            watermelon: _svgSymbol('#ff6f91', '#1a2a13', '\u{1F349}'),
-            lemon:      _svgSymbol('#ffe066', '#2a2805', '\u{1F34B}')
+        function _symTag(name, alt, svgUrl) {
+            // Ask the asset manifest whether a real sym_<name>.png shipped;
+            // if yes use it, otherwise start with the inline SVG data-URL
+            // (so no 404 on the wire). The onerror handler is a second
+            // safety net in case the manifest is stale or a file is
+            // deleted between deploys.
+            var manifest = window.__assetManifest && window.__assetManifest.symbols;
+            var hasReal = !!(manifest && manifest.has && manifest.has('sym_' + name + '.png'));
+            var src = hasReal ? ('assets/ui/sym_' + name + '.png') : svgUrl;
+            return '<img class="reel-symbol-img" src="' + src + '" alt="' + alt + '" draggable="false" ' +
+                (hasReal ? 'onerror="this.onerror=null;this.src=\'' + svgUrl.replace(/'/g, '&apos;') + '\';"' : '') +
+                '>';
+        }
+        // Static symbol config; the <img> tag is built lazily on access
+        // so it can read the freshest asset manifest every time.
+        const _SYMBOL_CONFIG = {
+            diamond:    { file: 'diamond',    alt: 'Diamond',    fill: '#9af2ff', bg: '#143747', glyph: '◆' },
+            cherry:     { file: 'cherry',     alt: 'Cherry',     fill: '#ff6060', bg: '#3a0d0d', glyph: '♥' },
+            seven:      { file: 'seven',      alt: 'Seven',      fill: '#ffd700', bg: '#3a1a00', glyph: '7' },
+            crown:      { file: 'seven',      alt: 'Crown',      fill: '#ffd700', bg: '#2a1d00', glyph: '♛' },
+            star:       { file: 'star',       alt: 'Star',       fill: '#ffeb3b', bg: '#1a1805', glyph: '★' },
+            bell:       { file: 'bell',       alt: 'Bell',       fill: '#ffca28', bg: '#2a1800', glyph: '⍾' },
+            coin:       { file: 'diamond',    alt: 'Coin',       fill: '#ffcc33', bg: '#2a1c00', glyph: '$' },
+            bar:        { file: 'bar',        alt: 'BAR',        fill: '#e0e0e0', bg: '#141414', glyph: 'BAR' },
+            clover:     { file: 'star',       alt: 'Clover',     fill: '#3ad68c', bg: '#06281a', glyph: '☘' },
+            watermelon: { file: 'watermelon', alt: 'Watermelon', fill: '#ff6f91', bg: '#1a2a13', glyph: '\u{1F349}' },
+            lemon:      { file: 'lemon',      alt: 'Lemon',      fill: '#ffe066', bg: '#2a2805', glyph: '\u{1F34B}' }
         };
+        const assetTemplates = new Proxy({}, {
+            get: function (_t, name) {
+                const cfg = _SYMBOL_CONFIG[name];
+                if (!cfg) return undefined;
+                return _symTag(cfg.file, cfg.alt, _svgSymbolHtml(cfg.fill, cfg.bg, cfg.glyph));
+            },
+            has: function (_t, name) { return Object.prototype.hasOwnProperty.call(_SYMBOL_CONFIG, name); },
+            ownKeys: function () { return Object.keys(_SYMBOL_CONFIG); },
+            getOwnPropertyDescriptor: function () { return { enumerable: true, configurable: true }; },
+        });
         // DEFAULT_BALANCE, DEFAULT_STATS, SLOT_SYMBOLS, ACHIEVEMENTS — from constants.js
 
         let currentFilter = 'all';
@@ -4629,8 +4655,12 @@ function destroyParticleEngine() {
         (function injectMonogramStyles() {
             if (document.getElementById('gameCardMonogramStyles')) return;
             var css =
-                '.game-card .game-card-monogram{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-family:Helvetica,Arial,sans-serif;font-size:80px;font-weight:800;line-height:1;letter-spacing:-3px;opacity:.82;text-shadow:0 4px 24px rgba(0,0,0,.55);pointer-events:none;user-select:none}' +
-                '.game-card .game-card-monogram::after{content:"";position:absolute;inset:0;background:radial-gradient(ellipse at 30% 25%,rgba(255,255,255,.18),transparent 55%);pointer-events:none}';
+                '.game-card .game-card-monogram{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-family:Helvetica,Arial,sans-serif;font-size:80px;font-weight:800;line-height:1;letter-spacing:-3px;opacity:.82;text-shadow:0 4px 24px rgba(0,0,0,.55);pointer-events:none;user-select:none;z-index:1}' +
+                '.game-card .game-card-monogram::after{content:"";position:absolute;inset:0;background:radial-gradient(ellipse at 30% 25%,rgba(255,255,255,.18),transparent 55%);pointer-events:none}' +
+                // When a real PNG loads it covers the monogram naturally
+                // via z-index. When it fails, onerror hides it and the
+                // monogram underneath remains visible.
+                '.game-card .game-card-thumb{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:2;background:transparent;display:block}';
             var s = document.createElement('style');
             s.id = 'gameCardMonogramStyles';
             s.textContent = css;
@@ -5453,22 +5483,24 @@ function renderGames() {
 
         function createGameCard(game) {
             const { hotIds: _hotIds, newIds: _newIds } = _getHotNewCached();
-            // Each game has a bgGradient + accentColor in its definition;
-            // we render those directly. The PNG thumbnails referenced in
-            // shared/game-definitions.js point at assets/thumbnails/X.png
-            // which have never been published; rather than 404 every card,
-            // we render a procedural gradient panel with the game's initial
-            // letter as a decorative overlay. Real art can be re-enabled
-            // by populating dist/assets/thumbnails/ and flipping the
-            // useThumbnail flag below.
-            const useThumbnail = false;
-            const hasThumbnail = useThumbnail && !!game.thumbnail;
-            const thumbStyle = hasThumbnail
-                ? `background: #1a2332;`
-                : `background: ${game.bgGradient};`;
-            const thumbDataBg = hasThumbnail ? ` data-bg="${game.thumbnail}"` : '';
-            const procMonogram = !hasThumbnail
-                ? `<div class="game-card-monogram" aria-hidden="true" style="color:${game.accentColor || '#fff'}">${(game.name || game.id || '?').trim().charAt(0).toUpperCase()}</div>`
+            // Each card shows the real PNG thumbnail (assets/thumbnails/
+            // <id>.png) if it has been published to dist/, OR falls back to
+            // a procedural gradient + monogram. The <img onerror> handler
+            // hides the image and reveals the monogram so a missing PNG
+            // degrades silently — no broken-image icon, no console noise,
+            // and no flag to flip when real art lands.
+            const thumbStyle = `background: ${game.bgGradient || '#1a2332'};`;
+            const thumbSrc = game.thumbnail ? String(game.thumbnail) : '';
+            const procMonogram = `<div class="game-card-monogram" aria-hidden="true" style="color:${game.accentColor || '#fff'}">${(game.name || game.id || '?').trim().charAt(0).toUpperCase()}</div>`;
+            // Only emit the <img> tag if the asset manifest confirms the
+            // file is actually present — skips the 404 round-trip for
+            // cards whose real thumbnail hasn't shipped yet. The onerror
+            // handler hides a broken image silently as a second safety.
+            const thumbBasename = thumbSrc ? thumbSrc.replace(/^.*\//, '') : '';
+            const manifest = (window.__assetManifest && window.__assetManifest.thumbnails) || null;
+            const hasRealThumb = !!(manifest && manifest.has && thumbBasename && manifest.has(thumbBasename));
+            const imgTag = hasRealThumb
+                ? `<img class="game-card-thumb" src="${thumbSrc}" alt="" loading="lazy" decoding="async" onerror="this.style.display='none';">`
                 : '';
             const isJackpot = game.tag === 'JACKPOT' || game.tagClass === 'tag-jackpot';
             const isHot  = game.tag === 'HOT'  || game.tagClass === 'tag-hot';
@@ -5540,8 +5572,9 @@ function renderGames() {
             return `
                 <div class="game-card${isHot ? ' game-card-hot' : ''}${isJackpot ? ' game-card-jackpot' : ''}${gameDayCardClass}" onclick="try{if(typeof _compareMode!=='undefined'&&_compareMode){_addToCompare('${game.id}');this.classList.toggle('compare-selected',typeof _compareGames!=='undefined'&&_compareGames.indexOf('${game.id}')>=0);}else{(window.openSlot||openSlot)('${game.id}');}}catch(e){console.warn('Game click error:',e.message);}" style="position:relative" data-game-name="${(game.name || game.id || '').toLowerCase()}" data-game-id="${(game.id || '').toLowerCase()}">
                     <button class="fav-btn${favored ? ' fav-active' : ''}" data-game-id="${game.id}" title="${favored ? 'Remove from favourites' : 'Add to favourites'}" onclick="event.stopPropagation(); (function(btn){var nowFav=toggleFavorite('${game.id}'); btn.textContent=nowFav?'\u2764\uFE0F':'\u2661'; btn.title=nowFav?'Remove from favourites':'Add to favourites'; btn.classList.add('fav-active'); setTimeout(function(){btn.classList.remove('fav-active');},350); updateFavTabBadge();})(this)">${favIcon}</button>
-                    <div class="game-thumbnail" style="${thumbStyle}"${thumbDataBg}>
-                        ${!hasThumbnail && game.asset ? (assetTemplates[game.asset] || '') : ''}
+                    <div class="game-thumbnail" style="${thumbStyle}">
+                        ${game.asset ? (assetTemplates[game.asset] || '') : ''}
+                        ${imgTag}
                         ${procMonogram}
                         ${topTag}
                         ${jackpotBadge}
@@ -59920,6 +59953,29 @@ setInterval(function() {
 // ═══════════════════════════════════════════════════════
 // APP MODULE
 // ═══════════════════════════════════════════════════════
+
+        // Asset manifest — lists files actually present in dist/assets/
+        // so the lobby can render real thumbnails/symbols when they ship
+        // and procedural fallbacks otherwise, with zero 404s either way.
+        // Populated asynchronously on boot; until it resolves the client
+        // behaves as if no real assets exist.
+        window.__assetManifest = { thumbnails: new Set(), symbols: new Set(), loaded: false };
+        (function loadAssetManifest() {
+            fetch('/asset-manifest.json', { cache: 'no-store' })
+                .then(function (r) { return r.ok ? r.json() : null; })
+                .then(function (m) {
+                    if (!m) return;
+                    window.__assetManifest.thumbnails = new Set(m.thumbnails || []);
+                    window.__assetManifest.symbols = new Set(m.symbols || []);
+                    window.__assetManifest.loaded = true;
+                    // Nudge the lobby to re-render so any already-rendered
+                    // cards pick up their newly-available real art.
+                    try {
+                        if (typeof renderGames === 'function' && typeof currentFilter !== 'undefined') renderGames();
+                    } catch (err) { /* non-fatal */ }
+                })
+                .catch(function () { /* 404 = no manifest yet; fallbacks stay */ });
+        })();
 
         // Short-circuit the many feature-poll fetches to endpoints that
         // don't exist on the real server, so the browser Network tab

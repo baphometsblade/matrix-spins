@@ -917,6 +917,21 @@ async function main() {
     assert.ok(h2body.maintenance.last_run && h2body.maintenance.last_run.startedAt);
     console.log('[test] /api/health includes maintenance last_run after a sweep');
 
+    // 53) Asset manifest is published and correctly reports the files that
+    //     actually exist in dist/assets/. With no art shipped the lists are
+    //     empty; if real PNGs are dropped in they appear here and the client
+    //     picks them up automatically.
+    const manifestRes = await fetch('http://localhost:3199/asset-manifest.json');
+    assert.strictEqual(manifestRes.status, 200);
+    const manifest = await manifestRes.json();
+    assert.ok(Array.isArray(manifest.thumbnails));
+    assert.ok(Array.isArray(manifest.symbols));
+    assert.ok(typeof manifest.generated_at === 'string');
+    // The repo has no assets/ tree — manifest should be empty.
+    assert.strictEqual(manifest.thumbnails.length, 0);
+    assert.strictEqual(manifest.symbols.length, 0);
+    console.log('[test] /asset-manifest.json reflects what is actually in dist/assets/');
+
     console.log('\n✅ all deposit-flow assertions passed');
     main.server.close();
     await db.close();

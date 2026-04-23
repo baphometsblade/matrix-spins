@@ -10,6 +10,7 @@
         "test": "node scripts/test-deposit-flow.js",
         "test:deposit": "node scripts/test-deposit-flow.js",
         "preflight": "node scripts/preflight.js",
+        "probe:assets": "node scripts/probe-assets.js",
         "qa:regression": "node scripts/qa_regression.js",
         "gen:symbols": "py -3.10 scripts/generate_sdxl_symbols.py --force",
         "gen:assets": "py -3.10 scripts/generate_sdxl_assets.py --all --quality ultra --force",

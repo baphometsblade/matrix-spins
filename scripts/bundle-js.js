@@ -305,6 +305,31 @@ function generateDistIndex(jsInfo, cssInfo, originalHtml) {
 }
 
 /**
+ * Walk dist/assets/ and write dist/asset-manifest.json with the list
+ * of present files under each well-known subdirectory. The client
+ * fetches this once at boot and only emits <img> tags for files it
+ * knows exist — so cards render procedural fallbacks without ever
+ * triggering a 404 for a missing PNG.
+ */
+function writeAssetManifest() {
+    const assetsDir = path.join(DIST_DIR, 'assets');
+    const manifest = { thumbnails: [], symbols: [], generated_at: new Date().toISOString() };
+    function listDir(sub) {
+        const dir = path.join(assetsDir, sub);
+        if (!fs.existsSync(dir)) return [];
+        return fs.readdirSync(dir)
+            .filter(f => /\.(png|jpe?g|webp|gif|svg)$/i.test(f))
+            .sort();
+    }
+    manifest.thumbnails = listDir('thumbnails');
+    manifest.symbols = listDir('ui').filter(f => /^sym_/i.test(f));
+    const dst = path.join(DIST_DIR, 'asset-manifest.json');
+    fs.writeFileSync(dst, JSON.stringify(manifest, null, 2));
+    log(`wrote asset-manifest.json (${manifest.thumbnails.length} thumbnails, ${manifest.symbols.length} symbols)`);
+    return manifest;
+}
+
+/**
  * Copy static assets (manifest.json, favicon.svg, etc.) and early-load
  * scripts that must stay separate from the bundle.
  */
@@ -361,7 +386,11 @@ function main() {
         // Step 5: Copy static assets
         copyStaticAssets();
 
-        // Step 6: Prune stale bundle.*.js / styles.*.css — keeps the
+        // Step 6: Write the asset manifest so the client can emit
+        // <img> tags only for real files that are actually present.
+        writeAssetManifest();
+
+        // Step 7: Prune stale bundle.*.js / styles.*.css — keeps the
         // current ones and discards older hash-named versions so the
         // repo does not accumulate a fresh 3.6MB bundle every commit.
         pruneStaleBundles(jsInfo.bundleFile, cssInfo.cssFile, 1);
