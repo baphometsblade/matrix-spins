@@ -599,6 +599,89 @@ async function main() {
     assert.ok(reconcile.body.count >= 1, 'reconciler did not pick up stale pending deposit');
     console.log('[test] reconcile-now ran the cron path on demand (' + reconcile.body.count + ' candidates)');
 
+    // 35) Admin balance adjustment — validates audit trail + mail
+    const adjUser = await http('POST', '/api/auth/register', {
+        csrf: (await http('GET', '/api/csrf-token')).body.csrfToken,
+        body: {
+            username: 'adj_' + Date.now(),
+            email: 'adj_' + Date.now() + '@example.com',
+            password: 'Str0ngP@ss!!',
+            date_of_birth: '1990-01-01',
+        },
+    });
+    assert.strictEqual(adjUser.status, 201);
+    const adjUserId = adjUser.body.user.id;
+
+    const emailSvcAdj = require('../server/services/email.service');
+    emailSvcAdj.clearCaptured();
+
+    // No reason → 400
+    const noReason = await http('POST', '/api/admin/users/' + adjUserId + '/adjust-balance', {
+        token: adminToken, csrf: adminAuthedCsrf,
+        body: { delta_cents: 500 },
+    });
+    assert.strictEqual(noReason.status, 400);
+
+    // Real credit
+    const credit = await http('POST', '/api/admin/users/' + adjUserId + '/adjust-balance', {
+        token: adminToken, csrf: adminAuthedCsrf,
+        body: { delta_cents: 500, reason: 'comp for support ticket #123' },
+    });
+    assert.strictEqual(credit.status, 200, 'credit failed: ' + credit.raw);
+    assert.strictEqual(credit.body.balance_after_cents, 500);
+
+    // Over-debit → 400 (balance would go negative)
+    const overDebit = await http('POST', '/api/admin/users/' + adjUserId + '/adjust-balance', {
+        token: adminToken, csrf: adminAuthedCsrf,
+        body: { delta_cents: -99999, reason: 'should be rejected' },
+    });
+    assert.strictEqual(overDebit.status, 400);
+
+    // Adjustment ledger has the row
+    const ledger = await http('GET', '/api/admin/users/' + adjUserId + '/adjustments', { token: adminToken });
+    assert.strictEqual(ledger.status, 200);
+    assert.ok(ledger.body.adjustments.length >= 1);
+    assert.strictEqual(Number(ledger.body.adjustments[0].delta_cents), 500);
+    assert.ok(/support ticket/i.test(ledger.body.adjustments[0].reason));
+
+    // User email captured
+    const adjMail = emailSvcAdj.getCaptured().find(m => /balance adjustment/i.test(m.subject));
+    assert.ok(adjMail, 'balance adjustment email not captured');
+    console.log('[test] admin balance adjust: credit + debit-cap + audit + email');
+
+    // 36) CSV exports
+    const userToken = adjUser.body.token;
+    const csv = await fetch('http://localhost:3199/api/user/deposits.csv', {
+        headers: { Authorization: 'Bearer ' + userToken },
+    });
+    assert.strictEqual(csv.status, 200);
+    assert.ok(/text\/csv/.test(csv.headers.get('content-type') || ''));
+    const csvText = await csv.text();
+    assert.ok(/^id,amount,currency,status/.test(csvText), 'user CSV header missing: ' + csvText.slice(0, 80));
+
+    const adminCsv = await fetch('http://localhost:3199/api/admin/deposits.csv', {
+        headers: { Authorization: 'Bearer ' + adminToken },
+    });
+    assert.strictEqual(adminCsv.status, 200);
+    const adminCsvText = await adminCsv.text();
+    assert.ok(/^id,user_id,username/.test(adminCsvText), 'admin CSV header missing');
+    console.log('[test] user + admin CSV export endpoints respond with real CSV');
+
+    // 37) Legal pages render real content (not the SPA fallback)
+    const rg = await fetch('http://localhost:3199/responsible-gambling.html');
+    const rgBody = await rg.text();
+    assert.ok(/Responsible gambling/i.test(rgBody), 'responsible-gambling.html missing expected content');
+    assert.ok(/begambleaware|ncpg|gamcare/i.test(rgBody), 'responsible-gambling.html missing external resources');
+    const pf = await fetch('http://localhost:3199/provably-fair.html');
+    const pfBody = await pf.text();
+    assert.ok(/HMAC-SHA256/.test(pfBody), 'provably-fair.html missing signature explanation');
+    console.log('[test] legal pages render real content');
+
+    // 38) Unknown .html 404s instead of SPA-falling through
+    const missing = await fetch('http://localhost:3199/not-a-real-page.html');
+    assert.strictEqual(missing.status, 404);
+    console.log('[test] unknown .html paths 404 cleanly');
+
     console.log('\n✅ all deposit-flow assertions passed');
     main.server.close();
     await db.close();

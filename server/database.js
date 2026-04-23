@@ -303,6 +303,20 @@ async function migrate() {
         );
     `);
     await driver.exec(`CREATE INDEX IF NOT EXISTS idx_recovery_codes_user ON user_recovery_codes (user_id);`);
+
+    await driver.exec(`
+        CREATE TABLE IF NOT EXISTS balance_adjustments (
+            id ${T.pk},
+            user_id ${driver.kind === 'pg' ? 'INTEGER' : 'INTEGER'} NOT NULL,
+            admin_id ${driver.kind === 'pg' ? 'INTEGER' : 'INTEGER'} NOT NULL,
+            admin_username TEXT,
+            delta_cents ${driver.kind === 'pg' ? 'BIGINT' : 'INTEGER'} NOT NULL,
+            balance_after_cents ${driver.kind === 'pg' ? 'BIGINT' : 'INTEGER'} NOT NULL,
+            reason TEXT NOT NULL,
+            created_at ${T.ts}
+        );
+    `);
+    await driver.exec(`CREATE INDEX IF NOT EXISTS idx_balance_adjustments_user ON balance_adjustments (user_id);`);
 }
 
 async function initDatabase() {

@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Provably fair — Matrix Spins</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<style>
+    :root { color-scheme: dark; }
+    * { box-sizing: border-box; }
+    body { margin: 0; padding: 40px 24px; font-family: -apple-system, Segoe UI, Roboto, sans-serif; background: #0d1117; color: #e0e0e0; line-height: 1.6; }
+    .wrap { max-width: 720px; margin: 0 auto; }
+    h1 { color: #d4af37; font-size: 26px; margin: 0 0 4px; letter-spacing: 1px; }
+    .sub { color: #8a8a8a; margin-bottom: 28px; font-size: 13px; }
+    h2 { color: #d4af37; font-size: 17px; text-transform: uppercase; letter-spacing: 2px; margin: 28px 0 10px; }
+    p { margin: 0 0 12px; color: #d8d8d8; }
+    code { background: rgba(255,255,255,.06); padding: 2px 6px; border-radius: 4px; font-size: 13px; color: #00d4ff; }
+    pre { background: rgba(255,255,255,.04); border: 1px solid #333; border-radius: 6px; padding: 12px; overflow-x: auto; font-size: 12px; color: #c8c8c8; }
+    .note { background: rgba(230,126,34,.1); border-left: 3px solid #e67e22; padding: 12px 14px; border-radius: 6px; color: #e0d0b8; margin: 16px 0; }
+    a { color: #00d4ff; }
+    .back { display: inline-block; margin-top: 32px; color: #8a8a8a; }
+</style>
+</head>
+<body>
+<div class="wrap">
+    <h1>Provably fair receipts</h1>
+    <div class="sub">How Matrix Spins proves each deposit produces a tamper-evident NFT receipt.</div>
+
+    <h2>What we sign</h2>
+    <p>Every deposit that clears Stripe mints a receipt NFT to your account. The receipt's metadata is signed with HMAC-SHA256 using a server-held <code>NFT_SIGNING_SECRET</code>. A recorded signature cannot be altered without detection, and the <code>token_id</code> is deterministic — the same <em>(user id, deposit id)</em> pair always hashes to the same id.</p>
+
+    <pre>token_id   = "msr_" + sha256("ms:" + user_id + ":" + deposit_id).slice(0, 24)
+signature  = HMAC-SHA256(NFT_SIGNING_SECRET, JSON.stringify(metadata))</pre>
+
+    <p>Metadata includes tier (bronze / silver / gold / platinum / diamond based on deposit amount), the amount + currency, the deposit id, the issue timestamp, and your user id. The image is an inline SVG rendered at mint time from the tier, so it's baked into the signature along with everything else.</p>
+
+    <h2>Verifying a receipt</h2>
+    <p>Your receipt JSON is available at <code>GET /api/nfts/&lt;token_id&gt;</code> while you're signed in. To verify independently:</p>
+    <ol>
+        <li>Take <code>metadata</code> and <code>signature</code> from the response.</li>
+        <li>Ask our team for the signing-secret key that was active at the receipt's <code>Issued</code> timestamp. We publish the current key fingerprint so you can match the signature algorithm version without us revealing the secret on-chain.</li>
+        <li>Compute <code>HMAC-SHA256(secret, JSON.stringify(metadata))</code>; compare to <code>signature</code>.</li>
+    </ol>
+    <p>If the hex strings match, the receipt is authentic and unaltered since minting.</p>
+
+    <h2>What "provably fair" does <em>not</em> mean here</h2>
+    <div class="note">
+        <strong>Scope:</strong> these receipts prove that <em>your deposit was recorded and the NFT tied to it was issued by us</em> — nothing more. They are not a provably-fair mechanism for game outcomes. We do not publish seeds for spin results because this version of Matrix Spins does not wager deposited balance against a server-side RNG.
+    </div>
+
+    <h2>On-chain upgrade path</h2>
+    <p>v1 receipts are DB-backed and off-chain. The receipt format is designed so the same <code>token_id</code> and metadata can later be published to an ERC-721 contract (we're evaluating Base and Polygon), at which point holders can verify ownership directly against the blockchain. Existing v1 receipts will remain valid and retain their token ids.</p>
+
+    <a href="/" class="back">← Back to the app</a>
+</div>
+</body>
+</html>

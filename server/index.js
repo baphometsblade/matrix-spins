@@ -146,7 +146,7 @@ app.use(express.static(DIST_DIR, { maxAge: '1y', index: false }));
 // wasn't served above must 404 — NOT fall through to index.html. Serving
 // index.html's HTML with a .css/.js/.png URL masks real broken-reference
 // bugs and can confuse browsers' MIME-sniffing.
-const ASSET_EXT_RE = /\.(?:css|js|mjs|map|png|jpe?g|webp|gif|svg|ico|woff2?|ttf|otf|eot|mp3|mp4|webm|ogg|json|xml|pdf)$/i;
+const ASSET_EXT_RE = /\.(?:css|js|mjs|map|png|jpe?g|webp|gif|svg|ico|woff2?|ttf|otf|eot|mp3|mp4|webm|ogg|json|xml|pdf|html|htm|txt|csv)$/i;
 app.get('*', (req, res) => {
     if (ASSET_EXT_RE.test(req.path)) {
         return res.status(404).send('Not found.');

@@ -128,6 +128,34 @@ router.get('/login-history', authenticate, async (req, res) => {
     }
 });
 
+function csvEscape(v) {
+    if (v == null) return '';
+    const s = String(v);
+    if (/[",\n\r]/.test(s)) return '"' + s.replace(/"/g, '""') + '"';
+    return s;
+}
+
+router.get('/deposits.csv', authenticate, async (req, res) => {
+    try {
+        const rows = await db.all(
+            'SELECT id, amount_cents, currency, status, provider, created_at, completed_at FROM deposits WHERE user_id = ? ORDER BY id DESC LIMIT 5000',
+            [req.user.id]
+        );
+        const header = 'id,amount,currency,status,provider,created_at,completed_at\n';
+        const body = rows.map(r => [
+            r.id,
+            (Number(r.amount_cents) / 100).toFixed(2),
+            r.currency, r.status, r.provider, r.created_at, r.completed_at,
+        ].map(csvEscape).join(',')).join('\n');
+        res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+        res.setHeader('Content-Disposition', 'attachment; filename="my-deposits-' + new Date().toISOString().slice(0, 10) + '.csv"');
+        res.send(header + body + '\n');
+    } catch (err) {
+        console.error('[user/deposits.csv]', err);
+        res.status(500).json({ error: 'Export failed.' });
+    }
+});
+
 router.get('/deposits', authenticate, async (req, res) => {
     try {
         const rows = await db.all(

@@ -59,6 +59,7 @@
     <div class="row-actions">
         <button onclick="loadOverview()">Refresh</button>
         <button onclick="reconcileNow()" title="Ask Stripe what happened to every pending deposit older than 10 minutes">Reconcile pending</button>
+        <button onclick="downloadCsv('/api/admin/deposits.csv','deposits.csv')" title="Download every deposit as CSV">Export deposits CSV</button>
     </div>
 
     <div class="cards" id="cards"></div>
@@ -263,6 +264,22 @@
             alert('Reconcile failed: ' + e.message);
         } finally {
             if (btn) { btn.disabled = false; btn.textContent = 'Reconcile pending'; }
+        }
+    };
+
+    // Fetch a text endpoint with bearer auth and trigger a file download.
+    window.downloadCsv = async function (path, filename) {
+        try {
+            const res = await fetch(path, { headers: token() ? { Authorization: 'Bearer ' + token() } : {} });
+            if (!res.ok) throw new Error('HTTP ' + res.status);
+            const blob = await res.blob();
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url; a.download = filename;
+            document.body.appendChild(a); a.click(); document.body.removeChild(a);
+            setTimeout(() => URL.revokeObjectURL(url), 1000);
+        } catch (e) {
+            alert('Download failed: ' + e.message);
         }
     };
 

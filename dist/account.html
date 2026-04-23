@@ -146,6 +146,9 @@
 </section>
 
 <section id="deposits">
+    <div style="display:flex;justify-content:flex-end;margin-bottom:8px">
+        <button class="secondary" onclick="downloadMyCsv()">Download CSV</button>
+    </div>
     <table id="tbl-deposits"><thead><tr>
         <th>ID</th><th>Amount</th><th>Status</th><th>Created</th><th>Completed</th>
     </tr></thead><tbody></tbody></table>
@@ -374,6 +377,21 @@
             }
             await loadLimits();
         } catch (e) { msg.className = 'msg err'; msg.textContent = e.message; }
+    };
+
+    window.downloadMyCsv = async function () {
+        try {
+            const res = await fetch('/api/user/deposits.csv', { headers: { Authorization: 'Bearer ' + token() } });
+            if (!res.ok) throw new Error('HTTP ' + res.status);
+            const blob = await res.blob();
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url; a.download = 'my-deposits.csv';
+            document.body.appendChild(a); a.click(); document.body.removeChild(a);
+            setTimeout(() => URL.revokeObjectURL(url), 1000);
+        } catch (e) {
+            alert('Download failed: ' + e.message);
+        }
     };
 
     window.deleteAccount = async function () {
