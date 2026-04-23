@@ -61,6 +61,10 @@
     .bar-fill.crit { background: linear-gradient(90deg, #c0392b, #e74c3c); }
     .signed-in-as { color: #8a8a8a; font-size: 13px; }
     .signed-in-as strong { color: #00d4ff; }
+    .verify-banner { background: rgba(230,126,34,.12); border: 1px solid rgba(230,126,34,.5); border-radius: 8px; padding: 12px 14px; display: flex; gap: 12px; align-items: center; margin-bottom: 16px; }
+    .verify-banner .icon { font-size: 20px; }
+    .verify-banner .txt { flex: 1; font-size: 13px; color: #ffcd71; }
+    .verify-banner .ok { color: #7fec7f; }
 </style>
 </head>
 <body>
@@ -75,6 +79,11 @@
 </div>
 
 <div id="main" style="display:none">
+<div id="verify-banner" class="verify-banner" style="display:none">
+    <span class="icon" aria-hidden="true">⚠</span>
+    <div class="txt" id="verify-banner-text">Your email isn't verified yet. Deposits are blocked until you click the confirmation link we sent.</div>
+    <button class="secondary" onclick="resendVerify(this)">Resend link</button>
+</div>
 <div class="tabs" role="tablist">
     <button class="tab active" data-tab="overview">Overview</button>
     <button class="tab" data-tab="profile">Profile</button>
@@ -217,8 +226,49 @@
         });
     });
 
+    // Handle incoming #verify-email=<token> link from the verification email.
+    async function consumeVerifyHash() {
+        const hash = window.location.hash || '';
+        const m = hash.match(/verify-email=([A-Za-z0-9._-]+)/);
+        if (!m) return null;
+        // Clean the URL so a reload doesn't re-try the token.
+        try { history.replaceState({}, '', window.location.pathname); } catch (err) { /* ignore */ }
+        try {
+            const res = await fetch('/api/auth/verify-email', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ token: m[1] }),
+            });
+            const data = await res.json().catch(function () { return {}; });
+            return { ok: res.ok, data, status: res.status };
+        } catch (e) {
+            return { ok: false, data: { error: e.message }, status: 0 };
+        }
+    }
+
+    window.resendVerify = async function (btn) {
+        if (btn) { btn.disabled = true; btn.textContent = 'Sending…'; }
+        try {
+            await api('POST', '/api/auth/resend-verification');
+            alert('New verification link sent. Check your email.');
+        } catch (e) {
+            alert('Could not send: ' + e.message);
+        } finally {
+            if (btn) { btn.disabled = false; btn.textContent = 'Resend link'; }
+        }
+    };
+
+    function renderVerifyBanner(user) {
+        const banner = document.getElementById('verify-banner');
+        if (!banner) return;
+        banner.style.display = user && user.email_verified ? 'none' : '';
+    }
+
     async function boot() {
         if (!token()) { document.getElementById('login-wrap').style.display = ''; document.getElementById('signed-in-as').textContent = 'Not signed in.'; return; }
+        // Consume a verify-email token in the hash before fetching /me so the
+        // first /me response already reflects the newly-verified state.
+        const consume = await consumeVerifyHash();
         try {
             var me = await api('GET', '/api/user/me');
             state.user = me.user;
@@ -228,6 +278,22 @@
             document.getElementById('pf-email').value = me.user.email || '';
             document.getElementById('pf-display').value = me.user.display_name || '';
             document.getElementById('ov-balance').textContent = money(me.user.balance);
+            renderVerifyBanner(me.user);
+            if (consume) {
+                if (consume.ok) {
+                    const banner = document.getElementById('verify-banner');
+                    if (banner) {
+                        banner.style.display = '';
+                        banner.classList.remove('verify-banner');
+                        banner.style.background = 'rgba(39,174,96,.12)';
+                        banner.style.border = '1px solid rgba(39,174,96,.5)';
+                        banner.innerHTML = '<span aria-hidden="true">✓</span><div class="txt ok">Email verified. Deposits are now enabled.</div>';
+                        setTimeout(function () { banner.style.display = 'none'; }, 8000);
+                    }
+                } else {
+                    alert('Email verification failed: ' + ((consume.data && consume.data.error) || 'unknown error'));
+                }
+            }
             await Promise.all([loadOverview(), loadDeposits(), loadNfts(), loadLimits(), loadActivity(), load2FA()]);
         } catch (e) {
             document.getElementById('signed-in-as').innerHTML = 'Session invalid or expired. <a href="/">Sign in again</a>.';

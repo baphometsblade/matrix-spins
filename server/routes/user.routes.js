@@ -24,6 +24,7 @@ function userPublic(u) {
         id: u.id,
         username: u.username,
         email: u.email,
+        email_verified: !!u.email_verified,
         display_name: u.display_name || null,
         date_of_birth: u.date_of_birth,
         balance: Number(u.balance_cents || 0) / 100,
@@ -36,7 +37,7 @@ function userPublic(u) {
 router.get('/me', authenticate, async (req, res) => {
     try {
         const user = await db.get(
-            'SELECT id, username, email, display_name, date_of_birth, balance_cents, is_admin, created_at FROM users WHERE id = ?',
+            'SELECT id, username, email, email_verified, display_name, date_of_birth, balance_cents, is_admin, created_at FROM users WHERE id = ?',
             [req.user.id]
         );
         if (!user) return res.status(404).json({ error: 'User not found.' });
@@ -86,7 +87,7 @@ router.patch('/me', authenticate, async (req, res) => {
         const before = await db.get('SELECT email, username FROM users WHERE id = ?', [req.user.id]);
         await db.run('UPDATE users SET ' + updates.join(', ') + ' WHERE id = ?', params);
         const updated = await db.get(
-            'SELECT id, username, email, display_name, date_of_birth, balance_cents, is_admin, created_at FROM users WHERE id = ?',
+            'SELECT id, username, email, email_verified, display_name, date_of_birth, balance_cents, is_admin, created_at FROM users WHERE id = ?',
             [req.user.id]
         );
         await authEvents.log({ userId: req.user.id, username: req.user.username, eventType: 'profile_update', outcome: 'success', req });

@@ -93,6 +93,29 @@ async function sendDepositReceipt({ to, username, amount, currency, depositId, t
     return send({ to, subject, text, html });
 }
 
+async function sendEmailVerification({ to, username, verifyUrl }) {
+    const subject = 'Confirm your Matrix Spins email';
+    const text = [
+        'Hi ' + (username || 'there') + ',',
+        '',
+        'Click the link below to confirm this email address. The link expires in 24 hours. Until you confirm, you cannot make deposits.',
+        '',
+        verifyUrl,
+        '',
+        'If you did not create a Matrix Spins account, ignore this email.',
+        '',
+        '— Matrix Spins',
+    ].join('\n');
+    const html = '<div style="font-family:Helvetica,Arial,sans-serif;max-width:480px;margin:auto;padding:24px;background:#0d1117;color:#e0e0e0;border-radius:12px">' +
+        '<h1 style="color:#d4af37;margin:0 0 12px;font-size:20px">Confirm your email</h1>' +
+        '<p>Hi ' + escapeHtml(username || 'there') + ',</p>' +
+        '<p>Click below to confirm this email address. The link expires in 24 hours. Until you confirm, deposits are blocked on your account.</p>' +
+        '<p style="margin:20px 0"><a href="' + escapeHtml(verifyUrl) + '" style="display:inline-block;padding:12px 20px;background:linear-gradient(135deg,#d4af37,#f4d03f);color:#000;text-decoration:none;border-radius:8px;font-weight:700">Confirm my email</a></p>' +
+        '<p style="font-size:12px;color:#8a8a8a">If you did not create a Matrix Spins account, ignore this email.</p>' +
+    '</div>';
+    return send({ to, subject, text, html });
+}
+
 async function sendWelcome({ to, username }) {
     const subject = 'Welcome to Matrix Spins';
     const text = [
@@ -181,6 +204,6 @@ async function sendSecurityAlert({ to, username, event, ip, userAgent }) {
     return send({ to, subject, text, html });
 }
 
-module.exports = { send, sendDepositReceipt, sendPasswordResetLink, sendWelcome, sendSecurityAlert, getCaptured, clearCaptured, hasTransport };
+module.exports = { send, sendDepositReceipt, sendPasswordResetLink, sendWelcome, sendSecurityAlert, sendEmailVerification, getCaptured, clearCaptured, hasTransport };
 // Suppress unused-var lint while still importing config
 void config;

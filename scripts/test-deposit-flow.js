@@ -932,6 +932,65 @@ async function main() {
     assert.strictEqual(manifest.symbols.length, 0);
     console.log('[test] /asset-manifest.json reflects what is actually in dist/assets/');
 
+    // 54–57) Email verification gates first deposit
+    emailSvc.clearCaptured();
+    const vCsrf = (await http('GET', '/api/csrf-token')).body.csrfToken;
+    const vReg = await http('POST', '/api/auth/register', {
+        csrf: vCsrf,
+        body: {
+            username: 'verify_' + Date.now(),
+            email: 'verify_' + Date.now() + '@example.com',
+            password: 'Str0ngP@ss!!',
+            date_of_birth: '1990-01-01',
+        },
+    });
+    assert.strictEqual(vReg.status, 201);
+    assert.strictEqual(vReg.body.user.email_verified, false, 'new account must start unverified');
+
+    // Verification email was captured
+    const verifyMail = emailSvc.getCaptured().find(m => /confirm your matrix spins email/i.test(m.subject));
+    assert.ok(verifyMail, 'verification email not captured');
+    const tm = verifyMail.text.match(/verify-email=([A-Fa-f0-9]+)/);
+    assert.ok(tm, 'verification URL missing from email: ' + verifyMail.text.slice(0, 200));
+    const verifyTokenRaw = tm[1];
+
+    // Unverified deposit is blocked
+    const vUserToken = vReg.body.token;
+    const vUserCsrf = (await http('GET', '/api/csrf-token', { token: vUserToken })).body.csrfToken;
+    const blocked = await http('POST', '/api/deposit/checkout', {
+        token: vUserToken, csrf: vUserCsrf,
+        body: { amount: 25, currency: 'usd' },
+    });
+    assert.strictEqual(blocked.status, 403);
+    assert.strictEqual(blocked.body.code, 'email_unverified');
+
+    // Verify the email
+    const verifyRes = await http('POST', '/api/auth/verify-email', {
+        csrf: (await http('GET', '/api/csrf-token')).body.csrfToken,
+        body: { token: verifyTokenRaw },
+    });
+    assert.strictEqual(verifyRes.status, 200);
+
+    // /me now reports verified
+    const vMe = await http('GET', '/api/user/me', { token: vUserToken });
+    assert.strictEqual(vMe.body.user.email_verified, true);
+
+    // Reused token is rejected
+    const verifyReplay = await http('POST', '/api/auth/verify-email', {
+        csrf: (await http('GET', '/api/csrf-token')).body.csrfToken,
+        body: { token: verifyTokenRaw },
+    });
+    assert.strictEqual(verifyReplay.status, 400);
+
+    // Deposit now advances past the gate (503 because Stripe test keys
+    // are fake in this test — but past email-verified is what we care about).
+    const allowed = await http('POST', '/api/deposit/checkout', {
+        token: vUserToken, csrf: vUserCsrf,
+        body: { amount: 25, currency: 'usd' },
+    });
+    assert.notStrictEqual(allowed.status, 403, 'deposit still gated after verify: ' + allowed.raw);
+    console.log('[test] email verification: unverified blocks deposit (403), verify lifts gate, replay rejected');
+
     console.log('\n✅ all deposit-flow assertions passed');
     main.server.close();
     await db.close();

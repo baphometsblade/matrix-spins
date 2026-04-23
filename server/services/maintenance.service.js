@@ -37,6 +37,16 @@ async function sweepOldProcessedEvents() {
     return { old_webhook_events_deleted: (r && r.changes) || 0 };
 }
 
+async function sweepExpiredEmailTokens() {
+    const nowIso = new Date().toISOString();
+    const r1 = await db.run('DELETE FROM email_verification_tokens WHERE used_at IS NOT NULL', []);
+    const r2 = await db.run('DELETE FROM email_verification_tokens WHERE expires_at < ?', [nowIso]);
+    return {
+        email_tokens_used_deleted: (r1 && r1.changes) || 0,
+        email_tokens_expired_deleted: (r2 && r2.changes) || 0,
+    };
+}
+
 async function runOnce() {
     const startedAt = new Date().toISOString();
     lastRun = { startedAt, finishedAt: null, summary: null, error: null };
@@ -44,7 +54,8 @@ async function runOnce() {
         const summary = Object.assign(
             {},
             await sweepExpiredPasswordResets(),
-            await sweepOldProcessedEvents()
+            await sweepOldProcessedEvents(),
+            await sweepExpiredEmailTokens()
         );
         lastRun = { startedAt, finishedAt: new Date().toISOString(), summary, error: null };
         const changed = Object.values(summary).some(v => v > 0);

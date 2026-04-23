@@ -157,10 +157,11 @@ function t() {
 async function addColumnIfMissing(table, column, typeDef) {
     try {
         await driver.exec(`ALTER TABLE ${table} ADD COLUMN ${column} ${typeDef}`);
+        return true;
     } catch (err) {
         // SQLite throws "duplicate column", Postgres throws "column already exists".
         const msg = (err && err.message || '').toLowerCase();
-        if (msg.includes('duplicate column') || msg.includes('already exists')) return;
+        if (msg.includes('duplicate column') || msg.includes('already exists')) return false;
         throw err;
     }
 }
@@ -194,6 +195,17 @@ async function migrate() {
     // token_version bumps invalidate every JWT issued before the bump
     // (e.g. password change, 2FA disable, admin-triggered revoke).
     await addColumnIfMissing('users', 'token_version', driver.kind === 'pg' ? 'INTEGER NOT NULL DEFAULT 0' : 'INTEGER NOT NULL DEFAULT 0');
+    // email_verified gates first deposit behind a click on the
+    // verification link. Defaults to 0/false so newly-registered
+    // accounts must verify before moving money.
+    const wasAdded = await addColumnIfMissing('users', 'email_verified', driver.kind === 'pg' ? 'BOOLEAN NOT NULL DEFAULT false' : 'INTEGER NOT NULL DEFAULT 0');
+    if (wasAdded) {
+        // Grandfather existing users — they registered before this gate
+        // existed and shouldn't suddenly be locked out of deposits.
+        const pgTrue = driver.kind === 'pg' ? 'true' : '1';
+        await driver.run('UPDATE users SET email_verified = ' + pgTrue);
+        console.log('[db] grandfathered existing users as email_verified');
+    }
 
     await driver.exec(`
         CREATE TABLE IF NOT EXISTS deposits (
@@ -263,6 +275,18 @@ async function migrate() {
         );
     `);
     await driver.exec(`CREATE INDEX IF NOT EXISTS idx_password_resets_user ON password_resets (user_id);`);
+
+    await driver.exec(`
+        CREATE TABLE IF NOT EXISTS email_verification_tokens (
+            id ${T.pk},
+            user_id ${driver.kind === 'pg' ? 'INTEGER' : 'INTEGER'} NOT NULL,
+            token_hash TEXT UNIQUE NOT NULL,
+            expires_at ${driver.kind === 'pg' ? 'TIMESTAMPTZ' : 'TEXT'} NOT NULL,
+            used_at ${driver.kind === 'pg' ? 'TIMESTAMPTZ' : 'TEXT'},
+            created_at ${T.ts}
+        );
+    `);
+    await driver.exec(`CREATE INDEX IF NOT EXISTS idx_email_verif_user ON email_verification_tokens (user_id);`);
 
     await addColumnIfMissing('users', 'display_name', 'TEXT');
 

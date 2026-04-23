@@ -39,12 +39,33 @@ function publicUser(row) {
         id: row.id,
         username: row.username,
         email: row.email,
+        email_verified: !!row.email_verified,
         date_of_birth: row.date_of_birth,
         balance: Number(row.balance_cents || 0) / 100,
         balance_cents: Number(row.balance_cents || 0),
         is_admin: !!row.is_admin,
         created_at: row.created_at,
     };
+}
+
+const VERIFY_TTL_MS = 24 * 60 * 60 * 1000;
+
+async function issueVerificationToken(user, req) {
+    const crypto2 = require('crypto');
+    const rawToken = crypto2.randomBytes(32).toString('hex');
+    const tokenHash = crypto2.createHash('sha256').update(rawToken).digest('hex');
+    const expiresAt = new Date(Date.now() + VERIFY_TTL_MS).toISOString();
+    await db.run(
+        'INSERT INTO email_verification_tokens (user_id, token_hash, expires_at) VALUES (?, ?, ?)',
+        [user.id, tokenHash, expiresAt]
+    );
+    const verifyUrl = config.PUBLIC_URL + '/#verify-email=' + rawToken;
+    if (user.email) {
+        mailer.sendEmailVerification({ to: user.email, username: user.username, verifyUrl })
+            .catch(function (err) { console.warn('[auth/verify] send failed:', err && err.message); });
+    }
+    void req;
+    return { rawToken, verifyUrl };
 }
 
 function ageInYears(dobStr) {
@@ -110,12 +131,14 @@ router.post('/register', async (req, res) => {
         const user = await db.get('SELECT * FROM users WHERE id = ?', [userId]);
         const token = signToken(user);
         await authEvents.log({ userId: user.id, username: user.username, eventType: 'register', outcome: 'success', req });
-        // Fire-and-forget welcome email. A failure here must not impede
-        // account creation — the user is already logged in by the time
-        // this promise resolves.
+        // Fire-and-forget welcome + verification emails. Failures log a
+        // warning but never block account creation or leak as a 500.
         if (user.email) {
             mailer.sendWelcome({ to: user.email, username: user.username }).catch(function (err) {
                 console.warn('[auth/register] welcome email failed:', err && err.message);
+            });
+            issueVerificationToken(user, req).catch(function (err) {
+                console.warn('[auth/register] verification issuance failed:', err && err.message);
             });
         }
         res.status(201).json({ token, user: publicUser(user) });
@@ -313,6 +336,62 @@ router.post('/reset-password', async (req, res) => {
     } catch (err) {
         console.error('[auth/reset-password]', err);
         res.status(500).json({ error: 'Failed to reset password.' });
+    }
+});
+
+/**
+ * POST /api/auth/verify-email
+ *   body: { token }
+ * Looks up the token (by sha256 hash), verifies unexpired + unused,
+ * flips users.email_verified to true, consumes the token. No auth
+ * required — the token itself is the credential.
+ */
+router.post('/verify-email', async (req, res) => {
+    const { token } = req.body || {};
+    if (typeof token !== 'string' || !token.trim()) {
+        return res.status(400).json({ error: 'Token is required.' });
+    }
+    try {
+        const crypto2 = require('crypto');
+        const tokenHash = crypto2.createHash('sha256').update(token).digest('hex');
+        const row = await db.get('SELECT * FROM email_verification_tokens WHERE token_hash = ?', [tokenHash]);
+        if (!row) return res.status(400).json({ error: 'Verification link is invalid or has already been used.' });
+        if (row.used_at) return res.status(400).json({ error: 'Verification link has already been used.' });
+        if (new Date(row.expires_at).getTime() < Date.now()) {
+            return res.status(400).json({ error: 'Verification link has expired. Request a new one.' });
+        }
+        const isPg = db.kind === 'pg';
+        await db.run(
+            isPg
+                ? 'UPDATE users SET email_verified = true WHERE id = ?'
+                : 'UPDATE users SET email_verified = 1 WHERE id = ?',
+            [row.user_id]
+        );
+        await db.run('UPDATE email_verification_tokens SET used_at = ? WHERE id = ?', [new Date().toISOString(), row.id]);
+        await authEvents.log({ userId: row.user_id, eventType: 'email_verified', outcome: 'success', req });
+        res.json({ ok: true });
+    } catch (err) {
+        console.error('[auth/verify-email]', err);
+        res.status(500).json({ error: 'Verification failed.' });
+    }
+});
+
+/**
+ * POST /api/auth/resend-verification (authed)
+ * Issues a fresh token + email. Rate-limited at the route layer; also
+ * no-ops (returns ok:true) when the email is already verified so a
+ * compromised account can't use resend to spam someone's inbox.
+ */
+router.post('/resend-verification', authenticate, async (req, res) => {
+    try {
+        const user = await db.get('SELECT id, username, email, email_verified FROM users WHERE id = ?', [req.user.id]);
+        if (!user) return res.status(404).json({ error: 'User not found.' });
+        if (user.email_verified) return res.json({ ok: true, already_verified: true });
+        await issueVerificationToken(user, req);
+        res.json({ ok: true });
+    } catch (err) {
+        console.error('[auth/resend-verification]', err);
+        res.status(500).json({ error: 'Resend failed.' });
     }
 });
 

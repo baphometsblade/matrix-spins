@@ -59,6 +59,13 @@ router.post('/checkout', authenticate, async (req, res) => {
     }
 
     try {
+        // Gate first deposit behind a verified email. We keep this here
+        // rather than at a middleware layer so the error message is
+        // specific and the rest of the deposit route is a single flow.
+        const verificationCheck = await db.get('SELECT email_verified FROM users WHERE id = ?', [req.user.id]);
+        if (!verificationCheck || !verificationCheck.email_verified) {
+            return res.status(403).json({ error: 'Please verify your email address before making a deposit. Check your inbox for the confirmation link.', code: 'email_unverified' });
+        }
         // Enforce per-user rolling-window deposit caps. These are stored
         // per-user on the `users` table so limit changes can be audited
         // and applied without redeploy.
