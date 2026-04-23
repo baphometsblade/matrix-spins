@@ -37,29 +37,14 @@
         var _resumeBannerTimer = null;
         var _lastPlayedGameForResume = null;
 
-        // Live player count simulation
-        var _liveCounts = {};
-
-        function _seedCount(gameId, isHot) {
-            var h = 0;
-            for (var i = 0; i < gameId.length; i++) { h = (h * 31 + gameId.charCodeAt(i)) & 0xffff; }
-            var base = isHot ? (18 + h % 80) : (8 + h % 45);
-            _liveCounts[gameId] = base;
-        }
-
-        function _getLiveCount(gameId) {
-            return _liveCounts[gameId] || 12;
-        }
-
-        function _tickLiveCounts() {
-            Object.keys(_liveCounts).forEach(function(id) {
-                var delta = Math.floor(Math.random() * 5) - 2; // -2 to +2
-                _liveCounts[id] = Math.max(6, _liveCounts[id] + delta);
-                // Update any visible badges
-                var badge = document.querySelector('.card-players-live[data-game="' + id + '"]');
-                if (badge) badge.lastChild.nodeValue = ' ' + _liveCounts[id] + ' playing';
-            });
-        }
+        // Live player counts were previously fabricated per-game from
+        // a hash of the game id + random ±2 drift every 15s. Stripped
+        // out — the badges won't render until there's a real metrics
+        // endpoint that returns concurrent players per game. Keep the
+        // function signatures as no-ops so callers don't crash.
+        function _seedCount(_gameId, _isHot) { /* no-op: no fake data */ }
+        function _getLiveCount(_gameId) { return null; }
+        function _tickLiveCounts() { /* no-op: no fake data */ }
 
 
         // ═══════════════════════════════════════════════════════
@@ -614,10 +599,6 @@ function renderGames() {
                     else applyGameOfDayBadge();
                     // Hot/Cold badges — fire-and-forget, cosmetic only
                     fetchGameStats();
-                    // Start live-count tick once, persists across re-renders
-                    if (!window._liveCountsInterval) {
-                        window._liveCountsInterval = setInterval(_tickLiveCounts, 15000 + Math.random() * 6000);
-                    }
                     // Initial tab count badges after games load (Sprint 19)
                     setTimeout(function() { if (typeof _updateTabCounts === 'function') _updateTabCounts(); }, 0);
                     // XP level badge update (Sprint 20)
@@ -966,7 +947,7 @@ function renderGames() {
                         </div>
                         ${topTag}
                         ${jackpotBadge}
-                        <div class="card-players-live" data-game="${game.id}"> ${_getLiveCount(game.id)} playing</div>
+                        <!-- card-players-live badge removed: no real per-game concurrency source -->
                         ${(function() { try { var _v = parseFloat(localStorage.getItem('personalBest_' + game.id) || '0'); if (_v > 0) { var _disp = _v >= 1000 ? ('$' + (_v/1000).toFixed(1) + 'K') : ('$' + Math.round(_v)); return '<div class="card-personal-best">\u{1F3C6} PB ' + _disp + '</div>'; } } catch(e) {} return ''; })()}
                         <div class="game-vol-badge ${volClass}" title="Volatility: ${vol}">
                             ${dotsHtml}

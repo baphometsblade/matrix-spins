@@ -1276,7 +1276,9 @@
         }
 
 
-        // Derive RTP from game properties (simulated since not stored in game data)
+        // Rough theoretical RTP bucket derived from the game's own
+        // payout table. This is a label for the info panel only — not
+        // a live-measured RTP from real play.
         function deriveGameRTP(game) {
             const maxPayout = (game.payouts && game.payouts.triple) || (game.rtp ? Math.round(game.rtp * 2) : 100);
             if (maxPayout >= 200) return '96.8%';
@@ -9188,67 +9190,15 @@
         }
 
         // ----------------------------------------------------------
-        // SPRINT 37 — Demo Mode
+        // Demo Mode — REMOVED. Previously temporarily swapped the user's
+        // balance with a hardcoded $10,000 and let them spin 3 times.
+        // Replaced with no-ops so any stale call site degrades safely:
+        // the real balance is authoritative and never mutated here.
         // ----------------------------------------------------------
         var _demoMode = false;
         var _demoSpinsLeft = 0;
-        var _demoRealBalance = 0;
-
-        // Override openSlot to support demo mode: openSlot(gameId, { demo: true })
-        (function() {
-            var _origOpenSlot = typeof openSlot === 'function' ? openSlot : null;
-            if (!_origOpenSlot) return;
-            openSlot = function(gameId, opts) {
-                _demoMode = !!(opts && opts.demo);
-                if (_demoMode) {
-                    _demoSpinsLeft = 3;
-                    _demoRealBalance = typeof balance !== 'undefined' ? balance : 0;
-                    balance = 10000;
-                    if (typeof updateBalance === 'function') updateBalance();
-                } else {
-                    _demoMode = false;
-                }
-                _origOpenSlot(gameId);
-                // Show/hide demo banner
-                var banner = document.getElementById('demoBanner');
-                var spansEl = document.getElementById('demoSpinsLeft');
-                if (banner) banner.style.display = _demoMode ? 'flex' : 'none';
-                if (spansEl) spansEl.textContent = _demoSpinsLeft;
-            };
-        })();
-
-        function _demoOnSpinEnd() {
-            if (!_demoMode) return;
-            _demoSpinsLeft--;
-            var spansEl = document.getElementById('demoSpinsLeft');
-            if (spansEl) spansEl.textContent = _demoSpinsLeft;
-            if (_demoSpinsLeft <= 0) {
-                // Show demo end modal
-                var modal = document.getElementById('demoEndModal');
-                if (modal) modal.classList.add('active');
-            }
-        }
-
-        function exitDemoMode(playForReal) {
-            // Restore real balance (don't saveBalance during demo)
-            if (_demoMode) {
-                balance = _demoRealBalance;
-                if (typeof updateBalance === 'function') updateBalance();
-                if (typeof saveBalance === 'function') saveBalance();
-            }
-            _demoMode = false;
-            _demoSpinsLeft = 0;
-            _demoRealBalance = 0;
-            var banner = document.getElementById('demoBanner');
-            if (banner) banner.style.display = 'none';
-            var modal = document.getElementById('demoEndModal');
-            if (modal) modal.classList.remove('active');
-            if (playForReal) {
-                // Stay in slot with real balance
-            } else {
-                if (typeof closeSlot === 'function') closeSlot();
-            }
-        }
+        function _demoOnSpinEnd() { /* no-op: demo mode removed */ }
+        function exitDemoMode() { /* no-op: demo mode removed */ }
 
         // ----------------------------------------------------------
         // SPRINT 38 — Session Time Tracker
@@ -15310,15 +15260,10 @@ function _updatePlayerCount() {
 var _bigWins255 = [];
 var _bigWinNames255 = ['Lucky_7s', 'Dragon888', 'SlotKing', 'NeonQueen', 'GoldRush99', 'WildAce', 'CryptoSpin', 'RoyalFlush', 'MatrixPro', 'JackpotJoe'];
 function _initBigWinsFeed() {
-    // Seed with some fake wins
-    for (var i = 0; i < 5; i++) {
-        _bigWins255.push({
-            name: _bigWinNames255[Math.floor(Math.random() * _bigWinNames255.length)],
-            amount: Math.floor(Math.random() * 5000) + 100,
-            game: ['Dragon Fortune', 'Mega Diamonds', 'Space Gems', 'Neon Nights', 'Lucky Sevens'][Math.floor(Math.random() * 5)],
-            time: Date.now() - Math.floor(Math.random() * 600000)
-        });
-    }
+    // Was seeding the feed with 5 hardcoded fake wins from a random-name
+    // list. Removed — the feed now renders whatever real wins the user's
+    // own session produces (via _addBigWin). If a server-side "recent
+    // wins" endpoint ships later, wire the fetch here.
     _renderBigWinsFeed();
 }
 function _addBigWin(winAmount, gameName) {
@@ -15901,19 +15846,12 @@ function _initBonusWheel() {
     if (el) el.style.display = canSpin ? '' : 'none';
 }
 function _spinBonusWheel() {
-    var dayMs = 86400000;
-    if ((Date.now() - _bonusWheel272.lastSpin) < dayMs) { alert('Come back tomorrow for another free spin!'); return; }
-    _bonusWheel272.lastSpin = Date.now();
-    try { localStorage.setItem('matrixSpins_bonusWheel', JSON.stringify({ lastSpin: _bonusWheel272.lastSpin })); } catch(e) {}
-    var prize = _bonusWheel272.prizes[Math.floor(Math.random() * _bonusWheel272.prizes.length)];
-    if (prize > 0) {
-        if (typeof balance !== 'undefined') balance += prize;
-        var betDisplay = document.getElementById('balanceAmount');
-        if (betDisplay) betDisplay.textContent = balance;
-        alert('\u{1F389} You won $' + prize + ' from the Daily Bonus Wheel!');
-    } else {
-        alert('Better luck tomorrow! Spin again in 24 hours.');
-    }
+    // The bonus wheel previously credited the user's displayed balance
+    // purely on the client — a free-money path that desynced the UI
+    // from the real server balance. Removed. When a real bonus-claim
+    // endpoint exists (server-side validated cool-down + credit), wire
+    // it here with a POST to /api/bonus/daily.
+    alert('Daily bonus rewards will be available once bonus-claim is wired to the real backend.');
     var btn = document.getElementById('bonusWheelBtn');
     if (btn) btn.style.display = 'none';
 }
@@ -16034,14 +15972,9 @@ function _uploadKYCDoc() {
     _updateKYCBadge();
     _openKYCPanel();
     _logAuditEvent('kyc_document_uploaded');
-    // Auto-approve after 3 seconds (simulated)
-    setTimeout(function() {
-        _kyc275.level = 3;
-        _kyc275.status = 'verified';
-        try { localStorage.setItem('matrixSpins_kyc', JSON.stringify(_kyc275)); } catch(e) {}
-        _updateKYCBadge();
-        _logAuditEvent('kyc_fully_verified');
-    }, 3000);
+    // The previous 3-second "auto-approve" fake has been removed.
+    // Verification status only changes when a real KYC provider's
+    // webhook flips it; until that's wired, documents stay pending.
 }
 
 // Sprint 276 — AML transaction monitoring
@@ -18273,23 +18206,15 @@ function _showLeaderboard() {
     panel = document.createElement('div');
     panel.id = 'leaderboard360';
     panel.className = 'leaderboard-overlay';
-    var mockData = [
-        { rank: 1, name: 'HighRoller99', wins: 125430, badge: '\u{1F451}' },
-        { rank: 2, name: 'LuckyStar22', wins: 98200, badge: '\u{1F948}' },
-        { rank: 3, name: 'SpinMaster', wins: 87650, badge: '\u{1F949}' },
-        { rank: 4, name: 'GoldenAce', wins: 72100, badge: '' },
-        { rank: 5, name: 'JackpotJane', wins: 65800, badge: '' },
-        { rank: 6, name: 'SlotKing88', wins: 58900, badge: '' },
-        { rank: 7, name: 'DiamondDave', wins: 51200, badge: '' },
-        { rank: 8, name: 'NeonNinja', wins: 43700, badge: '' },
-        { rank: 9, name: 'CherryBomb', wins: 38500, badge: '' },
-        { rank: 10, name: 'You', wins: typeof totalWon !== 'undefined' ? Math.floor(totalWon) : 0, badge: '\u{1F464}' }
-    ];
-    var html = '<div class="lb-inner"><h2>\u{1F3C6} Leaderboard</h2><div class="lb-tabs"><button class="lb-tab lb-tab-active" onclick="_switchLbTab(this,\&quot;daily\&quot;)">Daily</button><button class="lb-tab" onclick="_switchLbTab(this,\'weekly\')">Weekly</button><button class="lb-tab" onclick="_switchLbTab(this,\'alltime\')">All Time</button></div><div class="lb-list">';
-    mockData.forEach(function(p) {
-        html += '<div class="lb-row ' + (p.rank <= 3 ? 'lb-top3' : '') + '"><span class="lb-rank">#' + p.rank + '</span><span class="lb-badge">' + p.badge + '</span><span class="lb-name">' + p.name + '</span><span class="lb-wins">$' + p.wins.toLocaleString() + '</span></div>';
-    });
-    html += '</div><button onclick="document.getElementById(&quot;leaderboard360&quot;).style.display=&quot;none&quot;" class="lb-close-btn">Close</button></div>';
+    // Leaderboard rendering from hardcoded fake data has been removed.
+    // When a real /api/leaderboard endpoint ships, fetch and render it
+    // here. Until then, display an empty-state so users are never shown
+    // fabricated rankings.
+    var html = '<div class="lb-inner"><h2>\u{1F3C6} Leaderboard</h2>' +
+        '<div class="lb-empty" style="padding:40px 20px;color:#8a8a8a;text-align:center">' +
+        'Leaderboards will appear once real play data is collected.' +
+        '</div>' +
+        '<button onclick="document.getElementById(&quot;leaderboard360&quot;).style.display=&quot;none&quot;" class="lb-close-btn">Close</button></div>';
     panel.innerHTML = html;
     document.body.appendChild(panel);
 }
@@ -18681,24 +18606,17 @@ function _showCryptoConnect() {
     panel.id = 'cryptoPanel369';
     panel.className = 'crypto-overlay';
     panel.innerHTML = '<div class="crypto-inner">' +
-        '<h3>Connect Crypto Wallet</h3>' +
-        '<p style="color:#888;font-size:13px;">Deposit and withdraw using cryptocurrency. Fast, secure, and anonymous.</p>' +
-        '<div class="crypto-wallets">' +
-        '<button onclick="_connectWallet(\&quot;metamask\&quot;)" class="crypto-wallet-btn"><span>\u{1F98A}</span> MetaMask</button>' +
-        '<button onclick="_connectWallet(\&quot;walletconnect\&quot;)" class="crypto-wallet-btn"><span>\u{1F517}</span> WalletConnect</button>' +
-        '<button onclick="_connectWallet(\&quot;coinbase\&quot;)" class="crypto-wallet-btn"><span>\u{1F4B0}</span> Coinbase Wallet</button>' +
-        '</div>' +
-        '<div class="crypto-supported"><small>Supported: BTC, ETH, USDT, USDC, SOL, DOGE</small></div>' +
+        '<h3>Crypto wallet</h3>' +
+        '<p style="color:#8a8a8a;font-size:13px;line-height:1.5">On-chain wallet connection is not wired up yet. Deposits via Stripe (card) are available from the main Deposit button.</p>' +
         '<button onclick="document.getElementById(&quot;cryptoPanel369&quot;).style.display=&quot;none&quot;" class="crypto-close-btn">Close</button>' +
         '</div>';
     document.body.appendChild(panel);
 }
-function _connectWallet(provider) {
-    console.log('[Crypto] Connecting via', provider);
-    _cryptoWallet = { connected: true, address: '0x' + Math.random().toString(16).slice(2,12) + '...', chain: 'ETH' };
-    localStorage.setItem('ms_crypto_wallet', JSON.stringify(_cryptoWallet));
-    alert('Wallet connected! Address: ' + _cryptoWallet.address);
-    document.getElementById('cryptoPanel369').style.display = 'none';
+function _connectWallet(_provider) {
+    // Was generating a fake 0x address via Math.random() and storing it
+    // as if a real MetaMask connection had succeeded. Removed — no
+    // on-chain integration exists until ethers/viem is wired here.
+    alert('Crypto wallet connection is not yet available. Please use the Deposit button for card payments.');
 }
 
 
@@ -19799,13 +19717,9 @@ function _updateSocialTicker() {
     ticker.innerHTML = '<div class="st-content">' + msg + '</div>';
 }
 function _simulateSocialActivity() {
-    var names = ['LuckyAce', 'SpinQueen', 'GoldRush88', 'DiamondKing', 'NeonStar', 'MegaWins', 'CryptoSpinner'];
-    setInterval(function() {
-        var name = names[Math.floor(Math.random() * names.length)];
-        var types = ['bigwin', 'deposit', 'achievement'];
-        var type = types[Math.floor(Math.random() * types.length)];
-        _addSocialEvent(type, { player: name, amount: Math.floor(Math.random() * 500) + 10, name: 'Big Winner' });
-    }, 15000);
+    // Removed. Previously injected fake deposits/big-wins/achievements
+    // from a hardcoded name list every 15s. The social feed is now
+    // populated only by real events emitted from real endpoints.
 }
 
 
@@ -20722,16 +20636,12 @@ function _openTournamentLeaderboard() {
         el.className = 'tourney-leaderboard-overlay';
         document.body.appendChild(el);
     }
-    var fakeEntries = [
-        { name: 'LuckyAce', score: 15000 + Math.floor(Math.random()*5000) },
-        { name: 'SlotKing', score: 12000 + Math.floor(Math.random()*4000) },
-        { name: 'GoldRush', score: 9000 + Math.floor(Math.random()*3000) },
-        { name: 'YOU', score: _tournamentV2.myScore },
-        { name: 'SpinWiz', score: 5000 + Math.floor(Math.random()*2000) }
-    ].sort(function(a,b) { return b.score - a.score; });
-    var html = '<div class="tourney-lb-card"><h3>Tournament Leaderboard</h3><ol>';
-    fakeEntries.forEach(function(e) { html += '<li class="' + (e.name === 'YOU' ? 'tourney-you' : '') + '">' + e.name + ': ' + e.score + '</li>'; });
-    html += '</ol><button onclick="document.getElementById(&quot;tourneyLeaderboardOverlay&quot;).style.display=&quot;none&quot;">Close</button></div>';
+    // Hardcoded fake competitors have been removed. Until a real
+    // tournament backend exists, show only the player's own score.
+    var html = '<div class="tourney-lb-card"><h3>Tournament Leaderboard</h3>' +
+        '<ol><li class="tourney-you">YOU: ' + _tournamentV2.myScore + '</li></ol>' +
+        '<p style="color:#8a8a8a;font-size:12px">Ranked standings will appear when real tournament data is available.</p>' +
+        '<button onclick="document.getElementById(&quot;tourneyLeaderboardOverlay&quot;).style.display=&quot;none&quot;">Close</button></div>';
     el.innerHTML = html;
     el.style.display = 'flex';
 }
@@ -23861,18 +23771,12 @@ function _initLeaderboardSeasons() {
     var panel = document.createElement('div');
     panel.id = 'lb-season-panel';
     panel.className = 'lb-season-panel hidden';
-    var mockPlayers = [
-        {name:'LuckyAce',score:125000},{name:'SpinKing',score:98000},{name:'JackpotJane',score:87500},
-        {name:'GoldRush',score:72000},{name:'DiamondDave',score:65000},{name:'WinStreak',score:58000},
-        {name:'SlotMaster',score:45000},{name:'ReelDeal',score:38000},{name:'BonusHunter',score:29000},
-        {name:'You',score:parseInt(localStorage.getItem('ms_total_wagered')||'0')}
-    ].sort(function(a,b){return b.score-a.score;});
-    var rows = mockPlayers.map(function(p,i) {
-        var medal = i===0?'1st':i===1?'2nd':i===2?'3rd':'#'+(i+1);
-        var isYou = p.name==='You'?' lb-you':'';
-        return '<div class="lb-row'+isYou+'"><span class="lb-rank">'+medal+'</span><span class="lb-name">'+p.name+'</span><span class="lb-score">$'+p.score.toLocaleString()+'</span></div>';
-    }).join('');
-    panel.innerHTML = '<div class="lb-inner"><h3>Season '+season.number+' Leaderboard</h3><div class="lb-timer">'+daysLeft+' days remaining</div><div class="lb-prizes"><span>1st: $500</span><span>2nd: $250</span><span>3rd: $100</span></div>'+rows+'</div>';
+    // Season leaderboard previously mixed 9 hardcoded fake players with
+    // the real user's score. Dropped — show only the user's own tally
+    // until a real multi-user ranking endpoint exists.
+    var myScore = parseInt(localStorage.getItem('ms_total_wagered') || '0', 10) || 0;
+    var rows = '<div class="lb-row lb-you"><span class="lb-rank">#1</span><span class="lb-name">You</span><span class="lb-score">$' + myScore.toLocaleString() + '</span></div>';
+    panel.innerHTML = '<div class="lb-inner"><h3>Season '+season.number+' Leaderboard</h3><div class="lb-timer">'+daysLeft+' days remaining</div><div class="lb-prizes"><span>1st: $500</span><span>2nd: $250</span><span>3rd: $100</span></div>'+rows+'<p style="color:#8a8a8a;font-size:12px;margin-top:10px">Other players appear once real standings are collected.</p></div>';
     document.body.appendChild(panel);
     console.log('[Sprint 523-530] Leaderboard Seasons ready');
 }
@@ -25056,30 +24960,12 @@ function _initPrestigeRanks() {
     console.log('[Sprint 555-562] Prestige Ranks ready');
 }
 
-/* ---- Feature 3: Daily Spin Wheel v2 ---- */
-function _initDailyWheel() {
-    var lastSpin = localStorage.getItem('ms_daily_wheel_date');
-    var today = new Date().toISOString().slice(0, 10);
-    if (lastSpin === today) return;
-    if (document.getElementById('daily-wheel-prompt')) return;
-    var prompt555 = document.createElement('div');
-    prompt555.id = 'daily-wheel-prompt';
-    prompt555.className = 'daily-wheel-prompt';
-    prompt555.innerHTML = '<div class="dw-inner555"><h3>Daily Free Spin!</h3><p>Spin the wheel for a free reward!</p><button class="dw-spin555" id="dw-spin555-btn">SPIN NOW</button></div>';
-    document.body.appendChild(prompt555);
-    document.getElementById('dw-spin555-btn').addEventListener('click', function() {
-        var prizes = [5, 10, 15, 20, 25, 50, 1, 2, 3, 100];
-        var winner = prizes[Math.floor(Math.random() * prizes.length)];
-        localStorage.setItem('ms_daily_wheel_date', today);
-        var bal = parseFloat(localStorage.getItem('ms_balance') || '1000');
-        bal += winner;
-        localStorage.setItem('ms_balance', bal.toFixed(2));
-        if (typeof updateBalanceDisplay === 'function') updateBalanceDisplay();
-        prompt555.innerHTML = '<div class="dw-inner555"><h3>You won $' + winner + '!</h3><p>Come back tomorrow for another free spin!</p><button class="dw-close555" onclick="document.getElementById(&quot;daily-wheel-prompt&quot;).remove()">Nice!</button></div>';
-        if (typeof _addXP === 'function') _addXP(10);
-    });
-    console.log('[Sprint 555-562] Daily Wheel v2 ready');
-}
+/* ---- Feature 3: Daily Spin Wheel v2 ----
+ * Previously showed a daily "free spin" prompt that credited ms_balance
+ * in localStorage with a random prize. That was free money with no
+ * server backing — removed. The init now no-ops until a real
+ * bonus-claim endpoint is wired. */
+function _initDailyWheel() { /* no-op: fake bonus credit removed */ }
 
 /* ---- Feature 4: Streak Multiplier v2 ---- */
 var _streakMult555 = { count: 0, multiplier: 1 };
