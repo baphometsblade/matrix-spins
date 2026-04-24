@@ -1,0 +1,701 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Matrix Spins — Admin Console</title>
+<meta name="robots" content="noindex, nofollow">
+<style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        background: #0d0d1a;
+        color: #e0e0e0;
+        min-height: 100vh;
+        padding: 24px;
+    }
+    .container { max-width: 1280px; margin: 0 auto; }
+    header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 18px 24px;
+        background: linear-gradient(135deg, #1a1a2e, #16213e);
+        border: 1px solid rgba(255, 215, 0, 0.3);
+        border-radius: 12px;
+        margin-bottom: 24px;
+    }
+    header h1 {
+        background: linear-gradient(135deg, #ffd700, #ff8c00);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        font-size: 24px;
+    }
+    .user-info { font-size: 14px; color: #aaa; }
+    .user-info b { color: #ffd700; }
+    .user-info button {
+        margin-left: 16px;
+        padding: 6px 14px;
+        background: transparent;
+        border: 1px solid rgba(255, 215, 0, 0.3);
+        color: #ffd700;
+        border-radius: 6px;
+        cursor: pointer;
+        font-size: 13px;
+    }
+    .tabs {
+        display: flex;
+        gap: 4px;
+        margin-bottom: 20px;
+        border-bottom: 1px solid rgba(255, 215, 0, 0.2);
+    }
+    .tab {
+        padding: 12px 22px;
+        background: transparent;
+        border: none;
+        color: #888;
+        cursor: pointer;
+        font-size: 15px;
+        font-weight: 600;
+        border-bottom: 2px solid transparent;
+    }
+    .tab.active { color: #ffd700; border-bottom-color: #ffd700; }
+    .panel {
+        background: linear-gradient(135deg, #1a1a2e, #16213e);
+        border: 1px solid rgba(255, 215, 0, 0.2);
+        border-radius: 12px;
+        padding: 24px;
+        display: none;
+    }
+    .panel.active { display: block; }
+    .panel h2 {
+        color: #ffd700;
+        font-size: 18px;
+        margin-bottom: 20px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
+    .panel h2 .count {
+        background: rgba(255, 215, 0, 0.2);
+        color: #ffd700;
+        padding: 4px 12px;
+        border-radius: 12px;
+        font-size: 13px;
+    }
+    table { width: 100%; border-collapse: collapse; }
+    th {
+        text-align: left;
+        padding: 10px 12px;
+        font-size: 12px;
+        text-transform: uppercase;
+        color: #888;
+        border-bottom: 1px solid rgba(255, 215, 0, 0.1);
+    }
+    td {
+        padding: 14px 12px;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        font-size: 14px;
+        vertical-align: middle;
+    }
+    tr:hover td { background: rgba(255, 215, 0, 0.03); }
+    .mono { font-family: 'SF Mono', Menlo, Consolas, monospace; font-size: 13px; }
+    .money { color: #4ade80; font-weight: 600; }
+    .money.big { color: #fbbf24; }
+    .muted { color: #888; }
+    .btn {
+        padding: 6px 14px;
+        border: none;
+        border-radius: 6px;
+        font-size: 13px;
+        font-weight: 600;
+        cursor: pointer;
+        margin-right: 6px;
+    }
+    .btn-approve { background: #4ade80; color: #0d0d1a; }
+    .btn-deny { background: #ef4444; color: #fff; }
+    .btn-neutral { background: rgba(255, 255, 255, 0.1); color: #e0e0e0; }
+    .btn[disabled] { opacity: 0.4; cursor: not-allowed; }
+    .empty { text-align: center; padding: 40px 20px; color: #666; }
+    .error-banner {
+        background: rgba(239, 68, 68, 0.15);
+        border: 1px solid rgba(239, 68, 68, 0.4);
+        color: #fca5a5;
+        padding: 12px 16px;
+        border-radius: 8px;
+        margin-bottom: 16px;
+        font-size: 14px;
+    }
+    .success-toast {
+        position: fixed;
+        top: 24px;
+        right: 24px;
+        background: linear-gradient(135deg, #4ade80, #22c55e);
+        color: #0d0d1a;
+        padding: 14px 22px;
+        border-radius: 8px;
+        font-weight: 600;
+        box-shadow: 0 8px 24px rgba(34, 197, 94, 0.3);
+        z-index: 1000;
+    }
+    .login-box {
+        max-width: 400px;
+        margin: 80px auto;
+        padding: 40px;
+        background: linear-gradient(135deg, #1a1a2e, #16213e);
+        border: 1px solid rgba(255, 215, 0, 0.3);
+        border-radius: 12px;
+    }
+    .login-box h2 { color: #ffd700; text-align: center; margin-bottom: 24px; }
+    .login-box label { display: block; font-size: 13px; color: #aaa; margin-bottom: 6px; margin-top: 14px; }
+    .login-box input {
+        width: 100%;
+        padding: 10px 14px;
+        background: rgba(0, 0, 0, 0.3);
+        border: 1px solid rgba(255, 215, 0, 0.2);
+        border-radius: 6px;
+        color: #fff;
+        font-size: 14px;
+    }
+    .login-box button {
+        width: 100%;
+        padding: 12px;
+        background: linear-gradient(135deg, #ffd700, #ff8c00);
+        color: #0d0d1a;
+        border: none;
+        border-radius: 6px;
+        font-weight: 700;
+        font-size: 15px;
+        cursor: pointer;
+        margin-top: 20px;
+    }
+    .status-badge {
+        display: inline-block;
+        padding: 3px 10px;
+        border-radius: 12px;
+        font-size: 11px;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        font-weight: 600;
+    }
+    .status-pending { background: rgba(251, 191, 36, 0.2); color: #fbbf24; }
+    .status-verified { background: rgba(74, 222, 128, 0.2); color: #4ade80; }
+    .kpi-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+        gap: 14px;
+        margin-bottom: 20px;
+    }
+    .kpi {
+        background: rgba(0, 0, 0, 0.3);
+        border: 1px solid rgba(255, 215, 0, 0.1);
+        border-radius: 8px;
+        padding: 16px;
+    }
+    .kpi-label { font-size: 11px; text-transform: uppercase; color: #888; letter-spacing: 0.05em; }
+    .kpi-value { font-size: 26px; font-weight: 700; color: #ffd700; margin-top: 4px; }
+    #user-query {
+        width: 60%;
+        padding: 10px 14px;
+        background: rgba(0, 0, 0, 0.3);
+        border: 1px solid rgba(255, 215, 0, 0.2);
+        border-radius: 6px;
+        color: #fff;
+        font-size: 14px;
+        margin-right: 8px;
+    }
+</style>
+</head>
+<body>
+
+<div id="login-view" style="display:none">
+    <div class="login-box">
+        <h2>Admin Console</h2>
+        <p style="font-size:13px;color:#888;text-align:center">Sign in with your admin account</p>
+        <form id="login-form">
+            <label for="username">Username or email</label>
+            <input id="username" type="text" required autocomplete="username">
+            <label for="password">Password</label>
+            <input id="password" type="password" required autocomplete="current-password">
+            <div id="login-error" class="error-banner" style="display:none;margin-top:16px"></div>
+            <button type="submit">Sign in</button>
+        </form>
+    </div>
+</div>
+
+<div id="app-view" class="container" style="display:none">
+    <header>
+        <h1>Matrix Spins Admin</h1>
+        <div class="user-info">
+            Signed in as <b id="admin-username">—</b>
+            <button id="btn-logout">Sign out</button>
+        </div>
+    </header>
+
+    <div class="kpi-grid">
+        <div class="kpi"><div class="kpi-label">Pending withdrawals</div><div class="kpi-value" id="kpi-withdraw">—</div></div>
+        <div class="kpi"><div class="kpi-label">Pending KYC</div><div class="kpi-value" id="kpi-kyc">—</div></div>
+        <div class="kpi"><div class="kpi-label">Total deposits (24h)</div><div class="kpi-value" id="kpi-deposits">—</div></div>
+        <div class="kpi"><div class="kpi-label">Active users (24h)</div><div class="kpi-value" id="kpi-active">—</div></div>
+    </div>
+
+    <div class="tabs">
+        <button class="tab active" data-tab="withdrawals">Pending withdrawals</button>
+        <button class="tab" data-tab="kyc">Pending KYC</button>
+        <button class="tab" data-tab="users">User lookup</button>
+    </div>
+
+    <div id="panel-withdrawals" class="panel active">
+        <h2>Pending withdrawal requests <span class="count" id="count-withdrawals">0</span></h2>
+        <div id="withdrawals-list"><div class="empty">Loading…</div></div>
+    </div>
+
+    <div id="panel-kyc" class="panel">
+        <h2>Pending KYC verifications <span class="count" id="count-kyc">0</span></h2>
+        <div id="kyc-list"><div class="empty">Loading…</div></div>
+    </div>
+
+    <div id="panel-users" class="panel">
+        <h2>User lookup</h2>
+        <form id="user-lookup-form" style="margin-bottom:16px">
+            <input id="user-query" type="text" placeholder="Username, email, or user ID">
+            <button type="submit" class="btn btn-neutral">Look up</button>
+        </form>
+        <div id="user-result"></div>
+    </div>
+</div>
+
+<script>
+'use strict';
+
+const TOKEN_KEY = 'admin_jwt';
+let TOKEN = localStorage.getItem(TOKEN_KEY) || null;
+let CURRENT_USER = null;
+
+// ── Safe DOM helpers (never use innerHTML with interpolated data) ────
+function el(tag, opts, ...children) {
+    const node = document.createElement(tag);
+    if (opts) {
+        for (const k in opts) {
+            if (k === 'class') node.className = opts[k];
+            else if (k === 'dataset') {
+                for (const d in opts[k]) node.dataset[d] = opts[k][d];
+            } else if (k === 'style') {
+                for (const s in opts[k]) node.style[s] = opts[k][s];
+            } else if (k.startsWith('on') && typeof opts[k] === 'function') {
+                node.addEventListener(k.slice(2), opts[k]);
+            } else if (k === 'text') {
+                node.textContent = opts[k];
+            } else if (k === 'type' || k === 'id' || k === 'href' || k === 'placeholder') {
+                node[k] = opts[k];
+            } else {
+                node.setAttribute(k, opts[k]);
+            }
+        }
+    }
+    for (const c of children) {
+        if (c == null || c === false) continue;
+        if (typeof c === 'string' || typeof c === 'number') node.appendChild(document.createTextNode(String(c)));
+        else node.appendChild(c);
+    }
+    return node;
+}
+
+function clear(nodeOrId) {
+    const node = typeof nodeOrId === 'string' ? document.getElementById(nodeOrId) : nodeOrId;
+    while (node.firstChild) node.removeChild(node.firstChild);
+    return node;
+}
+
+function formatDate(iso) {
+    if (!iso) return '—';
+    try {
+        const d = new Date(iso);
+        if (isNaN(d.getTime())) return String(iso);
+        return d.toLocaleString('en-AU', { dateStyle: 'short', timeStyle: 'short' });
+    } catch (_) { return String(iso); }
+}
+
+function money(n) { return '$' + Number(n || 0).toFixed(2); }
+
+// ── Auth ─────────────────────────────────────────────────────────────
+async function doLogin(ev) {
+    ev.preventDefault();
+    const username = document.getElementById('username').value.trim();
+    const password = document.getElementById('password').value;
+    const errEl = document.getElementById('login-error');
+    errEl.style.display = 'none';
+    try {
+        const r = await fetch('/api/auth/login', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ username, password })
+        });
+        const data = await r.json();
+        if (!r.ok) throw new Error(data.error || 'Login failed');
+        if (!data.user || !data.user.is_admin) throw new Error('This account is not an admin.');
+        TOKEN = data.token;
+        CURRENT_USER = data.user;
+        localStorage.setItem(TOKEN_KEY, TOKEN);
+        showApp();
+    } catch (e) {
+        errEl.textContent = e.message || 'Sign-in failed';
+        errEl.style.display = 'block';
+    }
+}
+
+function doLogout() {
+    TOKEN = null;
+    CURRENT_USER = null;
+    localStorage.removeItem(TOKEN_KEY);
+    showLogin();
+}
+
+async function api(path, opts) {
+    opts = opts || {};
+    const headers = Object.assign({}, opts.headers || {});
+    if (TOKEN) headers.Authorization = 'Bearer ' + TOKEN;
+    if (opts.body && !headers['Content-Type']) headers['Content-Type'] = 'application/json';
+    const r = await fetch(path, Object.assign({}, opts, { headers }));
+    if (r.status === 401 || r.status === 403) {
+        doLogout();
+        throw new Error('Session expired — please sign in again.');
+    }
+    const data = await r.json().catch(() => ({}));
+    if (!r.ok) throw new Error(data.error || ('HTTP ' + r.status));
+    return data;
+}
+
+async function showApp() {
+    document.getElementById('login-view').style.display = 'none';
+    document.getElementById('app-view').style.display = 'block';
+    document.getElementById('admin-username').textContent = (CURRENT_USER && (CURRENT_USER.username || CURRENT_USER.email)) || '—';
+    await Promise.all([loadWithdrawals(), loadKYC(), loadKPIs()]);
+}
+
+function showLogin() {
+    document.getElementById('app-view').style.display = 'none';
+    document.getElementById('login-view').style.display = 'block';
+}
+
+// ── Tabs ─────────────────────────────────────────────────────────────
+function showTab(name) {
+    ['withdrawals', 'kyc', 'users'].forEach(t => {
+        const tab = document.querySelector('[data-tab="' + t + '"]');
+        if (tab) tab.classList.toggle('active', t === name);
+        document.getElementById('panel-' + t).classList.toggle('active', t === name);
+    });
+}
+
+// ── KPIs ─────────────────────────────────────────────────────────────
+async function loadKPIs() {
+    try {
+        const [wd, kyc] = await Promise.all([
+            api('/api/admin/withdrawals?status=pending').catch(() => ({ withdrawals: [] })),
+            api('/api/admin/kyc-pending').catch(() => ({ pending: [] })),
+        ]);
+        document.getElementById('kpi-withdraw').textContent = (wd.withdrawals || []).length;
+        document.getElementById('kpi-kyc').textContent = (kyc.pending || []).length;
+    } catch (_) { /* silent */ }
+    try {
+        const s = await api('/api/admin/stats/24h').catch(() => null);
+        document.getElementById('kpi-deposits').textContent = s ? money(s.deposits_24h) : '—';
+        document.getElementById('kpi-active').textContent = s ? (s.active_users_24h || 0) : '—';
+    } catch (_) {
+        document.getElementById('kpi-deposits').textContent = '—';
+        document.getElementById('kpi-active').textContent = '—';
+    }
+}
+
+// ── Withdrawals ──────────────────────────────────────────────────────
+async function loadWithdrawals() {
+    const listEl = clear('withdrawals-list');
+    const countEl = document.getElementById('count-withdrawals');
+    listEl.appendChild(el('div', { class: 'empty', text: 'Loading…' }));
+    try {
+        const data = await api('/api/admin/withdrawals?status=pending');
+        const rows = data.withdrawals || [];
+        countEl.textContent = String(rows.length);
+        clear(listEl);
+        if (!rows.length) {
+            listEl.appendChild(el('div', { class: 'empty', text: 'No pending withdrawals.' }));
+            return;
+        }
+        const table = el('table', null,
+            el('thead', null, el('tr', null,
+                el('th', { text: 'ID' }),
+                el('th', { text: 'User' }),
+                el('th', { text: 'Amount' }),
+                el('th', { text: 'Method' }),
+                el('th', { text: 'Requested' }),
+                el('th', null)
+            ))
+        );
+        const tbody = el('tbody');
+        rows.forEach(w => tbody.appendChild(renderWdRow(w)));
+        table.appendChild(tbody);
+        listEl.appendChild(table);
+    } catch (e) {
+        clear(listEl);
+        listEl.appendChild(el('div', { class: 'error-banner', text: 'Failed to load: ' + e.message }));
+    }
+}
+
+function renderWdRow(w) {
+    const amt = Number(w.amount || 0);
+    const moneyCell = el('td', { class: 'money' + (amt >= 1000 ? ' big' : ''), text: money(amt) });
+    const userCell = el('td', null,
+        el('b', { text: w.username || '—' }),
+        el('br'),
+        el('span', { class: 'muted mono', text: w.email || '' })
+    );
+    const actionsCell = el('td');
+    const approveBtn = el('button', {
+        class: 'btn btn-approve',
+        text: 'Approve',
+        onclick: () => approveWithdrawal(w.id, approveBtn)
+    });
+    const denyBtn = el('button', {
+        class: 'btn btn-deny',
+        text: 'Deny',
+        onclick: () => denyWithdrawal(w.id, denyBtn)
+    });
+    actionsCell.appendChild(approveBtn);
+    actionsCell.appendChild(denyBtn);
+    return el('tr', { dataset: { id: String(w.id) } },
+        el('td', { class: 'mono', text: '#' + w.id }),
+        userCell,
+        moneyCell,
+        el('td', { text: w.payment_type || w.method || '—' }),
+        el('td', { class: 'muted mono', text: formatDate(w.requested_at || w.created_at) }),
+        actionsCell
+    );
+}
+
+async function approveWithdrawal(id, btn) {
+    const note = prompt('Optional admin note (press Enter to skip):') || '';
+    disableRow(btn);
+    try {
+        await api('/api/admin/withdrawals/' + id + '/approve', {
+            method: 'POST',
+            body: JSON.stringify({ adminNotes: note })
+        });
+        showToast('Withdrawal #' + id + ' approved');
+        await loadWithdrawals();
+        await loadKPIs();
+    } catch (e) {
+        alert('Approve failed: ' + e.message);
+        enableRow(btn);
+    }
+}
+
+async function denyWithdrawal(id, btn) {
+    const reason = prompt('Reason for denial (required, ≥5 chars):');
+    if (!reason || reason.trim().length < 5) return;
+    disableRow(btn);
+    try {
+        await api('/api/admin/withdrawals/' + id + '/reject', {
+            method: 'POST',
+            body: JSON.stringify({ adminNotes: reason })
+        });
+        showToast('Withdrawal #' + id + ' rejected — balance refunded');
+        await loadWithdrawals();
+        await loadKPIs();
+    } catch (e) {
+        alert('Deny failed: ' + e.message);
+        enableRow(btn);
+    }
+}
+
+// ── KYC ──────────────────────────────────────────────────────────────
+async function loadKYC() {
+    const listEl = clear('kyc-list');
+    const countEl = document.getElementById('count-kyc');
+    listEl.appendChild(el('div', { class: 'empty', text: 'Loading…' }));
+    try {
+        const data = await api('/api/admin/kyc-pending');
+        const rows = data.pending || [];
+        countEl.textContent = String(rows.length);
+        clear(listEl);
+        if (!rows.length) {
+            listEl.appendChild(el('div', { class: 'empty', text: 'No pending KYC verifications.' }));
+            return;
+        }
+        const table = el('table', null,
+            el('thead', null, el('tr', null,
+                el('th', { text: 'User ID' }),
+                el('th', { text: 'Username / Email' }),
+                el('th', { text: 'DOB' }),
+                el('th', { text: 'Document' }),
+                el('th', { text: 'Submitted' }),
+                el('th', null)
+            ))
+        );
+        const tbody = el('tbody');
+        rows.forEach(u => tbody.appendChild(renderKycRow(u)));
+        table.appendChild(tbody);
+        listEl.appendChild(table);
+    } catch (e) {
+        clear(listEl);
+        listEl.appendChild(el('div', { class: 'error-banner', text: 'Failed to load: ' + e.message }));
+    }
+}
+
+function renderKycRow(u) {
+    const userCell = el('td', null,
+        el('b', { text: u.username || '—' }),
+        el('br'),
+        el('span', { class: 'muted mono', text: u.email || '' })
+    );
+    const actionsCell = el('td');
+    const approveBtn = el('button', {
+        class: 'btn btn-approve',
+        text: 'Approve',
+        onclick: () => approveKyc(u.id, approveBtn)
+    });
+    const rejectBtn = el('button', {
+        class: 'btn btn-deny',
+        text: 'Reject',
+        onclick: () => rejectKyc(u.id, rejectBtn)
+    });
+    actionsCell.appendChild(approveBtn);
+    actionsCell.appendChild(rejectBtn);
+    return el('tr', null,
+        el('td', { class: 'mono', text: '#' + u.id }),
+        userCell,
+        el('td', { class: 'mono', text: u.date_of_birth || '—' }),
+        el('td', { text: u.document_type || '—' }),
+        el('td', { class: 'muted mono', text: formatDate(u.submitted_at) }),
+        actionsCell
+    );
+}
+
+async function approveKyc(userId, btn) {
+    const note = prompt('Optional approval note:') || '';
+    disableRow(btn);
+    try {
+        await api('/api/admin/kyc-approve', {
+            method: 'POST',
+            body: JSON.stringify({ userId, notes: note })
+        });
+        showToast('KYC approved for user #' + userId);
+        await loadKYC();
+        await loadKPIs();
+    } catch (e) {
+        alert('Approve failed: ' + e.message);
+        enableRow(btn);
+    }
+}
+
+async function rejectKyc(userId, btn) {
+    const reason = prompt('Reason for rejection (required, ≥5 chars):');
+    if (!reason || reason.trim().length < 5) return;
+    disableRow(btn);
+    try {
+        await api('/api/admin/kyc-reject', {
+            method: 'POST',
+            body: JSON.stringify({ userId, reason })
+        });
+        showToast('KYC rejected for user #' + userId);
+        await loadKYC();
+        await loadKPIs();
+    } catch (e) {
+        alert('Reject failed: ' + e.message);
+        enableRow(btn);
+    }
+}
+
+// ── User lookup ──────────────────────────────────────────────────────
+async function lookupUser(ev) {
+    ev.preventDefault();
+    const q = document.getElementById('user-query').value.trim();
+    const resultEl = clear('user-result');
+    if (!q) return;
+    resultEl.appendChild(el('div', { class: 'empty', text: 'Loading…' }));
+    try {
+        let data;
+        try {
+            data = await api('/api/admin/users/search?q=' + encodeURIComponent(q));
+        } catch (_) {
+            data = await api('/api/admin/user-lookup?q=' + encodeURIComponent(q)).catch(() => null);
+        }
+        clear(resultEl);
+        const users = data && data.users ? data.users : [];
+        if (!users.length) {
+            resultEl.appendChild(el('div', { class: 'empty', text: 'No match.' }));
+            return;
+        }
+        const table = el('table', null,
+            el('thead', null, el('tr', null,
+                el('th', { text: 'ID' }),
+                el('th', { text: 'Username' }),
+                el('th', { text: 'Email' }),
+                el('th', { text: 'Balance' }),
+                el('th', { text: 'Bonus' }),
+                el('th', { text: 'Wagering' }),
+                el('th', { text: 'KYC' }),
+                el('th', { text: 'Verified' })
+            ))
+        );
+        const tbody = el('tbody');
+        users.forEach(u => {
+            const kycStatus = u.kyc_status || 'unverified';
+            tbody.appendChild(el('tr', null,
+                el('td', { class: 'mono', text: '#' + u.id }),
+                el('td', null, el('b', { text: u.username || '—' })),
+                el('td', { class: 'mono', text: u.email || '' }),
+                el('td', { class: 'money', text: money(u.balance) }),
+                el('td', { class: 'muted', text: money(u.bonus_balance) }),
+                el('td', { class: 'muted', text: money(u.wagering_requirement) }),
+                el('td', null, el('span', { class: 'status-badge status-' + kycStatus, text: kycStatus })),
+                el('td', { text: u.email_verified ? '✓' : '—' })
+            ));
+        });
+        table.appendChild(tbody);
+        resultEl.appendChild(table);
+    } catch (e) {
+        clear(resultEl);
+        resultEl.appendChild(el('div', { class: 'error-banner', text: 'Lookup failed: ' + e.message }));
+    }
+}
+
+// ── Helpers ──────────────────────────────────────────────────────────
+function showToast(msg) {
+    const t = el('div', { class: 'success-toast', text: msg });
+    document.body.appendChild(t);
+    setTimeout(() => t.remove(), 3000);
+}
+
+function disableRow(btn) {
+    const tr = btn.closest('tr');
+    if (tr) tr.querySelectorAll('button').forEach(b => { b.disabled = true; });
+}
+function enableRow(btn) {
+    const tr = btn.closest('tr');
+    if (tr) tr.querySelectorAll('button').forEach(b => { b.disabled = false; });
+}
+
+// ── Event wiring ─────────────────────────────────────────────────────
+document.getElementById('login-form').addEventListener('submit', doLogin);
+document.getElementById('btn-logout').addEventListener('click', doLogout);
+document.getElementById('user-lookup-form').addEventListener('submit', lookupUser);
+document.querySelectorAll('.tab').forEach(btn =>
+    btn.addEventListener('click', () => showTab(btn.dataset.tab))
+);
+
+// ── Boot ─────────────────────────────────────────────────────────────
+if (TOKEN) showApp();
+else showLogin();
+
+// Poll every 30s so admins see new requests without refresh
+setInterval(() => {
+    if (TOKEN && document.getElementById('app-view').style.display !== 'none') {
+        loadWithdrawals().catch(() => {});
+        loadKYC().catch(() => {});
+        loadKPIs().catch(() => {});
+    }
+}, 30_000);
+</script>
+</body>
+</html>

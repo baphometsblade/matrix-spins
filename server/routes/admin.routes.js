@@ -1425,38 +1425,39 @@ router.get('/withdrawals/:id', async (req, res) => {
 });
 
 // POST /api/admin/withdrawals/:id/approve — Approve a pending withdrawal
+// Accepts { admin_note } or { adminNotes } for compatibility with multiple UI clients.
 router.post('/withdrawals/:id/approve', async (req, res) => {
     try {
         const withdrawalId = req.params.id;
-        const { admin_note } = req.body;
+        const noteRaw = req.body.admin_note || req.body.adminNotes || '';
+        const admin_note = String(noteRaw || 'Approved by admin').slice(0, 500);
 
-        const withdrawal = await db.get('SELECT id, user_id, amount, status, created_at, account_created_at FROM withdrawals WHERE id = ?', [withdrawalId]);
-        if (!withdrawal) {
-            return res.status(404).json({ error: 'Withdrawal not found' });
-        }
-        if (withdrawal.status !== 'pending') {
-            return res.status(400).json({ error: `Withdrawal is already ${withdrawal.status}` });
-        }
-
-        // Mark as completed (balance was already deducted at request time)
-        await db.run(
-            "UPDATE withdrawals SET status = 'completed', admin_note = ?, processed_at = datetime('now') WHERE id = ?",
-            [admin_note || 'Approved by admin', withdrawalId]
+        // Atomic claim: only proceed if still pending. Prevents two admins
+        // concurrently double-processing the same withdrawal.
+        const claim = await db.run(
+            "UPDATE withdrawals SET status = 'completed', admin_note = ?, processed_at = datetime('now') WHERE id = ? AND status = 'pending'",
+            [admin_note, withdrawalId]
         );
+        if (!claim || claim.changes === 0) {
+            return res.status(409).json({ error: 'Withdrawal is not pending (may have been processed by another admin).' });
+        }
 
-        // Log the approval transaction
-        const user = await db.get('SELECT balance FROM users WHERE id = ?', [withdrawal.user_id]);
-        const currentBalance = user ? user.balance : 0;
-        await db.run(
-            'INSERT INTO transactions (user_id, type, amount, balance_before, balance_after, reference) VALUES (?, ?, ?, ?, ?, ?)',
-            [withdrawal.user_id, 'withdrawal_approved', withdrawal.amount, currentBalance, currentBalance, `WD-APPROVE-${withdrawalId}`]
-        );
+        // Read the now-claimed row for the response + audit log
+        const withdrawal = await db.get('SELECT id, user_id, amount FROM withdrawals WHERE id = ?', [withdrawalId]);
+        if (withdrawal) {
+            const user = await db.get('SELECT balance FROM users WHERE id = ?', [withdrawal.user_id]);
+            const currentBalance = user ? user.balance : 0;
+            await db.run(
+                'INSERT INTO transactions (user_id, type, amount, balance_before, balance_after, reference) VALUES (?, ?, ?, ?, ?, ?)',
+                [withdrawal.user_id, 'withdrawal_approved', withdrawal.amount, currentBalance, currentBalance, `WD-APPROVE-${withdrawalId}`]
+            );
+        }
 
         res.json({
             message: 'Withdrawal approved and ready for payout',
             withdrawalId: parseInt(withdrawalId),
-            amount: withdrawal.amount,
-            admin_note: admin_note || 'Approved by admin'
+            amount: withdrawal ? withdrawal.amount : null,
+            admin_note
         });
     } catch (err) {
         console.warn('[Admin] Approve withdrawal error:', err.message);
@@ -1465,39 +1466,43 @@ router.post('/withdrawals/:id/approve', async (req, res) => {
 });
 
 // POST /api/admin/withdrawals/:id/reject — Reject a pending withdrawal and refund balance
+// Same atomic-claim pattern as /approve. The claim MUST succeed before the
+// refund UPDATE runs, otherwise a concurrent admin rejection could refund twice.
+// admin_note / adminNotes both accepted for UI compatibility.
 router.post('/withdrawals/:id/reject', async (req, res) => {
     try {
         const withdrawalId = req.params.id;
-        const { admin_note } = req.body;
+        const noteRaw = req.body.admin_note || req.body.adminNotes || '';
+        const admin_note = String(noteRaw || '').trim();
 
-        if (!admin_note || !admin_note.trim()) {
-            return res.status(400).json({ error: 'admin_note is required — must provide a rejection reason' });
+        if (!admin_note || admin_note.length < 5) {
+            return res.status(400).json({ error: 'A rejection reason of at least 5 characters is required.' });
         }
 
-        const withdrawal = await db.get('SELECT id, user_id, amount, status, created_at, account_created_at FROM withdrawals WHERE id = ?', [withdrawalId]);
+        // Step 1: Atomic claim — only one admin can transition pending → rejected.
+        // If changes === 0, someone else already processed it; do NOT refund.
+        const claim = await db.run(
+            "UPDATE withdrawals SET status = 'rejected', admin_note = ?, processed_at = datetime('now') WHERE id = ? AND status = 'pending'",
+            [admin_note.slice(0, 500), withdrawalId]
+        );
+        if (!claim || claim.changes === 0) {
+            return res.status(409).json({ error: 'Withdrawal is not pending (may have been processed by another admin).' });
+        }
+
+        // Step 2: Safe to refund — the claim above guarantees single-processing.
+        const withdrawal = await db.get('SELECT id, user_id, amount FROM withdrawals WHERE id = ?', [withdrawalId]);
         if (!withdrawal) {
-            return res.status(404).json({ error: 'Withdrawal not found' });
-        }
-        if (withdrawal.status !== 'pending') {
-            return res.status(400).json({ error: `Withdrawal is already ${withdrawal.status}` });
+            // Shouldn't happen after a successful claim, but be defensive
+            return res.status(404).json({ error: 'Withdrawal not found after claim' });
         }
 
-        // Refund the amount back to user's balance
-        const user = await db.get('SELECT balance FROM users WHERE id = ?', [withdrawal.user_id]);
-        if (!user) {
-            return res.status(404).json({ error: 'User not found' });
-        }
+        const userBefore = await db.get('SELECT balance FROM users WHERE id = ?', [withdrawal.user_id]);
+        const balanceBefore = (userBefore && userBefore.balance) || 0;
 
-        const balanceBefore = user.balance;
+        // Atomic balance credit
+        await db.run('UPDATE users SET balance = balance + ? WHERE id = ?', [withdrawal.amount, withdrawal.user_id]);
         const balanceAfter = balanceBefore + withdrawal.amount;
 
-        await db.run('UPDATE users SET balance = balance + ? WHERE id = ?', [withdrawal.amount, withdrawal.user_id]);
-        await db.run(
-            "UPDATE withdrawals SET status = 'rejected', admin_note = ?, processed_at = datetime('now') WHERE id = ?",
-            [admin_note.trim(), withdrawalId]
-        );
-
-        // Log refund transaction
         await db.run(
             'INSERT INTO transactions (user_id, type, amount, balance_before, balance_after, reference) VALUES (?, ?, ?, ?, ?, ?)',
             [withdrawal.user_id, 'withdrawal_refund', withdrawal.amount, balanceBefore, balanceAfter, `WD-REJECT-${withdrawalId}`]
@@ -1509,13 +1514,17 @@ router.post('/withdrawals/:id/reject', async (req, res) => {
             amount: withdrawal.amount,
             refundedTo: withdrawal.user_id,
             newBalance: balanceAfter,
-            admin_note: admin_note.trim()
+            admin_note
         });
     } catch (err) {
         console.warn('[Admin] Reject withdrawal error:', err.message);
         res.status(500).json({ error: 'Failed to reject withdrawal' });
     }
 });
+
+// NOTE: /reject is the canonical endpoint. The admin UI calls /reject directly.
+// (An earlier iteration had a /deny alias here — removed to keep one code path
+// handling money.)
 
 // ═══════════════════════════════════════════════════
 //  USER ACCOUNT FREEZE
@@ -1702,6 +1711,88 @@ router.get('/hourly-activity', async (req, res) => {
     } catch (e) {
         console.warn('[Admin] Hourly activity error:', e.message);
         res.status(500).json({ error: 'Failed to load hourly data' });
+    }
+});
+
+// ═══════════════════════════════════════════════════════════════════════
+//  ADMIN UI BACKING ENDPOINTS — search + dashboard KPIs
+// ═══════════════════════════════════════════════════════════════════════
+
+// GET /api/admin/users/search?q=<query> — look up a user by id, username, or email
+router.get('/users/search', async (req, res) => {
+    try {
+        const q = String(req.query.q || '').trim();
+        if (!q || q.length < 2) {
+            return res.status(400).json({ error: 'Query must be at least 2 characters' });
+        }
+        if (q.length > 64) {
+            return res.status(400).json({ error: 'Query too long' });
+        }
+
+        const isNumericId = /^\d+$/.test(q);
+        const like = '%' + q.replace(/[%_\\]/g, '\\$&') + '%';
+
+        let users;
+        if (isNumericId) {
+            users = await db.all(
+                `SELECT id, username, email, balance, bonus_balance, wagering_requirement,
+                        wagering_progress, email_verified, kyc_status, is_banned, is_admin,
+                        created_at, last_login
+                 FROM users
+                 WHERE id = ? OR username LIKE ? OR email LIKE ?
+                 ORDER BY id DESC
+                 LIMIT 25`,
+                [parseInt(q, 10), like, like]
+            );
+        } else {
+            users = await db.all(
+                `SELECT id, username, email, balance, bonus_balance, wagering_requirement,
+                        wagering_progress, email_verified, kyc_status, is_banned, is_admin,
+                        created_at, last_login
+                 FROM users
+                 WHERE username LIKE ? OR email LIKE ?
+                 ORDER BY id DESC
+                 LIMIT 25`,
+                [like, like]
+            );
+        }
+
+        res.json({ users: users || [] });
+    } catch (err) {
+        console.warn('[Admin] User search error:', err.message);
+        res.status(500).json({ error: 'Search failed' });
+    }
+});
+
+// GET /api/admin/stats/24h — rolling 24-hour KPIs for the admin dashboard
+router.get('/stats/24h', async (req, res) => {
+    try {
+        const [deposits, active, withdrawals, registrations] = await Promise.all([
+            db.get(
+                "SELECT COALESCE(SUM(amount), 0) as total, COUNT(*) as count FROM deposits WHERE status = 'completed' AND created_at >= datetime('now', '-24 hours')"
+            ).catch(() => ({ total: 0, count: 0 })),
+            db.get(
+                "SELECT COUNT(DISTINCT user_id) as count FROM spins WHERE created_at >= datetime('now', '-24 hours')"
+            ).catch(() => ({ count: 0 })),
+            db.get(
+                "SELECT COALESCE(SUM(amount), 0) as total, COUNT(*) as count FROM withdrawals WHERE created_at >= datetime('now', '-24 hours')"
+            ).catch(() => ({ total: 0, count: 0 })),
+            db.get(
+                "SELECT COUNT(*) as count FROM users WHERE created_at >= datetime('now', '-24 hours')"
+            ).catch(() => ({ count: 0 })),
+        ]);
+
+        res.json({
+            deposits_24h:      Number((deposits && deposits.total) || 0),
+            deposit_count_24h: Number((deposits && deposits.count) || 0),
+            withdrawals_24h:   Number((withdrawals && withdrawals.total) || 0),
+            withdrawal_count_24h: Number((withdrawals && withdrawals.count) || 0),
+            active_users_24h:  Number((active && active.count) || 0),
+            new_users_24h:     Number((registrations && registrations.count) || 0),
+        });
+    } catch (err) {
+        console.warn('[Admin] 24h stats error:', err.message);
+        res.status(500).json({ error: 'Stats query failed' });
     }
 });
 

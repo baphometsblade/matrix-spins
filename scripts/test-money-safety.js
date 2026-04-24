@@ -639,6 +639,54 @@ test('withdrawal approve + deny endpoints are atomic (no double-approve race)', 
     assert(/WHERE id = \? AND status = 'pending'/.test(denyMatch[0]), 'deny must use atomic claim');
 });
 
+test('admin.routes /withdrawals/:id/approve is atomic (no TOCTOU double-process)', () => {
+    const src = fs.readFileSync(path.join(SERVER_DIR, 'routes', 'admin.routes.js'), 'utf8');
+    // Find the /approve handler specifically for /withdrawals/:id (not /approve-withdrawal)
+    const approveMatch = src.match(/router\.post\(\s*['"]\/withdrawals\/:id\/approve['"][\s\S]+?^\}\);/m);
+    assert(approveMatch, '/withdrawals/:id/approve not found in admin.routes.js');
+    assert(/WHERE id = \? AND status = 'pending'/.test(approveMatch[0]),
+        '/withdrawals/:id/approve must use atomic `WHERE status = pending` claim');
+    // Must 409 if claim failed
+    assert(/status\(409\)/.test(approveMatch[0]), 'approve must return 409 when claim loses race');
+});
+
+test('admin.routes /withdrawals/:id/reject is atomic — no double-refund race', () => {
+    const src = fs.readFileSync(path.join(SERVER_DIR, 'routes', 'admin.routes.js'), 'utf8');
+    const rejectMatch = src.match(/router\.post\(\s*['"]\/withdrawals\/:id\/reject['"][\s\S]+?^\}\);/m);
+    assert(rejectMatch, '/withdrawals/:id/reject not found in admin.routes.js');
+    const body = rejectMatch[0];
+    // The claim MUST precede the balance refund, and claim must be status-guarded.
+    const claimIdx  = body.search(/WHERE id = \? AND status = 'pending'/);
+    const refundIdx = body.search(/UPDATE users SET balance = balance \+ \?/);
+    assert(claimIdx >= 0, '/reject must use atomic status-guarded claim');
+    assert(refundIdx >= 0, '/reject must refund balance atomically');
+    assert(claimIdx < refundIdx, 'claim MUST precede refund — otherwise concurrent rejects double-refund');
+    assert(/status\(409\)/.test(body), 'reject must return 409 when claim loses race');
+});
+
+// ══════════════════════════════════════════════════════════════════════
+console.log('\n=== admin UI backing endpoints exist ===');
+// ══════════════════════════════════════════════════════════════════════
+test('admin.routes exposes GET /users/search', () => {
+    const src = fs.readFileSync(path.join(SERVER_DIR, 'routes', 'admin.routes.js'), 'utf8');
+    assert(/router\.get\(\s*['"]\/users\/search['"]/.test(src), 'admin must expose GET /users/search for the admin UI');
+});
+
+test('admin.routes exposes GET /stats/24h', () => {
+    const src = fs.readFileSync(path.join(SERVER_DIR, 'routes', 'admin.routes.js'), 'utf8');
+    assert(/router\.get\(\s*['"]\/stats\/24h['"]/.test(src), 'admin must expose GET /stats/24h for the admin UI');
+});
+
+test('admin UI file exists and avoids innerHTML with interpolated data', () => {
+    const adminIndex = path.join(__dirname, '..', 'admin', 'index.html');
+    assert(fs.existsSync(adminIndex), 'admin/index.html must exist');
+    const html = fs.readFileSync(adminIndex, 'utf8');
+    // Must NOT have template literals writing into innerHTML with user data
+    // (safe DOM construction via el()/textContent only)
+    assert(!/innerHTML\s*=\s*`[^`]*\$\{/.test(html),
+        'admin UI must not interpolate into innerHTML (XSS risk)');
+});
+
 // ══════════════════════════════════════════════════════════════════════
 console.log('\n=== signup enforces age 18+ and terms acceptance ===');
 // ══════════════════════════════════════════════════════════════════════
