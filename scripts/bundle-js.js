@@ -584,6 +584,30 @@ async function main() {
                 process.exit(1);
             }
         }
+
+        // Post-build hygiene: catch the "unminified slipped through" failure mode.
+        // If any minified bundle exists, index.html must reference a minified file
+        // and no unminified peer may remain in dist/.
+        const hasMinJs  = distFiles.some(f => /^bundle\.[a-f0-9]+\.min\.js$/.test(f));
+        const hasMinCss = distFiles.some(f => /^styles\.[a-f0-9]+\.min\.css$/.test(f));
+        const unminJsInDist  = distFiles.filter(f => /^bundle\.[a-f0-9]+\.js$/.test(f)  && !/\.min\.js$/.test(f));
+        const unminCssInDist = distFiles.filter(f => /^styles\.[a-f0-9]+\.css$/.test(f) && !/\.min\.css$/.test(f));
+        if (hasMinJs && unminJsInDist.length > 0) {
+            console.error('[BUNDLE] FATAL: unminified JS bundle(s) present alongside minified:', unminJsInDist.join(', '));
+            process.exit(1);
+        }
+        if (hasMinCss && unminCssInDist.length > 0) {
+            console.error('[BUNDLE] FATAL: unminified CSS bundle(s) present alongside minified:', unminCssInDist.join(', '));
+            process.exit(1);
+        }
+        if (hasMinJs && jsRef && !/\.min\.js$/.test(jsRef[0])) {
+            console.error('[BUNDLE] FATAL: index.html references unminified JS', jsRef[0], 'but .min.js exists');
+            process.exit(1);
+        }
+        if (hasMinCss && cssRef && !/\.min\.css$/.test(cssRef[0])) {
+            console.error('[BUNDLE] FATAL: index.html references unminified CSS', cssRef[0], 'but .min.css exists');
+            process.exit(1);
+        }
         console.log('');
 
     } catch (err) {
