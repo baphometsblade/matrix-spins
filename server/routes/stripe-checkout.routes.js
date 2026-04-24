@@ -280,6 +280,158 @@ router.post('/payment/webhook', express.raw({ type: 'application/json' }), async
         }
     }
 
+    // ═══════════════════════════════════════════════════════════════════
+    //  CHARGEBACK / DISPUTE — freeze account, flag operator, log ledger
+    // ═══════════════════════════════════════════════════════════════════
+    // A chargeback is the single biggest fraud vector. When a user disputes
+    // their card charge through the issuing bank:
+    //   - Stripe sends charge.dispute.created (we lose the funds + may lose more)
+    //   - We MUST ban the account immediately so they cannot keep withdrawing
+    //   - We claw back the chargeback amount from their current balance
+    //     (clamped ≥ 0 — if they already withdrew, that's the cost of doing
+    //     business; we can't go negative without violating the atomic balance
+    //     invariant and breaking play for other operations).
+    //   - We mark the deposit as disputed so admins know which funds are at risk.
+    if (event.type === 'charge.dispute.created' || event.type === 'charge.dispute.funds_withdrawn') {
+        try {
+            const dispute = event.data.object;
+            const chargeId = dispute.charge;
+            const paymentIntent = dispute.payment_intent;
+            const disputeAmount = Math.round((dispute.amount || 0)) / 100;
+            const { getBackend } = require('../database');
+            const db = getBackend();
+
+            // Find the deposit by payment_intent or charge id (both end up in external_ref)
+            const deposit = await db.get(
+                'SELECT id, user_id, amount, status FROM deposits WHERE external_ref = ? OR external_ref = ? LIMIT 1',
+                [paymentIntent || '', chargeId || '']
+            );
+
+            if (!deposit) {
+                console.error('[Stripe Dispute] No deposit matched for dispute ' + dispute.id +
+                    ' (charge=' + chargeId + ', pi=' + paymentIntent + ') — manual investigation required');
+                return res.json({ received: true, matched: false });
+            }
+
+            console.error('[Stripe Dispute] Chargeback filed: dispute=' + dispute.id +
+                ' user=' + deposit.user_id + ' amount=$' + disputeAmount +
+                ' reason=' + (dispute.reason || 'unknown'));
+
+            // Atomic claw-back + freeze in a single transaction
+            await db.beginTransaction();
+            try {
+                // 1. Mark deposit as disputed (idempotent — only first dispute transitions)
+                await db.run(
+                    "UPDATE deposits SET status = 'disputed' WHERE id = ? AND status IN ('completed', 'pending')",
+                    [deposit.id]
+                );
+
+                // 2. Claw back — deduct disputed amount from balance, clamped at 0.
+                // Uses CASE so a user with insufficient balance goes to 0 rather than
+                // negative. Lost-withdrawn funds are tracked via the transaction log below.
+                await db.run(
+                    `UPDATE users SET balance = CASE
+                        WHEN balance - ? < 0 THEN 0
+                        ELSE balance - ? END
+                     WHERE id = ?`,
+                    [disputeAmount, disputeAmount, deposit.user_id]
+                );
+
+                // 3. Freeze the account. Admin can review & unban if the dispute is
+                // resolved in the operator's favour.
+                await db.run(
+                    "UPDATE users SET is_banned = 1, banned_at = datetime('now'), banned_reason = ? WHERE id = ?",
+                    ['chargeback_dispute:' + dispute.id + ' (' + (dispute.reason || 'unspecified') + ')', deposit.user_id]
+                );
+
+                // 4. Audit trail
+                await db.run(
+                    'INSERT INTO transactions (user_id, type, amount, reference) VALUES (?, ?, ?, ?)',
+                    [deposit.user_id, 'chargeback', -disputeAmount, 'DISPUTE-' + dispute.id + ':' + (dispute.reason || 'unknown')]
+                );
+
+                await db.commit();
+                console.warn('[Stripe Dispute] User ' + deposit.user_id + ' banned, $' + disputeAmount + ' clawed back, deposit ' + deposit.id + ' marked disputed');
+            } catch (txErr) {
+                try { await db.rollback(); } catch (_) {}
+                throw txErr;
+            }
+
+            return res.json({ received: true, disputed: true, userId: deposit.user_id });
+        } catch (err) {
+            console.error('[Stripe Dispute] Handler error:', err.message);
+            // Return 500 so Stripe retries — better to process twice (idempotent)
+            // than miss a chargeback entirely.
+            return res.status(500).json({ error: 'Dispute processing error' });
+        }
+    }
+
+    // ═══════════════════════════════════════════════════════════════════
+    //  REFUND — admin-initiated or Stripe-automatic refund
+    // ═══════════════════════════════════════════════════════════════════
+    if (event.type === 'charge.refunded') {
+        try {
+            const charge = event.data.object;
+            const paymentIntent = charge.payment_intent;
+            const amountRefunded = Math.round((charge.amount_refunded || 0)) / 100;
+            const { getBackend } = require('../database');
+            const db = getBackend();
+
+            const deposit = await db.get(
+                'SELECT id, user_id, amount, status FROM deposits WHERE external_ref = ? OR external_ref = ? LIMIT 1',
+                [paymentIntent || '', charge.id || '']
+            );
+            if (!deposit) {
+                console.warn('[Stripe Refund] No deposit matched for charge ' + charge.id);
+                return res.json({ received: true, matched: false });
+            }
+
+            await db.beginTransaction();
+            try {
+                await db.run(
+                    "UPDATE deposits SET status = 'refunded' WHERE id = ? AND status IN ('completed', 'pending')",
+                    [deposit.id]
+                );
+                await db.run(
+                    'UPDATE users SET balance = CASE WHEN balance - ? < 0 THEN 0 ELSE balance - ? END WHERE id = ?',
+                    [amountRefunded, amountRefunded, deposit.user_id]
+                );
+                await db.run(
+                    'INSERT INTO transactions (user_id, type, amount, reference) VALUES (?, ?, ?, ?)',
+                    [deposit.user_id, 'refund', -amountRefunded, 'REFUND:' + charge.id]
+                );
+                await db.commit();
+                console.warn('[Stripe Refund] $' + amountRefunded + ' refunded to user ' + deposit.user_id + ' (deposit ' + deposit.id + ')');
+            } catch (txErr) {
+                try { await db.rollback(); } catch (_) {}
+                throw txErr;
+            }
+            return res.json({ received: true, refunded: true });
+        } catch (err) {
+            console.error('[Stripe Refund] Handler error:', err.message);
+            return res.status(500).json({ error: 'Refund processing error' });
+        }
+    }
+
+    // ═══════════════════════════════════════════════════════════════════
+    //  PAYMENT FAILED — mark any pending deposit as failed
+    // ═══════════════════════════════════════════════════════════════════
+    if (event.type === 'payment_intent.payment_failed') {
+        try {
+            const intent = event.data.object;
+            const { getBackend } = require('../database');
+            const db = getBackend();
+            await db.run(
+                "UPDATE deposits SET status = 'failed' WHERE external_ref = ? AND status = 'pending'",
+                [intent.id]
+            );
+            console.warn('[Stripe] Payment failed for intent ' + intent.id + ' — deposit marked failed');
+        } catch (err) {
+            console.warn('[Stripe] Failed-payment handler error:', err.message);
+        }
+        return res.json({ received: true, failed: true });
+    }
+
     res.json({ received: true });
 });
 

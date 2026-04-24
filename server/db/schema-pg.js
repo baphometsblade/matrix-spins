@@ -842,6 +842,11 @@ const USER_MIGRATIONS = [
     ['date_of_birth', 'TEXT'],
     ['registration_ip', 'TEXT'],
     ['terms_accepted_at', 'TEXT'],
+    // Fraud + compliance (used by fraud-detection.js + stripe chargeback handler)
+    ['banned_at', 'TIMESTAMPTZ'],
+    ['banned_reason', 'TEXT'],
+    ['fraud_flag', 'TEXT'],
+    ['fraud_flag_reason', 'TEXT'],
     ['country', 'TEXT'],
     ['currency', "TEXT DEFAULT 'AUD'"],
     ['email_verified', 'INTEGER DEFAULT 0'],

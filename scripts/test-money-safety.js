@@ -665,6 +665,124 @@ test('admin.routes /withdrawals/:id/reject is atomic — no double-refund race',
 });
 
 // ══════════════════════════════════════════════════════════════════════
+console.log('\n=== Stripe chargeback / dispute / refund handlers ===');
+// ══════════════════════════════════════════════════════════════════════
+const STRIPE_CHECKOUT_SRC_FULL = fs.readFileSync(path.join(SERVER_DIR, 'routes', 'stripe-checkout.routes.js'), 'utf8');
+
+test('webhook handles charge.dispute.created (chargeback)', () => {
+    assert(/event\.type\s*===?\s*['"]charge\.dispute\.created['"]/.test(STRIPE_CHECKOUT_SRC_FULL),
+        'webhook must handle charge.dispute.created');
+});
+
+test('webhook handles charge.dispute.funds_withdrawn', () => {
+    assert(/charge\.dispute\.funds_withdrawn/.test(STRIPE_CHECKOUT_SRC_FULL),
+        'webhook must handle charge.dispute.funds_withdrawn');
+});
+
+test('webhook handles charge.refunded', () => {
+    assert(/event\.type\s*===?\s*['"]charge\.refunded['"]/.test(STRIPE_CHECKOUT_SRC_FULL),
+        'webhook must handle charge.refunded');
+});
+
+test('webhook handles payment_intent.payment_failed', () => {
+    assert(/event\.type\s*===?\s*['"]payment_intent\.payment_failed['"]/.test(STRIPE_CHECKOUT_SRC_FULL),
+        'webhook must handle payment_intent.payment_failed');
+});
+
+test('chargeback handler freezes account (is_banned = 1)', () => {
+    // Find the chargeback block
+    const disputeIdx = STRIPE_CHECKOUT_SRC_FULL.indexOf('charge.dispute.created');
+    const refundIdx = STRIPE_CHECKOUT_SRC_FULL.indexOf('charge.refunded');
+    assert(disputeIdx > 0 && refundIdx > disputeIdx, 'ordering check');
+    const disputeBlock = STRIPE_CHECKOUT_SRC_FULL.slice(disputeIdx, refundIdx);
+    assert(/is_banned\s*=\s*1/.test(disputeBlock),
+        'chargeback handler must set is_banned = 1');
+});
+
+test('chargeback handler clamps balance at 0 (cannot go negative)', () => {
+    const disputeIdx = STRIPE_CHECKOUT_SRC_FULL.indexOf('charge.dispute.created');
+    const refundIdx = STRIPE_CHECKOUT_SRC_FULL.indexOf('charge.refunded');
+    const disputeBlock = STRIPE_CHECKOUT_SRC_FULL.slice(disputeIdx, refundIdx);
+    assert(/WHEN balance - \? < 0 THEN 0/.test(disputeBlock),
+        'chargeback claw-back must clamp at 0 to preserve atomic invariant');
+});
+
+test('chargeback handler wraps claw-back + freeze + tx log in DB transaction', () => {
+    const disputeIdx = STRIPE_CHECKOUT_SRC_FULL.indexOf('charge.dispute.created');
+    const refundIdx = STRIPE_CHECKOUT_SRC_FULL.indexOf('charge.refunded');
+    const disputeBlock = STRIPE_CHECKOUT_SRC_FULL.slice(disputeIdx, refundIdx);
+    assert(/beginTransaction\(\)/.test(disputeBlock), 'chargeback must use a DB transaction');
+    assert(/commit\(\)/.test(disputeBlock), 'chargeback must commit');
+    assert(/rollback/.test(disputeBlock), 'chargeback must rollback on error');
+});
+
+test('chargeback handler returns 500 on error so Stripe retries', () => {
+    const disputeIdx = STRIPE_CHECKOUT_SRC_FULL.indexOf('charge.dispute.created');
+    const refundIdx = STRIPE_CHECKOUT_SRC_FULL.indexOf('charge.refunded');
+    const disputeBlock = STRIPE_CHECKOUT_SRC_FULL.slice(disputeIdx, refundIdx);
+    assert(/status\(500\)/.test(disputeBlock),
+        'chargeback handler must return 500 on error — idempotent retry better than silent miss');
+});
+
+test('banned_at + banned_reason + fraud_flag columns exist in both schemas', () => {
+    const sqlite = fs.readFileSync(path.join(SERVER_DIR, 'db', 'schema-sqlite.js'), 'utf8');
+    const pg     = fs.readFileSync(path.join(SERVER_DIR, 'db', 'schema-pg.js'), 'utf8');
+    ['banned_at', 'banned_reason', 'fraud_flag', 'fraud_flag_reason'].forEach(col => {
+        assert(sqlite.includes(`'${col}'`), `schema-sqlite.js must declare USER_MIGRATION for ${col}`);
+        assert(pg.includes(`'${col}'`), `schema-pg.js must declare USER_MIGRATION for ${col}`);
+    });
+});
+
+// ══════════════════════════════════════════════════════════════════════
+console.log('\n=== wagering_progress atomicity ===');
+// ══════════════════════════════════════════════════════════════════════
+const SPIN_SRC_FULL = fs.readFileSync(path.join(SERVER_DIR, 'routes', 'spin.routes.js'), 'utf8');
+
+test('wagering_progress increments use atomic MIN()', () => {
+    // MIN(progress + bet, requirement) inside a single UPDATE
+    assert(/wagering_progress\s*=\s*MIN\(COALESCE\(wagering_progress,\s*0\)\s*\+\s*\?/.test(SPIN_SRC_FULL),
+        'wagering_progress increment must be atomic with MIN() to avoid overshoot');
+});
+
+test('wagering_progress increment only runs when requirement > 0', () => {
+    assert(/COALESCE\(wagering_requirement,\s*0\)\s*>\s*0/.test(SPIN_SRC_FULL),
+        'wagering increment must short-circuit when requirement = 0');
+});
+
+test('bonus → balance conversion is atomic (zeros out in single UPDATE)', () => {
+    // Looking for the canonical conversion SQL
+    assert(
+        /UPDATE users SET balance = balance \+ bonus_balance,\s*wagering_progress = 0,\s*wagering_requirement = 0,\s*bonus_balance = 0 WHERE id = \? AND bonus_balance > 0/.test(SPIN_SRC_FULL),
+        'bonus conversion must be a single atomic UPDATE with bonus_balance > 0 guard'
+    );
+});
+
+test('free spins do NOT increment wagering_progress (house-funded)', () => {
+    // The wagering increment block is wrapped in `if (!usedFreeSpin && bet > 0)`
+    assert(/if\s*\(\s*!usedFreeSpin\s*&&\s*bet\s*>\s*0\s*\)/.test(SPIN_SRC_FULL),
+        'wagering block must skip free-spin bets');
+});
+
+// ══════════════════════════════════════════════════════════════════════
+console.log('\n=== balance reconciliation script ===');
+// ══════════════════════════════════════════════════════════════════════
+test('scripts/reconcile-balances.js exists and exports a main()', () => {
+    const reconcilePath = path.join(__dirname, '..', 'scripts', 'reconcile-balances.js');
+    assert(fs.existsSync(reconcilePath), 'reconciliation script must exist');
+    const src = fs.readFileSync(reconcilePath, 'utf8');
+    assert(/async function main\(\)/.test(src), 'script must define main()');
+    assert(/BALANCE_TX_TYPES/.test(src), 'script must enumerate balance-affecting transaction types');
+    assert(/process\.exit\(/.test(src), 'script must exit with status code');
+});
+
+test('reconciliation script exits non-zero when drift ≥ $1 detected', () => {
+    const src = fs.readFileSync(path.join(__dirname, '..', 'scripts', 'reconcile-balances.js'), 'utf8');
+    // Look for the serious-drift exit logic
+    assert(/serious\s*>\s*0/.test(src), 'must exit non-zero on serious drift');
+    assert(/Math\.abs\(.*drift.*\)\s*>=\s*1/.test(src), 'serious threshold must be |drift| ≥ $1');
+});
+
+// ══════════════════════════════════════════════════════════════════════
 console.log('\n=== admin UI backing endpoints exist ===');
 // ══════════════════════════════════════════════════════════════════════
 test('admin.routes exposes GET /users/search', () => {
