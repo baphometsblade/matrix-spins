@@ -323,14 +323,35 @@ router.post('/payment/webhook', express.raw({ type: 'application/json' }), async
                 ' user=' + deposit.user_id + ' amount=$' + disputeAmount +
                 ' reason=' + (dispute.reason || 'unknown'));
 
+            // Idempotency: Stripe retries dispute webhooks, and the same
+            // dispute can arrive as both charge.dispute.created AND later
+            // charge.dispute.funds_withdrawn. We key off the transaction log
+            // reference `DISPUTE-<id>` — if we've already recorded it, skip
+            // the claw-back so balance isn't double-debited.
+            const alreadyClawedBack = await db.get(
+                "SELECT id FROM transactions WHERE user_id = ? AND type = 'chargeback' AND reference LIKE ? LIMIT 1",
+                [deposit.user_id, 'DISPUTE-' + dispute.id + '%']
+            ).catch(() => null);
+            if (alreadyClawedBack) {
+                console.warn('[Stripe Dispute] Dispute ' + dispute.id + ' already processed — skipping duplicate claw-back');
+                return res.json({ received: true, duplicate: true });
+            }
+
             // Atomic claw-back + freeze in a single transaction
             await db.beginTransaction();
             try {
-                // 1. Mark deposit as disputed (idempotent — only first dispute transitions)
-                await db.run(
+                // 1. Mark deposit as disputed — only the first webhook transitions the row
+                const claim = await db.run(
                     "UPDATE deposits SET status = 'disputed' WHERE id = ? AND status IN ('completed', 'pending')",
                     [deposit.id]
                 );
+
+                // If deposit is ALREADY disputed (from an earlier event in this dispute),
+                // we still run the claw-back because the above idempotency check caught
+                // repeats. But gate on the earlier idempotency lookup is the source of truth.
+                // claim.changes === 0 just means the deposit was previously transitioned
+                // — the idempotency check above is what actually prevents double-processing.
+                void claim;
 
                 // 2. Claw back — deduct disputed amount from balance, clamped at 0.
                 // Uses CASE so a user with insufficient balance goes to 0 rather than
@@ -350,7 +371,7 @@ router.post('/payment/webhook', express.raw({ type: 'application/json' }), async
                     ['chargeback_dispute:' + dispute.id + ' (' + (dispute.reason || 'unspecified') + ')', deposit.user_id]
                 );
 
-                // 4. Audit trail
+                // 4. Audit trail — also the idempotency marker for duplicate webhooks
                 await db.run(
                     'INSERT INTO transactions (user_id, type, amount, reference) VALUES (?, ?, ?, ?)',
                     [deposit.user_id, 'chargeback', -disputeAmount, 'DISPUTE-' + dispute.id + ':' + (dispute.reason || 'unknown')]
@@ -390,6 +411,16 @@ router.post('/payment/webhook', express.raw({ type: 'application/json' }), async
             if (!deposit) {
                 console.warn('[Stripe Refund] No deposit matched for charge ' + charge.id);
                 return res.json({ received: true, matched: false });
+            }
+
+            // Idempotency: Stripe may retry; skip if we've already logged this refund
+            const alreadyRefunded = await db.get(
+                "SELECT id FROM transactions WHERE user_id = ? AND type = 'refund' AND reference = ? LIMIT 1",
+                [deposit.user_id, 'REFUND:' + charge.id]
+            ).catch(() => null);
+            if (alreadyRefunded) {
+                console.warn('[Stripe Refund] Duplicate refund webhook for charge ' + charge.id + ' — skipping');
+                return res.json({ received: true, duplicate: true });
             }
 
             await db.beginTransaction();

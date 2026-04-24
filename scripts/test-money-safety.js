@@ -716,6 +716,28 @@ test('chargeback handler wraps claw-back + freeze + tx log in DB transaction', (
     assert(/rollback/.test(disputeBlock), 'chargeback must rollback on error');
 });
 
+test('chargeback handler is idempotent (Stripe retries do NOT double-clawback)', () => {
+    const disputeIdx = STRIPE_CHECKOUT_SRC_FULL.indexOf('charge.dispute.created');
+    const refundIdx = STRIPE_CHECKOUT_SRC_FULL.indexOf('charge.refunded');
+    const disputeBlock = STRIPE_CHECKOUT_SRC_FULL.slice(disputeIdx, refundIdx);
+    // Must check for an existing chargeback transaction BEFORE clawing back
+    assert(
+        /type\s*=\s*['"]chargeback['"][\s\S]{0,200}reference LIKE/.test(disputeBlock) ||
+        /alreadyClawedBack/.test(disputeBlock),
+        'chargeback handler must check for duplicate DISPUTE-id before processing'
+    );
+});
+
+test('refund handler is idempotent (duplicate webhook does NOT double-debit)', () => {
+    const refundIdx = STRIPE_CHECKOUT_SRC_FULL.indexOf('charge.refunded');
+    const failedIdx = STRIPE_CHECKOUT_SRC_FULL.indexOf('payment_intent.payment_failed');
+    const refundBlock = STRIPE_CHECKOUT_SRC_FULL.slice(refundIdx, failedIdx);
+    assert(
+        /alreadyRefunded/.test(refundBlock) || /type\s*=\s*['"]refund['"][\s\S]{0,100}reference = \?/.test(refundBlock),
+        'refund handler must check for duplicate REFUND: reference before processing'
+    );
+});
+
 test('chargeback handler returns 500 on error so Stripe retries', () => {
     const disputeIdx = STRIPE_CHECKOUT_SRC_FULL.indexOf('charge.dispute.created');
     const refundIdx = STRIPE_CHECKOUT_SRC_FULL.indexOf('charge.refunded');
