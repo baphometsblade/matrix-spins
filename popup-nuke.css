@@ -141,3 +141,31 @@
 .hero-banner .btn-bonus-wheel {
   display: none !important;
 }
+
+/* ==================================================================
+   2026-04-24: nuke every legacy floating panel that was cluttering
+   the slot modal (VIP bonus tier list, keyboard shortcuts overlay,
+   duplicate Pay Table FAB, friends panel, gift panel). Init functions
+   are also neutralised in js/ui-slot.js, but this kills them
+   defensively in case something else re-renders them.
+   ================================================================== */
+#vip-bonus-panel, .vip-bonus-panel,
+#keyboard-help, .keyboard-help,
+#slotHotkeySheet, .hotkey-sheet,
+#paytableBtn648, .paytable-btn,
+#friends-btn, .friends-btn,
+#friends-panel, .friends-panel,
+#friends-modal, .friends-modal,
+#gift-panel, .gift-panel,
+#cashback-panel, .cashback-panel,
+.kh-inner, .vb-inner {
+  display: none !important;
+}
+
+/* Suppress global "Rate limited" toasts when the slot modal is open.
+   The in-slot spin error handler surfaces 429s on its own. */
+body:has(#slotModal.active) .toast-rate-limit,
+body:has(#slotModal.active) [class*="rate-limit"],
+body:has(#slotModal.active) .error-toast[data-kind="rate_limit"] {
+  display: none !important;
+}

@@ -7575,34 +7575,42 @@
             justify-content: center;
         }
 
-        /* ═══ Bottom bar responsive ═══ */
+        /* ═══ Bottom bar responsive — readable text at every size ═══ */
         @media (max-width: 768px) {
             .slot-bottom-bar {
-                gap: 4px;
-                padding: 5px 6px;
-                min-height: 56px;
+                gap: 6px;
+                padding: 8px 10px;
+                min-height: 68px;
             }
 
             .slot-bar-section {
-                padding: 2px 6px;
+                padding: 4px 8px;
             }
 
             .slot-bar-value {
-                font-size: 14px;
+                font-size: 15px;
+                font-weight: 800;
+                line-height: 1.15;
             }
 
             .slot-bar-label {
-                font-size: 9px;
+                font-size: 11px;           /* was 9px — unreadable */
+                font-weight: 700;
+                letter-spacing: 0.5px;
+                opacity: 0.85;
+                line-height: 1.2;
             }
 
             .slot-bar-balance, .slot-bar-win {
-                min-width: 60px;
+                min-width: 72px;
             }
 
             .slot-spin-btn {
-                width: 52px;
-                height: 52px;
-                font-size: 10px;
+                width: 60px;
+                height: 60px;
+                font-size: 11px;
+                font-weight: 900;
+                letter-spacing: 0.3px;
                 border-width: 2px;
             }
 
@@ -7611,26 +7619,31 @@
             }
 
             .slot-bet-btn {
-                width: 26px;
-                height: 26px;
-                font-size: 14px;
+                width: 32px;
+                height: 32px;
+                font-size: 18px;
+                font-weight: 900;
             }
 
             .slot-turbo-btn, .slot-auto-btn {
-                width: 30px;
-                height: 30px;
+                width: 42px;
+                height: 42px;
+                font-size: 13px;
+                font-weight: 800;
             }
 
             .slot-bet-display {
-                min-width: 50px;
+                min-width: 64px;
             }
 
             .slot-bet-display .slot-bar-value {
-                font-size: 14px;
+                font-size: 15px;
+                font-weight: 800;
             }
 
             .slot-top-info .slot-title {
-                font-size: 14px;
+                font-size: 15px;
+                font-weight: 800;
             }
 
             .slot-reel-area {

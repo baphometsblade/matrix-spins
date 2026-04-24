@@ -3699,18 +3699,15 @@
                 }
                 if (points.length < 2) return;
 
-                // Build smooth path (cubic bezier through midpoints for a flowing look)
-                var d;
-                if (points.length === 2) {
-                    d = 'M' + points[0].x + ',' + points[0].y + ' L' + points[1].x + ',' + points[1].y;
-                } else {
-                    d = 'M' + points[0].x + ',' + points[0].y;
-                    for (var j = 1; j < points.length - 1; j++) {
-                        var mx = (points[j].x + points[j + 1].x) / 2;
-                        var my = (points[j].y + points[j + 1].y) / 2;
-                        d += ' Q' + points[j].x + ',' + points[j].y + ' ' + mx + ',' + my;
-                    }
-                    d += ' L' + points[points.length - 1].x + ',' + points[points.length - 1].y;
+                // Build STRAIGHT-SEGMENT path connecting every winning cell
+                // centre in order. Premium slots (Pragmatic Play, NetEnt)
+                // always use straight segments — never curves — so the
+                // player can read exactly which cells make the line. We
+                // used to bezier-smooth through midpoints which looked
+                // pretty but obscured the shape on zigzag paylines.
+                var d = 'M' + points[0].x + ',' + points[0].y;
+                for (var j = 1; j < points.length; j++) {
+                    d += ' L' + points[j].x + ',' + points[j].y;
                 }
 
                 var delay = idx * 0.06; // stagger each payline slightly
@@ -3719,20 +3716,34 @@
                 var glow = document.createElementNS('http://www.w3.org/2000/svg', 'path');
                 glow.setAttribute('d', d);
                 glow.setAttribute('stroke', color);
-                glow.setAttribute('stroke-width', '14');
+                glow.setAttribute('stroke-width', '22');
                 glow.setAttribute('fill', 'none');
                 glow.setAttribute('stroke-linecap', 'round');
                 glow.setAttribute('stroke-linejoin', 'round');
-                glow.setAttribute('opacity', '0.4');
+                glow.setAttribute('opacity', '0.55');
                 glow.setAttribute('filter', 'url(#plBlur)');
                 glow.style.animationDelay = delay + 's';
                 svg.appendChild(glow);
 
-                // Main crisp line (thicker and more opaque for visibility)
+                // Dark outline for contrast on bright backgrounds
+                var outline = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+                outline.setAttribute('d', d);
+                outline.setAttribute('stroke', 'rgba(0,0,0,0.9)');
+                outline.setAttribute('stroke-width', '11');
+                outline.setAttribute('fill', 'none');
+                outline.setAttribute('stroke-linecap', 'round');
+                outline.setAttribute('stroke-linejoin', 'round');
+                outline.setAttribute('opacity', '0.8');
+                outline.style.animationDelay = delay + 's';
+                svg.appendChild(outline);
+
+                // Main solid colored line — thick, saturated, industry
+                // standard. Full opacity so it reads as a real line even
+                // against busy symbol backgrounds.
                 var line = document.createElementNS('http://www.w3.org/2000/svg', 'path');
                 line.setAttribute('d', d);
                 line.setAttribute('stroke', color);
-                line.setAttribute('stroke-width', '4');
+                line.setAttribute('stroke-width', '7');
                 line.setAttribute('fill', 'none');
                 line.setAttribute('stroke-linecap', 'round');
                 line.setAttribute('stroke-linejoin', 'round');
@@ -3741,16 +3752,21 @@
                 line.style.animationDelay = delay + 's';
                 svg.appendChild(line);
 
-                // White inner highlight line (thin, centred on main line)
-                var highlight = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-                highlight.setAttribute('d', d);
-                highlight.setAttribute('stroke', '#ffffff');
-                highlight.setAttribute('stroke-width', '1.5');
-                highlight.setAttribute('fill', 'none');
-                highlight.setAttribute('stroke-linecap', 'round');
-                highlight.setAttribute('opacity', '0.55');
-                highlight.style.animationDelay = delay + 's';
-                svg.appendChild(highlight);
+                // Thin white centerline for premium "gem" look — only on
+                // the primary / highest-pay line to avoid visual noise
+                // when many lines are drawn at once.
+                if (idx === 0) {
+                    var highlight = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+                    highlight.setAttribute('d', d);
+                    highlight.setAttribute('stroke', '#ffffff');
+                    highlight.setAttribute('stroke-width', '2');
+                    highlight.setAttribute('fill', 'none');
+                    highlight.setAttribute('stroke-linecap', 'round');
+                    highlight.setAttribute('stroke-linejoin', 'round');
+                    highlight.setAttribute('opacity', '0.85');
+                    highlight.style.animationDelay = delay + 's';
+                    svg.appendChild(highlight);
+                }
 
                 // Dots at each cell centre (larger for visibility)
                 for (var p = 0; p < points.length; p++) {
@@ -23989,32 +24005,12 @@ function _initCashbackRewards() {
 }
 
 /* ---- Feature 8: VIP Deposit Bonuses ---- */
-function _initVIPDepositBonuses() {
-    if (document.getElementById('vip-bonus-panel')) return;
-    var vipLevel = parseInt(localStorage.getItem('ms_vip_level') || '0');
-    var bonuses = [
-        { level: 0, name: 'Bronze', match: 10, maxBonus: 50 },
-        { level: 1, name: 'Silver', match: 25, maxBonus: 125 },
-        { level: 2, name: 'Gold', match: 50, maxBonus: 250 },
-        { level: 3, name: 'Platinum', match: 75, maxBonus: 500 },
-        { level: 4, name: 'Diamond', match: 100, maxBonus: 1000 },
-        { level: 5, name: 'Royal', match: 150, maxBonus: 2500 }
-    ];
-    var current = bonuses[Math.min(vipLevel, bonuses.length-1)];
-    var panel = document.createElement('div');
-    panel.id = 'vip-bonus-panel';
-    panel.className = 'vip-bonus-panel hidden';
-    panel.innerHTML = '<div class="vb-inner"><h3>VIP Deposit Bonuses</h3>' +
-        '<div class="vb-current"><span class="vb-tier">' + current.name + '</span><span class="vb-match">' + current.match + '% Match</span><span class="vb-max">Up to $' + current.maxBonus + '</span></div>' +
-        '<div class="vb-tiers">' +
-        bonuses.map(function(b) {
-            return '<div class="vb-tier-item' + (b.level === vipLevel ? ' vb-active' : '') + (b.level < vipLevel ? ' vb-unlocked' : '') + '">' +
-                '<span class="vb-name">' + b.name + '</span><span>' + b.match + '% up to $' + b.maxBonus + '</span></div>';
-        }).join('') +
-        '</div><p class="vb-note">Deposit bonuses are applied automatically on your next deposit.</p></div>';
-    document.body.appendChild(panel);
-    console.log('[Sprint 515-522] VIP Deposit Bonuses ready');
-}
+// NEUTRALIZED 2026-04-24: was overlaying the slot modal with a giant tier
+// list (Bronze/Silver/Gold/...) that obscured the reels. The VIP deposit
+// match is still enforced server-side in payment.routes.js; players see
+// their tier in the cashier / wallet screens. This floating in-slot panel
+// is dead code now.
+function _initVIPDepositBonuses() { /* removed: see comment above */ }
 
 
 // === Sprint 523-530 Feature 1: Leaderboard Seasons ===
@@ -24213,34 +24209,13 @@ function _initFontSizeAdjuster() {
 }
 
 /* ---- Feature 3: Keyboard Navigation ---- */
-function _initKeyboardNav() {
-    var shortcuts = {
-        's': function() { var spinBtn = document.querySelector('.spin-btn, #spin-button, [data-action=spin]'); if(spinBtn) spinBtn.click(); },
-        'd': function() { var depBtn = document.querySelector('.deposit-btn, #deposit-button'); if(depBtn) depBtn.click(); },
-        'm': function() { var menuBtn = document.querySelector('.menu-btn, #menu-toggle'); if(menuBtn) menuBtn.click(); },
-        'h': function() { var helpPanel = document.getElementById('keyboard-help'); if(helpPanel) helpPanel.classList.toggle('hidden'); },
-        'Escape': function() { document.querySelectorAll('.modal,.overlay,[class*=modal],[class*=overlay]').forEach(function(m){m.remove();}); }
-    };
-    document.addEventListener('keydown', function(e) {
-        if (e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT' || e.target.tagName === 'TEXTAREA') return;
-        var fn = shortcuts[e.key];
-        if (fn) { e.preventDefault(); fn(); }
-    });
-    var help = document.createElement('div');
-    help.id = 'keyboard-help';
-    help.className = 'keyboard-help hidden';
-    help.setAttribute('role', 'dialog');
-    help.setAttribute('aria-label', 'Keyboard shortcuts');
-    help.innerHTML = '<div class="kh-inner"><h3>Keyboard Shortcuts</h3>' +
-        '<div class="kh-row"><kbd>S</kbd> Spin</div>' +
-        '<div class="kh-row"><kbd>D</kbd> Deposit</div>' +
-        '<div class="kh-row"><kbd>M</kbd> Menu</div>' +
-        '<div class="kh-row"><kbd>H</kbd> This help</div>' +
-        '<div class="kh-row"><kbd>Esc</kbd> Close modals</div>' +
-        '</div>';
-    document.body.appendChild(help);
-    console.log('[Sprint 531-538] Keyboard Navigation ready');
-}
+// NEUTRALIZED 2026-04-24: the visible help overlay was floating inside the
+// slot modal covering the reels, and the Escape handler was a loose nuke
+// removing every element whose class contained "modal" or "overlay" —
+// including the slot modal itself. ui-slot.js already wires Space→spin,
+// T→turbo, A→autoplay, Esc→close with proper input-field + modal-state
+// guards, so this legacy feature is dead weight here.
+function _initKeyboardNav() { /* removed: see comment above */ }
 
 /* ---- Feature 4: Screen Reader Labels ---- */
 function _initScreenReaderLabels() {
@@ -27388,17 +27363,10 @@ function _initBetPresets647() {
 }
 
 // === Feature 6: Paytable Viewer (648) ===
-function _initPaytable648() {
-    var btn = document.getElementById('paytableBtn648');
-    if (btn) return;
-    btn = document.createElement('button');
-    btn.id = 'paytableBtn648';
-    btn.className = 'paytable-btn';
-    btn.textContent = 'ℹ️ Pay Table';
-    btn.onclick = function() { _showPaytable648(); };
-    document.body.appendChild(btn);
-    console.log('[Sprint 643-650] Paytable Viewer ready');
-}
+// NEUTRALIZED 2026-04-24: the floating "Pay Table" button was covering the
+// slot top bar. The real paytable button lives in the slot-top-bar
+// (togglePaytable) so this duplicate FAB is redundant.
+function _initPaytable648() { /* removed: see comment above */ }
 function _showPaytable648() {
     // Redirect to the real per-symbol paytable (Sprint 19) instead of showing
     // hardcoded generic ranges which are misleading
