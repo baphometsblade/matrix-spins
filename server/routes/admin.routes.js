@@ -1506,6 +1506,12 @@ router.post('/withdrawals/:id/approve', async (req, res) => {
                 'INSERT INTO transactions (user_id, type, amount, balance_before, balance_after, reference) VALUES (?, ?, ?, ?, ?, ?)',
                 [withdrawal.user_id, 'withdrawal_approved', withdrawal.amount, currentBalance, currentBalance, `WD-APPROVE-${withdrawalId}`]
             );
+
+            // ROUND 64: Audit log — compliance trail on every admin withdrawal decision
+            await db.run(
+                "INSERT INTO admin_audit_log (admin_id, action, target_user_id, details, created_at) VALUES (?, 'approve_withdrawal_v2', ?, ?, datetime('now'))",
+                [req.user.id, withdrawal.user_id, JSON.stringify({ withdrawalId: parseInt(withdrawalId), amount: withdrawal.amount, note: admin_note })]
+            ).catch(() => {});
         }
 
         res.json({
@@ -1563,6 +1569,12 @@ router.post('/withdrawals/:id/reject', async (req, res) => {
             'INSERT INTO transactions (user_id, type, amount, balance_before, balance_after, reference) VALUES (?, ?, ?, ?, ?, ?)',
             [withdrawal.user_id, 'withdrawal_refund', withdrawal.amount, balanceBefore, balanceAfter, `WD-REJECT-${withdrawalId}`]
         );
+
+        // ROUND 64: Audit log — compliance trail on every admin withdrawal decision
+        await db.run(
+            "INSERT INTO admin_audit_log (admin_id, action, target_user_id, details, created_at) VALUES (?, 'reject_withdrawal_v2', ?, ?, datetime('now'))",
+            [req.user.id, withdrawal.user_id, JSON.stringify({ withdrawalId: parseInt(withdrawalId), amount: withdrawal.amount, reason: admin_note })]
+        ).catch(() => {});
 
         res.json({
             message: 'Withdrawal rejected and amount refunded to user balance',

@@ -15,9 +15,28 @@ const aml = require('../services/aml.service');
 const router = express.Router();
 
 // ─── Withdrawal request lock: prevents concurrent double-withdrawal race condition ───
-const activeWithdrawals = new Set();
-// Cleanup stale locks every 5 minutes (in case of crashes)
-setInterval(function() { activeWithdrawals.clear(); }, 5 * 60 * 1000);
+// ROUND 64: TTL-map (userId → acquisition timestamp). Every 60s the sweep
+// evicts entries older than 30 s — enough for any legit withdrawal to complete,
+// but bounded so crashes don't leave a permanent lock. Previous implementation
+// (`setInterval(() => set.clear(), 5 min)`) wiped the ENTIRE lock set on every
+// tick, briefly opening a race window for any in-flight request that acquired
+// just before the clear.
+const activeWithdrawals = {
+    _map: new Map(),
+    add(userId) { this._map.set(userId, Date.now()); },
+    has(userId) { return this._map.has(userId); },
+    delete(userId) { this._map.delete(userId); },
+    clear() { this._map.clear(); },
+    get size() { return this._map.size; },
+    [Symbol.iterator]() { return this._map.keys(); },
+};
+const _WITHDRAW_LOCK_TTL_MS = 30_000;
+setInterval(function sweepStaleWithdrawLocks() {
+    const cutoff = Date.now() - _WITHDRAW_LOCK_TTL_MS;
+    for (const [uid, acquiredAt] of activeWithdrawals._map) {
+        if (acquiredAt < cutoff) activeWithdrawals._map.delete(uid);
+    }
+}, 60 * 1000).unref();
 
 // ─── OTP Rate Limiter ───
 const otpLimiter = rateLimit({
@@ -856,11 +875,16 @@ router.post('/withdraw/:id/resend-otp', authenticate, otpLimiter, async (req, re
             return res.status(400).json({ error: 'OTP not required for this withdrawal' });
         }
 
-        // Rotate to a fresh 6-digit code (invalidates any previously emailed one)
+        // Rotate to a fresh 6-digit code (invalidates any previously emailed one).
+        // ROUND 64: otp_attempts is NOT reset — the 5-wrong-attempts cancel
+        // threshold is cumulative across resends. Otherwise an attacker could
+        // loop resend + 4 wrong guesses per 15-min window and brute-force the
+        // code over time. Legitimate users rarely need more than 1-2 attempts;
+        // if they really need a fresh start they can cancel + re-submit.
         const rand = crypto.randomBytes(3).readUIntBE(0, 3);
         const otpCode = String(rand % 1_000_000).padStart(6, '0');
         await db.run(
-            "UPDATE withdrawals SET otp_code = ?, otp_attempts = 0, otp_created_at = datetime('now') WHERE id = ?",
+            "UPDATE withdrawals SET otp_code = ?, otp_created_at = datetime('now') WHERE id = ?",
             [otpCode, wd.id]
         );
 
@@ -1213,6 +1237,12 @@ router.post('/admin/approve-deposit', authenticate, _payReqAdmin, async (req, re
             try { await db.rollback(); } catch (_rb) { console.warn('[payment] rollback error:', _rb.message); }
             throw txErr;
         }
+
+        // ── Audit log (fire-and-forget) — ROUND 64: compliance trail on admin money op ──
+        await db.run(
+            "INSERT INTO admin_audit_log (admin_id, action, target_user_id, details, created_at) VALUES (?, 'approve_deposit', ?, ?, datetime('now'))",
+            [req.user.id, deposit.user_id, JSON.stringify({ depositId: deposit.id, amount: deposit.amount, bonusAmount: bonusAmount, bonusType })]
+        ).catch(() => {});
 
         // ── NFT ledger: record deposit as NFT sale (fire-and-forget) ──
         mintOnDeposit(db, { userId: deposit.user_id, amount: deposit.amount, depositId: deposit.id, paymentType: deposit.payment_type, reference: deposit.reference, currency: config.CURRENCY }).catch(function() {});

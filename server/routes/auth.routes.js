@@ -224,7 +224,7 @@ router.post('/register', async (req, res) => {
             newReferralCode = generateReferralCode();
         }
 
-        const passwordHash = bcrypt.hashSync(password, 13);
+        const passwordHash = await bcrypt.hash(password, 13);
         const startBalance = config.DEFAULT_BALANCE;
         const SIGNUP_WAGERING_MULT = 25;
 
@@ -362,9 +362,11 @@ router.post('/login', async (req, res) => {
             }
         }
 
-        // Always run bcrypt comparison (constant-time — prevents user enumeration via timing)
+        // Always run bcrypt comparison (constant-time — prevents user enumeration via timing).
+        // Async so the ~150ms CPU cost at cost=13 doesn't block the event loop
+        // under credential-stuffing load.
         const hashToCompare = user ? user.password_hash : DUMMY_HASH;
-        const passwordValid = bcrypt.compareSync(password, hashToCompare);
+        const passwordValid = await bcrypt.compare(password, hashToCompare);
 
         if (!user || !passwordValid) {
             // Track failed attempts for real users
@@ -536,7 +538,7 @@ router.post('/reset-password', async (req, res) => {
         }
 
         // Hash new password + bump password_changed_at to invalidate existing sessions
-        const passwordHash = bcrypt.hashSync(newPassword, 13);
+        const passwordHash = await bcrypt.hash(newPassword, 13);
         await db.run(
             'UPDATE users SET password_hash = ?, password_changed_at = ? WHERE id = ?',
             [passwordHash, Math.floor(Date.now() / 1000), resetRecord.user_id]
@@ -580,15 +582,16 @@ router.post('/change-password', authenticate, async (req, res) => {
             return res.status(400).json({ error: `Password must contain ${passwordIssues.join(', ')}` });
         }
 
-        // Verify current password (bcrypt.compareSync is already constant-time)
-        const passwordValid = bcrypt.compareSync(currentPassword, user.password_hash);
+        // Verify current password. Async bcrypt.compare is constant-time AND
+        // non-blocking (runs on libuv threadpool).
+        const passwordValid = await bcrypt.compare(currentPassword, user.password_hash);
 
         if (!passwordValid) {
             return res.status(401).json({ error: 'Current password is incorrect' });
         }
 
         // Hash new password
-        const newPasswordHash = bcrypt.hashSync(newPassword, 13);
+        const newPasswordHash = await bcrypt.hash(newPassword, 13);
 
         // Update user password and record change timestamp (for token invalidation)
         const pwChangedAt = Math.floor(Date.now() / 1000);

@@ -40,8 +40,8 @@ router.post('/request-deletion', authenticate, async (req, res) => {
             return res.status(404).json({ error: 'User not found' });
         }
 
-        // Verify password
-        const passwordValid = bcrypt.compareSync(password, user.password_hash);
+        // Verify password (async — non-blocking)
+        const passwordValid = await bcrypt.compare(password, user.password_hash);
 
         if (!passwordValid) {
             return res.status(401).json({ error: 'Password is incorrect' });

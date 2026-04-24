@@ -625,13 +625,13 @@ router.put('/change-password', authenticate, async (req, res) => {
             return res.status(404).json({ error: 'User not found' });
         }
 
-        // Verify current password
-        if (!bcrypt.compareSync(current_password, user.password_hash)) {
+        // Verify current password (async — non-blocking under load)
+        if (!(await bcrypt.compare(current_password, user.password_hash))) {
             return res.status(401).json({ error: 'Current password is incorrect' });
         }
 
         // Hash and store new password
-        const newHash = bcrypt.hashSync(new_password, 12);
+        const newHash = await bcrypt.hash(new_password, 12);
         await db.run(
             "UPDATE users SET password_hash = ?, updated_at = datetime('now') WHERE id = ?",
             [newHash, req.user.id]
@@ -723,8 +723,8 @@ router.post('/reset-password', async (req, res) => {
             return res.status(400).json({ error: 'Invalid or expired reset token' });
         }
 
-        // Hash and update password
-        const newHash = bcrypt.hashSync(new_password, 12);
+        // Hash and update password (async — non-blocking)
+        const newHash = await bcrypt.hash(new_password, 12);
         await db.run(
             "UPDATE users SET password_hash = ?, updated_at = datetime('now') WHERE id = ?",
             [newHash, resetRecord.user_id]

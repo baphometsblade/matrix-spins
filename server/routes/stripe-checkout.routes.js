@@ -233,14 +233,28 @@ router.post('/payment/webhook', express.raw({ type: 'application/json' }), async
                     [playerId, amount, (config.CURRENCY || 'AUD'), session.id]
                 );
 
-                // Compute deposit bonus from config, with atomic first-deposit detection.
-                // Previous hardcoded map { 25: 5, 50: 15, 100: 40, 250: 125 } gave different
-                // bonuses than the reload/firstdeposit routes did — unified here.
-                var priorCompletedDeposits = await db.get(
-                    "SELECT COUNT(*) as count FROM deposits WHERE user_id = ? AND status = 'completed' AND external_ref != ?",
-                    [playerId, session.id]
+                // Compute deposit bonus from config.
+                //
+                // ROUND 64: first-deposit detection is now an atomic INSERT ...
+                // WHERE NOT EXISTS against the transactions log (keyed on
+                // type='first_deposit_bonus'). Under concurrent webhook sessions,
+                // both SELECTs previously returned COUNT=0 (before either COMMITted)
+                // and both applied the first-deposit bonus — FIRST_DEPOSIT_BONUS_MAX × 2.
+                // Now only the first INSERT succeeds; the second becomes a no-op
+                // and the handler falls through to the reload-bonus path.
+                var isFirstDeposit = false;
+                var firstDepositClaim = await db.run(
+                    `INSERT INTO transactions (user_id, type, amount, balance_before, balance_after, reference)
+                     SELECT ?, 'first_deposit_bonus', 0, 0, 0, 'FIRST-DEPOSIT-CLAIM'
+                     WHERE NOT EXISTS (
+                         SELECT 1 FROM transactions WHERE user_id = ? AND type = 'first_deposit_bonus'
+                     )`,
+                    [playerId, playerId]
                 );
-                var isFirstDeposit = !priorCompletedDeposits || priorCompletedDeposits.count === 0;
+                if (firstDepositClaim && firstDepositClaim.changes > 0) {
+                    isFirstDeposit = true;
+                }
+
                 var bonusPct = isFirstDeposit
                     ? (config.FIRST_DEPOSIT_BONUS_PCT || 100)
                     : (config.RELOAD_BONUS_PCT || 50);
@@ -257,11 +271,27 @@ router.post('/payment/webhook', express.raw({ type: 'application/json' }), async
                         [depositBonus, Math.round(depositBonus * wageringMult * 100) / 100, playerId]
                     );
                     var bonusType = isFirstDeposit ? 'first_deposit_bonus' : 'reload_bonus';
-                    await db.run(
-                        'INSERT INTO transactions (user_id, type, amount, balance_before, balance_after, reference) VALUES (?, ?, ?, ?, ?, ?)',
-                        [playerId, bonusType, depositBonus, 0, 0, (isFirstDeposit ? 'FIRST-DEPOSIT' : 'RELOAD') + '-MATCH (' + wageringMult + 'x wagering)']
-                    );
+                    var refLabel = (isFirstDeposit ? 'FIRST-DEPOSIT' : 'RELOAD') + '-MATCH (' + wageringMult + 'x wagering)';
+                    if (isFirstDeposit) {
+                        // Update the already-inserted claim row with the real amount + reference
+                        await db.run(
+                            'UPDATE transactions SET amount = ?, reference = ? WHERE user_id = ? AND type = ? AND reference = ?',
+                            [depositBonus, refLabel, playerId, 'first_deposit_bonus', 'FIRST-DEPOSIT-CLAIM']
+                        );
+                    } else {
+                        await db.run(
+                            'INSERT INTO transactions (user_id, type, amount, balance_before, balance_after, reference) VALUES (?, ?, ?, ?, ?, ?)',
+                            [playerId, bonusType, depositBonus, 0, 0, refLabel]
+                        );
+                    }
                     console.warn('[Stripe] ' + bonusType + ' credited: $' + depositBonus + ' (' + wageringMult + 'x wagering) for player ' + playerId);
+                } else if (isFirstDeposit) {
+                    // No bonus payable but we inserted a claim row — clean it up so
+                    // reload bonus still works on future deposits.
+                    await db.run(
+                        "DELETE FROM transactions WHERE user_id = ? AND type = 'first_deposit_bonus' AND reference = 'FIRST-DEPOSIT-CLAIM'",
+                        [playerId]
+                    );
                 }
 
                 await db.commit();

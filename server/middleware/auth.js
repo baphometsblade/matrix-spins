@@ -69,6 +69,13 @@ async function authenticate(req, res, next) {
         if (user.password_changed_at && payload.iat && payload.iat < user.password_changed_at) {
             return res.status(401).json({ error: 'Token invalidated after password change. Please log in again.' });
         }
+        // Re-check blacklist AFTER the awaited DB lookup — a concurrent /logout
+        // call could have blacklisted this token while we were waiting on the
+        // user SELECT, and we must not let the in-flight request complete with
+        // a just-revoked token. Cheap Map.has() lookup.
+        if (isBlacklisted(token)) {
+            return res.status(401).json({ error: 'Token has been revoked' });
+        }
         req.user = user;
         req.token = token; // Make token accessible for logout
         next();

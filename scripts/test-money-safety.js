@@ -614,29 +614,11 @@ test('admin.routes.js uses router.use(authenticate, requireAdmin) at top', () =>
         'admin.routes.js must enforce authenticate + requireAdmin at router level');
 });
 
-test('admin-withdrawals.routes.js uses router.use(authenticate, requireAdmin)', () => {
-    const src = fs.readFileSync(path.join(SERVER_DIR, 'routes', 'admin-withdrawals.routes.js'), 'utf8');
-    assert(/router\.use\(\s*authenticate\s*,\s*requireAdmin\s*\)/.test(src),
-        'admin-withdrawals.routes.js must enforce authenticate + requireAdmin at router level');
-});
-
 test('KYC approve + reject endpoints exist on admin.routes', () => {
     const src = fs.readFileSync(path.join(SERVER_DIR, 'routes', 'admin.routes.js'), 'utf8');
     assert(/router\.post\(\s*['"]\/kyc-approve['"]/.test(src), 'admin must expose POST /kyc-approve');
     assert(/router\.post\(\s*['"]\/kyc-reject['"]/.test(src), 'admin must expose POST /kyc-reject');
     assert(/router\.get\(\s*['"]\/kyc-pending['"]/.test(src), 'admin must expose GET /kyc-pending');
-});
-
-test('withdrawal approve + deny endpoints are atomic (no double-approve race)', () => {
-    const src = fs.readFileSync(path.join(SERVER_DIR, 'routes', 'admin-withdrawals.routes.js'), 'utf8');
-    // Both must use WHERE id = ? AND status = 'pending' for atomic claim
-    const approveMatch = src.match(/router\.post\(\s*['"]\/withdrawals\/:id\/approve['"][\s\S]+?^\}\);/m);
-    assert(approveMatch, 'approve endpoint not found');
-    assert(/WHERE id = \? AND status = 'pending'/.test(approveMatch[0]), 'approve must use atomic claim');
-
-    const denyMatch = src.match(/router\.post\(\s*['"]\/withdrawals\/:id\/deny['"][\s\S]+?^\}\);/m);
-    assert(denyMatch, 'deny endpoint not found');
-    assert(/WHERE id = \? AND status = 'pending'/.test(denyMatch[0]), 'deny must use atomic claim');
 });
 
 test('admin.routes /withdrawals/:id/approve is atomic (no TOCTOU double-process)', () => {
@@ -846,8 +828,10 @@ test('register endpoint requires terms acceptance', () => {
 
 test('passwords are hashed with bcrypt rounds >= 12', () => {
     const src = fs.readFileSync(path.join(SERVER_DIR, 'routes', 'auth.routes.js'), 'utf8');
-    const m = src.match(/bcrypt\.hashSync\(\s*password\s*,\s*(\d+)/);
-    assert(m, 'bcrypt.hashSync call not found');
+    // Accept both sync (bcrypt.hashSync, used at server boot) AND async
+    // (await bcrypt.hash, used on hot paths after round 64). Rounds ≥ 12 either way.
+    const m = src.match(/bcrypt\.(?:hashSync|hash)\(\s*(?:password|newPassword|new_password)\s*,\s*(\d+)/);
+    assert(m, 'bcrypt.hash(Sync)? call not found on password path');
     const rounds = parseInt(m[1], 10);
     assert(rounds >= 12, `bcrypt rounds must be ≥ 12 for production (got ${rounds})`);
 });
@@ -1113,14 +1097,10 @@ test('every *.routes.js file is either mounted or on the utility allowlist', () 
     const UTILITY_ALLOWLIST = new Set([
         // These export helpers that OTHER code requires; they are not
         // themselves express routers that need to be mounted.
-        'admin-dashboard.routes.js',   // exports in-memory store helpers
         'nft-deposit.routes.js',       // exports ensureNFTTables() used by stripe-checkout
-        'session-insights.routes.js',  // not yet wired; not referenced by client
-        'promos.routes.js',            // legacy — superseded by promocode.routes.js
-        // admin-withdrawals.routes.js is dead code (superseded by admin.routes.js),
-        // but leaving it here would mask real orphans. We explicitly acknowledge
-        // it as dead-but-not-yet-deleted:
-        'admin-withdrawals.routes.js',
+        // Note: admin-dashboard.routes.js, admin-withdrawals.routes.js,
+        // session-insights.routes.js, and promos.routes.js were deleted in
+        // round 64 after verifying they had zero callers.
     ]);
 
     const indexSrc = fs.readFileSync(path.join(SERVER_DIR, 'index.js'), 'utf8');
@@ -1532,6 +1512,113 @@ test('F6: /api/crypto/verify-deposit runs full RG + velocity checks', () => {
         'crypto.routes must import deposit-checks service');
     assert(/depositChecks\.runAllChecks/.test(CRYPTO_SRC_R63),
         'crypto verify-deposit must call runAllChecks (self-exclusion + limits + velocity)');
+});
+
+// ══════════════════════════════════════════════════════════════════════
+console.log('\n=== parallel-review MEDIUMs (round 64) ===');
+// ══════════════════════════════════════════════════════════════════════
+const AUTH_SRC_R64   = fs.readFileSync(path.join(SERVER_DIR, 'middleware', 'auth.js'), 'utf8');
+const PAY_SRC_R64    = fs.readFileSync(path.join(SERVER_DIR, 'routes', 'payment.routes.js'), 'utf8');
+const AUTHR_SRC_R64  = fs.readFileSync(path.join(SERVER_DIR, 'routes', 'auth.routes.js'), 'utf8');
+const ADMIN_SRC_R64  = fs.readFileSync(path.join(SERVER_DIR, 'routes', 'admin.routes.js'), 'utf8');
+const STRIPE_SRC_R64 = fs.readFileSync(path.join(SERVER_DIR, 'routes', 'stripe-checkout.routes.js'), 'utf8');
+
+// M2 — logout-race closure
+test('M2: authenticate re-checks blacklist AFTER the awaited DB lookup', () => {
+    // Must have TWO blacklist checks in the authenticate handler — one before
+    // the DB lookup (fast path) and one after (closes the logout race)
+    const authenticateFn = AUTH_SRC_R64.match(/async function authenticate[\s\S]+?^\}/m);
+    assert(authenticateFn, 'authenticate function not found');
+    const checks = (authenticateFn[0].match(/isBlacklisted\(token\)/g) || []).length;
+    assert(checks >= 2, `authenticate must call isBlacklisted at least twice (found ${checks})`);
+});
+
+// M3 — OTP resend does NOT reset attempts
+test('M3: OTP resend rotates code but keeps cumulative otp_attempts', () => {
+    const resendIdx = PAY_SRC_R64.search(/router\.post\(\s*['"]\/withdraw\/:id\/resend-otp['"]/);
+    assert(resendIdx > 0, 'resend-otp handler not found');
+    const resendBlock = PAY_SRC_R64.slice(resendIdx, resendIdx + 2000);
+    // The update must NOT set otp_attempts = 0
+    assert(!/otp_attempts\s*=\s*0/.test(resendBlock),
+        'resend-otp must NOT reset otp_attempts — would allow brute-force across resends');
+});
+
+// M4 — async bcrypt everywhere that matters
+test('M4: login + register + password-change use async bcrypt.compare/hash', () => {
+    // No compareSync in login (auth.routes.js lines around 367)
+    assert(/await bcrypt\.compare\(password, hashToCompare\)/.test(AUTHR_SRC_R64),
+        'login must use await bcrypt.compare (not compareSync)');
+    // Register uses await bcrypt.hash
+    assert(/await bcrypt\.hash\(password, 13\)/.test(AUTHR_SRC_R64),
+        'register must use await bcrypt.hash (not hashSync)');
+    // Change-password in auth.routes.js
+    assert(/await bcrypt\.compare\(currentPassword, user\.password_hash\)/.test(AUTHR_SRC_R64),
+        'change-password must use await bcrypt.compare');
+});
+
+// M9 — audit logs on admin money endpoints
+test('M9: /api/admin/withdrawals/:id/approve writes admin_audit_log', () => {
+    const block = ADMIN_SRC_R64.match(/router\.post\(\s*['"]\/withdrawals\/:id\/approve['"][\s\S]+?^\}\);/m);
+    assert(block, 'approve handler not found');
+    assert(/admin_audit_log/.test(block[0]),
+        'approve must write to admin_audit_log for compliance trail');
+    assert(/approve_withdrawal_v2/.test(block[0]),
+        "audit entry must tag action='approve_withdrawal_v2'");
+});
+
+test('M9: /api/admin/withdrawals/:id/reject writes admin_audit_log', () => {
+    const block = ADMIN_SRC_R64.match(/router\.post\(\s*['"]\/withdrawals\/:id\/reject['"][\s\S]+?^\}\);/m);
+    assert(block, 'reject handler not found');
+    assert(/admin_audit_log/.test(block[0]),
+        'reject must write to admin_audit_log for compliance trail');
+    assert(/reject_withdrawal_v2/.test(block[0]),
+        "audit entry must tag action='reject_withdrawal_v2'");
+});
+
+test('M9: /api/payments/admin/approve-deposit writes admin_audit_log', () => {
+    const block = PAY_SRC_R64.match(/router\.post\(\s*['"]\/admin\/approve-deposit['"][\s\S]+?^\}\);/m);
+    assert(block, 'approve-deposit handler not found');
+    assert(/admin_audit_log/.test(block[0]),
+        'approve-deposit must write to admin_audit_log');
+    assert(/'approve_deposit'/.test(block[0]),
+        "audit entry must tag action='approve_deposit'");
+});
+
+// M10 — atomic first-deposit bonus claim
+test('M10: first-deposit bonus uses atomic INSERT...WHERE NOT EXISTS claim', () => {
+    // Find the first-deposit computation block in stripe-checkout
+    const claimRegex = /INSERT INTO transactions[\s\S]+?'first_deposit_bonus'[\s\S]+?WHERE NOT EXISTS/;
+    assert(claimRegex.test(STRIPE_SRC_R64),
+        'first-deposit bonus must be gated by atomic INSERT...WHERE NOT EXISTS');
+    // Ensure the old COUNT-based pattern is gone
+    assert(!/SELECT COUNT\(\*\) as count FROM deposits[\s\S]{0,120}status = 'completed' AND external_ref != \?/.test(STRIPE_SRC_R64),
+        'old non-atomic COUNT-based first-deposit detection must be removed');
+});
+
+// M11 — withdrawal mutex no longer uses set.clear
+test('M11: withdrawal mutex uses TTL sweep, not blanket clear()', () => {
+    // Old pattern was `activeWithdrawals.clear()` inside a setInterval
+    // The new pattern must NOT match that — it uses per-entry TTL eviction.
+    const patternMatches = PAY_SRC_R64.match(/activeWithdrawals\.clear\(\)[^;]*;[\s\n]*\}\s*,\s*5\s*\*\s*60/g) || [];
+    assert(patternMatches.length === 0,
+        'must not blanket-clear the activeWithdrawals lock every 5 min');
+    assert(/_WITHDRAW_LOCK_TTL_MS/.test(PAY_SRC_R64),
+        'withdrawal mutex must use a TTL constant');
+    assert(/sweepStaleWithdrawLocks/.test(PAY_SRC_R64),
+        'withdrawal mutex must run a per-entry sweep');
+});
+
+// Dead-code sweep verification
+test('dead route files removed (admin-dashboard, admin-withdrawals, session-insights, promos)', () => {
+    const routes = fs.readdirSync(path.join(SERVER_DIR, 'routes'));
+    ['admin-dashboard.routes.js', 'admin-withdrawals.routes.js', 'session-insights.routes.js', 'promos.routes.js'].forEach(f => {
+        assert(!routes.includes(f), `dead file ${f} must be deleted`);
+    });
+});
+
+test('dead service crash.service.js removed', () => {
+    const services = fs.readdirSync(path.join(SERVER_DIR, 'services'));
+    assert(!services.includes('crash.service.js'), 'crash.service.js must be deleted');
 });
 
 // ══════════════════════════════════════════════════════════════════════
