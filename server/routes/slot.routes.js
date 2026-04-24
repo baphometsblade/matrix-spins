@@ -13,7 +13,6 @@
  */
 
 const express = require('express');
-const db = require('../database');
 const { authenticate } = require('../middleware/auth');
 const userRateLimit = require('../middleware/user-ratelimit');
 const engine = require('../services/slot-engine.service');
@@ -45,20 +44,6 @@ router.post('/spin', authenticate, spinLimiter, async (req, res) => {
 
     if (!engine.hasGame(game_id)) return res.status(404).json({ error: 'Unknown game.' });
 
-    // Honor the same self-exclusion gate that blocks deposits — a paused
-    // account should not be able to place bets with its existing balance.
-    const gate = await db.get('SELECT self_excluded_until FROM users WHERE id = ?', [req.user.id]);
-    if (gate && gate.self_excluded_until) {
-        const untilMs = Date.parse(gate.self_excluded_until);
-        if (Number.isFinite(untilMs) && untilMs > Date.now()) {
-            return res.status(403).json({
-                error: 'Your account is self-excluded until ' + new Date(untilMs).toISOString() + '.',
-                code: 'self_excluded',
-                until: new Date(untilMs).toISOString(),
-            });
-        }
-    }
-
     try {
         const result = await engine.spin({
             userId: req.user.id,
@@ -68,7 +53,12 @@ router.post('/spin', authenticate, spinLimiter, async (req, res) => {
         });
         res.json(result);
     } catch (err) {
-        if (err && err.status) return res.status(err.status).json({ error: err.message });
+        if (err && err.status) {
+            const body = { error: err.message };
+            if (err.code) body.code = err.code;
+            if (err.until) body.until = err.until;
+            return res.status(err.status).json(body);
+        }
         console.error('[slot/spin]', err);
         res.status(500).json({ error: 'Spin failed.' });
     }

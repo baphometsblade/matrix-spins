@@ -204,6 +204,56 @@ async function sendSecurityAlert({ to, username, event, ip, userAgent }) {
     return send({ to, subject, text, html });
 }
 
-module.exports = { send, sendDepositReceipt, sendPasswordResetLink, sendWelcome, sendSecurityAlert, sendEmailVerification, getCaptured, clearCaptured, hasTransport };
+async function sendWithdrawalRequested({ to, amount, currency }) {
+    const cur = String(currency || 'usd').toUpperCase();
+    const amountStr = '$' + Number(amount || 0).toFixed(2) + ' ' + cur;
+    const subject = 'Matrix Spins — withdrawal request received';
+    const text = [
+        'We received your withdrawal request for ' + amountStr + '.',
+        '',
+        'It is pending operator review. You will receive another email when it is paid or denied.',
+    ].join('\n');
+    return send({ to, subject, text });
+}
+
+async function sendWithdrawalPaid({ to, amount, currency }) {
+    const cur = String(currency || 'usd').toUpperCase();
+    const amountStr = '$' + Number(amount || 0).toFixed(2) + ' ' + cur;
+    const subject = 'Matrix Spins — withdrawal paid';
+    const text = [
+        'Your withdrawal of ' + amountStr + ' has been marked paid by our operations team.',
+        '',
+        'If you do not see the funds within 3 business days, reply to this email.',
+    ].join('\n');
+    return send({ to, subject, text });
+}
+
+async function sendWithdrawalDenied({ to, amount, currency, reason }) {
+    const cur = String(currency || 'usd').toUpperCase();
+    const amountStr = '$' + Number(amount || 0).toFixed(2) + ' ' + cur;
+    const subject = 'Matrix Spins — withdrawal denied';
+    const text = [
+        'Your withdrawal of ' + amountStr + ' was denied by our operations team.',
+        reason ? 'Reason: ' + reason : '',
+        '',
+        'The amount has been refunded to your account balance.',
+    ].filter(Boolean).join('\n');
+    return send({ to, subject, text });
+}
+
+module.exports = {
+    send,
+    sendDepositReceipt,
+    sendPasswordResetLink,
+    sendWelcome,
+    sendSecurityAlert,
+    sendEmailVerification,
+    sendWithdrawalRequested,
+    sendWithdrawalPaid,
+    sendWithdrawalDenied,
+    getCaptured,
+    clearCaptured,
+    hasTransport,
+};
 // Suppress unused-var lint while still importing config
 void config;

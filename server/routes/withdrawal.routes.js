@@ -21,6 +21,7 @@ const express = require('express');
 const db = require('../database');
 const config = require('../config');
 const { authenticate } = require('../middleware/auth');
+const { selfExclusionResponse } = require('../middleware/self-exclusion');
 const userRateLimit = require('../middleware/user-ratelimit');
 const mailer = require('../services/email.service');
 
@@ -79,16 +80,7 @@ router.post('/request', authenticate, reqLimiter, async (req, res) => {
         if (!user.email_verified) {
             return res.status(403).json({ error: 'Please verify your email address before withdrawing.', code: 'email_unverified' });
         }
-        if (user.self_excluded_until) {
-            const untilMs = Date.parse(user.self_excluded_until);
-            if (Number.isFinite(untilMs) && untilMs > Date.now()) {
-                return res.status(403).json({
-                    error: 'Your account is self-excluded until ' + new Date(untilMs).toISOString() + '.',
-                    code: 'self_excluded',
-                    until: new Date(untilMs).toISOString(),
-                });
-            }
-        }
+        if (selfExclusionResponse(res, user)) return;
 
         // Atomic debit. Conditional UPDATE refuses when balance < amount
         // so no negative balance can slip through a concurrent spin.
@@ -110,15 +102,10 @@ router.post('/request', authenticate, reqLimiter, async (req, res) => {
             [req.user.id]
         );
 
-        // Best-effort notification. Doesn't block the response; a
-        // failure here shouldn't hide the successful request.
+        // Best-effort notification. Doesn't block the response.
         if (user.email) {
-            mailer.send({
-                to: user.email,
-                subject: 'Matrix Spins — withdrawal request received',
-                text: 'We received your withdrawal request for $' + (cents / 100).toFixed(2) + ' ' + cur.toUpperCase() + '.\n' +
-                    'It is pending operator review. You will receive another email when it is paid or denied.\n',
-            }).catch(function (err) { console.warn('[withdrawal/request] email warn:', err && err.message); });
+            mailer.sendWithdrawalRequested({ to: user.email, amount: cents / 100, currency: cur })
+                .catch(function (err) { console.warn('[withdrawal/request] email warn:', err && err.message); });
         }
 
         res.status(201).json({
@@ -178,9 +165,7 @@ router.post('/:id/cancel', authenticate, async (req, res) => {
         // Flip to cancelled with a status-guarded UPDATE so two concurrent
         // requests (user cancel + operator approve) can't both succeed.
         const upd = await db.run(
-            db.kind === 'pg'
-                ? "UPDATE withdrawals SET status = 'cancelled', processed_at = now() WHERE id = ? AND status = 'pending'"
-                : "UPDATE withdrawals SET status = 'cancelled', processed_at = strftime('%Y-%m-%d %H:%M:%f','now') WHERE id = ? AND status = 'pending'",
+            "UPDATE withdrawals SET status = 'cancelled', processed_at = " + db.sqlNow() + " WHERE id = ? AND status = 'pending'",
             [row.id]
         );
         if (Number(upd && upd.changes) < 1) {
@@ -203,60 +188,45 @@ router.post('/:id/cancel', authenticate, async (req, res) => {
 // the admin route file pulls `internal`; server/index.js mounts `router`.
 const internal = {
     async approve(withdrawalId, admin, note) {
-        const row = await db.get('SELECT id, user_id, status FROM withdrawals WHERE id = ?', [withdrawalId]);
+        const row = await db.get('SELECT id, user_id, amount_cents, currency, status FROM withdrawals WHERE id = ?', [withdrawalId]);
         if (!row) { const e = new Error('Withdrawal not found.'); e.status = 404; throw e; }
         if (row.status !== 'pending') { const e = new Error('Only pending withdrawals can be approved.'); e.status = 409; throw e; }
         const upd = await db.run(
-            db.kind === 'pg'
-                ? "UPDATE withdrawals SET status = 'paid', admin_id = ?, admin_username = ?, admin_note = ?, processed_at = now() WHERE id = ? AND status = 'pending'"
-                : "UPDATE withdrawals SET status = 'paid', admin_id = ?, admin_username = ?, admin_note = ?, processed_at = strftime('%Y-%m-%d %H:%M:%f','now') WHERE id = ? AND status = 'pending'",
+            "UPDATE withdrawals SET status = 'paid', admin_id = ?, admin_username = ?, admin_note = ?, processed_at = " + db.sqlNow() + " WHERE id = ? AND status = 'pending'",
             [admin.id, admin.username || null, note || null, row.id]
         );
         if (Number(upd && upd.changes) < 1) {
             const e = new Error('Withdrawal state changed under us.'); e.status = 409; throw e;
         }
-        // Notify the user (best-effort).
         try {
-            const u = await db.get('SELECT email, username FROM users WHERE id = ?', [row.user_id]);
+            const u = await db.get('SELECT email FROM users WHERE id = ?', [row.user_id]);
             if (u && u.email) {
-                mailer.send({
-                    to: u.email,
-                    subject: 'Matrix Spins — withdrawal paid',
-                    text: 'Your withdrawal has been marked paid by our operations team.\n' +
-                          'If you do not see the funds within 3 business days, reply to this email.\n',
-                }).catch(function () {});
+                mailer.sendWithdrawalPaid({ to: u.email, amount: Number(row.amount_cents) / 100, currency: row.currency })
+                    .catch(function () {});
             }
         } catch (err) { console.warn('[withdrawal/approve] notify:', err && err.message); }
         return row.id;
     },
     async deny(withdrawalId, admin, note) {
-        const row = await db.get('SELECT id, user_id, amount_cents, status FROM withdrawals WHERE id = ?', [withdrawalId]);
+        const row = await db.get('SELECT id, user_id, amount_cents, currency, status FROM withdrawals WHERE id = ?', [withdrawalId]);
         if (!row) { const e = new Error('Withdrawal not found.'); e.status = 404; throw e; }
         if (row.status !== 'pending') { const e = new Error('Only pending withdrawals can be denied.'); e.status = 409; throw e; }
         const upd = await db.run(
-            db.kind === 'pg'
-                ? "UPDATE withdrawals SET status = 'denied', admin_id = ?, admin_username = ?, admin_note = ?, processed_at = now() WHERE id = ? AND status = 'pending'"
-                : "UPDATE withdrawals SET status = 'denied', admin_id = ?, admin_username = ?, admin_note = ?, processed_at = strftime('%Y-%m-%d %H:%M:%f','now') WHERE id = ? AND status = 'pending'",
+            "UPDATE withdrawals SET status = 'denied', admin_id = ?, admin_username = ?, admin_note = ?, processed_at = " + db.sqlNow() + " WHERE id = ? AND status = 'pending'",
             [admin.id, admin.username || null, note || null, row.id]
         );
         if (Number(upd && upd.changes) < 1) {
             const e = new Error('Withdrawal state changed under us.'); e.status = 409; throw e;
         }
-        // Refund balance.
         await db.run(
             'UPDATE users SET balance_cents = balance_cents + ? WHERE id = ?',
             [row.amount_cents, row.user_id]
         );
         try {
-            const u = await db.get('SELECT email, username FROM users WHERE id = ?', [row.user_id]);
+            const u = await db.get('SELECT email FROM users WHERE id = ?', [row.user_id]);
             if (u && u.email) {
-                mailer.send({
-                    to: u.email,
-                    subject: 'Matrix Spins — withdrawal denied',
-                    text: 'Your withdrawal was denied by our operations team.' +
-                          (note ? (' Reason: ' + note) : '') +
-                          '\nThe amount has been refunded to your account balance.\n',
-                }).catch(function () {});
+                mailer.sendWithdrawalDenied({ to: u.email, amount: Number(row.amount_cents) / 100, currency: row.currency, reason: note })
+                    .catch(function () {});
             }
         } catch (err) { console.warn('[withdrawal/deny] notify:', err && err.message); }
         return row.id;

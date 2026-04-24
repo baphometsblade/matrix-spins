@@ -308,9 +308,7 @@ router.put('/stats', authenticate, async (req, res) => {
         const existing = await db.get('SELECT user_id FROM user_stats WHERE user_id = ?', [req.user.id]);
         if (existing) {
             await db.run(
-                "UPDATE user_stats SET stats_json = ?, updated_at = " +
-                (db.kind === 'pg' ? "now()" : "strftime('%Y-%m-%d %H:%M:%f','now')") +
-                " WHERE user_id = ?",
+                "UPDATE user_stats SET stats_json = ?, updated_at = " + db.sqlNow() + " WHERE user_id = ?",
                 [json, req.user.id]
             );
         } else {

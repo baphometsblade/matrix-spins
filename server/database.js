@@ -458,4 +458,9 @@ module.exports = {
     all: (sql, params) => { guard(); return driver.all(sql, params); },
     exec: (sql) => { guard(); return driver.exec(sql); },
     close: () => driver && driver.close ? driver.close() : Promise.resolve(),
+    // SQL fragment for "the current timestamp", dialect-aware. Interpolated
+    // into query strings, NOT bound as a parameter — params go through `?`.
+    // Centralized so adding another backend (or swapping to CURRENT_TIMESTAMP
+    // everywhere) is a one-line change.
+    sqlNow: () => (driver && driver.kind === 'pg') ? 'now()' : "strftime('%Y-%m-%d %H:%M:%f','now')",
 };

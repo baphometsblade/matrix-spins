@@ -197,13 +197,26 @@ async function spin({ userId, gameId, betCents, clientSeed }) {
         throw e;
     }
 
-    // 1) Atomically debit the bet. The conditional UPDATE fails (0 rows)
-    //    if the user doesn't have the funds — no negative balance possible.
+    // 1) Atomically debit the bet AND gate self-exclusion in a single
+    //    UPDATE. If the user isn't funded OR the account is paused,
+    //    zero rows change and we disambiguate with ONE SELECT. Happy
+    //    path: one UPDATE per spin, no gate-SELECT at all.
     const debit = await db.run(
-        'UPDATE users SET balance_cents = balance_cents - ? WHERE id = ? AND balance_cents >= ?',
+        'UPDATE users SET balance_cents = balance_cents - ? ' +
+        'WHERE id = ? AND balance_cents >= ? ' +
+        'AND (self_excluded_until IS NULL OR self_excluded_until < ' + db.sqlNow() + ')',
         [bet, userId, bet]
     );
     if (Number(debit && debit.changes) < 1) {
+        const u = await db.get('SELECT balance_cents, self_excluded_until FROM users WHERE id = ?', [userId]);
+        if (u && u.self_excluded_until && Date.parse(u.self_excluded_until) > Date.now()) {
+            const untilIso = new Date(Date.parse(u.self_excluded_until)).toISOString();
+            const e = new Error('Your account is self-excluded until ' + untilIso + '.');
+            e.status = 403;
+            e.code = 'self_excluded';
+            e.until = untilIso;
+            throw e;
+        }
         const e = new Error('Insufficient balance.');
         e.status = 402;
         throw e;
@@ -268,41 +281,13 @@ async function spin({ userId, gameId, betCents, clientSeed }) {
     };
 }
 
-async function listRounds(userId, limit) {
-    const n = Math.min(Math.max(Number(limit) || 50, 1), 200);
-    const rows = await db.all(
-        `SELECT id, game_id, bet_cents, win_cents, balance_after_cents,
-                server_seed, server_seed_hash, client_seed, nonce, outcome_json, created_at
-           FROM slot_rounds
-          WHERE user_id = ?
-          ORDER BY id DESC
-          LIMIT ?`,
-        [userId, n]
-    );
-    return rows.map(r => ({
-        id: r.id,
-        game_id: r.game_id,
-        bet_cents: Number(r.bet_cents),
-        win_cents: Number(r.win_cents),
-        balance_after_cents: Number(r.balance_after_cents),
-        server_seed: r.server_seed,
-        server_seed_hash: r.server_seed_hash,
-        client_seed: r.client_seed,
-        nonce: Number(r.nonce),
-        outcome: (() => { try { return JSON.parse(r.outcome_json); } catch { return null; } })(),
-        created_at: r.created_at,
-    }));
-}
+const ROUND_COLUMNS = `id, game_id, bet_cents, win_cents, balance_after_cents,
+        server_seed, server_seed_hash, client_seed, nonce, outcome_json, created_at`;
 
-async function getRound(userId, roundId) {
-    const r = await db.get(
-        `SELECT id, game_id, bet_cents, win_cents, balance_after_cents,
-                server_seed, server_seed_hash, client_seed, nonce, outcome_json, created_at
-           FROM slot_rounds
-          WHERE user_id = ? AND id = ?`,
-        [userId, Number(roundId)]
-    );
+function normalizeRoundRow(r) {
     if (!r) return null;
+    let outcome = null;
+    try { outcome = JSON.parse(r.outcome_json); } catch { /* leave null */ }
     return {
         id: r.id,
         game_id: r.game_id,
@@ -313,9 +298,26 @@ async function getRound(userId, roundId) {
         server_seed_hash: r.server_seed_hash,
         client_seed: r.client_seed,
         nonce: Number(r.nonce),
-        outcome: (() => { try { return JSON.parse(r.outcome_json); } catch { return null; } })(),
+        outcome: outcome,
         created_at: r.created_at,
     };
+}
+
+async function listRounds(userId, limit) {
+    const n = Math.min(Math.max(Number(limit) || 50, 1), 200);
+    const rows = await db.all(
+        `SELECT ${ROUND_COLUMNS} FROM slot_rounds WHERE user_id = ? ORDER BY id DESC LIMIT ?`,
+        [userId, n]
+    );
+    return rows.map(normalizeRoundRow);
+}
+
+async function getRound(userId, roundId) {
+    const r = await db.get(
+        `SELECT ${ROUND_COLUMNS} FROM slot_rounds WHERE user_id = ? AND id = ?`,
+        [userId, Number(roundId)]
+    );
+    return normalizeRoundRow(r);
 }
 
 module.exports = {

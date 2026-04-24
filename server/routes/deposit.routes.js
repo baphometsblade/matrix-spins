@@ -14,6 +14,7 @@ const express = require('express');
 const config = require('../config');
 const db = require('../database');
 const { authenticate } = require('../middleware/auth');
+const { selfExclusionResponse } = require('../middleware/self-exclusion');
 
 const router = express.Router();
 
@@ -69,20 +70,10 @@ router.post('/checkout', authenticate, async (req, res) => {
         if (!verificationCheck || !verificationCheck.email_verified) {
             return res.status(403).json({ error: 'Please verify your email address before making a deposit. Check your inbox for the confirmation link.', code: 'email_unverified' });
         }
-        // Self-exclusion gate. A user who hit "take a break" should not
-        // even see the Checkout session — they will be rejected at login
-        // too, but a session established before exclusion could still
-        // try to deposit until the JWT expires, so check here as well.
-        if (verificationCheck.self_excluded_until) {
-            const untilMs = Date.parse(verificationCheck.self_excluded_until);
-            if (Number.isFinite(untilMs) && untilMs > Date.now()) {
-                return res.status(403).json({
-                    error: 'Your account is self-excluded until ' + new Date(untilMs).toISOString() + '.',
-                    code: 'self_excluded',
-                    until: new Date(untilMs).toISOString(),
-                });
-            }
-        }
+        // Self-exclusion gate. A session established before exclusion
+        // could still try to deposit until the JWT expires; reject here
+        // in case it races past the login-time check.
+        if (selfExclusionResponse(res, verificationCheck)) return;
         // Enforce per-user rolling-window deposit caps. These are stored
         // per-user on the `users` table so limit changes can be audited
         // and applied without redeploy.

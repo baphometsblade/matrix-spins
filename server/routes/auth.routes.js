@@ -6,6 +6,7 @@ const crypto = require('crypto');
 const config = require('../config');
 const db = require('../database');
 const { signToken, sign2faChallenge, authenticate, verifyTokenString, bumpTokenVersion } = require('../middleware/auth');
+const { selfExclusionResponse } = require('../middleware/self-exclusion');
 const mailer = require('../services/email.service');
 const authEvents = require('../services/auth-events.service');
 const { verifyTotpOrRecovery, currentSecret } = require('./twofa.routes');
@@ -178,19 +179,11 @@ router.post('/login', async (req, res) => {
         }
 
         // Self-exclusion block. Password was correct, but the account is
-        // paused — refuse the login and tell the user when they can
-        // come back. We log this as a distinct outcome so ops can tell
-        // it apart from actual credential failures.
-        if (user.self_excluded_until) {
-            const untilMs = Date.parse(user.self_excluded_until);
-            if (Number.isFinite(untilMs) && untilMs > Date.now()) {
-                await authEvents.log({ userId: user.id, username: user.username, eventType: 'login', outcome: 'self_excluded', req });
-                return res.status(403).json({
-                    error: 'Your account is self-excluded until ' + new Date(untilMs).toISOString() + '.',
-                    code: 'self_excluded',
-                    until: new Date(untilMs).toISOString(),
-                });
-            }
+        // paused — refuse the login and log it as a distinct outcome
+        // so ops can tell it apart from credential failures.
+        if (user.self_excluded_until && Date.parse(user.self_excluded_until) > Date.now()) {
+            await authEvents.log({ userId: user.id, username: user.username, eventType: 'login', outcome: 'self_excluded', req });
+            return selfExclusionResponse(res, user);
         }
 
         // If this user has 2FA enabled, return a short-lived challenge
@@ -224,16 +217,9 @@ router.post('/login/2fa', async (req, res) => {
     try {
         const user = await db.get('SELECT * FROM users WHERE id = ?', [payload.id]);
         if (!user) return res.status(404).json({ error: 'User not found.' });
-        if (user.self_excluded_until) {
-            const untilMs = Date.parse(user.self_excluded_until);
-            if (Number.isFinite(untilMs) && untilMs > Date.now()) {
-                await authEvents.log({ userId: user.id, username: user.username, eventType: 'login', outcome: 'self_excluded', req });
-                return res.status(403).json({
-                    error: 'Your account is self-excluded until ' + new Date(untilMs).toISOString() + '.',
-                    code: 'self_excluded',
-                    until: new Date(untilMs).toISOString(),
-                });
-            }
+        if (user.self_excluded_until && Date.parse(user.self_excluded_until) > Date.now()) {
+            await authEvents.log({ userId: user.id, username: user.username, eventType: 'login', outcome: 'self_excluded', req });
+            return selfExclusionResponse(res, user);
         }
         const verdict = await verifyTotpOrRecovery(user.id, code);
         if (!verdict.ok) {
