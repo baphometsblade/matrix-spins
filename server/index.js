@@ -79,6 +79,11 @@ const { authenticate: verifyToken, optionalAuth } = require('./middleware/auth')
 app.get('/api/csrf-token', verifyToken, getCsrfTokenHandler);
 // Populate req.user from JWT (non-blocking) so CSRF middleware can identify the user
 app.use(optionalAuth);
+// Idle-session timeout — force re-auth after SESSION_IDLE_TIMEOUT_MINUTES
+// of inactivity (default 30). Second clock on top of the 7-day JWT to
+// reduce impact of token exfiltration.
+const { idleTimeoutMiddleware } = require('./middleware/idle-timeout');
+app.use(idleTimeoutMiddleware);
 app.use(csrfMiddleware);
 
 // ─── Maintenance Mode Middleware ───

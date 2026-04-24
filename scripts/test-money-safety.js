@@ -1300,6 +1300,90 @@ test('reset-password bumps password_changed_at (invalidates existing tokens)', (
 });
 
 // ══════════════════════════════════════════════════════════════════════
+console.log('\n=== idle-session timeout ===');
+// ══════════════════════════════════════════════════════════════════════
+const idleMod = require(path.join(SERVER_DIR, 'middleware', 'idle-timeout'));
+
+test('idle-timeout middleware is exported + mounted globally after optionalAuth', () => {
+    assert(typeof idleMod.idleTimeoutMiddleware === 'function', 'must export idleTimeoutMiddleware');
+    const indexSrc = fs.readFileSync(path.join(SERVER_DIR, 'index.js'), 'utf8');
+    assert(/app\.use\(idleTimeoutMiddleware\)/.test(indexSrc),
+        'idleTimeoutMiddleware must be mounted globally');
+    // Must run AFTER optionalAuth (so req.user is populated)
+    const optIdx = indexSrc.indexOf('app.use(optionalAuth)');
+    const idleIdx = indexSrc.indexOf('app.use(idleTimeoutMiddleware)');
+    assert(optIdx > 0 && idleIdx > optIdx, 'idle middleware must come after optionalAuth');
+});
+
+test('idle timeout default is reasonable (15–60 min)', () => {
+    assert(idleMod.IDLE_TIMEOUT_MINUTES >= 15 && idleMod.IDLE_TIMEOUT_MINUTES <= 60,
+        `IDLE_TIMEOUT_MINUTES should be 15–60 (got ${idleMod.IDLE_TIMEOUT_MINUTES})`);
+});
+
+test('idle middleware is a no-op for unauthenticated requests', () => {
+    idleMod._reset();
+    const { idleTimeoutMiddleware } = idleMod;
+    let nextCalled = false;
+    const res = { status() { return this; }, json() { return this; } };
+    idleTimeoutMiddleware({}, res, () => { nextCalled = true; });
+    assert(nextCalled, 'must call next() when req.user absent');
+});
+
+test('idle middleware bumps timestamp on active request (first-seen, then next tick)', () => {
+    idleMod._reset();
+    const { idleTimeoutMiddleware } = idleMod;
+    let nextCalled = false;
+    const req = { user: { id: 42 } };
+    const res = { status() { return this; }, json() { return this; } };
+
+    idleTimeoutMiddleware(req, res, () => { nextCalled = true; });
+    assert(nextCalled, 'first request must pass through');
+    const t1 = idleMod._getLastSeen(42);
+    assert(t1 != null, 'lastSeen should be recorded');
+
+    // Second request a moment later — still active, still passes
+    nextCalled = false;
+    idleTimeoutMiddleware(req, res, () => { nextCalled = true; });
+    assert(nextCalled, 'subsequent request must pass through');
+    const t2 = idleMod._getLastSeen(42);
+    assert(t2 >= t1, 'lastSeen must be bumped (non-decreasing)');
+    idleMod._reset();
+});
+
+test('idle middleware rejects request when idle > timeout', () => {
+    idleMod._reset();
+    const { idleTimeoutMiddleware, IDLE_TIMEOUT_MS } = idleMod;
+    const req = { user: { id: 99 } };
+    let statusCode = 200, body = null, nextCalled = false;
+    const res = {
+        status(c) { statusCode = c; return this; },
+        json(b) { body = b; return this; },
+    };
+
+    // Seed lastSeen to (timeout + 1s) ago
+    idleTimeoutMiddleware(req, res, () => { nextCalled = true; });
+    // Now manually rewind the timestamp in the map
+    // Use the private reset + reseed trick by reaching into the module
+    const oldSeen = Date.now() - (IDLE_TIMEOUT_MS + 1000);
+    // There's no public setter — use a fresh hack: reset, then set via the
+    // internal map on a reimport? Instead simulate by directly manipulating
+    // internal state through reset → re-call with a patched Date.now.
+    const realNow = Date.now;
+    Date.now = () => oldSeen;
+    idleMod._reset();
+    idleTimeoutMiddleware(req, res, () => {});  // seed at oldSeen
+    Date.now = realNow;
+
+    // Now a fresh request — idle > timeout should 401
+    nextCalled = false;
+    idleTimeoutMiddleware(req, res, () => { nextCalled = true; });
+    assertEq(statusCode, 401, 'idle session must return 401');
+    assert(body && body.code === 'session_idle', 'body must carry code: session_idle');
+    assert(!nextCalled, 'next() must NOT be called on idle timeout');
+    idleMod._reset();
+});
+
+// ══════════════════════════════════════════════════════════════════════
 console.log('\n=== CLAUDE.md rule #7: no Math.random on server side ===');
 // ══════════════════════════════════════════════════════════════════════
 test('no server/**/*.js uses Math.random() in RNG-critical contexts', () => {
