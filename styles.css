@@ -6696,41 +6696,60 @@
            PRAGMATIC PLAY-STYLE SLOT UI — Full-screen layout with bottom bar
            ═══════════════════════════════════════════════════════════════════ */
 
+        /* Subtle pop-in for the slot modal. Uses forwards fill-mode only
+           (NOT both) — we never want the element to visually hold at the
+           from-state (opacity:0), which was leaving the modal invisible on
+           mobile when the animation-start tick was dropped by the browser.
+           Animations are purely decorative: the element is visible from
+           the start (opacity:1 is the default) and only a slight zoom
+           plays in. */
         @keyframes slotModalEnter {
-            0%   { opacity: 0; transform: scale(1.04); }
-            100% { opacity: 1; transform: none; }
+            0%   { transform: scale(1.03); }
+            100% { transform: none; }
         }
 
-        /* Reset the parent .modal wrapper so the fullscreen slot isn't clipped
-           by the 22-40px modal padding that other modals (stats, settings) need. */
+        /* Reset the parent .modal wrapper so the fullscreen slot isn't
+           clipped by the 22-40px padding that other popup modals use. All
+           dimension + overflow + z-index are forced here to beat any
+           generic [class*="modal"] rules in mobile-fixes.css. */
         #slotModal.active {
             position: fixed !important;
             inset: 0 !important;
             width: 100vw !important;
             height: 100vh !important;
             height: 100dvh !important;
-            max-height: none !important;
             max-width: none !important;
-            padding: 0;
-            overflow: hidden;
-            z-index: 1000;
+            max-height: none !important;
+            padding: 0 !important;
+            margin: 0 !important;
+            border-radius: 0 !important;
+            overflow: hidden !important;
+            z-index: 9999 !important;
             transition: none !important;
+            opacity: 1 !important;
         }
 
+        /* The fullscreen slot shell fills the modal and lays out its
+           children (top bar + reel area + bottom bar) as a vertical
+           flexbox. Every critical property is !important so it cannot be
+           clobbered by generic [class*="modal"] / [id*="modal"] mobile
+           rules. */
         .slot-modal-fullscreen {
             display: flex !important;
-            flex-direction: column;
-            width: 100%;
-            max-width: none;            /* override .modal-content max-width: 1200px */
-            height: 100vh;
-            height: 100dvh;             /* Dynamic viewport height — accounts for mobile browser chrome */
-            max-height: 100vh;
-            max-height: 100dvh;
+            flex-direction: column !important;
+            width: 100% !important;
+            max-width: none !important;
+            height: 100vh !important;
+            height: 100dvh !important;
+            max-height: 100vh !important;
+            max-height: 100dvh !important;
+            margin: 0 !important;
             padding: 0 !important;
             border-radius: 0 !important;
-            overflow: hidden;
+            overflow: hidden !important;
             background: #000 !important;
-            animation: slotModalEnter 0.35s cubic-bezier(0.22, 0.61, 0.36, 1) both;
+            opacity: 1 !important;
+            animation: slotModalEnter 0.35s cubic-bezier(0.22, 0.61, 0.36, 1) forwards;
         }
 
         /* Top Bar — Slim Pragmatic Play style */

@@ -26,9 +26,15 @@
      2. MODAL FIXES - Full-screen modals on mobile
      -------------------------------------------------------------------------- */
 
-  [id*="Modal"],
-  [id*="modal"],
-  [class*="modal"],
+  /* Generic popup modals on mobile become full-screen. The slot modal
+     (#slotModal) has its own explicit fullscreen rules so we exclude it
+     here — otherwise the safe-area padding + max-height + overflow-y
+     forced on it crop the reel area and (combined with the unrelated
+     .modal-content animation: modalSlideIn !important) leave the slot
+     invisible on phones. */
+  [id*="Modal"]:not(#slotModal),
+  [id*="modal"]:not(#slotModal),
+  [class*="modal"]:not(.slot-modal-fullscreen):not(.slot-top-bar):not(.slot-bottom-bar),
   .feature-popup {
     width: 100% !important;
     max-width: 100% !important;
@@ -43,10 +49,12 @@
     padding-bottom: env(safe-area-inset-bottom) !important;
   }
 
-  /* Ensure modal content is scrollable if needed */
-  [id*="Modal"] > *,
-  [id*="modal"] > *,
-  [class*="modal"] > *,
+  /* Ensure generic modal content is scrollable — but again skip the slot
+     modal, which owns its own flex layout and must not get overflow-y:auto
+     forced on its child columns. */
+  [id*="Modal"]:not(#slotModal) > *,
+  [id*="modal"]:not(#slotModal) > *,
+  [class*="modal"]:not(.slot-modal-fullscreen) > *:not(.slot-modal-fullscreen),
   .feature-popup > * {
     max-height: calc(100vh - env(safe-area-inset-top) - env(safe-area-inset-bottom)) !important;
     overflow-y: auto !important;
