@@ -372,6 +372,60 @@ Matrix Spins`,
     return true;
 }
 
+/**
+ * Send a 6-digit OTP for high-value withdrawal confirmation.
+ * Returns true on success, false if SMTP is not configured.
+ */
+async function sendWithdrawalOtp(toEmail, username, otpCode, amount, currency, expiryMinutes) {
+    const transporter = getTransporter();
+    if (!transporter) {
+        console.warn('[Email] SMTP not configured — withdrawal OTP email not sent');
+        return false;
+    }
+
+    const amtStr = `${currency || 'AUD'} ${Number(amount).toFixed(2)}`;
+    const expStr = `${expiryMinutes} minute${expiryMinutes !== 1 ? 's' : ''}`;
+
+    await transporter.sendMail({
+        from: config.SMTP_FROM,
+        to: toEmail,
+        subject: `Matrix Spins — Withdrawal verification code: ${otpCode}`,
+        text: [
+            `Hi ${username || 'player'},`,
+            '',
+            `You requested a withdrawal of ${amtStr} from Matrix Spins.`,
+            '',
+            `Your verification code is: ${otpCode}`,
+            `(expires in ${expStr})`,
+            '',
+            'If you did NOT request this withdrawal, do not share this code. Change your password immediately and contact support.',
+            '',
+            'Matrix Spins',
+        ].join('\n'),
+        html: `<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"></head>
+<body style="font-family:Arial,sans-serif;background:#0d0d1a;color:#fff;padding:40px;margin:0">
+  <div style="max-width:520px;margin:0 auto;background:linear-gradient(135deg,#1a1a2e,#16213e);border:1px solid rgba(255,215,0,0.3);border-radius:12px;overflow:hidden">
+    <div style="background:linear-gradient(135deg,#ffd700,#ff8c00);padding:20px;text-align:center">
+      <h1 style="margin:0;color:#0d0d1a;font-size:24px">Matrix Spins</h1>
+    </div>
+    <div style="padding:32px">
+      <h2 style="color:#ffd700;margin-top:0">Withdrawal verification</h2>
+      <p style="color:#ccc;line-height:1.6">Hi ${username ? String(username).replace(/[<>]/g, '') : 'player'}, you requested a withdrawal of <strong style="color:#ffd700">${amtStr}</strong>. To confirm it, enter this code in the app within <strong>${expStr}</strong>:</p>
+      <div style="margin:32px 0;text-align:center">
+        <div style="display:inline-block;background:#0d0d1a;border:2px solid #ffd700;padding:20px 36px;border-radius:10px;font-family:'SF Mono',Menlo,Consolas,monospace;font-size:34px;letter-spacing:12px;font-weight:bold;color:#ffd700">${otpCode}</div>
+      </div>
+      <p style="color:#999;font-size:13px;line-height:1.6">If you did not request this withdrawal, do NOT share the code. Change your password immediately and contact support.</p>
+    </div>
+    <div style="background:rgba(0,0,0,0.3);padding:16px;text-align:center;color:#666;font-size:12px">Matrix Spins — msaart.online</div>
+  </div>
+</body>
+</html>`,
+    });
+    return true;
+}
+
 module.exports = {
     sendPasswordReset,
     sendVerificationEmail,
@@ -379,4 +433,5 @@ module.exports = {
     sendWeeklyReport,
     sendDepositNudgeEmail,
     sendVipTierEmail,
+    sendWithdrawalOtp,
 };

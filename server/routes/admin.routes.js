@@ -1426,20 +1426,36 @@ router.get('/withdrawals/:id', async (req, res) => {
 
 // POST /api/admin/withdrawals/:id/approve — Approve a pending withdrawal
 // Accepts { admin_note } or { adminNotes } for compatibility with multiple UI clients.
+// High-value withdrawals (≥ WITHDRAWAL_OTP_THRESHOLD) must have reached 'otp_verified'
+// before approve — admins cannot bypass the email-OTP consent step.
 router.post('/withdrawals/:id/approve', async (req, res) => {
     try {
         const withdrawalId = req.params.id;
         const noteRaw = req.body.admin_note || req.body.adminNotes || '';
         const admin_note = String(noteRaw || 'Approved by admin').slice(0, 500);
+        const config = require('../config');
 
-        // Atomic claim: only proceed if still pending. Prevents two admins
-        // concurrently double-processing the same withdrawal.
+        // Precondition check: high-value withdrawals require OTP verification first
+        const wd = await db.get('SELECT amount, status FROM withdrawals WHERE id = ?', [withdrawalId]);
+        if (!wd) return res.status(404).json({ error: 'Withdrawal not found' });
+
+        const OTP_THRESHOLD = config.WITHDRAWAL_OTP_THRESHOLD || 500;
+        if (wd.amount >= OTP_THRESHOLD && wd.status === 'pending') {
+            return res.status(400).json({
+                error: 'Withdrawal requires user email-OTP verification before admin approval.',
+                otpRequired: true,
+                currentStatus: wd.status,
+            });
+        }
+
+        // Atomic claim: transition from pending OR otp_verified → completed.
+        // Two admins cannot both approve the same withdrawal.
         const claim = await db.run(
-            "UPDATE withdrawals SET status = 'completed', admin_note = ?, processed_at = datetime('now') WHERE id = ? AND status = 'pending'",
+            "UPDATE withdrawals SET status = 'completed', admin_note = ?, processed_at = datetime('now') WHERE id = ? AND status IN ('pending', 'otp_verified')",
             [admin_note, withdrawalId]
         );
         if (!claim || claim.changes === 0) {
-            return res.status(409).json({ error: 'Withdrawal is not pending (may have been processed by another admin).' });
+            return res.status(409).json({ error: 'Withdrawal is not approvable (may have been processed by another admin).' });
         }
 
         // Read the now-claimed row for the response + audit log
@@ -1479,10 +1495,11 @@ router.post('/withdrawals/:id/reject', async (req, res) => {
             return res.status(400).json({ error: 'A rejection reason of at least 5 characters is required.' });
         }
 
-        // Step 1: Atomic claim — only one admin can transition pending → rejected.
+        // Step 1: Atomic claim — only one admin can transition to rejected.
+        // Accepts both 'pending' (pre-OTP) and 'otp_verified' (post-OTP).
         // If changes === 0, someone else already processed it; do NOT refund.
         const claim = await db.run(
-            "UPDATE withdrawals SET status = 'rejected', admin_note = ?, processed_at = datetime('now') WHERE id = ? AND status = 'pending'",
+            "UPDATE withdrawals SET status = 'rejected', admin_note = ?, processed_at = datetime('now') WHERE id = ? AND status IN ('pending', 'otp_verified')",
             [admin_note.slice(0, 500), withdrawalId]
         );
         if (!claim || claim.changes === 0) {

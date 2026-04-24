@@ -641,12 +641,14 @@ test('withdrawal approve + deny endpoints are atomic (no double-approve race)', 
 
 test('admin.routes /withdrawals/:id/approve is atomic (no TOCTOU double-process)', () => {
     const src = fs.readFileSync(path.join(SERVER_DIR, 'routes', 'admin.routes.js'), 'utf8');
-    // Find the /approve handler specifically for /withdrawals/:id (not /approve-withdrawal)
     const approveMatch = src.match(/router\.post\(\s*['"]\/withdrawals\/:id\/approve['"][\s\S]+?^\}\);/m);
     assert(approveMatch, '/withdrawals/:id/approve not found in admin.routes.js');
-    assert(/WHERE id = \? AND status = 'pending'/.test(approveMatch[0]),
-        '/withdrawals/:id/approve must use atomic `WHERE status = pending` claim');
-    // Must 409 if claim failed
+    // Atomic claim must be status-guarded; post-OTP-enforcement this accepts
+    // both 'pending' and 'otp_verified'.
+    assert(
+        /WHERE id = \? AND status IN \('pending', 'otp_verified'\)/.test(approveMatch[0]),
+        '/withdrawals/:id/approve must use status-guarded claim (pending OR otp_verified)'
+    );
     assert(/status\(409\)/.test(approveMatch[0]), 'approve must return 409 when claim loses race');
 });
 
@@ -655,8 +657,8 @@ test('admin.routes /withdrawals/:id/reject is atomic — no double-refund race',
     const rejectMatch = src.match(/router\.post\(\s*['"]\/withdrawals\/:id\/reject['"][\s\S]+?^\}\);/m);
     assert(rejectMatch, '/withdrawals/:id/reject not found in admin.routes.js');
     const body = rejectMatch[0];
-    // The claim MUST precede the balance refund, and claim must be status-guarded.
-    const claimIdx  = body.search(/WHERE id = \? AND status = 'pending'/);
+    // Claim must be status-guarded and precede balance refund.
+    const claimIdx  = body.search(/WHERE id = \? AND status IN \('pending', 'otp_verified'\)/);
     const refundIdx = body.search(/UPDATE users SET balance = balance \+ \?/);
     assert(claimIdx >= 0, '/reject must use atomic status-guarded claim');
     assert(refundIdx >= 0, '/reject must refund balance atomically');
@@ -1173,6 +1175,128 @@ test('uncaughtException exits after logging (Render restarts us)', () => {
     assert(exMatch, 'uncaughtException handler not found');
     assert(/process\.exit\(1\)/.test(exMatch[0]),
         'uncaughtException must exit(1) so the process manager restarts us');
+});
+
+// ══════════════════════════════════════════════════════════════════════
+console.log('\n=== withdrawal OTP end-to-end ===');
+// ══════════════════════════════════════════════════════════════════════
+const PAYMENT_SRC_FULL = fs.readFileSync(path.join(SERVER_DIR, 'routes', 'payment.routes.js'), 'utf8');
+
+test('config declares WITHDRAWAL_OTP_THRESHOLD (env-overridable)', () => {
+    const cfg = fs.readFileSync(path.join(SERVER_DIR, 'config.js'), 'utf8');
+    assert(/WITHDRAWAL_OTP_THRESHOLD:/.test(cfg), 'config must declare WITHDRAWAL_OTP_THRESHOLD');
+    assert(/process\.env\.WITHDRAWAL_OTP_THRESHOLD/.test(cfg), 'must be env-overridable');
+    assert(/WITHDRAWAL_OTP_EXPIRY_MINUTES:/.test(cfg), 'config must declare expiry');
+});
+
+test('withdrawals schema has otp_code + otp_attempts + otp_created_at + otp_verified_at', () => {
+    const sqlite = fs.readFileSync(path.join(SERVER_DIR, 'db', 'schema-sqlite.js'), 'utf8');
+    const pg = fs.readFileSync(path.join(SERVER_DIR, 'db', 'schema-pg.js'), 'utf8');
+    ['otp_code', 'otp_attempts', 'otp_created_at', 'otp_verified_at'].forEach(col => {
+        assert(sqlite.includes(`'${col}'`), `schema-sqlite WITHDRAWAL_MIGRATIONS must include ${col}`);
+        assert(pg.includes(`'${col}'`), `schema-pg WITHDRAWAL_MIGRATIONS must include ${col}`);
+    });
+});
+
+test('high-value withdrawals GENERATE + email an OTP at request time', () => {
+    assert(/withdrawal\s*>=\s*OTP_THRESHOLD/.test(PAYMENT_SRC_FULL),
+        'withdraw route must check OTP_THRESHOLD');
+    assert(/crypto\.randomBytes\(3\)\.readUIntBE\(0,\s*3\)/.test(PAYMENT_SRC_FULL),
+        'OTP must be generated from crypto RNG (3 bytes → 6 digits)');
+    assert(/sendWithdrawalOtp/.test(PAYMENT_SRC_FULL),
+        'withdraw must call emailService.sendWithdrawalOtp');
+});
+
+test('OTP generation uses crypto, never Math.random', () => {
+    // Look for the otp_code UPDATE and ensure a crypto.randomBytes call
+    // precedes it within a reasonable window.
+    const otpUpdateIdx = PAYMENT_SRC_FULL.indexOf('SET otp_code = ?, otp_attempts = 0, otp_created_at');
+    assert(otpUpdateIdx > 0, 'OTP UPDATE statement not found');
+    const precedingWindow = PAYMENT_SRC_FULL.slice(Math.max(0, otpUpdateIdx - 400), otpUpdateIdx);
+    assert(/crypto\.randomBytes\(3\)\.readUIntBE\(0,\s*3\)/.test(precedingWindow),
+        'OTP must be generated from crypto.randomBytes(3) (→ 6 digits) immediately before the UPDATE');
+});
+
+test('OTP verify enforces expiry from otp_created_at', () => {
+    assert(/WITHDRAWAL_OTP_EXPIRY_MINUTES/.test(PAYMENT_SRC_FULL),
+        'OTP verify must check expiry');
+    assert(/expired/i.test(PAYMENT_SRC_FULL), 'OTP verify must return an expiry error');
+});
+
+test('resend-otp endpoint rotates + re-emails', () => {
+    assert(/router\.post\(\s*['"]\/withdraw\/:id\/resend-otp['"]/.test(PAYMENT_SRC_FULL),
+        'must expose POST /withdraw/:id/resend-otp');
+    // Find the actual handler definition (first char of "router.post(...)"),
+    // not a comment mention, then take a 2000-char window.
+    const resendIdx = PAYMENT_SRC_FULL.search(/router\.post\(\s*['"]\/withdraw\/:id\/resend-otp['"]/);
+    assert(resendIdx > 0, 'resend handler not found');
+    const window = PAYMENT_SRC_FULL.slice(resendIdx, resendIdx + 2000);
+    assert(/crypto\.randomBytes/.test(window), 'resend must rotate the code via crypto.randomBytes');
+    assert(/sendWithdrawalOtp/.test(window), 'resend must re-email the code');
+});
+
+test('admin approve BLOCKS high-value withdrawals that have not passed OTP', () => {
+    const adminSrc = fs.readFileSync(path.join(SERVER_DIR, 'routes', 'admin.routes.js'), 'utf8');
+    const approveBlock = adminSrc.match(/router\.post\(\s*['"]\/withdrawals\/:id\/approve['"][\s\S]+?^\}\);/m);
+    assert(approveBlock, 'approve block not found');
+    assert(/WITHDRAWAL_OTP_THRESHOLD/.test(approveBlock[0]),
+        'admin approve must reference WITHDRAWAL_OTP_THRESHOLD');
+    assert(/otpRequired/.test(approveBlock[0]),
+        'admin approve must return otpRequired flag when OTP not yet verified');
+});
+
+test('admin approve/reject accept BOTH pending and otp_verified status', () => {
+    const adminSrc = fs.readFileSync(path.join(SERVER_DIR, 'routes', 'admin.routes.js'), 'utf8');
+    const approveBlock = adminSrc.match(/router\.post\(\s*['"]\/withdrawals\/:id\/approve['"][\s\S]+?^\}\);/m);
+    const rejectBlock = adminSrc.match(/router\.post\(\s*['"]\/withdrawals\/:id\/reject['"][\s\S]+?^\}\);/m);
+    assert(approveBlock && rejectBlock, 'both blocks found');
+    assert(/status IN \('pending', 'otp_verified'\)/.test(approveBlock[0]),
+        'approve must accept both pending and otp_verified');
+    assert(/status IN \('pending', 'otp_verified'\)/.test(rejectBlock[0]),
+        'reject must accept both pending and otp_verified');
+});
+
+// ══════════════════════════════════════════════════════════════════════
+console.log('\n=== password strength + breach blocklist ===');
+// ══════════════════════════════════════════════════════════════════════
+const AUTH_SRC_FULL = fs.readFileSync(path.join(SERVER_DIR, 'routes', 'auth.routes.js'), 'utf8');
+
+test('validatePassword rejects common breach-list passwords', () => {
+    assert(/COMMON_PASSWORDS/.test(AUTH_SRC_FULL), 'must maintain a COMMON_PASSWORDS set');
+    // Must include the obvious suspects
+    ['password', 'password123', 'qwerty123', 'letmein1'].forEach(p => {
+        assert(new RegExp(`['"]${p}['"]`).test(AUTH_SRC_FULL),
+            `COMMON_PASSWORDS must include "${p}"`);
+    });
+});
+
+test('validatePassword rejects passwords containing username / email', () => {
+    assert(/must not contain your username/.test(AUTH_SRC_FULL),
+        'must reject password containing username');
+    assert(/must not contain your email/.test(AUTH_SRC_FULL),
+        'must reject password containing email local-part');
+});
+
+test('validatePassword caps length at 128 chars', () => {
+    assert(/no more than 128 characters/.test(AUTH_SRC_FULL),
+        'must reject passwords > 128 chars (bcrypt denial-of-service guard)');
+});
+
+test('register, reset-password, change-password all pass identity context', () => {
+    // Register: validatePassword(password, { username, email })
+    assert(/validatePassword\(password,\s*\{\s*username,\s*email\s*\}\)/.test(AUTH_SRC_FULL),
+        'register must pass { username, email } to validatePassword');
+    // Reset + change both have similar patterns
+    assert(/validatePassword\(newPassword,\s*\{\s*username:/.test(AUTH_SRC_FULL),
+        'reset-password + change-password must pass identity context');
+});
+
+test('reset-password bumps password_changed_at (invalidates existing tokens)', () => {
+    const resetIdx = AUTH_SRC_FULL.indexOf("router.post('/reset-password'");
+    assert(resetIdx > 0, 'reset-password handler not found');
+    const window = AUTH_SRC_FULL.slice(resetIdx, resetIdx + 2500);
+    assert(/password_changed_at\s*=\s*\?/.test(window),
+        'reset-password must bump password_changed_at so old JWTs are invalidated');
 });
 
 // ══════════════════════════════════════════════════════════════════════

@@ -939,6 +939,8 @@ const USER_MIGRATIONS = [
 const WITHDRAWAL_MIGRATIONS = [
     ['otp_code', 'TEXT'],
     ['otp_attempts', 'INTEGER DEFAULT 0'],
+    ['otp_created_at', 'TIMESTAMPTZ'],
+    ['otp_verified_at', 'TIMESTAMPTZ'],
 ];
 
 /** Extra columns added to spins table (provably fair fields). */

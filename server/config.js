@@ -63,6 +63,12 @@ module.exports = {
     WITHDRAWAL_PROCESSING_DAYS: 3,
     PAYMENT_METHODS: ['visa', 'mastercard', 'payid', 'bank_transfer', 'crypto_btc', 'crypto_eth', 'crypto_usdt'],
 
+    // Withdrawal OTP: withdrawals at or above this threshold require email
+    // OTP verification before admin can approve them. Protects against
+    // account-takeover theft of accumulated balance.
+    WITHDRAWAL_OTP_THRESHOLD: parseFloat(process.env.WITHDRAWAL_OTP_THRESHOLD) || 500,
+    WITHDRAWAL_OTP_EXPIRY_MINUTES: 15,
+
     // First-deposit bonus (wagering mults per CLAUDE.md revenue-protection rules)
     FIRST_DEPOSIT_BONUS_PCT: 50,      // 50% match
     FIRST_DEPOSIT_BONUS_MAX: 200,     // cap at $200

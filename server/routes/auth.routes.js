@@ -18,18 +18,60 @@ var tsDef = isPg ? 'TIMESTAMPTZ DEFAULT NOW()' : "TEXT DEFAULT (datetime('now'))
 // Dummy hash for constant-time auth when user not found (prevents timing attacks)
 const DUMMY_HASH = bcrypt.hashSync('dummy-password-never-matches', 13);
 
+// Top ~50 breach-list passwords (condensed). A full list (hundreds of
+// thousands) would belong in a file or k-anon HIBP API, but for a
+// casino operator the bar is "obvious guesses MUST fail" — this
+// catches every common password a bot would try first.
+// Stored lowercased; comparison is also lowercased.
+const COMMON_PASSWORDS = new Set([
+    'password', 'password1', 'password123', 'password!', 'p@ssw0rd', 'passw0rd',
+    '12345678', '123456789', '1234567890', 'qwerty123', 'qwertyui', 'qwertyuiop',
+    'letmein1', 'admin123', 'administrator', 'welcome1', 'welcome123',
+    'abc12345', 'iloveyou', 'monkey123', 'dragon123', 'master123',
+    'football', 'baseball', 'superman', 'batman123', 'pokemon1',
+    'summer2024', 'summer2025', 'summer2026', 'winter2024', 'winter2025',
+    'january1', 'december', 'ch@ng3me', 'changeme1', 'secret01', 'secret123',
+    'trustno1', 'whatever', 'starwars', 'princess', 'michael1',
+    'jennifer1', 'michelle', 'matthew1', 'password12',
+    // casino-specific obvious guesses
+    'casino123', 'jackpot1', 'winner123', 'gambler1', 'blackjack1',
+    'matrix123', 'matrixspins', 'msaart2026',
+]);
+
 /**
  * Validate password strength
  * @param {string} password - The password to validate
+ * @param {object} [ctx] - Optional context ({ username, email }) to block
+ *                        using identity fields as the password.
  * @returns {string[]} Array of issues, empty if valid
  */
-function validatePassword(password) {
+function validatePassword(password, ctx) {
     const issues = [];
+    if (!password || typeof password !== 'string') {
+        issues.push('at least 8 characters');
+        return issues;
+    }
     if (password.length < 8) issues.push('at least 8 characters');
+    if (password.length > 128) issues.push('no more than 128 characters');
     if (!/[A-Z]/.test(password)) issues.push('an uppercase letter');
     if (!/[a-z]/.test(password)) issues.push('a lowercase letter');
     if (!/[0-9]/.test(password)) issues.push('a number');
     if (!/[^A-Za-z0-9]/.test(password)) issues.push('a special character');
+
+    const lc = password.toLowerCase();
+    if (COMMON_PASSWORDS.has(lc)) {
+        issues.push('(this password is on the public breach list — choose something unique)');
+    }
+    if (ctx && ctx.username && lc.includes(String(ctx.username).toLowerCase())) {
+        issues.push('(must not contain your username)');
+    }
+    if (ctx && ctx.email) {
+        const local = String(ctx.email).split('@')[0].toLowerCase();
+        if (local && local.length >= 4 && lc.includes(local)) {
+            issues.push('(must not contain your email local-part)');
+        }
+    }
+
     return issues;
 }
 
@@ -141,7 +183,7 @@ router.post('/register', async (req, res) => {
         if (username.length < 3 || username.length > 20) {
             return res.status(400).json({ error: 'Username must be 3-20 characters' });
         }
-        const passwordIssues = validatePassword(password);
+        const passwordIssues = validatePassword(password, { username, email });
         if (passwordIssues.length > 0) {
             return res.status(400).json({ error: `Password must contain ${passwordIssues.join(', ')}` });
         }
@@ -462,14 +504,10 @@ router.post('/reset-password', async (req, res) => {
         if (typeof token !== 'string' || token.length !== 64 || !/^[a-f0-9]+$/.test(token)) {
             return res.status(400).json({ error: 'Invalid reset token format' });
         }
-        const passwordIssues = validatePassword(newPassword);
-        if (passwordIssues.length > 0) {
-            return res.status(400).json({ error: `Password must contain ${passwordIssues.join(', ')}` });
-        }
 
-        // Find the token
+        // Find the token first so we can pass the user's identity to the password validator
         const resetRecord = await db.get(
-            'SELECT id, user_id, token, expires_at, used FROM password_reset_tokens WHERE token = ? AND used = 0',
+            'SELECT t.id, t.user_id, t.token, t.expires_at, t.used, u.username, u.email FROM password_reset_tokens t JOIN users u ON u.id = t.user_id WHERE t.token = ? AND t.used = 0',
             [token]
         );
 
@@ -483,9 +521,18 @@ router.post('/reset-password', async (req, res) => {
             return res.status(400).json({ error: 'Reset link has expired. Please request a new one.' });
         }
 
-        // Hash new password and update user
+        // Now validate password strength with identity-contains check
+        const passwordIssues = validatePassword(newPassword, { username: resetRecord.username, email: resetRecord.email });
+        if (passwordIssues.length > 0) {
+            return res.status(400).json({ error: `Password must contain ${passwordIssues.join(', ')}` });
+        }
+
+        // Hash new password + bump password_changed_at to invalidate existing sessions
         const passwordHash = bcrypt.hashSync(newPassword, 13);
-        await db.run('UPDATE users SET password_hash = ? WHERE id = ?', [passwordHash, resetRecord.user_id]);
+        await db.run(
+            'UPDATE users SET password_hash = ?, password_changed_at = ? WHERE id = ?',
+            [passwordHash, Math.floor(Date.now() / 1000), resetRecord.user_id]
+        );
 
         // Mark token as used
         await db.run('UPDATE password_reset_tokens SET used = 1 WHERE id = ?', [resetRecord.id]);
@@ -513,16 +560,16 @@ router.post('/change-password', authenticate, async (req, res) => {
             return res.status(400).json({ error: 'New password must be different from current password' });
         }
 
-        const passwordIssues = validatePassword(newPassword);
-        if (passwordIssues.length > 0) {
-            return res.status(400).json({ error: `Password must contain ${passwordIssues.join(', ')}` });
-        }
-
-        // Fetch current user from database
-        const user = await db.get('SELECT id, password_hash FROM users WHERE id = ?', [req.user.id]);
+        // Fetch current user from database (needed for identity-contains password check)
+        const user = await db.get('SELECT id, username, email, password_hash FROM users WHERE id = ?', [req.user.id]);
 
         if (!user) {
             return res.status(404).json({ error: 'User not found' });
+        }
+
+        const passwordIssues = validatePassword(newPassword, { username: user.username, email: user.email });
+        if (passwordIssues.length > 0) {
+            return res.status(400).json({ error: `Password must contain ${passwordIssues.join(', ')}` });
         }
 
         // Verify current password (bcrypt.compareSync is already constant-time)

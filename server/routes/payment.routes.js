@@ -630,12 +630,54 @@ router.post('/withdraw', authenticate, async (req, res) => {
             console.warn('[AML] analyseWithdrawal error:', e.message);
         });
 
+        // ── Withdrawal OTP (email-confirmed high-value withdrawals) ────────
+        // Any withdrawal ≥ WITHDRAWAL_OTP_THRESHOLD gets a 6-digit OTP emailed
+        // to the user. Blocks account-takeover theft: even with a stolen JWT,
+        // the attacker can't complete the withdrawal without the user's email.
+        let otpRequired = false;
+        const OTP_THRESHOLD = config.WITHDRAWAL_OTP_THRESHOLD || 500;
+        if (withdrawal >= OTP_THRESHOLD) {
+            try {
+                // 6-digit OTP from crypto RNG (never Math.random)
+                const rand = crypto.randomBytes(3).readUIntBE(0, 3);
+                const otpCode = String(rand % 1_000_000).padStart(6, '0');
+                await db.run(
+                    "UPDATE withdrawals SET otp_code = ?, otp_attempts = 0, otp_created_at = datetime('now') WHERE id = ?",
+                    [otpCode, withdrawalId]
+                );
+                otpRequired = true;
+
+                // Look up user email for delivery (fire-and-forget — user can
+                // also resend via /withdraw/:id/resend-otp if the email doesn't arrive)
+                const emailRow = await db.get('SELECT email, username FROM users WHERE id = ?', [req.user.id]);
+                if (emailRow && emailRow.email) {
+                    const emailService = require('../services/email.service');
+                    emailService.sendWithdrawalOtp(
+                        emailRow.email,
+                        emailRow.username,
+                        otpCode,
+                        withdrawal,
+                        config.CURRENCY,
+                        config.WITHDRAWAL_OTP_EXPIRY_MINUTES || 15
+                    ).catch(function(e) {
+                        console.warn('[Payment] OTP email send failed:', e.message);
+                    });
+                }
+            } catch (otpErr) {
+                console.warn('[Payment] OTP generation error (non-blocking):', otpErr.message);
+            }
+        }
+
         // Calculate when cooling-off ends (24h from now)
         var coolingOffEnds = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
 
         res.json({
-            message: `Withdrawal of $${withdrawal.toFixed(2)} submitted. 24-hour review period before processing.`,
+            message: otpRequired
+                ? `Withdrawal of $${withdrawal.toFixed(2)} submitted. Check your email for a verification code to confirm it, then admin review (${config.WITHDRAWAL_PROCESSING_DAYS + 1} days).`
+                : `Withdrawal of $${withdrawal.toFixed(2)} submitted. 24-hour review period before processing.`,
             balance: balanceAfter,
+            otpRequired,
+            otpExpiryMinutes: otpRequired ? (config.WITHDRAWAL_OTP_EXPIRY_MINUTES || 15) : undefined,
             withdrawal: {
                 id: withdrawalId,
                 amount: withdrawal,
@@ -678,7 +720,7 @@ router.post('/withdraw/verify-otp', authenticate, otpLimiter, async (req, res) =
         }
 
         const wd = await db.get(
-            'SELECT id, user_id, amount, status, otp_code, otp_attempts FROM withdrawals WHERE id = ? AND user_id = ?',
+            'SELECT id, user_id, amount, status, otp_code, otp_attempts, otp_created_at FROM withdrawals WHERE id = ? AND user_id = ?',
             [parseInt(withdrawal_id), req.user.id]
         );
         if (!wd) {
@@ -689,6 +731,20 @@ router.post('/withdraw/verify-otp', authenticate, otpLimiter, async (req, res) =
         }
         if (!wd.otp_code) {
             return res.status(400).json({ error: 'No OTP is set for this withdrawal or it has been invalidated' });
+        }
+
+        // Enforce OTP expiry. Expired OTPs are invalidated so a stolen code
+        // from an old inbox can't be replayed after the window.
+        const expiryMin = config.WITHDRAWAL_OTP_EXPIRY_MINUTES || 15;
+        if (wd.otp_created_at) {
+            const ageMs = Date.now() - new Date(wd.otp_created_at).getTime();
+            if (ageMs > expiryMin * 60 * 1000) {
+                await db.run(
+                    'UPDATE withdrawals SET otp_code = NULL WHERE id = ?',
+                    [wd.id]
+                );
+                return res.status(400).json({ error: 'Verification code has expired. Please request a new one.' });
+            }
         }
 
         // Check DB-level attempt count
@@ -722,13 +778,66 @@ router.post('/withdraw/verify-otp', authenticate, otpLimiter, async (req, res) =
 
         // OTP correct — mark as otp_verified
         await db.run(
-            "UPDATE withdrawals SET status = 'otp_verified', otp_code = NULL, otp_attempts = 0 WHERE id = ?",
+            "UPDATE withdrawals SET status = 'otp_verified', otp_code = NULL, otp_attempts = 0, otp_verified_at = datetime('now') WHERE id = ?",
             [wd.id]
         );
-        res.json({ message: 'OTP verified. Withdrawal approved for processing.', withdrawal_id: wd.id });
+        res.json({ message: 'OTP verified. Withdrawal queued for admin review.', withdrawal_id: wd.id });
     } catch (err) {
         console.warn('[Payment] OTP verify error:', err.message);
         res.status(500).json({ error: 'Failed to verify OTP' });
+    }
+});
+
+// POST /api/payments/withdraw/:id/resend-otp — rotate + resend the OTP
+// Rate-limited via otpLimiter to prevent abusing it as a free email sender.
+router.post('/withdraw/:id/resend-otp', authenticate, otpLimiter, async (req, res) => {
+    try {
+        const withdrawalId = parseInt(req.params.id, 10);
+        if (!Number.isInteger(withdrawalId) || withdrawalId <= 0) {
+            return res.status(400).json({ error: 'Invalid withdrawal id' });
+        }
+        const wd = await db.get(
+            'SELECT id, user_id, amount, status FROM withdrawals WHERE id = ? AND user_id = ?',
+            [withdrawalId, req.user.id]
+        );
+        if (!wd) return res.status(404).json({ error: 'Withdrawal not found' });
+        if (wd.status !== 'pending') {
+            return res.status(400).json({ error: `Withdrawal is not pending (status: ${wd.status})` });
+        }
+        if (wd.amount < (config.WITHDRAWAL_OTP_THRESHOLD || 500)) {
+            return res.status(400).json({ error: 'OTP not required for this withdrawal' });
+        }
+
+        // Rotate to a fresh 6-digit code (invalidates any previously emailed one)
+        const rand = crypto.randomBytes(3).readUIntBE(0, 3);
+        const otpCode = String(rand % 1_000_000).padStart(6, '0');
+        await db.run(
+            "UPDATE withdrawals SET otp_code = ?, otp_attempts = 0, otp_created_at = datetime('now') WHERE id = ?",
+            [otpCode, wd.id]
+        );
+
+        const user = await db.get('SELECT email, username FROM users WHERE id = ?', [req.user.id]);
+        if (user && user.email) {
+            const emailService = require('../services/email.service');
+            emailService.sendWithdrawalOtp(
+                user.email,
+                user.username,
+                otpCode,
+                wd.amount,
+                config.CURRENCY,
+                config.WITHDRAWAL_OTP_EXPIRY_MINUTES || 15
+            ).catch(function(e) {
+                console.warn('[Payment] OTP resend email error:', e.message);
+            });
+        }
+        res.json({
+            ok: true,
+            message: 'A new verification code has been emailed to you.',
+            expiryMinutes: config.WITHDRAWAL_OTP_EXPIRY_MINUTES || 15,
+        });
+    } catch (err) {
+        console.warn('[Payment] OTP resend error:', err.message);
+        res.status(500).json({ error: 'Failed to resend OTP' });
     }
 });
 

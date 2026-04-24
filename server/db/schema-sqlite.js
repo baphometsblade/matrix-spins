@@ -933,6 +933,8 @@ const USER_MIGRATIONS = [
 const WITHDRAWAL_MIGRATIONS = [
     ['otp_code', 'TEXT'],
     ['otp_attempts', 'INTEGER DEFAULT 0'],
+    ['otp_created_at', 'TEXT'],
+    ['otp_verified_at', 'TEXT'],
 ];
 
 module.exports = { TABLES, INDEXES, DEFERRED_INDEXES, USER_MIGRATIONS, WITHDRAWAL_MIGRATIONS };
