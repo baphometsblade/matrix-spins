@@ -22,8 +22,23 @@
 </head>
 <body>
 <div class="wrap">
-    <h1>Provably fair receipts</h1>
-    <div class="sub">How Matrix Spins proves each deposit produces a tamper-evident NFT receipt.</div>
+    <h1>Provably fair</h1>
+    <div class="sub">Two independent integrity guarantees: one for every spin outcome, one for every deposit receipt.</div>
+
+    <h2>Slot spins</h2>
+    <p>Every spin on a live Matrix Spins table is settled server-side from a seed we <em>committed to before</em> you placed your bet. After the spin, we reveal the full seed so you can recompute the reel stops in your browser with zero trust in our servers.</p>
+
+    <p>Before the spin, <code>GET /api/slot/commit</code> returns <code>sha256(server_seed)</code>. You can snapshot that hash. After the spin, the response includes <code>revealed.server_seed</code> and a fresh <code>next_commit.server_seed_hash</code> — the used seed cannot be reused for a later round.</p>
+
+    <pre>reel_float_i = parseInt(HMAC-SHA256(server_seed, client_seed + ":" + nonce + ":" + round).slice(i*8, i*8+8), 16) / 2^32
+reel_index_i = floor(reel_float_i * reel_length)</pre>
+
+    <p>The <code>client_seed</code> is yours to choose — use any ASCII string up to 64 characters; we substitute <code>"default"</code> if you leave it blank. The <code>nonce</code> increments within the life of a server seed and is reset to 0 each time a new commit is rolled, i.e. after every spin.</p>
+
+    <p><a href="/verify-round.html">Verify a past spin &rarr;</a> &nbsp; (recomputes the reel stops in your browser via WebCrypto)</p>
+
+    <h2>Deposit receipts</h2>
+    <p>Every deposit that clears Stripe mints a receipt NFT to your account. The receipt's metadata is signed with HMAC-SHA256 using a server-held <code>NFT_SIGNING_SECRET</code>. A recorded signature cannot be altered without detection, and the <code>token_id</code> is deterministic — the same <em>(user id, deposit id)</em> pair always hashes to the same id.</p>
 
     <h2>What we sign</h2>
     <p>Every deposit that clears Stripe mints a receipt NFT to your account. The receipt's metadata is signed with HMAC-SHA256 using a server-held <code>NFT_SIGNING_SECRET</code>. A recorded signature cannot be altered without detection, and the <code>token_id</code> is deterministic — the same <em>(user id, deposit id)</em> pair always hashes to the same id.</p>
@@ -42,9 +57,9 @@ signature  = HMAC-SHA256(NFT_SIGNING_SECRET, JSON.stringify(metadata))</pre>
     </ol>
     <p>If the hex strings match, the receipt is authentic and unaltered since minting.</p>
 
-    <h2>What "provably fair" does <em>not</em> mean here</h2>
+    <h2>Scope notes</h2>
     <div class="note">
-        <strong>Scope:</strong> these receipts prove that <em>your deposit was recorded and the NFT tied to it was issued by us</em> — nothing more. They are not a provably-fair mechanism for game outcomes. We do not publish seeds for spin results because this version of Matrix Spins does not wager deposited balance against a server-side RNG.
+        <strong>Receipts vs. spin outcomes:</strong> the receipt signature proves the receipt itself wasn't forged or altered. It does <em>not</em> prove the fairness of any specific spin — that proof comes from the commit-reveal chain described above (<a href="/verify-round.html">verify a round</a>).
     </div>
 
     <h2>On-chain upgrade path</h2>

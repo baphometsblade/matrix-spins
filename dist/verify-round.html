@@ -1,0 +1,363 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Verify a round — Matrix Spins</title>
+<link rel="icon" type="image/svg+xml" href="/favicon.svg">
+<style>
+    :root { color-scheme: dark; }
+    body { margin: 0; font: 14px/1.55 system-ui, -apple-system, Segoe UI, Roboto, sans-serif; color: #e7e7e7; background: #0d1117; }
+    .wrap { max-width: 760px; margin: 0 auto; padding: 28px 20px 80px; }
+    h1 { margin: 0 0 4px; font-size: 26px; color: #d4af37; letter-spacing: 0.3px; }
+    .lead { color: #a0a0a0; margin: 0 0 20px; font-size: 14px; }
+    h2 { margin: 28px 0 10px; font-size: 15px; color: #d4af37; letter-spacing: 1px; text-transform: uppercase; }
+    .card { background: rgba(255,255,255,0.04); border: 1px solid rgba(212,175,55,0.18); border-radius: 10px; padding: 18px; margin-bottom: 14px; }
+    .row { display: flex; align-items: center; gap: 12px; margin-bottom: 10px; flex-wrap: wrap; }
+    label.inline { width: 140px; font-size: 13px; color: #a0a0a0; flex-shrink: 0; }
+    input, select { flex: 1; min-width: 0; background: #0b0e14; color: #e7e7e7; border: 1px solid #242a33; border-radius: 6px; padding: 8px 10px; font: inherit; }
+    input.mono { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12px; }
+    button { background: #d4af37; color: #111; border: 0; border-radius: 6px; padding: 9px 14px; font-weight: 700; cursor: pointer; }
+    button:disabled { opacity: .5; cursor: wait; }
+    button.secondary { background: transparent; color: #e7e7e7; border: 1px solid #3a3f49; font-weight: 500; }
+    .pill { display: inline-block; padding: 2px 10px; border-radius: 999px; font-size: 12px; font-weight: 600; }
+    .pill-ok { background: rgba(40,180,99,.18); color: #5fd489; }
+    .pill-fail { background: rgba(231,76,60,.20); color: #ff9f9f; }
+    .mono { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12px; color: #00d4ff; word-break: break-all; }
+    .kv { display: grid; grid-template-columns: 140px 1fr; gap: 4px 12px; font-size: 13px; }
+    .kv dt { color: #9aa1ad; }
+    .kv dd { margin: 0; color: #e7e7e7; }
+    .muted { color: #8a8a8a; font-size: 13px; }
+    .err { color: #ff9f9f; }
+    .ok { color: #5fd489; }
+    .hidden { display: none; }
+    .reels { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin-top: 10px; }
+    .reel { text-align: center; padding: 10px 0; border-radius: 6px; background: #0b0e14; border: 1px solid #242a33; font-weight: 800; }
+    a { color: #00d4ff; }
+</style>
+</head>
+<body>
+<div class="wrap">
+    <h1>Verify a slot round</h1>
+    <p class="lead">
+        Every spin on Matrix Spins is derived from
+        <code>HMAC-SHA256(server_seed, client_seed:nonce:round)</code>.
+        Before you bet, you see <code>sha256(server_seed)</code> — the
+        commit. After the spin, the seed is revealed. This page
+        recomputes the reel stops entirely in your browser, so you can
+        confirm the server didn't swap seeds after seeing your bet.
+    </p>
+
+    <div class="card" id="history-card">
+        <h2 style="margin-top:0">From your history</h2>
+        <div id="history-body">
+            <p class="muted" id="history-status">Checking for a session&hellip;</p>
+            <div id="history-picker" class="hidden">
+                <div class="row">
+                    <label class="inline" for="history-select">Round</label>
+                    <select id="history-select"></select>
+                </div>
+                <div class="row">
+                    <button id="history-verify">Verify this round</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card">
+        <h2 style="margin-top:0">Paste values manually</h2>
+        <p class="muted" style="margin-top:0">
+            Got these values from a screenshot, a friend, or the live-slot
+            modal? Paste them here to recompute the outcome locally. No data
+            leaves your browser.
+        </p>
+        <div class="row">
+            <label class="inline" for="m-game">Game</label>
+            <select id="m-game"><option value="classic_777">Classic 777</option></select>
+        </div>
+        <div class="row"><label class="inline" for="m-server-seed">Server seed</label><input id="m-server-seed" class="mono" placeholder="64-hex-char string"></div>
+        <div class="row"><label class="inline" for="m-server-hash">Committed hash</label><input id="m-server-hash" class="mono" placeholder="sha256 of the server seed, 64 hex chars"></div>
+        <div class="row"><label class="inline" for="m-client-seed">Client seed</label><input id="m-client-seed" placeholder="whatever you chose, or &quot;default&quot;"></div>
+        <div class="row"><label class="inline" for="m-nonce">Nonce</label><input id="m-nonce" type="number" min="0" placeholder="1"></div>
+        <div class="row"><label class="inline" for="m-expected">Expected stops</label><input id="m-expected" placeholder="comma-separated indices, optional"></div>
+        <div class="row">
+            <button id="manual-verify">Verify</button>
+            <button class="secondary" id="manual-clear">Clear</button>
+        </div>
+    </div>
+
+    <div class="card hidden" id="result-card">
+        <h2 style="margin-top:0">Result</h2>
+        <div id="result-body"></div>
+    </div>
+
+    <p class="muted" style="margin-top:24px">
+        <a href="/provably-fair.html">&larr; About Matrix Spins fairness</a>
+    </p>
+</div>
+
+<script>
+(function () {
+    'use strict';
+
+    // Mirror of server/services/slot-engine.service.js GAMES. Hardcoded
+    // on purpose: if the server ever changes the reel strip, stale
+    // clients will loudly fail verification — that's the correct signal.
+    var GAMES = {
+        classic_777: {
+            reels: [
+                ['cherry','cherry','cherry','cherry','lemon','lemon','orange','orange','bar','seven'],
+                ['cherry','cherry','cherry','cherry','lemon','lemon','orange','orange','bar','seven'],
+                ['cherry','cherry','cherry','cherry','lemon','lemon','orange','orange','bar','seven'],
+            ],
+            paytable: { cherry: 3, lemon: 10, orange: 15, bar: 60, seven: 500 },
+        },
+    };
+
+    var SUBTLE = window.crypto && window.crypto.subtle;
+    var enc = new TextEncoder();
+
+    function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' })[c]; }); }
+    function mono(s) { return '<span class="mono">' + esc(s) + '</span>'; }
+
+    async function sha256Hex(bytes) {
+        var buf = await SUBTLE.digest('SHA-256', bytes);
+        return Array.prototype.map.call(new Uint8Array(buf), function (b) { return b.toString(16).padStart(2, '0'); }).join('');
+    }
+
+    async function hmacSha256Hex(keyBytes, msgBytes) {
+        var key = await SUBTLE.importKey('raw', keyBytes, { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']);
+        var sig = await SUBTLE.sign('HMAC', key, msgBytes);
+        return Array.prototype.map.call(new Uint8Array(sig), function (b) { return b.toString(16).padStart(2, '0'); }).join('');
+    }
+
+    // Must match server/services/slot-engine.service.js normalizeClientSeed
+    // byte for byte, otherwise the HMAC input differs and verification
+    // false-negatives.
+    function normalizeClientSeed(raw) {
+        if (raw == null) return 'default';
+        var s = String(raw).slice(0, 64).replace(/[^\x20-\x7e]/g, '');
+        return s || 'default';
+    }
+
+    async function deriveFloats(serverSeed, clientSeed, nonce, count) {
+        var key = enc.encode(serverSeed);
+        var floats = [];
+        var round = 0;
+        while (floats.length < count) {
+            var mac = await hmacSha256Hex(key, enc.encode(clientSeed + ':' + nonce + ':' + round));
+            for (var i = 0; i + 8 <= mac.length && floats.length < count; i += 8) {
+                floats.push(parseInt(mac.slice(i, i + 8), 16) / 0x100000000);
+            }
+            round += 1;
+        }
+        return floats;
+    }
+
+    async function verifyRound(params) {
+        var game = GAMES[params.gameId];
+        if (!game) throw new Error('Unknown game: ' + params.gameId);
+        var serverSeed = String(params.serverSeed || '').trim().toLowerCase();
+        var committed = String(params.serverSeedHash || '').trim().toLowerCase();
+        var cs = normalizeClientSeed(params.clientSeed);
+        var nonce = Number(params.nonce);
+        if (!/^[0-9a-f]{64}$/.test(serverSeed)) throw new Error('Server seed must be 64 hex characters.');
+        if (!/^[0-9a-f]{64}$/.test(committed)) throw new Error('Committed hash must be 64 hex characters.');
+        if (!Number.isFinite(nonce) || nonce < 0) throw new Error('Nonce must be a non-negative integer.');
+
+        var computedHash = await sha256Hex(enc.encode(serverSeed));
+        var commitOk = computedHash === committed;
+
+        var floats = await deriveFloats(serverSeed, cs, nonce, game.reels.length);
+        var indices = game.reels.map(function (reel, i) {
+            var idx = Math.floor(floats[i] * reel.length);
+            return idx >= reel.length ? reel.length - 1 : idx;
+        });
+        var symbols = indices.map(function (idx, i) { return game.reels[i][idx]; });
+        var allMatch = symbols.every(function (s) { return s === symbols[0]; });
+        var multiplier = allMatch ? Number(game.paytable[symbols[0]] || 0) : 0;
+
+        var expected = null, stopsOk = null;
+        if (Array.isArray(params.expectedStops) && params.expectedStops.length === indices.length) {
+            expected = params.expectedStops.map(Number);
+            stopsOk = expected.every(function (e, i) { return Number(e) === indices[i]; });
+        }
+
+        return {
+            commitOk: commitOk,
+            computedHash: computedHash,
+            normalizedClientSeed: cs,
+            nonce: nonce,
+            floats: floats,
+            indices: indices,
+            symbols: symbols,
+            multiplier: multiplier,
+            expected: expected,
+            stopsOk: stopsOk,
+        };
+    }
+
+    function renderResult(r) {
+        var card = document.getElementById('result-card');
+        var body = document.getElementById('result-body');
+        card.classList.remove('hidden');
+        var overall;
+        if (!r.commitOk) overall = '<span class="pill pill-fail">&#10007; Seed does not match commit</span>';
+        else if (r.stopsOk === false) overall = '<span class="pill pill-fail">&#10007; Reel stops differ</span>';
+        else if (r.stopsOk === true) overall = '<span class="pill pill-ok">&#10003; Verified</span>';
+        else overall = '<span class="pill pill-ok">&#10003; Seed valid, stops computed</span>';
+
+        var rows = [
+            ['sha256(server_seed)', mono(r.computedHash) + (r.commitOk ? ' &nbsp;<span class="ok">matches commit</span>' : ' &nbsp;<span class="err">mismatch</span>')],
+            ['Client seed (used)',  mono(r.normalizedClientSeed)],
+            ['Nonce',               mono(String(r.nonce))],
+            ['Floats',              mono(r.floats.map(function (f) { return f.toFixed(8); }).join(', '))],
+            ['Indices (computed)',  mono(r.indices.join(', '))],
+            ['Symbols',             mono(r.symbols.join(' &middot; '))],
+            ['Multiplier',          r.multiplier > 0 ? mono(r.multiplier + '&times;') : '<span class="muted">no win</span>'],
+        ];
+        if (r.expected) {
+            rows.push([
+                'Expected indices',
+                mono(r.expected.join(', ')) + ' &nbsp;' + (r.stopsOk ? '<span class="ok">&#10003;</span>' : '<span class="err">&#10007;</span>'),
+            ]);
+        }
+
+        var reelHtml = '<div class="reels">' +
+            r.symbols.map(function (sym) { return '<div class="reel">' + esc(sym.toUpperCase()) + '</div>'; }).join('') +
+            '</div>';
+
+        body.innerHTML =
+            '<div style="margin-bottom:12px">' + overall + '</div>' +
+            reelHtml +
+            '<dl class="kv" style="margin-top:14px">' +
+                rows.map(function (kv) { return '<dt>' + kv[0] + '</dt><dd>' + kv[1] + '</dd>'; }).join('') +
+            '</dl>';
+    }
+
+    function showError(msg) {
+        var card = document.getElementById('result-card');
+        var body = document.getElementById('result-body');
+        card.classList.remove('hidden');
+        body.innerHTML = '<p class="err">' + esc(msg) + '</p>';
+    }
+
+    document.getElementById('manual-verify').addEventListener('click', async function () {
+        var btn = this;
+        btn.disabled = true;
+        try {
+            var expectedRaw = document.getElementById('m-expected').value.trim();
+            var expected = expectedRaw ? expectedRaw.split(',').map(function (s) { return Number(s.trim()); }).filter(function (n) { return Number.isFinite(n); }) : null;
+            var params = {
+                gameId:         document.getElementById('m-game').value,
+                serverSeed:     document.getElementById('m-server-seed').value,
+                serverSeedHash: document.getElementById('m-server-hash').value,
+                clientSeed:     document.getElementById('m-client-seed').value,
+                nonce:          document.getElementById('m-nonce').value,
+                expectedStops:  expected,
+            };
+            var r = await verifyRound(params);
+            renderResult(r);
+        } catch (e) {
+            showError(e.message || String(e));
+        }
+        btn.disabled = false;
+    });
+
+    document.getElementById('manual-clear').addEventListener('click', function () {
+        ['m-server-seed','m-server-hash','m-client-seed','m-nonce','m-expected'].forEach(function (id) {
+            document.getElementById(id).value = '';
+        });
+        document.getElementById('result-card').classList.add('hidden');
+    });
+
+    // --- History side: pull from /api/slot/rounds if signed in. ---
+    function token() {
+        try {
+            var t = localStorage.getItem('casinoToken');
+            if (t) return t;
+            var a = localStorage.getItem('ms_admin_token');
+            if (a) return a;
+        } catch (e) { /* storage unavailable */ }
+        return null;
+    }
+
+    function money(cents) { return '$' + (Number(cents || 0) / 100).toFixed(2); }
+
+    async function loadHistory() {
+        var status = document.getElementById('history-status');
+        var picker = document.getElementById('history-picker');
+        var select = document.getElementById('history-select');
+        var tok = token();
+        if (!tok) {
+            status.textContent = 'Not signed in. Use the "paste manually" panel below, or ';
+            status.innerHTML += '<a href="/">sign in</a> and come back.';
+            return;
+        }
+        try {
+            var res = await fetch('/api/slot/rounds?limit=50', { headers: { Authorization: 'Bearer ' + tok } });
+            if (res.status === 401) {
+                status.textContent = 'Your session expired. ';
+                status.innerHTML += '<a href="/">Sign in again</a>.';
+                return;
+            }
+            if (!res.ok) throw new Error('HTTP ' + res.status);
+            var data = await res.json();
+            if (!data.rounds || data.rounds.length === 0) {
+                status.textContent = 'No rounds yet. Play a spin on the classic_777 table and come back.';
+                return;
+            }
+            select.innerHTML = data.rounds.map(function (r) {
+                var net = r.win_cents - r.bet_cents;
+                var sign = net >= 0 ? '+' : '';
+                return '<option value="' + r.id + '">#' + r.id + ' &middot; ' +
+                    String(r.created_at || '').replace('T', ' ').slice(0, 16) + ' &middot; bet ' + money(r.bet_cents) +
+                    ' &middot; net ' + sign + money(net) + '</option>';
+            }).join('');
+            status.classList.add('hidden');
+            picker.classList.remove('hidden');
+            select._rounds = {};
+            data.rounds.forEach(function (r) { select._rounds[r.id] = r; });
+
+            var params = new URLSearchParams(location.search);
+            var preselect = params.get('round');
+            if (preselect && select._rounds[preselect]) {
+                select.value = preselect;
+                verifySelected();
+            }
+        } catch (err) {
+            status.textContent = 'Could not load your history: ' + err.message;
+        }
+    }
+
+    async function verifySelected() {
+        var select = document.getElementById('history-select');
+        var id = select.value;
+        var round = select._rounds && select._rounds[id];
+        if (!round) return;
+        try {
+            var r = await verifyRound({
+                gameId: round.game_id,
+                serverSeed: round.server_seed,
+                serverSeedHash: round.server_seed_hash,
+                clientSeed: round.client_seed,
+                nonce: round.nonce,
+                expectedStops: (round.outcome && round.outcome.stops || []).map(function (s) { return s.index; }),
+            });
+            renderResult(r);
+        } catch (err) {
+            showError(err.message || String(err));
+        }
+    }
+
+    document.getElementById('history-verify').addEventListener('click', verifySelected);
+
+    if (!SUBTLE) {
+        showError('This browser does not expose window.crypto.subtle. HTTPS is required — try the production site, or run locally over http://localhost (not a bare IP).');
+    } else {
+        loadHistory();
+    }
+})();
+</script>
+</body>
+</html>

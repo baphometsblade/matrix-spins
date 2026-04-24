@@ -1,5 +1,5 @@
 /* Royal Slots Casino - Bundled JavaScript */
-/* Generated: 2026-04-24T06:52:26.265Z */
+/* Generated: 2026-04-24T10:19:44.059Z */
 
 
 /* â”€â”€â”€ shared/game-definitions.js (2/56) â”€â”€â”€ */
@@ -40952,11 +40952,13 @@ window._logAudit658 = _logAudit658;
         if (!el) return;
         if (!state.lastResult) { el.innerHTML = ''; return; }
         var r = state.lastResult.revealed;
+        var rid = state.lastResult.round_id;
         el.innerHTML =
             '<div style="margin-top:4px;">Last round revealed seed:</div>' +
             '<div style="font-family:monospace;word-break:break-all;color:#cbd5e1;">' + r.server_seed + '</div>' +
             '<div style="margin-top:4px;">sha256 of seed must equal pre-commit hash: ' +
-                '<span style="font-family:monospace;">' + shortHash(r.server_seed_hash) + '</span></div>';
+                '<span style="font-family:monospace;">' + shortHash(r.server_seed_hash) + '</span></div>' +
+            '<div style="margin-top:6px;"><a href="/verify-round.html?round=' + rid + '" target="_blank" rel="noopener" style="color:#00d4ff;">Verify this round &rarr;</a></div>';
     }
 
     async function fetchJSON(path, opts) {

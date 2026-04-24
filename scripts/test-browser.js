@@ -257,6 +257,37 @@ async function main() {
             }
         }
 
+        // Verify-round page — after the live-slot spin persisted a
+        // round, navigate to /verify-round.html?round=N and confirm
+        // the browser's SubtleCrypto RNG reimplementation reaches the
+        // same indices the server did. This catches any drift between
+        // server/services/slot-engine.service.js and the hardcoded
+        // client reel strip.
+        if (registered) {
+            const userRow = await db.get("SELECT id FROM users WHERE username = ?", [regUsername]);
+            const roundRow = userRow ? await db.get(
+                'SELECT id FROM slot_rounds WHERE user_id = ? ORDER BY id DESC LIMIT 1',
+                [userRow.id]
+            ) : null;
+            if (roundRow && roundRow.id) {
+                await page.goto('http://localhost:' + process.env.PORT + '/verify-round.html?round=' + roundRow.id, { waitUntil: 'networkidle', timeout: 15000 });
+                // Wait for the auto-verify driven by ?round=... to render
+                // the result card.
+                const okPill = await page.waitForSelector('#result-card .pill-ok', { timeout: 5000 })
+                    .then(el => el ? el.innerText() : null)
+                    .catch(() => null);
+                const failPill = await page.$('#result-card .pill-fail');
+                if (failPill) {
+                    const txt = await failPill.innerText();
+                    fail('verify-round showed a failure pill: ' + txt);
+                } else if (!okPill) {
+                    fail('verify-round did not render a verification pill');
+                } else {
+                    ok('verify-round: ' + okPill.trim() + ' for round #' + roundRow.id);
+                }
+            }
+        }
+
         // Withdrawal UI — navigate to /account.html, open the
         // Withdrawals tab, submit the form, and assert a real pending
         // withdrawal row exists for this user.
