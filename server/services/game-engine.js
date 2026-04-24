@@ -681,10 +681,14 @@ async function resolveSpin(game, betAmount, gameStats, freeSpinState = null, db 
         }
     }
 
-    // Advance free spins
+    // Advance free-spin counter. Decrement `remaining` here, but DEFER
+    // the totalWin accumulation until AFTER scaleWinForRTP + rounding so
+    // the freeSpinState.totalWin summary actually matches the sum of
+    // winAmounts credited to the player across the round — a real bug
+    // the test-engine-internals suite caught.
+    const _thisWasFreeSpin = freeSpinState.active;
     if (freeSpinState.active) {
         freeSpinState.remaining--;
-        freeSpinState.totalWin += winAmount;
         if (freeSpinState.remaining <= 0) {
             freeSpinState.active = false;
         }
@@ -699,6 +703,15 @@ async function resolveSpin(game, betAmount, gameStats, freeSpinState = null, db 
 
     // Round final win amount
     winAmount = Math.round(winAmount * 100) / 100;
+
+    // Accumulate the round's running total with the FINAL (post-scale,
+    // post-round) paid amount — only on spins that were themselves a
+    // free spin. The triggering spin itself is not part of the round's
+    // totalWin because the player paid for it.
+    if (_thisWasFreeSpin) {
+        if (typeof freeSpinState.totalWin !== 'number') freeSpinState.totalWin = 0;
+        freeSpinState.totalWin = Math.round((freeSpinState.totalWin + winAmount) * 100) / 100;
+    }
 
     // ── Progressive jackpot: report contribution + hit to caller.
     // The caller (spin.routes.js) is responsible for persisting the pool
