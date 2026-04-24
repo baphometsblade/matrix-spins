@@ -90,6 +90,7 @@
     <button class="tab" data-tab="security">Security</button>
     <button class="tab" data-tab="limits">Limits</button>
     <button class="tab" data-tab="deposits">Deposits</button>
+    <button class="tab" data-tab="withdrawals">Withdrawals</button>
     <button class="tab" data-tab="receipts">Receipt NFTs</button>
     <button class="tab" data-tab="activity">Activity</button>
 </div>
@@ -166,6 +167,30 @@
     </div>
     <table id="tbl-deposits"><thead><tr>
         <th>ID</th><th>Amount</th><th>Status</th><th>Created</th><th>Completed</th>
+    </tr></thead><tbody></tbody></table>
+</section>
+
+<section id="withdrawals">
+    <form class="card" id="wd-form" onsubmit="event.preventDefault();requestWithdrawal()">
+        <div class="label" style="margin-bottom:8px">Request a withdrawal</div>
+        <p style="font-size:13px;color:#8a8a8a;margin:0 0 12px 0;">
+            $10 &ndash; $5,000 per request. Processed manually by our
+            operations team within 1&ndash;3 business days. You can cancel a
+            still-pending request at any time.
+        </p>
+        <div class="row"><label class="inline" for="wd-amount">Amount (USD)</label><input type="number" id="wd-amount" min="10" max="5000" step="0.01" required placeholder="25.00"></div>
+        <div class="row"><label class="inline" for="wd-method">Method</label>
+            <select id="wd-method" required>
+                <option value="bank_transfer">Bank transfer</option>
+                <option value="crypto">Crypto (BTC / ETH / USDC)</option>
+            </select>
+        </div>
+        <div class="row"><label class="inline" for="wd-destination">Destination</label><input type="text" id="wd-destination" maxlength="200" required placeholder="IBAN / wallet address"></div>
+        <button class="primary" type="submit" id="wd-submit">Request withdrawal</button>
+        <div class="msg" id="wd-msg"></div>
+    </form>
+    <table id="tbl-withdrawals"><thead><tr>
+        <th>ID</th><th>Amount</th><th>Method</th><th>Status</th><th>Note</th><th>Requested</th><th>Processed</th><th></th>
     </tr></thead><tbody></tbody></table>
 </section>
 
@@ -294,7 +319,7 @@
                     alert('Email verification failed: ' + ((consume.data && consume.data.error) || 'unknown error'));
                 }
             }
-            await Promise.all([loadOverview(), loadDeposits(), loadNfts(), loadLimits(), loadActivity(), load2FA()]);
+            await Promise.all([loadOverview(), loadDeposits(), loadNfts(), loadLimits(), loadActivity(), load2FA(), loadWithdrawals()]);
         } catch (e) {
             document.getElementById('signed-in-as').innerHTML = 'Session invalid or expired. <a href="/">Sign in again</a>.';
             document.getElementById('login-wrap').style.display = '';
@@ -372,6 +397,68 @@
             setBar('monthly', data.used.monthly_cents, data.limits.monthly_cents);
         } catch (e) { /* ignore */ }
     }
+
+    async function loadWithdrawals() {
+        try {
+            var data = await api('GET', '/api/withdrawal');
+            var tbody = document.querySelector('#tbl-withdrawals tbody');
+            tbody.innerHTML = data.withdrawals.length === 0
+                ? '<tr><td colspan="8" class="empty">No withdrawals yet.</td></tr>'
+                : data.withdrawals.map(function (w) {
+                    var cancelBtn = w.status === 'pending'
+                        ? '<button class="secondary" onclick="cancelWithdrawal(' + w.id + ', this)">Cancel</button>'
+                        : '';
+                    return '<tr>' +
+                        '<td class="mono">#' + w.id + '</td>' +
+                        '<td>' + money(w.amount) + ' ' + esc((w.currency||'').toUpperCase()) + '</td>' +
+                        '<td>' + esc(w.method) + '</td>' +
+                        '<td>' + pill(w.status) + '</td>' +
+                        '<td>' + esc(w.admin_note || '—') + '</td>' +
+                        '<td>' + esc(String(w.created_at || '').replace('T',' ').slice(0,19)) + '</td>' +
+                        '<td>' + esc(String(w.processed_at || '').replace('T',' ').slice(0,19)) + '</td>' +
+                        '<td>' + cancelBtn + '</td>' +
+                    '</tr>';
+                }).join('');
+        } catch (e) { /* ignore */ }
+    }
+
+    window.requestWithdrawal = async function () {
+        var amt = Number(document.getElementById('wd-amount').value);
+        var method = document.getElementById('wd-method').value;
+        var dest = document.getElementById('wd-destination').value;
+        var msg = document.getElementById('wd-msg');
+        var btn = document.getElementById('wd-submit');
+        msg.textContent = '';
+        if (!Number.isFinite(amt) || amt < 10 || amt > 5000) {
+            msg.textContent = 'Amount must be between $10 and $5,000.';
+            msg.className = 'msg err';
+            return;
+        }
+        btn.disabled = true;
+        try {
+            await api('POST', '/api/withdrawal/request', { amount: amt, method: method, destination: dest });
+            msg.textContent = 'Withdrawal requested. It will be reviewed by our operations team.';
+            msg.className = 'msg ok';
+            document.getElementById('wd-amount').value = '';
+            document.getElementById('wd-destination').value = '';
+            await Promise.all([loadWithdrawals(), loadOverview()]);
+        } catch (e) {
+            msg.textContent = e.message || 'Failed to request withdrawal.';
+            msg.className = 'msg err';
+        }
+        btn.disabled = false;
+    };
+
+    window.cancelWithdrawal = async function (id, btn) {
+        if (btn) btn.disabled = true;
+        try {
+            await api('POST', '/api/withdrawal/' + id + '/cancel');
+            await Promise.all([loadWithdrawals(), loadOverview()]);
+        } catch (e) {
+            if (btn) btn.disabled = false;
+            alert(e.message || 'Could not cancel withdrawal.');
+        }
+    };
 
     async function loadActivity() {
         try {

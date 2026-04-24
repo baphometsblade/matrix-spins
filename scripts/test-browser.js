@@ -257,6 +257,62 @@ async function main() {
             }
         }
 
+        // Withdrawal UI — navigate to /account.html, open the
+        // Withdrawals tab, submit the form, and assert a real pending
+        // withdrawal row exists for this user.
+        if (registered) {
+            const userRow = await db.get("SELECT id FROM users WHERE username = ?", [regUsername]);
+            if (userRow && userRow.id) {
+                // Email-verified + healthy balance are prerequisites;
+                // the withdrawal endpoint rejects otherwise.
+                await db.run("UPDATE users SET email_verified = 1, balance_cents = ? WHERE id = ?", [50000, userRow.id]);
+                await page.goto('http://localhost:' + process.env.PORT + '/account.html', { waitUntil: 'networkidle', timeout: 15000 });
+                // Dismiss any first-visit consent overlay if it shows up here too.
+                await page.evaluate(() => {
+                    var btn = document.getElementById('acceptTermsBtn');
+                    if (btn) btn.click();
+                    var consent = document.getElementById('first-visit-consent');
+                    if (consent && consent.parentNode) consent.parentNode.removeChild(consent);
+                });
+                // Switch to the Withdrawals tab.
+                await page.evaluate(() => {
+                    var tab = document.querySelector('[data-tab="withdrawals"]');
+                    if (tab) tab.click();
+                });
+                const formUp = await page.waitForSelector('#wd-form', { state: 'visible', timeout: 5000 })
+                    .then(() => true).catch(() => false);
+                if (!formUp) {
+                    fail('withdrawal form did not become visible on account page');
+                } else {
+                    await page.fill('#wd-amount', '25');
+                    await page.selectOption('#wd-method', 'bank_transfer');
+                    await page.fill('#wd-destination', 'IBAN-SMOKE-' + Date.now());
+                    const beforeBal = await db.get("SELECT balance_cents FROM users WHERE id = ?", [userRow.id]);
+                    await page.click('#wd-submit');
+                    // Wait until the server-side row appears.
+                    let wdRow = null;
+                    for (let i = 0; i < 50 && !wdRow; i++) {
+                        wdRow = await db.get("SELECT id, amount_cents, status FROM withdrawals WHERE user_id = ? ORDER BY id DESC LIMIT 1", [userRow.id]);
+                        if (!wdRow) await new Promise(r => setTimeout(r, 100));
+                    }
+                    if (!wdRow) {
+                        fail('withdrawal UI submit did not persist a withdrawal row');
+                    } else {
+                        const afterBal = await db.get("SELECT balance_cents FROM users WHERE id = ?", [userRow.id]);
+                        if (Number(wdRow.amount_cents) !== 2500) {
+                            fail('withdrawal amount wrong: ' + wdRow.amount_cents + 'c');
+                        } else if (wdRow.status !== 'pending') {
+                            fail('withdrawal status wrong: ' + wdRow.status);
+                        } else if (Number(afterBal.balance_cents) !== Number(beforeBal.balance_cents) - 2500) {
+                            fail('withdrawal balance debit wrong: before=' + beforeBal.balance_cents + ' after=' + afterBal.balance_cents);
+                        } else {
+                            ok('withdrawal UI: $25 request submitted, row=' + wdRow.id + ' status=pending, balance debited exactly');
+                        }
+                    }
+                }
+            }
+        }
+
         if (consoleErrors.length) {
             // Filter out known-benign noise:
             //   - service-worker registration on a server that doesn't serve /sw.js
