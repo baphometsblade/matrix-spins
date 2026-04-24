@@ -1089,6 +1089,134 @@ async function main() {
     assert.notStrictEqual(allowed.status, 403, 'deposit still gated after verify: ' + allowed.raw);
     console.log('[test] email verification: unverified blocks deposit (403), verify lifts gate, replay rejected');
 
+    // ═══ Server-authoritative slot engine ═══════════════════════════════════
+    {
+        const crypto = require('crypto');
+        const sha256 = (s) => crypto.createHash('sha256').update(s).digest('hex');
+
+        // Fresh user to keep the main test user's state clean.
+        const slUser = 'slot_' + Date.now();
+        const slReg = await http('POST', '/api/auth/register', {
+            csrf,
+            body: {
+                username: slUser,
+                email: slUser + '@example.com',
+                password: 'Str0ngP@ss!!',
+                date_of_birth: '1990-01-01',
+            },
+        });
+        assert.strictEqual(slReg.status, 201);
+        const slToken = slReg.body.token;
+        const slId = slReg.body.user.id;
+
+        // Game list is populated.
+        const games = await http('GET', '/api/slot/games', { token: slToken });
+        assert.strictEqual(games.status, 200);
+        assert.ok(games.body.games.find(g => g.id === 'classic_777'), 'classic_777 must be listed');
+
+        // With $0 balance a spin must 402 — no negative balance possible.
+        const slCsrf = (await http('GET', '/api/csrf-token', { token: slToken })).body.csrfToken;
+        const broke = await http('POST', '/api/slot/spin', {
+            token: slToken, csrf: slCsrf,
+            body: { game_id: 'classic_777', bet_cents: 100, client_seed: 'abc' },
+        });
+        assert.strictEqual(broke.status, 402, 'insufficient balance must 402: ' + broke.raw);
+
+        // Credit a realistic bankroll ($100 = 10000c) directly — deposits go
+        // through Stripe and are covered elsewhere.
+        await db.run('UPDATE users SET balance_cents = ? WHERE id = ?', [10000, slId]);
+
+        // Fetch the pre-spin commit; retain its hash so we can verify the
+        // revealed seed matches it after the spin.
+        const pre = await http('GET', '/api/slot/commit', { token: slToken });
+        assert.strictEqual(pre.status, 200);
+        assert.ok(/^[0-9a-f]{64}$/.test(pre.body.server_seed_hash), 'commit hash must be sha256 hex');
+        const committedHash = pre.body.server_seed_hash;
+
+        // One honest spin at $1.
+        const spin1 = await http('POST', '/api/slot/spin', {
+            token: slToken, csrf: slCsrf,
+            body: { game_id: 'classic_777', bet_cents: 100, client_seed: 'tester' },
+        });
+        assert.strictEqual(spin1.status, 200, 'spin failed: ' + spin1.raw);
+        assert.strictEqual(spin1.body.bet_cents, 100);
+        assert.ok(spin1.body.win_cents >= 0);
+        assert.strictEqual(spin1.body.balance_cents, 10000 - 100 + spin1.body.win_cents);
+        // Provably-fair: the revealed server_seed must hash to the value
+        // we fetched before the spin.
+        assert.strictEqual(
+            sha256(spin1.body.revealed.server_seed), committedHash,
+            'revealed seed does not match committed hash'
+        );
+        // And a NEW commit must have been rolled.
+        assert.ok(/^[0-9a-f]{64}$/.test(spin1.body.next_commit.server_seed_hash));
+        assert.notStrictEqual(spin1.body.next_commit.server_seed_hash, committedHash);
+
+        // Out-of-range bets are rejected.
+        const tooSmall = await http('POST', '/api/slot/spin', {
+            token: slToken, csrf: slCsrf,
+            body: { game_id: 'classic_777', bet_cents: 1, client_seed: 'tester' },
+        });
+        assert.strictEqual(tooSmall.status, 400);
+        const tooBig = await http('POST', '/api/slot/spin', {
+            token: slToken, csrf: slCsrf,
+            body: { game_id: 'classic_777', bet_cents: 999999, client_seed: 'tester' },
+        });
+        assert.strictEqual(tooBig.status, 400);
+
+        // RTP sanity: 500 spins at $0.10 each. The theoretical RTP is 95.2%;
+        // the 500x jackpot symbol has probability 1/1000, so variance over
+        // 500 spins is large. We only assert the engine's books close:
+        //   end_balance == start_balance - total_bet + total_win
+        // and that the ratio stays in a sane band [0, 4x]. Tight RTP
+        // convergence would need tens of thousands of spins.
+        const rtpStart = (await http('GET', '/api/balance', { token: slToken })).body.balance_cents;
+        let totalBet = 0, totalWin = 0;
+        for (let i = 0; i < 500; i++) {
+            const s = await http('POST', '/api/slot/spin', {
+                token: slToken, csrf: slCsrf,
+                body: { game_id: 'classic_777', bet_cents: 10, client_seed: 'rtp' + i },
+            });
+            if (s.status === 402) break; // ran out, that's fine
+            assert.strictEqual(s.status, 200, 'rtp spin failed at i=' + i + ': ' + s.raw);
+            totalBet += s.body.bet_cents;
+            totalWin += s.body.win_cents;
+        }
+        const rtpEnd = (await http('GET', '/api/balance', { token: slToken })).body.balance_cents;
+        assert.strictEqual(rtpEnd, rtpStart - totalBet + totalWin, 'books must close');
+        const rtpRatio = totalBet ? totalWin / totalBet : 0;
+        assert.ok(rtpRatio >= 0 && rtpRatio <= 4, 'RTP ratio wildly off: ' + rtpRatio);
+        console.log('[test] slot engine: 500 spins settled, books close, RTP=' + (rtpRatio * 100).toFixed(1) + '%');
+
+        // Rounds history is queryable and has the right user.
+        const hist = await http('GET', '/api/slot/rounds?limit=5', { token: slToken });
+        assert.strictEqual(hist.status, 200);
+        assert.ok(hist.body.rounds.length > 0);
+        assert.ok(hist.body.rounds.every(r => r.game_id === 'classic_777'));
+
+        // Another user cannot see this user's rounds.
+        const outsiderName = 'outsider_' + Date.now();
+        const outsider = await http('POST', '/api/auth/register', {
+            csrf,
+            body: {
+                username: outsiderName,
+                email: outsiderName + '@example.com',
+                password: 'Str0ngP@ss!!',
+                date_of_birth: '1990-01-01',
+            },
+        });
+        assert.strictEqual(outsider.status, 201);
+        const peek = await http('GET', '/api/slot/rounds/' + hist.body.rounds[0].id, { token: outsider.body.token });
+        assert.strictEqual(peek.status, 404, 'round leakage: user must not see another user\'s round');
+
+        // Determinism: same seeds + nonce must produce the same stops.
+        const engine = require('../server/services/slot-engine.service');
+        const a = engine._internals.spinReels(engine._internals.GAMES.classic_777, 'seed-abc', 'cli', 42);
+        const b = engine._internals.spinReels(engine._internals.GAMES.classic_777, 'seed-abc', 'cli', 42);
+        assert.deepStrictEqual(a, b, 'engine RNG must be deterministic for fixed seeds');
+        console.log('[test] slot engine: commit/reveal verified, round isolation enforced, RNG deterministic');
+    }
+
     console.log('\n✅ all deposit-flow assertions passed');
     main.server.close();
     await db.close();

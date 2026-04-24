@@ -59,6 +59,7 @@
                 '/api/user/login-history',
                 '/api/user/export.json',
                 '/api/user',          // DELETE /api/user (account deletion)
+                '/api/slot/',         // server-authoritative spin engine
                 '/api/admin/',
             ];
             var origFetch = window.fetch.bind(window);

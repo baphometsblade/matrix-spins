@@ -359,6 +359,43 @@ async function migrate() {
             updated_at ${T.ts}
         );
     `);
+
+    // Server-authoritative slot rounds. Every spin is settled server-side:
+    // we debit the bet, run the RNG, credit the win, and log the full
+    // outcome here. The server_seed / server_seed_hash / client_seed /
+    // nonce tuple lets the user verify the round was fair after the
+    // fact (standard commit-reveal).
+    await driver.exec(`
+        CREATE TABLE IF NOT EXISTS slot_rounds (
+            id ${T.pk},
+            user_id ${driver.kind === 'pg' ? 'INTEGER' : 'INTEGER'} NOT NULL,
+            game_id TEXT NOT NULL,
+            bet_cents ${driver.kind === 'pg' ? 'BIGINT' : 'INTEGER'} NOT NULL,
+            win_cents ${driver.kind === 'pg' ? 'BIGINT' : 'INTEGER'} NOT NULL,
+            balance_after_cents ${driver.kind === 'pg' ? 'BIGINT' : 'INTEGER'} NOT NULL,
+            server_seed TEXT NOT NULL,
+            server_seed_hash TEXT NOT NULL,
+            client_seed TEXT NOT NULL,
+            nonce ${driver.kind === 'pg' ? 'INTEGER' : 'INTEGER'} NOT NULL,
+            outcome_json TEXT NOT NULL,
+            created_at ${T.ts}
+        );
+    `);
+    await driver.exec(`CREATE INDEX IF NOT EXISTS idx_slot_rounds_user ON slot_rounds (user_id, id DESC);`);
+
+    // Holds the CURRENT unused commit for each user. On each spin we
+    // consume this row (revealing the seed to the user in the response)
+    // and roll a fresh one. The hash is exposed via /api/slot/commit
+    // before the spin so the user can verify post hoc.
+    await driver.exec(`
+        CREATE TABLE IF NOT EXISTS user_slot_seeds (
+            user_id ${driver.kind === 'pg' ? 'INTEGER' : 'INTEGER'} PRIMARY KEY,
+            server_seed TEXT NOT NULL,
+            server_seed_hash TEXT NOT NULL,
+            nonce ${driver.kind === 'pg' ? 'INTEGER' : 'INTEGER'} NOT NULL DEFAULT 0,
+            created_at ${T.ts}
+        );
+    `);
 }
 
 async function initDatabase() {
