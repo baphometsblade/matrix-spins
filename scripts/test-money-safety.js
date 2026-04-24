@@ -1010,6 +1010,75 @@ test('self-exclusion period validated against COOLING_OFF_PERIODS config', () =>
 });
 
 // ══════════════════════════════════════════════════════════════════════
+console.log('\n=== terms-of-service versioning ===');
+// ══════════════════════════════════════════════════════════════════════
+test('config declares CURRENT_TERMS_VERSION (env-overridable)', () => {
+    const src = fs.readFileSync(path.join(SERVER_DIR, 'config.js'), 'utf8');
+    assert(/CURRENT_TERMS_VERSION:/.test(src), 'config must declare CURRENT_TERMS_VERSION');
+    assert(/process\.env\.TERMS_VERSION/.test(src), 'CURRENT_TERMS_VERSION must be env-overridable');
+});
+
+test('users.terms_version column declared in both schemas', () => {
+    const sqlite = fs.readFileSync(path.join(SERVER_DIR, 'db', 'schema-sqlite.js'), 'utf8');
+    const pg = fs.readFileSync(path.join(SERVER_DIR, 'db', 'schema-pg.js'), 'utf8');
+    assert(/'terms_version'/.test(sqlite), 'schema-sqlite.js must declare terms_version USER_MIGRATION');
+    assert(/'terms_version'/.test(pg), 'schema-pg.js must declare terms_version USER_MIGRATION');
+});
+
+test('register stores terms_version at signup', () => {
+    const src = fs.readFileSync(path.join(SERVER_DIR, 'routes', 'auth.routes.js'), 'utf8');
+    assert(/terms_version/.test(src), 'register must set terms_version on new user');
+    assert(/config\.CURRENT_TERMS_VERSION/.test(src),
+        'register must read from config.CURRENT_TERMS_VERSION (not hardcoded)');
+});
+
+test('user.routes exposes /terms-status + /accept-terms', () => {
+    const src = fs.readFileSync(path.join(SERVER_DIR, 'routes', 'user.routes.js'), 'utf8');
+    assert(/router\.get\(\s*['"]\/terms-status['"]/.test(src), 'must expose GET /terms-status');
+    assert(/router\.post\(\s*['"]\/accept-terms['"]/.test(src), 'must expose POST /accept-terms');
+});
+
+test('/terms-status reports needsReacceptance correctly', () => {
+    const src = fs.readFileSync(path.join(SERVER_DIR, 'routes', 'user.routes.js'), 'utf8');
+    // Look for the needsReacceptance logic: accepted < current
+    assert(/needsReacceptance:\s*accepted\s*<\s*current/.test(src),
+        '/terms-status must return needsReacceptance when acceptedVersion < currentVersion');
+});
+
+// ══════════════════════════════════════════════════════════════════════
+console.log('\n=== GDPR data export (Right of Access) ===');
+// ══════════════════════════════════════════════════════════════════════
+test('user.routes exposes GET /data-export', () => {
+    const src = fs.readFileSync(path.join(SERVER_DIR, 'routes', 'user.routes.js'), 'utf8');
+    assert(/router\.get\(\s*['"]\/data-export['"]/.test(src), 'must expose GET /data-export');
+    assert(/authenticate/.test(src), 'data-export must be behind authenticate');
+});
+
+test('data-export bundles profile + transactions + deposits + withdrawals + verifications', () => {
+    const src = fs.readFileSync(path.join(SERVER_DIR, 'routes', 'user.routes.js'), 'utf8');
+    const handler = src.match(/router\.get\(\s*['"]\/data-export['"][\s\S]+?^\}\);/m);
+    assert(handler, 'data-export handler not found');
+    ['profile', 'transactions', 'deposits', 'withdrawals', 'verifications'].forEach(k => {
+        assert(new RegExp('\\b' + k + '\\b').test(handler[0]),
+            `data-export must include ${k}`);
+    });
+});
+
+test('data-export response is a downloadable JSON attachment', () => {
+    const src = fs.readFileSync(path.join(SERVER_DIR, 'routes', 'user.routes.js'), 'utf8');
+    const handler = src.match(/router\.get\(\s*['"]\/data-export['"][\s\S]+?^\}\);/m);
+    assert(handler, 'handler not found');
+    assert(/Content-Disposition/i.test(handler[0]), 'must set Content-Disposition to force download');
+    assert(/attachment/.test(handler[0]), 'must be attachment not inline');
+});
+
+test('data-export includes GDPR article metadata', () => {
+    const src = fs.readFileSync(path.join(SERVER_DIR, 'routes', 'user.routes.js'), 'utf8');
+    assert(/GDPR Article 15/.test(src),
+        'data-export should label itself with GDPR Article 15 (Right of Access)');
+});
+
+// ══════════════════════════════════════════════════════════════════════
 console.log('\n=== CLAUDE.md rule #7: no Math.random on server side ===');
 // ══════════════════════════════════════════════════════════════════════
 test('no server/**/*.js uses Math.random() in RNG-critical contexts', () => {

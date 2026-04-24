@@ -75,6 +75,12 @@ module.exports = {
     PASSWORD_RESET_EXPIRY_HOURS: 1,
     PASSWORD_RESET_MAX_ACTIVE: 3,
 
+    // Terms of Service — bump this whenever legal copy changes materially.
+    // Users whose users.terms_version < CURRENT_TERMS_VERSION will be
+    // forced to re-accept via GET /api/user/terms-status before they can
+    // perform money operations.
+    CURRENT_TERMS_VERSION: parseInt(process.env.TERMS_VERSION, 10) || 1,
+
     // Email / SMTP
     SMTP_HOST:   process.env.SMTP_HOST   || null,
     SMTP_PORT:   parseInt(process.env.SMTP_PORT, 10) || 587,

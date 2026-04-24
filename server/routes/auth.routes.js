@@ -193,9 +193,11 @@ router.post('/register', async (req, res) => {
         const nowIso = new Date().toISOString();
 
         // Signup bonus goes to bonus_balance with wagering requirement (prevents bot farm withdrawals)
+        // terms_version is set so we know exactly WHICH version of the terms the user accepted
+        // (required for re-consent flow when terms are materially revised)
         const result = await db.run(
-            'INSERT INTO users (username, email, password_hash, balance, bonus_balance, wagering_requirement, referral_code, referred_by, email_verified, date_of_birth, registration_ip, terms_accepted_at) VALUES (?, ?, ?, 0, ?, ?, ?, ?, ?, ?, ?, ?)',
-            [username, email, passwordHash, startBalance, startBalance * SIGNUP_WAGERING_MULT, newReferralCode, referrerId, 0, dobIso, clientIp, nowIso]
+            'INSERT INTO users (username, email, password_hash, balance, bonus_balance, wagering_requirement, referral_code, referred_by, email_verified, date_of_birth, registration_ip, terms_accepted_at, terms_version) VALUES (?, ?, ?, 0, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+            [username, email, passwordHash, startBalance, startBalance * SIGNUP_WAGERING_MULT, newReferralCode, referrerId, 0, dobIso, clientIp, nowIso, config.CURRENT_TERMS_VERSION || 1]
         );
 
         const userId = result.lastInsertRowid;

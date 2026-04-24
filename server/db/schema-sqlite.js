@@ -841,6 +841,8 @@ const USER_MIGRATIONS = [
     ['banned_reason', 'TEXT'],
     ['fraud_flag', 'TEXT'],
     ['fraud_flag_reason', 'TEXT'],
+    ['terms_version', 'INTEGER DEFAULT 1'],
+    ['password_changed_at', 'INTEGER DEFAULT 0'],
     ['country', 'TEXT'],
     ['currency', "TEXT DEFAULT 'AUD'"],
     ['email_verified', 'INTEGER DEFAULT 0'],

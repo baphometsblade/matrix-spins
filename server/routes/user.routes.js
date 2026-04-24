@@ -858,6 +858,114 @@ router.get('/transactions', authenticate, async (req, res) => {
 });
 
 // ═══════════════════════════════════════════════════════════
+//  TERMS OF SERVICE
+// ═══════════════════════════════════════════════════════════
+
+// GET /api/user/terms-status — does the user need to re-accept current terms?
+router.get('/terms-status', authenticate, async (req, res) => {
+    try {
+        const user = await db.get('SELECT terms_version, terms_accepted_at FROM users WHERE id = ?', [req.user.id]);
+        const current = parseInt(config.CURRENT_TERMS_VERSION || 1, 10);
+        const accepted = user && user.terms_version ? parseInt(user.terms_version, 10) : 0;
+        res.json({
+            currentVersion: current,
+            acceptedVersion: accepted,
+            needsReacceptance: accepted < current,
+            acceptedAt: user ? user.terms_accepted_at : null,
+        });
+    } catch (err) {
+        console.warn('[User] terms-status error:', err.message);
+        res.status(500).json({ error: 'Failed to fetch terms status' });
+    }
+});
+
+// POST /api/user/accept-terms — record that the user has accepted the current version
+router.post('/accept-terms', authenticate, async (req, res) => {
+    try {
+        const current = parseInt(config.CURRENT_TERMS_VERSION || 1, 10);
+        await db.run(
+            "UPDATE users SET terms_version = ?, terms_accepted_at = datetime('now'), updated_at = datetime('now') WHERE id = ?",
+            [current, req.user.id]
+        );
+        res.json({ ok: true, acceptedVersion: current, acceptedAt: new Date().toISOString() });
+    } catch (err) {
+        console.warn('[User] accept-terms error:', err.message);
+        res.status(500).json({ error: 'Failed to record terms acceptance' });
+    }
+});
+
+// ═══════════════════════════════════════════════════════════
+//  GDPR — DATA EXPORT (Right of Access, Art. 15)
+// ═══════════════════════════════════════════════════════════
+
+// GET /api/user/data-export — bundle all personal data for download.
+// Response is sized and cheap enough to stream in one request; no paging
+// needed for typical players. Contains profile + all transactions +
+// all deposits + all withdrawals + all verification submissions.
+// For compliance: operators must respond within 30 days of request, so
+// self-service export is the premium experience.
+router.get('/data-export', authenticate, async (req, res) => {
+    try {
+        const userId = req.user.id;
+        const [profile, transactions, deposits, withdrawals, verifications, spinStats] = await Promise.all([
+            db.get(
+                `SELECT id, username, email, display_name, phone, date_of_birth, country,
+                        currency, email_verified, phone_verified, kyc_status,
+                        terms_version, terms_accepted_at,
+                        created_at, updated_at, balance, bonus_balance
+                 FROM users WHERE id = ?`, [userId]
+            ).catch(() => null),
+            db.all(
+                'SELECT type, amount, balance_before, balance_after, reference, created_at FROM transactions WHERE user_id = ? ORDER BY created_at ASC LIMIT 5000',
+                [userId]
+            ).catch(() => []),
+            db.all(
+                'SELECT amount, currency, payment_type, status, reference, created_at, completed_at FROM deposits WHERE user_id = ? ORDER BY created_at ASC LIMIT 5000',
+                [userId]
+            ).catch(() => []),
+            db.all(
+                'SELECT amount, currency, payment_type, status, reference, admin_note, created_at, processed_at FROM withdrawals WHERE user_id = ? ORDER BY created_at ASC LIMIT 5000',
+                [userId]
+            ).catch(() => []),
+            db.all(
+                'SELECT status, document_type, submitted_at, verified_at, notes FROM user_verification WHERE user_id = ?',
+                [userId]
+            ).catch(() => []),
+            db.get(
+                'SELECT COUNT(*) as total_spins, COALESCE(SUM(bet_amount), 0) as total_wagered, COALESCE(SUM(win_amount), 0) as total_won FROM spins WHERE user_id = ?',
+                [userId]
+            ).catch(() => ({ total_spins: 0, total_wagered: 0, total_won: 0 })),
+        ]);
+
+        if (!profile) return res.status(404).json({ error: 'User not found' });
+
+        const exported = {
+            exportMetadata: {
+                generatedAt: new Date().toISOString(),
+                gdprArticle: 'GDPR Article 15 (Right of Access)',
+                userId: userId,
+                platform: 'Matrix Spins',
+            },
+            profile,
+            transactions,
+            deposits,
+            withdrawals,
+            verifications,
+            aggregateStats: spinStats,
+        };
+
+        // Download as a timestamped JSON file
+        const filename = `matrix-spins-data-export-user-${userId}-${new Date().toISOString().slice(0, 10)}.json`;
+        res.setHeader('Content-Type', 'application/json');
+        res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+        res.send(JSON.stringify(exported, null, 2));
+    } catch (err) {
+        console.warn('[User] data-export error:', err.message);
+        res.status(500).json({ error: 'Failed to generate data export' });
+    }
+});
+
+// ═══════════════════════════════════════════════════════════
 //  ACCOUNT
 // ═══════════════════════════════════════════════════════════
 
