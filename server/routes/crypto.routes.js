@@ -260,26 +260,25 @@ router.post('/verify-deposit', authenticate, async (req, res) => {
             return res.status(400).json({ error: 'Transaction has zero ETH value' });
         }
 
-        // ROUND 61: Self-exclusion check — crypto deposits must respect self-exclusion
-        try {
-            var exclusion = await db.get(
-                "SELECT id FROM self_exclusions WHERE user_id = ? AND is_active = 1 AND (ends_at IS NULL OR ends_at > datetime('now'))",
-                [req.user.id]
-            );
-            if (exclusion) {
-                return res.status(403).json({ error: 'Account is self-excluded. Deposits are disabled.' });
-            }
-        } catch (exclErr) {
-            if (exclErr.message && exclErr.message.includes('no such table')) { /* OK */ }
-            else {
-                console.error('[Crypto] Self-exclusion check failed:', exclErr.message);
-                return res.status(500).json({ error: 'Security check failed' });
-            }
-        }
-
-        // Convert to AUD
+        // Convert to AUD first so we can run RG deposit-limit checks against the actual amount
         const ethPrice = await getEthPriceAUD();
         const audAmount = Math.round(ethValue * ethPrice * 100) / 100; // Round to 2 decimal places
+
+        // ROUND 63: Full responsible-gambling + velocity + self-exclusion checks.
+        // Previously only self-exclusion was enforced here — users could bypass
+        // their own daily/weekly/monthly deposit limits by depositing via crypto
+        // instead of /api/payment/deposit. The shared service matches what
+        // stripe-checkout + matrix-money + payment all already use.
+        try {
+            const depositChecks = require('../services/deposit-checks.service');
+            const rgCheck = await depositChecks.runAllChecks(req.user.id, audAmount);
+            if (!rgCheck.allowed) {
+                return res.status(403).json({ error: rgCheck.error });
+            }
+        } catch (rgErr) {
+            console.error('[Crypto] RG check failed:', rgErr.message);
+            return res.status(500).json({ error: 'Security check failed' });
+        }
 
         // ROUND 61: Number.isFinite — guards against NaN/Infinity from bad price feeds
         if (!Number.isFinite(audAmount) || audAmount <= 0) {

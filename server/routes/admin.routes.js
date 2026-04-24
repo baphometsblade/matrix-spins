@@ -814,10 +814,28 @@ router.post('/approve-withdrawal', async (req, res) => {
     try {
         const { withdrawalId } = req.body;
         if (!withdrawalId) return res.status(400).json({ error: 'withdrawalId is required' });
+        const config = require('../config');
 
         const wd = await db.get('SELECT id, user_id, amount, status, created_at, account_created_at FROM withdrawals WHERE id = ?', [withdrawalId]);
         if (!wd) return res.status(404).json({ error: 'Withdrawal not found' });
-        if (wd.status !== 'pending') return res.status(400).json({ error: `Withdrawal is already ${wd.status}` });
+        if (wd.status !== 'pending' && wd.status !== 'otp_verified') {
+            return res.status(400).json({ error: `Withdrawal is already ${wd.status}` });
+        }
+
+        // OTP gate — high-value withdrawals MUST have passed player email-OTP
+        // verification before ANY admin can approve them. This endpoint used to
+        // bypass that gate; a compromised admin account or insider could drain
+        // stolen player balances up to MAX_WITHDRAWAL per request by going
+        // through here instead of /withdrawals/:id/approve. Now both paths
+        // enforce the same precondition.
+        const OTP_THRESHOLD = config.WITHDRAWAL_OTP_THRESHOLD || 500;
+        if (wd.amount >= OTP_THRESHOLD && wd.status === 'pending') {
+            return res.status(400).json({
+                error: 'Withdrawal requires user email-OTP verification before admin approval.',
+                otpRequired: true,
+                currentStatus: wd.status,
+            });
+        }
 
         // 24h cooling-off enforcement (hard — no bypass)
         if (wd.created_at) {
@@ -835,8 +853,10 @@ router.post('/approve-withdrawal', async (req, res) => {
         }
 
         // Atomic approve — prevents two admins both approving the same withdrawal.
+        // Accepts 'pending' (low-value, no OTP required) and 'otp_verified' (high-value
+        // after player verified the email code). Rejects anything else.
         var approveResult = await db.run(
-            "UPDATE withdrawals SET status = 'completed', processed_at = datetime('now'), admin_note = 'Approved by admin' WHERE id = ? AND status = 'pending'",
+            "UPDATE withdrawals SET status = 'completed', processed_at = datetime('now'), admin_note = 'Approved by admin' WHERE id = ? AND status IN ('pending', 'otp_verified')",
             [withdrawalId]
         );
         if (!approveResult || approveResult.changes === 0) {
@@ -857,31 +877,43 @@ router.post('/approve-withdrawal', async (req, res) => {
 });
 
 // POST /api/admin/reject-withdrawal — Reject a withdrawal and refund balance
+// Uses the same atomic status-guarded claim pattern as /withdrawals/:id/reject
+// below so two admins clicking Reject on the same row cannot double-refund.
 router.post('/reject-withdrawal', async (req, res) => {
     try {
         const { withdrawalId, reason } = req.body;
         if (!withdrawalId) return res.status(400).json({ error: 'withdrawalId is required' });
 
-        const wd = await db.get('SELECT id, user_id, amount, status, created_at, account_created_at FROM withdrawals WHERE id = ?', [withdrawalId]);
-        if (!wd) return res.status(404).json({ error: 'Withdrawal not found' });
-        if (wd.status !== 'pending') return res.status(400).json({ error: `Withdrawal is already ${wd.status}` });
+        const admin_note = String(reason || 'Rejected by admin').slice(0, 500);
 
-        // Refund the balance back to the user
-        const user = await db.get('SELECT balance FROM users WHERE id = ?', [wd.user_id]);
-        if (!user) return res.status(404).json({ error: 'User not found' });
+        // Atomic claim: only one admin can transition pending/otp_verified → rejected.
+        const claim = await db.run(
+            "UPDATE withdrawals SET status = 'rejected', processed_at = datetime('now'), admin_note = ? WHERE id = ? AND status IN ('pending', 'otp_verified')",
+            [admin_note, withdrawalId]
+        );
+        if (!claim || claim.changes === 0) {
+            return res.status(409).json({ error: 'Withdrawal is not pending (may have been processed by another admin).' });
+        }
 
-        const balanceBefore = user.balance;
+        // Safe to refund — the claim guarantees single-processing.
+        const wd = await db.get('SELECT id, user_id, amount FROM withdrawals WHERE id = ?', [withdrawalId]);
+        if (!wd) return res.status(404).json({ error: 'Withdrawal not found after claim' });
+
+        const userBefore = await db.get('SELECT balance FROM users WHERE id = ?', [wd.user_id]);
+        const balanceBefore = (userBefore && userBefore.balance) || 0;
+        await db.run('UPDATE users SET balance = balance + ? WHERE id = ?', [wd.amount, wd.user_id]);
         const balanceAfter = balanceBefore + wd.amount;
 
-        await db.run('UPDATE users SET balance = balance + ? WHERE id = ?', [wd.amount, wd.user_id]);
-        await db.run(
-            "UPDATE withdrawals SET status = 'rejected', processed_at = datetime('now'), admin_note = ? WHERE id = ?",
-            [reason || 'Rejected by admin', withdrawalId]
-        );
         await db.run(
             'INSERT INTO transactions (user_id, type, amount, balance_before, balance_after, reference) VALUES (?, ?, ?, ?, ?, ?)',
             [wd.user_id, 'withdrawal_refund', wd.amount, balanceBefore, balanceAfter, `WDR-REJECT-${withdrawalId}`]
         );
+
+        // Audit log
+        await db.run(
+            "INSERT INTO admin_audit_log (admin_id, action, target_user_id, details, created_at) VALUES (?, 'reject_withdrawal', ?, ?, datetime('now'))",
+            [req.user.id, wd.user_id, JSON.stringify({ withdrawalId: Number(withdrawalId), amount: wd.amount, reason: admin_note })]
+        ).catch(() => {});
 
         res.json({ message: 'Withdrawal rejected and refunded', withdrawalId, amount: wd.amount, newBalance: balanceAfter });
     } catch (err) {

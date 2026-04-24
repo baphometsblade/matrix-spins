@@ -323,35 +323,49 @@ router.post('/payment/webhook', express.raw({ type: 'application/json' }), async
                 ' user=' + deposit.user_id + ' amount=$' + disputeAmount +
                 ' reason=' + (dispute.reason || 'unknown'));
 
-            // Idempotency: Stripe retries dispute webhooks, and the same
-            // dispute can arrive as both charge.dispute.created AND later
-            // charge.dispute.funds_withdrawn. We key off the transaction log
-            // reference `DISPUTE-<id>` — if we've already recorded it, skip
-            // the claw-back so balance isn't double-debited.
-            const alreadyClawedBack = await db.get(
-                "SELECT id FROM transactions WHERE user_id = ? AND type = 'chargeback' AND reference LIKE ? LIMIT 1",
-                [deposit.user_id, 'DISPUTE-' + dispute.id + '%']
-            ).catch(() => null);
-            if (alreadyClawedBack) {
-                console.warn('[Stripe Dispute] Dispute ' + dispute.id + ' already processed — skipping duplicate claw-back');
-                return res.json({ received: true, duplicate: true });
-            }
-
-            // Atomic claw-back + freeze in a single transaction
+            // Atomic claw-back + freeze + idempotency claim in a single transaction.
+            //
+            // ROUND 63: Previously the idempotency check (SELECT from transactions
+            // by DISPUTE-<id> reference) ran OUTSIDE the transaction. Under
+            // concurrent dispute.created + dispute.funds_withdrawn webhooks (or
+            // Stripe retries), both requests' SELECTs would return no match
+            // before either one COMMITted, and both would proceed to claw back
+            // balance — double-debit. Now the idempotency is the atomic claim:
+            // a conditional INSERT that succeeds exactly once per dispute id.
             await db.beginTransaction();
             try {
+                // Guarded INSERT into transactions — serves as the atomic idempotency
+                // key. If a row with reference=DISPUTE-<id> already exists (from a
+                // previous webhook event for the same dispute) this becomes a no-op
+                // (changes = 0) and we bail out without clawing back again.
+                const refKey = 'DISPUTE-' + dispute.id;
+                const idempotencyClaim = await db.run(
+                    `INSERT INTO transactions (user_id, type, amount, reference)
+                     SELECT ?, 'chargeback', ?, ?
+                     WHERE NOT EXISTS (
+                         SELECT 1 FROM transactions
+                          WHERE user_id = ? AND type = 'chargeback'
+                            AND reference LIKE ?
+                     )`,
+                    [
+                        deposit.user_id,
+                        -disputeAmount,
+                        refKey + ':' + (dispute.reason || 'unknown'),
+                        deposit.user_id,
+                        refKey + '%',
+                    ]
+                );
+                if (!idempotencyClaim || idempotencyClaim.changes === 0) {
+                    await db.rollback();
+                    console.warn('[Stripe Dispute] Dispute ' + dispute.id + ' already processed — skipping duplicate claw-back');
+                    return res.json({ received: true, duplicate: true });
+                }
+
                 // 1. Mark deposit as disputed — only the first webhook transitions the row
-                const claim = await db.run(
+                await db.run(
                     "UPDATE deposits SET status = 'disputed' WHERE id = ? AND status IN ('completed', 'pending')",
                     [deposit.id]
                 );
-
-                // If deposit is ALREADY disputed (from an earlier event in this dispute),
-                // we still run the claw-back because the above idempotency check caught
-                // repeats. But gate on the earlier idempotency lookup is the source of truth.
-                // claim.changes === 0 just means the deposit was previously transitioned
-                // — the idempotency check above is what actually prevents double-processing.
-                void claim;
 
                 // 2. Claw back — deduct disputed amount from balance, clamped at 0.
                 // Uses CASE so a user with insufficient balance goes to 0 rather than
@@ -369,12 +383,6 @@ router.post('/payment/webhook', express.raw({ type: 'application/json' }), async
                 await db.run(
                     "UPDATE users SET is_banned = 1, banned_at = datetime('now'), banned_reason = ? WHERE id = ?",
                     ['chargeback_dispute:' + dispute.id + ' (' + (dispute.reason || 'unspecified') + ')', deposit.user_id]
-                );
-
-                // 4. Audit trail — also the idempotency marker for duplicate webhooks
-                await db.run(
-                    'INSERT INTO transactions (user_id, type, amount, reference) VALUES (?, ?, ?, ?)',
-                    [deposit.user_id, 'chargeback', -disputeAmount, 'DISPUTE-' + dispute.id + ':' + (dispute.reason || 'unknown')]
                 );
 
                 await db.commit();
@@ -413,18 +421,29 @@ router.post('/payment/webhook', express.raw({ type: 'application/json' }), async
                 return res.json({ received: true, matched: false });
             }
 
-            // Idempotency: Stripe may retry; skip if we've already logged this refund
-            const alreadyRefunded = await db.get(
-                "SELECT id FROM transactions WHERE user_id = ? AND type = 'refund' AND reference = ? LIMIT 1",
-                [deposit.user_id, 'REFUND:' + charge.id]
-            ).catch(() => null);
-            if (alreadyRefunded) {
-                console.warn('[Stripe Refund] Duplicate refund webhook for charge ' + charge.id + ' — skipping');
-                return res.json({ received: true, duplicate: true });
-            }
-
+            // Atomic refund with idempotency claim INSIDE the transaction.
+            // ROUND 63: the previous idempotency SELECT ran outside the
+            // transaction, so two concurrent refund webhooks could both
+            // pass the check and both debit balance. Now the transaction-
+            // log INSERT IS the claim — a duplicate yields 0 rows.
             await db.beginTransaction();
             try {
+                const refKey = 'REFUND:' + charge.id;
+                const idempotencyClaim = await db.run(
+                    `INSERT INTO transactions (user_id, type, amount, reference)
+                     SELECT ?, 'refund', ?, ?
+                     WHERE NOT EXISTS (
+                         SELECT 1 FROM transactions
+                          WHERE user_id = ? AND type = 'refund' AND reference = ?
+                     )`,
+                    [deposit.user_id, -amountRefunded, refKey, deposit.user_id, refKey]
+                );
+                if (!idempotencyClaim || idempotencyClaim.changes === 0) {
+                    await db.rollback();
+                    console.warn('[Stripe Refund] Duplicate refund webhook for charge ' + charge.id + ' — skipping');
+                    return res.json({ received: true, duplicate: true });
+                }
+
                 await db.run(
                     "UPDATE deposits SET status = 'refunded' WHERE id = ? AND status IN ('completed', 'pending')",
                     [deposit.id]
@@ -432,10 +451,6 @@ router.post('/payment/webhook', express.raw({ type: 'application/json' }), async
                 await db.run(
                     'UPDATE users SET balance = CASE WHEN balance - ? < 0 THEN 0 ELSE balance - ? END WHERE id = ?',
                     [amountRefunded, amountRefunded, deposit.user_id]
-                );
-                await db.run(
-                    'INSERT INTO transactions (user_id, type, amount, reference) VALUES (?, ?, ?, ?)',
-                    [deposit.user_id, 'refund', -amountRefunded, 'REFUND:' + charge.id]
                 );
                 await db.commit();
                 console.warn('[Stripe Refund] $' + amountRefunded + ' refunded to user ' + deposit.user_id + ' (deposit ' + deposit.id + ')');

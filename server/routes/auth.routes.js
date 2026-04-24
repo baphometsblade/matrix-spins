@@ -311,18 +311,19 @@ router.post('/register', async (req, res) => {
             }
         }
 
-        // Generate email verification token
+        // Generate email verification token. Plaintext is sent to the user's
+        // email; only the SHA-256 hash is stored in the DB so a leaked DB
+        // dump cannot be replayed to take over accounts.
         const verificationToken = crypto.randomBytes(32).toString('hex');
         const VERIFICATION_EXPIRY_HOURS = 24;
         const verificationExpiresAt = new Date(Date.now() + VERIFICATION_EXPIRY_HOURS * 60 * 60 * 1000).toISOString().slice(0, 19).replace('T', ' ');
 
-        // Store verification token
         await db.run(
             'INSERT INTO email_verification_tokens (user_id, token, expires_at) VALUES (?, ?, ?)',
-            [userId, verificationToken, verificationExpiresAt]
+            [userId, hashToken(verificationToken), verificationExpiresAt]
         );
 
-        // Send verification email (non-blocking)
+        // Send verification email (non-blocking) — plaintext only in the email URL
         try {
             await emailService.sendVerificationEmail(email, username, verificationToken);
         } catch (emailErr) {
@@ -385,6 +386,10 @@ router.post('/login', async (req, res) => {
 
         // Successful login — clear failed attempts
         failedLogins.delete(user.id);
+
+        // Reset idle-timeout state — clears any 'idleRejected' flag so the
+        // fresh token can make requests without tripping the idle guard.
+        try { require('../middleware/idle-timeout')._reset(user.id); } catch (_) {}
 
         const token = jwt.sign({ userId: user.id }, config.JWT_SECRET, { expiresIn: config.JWT_EXPIRES_IN });
 
@@ -456,7 +461,9 @@ router.post('/forgot-password', async (req, res) => {
             return res.json({ message: successMsg });
         }
 
-        // Generate secure reset token
+        // Generate secure reset token. Plaintext is emailed to the user;
+        // only the SHA-256 hash is stored in password_reset_tokens so a
+        // leaked DB dump cannot be replayed to hijack accounts.
         const resetToken = crypto.randomBytes(32).toString('hex');
         const EXPIRY_HOURS = 1;
         const expiresAt = new Date(Date.now() + EXPIRY_HOURS * 60 * 60 * 1000).toISOString().slice(0, 19).replace('T', ' ');
@@ -464,13 +471,13 @@ router.post('/forgot-password', async (req, res) => {
         // Invalidate any existing tokens for this user
         await db.run('UPDATE password_reset_tokens SET used = 1 WHERE user_id = ? AND used = 0', [user.id]);
 
-        // Store the token (ON CONFLICT handles race condition if two requests fire simultaneously)
+        // Store the HASH, not the plaintext.
         await db.run(
             'INSERT INTO password_reset_tokens (user_id, token, expires_at) VALUES (?, ?, ?) ON CONFLICT(token) DO UPDATE SET expires_at = excluded.expires_at',
-            [user.id, resetToken, expiresAt]
+            [user.id, hashToken(resetToken), expiresAt]
         );
 
-        // Build reset URL
+        // Plaintext reset token goes only in the email URL
         const baseUrl = config.BASE_URL || 'https://msaart.online';
         const resetUrl = `${baseUrl}/?resetToken=${resetToken}`;
 
@@ -505,10 +512,11 @@ router.post('/reset-password', async (req, res) => {
             return res.status(400).json({ error: 'Invalid reset token format' });
         }
 
-        // Find the token first so we can pass the user's identity to the password validator
+        // Find the token first so we can pass the user's identity to the password validator.
+        // The DB stores only the SHA-256 hash, so hash the incoming plaintext before lookup.
         const resetRecord = await db.get(
             'SELECT t.id, t.user_id, t.token, t.expires_at, t.used, u.username, u.email FROM password_reset_tokens t JOIN users u ON u.id = t.user_id WHERE t.token = ? AND t.used = 0',
-            [token]
+            [hashToken(token)]
         );
 
         if (!resetRecord) {
@@ -627,10 +635,10 @@ router.post('/verify-email', async (req, res) => {
             return res.status(400).json({ error: 'Invalid verification token format' });
         }
 
-        // Find the token
+        // Find the token — stored as SHA-256 hash, so hash the incoming plaintext before lookup
         const verifyRecord = await db.get(
             'SELECT id, user_id, token, expires_at, used FROM email_verification_tokens WHERE token = ? AND used = 0',
-            [token]
+            [hashToken(token)]
         );
 
         if (!verifyRecord) {
@@ -690,15 +698,14 @@ router.post('/resend-verification', async (req, res) => {
         // Invalidate any existing tokens for this user
         await db.run('UPDATE email_verification_tokens SET used = 1 WHERE user_id = ? AND used = 0', [user.id]);
 
-        // Generate new verification token
+        // Generate new verification token — plaintext emailed, SHA-256 hash stored.
         const verificationToken = crypto.randomBytes(32).toString('hex');
         const VERIFICATION_EXPIRY_HOURS = 24;
         const verificationExpiresAt = new Date(Date.now() + VERIFICATION_EXPIRY_HOURS * 60 * 60 * 1000).toISOString().slice(0, 19).replace('T', ' ');
 
-        // Store verification token
         await db.run(
             'INSERT INTO email_verification_tokens (user_id, token, expires_at) VALUES (?, ?, ?)',
-            [user.id, verificationToken, verificationExpiresAt]
+            [user.id, hashToken(verificationToken), verificationExpiresAt]
         );
 
         // Send verification email (non-blocking)

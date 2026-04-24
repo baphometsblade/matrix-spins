@@ -1384,6 +1384,157 @@ test('idle middleware rejects request when idle > timeout', () => {
 });
 
 // ══════════════════════════════════════════════════════════════════════
+console.log('\n=== parallel-review fixes (round 63) ===');
+// ══════════════════════════════════════════════════════════════════════
+const ADMIN_SRC_R63 = fs.readFileSync(path.join(SERVER_DIR, 'routes', 'admin.routes.js'), 'utf8');
+const AUTH_SRC_R63  = fs.readFileSync(path.join(SERVER_DIR, 'routes', 'auth.routes.js'), 'utf8');
+const PAY_SRC_R63   = fs.readFileSync(path.join(SERVER_DIR, 'routes', 'payment.routes.js'), 'utf8');
+const STRIPE_SRC_R63 = fs.readFileSync(path.join(SERVER_DIR, 'routes', 'stripe-checkout.routes.js'), 'utf8');
+const CRYPTO_SRC_R63 = fs.readFileSync(path.join(SERVER_DIR, 'routes', 'crypto.routes.js'), 'utf8');
+const IDLE_SRC_R63  = fs.readFileSync(path.join(SERVER_DIR, 'middleware', 'idle-timeout.js'), 'utf8');
+
+// F1 — legacy /reject-withdrawal uses atomic status-guarded claim
+test('F1: legacy /api/admin/reject-withdrawal uses atomic claim (no double-refund)', () => {
+    const block = ADMIN_SRC_R63.match(/router\.post\(\s*['"]\/reject-withdrawal['"][\s\S]+?^\}\);/m);
+    assert(block, '/reject-withdrawal handler not found');
+    // Must use the same WHERE-status-guarded UPDATE pattern before touching balance
+    const claimIdx  = block[0].search(/WHERE id = \? AND status IN \('pending', 'otp_verified'\)/);
+    const refundIdx = block[0].search(/UPDATE users SET balance = balance \+ \?/);
+    assert(claimIdx >= 0, '/reject-withdrawal must use status-guarded claim');
+    assert(refundIdx >= 0, '/reject-withdrawal must refund atomically');
+    assert(claimIdx < refundIdx, 'claim MUST precede refund — no double-refund race');
+    assert(/status\(409\)/.test(block[0]), 'must 409 when claim loses the race');
+});
+
+// F3 — legacy /approve-withdrawal enforces OTP gate
+test('F3: legacy /api/admin/approve-withdrawal enforces OTP gate for high-value withdrawals', () => {
+    const block = ADMIN_SRC_R63.match(/router\.post\(\s*['"]\/approve-withdrawal['"][\s\S]+?^\}\);/m);
+    assert(block, '/approve-withdrawal handler not found');
+    assert(/WITHDRAWAL_OTP_THRESHOLD/.test(block[0]),
+        '/approve-withdrawal must reference the OTP threshold');
+    assert(/otpRequired/.test(block[0]),
+        '/approve-withdrawal must surface otpRequired: true when the player has not passed OTP yet');
+    assert(/status IN \('pending', 'otp_verified'\)/.test(block[0]),
+        '/approve-withdrawal must accept both pending and otp_verified');
+});
+
+// F4 — idle-timeout cannot be bypassed by a single throwaway request
+test('F4: idle-timeout uses idleRejected flag; rejection persists across retries', () => {
+    assert(/idleRejected/.test(IDLE_SRC_R63),
+        'idle-timeout middleware must track idleRejected flag');
+    // On timeout, must flag instead of delete
+    assert(/entry\.idleRejected\s*=\s*true/.test(IDLE_SRC_R63),
+        'on timeout must SET entry.idleRejected, not delete the entry');
+    // Login must call _reset to clear the flag
+    assert(/_reset\(user\.id\)/.test(AUTH_SRC_R63) || /_reset\s*\(\s*user\.id\s*\)/.test(AUTH_SRC_R63),
+        'login must call idle-timeout._reset(user.id) on successful authentication');
+});
+
+// F7 — orphan /stripe/payment-intent returns 501
+test('F7: /api/payment/stripe/payment-intent is disabled (501)', () => {
+    const block = PAY_SRC_R63.match(/router\.post\(\s*['"]\/stripe\/payment-intent['"][\s\S]+?\}\);/);
+    assert(block, '/stripe/payment-intent handler not found');
+    assert(/status\(501\)/.test(block[0]), 'must return 501');
+    assert(/payment_intent_disabled_pending_webhook_handler/.test(block[0]),
+        'response body must include the documented code');
+    // The old handler called stripeService.createPaymentIntent; must NOT anymore
+    assert(!/createPaymentIntent\s*\(/.test(block[0]),
+        'disabled handler must NOT create any Stripe charges');
+});
+
+// F2 — /approve-deposit status flip inside transaction
+test('F2: admin/approve-deposit status UPDATE is inside the transaction', () => {
+    const block = PAY_SRC_R63.match(/router\.post\(\s*['"]\/admin\/approve-deposit['"][\s\S]+?^\}\);/m);
+    assert(block, '/admin/approve-deposit handler not found');
+    const beginIdx = block[0].indexOf('beginTransaction');
+    const claimIdx = block[0].search(/UPDATE deposits SET status = 'completed' WHERE id = \? AND status = 'pending'/);
+    assert(beginIdx > 0 && claimIdx > 0, 'both begin and claim must exist');
+    assert(beginIdx < claimIdx,
+        'status claim UPDATE must run INSIDE the transaction (begin precedes claim)');
+    // Rollback path must exist
+    assert(/await db\.rollback\(\)/.test(block[0]), 'rollback must be called if claim fails');
+});
+
+// H1 — reset + verify tokens stored as hashes
+test('H1: password-reset token stored as hash(hashToken), not plaintext', () => {
+    // Store side
+    assert(/\[user\.id, hashToken\(resetToken\), expiresAt\]/.test(AUTH_SRC_R63),
+        'reset token INSERT must wrap resetToken in hashToken()');
+    // Read side
+    assert(/WHERE t\.token = \? AND t\.used = 0[\s\S]{0,80}\[hashToken\(token\)\]/.test(AUTH_SRC_R63),
+        'reset token lookup must hash incoming plaintext before SELECT');
+});
+
+test('H1: email verification token stored as hash(hashToken), not plaintext', () => {
+    // Both write sites must use hashToken
+    const writeCount = (AUTH_SRC_R63.match(/\[userId, hashToken\(verificationToken\)|\[user\.id, hashToken\(verificationToken\)/g) || []).length;
+    assert(writeCount >= 2,
+        `both register + resend-verification must wrap verificationToken in hashToken() (found ${writeCount})`);
+    // Read side in /verify-email
+    assert(/FROM email_verification_tokens WHERE token = \? AND used = 0[\s\S]{0,80}\[hashToken\(token\)\]/.test(AUTH_SRC_R63),
+        '/verify-email must hash incoming plaintext before SELECT');
+});
+
+// H2 — atomic OTP attempts + timing-safe compare
+test('H2: OTP attempt counter increments atomically (RETURNING or tx-wrapped UPDATE)', () => {
+    // Must NOT have the old pattern: const attempts = wd.otp_attempts + 1; UPDATE SET otp_attempts = ?
+    assert(!/const attempts = \(wd\.otp_attempts \|\| 0\) \+ 1;[\s\S]{0,500}UPDATE withdrawals SET otp_attempts = \?/.test(PAY_SRC_R63),
+        'old non-atomic SELECT→compute→UPDATE pattern must be gone');
+    // Must have the atomic increment
+    assert(/UPDATE withdrawals SET otp_attempts = COALESCE\(otp_attempts, 0\) \+ 1/.test(PAY_SRC_R63),
+        'OTP attempts must be incremented by an atomic UPDATE');
+    // Must be guarded by status + otp_code NOT NULL to avoid racing a cancelled withdrawal
+    assert(/status = 'pending' AND otp_code IS NOT NULL/.test(PAY_SRC_R63),
+        'atomic increment must be guarded by status + otp_code');
+});
+
+test('H2: OTP comparison is constant-time (crypto.timingSafeEqual)', () => {
+    // In the verify-otp handler
+    const block = PAY_SRC_R63.match(/router\.post\(\s*['"]\/withdraw\/verify-otp['"][\s\S]+?^\}\);/m);
+    assert(block, '/verify-otp handler not found');
+    assert(/crypto\.timingSafeEqual/.test(block[0]),
+        'OTP match must use crypto.timingSafeEqual instead of !== or ===');
+});
+
+// F5 — dispute + refund idempotency inside transaction
+test('F5: dispute claw-back idempotency is atomic INSERT claim inside the transaction', () => {
+    // Find the charge.dispute.created block
+    const disputeIdx = STRIPE_SRC_R63.indexOf('charge.dispute.created');
+    const refundIdx = STRIPE_SRC_R63.indexOf('charge.refunded');
+    const disputeBlock = STRIPE_SRC_R63.slice(disputeIdx, refundIdx);
+
+    // Must have a guarded INSERT ... WHERE NOT EXISTS as the claim
+    assert(/INSERT INTO transactions[\s\S]{0,800}WHERE NOT EXISTS/.test(disputeBlock),
+        'dispute claim must be INSERT ... WHERE NOT EXISTS (atomic idempotency)');
+    // begin must precede the claim — claim inside the transaction
+    const beginIdx = disputeBlock.indexOf('beginTransaction');
+    const insIdx   = disputeBlock.search(/INSERT INTO transactions[\s\S]*?WHERE NOT EXISTS/);
+    assert(beginIdx > 0 && insIdx > beginIdx,
+        'idempotency claim INSERT must be INSIDE the transaction (after beginTransaction)');
+});
+
+test('F5: refund idempotency is also atomic INSERT claim inside the transaction', () => {
+    const refundIdx = STRIPE_SRC_R63.indexOf('charge.refunded');
+    const failedIdx = STRIPE_SRC_R63.indexOf('payment_intent.payment_failed');
+    const refundBlock = STRIPE_SRC_R63.slice(refundIdx, failedIdx);
+
+    assert(/INSERT INTO transactions[\s\S]{0,800}WHERE NOT EXISTS/.test(refundBlock),
+        'refund claim must be INSERT ... WHERE NOT EXISTS');
+    const beginIdx = refundBlock.indexOf('beginTransaction');
+    const insIdx   = refundBlock.search(/INSERT INTO transactions[\s\S]*?WHERE NOT EXISTS/);
+    assert(beginIdx > 0 && insIdx > beginIdx,
+        'refund idempotency claim must be inside the transaction');
+});
+
+// F6 — crypto verify-deposit RG
+test('F6: /api/crypto/verify-deposit runs full RG + velocity checks', () => {
+    assert(/require\(['"]\.\.\/services\/deposit-checks\.service['"]\)/.test(CRYPTO_SRC_R63),
+        'crypto.routes must import deposit-checks service');
+    assert(/depositChecks\.runAllChecks/.test(CRYPTO_SRC_R63),
+        'crypto verify-deposit must call runAllChecks (self-exclusion + limits + velocity)');
+});
+
+// ══════════════════════════════════════════════════════════════════════
 console.log('\n=== CLAUDE.md rule #7: no Math.random on server side ===');
 // ══════════════════════════════════════════════════════════════════════
 test('no server/**/*.js uses Math.random() in RNG-critical contexts', () => {

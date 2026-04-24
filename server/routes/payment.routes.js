@@ -747,18 +747,67 @@ router.post('/withdraw/verify-otp', authenticate, otpLimiter, async (req, res) =
             }
         }
 
-        // Check DB-level attempt count
-        const attempts = (wd.otp_attempts || 0) + 1;
-        if (otp !== wd.otp_code) {
+        // Atomic attempt increment — prevents the parallel-guess race where
+        // five concurrent verify requests all read otp_attempts=0, all compute
+        // attempts=1, and all miss the attempts>=5 cancel threshold. The
+        // increment itself is now the serialisation point: each request's
+        // RETURNING gives the post-increment value it owns.
+        //
+        // Fallback when RETURNING isn't supported (older SQLite < 3.35): a
+        // transaction wraps the increment + re-read so concurrent requests
+        // serialise through the row-level lock.
+        let attempts;
+        let otpCodeInDb;
+        try {
+            const incResult = await db.get(
+                "UPDATE withdrawals SET otp_attempts = COALESCE(otp_attempts, 0) + 1 WHERE id = ? AND user_id = ? AND status = 'pending' AND otp_code IS NOT NULL RETURNING otp_attempts, otp_code",
+                [wd.id, req.user.id]
+            );
+            if (incResult && incResult.otp_attempts) {
+                attempts = incResult.otp_attempts;
+                otpCodeInDb = incResult.otp_code;
+            }
+        } catch (_) { /* RETURNING unsupported — fall through to transaction fallback */ }
+        if (attempts == null) {
+            await db.beginTransaction();
+            try {
+                await db.run(
+                    "UPDATE withdrawals SET otp_attempts = COALESCE(otp_attempts, 0) + 1 WHERE id = ? AND user_id = ? AND status = 'pending' AND otp_code IS NOT NULL",
+                    [wd.id, req.user.id]
+                );
+                const fresh = await db.get(
+                    'SELECT otp_attempts, otp_code FROM withdrawals WHERE id = ?',
+                    [wd.id]
+                );
+                await db.commit();
+                attempts = fresh ? fresh.otp_attempts : null;
+                otpCodeInDb = fresh ? fresh.otp_code : null;
+            } catch (txErr) {
+                await db.rollback();
+                throw txErr;
+            }
+        }
+        if (attempts == null || otpCodeInDb == null) {
+            return res.status(400).json({ error: 'No OTP is set for this withdrawal or it has been invalidated' });
+        }
+
+        // Constant-time compare to avoid leaking code digits through timing
+        const submitted = String(otp);
+        let matches = false;
+        try {
+            if (submitted.length === otpCodeInDb.length) {
+                matches = crypto.timingSafeEqual(Buffer.from(submitted, 'utf8'), Buffer.from(otpCodeInDb, 'utf8'));
+            }
+        } catch (_) { matches = false; }
+
+        if (!matches) {
             if (attempts >= 5) {
                 // Invalidate the OTP, cancel the withdrawal, and refund — all atomically.
-                // Without a transaction, a crash between status update and balance refund
-                // permanently loses user funds.
                 await db.beginTransaction();
                 try {
                     await db.run(
-                        "UPDATE withdrawals SET otp_code = NULL, otp_attempts = ?, status = 'cancelled', admin_note = 'OTP invalidated after 5 failed attempts', processed_at = datetime('now') WHERE id = ?",
-                        [attempts, wd.id]
+                        "UPDATE withdrawals SET otp_code = NULL, status = 'cancelled', admin_note = 'OTP invalidated after 5 failed attempts', processed_at = datetime('now') WHERE id = ? AND status = 'pending'",
+                        [wd.id]
                     );
                     await db.run('UPDATE users SET balance = balance + ? WHERE id = ?', [wd.amount, req.user.id]);
                     await db.run(
@@ -772,13 +821,12 @@ router.post('/withdraw/verify-otp', authenticate, otpLimiter, async (req, res) =
                 }
                 return res.status(400).json({ error: 'Too many incorrect OTP attempts — withdrawal has been cancelled and refunded' });
             }
-            await db.run('UPDATE withdrawals SET otp_attempts = ? WHERE id = ?', [attempts, wd.id]);
-            return res.status(400).json({ error: `Incorrect OTP. ${5 - attempts} attempt(s) remaining.` });
+            return res.status(400).json({ error: `Incorrect OTP. ${Math.max(0, 5 - attempts)} attempt(s) remaining.` });
         }
 
-        // OTP correct — mark as otp_verified
+        // OTP correct — mark as otp_verified atomically (guard against concurrent race)
         await db.run(
-            "UPDATE withdrawals SET status = 'otp_verified', otp_code = NULL, otp_attempts = 0, otp_verified_at = datetime('now') WHERE id = ?",
+            "UPDATE withdrawals SET status = 'otp_verified', otp_code = NULL, otp_attempts = 0, otp_verified_at = datetime('now') WHERE id = ? AND status = 'pending'",
             [wd.id]
         );
         res.json({ message: 'OTP verified. Withdrawal queued for admin review.', withdrawal_id: wd.id });
@@ -1066,15 +1114,6 @@ router.post('/admin/approve-deposit', authenticate, _payReqAdmin, async (req, re
             return res.status(400).json({ error: `Deposit already ${deposit.status}` });
         }
 
-        // ROUND 53: Atomic status claim — prevents double-credit from concurrent webhooks
-        var claimResult = await db.run(
-            "UPDATE deposits SET status = 'completed' WHERE id = ? AND status = 'pending'",
-            [depositId]
-        );
-        if (!claimResult || claimResult.changes === 0) {
-            return res.status(409).json({ error: 'Deposit already processed (concurrent claim)' });
-        }
-
         const user = await db.get('SELECT balance, bonus_balance FROM users WHERE id = ?', [deposit.user_id]);
         if (!user) {
             return res.status(404).json({ error: 'User not found' });
@@ -1084,6 +1123,12 @@ router.post('/admin/approve-deposit', authenticate, _payReqAdmin, async (req, re
         let balanceAfter = balanceBefore + deposit.amount;
 
         // ── Wrap deposit approval in transaction for atomicity ──
+        // ROUND 63: The status-claim UPDATE is now INSIDE the transaction
+        // alongside the balance credit. Previously the status flip auto-
+        // committed before the balance UPDATE, so a failed credit + rollback
+        // would leave status='completed' with no balance change — funds
+        // permanently stuck, uncreditable on retry (409 "already processed").
+        //
         // SECURITY: Bonus eligibility check moved INSIDE the transaction to prevent
         // race condition where two concurrent deposits both see count=0 and both
         // receive the first-deposit bonus.
@@ -1092,6 +1137,18 @@ router.post('/admin/approve-deposit', authenticate, _payReqAdmin, async (req, re
         var wageringMult = 0;
         var bonusType = '';
         try {
+            // Atomic status claim — prevents double-credit from concurrent webhooks.
+            // If the claim loses, rollback and return 409. If the subsequent credit
+            // fails, rollback reverts the claim so a retry can succeed cleanly.
+            var claimResult = await db.run(
+                "UPDATE deposits SET status = 'completed' WHERE id = ? AND status = 'pending'",
+                [depositId]
+            );
+            if (!claimResult || claimResult.changes === 0) {
+                await db.rollback();
+                return res.status(409).json({ error: 'Deposit already processed (concurrent claim)' });
+            }
+
             // Atomic credit — prevents race condition balance overwrites from concurrent wins
             await db.run('UPDATE users SET balance = balance + ? WHERE id = ?', [deposit.amount, deposit.user_id]);
 
@@ -1400,63 +1457,21 @@ router.post('/stripe/checkout', authenticate, async (req, res) => {
     }
 });
 
-// POST /api/payments/stripe/payment-intent — create a PaymentIntent for embedded forms (authenticated)
-router.post('/stripe/payment-intent', authenticate, async (req, res) => {
-    try {
-        if (!stripeService.isAvailable()) {
-            return res.status(503).json({ error: 'Stripe payments are not currently available' });
-        }
-
-        const { amount, currency } = req.body;
-        const depositAmount = parseFloat(amount);
-
-        if (!Number.isFinite(depositAmount) || depositAmount <= 0) {
-            return res.status(400).json({ error: 'Invalid deposit amount' });
-        }
-        if (depositAmount < config.MIN_DEPOSIT) {
-            return res.status(400).json({ error: `Minimum deposit is $${config.MIN_DEPOSIT.toFixed(2)}` });
-        }
-        if (depositAmount > config.MAX_DEPOSIT) {
-            return res.status(400).json({ error: `Maximum deposit is $${config.MAX_DEPOSIT.toFixed(2)}` });
-        }
-
-        // Check self-exclusion
-        const exclusion = await checkExclusion(req.user.id);
-        if (exclusion) {
-            return res.status(403).json({ error: exclusion });
-        }
-
-        // Check deposit limits
-        await ensureUserLimitsRow(req.user.id);
-        const limitError = await checkDepositLimits(req.user.id, depositAmount);
-        if (limitError) {
-            return res.status(400).json({ error: limitError });
-        }
-
-        // Deposit velocity fraud check
-        const velocityError = await checkDepositVelocity(req.user.id);
-        if (velocityError) {
-            return res.status(429).json({ error: velocityError });
-        }
-
-        const result = await stripeService.createPaymentIntent(
-            req.user.id,
-            depositAmount,
-            currency || config.CURRENCY
-        );
-
-        res.json({
-            message: 'Payment intent created',
-            clientSecret: result.clientSecret,
-            paymentIntentId: result.paymentIntentId,
-            depositId: result.depositId,
-            reference: result.reference,
-        });
-    } catch (err) {
-        console.warn('[Stripe] PaymentIntent error:', err.message);
-        // SECURITY: Don't leak internal error details to client
-        res.status(500).json({ error: 'Payment processing failed. Please try again.' });
-    }
+// POST /api/payments/stripe/payment-intent — DISABLED (ROUND 63 / 2026-04-24)
+//
+// This endpoint created a PaymentIntent + `pending` deposit row, but the
+// canonical Stripe webhook at /api/payment/webhook only handles
+// `checkout.session.completed` — NOT `payment_intent.succeeded`. So charges
+// created here would succeed on Stripe's side, be debited from the cardholder,
+// and stay `pending` forever on our side; worse, a later chargeback would
+// then debit the user's in-casino balance for a deposit they were never
+// credited for. Return 501 until a payment_intent.succeeded handler is
+// wired into the canonical webhook.
+router.post('/stripe/payment-intent', authenticate, (req, res) => {
+    return res.status(501).json({
+        error: 'Embedded PaymentIntent flow is disabled. Use /api/payment/create-checkout for hosted Stripe Checkout instead.',
+        code: 'payment_intent_disabled_pending_webhook_handler'
+    });
 });
 
 // DISABLED: Duplicate webhook handler removed to prevent double-credit risk.

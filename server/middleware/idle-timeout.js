@@ -65,11 +65,27 @@ function idleTimeoutMiddleware(req, res, next) {
         return next();
     }
 
+    // Previously-rejected session — require explicit re-login before this
+    // middleware will let the user back in. Prevents the bypass where an
+    // attacker with a stolen JWT fires one throwaway request to clear the
+    // idle state, then uses the token freely afterwards. The login route
+    // calls _reset(userId) to clear this flag on successful credentials.
+    if (entry.idleRejected) {
+        return res.status(401).json({
+            error: 'Session timed out due to inactivity. Please sign in again.',
+            code: 'session_idle',
+            timeoutMinutes: IDLE_TIMEOUT_MINUTES,
+        });
+    }
+
     const idleMs = now - entry.lastSeen;
     if (idleMs > IDLE_TIMEOUT_MS) {
-        // Too idle — force re-auth. Clear the entry so the next /login
-        // starts with a fresh timer.
-        lastActivity.delete(userId);
+        // Too idle — force re-auth. Mark the entry as idle-rejected so the
+        // NEXT request also rejects (instead of going through the bootstrap
+        // path). The rejection only clears when /api/auth/login calls
+        // _reset(userId) after a successful password check.
+        entry.idleRejected = true;
+        entry.lastSeen = now; // keep lastSeen fresh so the cleanup sweep doesn't evict it
         return res.status(401).json({
             error: 'Session timed out due to inactivity. Please sign in again.',
             code: 'session_idle',
