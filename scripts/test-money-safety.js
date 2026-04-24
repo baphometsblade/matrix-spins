@@ -542,6 +542,152 @@ test('stripe-checkout idempotency check fails CLOSED on DB error', () => {
 });
 
 // ══════════════════════════════════════════════════════════════════════
+console.log('\n=== shared deposit-checks service (RG + velocity) ===');
+// ══════════════════════════════════════════════════════════════════════
+const depositChecksMod = require(path.join(SERVER_DIR, 'services', 'deposit-checks.service'));
+
+test('deposit-checks service exports the full public API', () => {
+    ['checkExclusion', 'checkDepositLimits', 'checkDepositVelocity', 'runAllChecks'].forEach(fn => {
+        assert(typeof depositChecksMod[fn] === 'function', `deposit-checks must export ${fn}`);
+    });
+});
+
+test('runAllChecks short-circuits on exclusion → limit → velocity order', () => {
+    // Source-level verification (module-internal bindings capture by closure,
+    // so we verify by reading source rather than monkey-patching exports).
+    const src = fs.readFileSync(path.join(SERVER_DIR, 'services', 'deposit-checks.service.js'), 'utf8');
+    const body = src.match(/async function runAllChecks[\s\S]+?^}/m);
+    assert(body, 'runAllChecks body not found');
+    const code = body[0];
+    // Order of calls must be: exclusion → limits → velocity
+    const idxExcl = code.indexOf('checkExclusion(');
+    const idxLim  = code.indexOf('checkDepositLimits(');
+    const idxVel  = code.indexOf('checkDepositVelocity(');
+    assert(idxExcl >= 0 && idxLim >= 0 && idxVel >= 0, 'all three checks must be called');
+    assert(idxExcl < idxLim && idxLim < idxVel, 'call order must be exclusion → limits → velocity');
+    // Each failure must short-circuit (early return)
+    const shortCircuitReturns = (code.match(/return \{\s*allowed:\s*false/g) || []).length;
+    assert(shortCircuitReturns >= 3, `must have 3 short-circuit returns (got ${shortCircuitReturns})`);
+});
+
+test('stripe-checkout uses shared depositChecks.runAllChecks', () => {
+    const src = fs.readFileSync(path.join(SERVER_DIR, 'routes', 'stripe-checkout.routes.js'), 'utf8');
+    assert(/require\(['"]\.\.\/services\/deposit-checks\.service['"]\)/.test(src), 'stripe-checkout must import deposit-checks');
+    assert(/depositChecks\.runAllChecks/.test(src), 'stripe-checkout must call runAllChecks');
+});
+
+test('matrix-money purchase uses shared depositChecks.runAllChecks', () => {
+    const src = fs.readFileSync(path.join(SERVER_DIR, 'routes', 'matrix-money.routes.js'), 'utf8');
+    assert(/require\(['"]\.\.\/services\/deposit-checks\.service['"]\)/.test(src), 'matrix-money must import deposit-checks');
+    assert(/depositChecks\.runAllChecks/.test(src), 'matrix-money must call runAllChecks');
+});
+
+test('payment.routes delegates to shared deposit-checks service', () => {
+    const src = fs.readFileSync(path.join(SERVER_DIR, 'routes', 'payment.routes.js'), 'utf8');
+    assert(/depositChecks\.checkExclusion|depositChecks\.checkDepositLimits|depositChecks\.checkDepositVelocity/.test(src),
+        'payment.routes must delegate to shared deposit-checks');
+});
+
+// ══════════════════════════════════════════════════════════════════════
+console.log('\n=== bundle purchase endpoint is disabled (revenue leak fix) ===');
+// ══════════════════════════════════════════════════════════════════════
+test('/api/bundles/purchase returns 501 until Stripe integration lands', () => {
+    // Check that the endpoint source returns 501 with the documented code
+    const src = fs.readFileSync(path.join(SERVER_DIR, 'index.js'), 'utf8');
+    const bundleHandler = src.match(/app\.post\(\s*['"]\/api\/bundles\/purchase['"][\s\S]+?\n\}\);/);
+    assert(bundleHandler, 'bundle purchase endpoint not found');
+    assert(/status\(501\)/.test(bundleHandler[0]), 'bundle purchase must return 501 (not 200/400)');
+    assert(/bundles_disabled_pending_payment_integration/.test(bundleHandler[0]), 'response must include documented code');
+    // Strip comment lines before checking for purchaseBundle call
+    const codeOnly = bundleHandler[0].split('\n')
+        .filter(line => !/^\s*\/\//.test(line))
+        .join('\n');
+    assert(!/purchaseBundle\s*\(/.test(codeOnly), 'handler code must NOT credit bundle until Stripe is wired');
+});
+
+// ══════════════════════════════════════════════════════════════════════
+console.log('\n=== admin routes require auth + admin role ===');
+// ══════════════════════════════════════════════════════════════════════
+test('admin.routes.js uses router.use(authenticate, requireAdmin) at top', () => {
+    const src = fs.readFileSync(path.join(SERVER_DIR, 'routes', 'admin.routes.js'), 'utf8');
+    assert(/router\.use\(\s*authenticate\s*,\s*requireAdmin\s*\)/.test(src),
+        'admin.routes.js must enforce authenticate + requireAdmin at router level');
+});
+
+test('admin-withdrawals.routes.js uses router.use(authenticate, requireAdmin)', () => {
+    const src = fs.readFileSync(path.join(SERVER_DIR, 'routes', 'admin-withdrawals.routes.js'), 'utf8');
+    assert(/router\.use\(\s*authenticate\s*,\s*requireAdmin\s*\)/.test(src),
+        'admin-withdrawals.routes.js must enforce authenticate + requireAdmin at router level');
+});
+
+test('KYC approve + reject endpoints exist on admin.routes', () => {
+    const src = fs.readFileSync(path.join(SERVER_DIR, 'routes', 'admin.routes.js'), 'utf8');
+    assert(/router\.post\(\s*['"]\/kyc-approve['"]/.test(src), 'admin must expose POST /kyc-approve');
+    assert(/router\.post\(\s*['"]\/kyc-reject['"]/.test(src), 'admin must expose POST /kyc-reject');
+    assert(/router\.get\(\s*['"]\/kyc-pending['"]/.test(src), 'admin must expose GET /kyc-pending');
+});
+
+test('withdrawal approve + deny endpoints are atomic (no double-approve race)', () => {
+    const src = fs.readFileSync(path.join(SERVER_DIR, 'routes', 'admin-withdrawals.routes.js'), 'utf8');
+    // Both must use WHERE id = ? AND status = 'pending' for atomic claim
+    const approveMatch = src.match(/router\.post\(\s*['"]\/withdrawals\/:id\/approve['"][\s\S]+?^\}\);/m);
+    assert(approveMatch, 'approve endpoint not found');
+    assert(/WHERE id = \? AND status = 'pending'/.test(approveMatch[0]), 'approve must use atomic claim');
+
+    const denyMatch = src.match(/router\.post\(\s*['"]\/withdrawals\/:id\/deny['"][\s\S]+?^\}\);/m);
+    assert(denyMatch, 'deny endpoint not found');
+    assert(/WHERE id = \? AND status = 'pending'/.test(denyMatch[0]), 'deny must use atomic claim');
+});
+
+// ══════════════════════════════════════════════════════════════════════
+console.log('\n=== signup enforces age 18+ and terms acceptance ===');
+// ══════════════════════════════════════════════════════════════════════
+test('register endpoint requires dateOfBirth and blocks under-18', () => {
+    const src = fs.readFileSync(path.join(SERVER_DIR, 'routes', 'auth.routes.js'), 'utf8');
+    assert(/age\s*<\s*18/.test(src), 'auth.routes must block age < 18');
+    assert(/You must be 18/.test(src), 'register must show 18+ error message');
+});
+
+test('register endpoint requires terms acceptance', () => {
+    const src = fs.readFileSync(path.join(SERVER_DIR, 'routes', 'auth.routes.js'), 'utf8');
+    assert(/acceptTerms/.test(src), 'auth.routes must require acceptTerms');
+    assert(/Terms & Conditions/.test(src), 'register must show terms message');
+});
+
+test('passwords are hashed with bcrypt rounds >= 12', () => {
+    const src = fs.readFileSync(path.join(SERVER_DIR, 'routes', 'auth.routes.js'), 'utf8');
+    const m = src.match(/bcrypt\.hashSync\(\s*password\s*,\s*(\d+)/);
+    assert(m, 'bcrypt.hashSync call not found');
+    const rounds = parseInt(m[1], 10);
+    assert(rounds >= 12, `bcrypt rounds must be ≥ 12 for production (got ${rounds})`);
+});
+
+// ══════════════════════════════════════════════════════════════════════
+console.log('\n=== email verification flow integrity ===');
+// ══════════════════════════════════════════════════════════════════════
+test('verify-email requires 64-char hex token', () => {
+    const src = fs.readFileSync(path.join(SERVER_DIR, 'routes', 'auth.routes.js'), 'utf8');
+    // The token validator: token.length !== 64 && /^[a-f0-9]+$/
+    assert(/token\.length\s*!==?\s*64/.test(src), 'verify-email must require 64-char token');
+    assert(/\/\^\[a-f0-9\]\+\$\//.test(src), 'verify-email must require hex-only token');
+});
+
+test('verify-email rejects expired tokens', () => {
+    const src = fs.readFileSync(path.join(SERVER_DIR, 'routes', 'auth.routes.js'), 'utf8');
+    assert(/expires_at|expired/.test(src), 'verify-email must check token expiry');
+});
+
+test('verify-email is rate-limited (stops enumeration)', () => {
+    const src = fs.readFileSync(path.join(SERVER_DIR, 'routes', 'auth.routes.js'), 'utf8');
+    assert(/_verifyEmailAttempts/.test(src), 'verify-email must rate-limit per IP');
+});
+
+test('withdraw requires email_verified before processing', () => {
+    const src = fs.readFileSync(path.join(SERVER_DIR, 'routes', 'payment.routes.js'), 'utf8');
+    assert(/email_verified/.test(src) && /verify.*email/i.test(src), 'withdraw must require email_verified');
+});
+
+// ══════════════════════════════════════════════════════════════════════
 console.log('\n=== launch-readiness warnings cover critical env ===');
 // ══════════════════════════════════════════════════════════════════════
 test('launch-readiness warns on missing Stripe live keys', () => {

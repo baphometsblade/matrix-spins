@@ -7,6 +7,8 @@ const rateLimit = require('express-rate-limit');
 const { mintOnDeposit, recordResaleOnWithdrawal } = require('../services/nft-ledger');
 const { mintDeposit } = require('../../blockchain/mint');
 const { burnWithdrawal } = require('../../blockchain/burn');
+// Shared responsible-gambling + velocity checks (also used by stripe-checkout.routes.js)
+const depositChecks = require('../services/deposit-checks.service');
 
 const router = express.Router();
 
@@ -50,107 +52,13 @@ async function ensureUserLimitsRow(userId) {
     }
 }
 
-// ─── Check self-exclusion / cooling-off status ───
-async function checkExclusion(userId) {
-    const limits = await db.get(
-        'SELECT self_excluded_until, cooling_off_until FROM user_limits WHERE user_id = ?',
-        [userId]
-    );
-    if (!limits) return null;
-
-    const now = new Date().toISOString();
-    if (limits.self_excluded_until && limits.self_excluded_until > now) {
-        return `Account is self-excluded until ${limits.self_excluded_until}`;
-    }
-    if (limits.cooling_off_until && limits.cooling_off_until > now) {
-        return `Account is in cooling-off period until ${limits.cooling_off_until}`;
-    }
-    return null;
-}
-
-// ─── Check deposit limits ───
-async function checkDepositLimits(userId, amount) {
-    const limits = await db.get(
-        'SELECT daily_deposit_limit, weekly_deposit_limit, monthly_deposit_limit FROM user_limits WHERE user_id = ?',
-        [userId]
-    );
-    if (!limits) return null;
-
-    const now = new Date();
-
-    if (limits.daily_deposit_limit !== null) {
-        const dayStart = new Date(now);
-        dayStart.setHours(0, 0, 0, 0);
-        const daily = await db.get(
-            "SELECT COALESCE(SUM(amount), 0) as total FROM deposits WHERE user_id = ? AND status = 'completed' AND created_at >= ?",
-            [userId, dayStart.toISOString()]
-        );
-        if (daily.total + amount > limits.daily_deposit_limit) {
-            return `Daily deposit limit of $${limits.daily_deposit_limit.toFixed(2)} would be exceeded. Already deposited $${daily.total.toFixed(2)} today.`;
-        }
-    }
-
-    if (limits.weekly_deposit_limit !== null) {
-        const weekStart = new Date(now);
-        weekStart.setDate(weekStart.getDate() - 7);
-        const weekly = await db.get(
-            "SELECT COALESCE(SUM(amount), 0) as total FROM deposits WHERE user_id = ? AND status = 'completed' AND created_at >= ?",
-            [userId, weekStart.toISOString()]
-        );
-        if (weekly.total + amount > limits.weekly_deposit_limit) {
-            return `Weekly deposit limit of $${limits.weekly_deposit_limit.toFixed(2)} would be exceeded. Already deposited $${weekly.total.toFixed(2)} this week.`;
-        }
-    }
-
-    if (limits.monthly_deposit_limit !== null) {
-        const monthStart = new Date(now);
-        monthStart.setDate(monthStart.getDate() - 30);
-        const monthly = await db.get(
-            "SELECT COALESCE(SUM(amount), 0) as total FROM deposits WHERE user_id = ? AND status = 'completed' AND created_at >= ?",
-            [userId, monthStart.toISOString()]
-        );
-        if (monthly.total + amount > limits.monthly_deposit_limit) {
-            return `Monthly deposit limit of $${limits.monthly_deposit_limit.toFixed(2)} would be exceeded. Already deposited $${monthly.total.toFixed(2)} this month.`;
-        }
-    }
-
-    return null;
-}
-
-// ─── Deposit velocity fraud detection ───
-// Blocks rapid-fire deposits that indicate automated abuse or stolen cards
-async function checkDepositVelocity(userId) {
-    // Max 3 deposits per hour
-    const hourAgo = new Date(Date.now() - 60 * 60 * 1000).toISOString();
-    const hourly = await db.get(
-        "SELECT COUNT(*) as count FROM deposits WHERE user_id = ? AND created_at >= ?",
-        [userId, hourAgo]
-    );
-    if (hourly && hourly.count >= 3) {
-        return 'Too many deposit attempts. Please wait before trying again.';
-    }
-
-    // Max 5 deposits per 24 hours
-    const dayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
-    const daily = await db.get(
-        "SELECT COUNT(*) as count FROM deposits WHERE user_id = ? AND created_at >= ?",
-        [userId, dayAgo]
-    );
-    if (daily && daily.count >= 5) {
-        return 'Daily deposit attempt limit reached. Please try again tomorrow.';
-    }
-
-    // Max 3 pending deposits at once (prevents queue flooding)
-    const pending = await db.get(
-        "SELECT COUNT(*) as count FROM deposits WHERE user_id = ? AND status = 'pending'",
-        [userId]
-    );
-    if (pending && pending.count >= 3) {
-        return 'You have too many pending deposits. Please wait for them to process.';
-    }
-
-    return null;
-}
+// ─── RG + velocity checks delegated to shared service ───
+// The canonical implementations live in services/deposit-checks.service.js
+// so stripe-checkout.routes.js + bundle.routes.js + matrix-money.routes.js
+// all enforce the same limits. Thin wrappers kept here for call-site readability.
+const checkExclusion       = (userId) => depositChecks.checkExclusion(userId);
+const checkDepositLimits   = (userId, amount) => depositChecks.checkDepositLimits(userId, amount);
+const checkDepositVelocity = (userId) => depositChecks.checkDepositVelocity(userId);
 
 // ═══════════════════════════════════════════════════
 

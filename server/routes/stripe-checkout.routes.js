@@ -3,6 +3,7 @@ const express = require('express');
 const router = express.Router();
 const config = require('../config');
 const { authenticate } = require('../middleware/auth');
+const depositChecks = require('../services/deposit-checks.service');
 
 // Deposit price mapping — Stripe Price IDs from env only (no hardcoded
 // fallbacks because a test-mode price ID would break live-mode checkout with
@@ -47,15 +48,12 @@ router.post('/payment/create-checkout', authenticate, async (req, res) => {
             });
         }
 
-        // SECURITY: Check self-exclusion before allowing deposit
-        const { getBackend } = require('../database');
-        const db = getBackend();
-        const exclusion = await db.get(
-            "SELECT id FROM self_exclusions WHERE user_id = ? AND is_active = 1 AND (ends_at IS NULL OR ends_at > datetime('now'))",
-            [playerId]
-        );
-        if (exclusion) {
-            return res.status(403).json({ error: 'Account is self-excluded. Deposits are disabled.' });
+        // SECURITY: Full responsible-gambling + velocity checks before
+        // creating a Stripe session. Mirrors /api/payment/deposit — a user
+        // cannot bypass their own deposit limit by using a different route.
+        const rgCheck = await depositChecks.runAllChecks(playerId, amountNum);
+        if (!rgCheck.allowed) {
+            return res.status(403).json({ error: rgCheck.error });
         }
 
         const priceId = DEPOSIT_PRICES[amountNum];

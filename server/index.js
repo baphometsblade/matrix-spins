@@ -473,16 +473,25 @@ app.get('/api/bundles', async (req, res) => {
 });
 
 app.post('/api/bundles/purchase', verifyToken, async (req, res) => {
-    try {
-        const bundleService = require('./services/bundle.service');
-        const { bundleId } = req.body;
-        if (!bundleId) return res.status(400).json({ error: 'Bundle ID required' });
-        const result = await bundleService.purchaseBundle(req.user.id, bundleId);
-        res.json(result);
-    } catch (e) {
-        console.warn('[Bundle] purchase error:', e.message);
-        res.status(400).json({ error: e.message });
-    }
+    // ROUND 60 (2026-04-24): Bundle purchases bypass all responsible-gambling,
+    // fraud-velocity, and — most critically — the actual payment processor.
+    // bundleService.purchaseBundle() credits balance + bonus_balance directly
+    // with no Stripe charge. That's free money to any authenticated user.
+    //
+    // Until this endpoint is wired through Stripe checkout (create session →
+    // webhook credits bundle), it must remain disabled. The bundle catalog
+    // still shows via GET /api/bundles.
+    //
+    // Re-enable path:
+    //   1. POST /api/payment/create-checkout with { bundleId } metadata
+    //   2. Stripe webhook at /api/payment/webhook calls
+    //      bundleService.purchaseBundle(userId, bundleId) AFTER verifying
+    //      session.amount_total === bundle.price * 100
+    //   3. bundle.service.purchaseBundle must also call depositChecks.runAllChecks
+    return res.status(501).json({
+        error: 'Bundle purchases are temporarily unavailable. Please use the deposit flow.',
+        code: 'bundles_disabled_pending_payment_integration'
+    });
 });
 
 // ─── Active campaigns for current user ───

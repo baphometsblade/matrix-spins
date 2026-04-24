@@ -17,6 +17,7 @@ const db = require('../database');
 const config = require('../config');
 const crypto = require('crypto');
 const { mintOnDeposit, recordResaleOnWithdrawal, generateTokenId } = require('../services/nft-ledger');
+const depositChecks = require('../services/deposit-checks.service');
 
 const router = express.Router();
 
@@ -78,35 +79,11 @@ router.post('/purchase', authenticate, async (req, res) => {
             return res.status(400).json({ error: 'Valid payment type is required' });
         }
 
-        // ROUND 49: Check BOTH self-exclusion tables (was only checking user_limits)
-        try {
-            var exclusion = await db.get(
-                "SELECT id FROM self_exclusions WHERE user_id = ? AND is_active = 1 AND (ends_at IS NULL OR ends_at > datetime('now'))",
-                [req.user.id]
-            );
-            if (exclusion) {
-                return res.status(403).json({ error: 'Account is self-excluded. Purchases are disabled.' });
-            }
-        } catch (exclErr) {
-            if (exclErr.message && exclErr.message.includes('no such table')) { /* OK */ }
-            else {
-                console.error('[MatrixMoney] Self-exclusion check failed:', exclErr.message);
-                return res.status(500).json({ error: 'Security check failed' });
-            }
-        }
-        // Also check user_limits table
-        const limits = await db.get(
-            'SELECT self_excluded_until, cooling_off_until FROM user_limits WHERE user_id = ?',
-            [req.user.id]
-        );
-        if (limits) {
-            const now = new Date().toISOString().slice(0, 19).replace('T', ' ');
-            if (limits.self_excluded_until && limits.self_excluded_until > now) {
-                return res.status(403).json({ error: `Account is self-excluded until ${limits.self_excluded_until}` });
-            }
-            if (limits.cooling_off_until && limits.cooling_off_until > now) {
-                return res.status(403).json({ error: `Account is in cooling-off period until ${limits.cooling_off_until}` });
-            }
+        // Full RG + velocity checks (shared with /api/payment/deposit and /api/payment/create-checkout)
+        // Prevents users from bypassing their own deposit limits by using a different route.
+        const rgCheck = await depositChecks.runAllChecks(req.user.id, pkg.price);
+        if (!rgCheck.allowed) {
+            return res.status(403).json({ error: rgCheck.error });
         }
 
         // Validate payment method ownership
