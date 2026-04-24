@@ -100,6 +100,13 @@
         <th>ID</th><th>User</th><th>Amount</th><th>Method</th><th>Destination</th><th>Requested</th><th></th>
     </tr></thead><tbody><tr><td colspan="7" style="color:#666;padding:18px;text-align:center">— click Refresh —</td></tr></tbody></table>
 
+    <h2 style="display:flex;align-items:center;gap:12px">Recent slot rounds
+        <button class="row-actions-inline" id="btn-load-rounds" style="margin-left:auto;padding:5px 10px;font-size:11px;background:rgba(255,255,255,.08);color:#e0e0e0;border:1px solid #333;border-radius:4px;cursor:pointer">Load recent</button>
+    </h2>
+    <table id="tbl-rounds"><thead><tr>
+        <th>ID</th><th>User</th><th>Game</th><th>Bet</th><th>Win</th><th>Balance after</th><th>Nonce</th><th>When</th><th></th>
+    </tr></thead><tbody><tr><td colspan="9" style="color:#666;padding:18px;text-align:center">— click Load recent —</td></tr></tbody></table>
+
     <h2 style="display:flex;align-items:center;gap:12px">Stripe webhook events
         <button class="row-actions-inline" id="btn-load-events" style="margin-left:auto;padding:5px 10px;font-size:11px;background:rgba(255,255,255,.08);color:#e0e0e0;border:1px solid #333;border-radius:4px;cursor:pointer">Load recent</button>
     </h2>
@@ -408,6 +415,39 @@
         }
     };
     document.getElementById('btn-load-wd').addEventListener('click', loadPendingWithdrawals);
+
+    // Load recent slot rounds across all users.
+    document.getElementById('btn-load-rounds').addEventListener('click', async function () {
+        const btn = this;
+        btn.disabled = true; btn.textContent = 'Loading…';
+        try {
+            const data = await api('GET', '/api/admin/slot-rounds?limit=100');
+            const tbody = document.querySelector('#tbl-rounds tbody');
+            tbody.innerHTML = data.rounds.length === 0
+                ? '<tr><td colspan="9" style="color:#666;padding:18px;text-align:center">— no rounds yet —</td></tr>'
+                : data.rounds.map(r => {
+                    const net = r.win_cents - r.bet_cents;
+                    const verifyUrl = '/verify-round.html?round=' + r.id;
+                    return '<tr>' +
+                        '<td class="mono">#' + r.id + '</td>' +
+                        '<td>' + esc(r.username || r.user_id) + '</td>' +
+                        '<td>' + esc(r.game_id) + '</td>' +
+                        '<td>' + money(r.bet_cents / 100) + '</td>' +
+                        '<td>' + (r.win_cents > 0
+                            ? '<span style="color:#5fd489">+' + money(r.win_cents / 100) + '</span>'
+                            : money(r.win_cents / 100)) + '</td>' +
+                        '<td>' + money(r.balance_after_cents / 100) + '</td>' +
+                        '<td class="mono">' + r.nonce + '</td>' +
+                        '<td>' + esc(String(r.created_at || '').replace('T',' ').slice(0,19)) + '</td>' +
+                        '<td><a href="' + verifyUrl + '" target="_blank" rel="noopener" style="color:#00d4ff;font-size:11px">Verify&nbsp;&rarr;</a></td>' +
+                    '</tr>';
+                }).join('');
+        } catch (e) {
+            alert('Failed to load slot rounds: ' + e.message);
+        } finally {
+            btn.disabled = false; btn.textContent = 'Reload';
+        }
+    });
 
     // Load recent Stripe webhook events into the events table.
     document.getElementById('btn-load-events').addEventListener('click', async function () {

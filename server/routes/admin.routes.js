@@ -733,4 +733,56 @@ router.post('/withdrawals/:id/deny', async (req, res) => {
     }
 });
 
+/**
+ * Slot-rounds viewer — the audit surface for the server-authoritative
+ * slot engine. Returns recent rounds across all users with the joined
+ * username so ops can scan for anomalies (e.g. a user hitting the 500×
+ * jackpot multiple times in a row, an unexpected spike in volume).
+ *
+ * Filters: ?user_id=<n> to scope to one user, ?limit=<n> capped at 500.
+ * Revealed seeds are included by design — an operator reviewing a
+ * dispute can plug (server_seed, client_seed, nonce) into the
+ * /verify-round.html page to confirm the outcome matches what we
+ * returned to the user.
+ */
+router.get('/slot-rounds', async (req, res) => {
+    try {
+        const limit = Math.min(Math.max(Number(req.query.limit) || 100, 1), 500);
+        const userId = req.query.user_id ? Number(req.query.user_id) : null;
+        const sql =
+            'SELECT r.id, r.user_id, u.username, r.game_id, r.bet_cents, r.win_cents, ' +
+            'r.balance_after_cents, r.server_seed, r.server_seed_hash, r.client_seed, ' +
+            'r.nonce, r.outcome_json, r.created_at ' +
+            'FROM slot_rounds r LEFT JOIN users u ON u.id = r.user_id ' +
+            (userId ? 'WHERE r.user_id = ? ' : '') +
+            'ORDER BY r.id DESC LIMIT ?';
+        const params = userId ? [userId, limit] : [limit];
+        const rows = await db.all(sql, params);
+        res.json({
+            rounds: rows.map(r => {
+                let outcome = null;
+                try { outcome = JSON.parse(r.outcome_json); } catch { /* leave null */ }
+                return {
+                    id: r.id,
+                    user_id: r.user_id,
+                    username: r.username,
+                    game_id: r.game_id,
+                    bet_cents: Number(r.bet_cents),
+                    win_cents: Number(r.win_cents),
+                    balance_after_cents: Number(r.balance_after_cents),
+                    server_seed: r.server_seed,
+                    server_seed_hash: r.server_seed_hash,
+                    client_seed: r.client_seed,
+                    nonce: Number(r.nonce),
+                    outcome,
+                    created_at: r.created_at,
+                };
+            }),
+        });
+    } catch (err) {
+        console.error('[admin/slot-rounds]', err);
+        res.status(500).json({ error: 'Failed to list slot rounds.' });
+    }
+});
+
 module.exports = router;

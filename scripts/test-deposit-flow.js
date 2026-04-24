@@ -1373,6 +1373,114 @@ async function main() {
         console.log('[test] withdrawal: request debits, cancel/deny refund, approve preserves, bad inputs rejected');
     }
 
+    // ═══ 2FA-gated withdrawal ═══════════════════════════════════════════════
+    // A user with 2FA enabled cannot cash out with just the session token.
+    // Requests without a code get 401 totp_required; wrong codes get 401
+    // totp_invalid; correct codes succeed exactly once (TOTP window guard
+    // is already exercised elsewhere).
+    {
+        const totp = require('../server/services/totp.service');
+        const t2User = 'wd2fa_' + Date.now();
+        const t2Reg = await http('POST', '/api/auth/register', {
+            csrf,
+            body: {
+                username: t2User, email: t2User + '@example.com',
+                password: 'Str0ngP@ss!!', date_of_birth: '1990-01-01',
+            },
+        });
+        assert.strictEqual(t2Reg.status, 201);
+        const t2Token = t2Reg.body.token;
+        const t2Id = t2Reg.body.user.id;
+        await db.run('UPDATE users SET email_verified = 1, balance_cents = ? WHERE id = ?', [20000, t2Id]);
+
+        // Turn on 2FA for this user.
+        const tCsrf1 = (await http('GET', '/api/csrf-token', { token: t2Token })).body.csrfToken;
+        const setup2 = await http('POST', '/api/auth/2fa/setup', { token: t2Token, csrf: tCsrf1, body: {} });
+        assert.strictEqual(setup2.status, 200);
+        const enable2 = await http('POST', '/api/auth/2fa/enable', {
+            token: t2Token, csrf: tCsrf1, body: { code: totp.generateTOTP(setup2.body.secret) },
+        });
+        assert.strictEqual(enable2.status, 200);
+
+        // Enabling 2FA bumps token_version; re-login via the challenge flow.
+        const login2 = await http('POST', '/api/auth/login', {
+            csrf, body: { username: t2User, password: 'Str0ngP@ss!!' },
+        });
+        assert.strictEqual(login2.status, 200);
+        assert.ok(login2.body.requires_2fa);
+        const login2b = await http('POST', '/api/auth/login/2fa', {
+            csrf, body: { challenge: login2.body.challenge, code: totp.generateTOTP(setup2.body.secret) },
+        });
+        assert.strictEqual(login2b.status, 200);
+        const t2Token2 = login2b.body.token;
+        const tCsrf2 = (await http('GET', '/api/csrf-token', { token: t2Token2 })).body.csrfToken;
+
+        // (a) No code → 401 totp_required.
+        const noCode = await http('POST', '/api/withdrawal/request', {
+            token: t2Token2, csrf: tCsrf2,
+            body: { amount: 20, method: 'bank_transfer', destination: 'ACCT' },
+        });
+        assert.strictEqual(noCode.status, 401, 'expected 401 without code, got ' + noCode.status);
+        assert.strictEqual(noCode.body.code, 'totp_required');
+
+        // (b) Wrong code → 401 totp_invalid. Balance unchanged.
+        const balBefore = (await http('GET', '/api/balance', { token: t2Token2 })).body.balance_cents;
+        const wrongCode = await http('POST', '/api/withdrawal/request', {
+            token: t2Token2, csrf: tCsrf2,
+            body: { amount: 20, method: 'bank_transfer', destination: 'ACCT', totp_code: '000000' },
+        });
+        assert.strictEqual(wrongCode.status, 401, 'expected 401 wrong code, got ' + wrongCode.status);
+        assert.strictEqual(wrongCode.body.code, 'totp_invalid');
+        const balAfterWrong = (await http('GET', '/api/balance', { token: t2Token2 })).body.balance_cents;
+        assert.strictEqual(balAfterWrong, balBefore, 'balance must not move on failed 2FA');
+
+        // (c) Correct code → 201. Balance debited.
+        const okReq = await http('POST', '/api/withdrawal/request', {
+            token: t2Token2, csrf: tCsrf2,
+            body: {
+                amount: 20, method: 'bank_transfer', destination: 'ACCT-2FA',
+                totp_code: totp.generateTOTP(setup2.body.secret),
+            },
+        });
+        assert.strictEqual(okReq.status, 201, 'expected 201, got ' + okReq.status + ': ' + okReq.raw);
+        assert.strictEqual(okReq.body.withdrawal.status, 'pending');
+        const balAfterOk = (await http('GET', '/api/balance', { token: t2Token2 })).body.balance_cents;
+        assert.strictEqual(balAfterOk, balBefore - 2000, 'balance must reflect 2FA-gated debit');
+        console.log('[test] withdrawal: 2FA-enabled user requires valid totp_code; wrong/missing code refuses; balance untouched on failure');
+    }
+
+    // ═══ Admin slot-rounds viewer ═══════════════════════════════════════════
+    {
+        const adminRounds = await http('GET', '/api/admin/slot-rounds?limit=5', { token: adminToken });
+        assert.strictEqual(adminRounds.status, 200);
+        assert.ok(Array.isArray(adminRounds.body.rounds));
+        // We ran a 25-spin RTP test earlier on one user; at least one row
+        // must be present with the right shape.
+        assert.ok(adminRounds.body.rounds.length >= 1, 'expected at least one slot round from earlier tests');
+        const r0 = adminRounds.body.rounds[0];
+        for (const k of ['id', 'user_id', 'game_id', 'bet_cents', 'win_cents', 'server_seed', 'server_seed_hash', 'client_seed', 'nonce', 'outcome']) {
+            assert.ok(k in r0, 'missing field on admin slot round: ' + k);
+        }
+        // Non-admin must be blocked. Use a freshly-registered user —
+        // the main test user's session has been invalidated by earlier
+        // password-change and account-deletion tests.
+        const nobody = 'nobody_' + Date.now();
+        const nobodyReg = await http('POST', '/api/auth/register', {
+            csrf,
+            body: {
+                username: nobody, email: nobody + '@example.com',
+                password: 'Str0ngP@ss!!', date_of_birth: '1990-01-01',
+            },
+        });
+        const blocked = await http('GET', '/api/admin/slot-rounds', { token: nobodyReg.body.token });
+        assert.strictEqual(blocked.status, 403);
+        // user_id filter works.
+        const filtered = await http('GET', '/api/admin/slot-rounds?user_id=' + r0.user_id + '&limit=3', { token: adminToken });
+        assert.strictEqual(filtered.status, 200);
+        assert.ok(filtered.body.rounds.every(r => r.user_id === r0.user_id));
+        console.log('[test] admin /api/admin/slot-rounds: admin sees joined-user rows with seeds; non-admin 403; user_id filter scopes correctly');
+    }
+
     console.log('\n✅ all deposit-flow assertions passed');
     main.server.close();
     await db.close();

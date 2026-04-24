@@ -186,6 +186,7 @@
             </select>
         </div>
         <div class="row"><label class="inline" for="wd-destination">Destination</label><input type="text" id="wd-destination" maxlength="200" required placeholder="IBAN / wallet address"></div>
+        <div class="row" id="wd-2fa-row" style="display:none"><label class="inline" for="wd-2fa">2FA code</label><input type="text" id="wd-2fa" inputmode="numeric" autocomplete="one-time-code" maxlength="10" placeholder="6-digit code or recovery code"></div>
         <button class="primary" type="submit" id="wd-submit">Request withdrawal</button>
         <div class="msg" id="wd-msg"></div>
     </form>
@@ -338,6 +339,12 @@
             document.getElementById('ov-deposits').textContent = deps.deposits.length;
             document.getElementById('ov-nfts').textContent = nfts.nfts.length;
             document.getElementById('ov-2fa').textContent = tfa.enabled ? 'Enabled' : 'Off';
+            // Show the 2FA input on the withdrawal form only if the account
+            // has 2FA enabled — the server rejects cash-outs without a
+            // code in that case. We mirror the check client-side so
+            // 2FA-less users aren't confused by an empty field.
+            var wd2faRow = document.getElementById('wd-2fa-row');
+            if (wd2faRow) wd2faRow.style.display = tfa.enabled ? '' : 'none';
         } catch (e) { /* partial failure is ok here */ }
     }
 
@@ -426,6 +433,9 @@
         var amt = Number(document.getElementById('wd-amount').value);
         var method = document.getElementById('wd-method').value;
         var dest = document.getElementById('wd-destination').value;
+        var totpInput = document.getElementById('wd-2fa');
+        var totpVisible = document.getElementById('wd-2fa-row').style.display !== 'none';
+        var totp = totpVisible ? (totpInput.value || '').trim() : '';
         var msg = document.getElementById('wd-msg');
         var btn = document.getElementById('wd-submit');
         msg.textContent = '';
@@ -434,13 +444,21 @@
             msg.className = 'msg err';
             return;
         }
+        if (totpVisible && !totp) {
+            msg.textContent = 'Enter your 2FA code to authorize this withdrawal.';
+            msg.className = 'msg err';
+            return;
+        }
         btn.disabled = true;
         try {
-            await api('POST', '/api/withdrawal/request', { amount: amt, method: method, destination: dest });
+            var body = { amount: amt, method: method, destination: dest };
+            if (totp) body.totp_code = totp;
+            await api('POST', '/api/withdrawal/request', body);
             msg.textContent = 'Withdrawal requested. It will be reviewed by our operations team.';
             msg.className = 'msg ok';
             document.getElementById('wd-amount').value = '';
             document.getElementById('wd-destination').value = '';
+            if (totpInput) totpInput.value = '';
             await Promise.all([loadWithdrawals(), loadOverview()]);
         } catch (e) {
             msg.textContent = e.message || 'Failed to request withdrawal.';

@@ -24,6 +24,7 @@ const { authenticate } = require('../middleware/auth');
 const { selfExclusionResponse } = require('../middleware/self-exclusion');
 const userRateLimit = require('../middleware/user-ratelimit');
 const mailer = require('../services/email.service');
+const { verifyTotpOrRecovery, currentSecret } = require('./twofa.routes');
 
 const router = express.Router();
 
@@ -81,6 +82,28 @@ router.post('/request', authenticate, reqLimiter, async (req, res) => {
             return res.status(403).json({ error: 'Please verify your email address before withdrawing.', code: 'email_unverified' });
         }
         if (selfExclusionResponse(res, user)) return;
+
+        // If the user has 2FA enabled, require a fresh TOTP (or recovery)
+        // code with this request. Cashout is the highest-risk authed
+        // action; it's the industry default to re-challenge even inside
+        // a valid session. Users without 2FA enabled proceed as before.
+        const totpRow = await currentSecret(req.user.id);
+        if (totpRow && totpRow.enabled) {
+            const code = req.body && req.body.totp_code;
+            if (typeof code !== 'string' || !code.trim()) {
+                return res.status(401).json({
+                    error: 'Two-factor code required to withdraw.',
+                    code: 'totp_required',
+                });
+            }
+            const verdict = await verifyTotpOrRecovery(req.user.id, code.trim());
+            if (!verdict || !verdict.ok) {
+                return res.status(401).json({
+                    error: 'Two-factor code does not match.',
+                    code: 'totp_invalid',
+                });
+            }
+        }
 
         // Atomic debit. Conditional UPDATE refuses when balance < amount
         // so no negative balance can slip through a concurrent spin.
