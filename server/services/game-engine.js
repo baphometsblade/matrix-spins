@@ -61,7 +61,7 @@ function symbolsMatchWithWild(a, b, game) {
 
 // ─── Grid Generation (with house edge weighting) ───
 
-function generateGrid(game, gameStats) {
+function generateGrid(game, gameStats, freeSpinState) {
     const cols = getGridCols(game);
     const rows = getGridRows(game);
     const symbols = game.symbols;
@@ -75,6 +75,31 @@ function generateGrid(game, gameStats) {
             grid[c][r] = rng.pickWeighted(symbols, weights);
         }
     }
+
+    // ── Scatter retrigger suppression during free spins ──
+    // Without this, multi-row high-volatility games (e.g. gates_olympus /
+    // Halls of Thunder) produce 3+ scatters on natural weight frequently
+    // enough that retriggers chain almost every free spin, leaving the
+    // player stuck in an infinite bonus loop. Cap scatters below the
+    // retrigger threshold once a free-spin round is already active.
+    const scatterSym = game.scatterSymbol;
+    if (scatterSym && freeSpinState && freeSpinState.active && game.freeSpinsRetrigger) {
+        const scatterThreshold = rows > 1 ? 3 : 2;
+        const maxScatters = scatterThreshold - 1;
+        const nonScatterSyms = symbols.filter(s => s !== scatterSym && !isWild(s, game));
+        let scatterCount = 0;
+        for (let c = 0; c < cols; c++) {
+            for (let r = 0; r < rows; r++) {
+                if (grid[c][r] === scatterSym) {
+                    scatterCount++;
+                    if (scatterCount > maxScatters && nonScatterSyms.length > 0) {
+                        grid[c][r] = nonScatterSyms[rng.randomInt(nonScatterSyms.length)];
+                    }
+                }
+            }
+        }
+    }
+
     return grid;
 }
 
@@ -429,9 +454,11 @@ async function resolveSpin(game, betAmount, gameStats, freeSpinState = null, db 
         allowWin = await houseEdge.shouldAllowWin(game, gameStats, db);
     }
 
-    // Generate appropriate grid
+    // Generate appropriate grid. Passing freeSpinState lets generateGrid
+    // suppress retrigger-level scatter counts during an active bonus round
+    // (see scatter-suppression block in generateGrid).
     const grid = allowWin
-        ? generateGrid(game, gameStats)
+        ? generateGrid(game, gameStats, freeSpinState)
         : generateNoWinGrid(game, gameStats);
 
     let winAmount = 0;
@@ -579,13 +606,29 @@ async function resolveSpin(game, betAmount, gameStats, freeSpinState = null, db 
         };
     }
 
-    // Scatter retrigger during free spins
-    const MAX_FREE_SPINS = 50;
-    if (scatterCount >= scatterThreshold && freeSpinState.active && game.freeSpinsRetrigger && freeSpinState.remaining < MAX_FREE_SPINS) {
+    // Scatter retrigger during free spins.
+    // Hard cap the TOTAL free spins ever awarded in a single round
+    // (initial + all retriggers) — without this, high-volatility games
+    // with freeSpinsRetrigger=true could loop indefinitely. 100 is the
+    // common industry ceiling for a single bonus round (Pragmatic,
+    // NetEnt, Playtech all sit around 80-120).
+    const MAX_FREE_SPINS = 50;           // max concurrent remaining
+    const MAX_TOTAL_PER_ROUND = 100;     // max ever awarded in one round
+    if (typeof freeSpinState.totalAwarded !== 'number') {
+        freeSpinState.totalAwarded = freeSpinState.remaining || 0;
+    }
+    if (scatterCount >= scatterThreshold && freeSpinState.active && game.freeSpinsRetrigger
+            && freeSpinState.remaining < MAX_FREE_SPINS
+            && freeSpinState.totalAwarded < MAX_TOTAL_PER_ROUND) {
         const extraSpins = scatterCount >= fullScatterThreshold ? game.freeSpinsCount : Math.max(2, Math.floor(game.freeSpinsCount / 3));
-        const capped = Math.min(extraSpins, MAX_FREE_SPINS - freeSpinState.remaining);
+        const room = Math.min(
+            MAX_FREE_SPINS - freeSpinState.remaining,
+            MAX_TOTAL_PER_ROUND - freeSpinState.totalAwarded
+        );
+        const capped = Math.min(extraSpins, room);
         if (capped > 0) {
             freeSpinState.remaining += capped;
+            freeSpinState.totalAwarded += capped;
             freeSpinsAwarded += capped;
         }
     }
