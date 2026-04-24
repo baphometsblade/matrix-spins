@@ -28,6 +28,7 @@
 
 const crypto = require('crypto');
 const db = require('../database');
+const featureFlags = require('./feature-flags.service');
 
 /* ────────────────────────────── games ────────────────────────────── */
 
@@ -188,6 +189,21 @@ async function publicCommit(userId) {
 /* ──────────────────────────── spin handler ────────────────────────── */
 
 async function spin({ userId, gameId, betCents, clientSeed }) {
+    // Operator kill switch. If an ops engineer flipped the slot-engine
+    // paused flag (incident response, suspected exploit, maintenance
+    // window), every spin refuses with 503 until the flag is cleared.
+    // The flag read is cached in-process for 5s so this adds ~microseconds
+    // to the hot path once the cache is warm.
+    const pauseFlag = await featureFlags.getFlag('slot.paused', { paused: false, reason: null });
+    if (pauseFlag && pauseFlag.paused) {
+        const e = new Error(pauseFlag.reason
+            ? 'Slot engine is paused: ' + pauseFlag.reason
+            : 'Slot engine is temporarily paused for maintenance.');
+        e.status = 503;
+        e.code = 'slot_paused';
+        throw e;
+    }
+
     const game = GAMES[gameId];
     if (!game) { const e = new Error('Unknown game.'); e.status = 404; throw e; }
     const bet = Math.round(Number(betCents));

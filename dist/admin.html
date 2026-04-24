@@ -100,6 +100,22 @@
         <th>ID</th><th>User</th><th>Amount</th><th>Method</th><th>Destination</th><th>Requested</th><th></th>
     </tr></thead><tbody><tr><td colspan="7" style="color:#666;padding:18px;text-align:center">— click Refresh —</td></tr></tbody></table>
 
+    <h2>Slot engine</h2>
+    <div id="slot-kill" style="background:rgba(255,255,255,.04);border:1px solid rgba(212,175,55,.18);border-radius:8px;padding:14px 16px;margin-bottom:14px">
+        <div style="display:flex;gap:14px;align-items:center;flex-wrap:wrap">
+            <div style="flex:1 1 auto;min-width:0">
+                <div style="font-size:13px;color:#8a8a8a;margin-bottom:4px">Status</div>
+                <div id="slot-kill-status" style="font-size:15px;font-weight:700">&mdash;</div>
+                <div id="slot-kill-reason" style="font-size:12px;color:#9aa1ad;margin-top:2px"></div>
+                <div id="slot-kill-meta" style="font-size:11px;color:#666;margin-top:4px"></div>
+            </div>
+            <div style="display:flex;gap:6px">
+                <button id="btn-slot-pause" class="row-deny">Pause spin engine</button>
+                <button id="btn-slot-resume" class="row-approve">Resume</button>
+            </div>
+        </div>
+    </div>
+
     <h2 style="display:flex;align-items:center;gap:12px">Recent slot rounds
         <button class="row-actions-inline" id="btn-load-rounds" style="margin-left:auto;padding:5px 10px;font-size:11px;background:rgba(255,255,255,.08);color:#e0e0e0;border:1px solid #333;border-radius:4px;cursor:pointer">Load recent</button>
     </h2>
@@ -171,6 +187,7 @@
             document.getElementById('who').textContent = username || '';
             loadOverview();
             if (typeof loadPendingWithdrawals === 'function') loadPendingWithdrawals();
+            if (typeof refreshSlotKill === 'function') refreshSlotKill();
         }
     }
 
@@ -415,6 +432,59 @@
         }
     };
     document.getElementById('btn-load-wd').addEventListener('click', loadPendingWithdrawals);
+
+    // Slot-engine kill switch. Paints the current flag state, gives
+    // ops a one-click pause/resume.
+    async function refreshSlotKill() {
+        try {
+            const data = await api('GET', '/api/admin/feature-flags');
+            const f = (data.flags || []).find(x => x.key === 'slot.paused');
+            const v = (f && f.value) || { paused: false, reason: null };
+            const statusEl = document.getElementById('slot-kill-status');
+            const reasonEl = document.getElementById('slot-kill-reason');
+            const metaEl = document.getElementById('slot-kill-meta');
+            if (v.paused) {
+                statusEl.textContent = 'PAUSED';
+                statusEl.style.color = '#ff9f9f';
+                reasonEl.textContent = v.reason ? ('Reason: ' + v.reason) : '(no reason supplied)';
+            } else {
+                statusEl.textContent = 'Running';
+                statusEl.style.color = '#5fd489';
+                reasonEl.textContent = '';
+            }
+            metaEl.textContent = f
+                ? ('Last change: ' + String(f.updated_at || '').replace('T',' ').slice(0,19) +
+                   ' by ' + esc(f.updated_by_username || '—'))
+                : 'Never toggled.';
+        } catch (e) {
+            document.getElementById('slot-kill-status').textContent = 'Status unavailable: ' + e.message;
+        }
+    }
+    document.getElementById('btn-slot-pause').addEventListener('click', async function () {
+        const reason = prompt('Reason for pausing the slot engine? (shown to ops; kept in the audit log)', '');
+        if (reason === null) return;
+        this.disabled = true;
+        try {
+            await api('PUT', '/api/admin/feature-flags/slot.paused', { value: { paused: true, reason: reason.trim() || null } });
+            await refreshSlotKill();
+        } catch (e) {
+            alert('Pause failed: ' + e.message);
+        } finally {
+            this.disabled = false;
+        }
+    });
+    document.getElementById('btn-slot-resume').addEventListener('click', async function () {
+        if (!confirm('Resume the slot engine? New spins will be accepted again.')) return;
+        this.disabled = true;
+        try {
+            await api('PUT', '/api/admin/feature-flags/slot.paused', { value: { paused: false, reason: null } });
+            await refreshSlotKill();
+        } catch (e) {
+            alert('Resume failed: ' + e.message);
+        } finally {
+            this.disabled = false;
+        }
+    });
 
     // Load recent slot rounds across all users.
     document.getElementById('btn-load-rounds').addEventListener('click', async function () {

@@ -397,6 +397,21 @@ async function migrate() {
         );
     `);
 
+    // Operator feature flags. Namespaced key → JSON value. Used today for
+    // the slot-engine kill switch (key='slot.paused', value={ paused:
+    // true|false, reason: string }), but the shape is generic so future
+    // flags (per-game pauses, rollout toggles, banner text) don't need
+    // another table.
+    await driver.exec(`
+        CREATE TABLE IF NOT EXISTS feature_flags (
+            key TEXT PRIMARY KEY,
+            value_json TEXT NOT NULL,
+            updated_at ${T.ts},
+            updated_by_id ${driver.kind === 'pg' ? 'INTEGER' : 'INTEGER'},
+            updated_by_username TEXT
+        );
+    `);
+
     // Withdrawals. When a user requests a cash-out we atomically debit
     // their balance and create a row here in status='pending'. An
     // operator approves (marks 'paid' once the real transfer settles

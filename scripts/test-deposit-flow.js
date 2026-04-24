@@ -1481,6 +1481,84 @@ async function main() {
         console.log('[test] admin /api/admin/slot-rounds: admin sees joined-user rows with seeds; non-admin 403; user_id filter scopes correctly');
     }
 
+    // ═══ Slot-engine kill switch ════════════════════════════════════════════
+    // Admin toggles slot.paused feature flag; affected user can no longer
+    // spin until it's cleared. Cache invalidation happens in-process on
+    // setFlag, so no sleep is needed.
+    {
+        const ksCsrf = (await http('GET', '/api/csrf-token', { token: adminToken })).body.csrfToken;
+
+        // Non-admin cannot toggle the flag.
+        const fresh = 'ksnoad_' + Date.now();
+        const freshReg = await http('POST', '/api/auth/register', {
+            csrf,
+            body: { username: fresh, email: fresh + '@example.com', password: 'Str0ngP@ss!!', date_of_birth: '1990-01-01' },
+        });
+        const freshToken = freshReg.body.token;
+        const freshCsrf = (await http('GET', '/api/csrf-token', { token: freshToken })).body.csrfToken;
+        const denied = await http('PUT', '/api/admin/feature-flags/slot.paused', {
+            token: freshToken, csrf: freshCsrf,
+            body: { value: { paused: true, reason: 'nope' } },
+        });
+        assert.strictEqual(denied.status, 403);
+
+        // Unknown key rejected.
+        const badKey = await http('PUT', '/api/admin/feature-flags/not.real', {
+            token: adminToken, csrf: ksCsrf, body: { value: { paused: true } },
+        });
+        assert.strictEqual(badKey.status, 400);
+
+        // Bad shape for slot.paused rejected (missing paused bool).
+        const badShape = await http('PUT', '/api/admin/feature-flags/slot.paused', {
+            token: adminToken, csrf: ksCsrf, body: { value: { reason: 'forgot' } },
+        });
+        assert.strictEqual(badShape.status, 400);
+
+        // Prepare a bettor: credit some balance so they'd otherwise be
+        // able to spin.
+        await db.run('UPDATE users SET email_verified = 1, balance_cents = 100000 WHERE id = ?', [freshReg.body.user.id]);
+
+        // Pause.
+        const paused = await http('PUT', '/api/admin/feature-flags/slot.paused', {
+            token: adminToken, csrf: ksCsrf,
+            body: { value: { paused: true, reason: 'reconciliation sweep' } },
+        });
+        assert.strictEqual(paused.status, 200);
+        assert.strictEqual(paused.body.value.paused, true);
+
+        // A spin must now refuse 503.
+        const blocked2 = await http('POST', '/api/slot/spin', {
+            token: freshToken, csrf: freshCsrf,
+            body: { game_id: 'classic_777', bet_cents: 100 },
+        });
+        assert.strictEqual(blocked2.status, 503, 'paused spin should be 503, got ' + blocked2.status);
+        assert.strictEqual(blocked2.body.code, 'slot_paused');
+        assert.ok(/reconciliation sweep/.test(blocked2.body.error), 'reason missing: ' + blocked2.body.error);
+
+        // Listing the flags surfaces the current value + audit metadata.
+        const flagsList = await http('GET', '/api/admin/feature-flags', { token: adminToken });
+        assert.strictEqual(flagsList.status, 200);
+        const slotFlag = flagsList.body.flags.find(f => f.key === 'slot.paused');
+        assert.ok(slotFlag, 'slot.paused missing from list');
+        assert.strictEqual(slotFlag.value.paused, true);
+        assert.strictEqual(slotFlag.updated_by_username, adminLogin.body.user.username);
+
+        // Resume.
+        const resumed = await http('PUT', '/api/admin/feature-flags/slot.paused', {
+            token: adminToken, csrf: ksCsrf,
+            body: { value: { paused: false, reason: null } },
+        });
+        assert.strictEqual(resumed.status, 200);
+
+        // Same user can spin again.
+        const open = await http('POST', '/api/slot/spin', {
+            token: freshToken, csrf: freshCsrf,
+            body: { game_id: 'classic_777', bet_cents: 100 },
+        });
+        assert.strictEqual(open.status, 200, 'spin after resume failed: ' + open.raw);
+        console.log('[test] slot kill switch: admin pause → 503 slot_paused with reason; resume → 200; non-admin + bad key + bad shape rejected');
+    }
+
     console.log('\n✅ all deposit-flow assertions passed');
     main.server.close();
     await db.close();
