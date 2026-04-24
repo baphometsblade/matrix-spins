@@ -691,10 +691,10 @@ async function resolveSpin(game, betAmount, gameStats, freeSpinState = null, db 
     }
 
     // Dynamic RTP convergence: scale win amount based on per-game RTP drift.
-    // This ensures every game (regardless of grid size, cluster min, or payline count)
-    // converges toward the target RTP without needing per-game paytable tuning.
+    // This ensures every game converges toward its OWN advertised RTP
+    // (game.rtp) instead of the global house floor.
     if (winAmount > 0) {
-        winAmount = houseEdge.scaleWinForRTP(winAmount, betAmount, gameStats);
+        winAmount = houseEdge.scaleWinForRTP(winAmount, betAmount, gameStats, game);
     }
 
     // Round final win amount

@@ -233,30 +233,48 @@ async function shouldAllowWin(game, gameStats, db) {
 // Scales win amounts based on per-game RTP drift vs target.
 // This handles different grid sizes, cluster minimums, and payline counts
 // automatically — no fragile per-game-type static multiplier tuning needed.
-// After sufficient samples (>50 spins), the scaling factor smoothly converges
-// the game's effective RTP toward TARGET_RTP.
+//
+// Target resolution (in priority order):
+//   1. game.rtp (per-game published RTP — what regulators audit us against)
+//   2. config.TARGET_RTP (global house floor)
+//   3. 0.88 fallback
+// The caller passes the `game` object so we can converge toward the
+// advertised number specifically — prior versions always used the global
+// config floor which left per-game RTP systematically ~15% below what the
+// UI displayed, which is a regulator-red-flag misrepresentation.
 
-function scaleWinForRTP(winAmount, betAmount, gameStats) {
+function scaleWinForRTP(winAmount, betAmount, gameStats, game) {
     if (!gameStats || gameStats.total_spins < 30 || gameStats.total_wagered <= 0) {
         return winAmount; // Not enough data — use raw paytable value
     }
 
-    const targetRTP = config.TARGET_RTP || 0.88;
+    // Per-game RTP first, fall back to global floor. game.rtp is stored
+    // as a percentage (e.g. 91.5) so divide by 100 if it looks like one.
+    let targetRTP;
+    if (game && typeof game.rtp === 'number' && game.rtp > 0) {
+        targetRTP = game.rtp > 1 ? game.rtp / 100 : game.rtp;
+    } else {
+        targetRTP = config.TARGET_RTP || 0.88;
+    }
+    // Safety clamp — never target outside 80-97% even if data is bad
+    targetRTP = Math.max(0.80, Math.min(0.97, targetRTP));
+
     const targetPaid = gameStats.total_wagered * targetRTP;
     const deficit = targetPaid - gameStats.total_paid; // Positive = underpaying
 
     // Only adjust if deficit is significant (> 1 bet worth)
     if (Math.abs(deficit) < betAmount) return winAmount;
 
-    // Deficit-based catch-up: spread the correction over the next ~50 winning spins.
-    // This converges faster than percentage-based scaling because it adds/subtracts
-    // an absolute amount based on how far behind/ahead the game is.
-    const correction = deficit * 0.02; // Close 2% of deficit per winning spin
+    // Aggressive catch-up: close 15% of the deficit per winning spin.
+    // Prior 2% correction was too slow — volatile games with few wins
+    // never converged within a typical session. 15% means a game that
+    // is 20% under target closes the gap in ~7 winning spins.
+    const correction = deficit * 0.15;
 
     let scaled = winAmount + correction;
 
-    // Clamp: never go below 10% of original or above 10x original
-    scaled = Math.max(winAmount * 0.1, Math.min(winAmount * 10, scaled));
+    // Clamp: never go below 25% of original or above 12x original
+    scaled = Math.max(winAmount * 0.25, Math.min(winAmount * 12, scaled));
 
     return Math.round(scaled * 100) / 100;
 }
