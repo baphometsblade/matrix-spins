@@ -1348,16 +1348,23 @@ router.get('/withdrawals', async (req, res) => {
             return res.status(400).json({ error: 'Invalid status filter. Use: pending, completed, rejected, or all' });
         }
 
+        // Support multi-status filter for admin UI: status=pending returns
+        // BOTH 'pending' and 'otp_verified' so admins can see everything in
+        // the review queue in one pass, with otp_verified flagged.
         let query = `
             SELECT w.id, w.user_id, w.amount, w.currency, w.payment_type, w.status,
                    w.admin_note, w.reference, w.created_at, w.processed_at,
+                   w.otp_code IS NOT NULL AS otp_outstanding,
+                   w.otp_verified_at,
                    u.username, u.email, u.balance
             FROM withdrawals w
             JOIN users u ON w.user_id = u.id
         `;
         const params = [];
 
-        if (status !== 'all') {
+        if (status === 'pending') {
+            query += " WHERE w.status IN ('pending', 'otp_verified')";
+        } else if (status !== 'all') {
             query += ' WHERE w.status = ?';
             params.push(status);
         }

@@ -1125,18 +1125,69 @@ async function submitWithdrawal() {
             updateBalance();
         }
 
-        const processingDays = res.estimatedDays || 3;
-        const eta = new Date(Date.now() + processingDays * 86400000);
-        const etaStr = eta.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
-        showToast(`Withdrawal of $${formatMoney(amount)} submitted. Expected by ${etaStr}.`, 'success', 6000);
-
-        // Add to pending list
+        // Add to pending list before any further UI
         if (res.withdrawal) {
             walletWithdrawalHistory.unshift(res.withdrawal);
         }
+
+        // High-value withdrawals ≥ WITHDRAWAL_OTP_THRESHOLD require email OTP.
+        // Server returns { otpRequired: true, otpExpiryMinutes } — prompt for the code.
+        if (res.otpRequired && res.withdrawal && res.withdrawal.id) {
+            renderWithdrawForm();
+            await promptWithdrawalOtp(res.withdrawal.id, amount, res.otpExpiryMinutes || 15);
+            return;
+        }
+
+        const processingDays = res.estimatedDays || 3;
+        const eta = new Date(Date.now() + processingDays * 86400000);
+        const etaStr = eta.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+        showToast(res.message || `Withdrawal of $${formatMoney(amount)} submitted. Expected by ${etaStr}.`, 'success', 6000);
+
         renderWithdrawForm();
     } catch (err) {
         showToast(err.message || 'Withdrawal request failed.', 'error');
+    }
+}
+
+/**
+ * Minimal blocking prompt for withdrawal OTP entry.
+ * Server has emailed a 6-digit code to the user; we loop until they
+ * enter the correct code, explicitly cancel, or hit 5 wrong attempts
+ * (after which the server cancels + refunds the withdrawal).
+ */
+async function promptWithdrawalOtp(withdrawalId, amount, expiryMinutes) {
+    let attemptsLeft = 5;
+    while (attemptsLeft > 0) {
+        const code = window.prompt(
+            `A 6-digit verification code has been emailed to confirm your $${formatMoney(amount)} withdrawal.\n\n` +
+            `Enter the code (expires in ${expiryMinutes} min). Leave blank to cancel.`
+        );
+        if (code == null) {
+            showToast('Withdrawal pending — enter the code from your email to finish it.', 'info', 6000);
+            return;
+        }
+        const cleaned = String(code).trim();
+        if (!/^\d{6}$/.test(cleaned)) {
+            showToast('Code must be exactly 6 digits. Check your email.', 'error');
+            continue;
+        }
+        try {
+            await apiRequest('/api/payment/withdraw/verify-otp', {
+                method: 'POST',
+                body: { withdrawal_id: withdrawalId, otp: cleaned },
+                requireAuth: true
+            });
+            showToast('Verification code accepted. Your withdrawal is queued for admin review.', 'success', 6000);
+            return;
+        } catch (err) {
+            attemptsLeft--;
+            const msg = err.message || 'Incorrect code.';
+            if (attemptsLeft <= 0 || /cancelled|refunded|expired/i.test(msg)) {
+                showToast(msg, 'error', 8000);
+                return;
+            }
+            showToast(msg, 'error');
+        }
     }
 }
 

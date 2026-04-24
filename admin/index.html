@@ -439,6 +439,7 @@ async function loadWithdrawals() {
                 el('th', { text: 'User' }),
                 el('th', { text: 'Amount' }),
                 el('th', { text: 'Method' }),
+                el('th', { text: 'Status' }),
                 el('th', { text: 'Requested' }),
                 el('th', null)
             ))
@@ -461,15 +462,33 @@ function renderWdRow(w) {
         el('br'),
         el('span', { class: 'muted mono', text: w.email || '' })
     );
+
+    // Status badge: 'pending' / 'otp_verified' / 'awaiting-OTP' for high-value pre-OTP
+    const statusCell = el('td');
+    const isOtpVerified = w.status === 'otp_verified' || w.otp_verified_at;
+    const isAwaitingOtp = w.status === 'pending' && w.otp_outstanding;
+    if (isOtpVerified) {
+        statusCell.appendChild(el('span', { class: 'status-badge status-verified', text: 'OTP verified' }));
+    } else if (isAwaitingOtp) {
+        statusCell.appendChild(el('span', { class: 'status-badge status-pending', text: 'awaiting OTP' }));
+    } else {
+        statusCell.appendChild(el('span', { class: 'status-badge status-pending', text: w.status || 'pending' }));
+    }
+
     const actionsCell = el('td');
     const approveBtn = el('button', {
         class: 'btn btn-approve',
         text: 'Approve',
         onclick: () => approveWithdrawal(w.id, approveBtn)
     });
+    // Gate approve button if OTP still outstanding
+    if (isAwaitingOtp) {
+        approveBtn.disabled = true;
+        approveBtn.title = 'Awaiting player OTP verification';
+    }
     const denyBtn = el('button', {
         class: 'btn btn-deny',
-        text: 'Deny',
+        text: 'Reject',
         onclick: () => denyWithdrawal(w.id, denyBtn)
     });
     actionsCell.appendChild(approveBtn);
@@ -479,6 +498,7 @@ function renderWdRow(w) {
         userCell,
         moneyCell,
         el('td', { text: w.payment_type || w.method || '—' }),
+        statusCell,
         el('td', { class: 'muted mono', text: formatDate(w.requested_at || w.created_at) }),
         actionsCell
     );
