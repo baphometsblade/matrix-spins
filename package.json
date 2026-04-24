@@ -1,43 +1,45 @@
-﻿{
-    "name":  "matrix-spins-server",
-    "version":  "1.0.0",
-    "description":  "Server-side casino with secure RNG, JWT auth, and house edge enforcement",
-    "main":  "server/index.js",
-    "scripts":  {
-                    "build":  "node scripts/bundle-js.js",
-                    "start":  "node scripts/bundle-js.js \u0026\u0026 node server/index.js",
-                    "dev":  "node server/index.js",
-                    "test:adapter":  "node scripts/test_query_adapter.js",
-                    "qa:regression":  "node scripts/qa_regression.js",
-                    "reasset:slot-chrome":  "py -3.10 scripts/reasset_slot_chrome.py --engine sdxl --force --style-mode contrast",
-                    "reasset:slot-chrome:auto":  "py -3.10 scripts/reasset_slot_chrome.py --engine auto --force --style-mode contrast",
-                    "reasset:slot-chrome:balanced":  "py -3.10 scripts/reasset_slot_chrome.py --engine sdxl --force --style-mode balanced",
-                    "reasset:symbols":  "py -3.10 scripts/generate_sdxl_symbols.py --force",
-                    "animate:symbols":  "py -3.10 scripts/generate_animated_symbols_pil.py --force",
-                    "animate:backgrounds":  "py -3.10 scripts/generate_animated_backgrounds_pil.py --force",
-                    "animate:all":  "npm run animate:symbols \u0026\u0026 npm run animate:backgrounds",
-                    "thumbnails:regen":  "py -3.10 scripts/gen_hd_all_thumbnails.py",
-                    "thumbnails:regen:force":  "py -3.10 scripts/gen_hd_all_thumbnails.py --force",
-                    "thumbnails:webp":  "py -3.10 scripts/convert_thumbnails_webp.py",
-                    "thumbnails:all":  "npm run thumbnails:regen \u0026\u0026 npm run thumbnails:webp"
-                },
-    "dependencies":  {
-                         "bcryptjs":  "^2.4.3",
-                         "cors":  "^2.8.5",
-                         "dotenv":  "^16.4.1",
-                         "express":  "^4.18.2",
-                         "express-rate-limit":  "^7.1.5",
-                         "helmet":  "^7.1.0",
-                         "jsonwebtoken":  "^9.0.2",
-                         "node-cron":  "^4.2.1",
-                         "nodemailer":  "^8.0.1",
-                         "pg":  "^8.18.0",
-                         "sql.js":  "^1.10.2",
-                         "stripe":  "^14.25.0"
-                     },
-    "devDependencies":  {
-                            "acorn":  "^8.16.0",
-                            "css-tree":  "^3.2.1",
-                            "playwright":  "^1.58.2"
-                        }
+{
+    "name": "matrix-spins-server",
+    "version": "1.0.0",
+    "description": "Server-side casino with secure RNG, JWT auth, and house edge enforcement",
+    "main": "server/index.js",
+    "scripts": {
+        "build": "node scripts/bundle-js.js",
+        "start": "node scripts/bundle-js.js && node server/index.js",
+        "dev": "node server/index.js",
+        "test:adapter": "node scripts/test_query_adapter.js",
+        "qa:regression": "node scripts/qa_regression.js",
+        "reasset:slot-chrome": "py -3.10 scripts/reasset_slot_chrome.py --engine sdxl --force --style-mode contrast",
+        "reasset:slot-chrome:auto": "py -3.10 scripts/reasset_slot_chrome.py --engine auto --force --style-mode contrast",
+        "reasset:slot-chrome:balanced": "py -3.10 scripts/reasset_slot_chrome.py --engine sdxl --force --style-mode balanced",
+        "reasset:symbols": "py -3.10 scripts/generate_sdxl_symbols.py --force",
+        "animate:symbols": "py -3.10 scripts/generate_animated_symbols_pil.py --force",
+        "animate:backgrounds": "py -3.10 scripts/generate_animated_backgrounds_pil.py --force",
+        "animate:all": "npm run animate:symbols && npm run animate:backgrounds",
+        "thumbnails:regen": "py -3.10 scripts/gen_hd_all_thumbnails.py",
+        "thumbnails:regen:force": "py -3.10 scripts/gen_hd_all_thumbnails.py --force",
+        "thumbnails:webp": "py -3.10 scripts/convert_thumbnails_webp.py",
+        "thumbnails:all": "npm run thumbnails:regen && npm run thumbnails:webp"
+    },
+    "dependencies": {
+        "bcryptjs": "^2.4.3",
+        "cors": "^2.8.5",
+        "dotenv": "^16.4.1",
+        "express": "^4.18.2",
+        "express-rate-limit": "^7.1.5",
+        "helmet": "^7.1.0",
+        "jsonwebtoken": "^9.0.2",
+        "node-cron": "^4.2.1",
+        "nodemailer": "^8.0.1",
+        "pg": "^8.18.0",
+        "sql.js": "^1.10.2",
+        "stripe": "^14.25.0"
+    },
+    "devDependencies": {
+        "acorn": "^8.16.0",
+        "canvas": "^3.2.3",
+        "css-tree": "^3.2.1",
+        "playwright": "^1.58.2",
+        "sharp": "^0.34.5"
+    }
 }
