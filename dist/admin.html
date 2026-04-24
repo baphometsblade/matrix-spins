@@ -36,6 +36,11 @@
     .row-refund { padding: 5px 10px; font-size: 11px; background: rgba(231,76,60,.15); color: #ff9f9f; border: 1px solid #e74c3c; border-radius: 4px; cursor: pointer; }
     .row-refund:hover { background: rgba(231,76,60,.25); }
     .row-refund:disabled { opacity: .5; cursor: wait; }
+    .row-approve { padding: 5px 10px; font-size: 11px; background: rgba(46,204,113,.15); color: #a8e6c7; border: 1px solid #27ae60; border-radius: 4px; cursor: pointer; margin-right: 4px; }
+    .row-approve:hover { background: rgba(46,204,113,.25); }
+    .row-deny { padding: 5px 10px; font-size: 11px; background: rgba(231,76,60,.15); color: #ff9f9f; border: 1px solid #e74c3c; border-radius: 4px; cursor: pointer; }
+    .row-deny:hover { background: rgba(231,76,60,.25); }
+    .row-approve:disabled, .row-deny:disabled { opacity: .5; cursor: wait; }
     .row-adjust, .row-revoke, .row-unlock { padding: 5px 10px; font-size: 11px; background: rgba(212,175,55,.1); color: #d4af37; border: 1px solid rgba(212,175,55,.45); border-radius: 4px; cursor: pointer; margin-right: 4px; }
     .row-adjust:hover, .row-revoke:hover, .row-unlock:hover { background: rgba(212,175,55,.22); }
     .row-revoke { border-color: #e74c3c; color: #ff9f9f; background: rgba(231,76,60,.1); }
@@ -87,6 +92,13 @@
     <table id="tbl-pending"><thead><tr>
         <th>ID</th><th>User</th><th>Amount</th><th>Status</th><th>Created</th><th></th>
     </tr></thead><tbody></tbody></table>
+
+    <h2 style="display:flex;align-items:center;gap:12px">Pending withdrawals
+        <button class="row-actions-inline" id="btn-load-wd" style="margin-left:auto;padding:5px 10px;font-size:11px;background:rgba(255,255,255,.08);color:#e0e0e0;border:1px solid #333;border-radius:4px;cursor:pointer">Refresh</button>
+    </h2>
+    <table id="tbl-withdrawals"><thead><tr>
+        <th>ID</th><th>User</th><th>Amount</th><th>Method</th><th>Destination</th><th>Requested</th><th></th>
+    </tr></thead><tbody><tr><td colspan="7" style="color:#666;padding:18px;text-align:center">— click Refresh —</td></tr></tbody></table>
 
     <h2 style="display:flex;align-items:center;gap:12px">Stripe webhook events
         <button class="row-actions-inline" id="btn-load-events" style="margin-left:auto;padding:5px 10px;font-size:11px;background:rgba(255,255,255,.08);color:#e0e0e0;border:1px solid #333;border-radius:4px;cursor:pointer">Load recent</button>
@@ -151,6 +163,7 @@
         if (which === 'dashboard') {
             document.getElementById('who').textContent = username || '';
             loadOverview();
+            if (typeof loadPendingWithdrawals === 'function') loadPendingWithdrawals();
         }
     }
 
@@ -333,6 +346,68 @@
             if (btn) { btn.disabled = false; btn.textContent = 'Reconcile pending'; }
         }
     };
+
+    // Pending withdrawals — load + approve/deny handlers.
+    window.loadPendingWithdrawals = async function () {
+        const btn = document.getElementById('btn-load-wd');
+        if (btn) { btn.disabled = true; btn.textContent = 'Loading…'; }
+        try {
+            const data = await api('GET', '/api/admin/withdrawals?status=pending');
+            const tbody = document.querySelector('#tbl-withdrawals tbody');
+            tbody.innerHTML = data.withdrawals.length === 0
+                ? '<tr><td colspan="7" style="color:#666;padding:18px;text-align:center">— no pending withdrawals —</td></tr>'
+                : data.withdrawals.map(w => '<tr>' +
+                    '<td class="mono">#' + w.id + '</td>' +
+                    '<td>' + esc(w.username || w.user_id) + '</td>' +
+                    '<td>' + money(w.amount) + ' ' + esc((w.currency || '').toUpperCase()) + '</td>' +
+                    '<td>' + esc(w.method) + '</td>' +
+                    '<td class="mono" style="font-size:11px">' + esc(w.destination || '') + '</td>' +
+                    '<td>' + esc(String(w.created_at || '').replace('T',' ').slice(0,19)) + '</td>' +
+                    '<td>' +
+                        '<button class="row-approve" data-id="' + w.id + '" data-amt="' + w.amount + '">Approve</button>' +
+                        '<button class="row-deny" data-id="' + w.id + '" data-amt="' + w.amount + '">Deny</button>' +
+                    '</td>' +
+                '</tr>').join('');
+            tbody.querySelectorAll('.row-approve').forEach(b => {
+                b.addEventListener('click', async function () {
+                    const id = this.dataset.id;
+                    const amt = this.dataset.amt;
+                    const note = prompt('Approve withdrawal #' + id + ' for $' + amt + '?\nOptional note (e.g. "wire ref 12345"):', '');
+                    if (note === null) return; // cancelled
+                    this.disabled = true; this.textContent = 'Approving…';
+                    try {
+                        await api('POST', '/api/admin/withdrawals/' + id + '/approve', { note: note || null });
+                        loadPendingWithdrawals();
+                    } catch (e) {
+                        alert('Approve failed: ' + e.message);
+                        this.disabled = false; this.textContent = 'Approve';
+                    }
+                });
+            });
+            tbody.querySelectorAll('.row-deny').forEach(b => {
+                b.addEventListener('click', async function () {
+                    const id = this.dataset.id;
+                    const amt = this.dataset.amt;
+                    const note = prompt('Deny withdrawal #' + id + ' for $' + amt + '?\nRequired reason (shown to the user):', '');
+                    if (note === null) return; // cancelled
+                    if (!note.trim()) { alert('A reason is required so the user knows why.'); return; }
+                    this.disabled = true; this.textContent = 'Denying…';
+                    try {
+                        await api('POST', '/api/admin/withdrawals/' + id + '/deny', { note: note.trim() });
+                        loadPendingWithdrawals();
+                    } catch (e) {
+                        alert('Deny failed: ' + e.message);
+                        this.disabled = false; this.textContent = 'Deny';
+                    }
+                });
+            });
+        } catch (e) {
+            alert('Failed to load withdrawals: ' + e.message);
+        } finally {
+            if (btn) { btn.disabled = false; btn.textContent = 'Refresh'; }
+        }
+    };
+    document.getElementById('btn-load-wd').addEventListener('click', loadPendingWithdrawals);
 
     // Load recent Stripe webhook events into the events table.
     document.getElementById('btn-load-events').addEventListener('click', async function () {
