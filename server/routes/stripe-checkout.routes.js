@@ -4,6 +4,7 @@ const router = express.Router();
 const config = require('../config');
 const { authenticate } = require('../middleware/auth');
 const depositChecks = require('../services/deposit-checks.service');
+const aml = require('../services/aml.service');
 
 // Deposit price mapping — Stripe Price IDs from env only (no hardcoded
 // fallbacks because a test-mode price ID would break live-mode checkout with
@@ -270,6 +271,11 @@ router.post('/payment/webhook', express.raw({ type: 'application/json' }), async
             }
 
             console.warn('[Stripe+NFT] Minted ' + nftId + ' for player ' + playerId + ': $' + amount);
+
+            // AML analysis (fire-and-forget — never blocks deposit credit)
+            aml.analyseDeposit(playerId, amount, session.id).catch(function(e) {
+                console.warn('[AML] analyseDeposit error:', e.message);
+            });
         } catch (dbErr) {
             console.error('[Stripe] NFT mint/credit error:', dbErr.message);
             // CRITICAL: Must return 5xx so Stripe retries. If we return 2xx here,

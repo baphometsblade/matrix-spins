@@ -253,4 +253,83 @@ router.put('/wager-limit', authenticate, async (req, res) => {
     }
 });
 
+// ═══════════════════════════════════════════════════════════════════
+//  GET /api/session/reality-check
+//  Regulatory reality-check — client polls (typically every 30-60 min)
+//  to show the player a session summary: time elapsed, spins, total
+//  wagered, net win/loss. Required under UK Gambling Commission rules
+//  and widely accepted as premium operator standard elsewhere.
+// ═══════════════════════════════════════════════════════════════════
+router.get('/reality-check', authenticate, async (req, res) => {
+    try {
+        const userId = req.user.id;
+        const info = sessionTimer.getSessionInfo(userId);
+
+        if (!info) {
+            // No active session — nothing to summarise yet
+            return res.json({
+                active: false,
+                sessionMinutes: 0,
+                spins: 0,
+                totalWagered: 0,
+                totalWon: 0,
+                netResult: 0,
+                dueReminder: false,
+            });
+        }
+
+        const sessionStart = new Date(info.startedAt).toISOString();
+
+        // Sum bets + wins for spins landed in this session
+        const stats = await db.get(
+            `SELECT
+                COUNT(*) as spins,
+                COALESCE(SUM(bet_amount), 0) as wagered,
+                COALESCE(SUM(win_amount), 0) as won
+             FROM spins
+             WHERE user_id = ? AND created_at >= ?`,
+            [userId, sessionStart]
+        );
+
+        const wagered  = Math.round(((stats && stats.wagered) || 0) * 100) / 100;
+        const won      = Math.round(((stats && stats.won) || 0) * 100) / 100;
+        const net      = Math.round((won - wagered) * 100) / 100;
+        const sessionMinutes = info.elapsedMinutes;
+
+        // Client decides whether to show a modal based on dueReminder.
+        // Server flags "due" every 60 min by default; operator-configurable
+        // per-user via `reality_check_interval` (minutes) if they set it.
+        let interval = 60;
+        try {
+            const row = await db.get('SELECT reality_check_interval FROM user_limits WHERE user_id = ?', [userId]);
+            if (row && row.reality_check_interval && row.reality_check_interval > 0) {
+                interval = parseInt(row.reality_check_interval, 10);
+            }
+        } catch (_) { /* column may not exist yet, default 60 */ }
+
+        // Due if elapsed >= N * interval (i.e. we should have shown a check
+        // at each multiple). Client compares against last-shown timestamp
+        // in local state; server just flags ≥ 1 interval has passed.
+        const dueReminder = sessionMinutes >= interval;
+
+        res.json({
+            active: true,
+            sessionMinutes,
+            intervalMinutes: interval,
+            dueReminder,
+            startedAt: sessionStart,
+            spins: (stats && stats.spins) || 0,
+            totalWagered: wagered,
+            totalWon: won,
+            netResult: net,
+            message: dueReminder
+                ? `You've been playing for ${sessionMinutes} minutes. Please take a moment to review your activity.`
+                : null,
+        });
+    } catch (err) {
+        console.warn('[Session] Reality check error:', err.message);
+        res.status(500).json({ error: 'Failed to load reality check' });
+    }
+});
+
 module.exports = router;

@@ -236,6 +236,7 @@
     <div class="kpi-grid">
         <div class="kpi"><div class="kpi-label">Pending withdrawals</div><div class="kpi-value" id="kpi-withdraw">—</div></div>
         <div class="kpi"><div class="kpi-label">Pending KYC</div><div class="kpi-value" id="kpi-kyc">—</div></div>
+        <div class="kpi"><div class="kpi-label">AML events (unreviewed)</div><div class="kpi-value" id="kpi-aml">—</div></div>
         <div class="kpi"><div class="kpi-label">Total deposits (24h)</div><div class="kpi-value" id="kpi-deposits">—</div></div>
         <div class="kpi"><div class="kpi-label">Active users (24h)</div><div class="kpi-value" id="kpi-active">—</div></div>
     </div>
@@ -243,6 +244,7 @@
     <div class="tabs">
         <button class="tab active" data-tab="withdrawals">Pending withdrawals</button>
         <button class="tab" data-tab="kyc">Pending KYC</button>
+        <button class="tab" data-tab="aml">AML review</button>
         <button class="tab" data-tab="users">User lookup</button>
     </div>
 
@@ -254,6 +256,11 @@
     <div id="panel-kyc" class="panel">
         <h2>Pending KYC verifications <span class="count" id="count-kyc">0</span></h2>
         <div id="kyc-list"><div class="empty">Loading…</div></div>
+    </div>
+
+    <div id="panel-aml" class="panel">
+        <h2>AML events — pending review <span class="count" id="count-aml">0</span></h2>
+        <div id="aml-list"><div class="empty">Loading…</div></div>
     </div>
 
     <div id="panel-users" class="panel">
@@ -381,22 +388,26 @@ function showLogin() {
 
 // ── Tabs ─────────────────────────────────────────────────────────────
 function showTab(name) {
-    ['withdrawals', 'kyc', 'users'].forEach(t => {
+    ['withdrawals', 'kyc', 'aml', 'users'].forEach(t => {
         const tab = document.querySelector('[data-tab="' + t + '"]');
         if (tab) tab.classList.toggle('active', t === name);
         document.getElementById('panel-' + t).classList.toggle('active', t === name);
     });
+    // Lazy-load AML when its tab is opened
+    if (name === 'aml') loadAML().catch(() => {});
 }
 
 // ── KPIs ─────────────────────────────────────────────────────────────
 async function loadKPIs() {
     try {
-        const [wd, kyc] = await Promise.all([
+        const [wd, kyc, amlData] = await Promise.all([
             api('/api/admin/withdrawals?status=pending').catch(() => ({ withdrawals: [] })),
             api('/api/admin/kyc-pending').catch(() => ({ pending: [] })),
+            api('/api/admin/aml-events?reviewed=false').catch(() => ({ events: [] })),
         ]);
         document.getElementById('kpi-withdraw').textContent = (wd.withdrawals || []).length;
         document.getElementById('kpi-kyc').textContent = (kyc.pending || []).length;
+        document.getElementById('kpi-aml').textContent = (amlData.events || []).length;
     } catch (_) { /* silent */ }
     try {
         const s = await api('/api/admin/stats/24h').catch(() => null);
@@ -602,6 +613,90 @@ async function rejectKyc(userId, btn) {
         await loadKPIs();
     } catch (e) {
         alert('Reject failed: ' + e.message);
+        enableRow(btn);
+    }
+}
+
+// ── AML event review ─────────────────────────────────────────────────
+async function loadAML() {
+    const listEl = clear('aml-list');
+    const countEl = document.getElementById('count-aml');
+    listEl.appendChild(el('div', { class: 'empty', text: 'Loading…' }));
+    try {
+        const data = await api('/api/admin/aml-events?reviewed=false');
+        const rows = data.events || [];
+        countEl.textContent = String(rows.length);
+        clear(listEl);
+        if (!rows.length) {
+            listEl.appendChild(el('div', { class: 'empty', text: 'No unreviewed AML events.' }));
+            return;
+        }
+        const table = el('table', null,
+            el('thead', null, el('tr', null,
+                el('th', { text: 'ID' }),
+                el('th', { text: 'Type' }),
+                el('th', { text: 'User' }),
+                el('th', { text: 'Amount' }),
+                el('th', { text: 'Reference' }),
+                el('th', { text: 'Detected' }),
+                el('th', null)
+            ))
+        );
+        const tbody = el('tbody');
+        rows.forEach(e2 => tbody.appendChild(renderAmlRow(e2)));
+        table.appendChild(tbody);
+        listEl.appendChild(table);
+    } catch (e) {
+        clear(listEl);
+        listEl.appendChild(el('div', { class: 'error-banner', text: 'Failed to load: ' + e.message }));
+    }
+}
+
+function renderAmlRow(e) {
+    const amtNum = Number(e.amount || 0);
+    const details = e.details
+        ? el('span', { class: 'muted mono', style: { fontSize: '11px' }, text: e.details.slice(0, 80) + (e.details.length > 80 ? '…' : '') })
+        : null;
+    const userCell = el('td', null,
+        el('b', { text: e.username || '—' }),
+        el('br'),
+        el('span', { class: 'muted mono', text: e.email || '' })
+    );
+    const typeCell = el('td', null,
+        el('span', { class: 'status-badge status-pending', text: e.event_type || '—' }),
+        el('br'),
+        details
+    );
+    const actionsCell = el('td');
+    const reviewBtn = el('button', {
+        class: 'btn btn-neutral',
+        text: 'Mark reviewed',
+        onclick: () => reviewAml(e.id, reviewBtn)
+    });
+    actionsCell.appendChild(reviewBtn);
+    return el('tr', null,
+        el('td', { class: 'mono', text: '#' + e.id }),
+        typeCell,
+        userCell,
+        el('td', { class: 'money' + (amtNum >= 10000 ? ' big' : ''), text: money(amtNum) }),
+        el('td', { class: 'muted mono', text: (e.reference || '—').slice(0, 40) }),
+        el('td', { class: 'muted mono', text: formatDate(e.created_at) }),
+        actionsCell
+    );
+}
+
+async function reviewAml(id, btn) {
+    const notes = prompt('Review notes (optional):') || '';
+    disableRow(btn);
+    try {
+        await api('/api/admin/aml-events/' + id + '/review', {
+            method: 'POST',
+            body: JSON.stringify({ notes })
+        });
+        showToast('AML event #' + id + ' marked reviewed');
+        await loadAML();
+    } catch (e) {
+        alert('Mark-reviewed failed: ' + e.message);
         enableRow(btn);
     }
 }

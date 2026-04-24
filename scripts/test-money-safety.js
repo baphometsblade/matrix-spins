@@ -889,6 +889,127 @@ test('launch-readiness warns on missing geo-block config', () => {
 });
 
 // ══════════════════════════════════════════════════════════════════════
+console.log('\n=== AML (anti-money-laundering) service ===');
+// ══════════════════════════════════════════════════════════════════════
+const amlMod = require(path.join(SERVER_DIR, 'services', 'aml.service'));
+
+test('AML service exports full public API', () => {
+    ['logEvent', 'analyseDeposit', 'analyseWithdrawal', 'getUnreviewedEvents', 'markReviewed'].forEach(fn => {
+        assert(typeof amlMod[fn] === 'function', `AML service must export ${fn}`);
+    });
+    // Thresholds exposed for admin UI
+    assert(typeof amlMod.LARGE_TX_THRESHOLD === 'number', 'AML must expose LARGE_TX_THRESHOLD');
+    assert(amlMod.LARGE_TX_THRESHOLD >= 10000, 'LARGE_TX_THRESHOLD must be ≥ $10k (standard AML reporting threshold)');
+});
+
+test('AML analyseDeposit flags single large transaction', async () => {
+    // Validate source-level guard: large deposits hit logEvent('large_deposit', …)
+    const src = fs.readFileSync(path.join(SERVER_DIR, 'services', 'aml.service.js'), 'utf8');
+    const depositFn = src.match(/async function analyseDeposit[\s\S]+?^}/m);
+    assert(depositFn, 'analyseDeposit fn not found');
+    assert(/amount\s*>=\s*LARGE_TX_THRESHOLD/.test(depositFn[0]), 'must threshold-check at LARGE_TX_THRESHOLD');
+    assert(/['"]large_deposit['"]/.test(depositFn[0]), "must log event type 'large_deposit'");
+});
+
+test('AML analyseWithdrawal flags large + rapid-turnaround', () => {
+    const src = fs.readFileSync(path.join(SERVER_DIR, 'services', 'aml.service.js'), 'utf8');
+    const wdFn = src.match(/async function analyseWithdrawal[\s\S]+?^}/m);
+    assert(wdFn, 'analyseWithdrawal fn not found');
+    assert(/['"]large_withdrawal['"]/.test(wdFn[0]), "must log 'large_withdrawal'");
+    assert(/['"]rapid_turnaround['"]/.test(wdFn[0]), "must log 'rapid_turnaround'");
+    assert(/wagerRatio\s*<\s*0\.5/.test(wdFn[0]), 'rapid-turnaround check must require < 50% wagered');
+});
+
+test('AML logEvent is fire-and-forget (never throws out)', () => {
+    const src = fs.readFileSync(path.join(SERVER_DIR, 'services', 'aml.service.js'), 'utf8');
+    const logFn = src.match(/async function logEvent[\s\S]+?^}/m);
+    assert(logFn, 'logEvent fn not found');
+    // try/catch must surround the INSERT so AML logging never fails money ops
+    assert(/try\s*\{[\s\S]*INSERT[\s\S]*\}\s*catch/.test(logFn[0]),
+        'logEvent must wrap INSERT in try/catch so AML never blocks money ops');
+});
+
+test('Stripe deposit webhook calls aml.analyseDeposit', () => {
+    const src = fs.readFileSync(path.join(SERVER_DIR, 'routes', 'stripe-checkout.routes.js'), 'utf8');
+    assert(/aml\.analyseDeposit\(/.test(src), 'stripe webhook must call aml.analyseDeposit on success');
+});
+
+test('Withdraw route calls aml.analyseWithdrawal', () => {
+    const src = fs.readFileSync(path.join(SERVER_DIR, 'routes', 'payment.routes.js'), 'utf8');
+    assert(/aml\.analyseWithdrawal\(/.test(src), 'withdraw route must call aml.analyseWithdrawal');
+});
+
+test('admin.routes exposes GET /aml-events + POST /aml-events/:id/review', () => {
+    const src = fs.readFileSync(path.join(SERVER_DIR, 'routes', 'admin.routes.js'), 'utf8');
+    assert(/router\.get\(\s*['"]\/aml-events['"]/.test(src), 'admin must expose GET /aml-events');
+    assert(/router\.post\(\s*['"]\/aml-events\/:id\/review['"]/.test(src), 'admin must expose POST /aml-events/:id/review');
+});
+
+// ══════════════════════════════════════════════════════════════════════
+console.log('\n=== session reality-check ===');
+// ══════════════════════════════════════════════════════════════════════
+test('/api/session/reality-check endpoint exists', () => {
+    const src = fs.readFileSync(path.join(SERVER_DIR, 'routes', 'session.routes.js'), 'utf8');
+    assert(/router\.get\(\s*['"]\/reality-check['"]/.test(src), 'session.routes must expose GET /reality-check');
+});
+
+test('reality-check returns spins / wagered / won / net', () => {
+    const src = fs.readFileSync(path.join(SERVER_DIR, 'routes', 'session.routes.js'), 'utf8');
+    // Look for the response shape fields
+    ['sessionMinutes', 'spins', 'totalWagered', 'totalWon', 'netResult', 'dueReminder'].forEach(k => {
+        assert(new RegExp(k).test(src), `reality-check response must include ${k}`);
+    });
+});
+
+test('reality-check default interval is 60 minutes', () => {
+    const src = fs.readFileSync(path.join(SERVER_DIR, 'routes', 'session.routes.js'), 'utf8');
+    assert(/let\s+interval\s*=\s*60/.test(src), 'default reality-check interval must be 60 minutes');
+});
+
+// ══════════════════════════════════════════════════════════════════════
+console.log('\n=== JWT + logout security ===');
+// ══════════════════════════════════════════════════════════════════════
+test('logout blacklists the JWT', () => {
+    const src = fs.readFileSync(path.join(SERVER_DIR, 'routes', 'auth.routes.js'), 'utf8');
+    assert(/blacklistToken\(req\.token\)/.test(src), 'logout must call blacklistToken(req.token)');
+});
+
+test('authenticate middleware rejects blacklisted tokens', () => {
+    const src = fs.readFileSync(path.join(SERVER_DIR, 'middleware', 'auth.js'), 'utf8');
+    assert(/if\s*\(\s*isBlacklisted\(token\)\s*\)[\s\S]{0,100}Token has been revoked/.test(src),
+        'authenticate must 401 blacklisted tokens');
+});
+
+test('authenticate invalidates tokens issued before password change', () => {
+    const src = fs.readFileSync(path.join(SERVER_DIR, 'middleware', 'auth.js'), 'utf8');
+    assert(/payload\.iat\s*<\s*user\.password_changed_at/.test(src),
+        'tokens with iat < password_changed_at must be rejected');
+});
+
+test('JWT algorithm is pinned to HS256 (no algorithm confusion)', () => {
+    const src = fs.readFileSync(path.join(SERVER_DIR, 'middleware', 'auth.js'), 'utf8');
+    assert(/algorithms:\s*\[\s*['"]HS256['"]\s*\]/.test(src),
+        'jwt.verify must pin algorithms: [HS256] to prevent alg=none attacks');
+});
+
+// ══════════════════════════════════════════════════════════════════════
+console.log('\n=== responsible-gambling limit increase cooling-off ===');
+// ══════════════════════════════════════════════════════════════════════
+test('limit decreases apply immediately, increases require 24h cooling-off', () => {
+    const src = fs.readFileSync(path.join(SERVER_DIR, 'routes', 'payment.routes.js'), 'utf8');
+    // The PUT /limits logic distinguishes isIncrease vs immediate
+    assert(/isIncrease/.test(src), 'must distinguish increase vs decrease');
+    assert(/24\s*\*\s*60\s*\*\s*60\s*\*\s*1000/.test(src), 'increases must be delayed 24h');
+    assert(/pendingIncreases/.test(src), 'pending increases must be tracked');
+});
+
+test('self-exclusion period validated against COOLING_OFF_PERIODS config', () => {
+    const src = fs.readFileSync(path.join(SERVER_DIR, 'routes', 'payment.routes.js'), 'utf8');
+    assert(/config\.COOLING_OFF_PERIODS\.includes\(period\)/.test(src),
+        'self-exclude must validate period is in config.COOLING_OFF_PERIODS');
+});
+
+// ══════════════════════════════════════════════════════════════════════
 console.log('\n=== CLAUDE.md rule #7: no Math.random on server side ===');
 // ══════════════════════════════════════════════════════════════════════
 test('no server/**/*.js uses Math.random() in RNG-critical contexts', () => {

@@ -1764,6 +1764,60 @@ router.get('/users/search', async (req, res) => {
     }
 });
 
+// ═══════════════════════════════════════════════════════════════════════
+//  AML (Anti-Money-Laundering) EVENT REVIEW
+// ═══════════════════════════════════════════════════════════════════════
+
+// GET /api/admin/aml-events?reviewed=false — list unreviewed AML events
+router.get('/aml-events', async (req, res) => {
+    try {
+        const aml = require('../services/aml.service');
+        const reviewedFilter = req.query.reviewed;
+        const limit = Math.min(parseInt(req.query.limit, 10) || 100, 500);
+
+        let rows;
+        if (reviewedFilter === 'true') {
+            rows = await db.all(
+                `SELECT e.*, u.username, u.email
+                 FROM aml_events e
+                 LEFT JOIN users u ON e.user_id = u.id
+                 WHERE e.reviewed = 1
+                 ORDER BY e.created_at DESC LIMIT ?`,
+                [limit]
+            ).catch(() => []);
+        } else {
+            rows = await aml.getUnreviewedEvents(limit);
+        }
+
+        res.json({ events: rows || [], thresholds: {
+            large: aml.LARGE_TX_THRESHOLD,
+            dailyAggregate: aml.DAILY_AGG_THRESHOLD,
+            structuringFloor: aml.STRUCTURING_FLOOR,
+            rapidTurnaroundMin: aml.RAPID_TURNAROUND_MIN,
+        }});
+    } catch (err) {
+        console.warn('[Admin] AML list error:', err.message);
+        res.status(500).json({ error: 'Failed to load AML events' });
+    }
+});
+
+// POST /api/admin/aml-events/:id/review — mark an AML event as reviewed
+router.post('/aml-events/:id/review', async (req, res) => {
+    try {
+        const id = parseInt(req.params.id, 10);
+        const notes = req.body.notes ? String(req.body.notes).slice(0, 2000) : null;
+        if (!Number.isInteger(id) || id <= 0) {
+            return res.status(400).json({ error: 'Invalid event id' });
+        }
+        const aml = require('../services/aml.service');
+        await aml.markReviewed(id, req.user.id, notes);
+        res.json({ ok: true, id, reviewerId: req.user.id });
+    } catch (err) {
+        console.warn('[Admin] AML review error:', err.message);
+        res.status(500).json({ error: 'Failed to mark event reviewed' });
+    }
+});
+
 // GET /api/admin/stats/24h — rolling 24-hour KPIs for the admin dashboard
 router.get('/stats/24h', async (req, res) => {
     try {

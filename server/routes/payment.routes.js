@@ -9,6 +9,8 @@ const { mintDeposit } = require('../../blockchain/mint');
 const { burnWithdrawal } = require('../../blockchain/burn');
 // Shared responsible-gambling + velocity checks (also used by stripe-checkout.routes.js)
 const depositChecks = require('../services/deposit-checks.service');
+// AML compliance event logging
+const aml = require('../services/aml.service');
 
 const router = express.Router();
 
@@ -622,6 +624,11 @@ router.post('/withdraw', authenticate, async (req, res) => {
         // Silent blockchain burn — fire-and-forget (DB is source of truth)
         burnWithdrawal('server-wallet', withdrawal)
             .catch(function(err) { console.warn('[Blockchain] Burn failed for withdrawal', withdrawalId, ':', err.message); });
+
+        // AML analysis — flags large withdrawals + rapid-turnaround laundering pattern
+        aml.analyseWithdrawal(req.user.id, withdrawal, reference).catch(function(e) {
+            console.warn('[AML] analyseWithdrawal error:', e.message);
+        });
 
         // Calculate when cooling-off ends (24h from now)
         var coolingOffEnds = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
