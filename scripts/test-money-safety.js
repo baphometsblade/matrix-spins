@@ -542,6 +542,41 @@ test('stripe-checkout idempotency check fails CLOSED on DB error', () => {
 });
 
 // ══════════════════════════════════════════════════════════════════════
+console.log('\n=== launch-readiness warnings cover critical env ===');
+// ══════════════════════════════════════════════════════════════════════
+test('launch-readiness warns on missing Stripe live keys', () => {
+    assert(/STRIPE_SECRET_KEY is missing or not a live key/.test(INDEX_SRC), 'must warn on missing STRIPE_SECRET_KEY');
+    assert(/STRIPE_WEBHOOK_SECRET is missing/.test(INDEX_SRC), 'must warn on missing STRIPE_WEBHOOK_SECRET');
+    assert(/STRIPE_PUBLISHABLE_KEY is missing or not a live key/.test(INDEX_SRC), 'must warn on missing STRIPE_PUBLISHABLE_KEY');
+});
+
+test('launch-readiness warns on weak JWT_SECRET', () => {
+    assert(/JWT_SECRET is weak/.test(INDEX_SRC), 'must warn on weak JWT_SECRET');
+    // Must check length AND dev-default patterns
+    assert(/JWT_SECRET.*length\s*<\s*32/.test(INDEX_SRC), 'must check JWT_SECRET length >= 32');
+});
+
+test('launch-readiness warns on missing SMTP config', () => {
+    assert(/SMTP is not fully configured/.test(INDEX_SRC), 'must warn on missing SMTP');
+});
+
+test('launch-readiness warns on missing ADMIN_EMAIL', () => {
+    assert(/ADMIN_EMAIL not set/.test(INDEX_SRC), 'must warn on missing ADMIN_EMAIL');
+});
+
+test('launch-readiness warns on missing APP_URL', () => {
+    assert(/APP_URL missing/.test(INDEX_SRC), 'must warn on missing APP_URL');
+});
+
+test('launch-readiness warns on missing DATABASE_URL', () => {
+    assert(/DATABASE_URL missing/.test(INDEX_SRC), 'must warn on missing DATABASE_URL');
+});
+
+test('launch-readiness warns on missing geo-block config', () => {
+    assert(/ALLOWED_COUNTRIES or BLOCKED_COUNTRIES/.test(INDEX_SRC), 'must warn on missing geo config');
+});
+
+// ══════════════════════════════════════════════════════════════════════
 console.log('\n=== CLAUDE.md rule #7: no Math.random on server side ===');
 // ══════════════════════════════════════════════════════════════════════
 test('no server/**/*.js uses Math.random() in RNG-critical contexts', () => {

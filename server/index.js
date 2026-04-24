@@ -838,11 +838,31 @@ async function start() {
         if (!config.STRIPE_WEBHOOK_SECRET) {
             warnings.push('STRIPE_WEBHOOK_SECRET is missing — webhooks cannot be verified; deposits will not credit.');
         }
+        if (!config.STRIPE_PUBLISHABLE_KEY || !/^pk_live_/.test(config.STRIPE_PUBLISHABLE_KEY)) {
+            warnings.push('STRIPE_PUBLISHABLE_KEY is missing or not a live key — client-side Stripe.js will fail to initialise.');
+        }
+        if (!process.env.APP_URL) {
+            warnings.push('APP_URL missing — Stripe success/cancel redirects default to msaart.online. Set to your production domain.');
+        }
         if (!process.env.ALLOWED_COUNTRIES && !process.env.BLOCKED_COUNTRIES) {
             warnings.push('No ALLOWED_COUNTRIES or BLOCKED_COUNTRIES set — geo-blocking is OFF. Payments accepted from every jurisdiction.');
         }
         if (!process.env.DATABASE_URL) {
             warnings.push('DATABASE_URL missing — running on SQLite. Production requires managed PostgreSQL for durability.');
+        }
+        if (!config.SMTP_HOST || !config.SMTP_USER || !config.SMTP_PASS) {
+            warnings.push('SMTP is not fully configured — password resets + email verification will fail; users cannot complete withdrawals.');
+        }
+        if (!config.ADMIN_EMAIL) {
+            warnings.push('ADMIN_EMAIL not set — no operator will be notified of large withdrawals, chargebacks, or fraud flags.');
+        }
+        // JWT_SECRET strength — block obvious weak defaults
+        const weakJwtPatterns = ['dev-secret', 'change-me', 'secret', 'changeme', 'password', '123'];
+        if (config.JWT_SECRET && (config.JWT_SECRET.length < 32 || weakJwtPatterns.some(p => config.JWT_SECRET.toLowerCase().includes(p)))) {
+            warnings.push('JWT_SECRET is weak (< 32 chars or contains a common default). Generate a strong secret: `node -e "console.log(require(\'crypto\').randomBytes(48).toString(\'base64\'))"`');
+        }
+        if (!process.env.WEBHOOK_SECRET) {
+            warnings.push('WEBHOOK_SECRET (generic payment-confirm) missing — /api/payment/webhook/confirm returns 503 for any call.');
         }
         if (warnings.length) {
             console.warn('\n' + '⚠'.repeat(25));
