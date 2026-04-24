@@ -98,11 +98,17 @@ async function processJackpotContribution(userId, betAmount) {
             // Jackpot won!
             const wonAmount = Math.round(row.current_amount * 100) / 100;
 
-            // Reset pool to seed amount
-            await db.run(
-                "UPDATE jackpot_pool SET current_amount = seed_amount, total_paid_out = total_paid_out + ?, last_won_at = datetime('now'), last_winner_id = ? WHERE tier = ?",
-                [wonAmount, userId, tierName]
+            // Reset pool to seed amount — conditional on current_amount matching
+            // the value we just read. If another concurrent spin already won
+            // this jackpot, the WHERE clause fails to match and we skip the payout.
+            const resetResult = await db.run(
+                "UPDATE jackpot_pool SET current_amount = seed_amount, total_paid_out = total_paid_out + ?, last_won_at = datetime('now'), last_winner_id = ? WHERE tier = ? AND current_amount = ?",
+                [wonAmount, userId, tierName, row.current_amount]
             );
+            if (!resetResult || resetResult.changes === 0) {
+                // Another request already claimed this jackpot — move to next tier
+                continue;
+            }
 
             // Credit balance (this path is used by jackpot.routes.js which
             // does NOT credit balance itself — unlike spin.routes.js which
@@ -217,10 +223,16 @@ async function checkAndAward(userId, betAmount, minBet, isJackpotGame) {
         if (mustHit || randomHit) {
             const wonAmount = Math.round(row.current_amount * 100) / 100;
 
-            await db.run(
-                "UPDATE jackpot_pool SET current_amount = seed_amount, total_paid_out = total_paid_out + ?, last_won_at = datetime('now'), last_winner_id = ? WHERE tier = ?",
-                [wonAmount, userId, tierName]
+            // Conditional reset — only succeeds if no concurrent spin
+            // already claimed this jackpot from the same pool.
+            const resetResult = await db.run(
+                "UPDATE jackpot_pool SET current_amount = seed_amount, total_paid_out = total_paid_out + ?, last_won_at = datetime('now'), last_winner_id = ? WHERE tier = ? AND current_amount = ?",
+                [wonAmount, userId, tierName, row.current_amount]
             );
+            if (!resetResult || resetResult.changes === 0) {
+                // Race lost — try the next tier
+                continue;
+            }
 
             return { tier: tierName, amount: wonAmount };
         }

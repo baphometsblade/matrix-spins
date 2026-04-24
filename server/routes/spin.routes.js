@@ -13,17 +13,17 @@ const gameIndex = new Map();
 const jackpotService = require('../services/jackpot.service');
 const reengageTriggers = require('../services/reengage-triggers.service');
 const playerAnalytics = require('../services/player-analytics.service');
+const spinMutex = require('../services/spin-mutex');
 const router = express.Router();
 
 // ── Spin idempotency guard: prevents double-spend from concurrent requests ──
-const activeSpins = new Map(); // userId -> { timestamp }
-// Cleanup stale entries every 60s
-setInterval(() => {
-    const cutoff = Date.now() - 30000; // 30s max spin duration
-    for (const [uid, data] of activeSpins) {
-        if (data.timestamp < cutoff) activeSpins.delete(uid);
-    }
-}, 60000);
+// Shared across /api/spin and /api/buy-feature via server/services/spin-mutex.js
+// so a user cannot race the two endpoints against each other.
+const activeSpins = {
+    has: (uid) => spinMutex.isLocked(uid),
+    set: (uid, _meta) => spinMutex.tryAcquire(uid, 'spin'),
+    delete: (uid) => spinMutex.release(uid),
+};
 
 // ── Daily-missions helpers (shared logic, used in fire-and-forget block) ──
 const DAILY_MISSION_TEMPLATES = [
@@ -528,9 +528,9 @@ router.post('/', authenticate, async (req, res) => {
             }
         }
 
-        // ── Enforce session win cap ($50k cumulative ceiling, persisted to DB) ──
+        // ── Enforce session win cap (config.SESSION_WIN_CAP cumulative, persisted to DB) ──
         // Applied AFTER event multiplier + boosts so they cannot bypass the cap
-        // Atomic: uses MIN(total_wins + ?, cap) to prevent concurrent spins from exceeding the cap
+        // Atomic: uses CASE clamp so concurrent spins cannot exceed the cap
         if (spinResult.winAmount > 0) {
             // Expire old sessions atomically
             await db.run(

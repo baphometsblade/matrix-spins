@@ -309,8 +309,8 @@ async function handlePaymentSuccess(metadata, externalId, amountFromStripe, even
         bonusType = 'reload_bonus';
     }
 
-    // Update user balance
-    await db.run('UPDATE users SET balance = ? WHERE id = ?', [balanceAfter, depositUserId]);
+    // Update user balance (atomic — prevents read-then-set races with concurrent spins)
+    await db.run('UPDATE users SET balance = balance + ? WHERE id = ?', [depositAmount, depositUserId]);
 
     // Mark deposit as completed
     await db.run(
@@ -318,17 +318,18 @@ async function handlePaymentSuccess(metadata, externalId, amountFromStripe, even
         [externalId, deposit.id]
     );
 
-    // Log the deposit transaction
+    // Log the deposit transaction (balanceBefore/balanceAfter are snapshots for the audit log
+    // — the actual update above is atomic so a concurrent spin's bet deduction will not be lost)
     await db.run(
         'INSERT INTO transactions (user_id, type, amount, balance_before, balance_after, reference) VALUES (?, ?, ?, ?, ?, ?)',
         [depositUserId, 'deposit', depositAmount, balanceBefore, balanceAfter, reference]
     );
 
-    // Apply bonus if applicable
+    // Apply bonus if applicable — CLAUDE.md rule #5: wagering MUST accumulate, never overwrite
     if (bonusAmount > 0) {
         const wagerReq = bonusAmount * wageringMult;
         await db.run(
-            'UPDATE users SET bonus_balance = bonus_balance + ?, wagering_requirement = ?, wagering_progress = 0 WHERE id = ?',
+            'UPDATE users SET bonus_balance = COALESCE(bonus_balance, 0) + ?, wagering_requirement = COALESCE(wagering_requirement, 0) + ?, wagering_progress = COALESCE(wagering_progress, 0) WHERE id = ?',
             [bonusAmount, wagerReq, depositUserId]
         );
         const refLabel = bonusType === 'first_deposit_bonus'

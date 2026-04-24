@@ -4,6 +4,7 @@ const db = require('../database');
 const config = require('../config');
 const gameEngine = require('../services/game-engine');
 const houseEdge = require('../services/house-edge');
+const spinMutex = require('../services/spin-mutex');
 const games = require('../../shared/game-definitions');
 
 const router = express.Router();
@@ -111,9 +112,18 @@ router.get('/price/:gameId', authenticate, async (req, res) => {
 
 // ─── POST / ─── Buy free spins and resolve the initial trigger spin ───
 router.post('/', authenticate, async (req, res) => {
+    const userId = req.user && req.user.id;
+
+    // ── Acquire per-user mutex (shared with /api/spin) ──
+    // Prevents a user from racing buy-feature against spin or against a
+    // second buy-feature call, which could otherwise overshoot the session
+    // win cap or corrupt free-spin state.
+    if (!spinMutex.tryAcquire(userId, 'buy_feature')) {
+        return res.status(429).json({ error: 'Another spin is already in progress. Please wait.' });
+    }
+
     try {
         const { gameId, betAmount } = req.body;
-        const userId = req.user.id;
 
         // ── SECURITY: Check self-exclusion before allowing buy-feature ──
         const exclusion = await db.get(
@@ -121,32 +131,39 @@ router.post('/', authenticate, async (req, res) => {
             [userId]
         );
         if (exclusion) {
+            spinMutex.release(userId);
             return res.status(403).json({ error: 'Your account is currently self-excluded from playing.' });
         }
 
         // ── Validate game ──
         const game = games.find(g => g.id === gameId);
         if (!game) {
+            spinMutex.release(userId);
             return res.status(400).json({ error: 'Invalid game ID' });
         }
 
         // ── Game must support free spins ──
         if (!game.freeSpinsCount || game.freeSpinsCount <= 0) {
+            spinMutex.release(userId);
             return res.status(400).json({ error: 'This game does not support buy-feature (no free spins bonus)' });
         }
 
         // ── Validate bet ──
         const bet = parseFloat(betAmount);
         if (!Number.isFinite(bet) || bet <= 0) {
+            spinMutex.release(userId);
             return res.status(400).json({ error: 'Invalid bet amount' });
         }
         if (bet < (game.minBet || config.MIN_BET)) {
+            spinMutex.release(userId);
             return res.status(400).json({ error: `Minimum bet is $${game.minBet || config.MIN_BET}` });
         }
         if (bet > (game.maxBet || config.MAX_BET)) {
+            spinMutex.release(userId);
             return res.status(400).json({ error: `Maximum bet is $${game.maxBet || config.MAX_BET}` });
         }
         if (bet > config.MAX_BET) {
+            spinMutex.release(userId);
             return res.status(400).json({ error: `Maximum bet is $${config.MAX_BET}` });
         }
 
@@ -157,9 +174,11 @@ router.post('/', authenticate, async (req, res) => {
         // ── Check balance (fresh from DB) ──
         const currentUser = await db.get('SELECT balance FROM users WHERE id = ?', [userId]);
         if (!currentUser) {
+            spinMutex.release(userId);
             return res.status(404).json({ error: 'User not found' });
         }
         if (currentUser.balance < buyPrice) {
+            spinMutex.release(userId);
             return res.status(400).json({
                 error: 'Insufficient balance',
                 required: buyPrice,
@@ -176,6 +195,7 @@ router.post('/', authenticate, async (req, res) => {
         const debitResult = await db.run('UPDATE users SET balance = balance - ? WHERE id = ? AND balance >= ?', [buyPrice, userId, buyPrice]);
         if (!debitResult || debitResult.changes === 0) {
             try { await db.rollback(); } catch (_) {}
+            spinMutex.release(userId);
             return res.status(400).json({ error: 'Insufficient balance' });
         }
 
@@ -206,7 +226,10 @@ router.post('/', authenticate, async (req, res) => {
         spinResult.winAmount = cappedWinAmount;
         applyWinCapMetadata(spinResult, uncappedWinAmount, cappedWinAmount);
 
-        // ── Enforce session win cap ($50k cumulative ceiling) ──
+        // ── Enforce session win cap (config.SESSION_WIN_CAP, cumulative) ──
+        // Atomic: CASE clamps at SESSION_WIN_CAP so concurrent buys / spins
+        // cannot overshoot the cap, even if two requests read the same stale
+        // total_wins. Mirrors spin.routes.js.
         const capRow = await db.get('SELECT total_wins, session_start FROM session_win_caps WHERE user_id = ?', [userId]);
         let sessionWins = 0;
         if (capRow) {
@@ -224,11 +247,14 @@ router.post('/', authenticate, async (req, res) => {
             spinResult.winAmount = sessionCapped;
         }
         if (sessionCapped > 0) {
+            const clampedInsert = Math.min(sessionCapped, config.SESSION_WIN_CAP);
             await db.run(
                 `INSERT INTO session_win_caps (user_id, total_wins, session_start)
                  VALUES (?, ?, datetime('now'))
-                 ON CONFLICT(user_id) DO UPDATE SET total_wins = total_wins + ?`,
-                [userId, sessionCapped, sessionCapped]
+                 ON CONFLICT(user_id) DO UPDATE SET total_wins = CASE
+                     WHEN session_win_caps.total_wins + ? > ? THEN ?
+                     ELSE session_win_caps.total_wins + ? END`,
+                [userId, clampedInsert, sessionCapped, config.SESSION_WIN_CAP, config.SESSION_WIN_CAP, sessionCapped]
             );
         }
 
@@ -256,6 +282,9 @@ router.post('/', authenticate, async (req, res) => {
         // ── Commit transaction (debit + win credit + logs are all-or-nothing) ──
         await db.commit();
 
+        // Release the mutex after a clean commit
+        spinMutex.release(userId);
+
         // ── Response ──
         res.json({
             grid: spinResult.grid,
@@ -270,6 +299,7 @@ router.post('/', authenticate, async (req, res) => {
 
     } catch (err) {
         try { await db.rollback(); } catch (_) {}
+        spinMutex.release(userId);
         console.warn('[BuyFeature] Error:', err.message);
         res.status(500).json({ error: 'Buy-feature failed' });
     }
