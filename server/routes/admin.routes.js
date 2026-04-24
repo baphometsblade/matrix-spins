@@ -318,6 +318,19 @@ router.post('/user/:id/unban', async (req, res) => {
 });
 
 // POST /api/admin/user/:id/adjust-balance
+//
+// ROUND 65: Hard caps on a per-call and lifetime basis. A phished admin
+// account could previously set balance to arbitrarily large values
+// ($1B+ accepted; `Number.isFinite` was the only gate). With the 30/min
+// admin rate limit that was enough to drain the entire casino float
+// inside a rate-limit window. Now:
+//   - per call: ±$10,000 max (matches the other admin money endpoints)
+//   - lifetime aggregate per target user: $25,000 of |adjustment|
+//   - if the operator genuinely needs a larger adjustment, multiple
+//     reviewed admin actions are safer than one big one
+const ADMIN_ADJUST_PER_CALL_CAP = 10000;
+const ADMIN_ADJUST_LIFETIME_CAP = 25000;
+
 router.post('/user/:id/adjust-balance', async (req, res) => {
     try {
         const userId = parseInt(req.params.id);
@@ -326,6 +339,32 @@ router.post('/user/:id/adjust-balance', async (req, res) => {
 
         if (!Number.isFinite(adjustment)) {
             return res.status(400).json({ error: 'Invalid amount' });
+        }
+        if (Math.abs(adjustment) > ADMIN_ADJUST_PER_CALL_CAP) {
+            return res.status(400).json({
+                error: `Per-call adjustment limited to $${ADMIN_ADJUST_PER_CALL_CAP.toFixed(2)}`,
+                requested: adjustment,
+                cap: ADMIN_ADJUST_PER_CALL_CAP
+            });
+        }
+        if (adjustment === 0) {
+            return res.status(400).json({ error: 'Adjustment must be non-zero' });
+        }
+
+        // Lifetime guard — sum of |adjustment| over all admin_adjustment
+        // transactions for this target user. A compromised admin hitting the
+        // endpoint 30 times/min quickly blows past this and gets blocked.
+        const lifetime = await db.get(
+            "SELECT COALESCE(SUM(ABS(amount)), 0) as total FROM transactions WHERE user_id = ? AND type = 'admin_adjustment'",
+            [userId]
+        ).catch(() => ({ total: 0 }));
+        const lifetimeTotal = Number((lifetime && lifetime.total) || 0);
+        if (lifetimeTotal + Math.abs(adjustment) > ADMIN_ADJUST_LIFETIME_CAP) {
+            return res.status(400).json({
+                error: `Lifetime adjustment cap ($${ADMIN_ADJUST_LIFETIME_CAP}) would be exceeded for this user.`,
+                lifetimeToDate: lifetimeTotal,
+                cap: ADMIN_ADJUST_LIFETIME_CAP
+            });
         }
 
         // ROUND 47: Wrap in transaction — previously, concurrent admin requests

@@ -1622,6 +1622,138 @@ test('dead service crash.service.js removed', () => {
 });
 
 // ══════════════════════════════════════════════════════════════════════
+console.log('\n=== round 65: admin blast-radius + gift race + sanitize DoS ===');
+// ══════════════════════════════════════════════════════════════════════
+const ADMIN_R65   = fs.readFileSync(path.join(SERVER_DIR, 'routes', 'admin.routes.js'), 'utf8');
+const BALANCE_R65 = fs.readFileSync(path.join(SERVER_DIR, 'routes', 'balance.routes.js'), 'utf8');
+const GIFTS_R65   = fs.readFileSync(path.join(SERVER_DIR, 'routes', 'gifts.routes.js'), 'utf8');
+const WHEEL_R65   = fs.readFileSync(path.join(SERVER_DIR, 'routes', 'dailywheel.routes.js'), 'utf8');
+const WDENH_R65   = fs.readFileSync(path.join(SERVER_DIR, 'routes', 'withdrawal-enhance.routes.js'), 'utf8');
+const SANITIZE_R65 = fs.readFileSync(path.join(SERVER_DIR, 'middleware', 'sanitize.js'), 'utf8');
+
+// CRIT #1 — adjust-balance caps
+test('CRIT#1: admin /adjust-balance has per-call cap ≤ $10,000', () => {
+    const handler = ADMIN_R65.match(/router\.post\(\s*['"]\/user\/:id\/adjust-balance['"][\s\S]+?^\}\);/m);
+    assert(handler, 'adjust-balance handler not found');
+    assert(/ADMIN_ADJUST_PER_CALL_CAP\s*=\s*10000/.test(ADMIN_R65),
+        'must declare ADMIN_ADJUST_PER_CALL_CAP = 10000');
+    assert(/Math\.abs\(adjustment\)\s*>\s*ADMIN_ADJUST_PER_CALL_CAP/.test(handler[0]),
+        'per-call cap must be enforced via Math.abs(adjustment) > cap check');
+});
+
+test('CRIT#1: admin /adjust-balance has lifetime cap ≤ $25,000', () => {
+    const handler = ADMIN_R65.match(/router\.post\(\s*['"]\/user\/:id\/adjust-balance['"][\s\S]+?^\}\);/m);
+    assert(handler, 'adjust-balance handler not found');
+    assert(/ADMIN_ADJUST_LIFETIME_CAP\s*=\s*25000/.test(ADMIN_R65),
+        'must declare ADMIN_ADJUST_LIFETIME_CAP = 25000');
+    assert(/type = 'admin_adjustment'/.test(handler[0]),
+        'lifetime check must sum existing admin_adjustment transactions');
+    assert(/lifetimeTotal \+ Math\.abs\(adjustment\)\s*>\s*ADMIN_ADJUST_LIFETIME_CAP/.test(handler[0]),
+        'lifetime cap comparison must be lifetimeTotal + |adjustment| > cap');
+});
+
+// CRIT #2 — /api/deposit hardening
+test('CRIT#2: /api/deposit caps at $10,000 per call (down from $100k)', () => {
+    assert(/ADMIN_MANUAL_DEPOSIT_CAP\s*=\s*10000/.test(BALANCE_R65),
+        'must declare ADMIN_MANUAL_DEPOSIT_CAP = 10000');
+    assert(/deposit\s*>\s*ADMIN_MANUAL_DEPOSIT_CAP/.test(BALANCE_R65),
+        'per-call cap comparison must be enforced');
+    assert(!/if \(deposit > 100000\)/.test(BALANCE_R65),
+        'old $100,000 cap must be removed');
+});
+
+test('CRIT#2: /api/deposit writes admin_audit_log', () => {
+    const handler = BALANCE_R65.match(/router\.post\(\s*['"]\/deposit['"][\s\S]+?^\}\);/m);
+    assert(handler, '/deposit handler not found');
+    assert(/admin_audit_log/.test(handler[0]),
+        '/deposit must write to admin_audit_log for forensic trail');
+    assert(/'manual_deposit'/.test(handler[0]),
+        "audit entry must tag action='manual_deposit'");
+});
+
+// HIGH #3 — gift claim atomic
+test('HIGH#3: gift claim uses atomic WHERE status=pending guard', () => {
+    const claimUpdate = /UPDATE gifts SET status = 'claimed'[\s\S]{0,200}WHERE id = \? AND to_user_id = \? AND status = 'pending'/;
+    assert(claimUpdate.test(GIFTS_R65),
+        'gift claim UPDATE must use status-guarded claim');
+    assert(/claim\.changes === 0|changes\s*===\s*0/.test(GIFTS_R65),
+        'must check changes === 0 to detect lost race');
+});
+
+// HIGH #4 — daily wheel UNIQUE + atomic INSERT
+test('HIGH#4: daily_wheel_spins has UNIQUE (user_id, spin_date) index', () => {
+    assert(/CREATE UNIQUE INDEX IF NOT EXISTS idx_daily_wheel_user_day ON daily_wheel_spins\s*\(user_id, spin_date\)/.test(WHEEL_R65),
+        'must create UNIQUE INDEX on (user_id, spin_date)');
+    assert(/spin_date/.test(WHEEL_R65),
+        'schema must include spin_date column');
+});
+
+test('HIGH#4: daily wheel INSERT is the atomic one-per-day claim', () => {
+    assert(/VALUES\s*\(\?,\s*\?,\s*\?,\s*DATE\('now'\)\)/.test(WHEEL_R65),
+        "INSERT must write spin_date = DATE('now') for the UNIQUE constraint");
+    const spinHandler = WHEEL_R65.match(/router\.post\(\s*['"]\/spin['"][\s\S]+?^\}\);?/m);
+    assert(spinHandler, 'spin handler not found');
+    assert(/includes\('unique'\)|includes\('duplicate'\)/.test(spinHandler[0]),
+        'must catch UNIQUE violation as "already spun" (not propagate 500)');
+});
+
+// withdrawal-enhance accept-offer race
+test('accept-offer claim is guarded by WHERE accepted = 0 (atomic)', () => {
+    const handler = WDENH_R65.match(/router\.post\(\s*['"]\/accept-offer['"][\s\S]+?^\}\);?/m);
+    assert(handler, '/accept-offer handler not found');
+    assert(/UPDATE withdrawal_offers SET accepted = 1 WHERE id = \? AND user_id = \? AND accepted = 0/.test(handler[0]),
+        'accept-offer UPDATE must guard on accepted = 0');
+    assert(/claim\.changes === 0|changes\s*===\s*0/.test(handler[0]),
+        'must detect lost race and 409');
+});
+
+// MED #5 — sanitize truncates FIRST
+test('MED#5: sanitize truncates long strings BEFORE regex passes', () => {
+    const stringBranch = SANITIZE_R65.match(/if \(typeof obj === 'string'\)[\s\S]+?return s;/);
+    assert(stringBranch, 'string branch not found');
+    const body = stringBranch[0];
+    const truncateIdx = body.indexOf('s.substring(0, MAX_STRING_LENGTH)');
+    const firstRegexIdx = body.indexOf('s.replace(/<[^>]*>?/g');
+    assert(truncateIdx > 0 && firstRegexIdx > 0, 'both truncate + regex must exist');
+    assert(truncateIdx < firstRegexIdx,
+        'truncate (substring) MUST precede the regex chain');
+});
+
+// MED #6 — sanitize depth overflow REJECTS (throws)
+test('MED#6: sanitize depth overflow throws SanitizeRejectError (no silent bypass)', () => {
+    // Force fresh require so exports update after edit
+    const p = require.resolve(path.join(SERVER_DIR, 'middleware', 'sanitize'));
+    delete require.cache[p];
+    const mod = require(p);
+    assert(typeof mod.sanitize === 'function', 'sanitize must be exported for testing');
+    assert(mod.SanitizeRejectError, 'SanitizeRejectError must be exported');
+    let deep = { payload: '<script>alert(1)</script>' };
+    for (let i = 0; i < 22; i++) deep = { x: deep };
+    let threw = false;
+    try { mod.sanitize(deep); } catch (e) {
+        threw = e instanceof mod.SanitizeRejectError;
+    }
+    assert(threw, 'sanitize must THROW SanitizeRejectError on depth > MAX_DEPTH');
+});
+
+test('MED#6: sanitize middleware returns 400 (not bypass) on depth overflow', () => {
+    const p = require.resolve(path.join(SERVER_DIR, 'middleware', 'sanitize'));
+    delete require.cache[p];
+    const mw = require(p);
+    let deep = { payload: '<script>x</script>' };
+    for (let i = 0; i < 22; i++) deep = { x: deep };
+    const req = { body: deep, query: {}, params: {} };
+    let statusCode = 200;
+    let body = null;
+    const res = { status(c) { statusCode = c; return this; }, json(b) { body = b; return this; } };
+    let nextCalled = false;
+    mw(req, res, () => { nextCalled = true; });
+    assertEq(statusCode, 400, 'depth-overflow request must 400');
+    assert(body && /depth/i.test(body.error), 'error should reference depth overflow');
+    assert(!nextCalled, 'next() must NOT be called on rejection');
+});
+
+// ══════════════════════════════════════════════════════════════════════
 console.log('\n=== CLAUDE.md rule #7: no Math.random on server side ===');
 // ══════════════════════════════════════════════════════════════════════
 test('no server/**/*.js uses Math.random() in RNG-critical contexts', () => {
@@ -1645,6 +1777,325 @@ test('no server/**/*.js uses Math.random() in RNG-critical contexts', () => {
         });
     }
     assert(badHits.length === 0, `Math.random() found in ${badHits.length} places:\n  ${badHits.join('\n  ')}`);
+});
+
+// ══════════════════════════════════════════════════════════════════════
+console.log('\n=== withdrawal-enhance /accept-offer atomic claim ===');
+// ══════════════════════════════════════════════════════════════════════
+// CLAUDE.md rule #6 (bonusGuard), rule #1 (bonus_balance + wagering),
+// rule #5 (wagering_requirement COALESCE). The /accept-offer route grants
+// a retention bonus AND cancels the pending withdrawal that triggered it.
+// All bonus/wagering/withdrawal-refund writes must live in one DB tx.
+const WE_SRC = fs.readFileSync(path.join(SERVER_DIR, 'routes', 'withdrawal-enhance.routes.js'), 'utf8');
+
+test('withdrawal-enhance /accept-offer imports + applies bonusGuard (CLAUDE.md rule 6)', () => {
+    assert(/require\(['"]\.\.\/middleware\/bonus-guard['"]\)/.test(WE_SRC),
+        'withdrawal-enhance must require middleware/bonus-guard');
+    assert(/router\.post\(\s*['"]\/accept-offer['"]\s*,\s*authenticate\s*,\s*bonusGuard/.test(WE_SRC),
+        '/accept-offer must list bonusGuard in its middleware chain');
+});
+
+test('withdrawal-enhance /accept-offer bonus credit + wagering are in ONE UPDATE with COALESCE', () => {
+    const acceptBlock = WE_SRC.match(/router\.post\(\s*['"]\/accept-offer['"][\s\S]+?^\}\);/m);
+    assert(acceptBlock, '/accept-offer handler not found');
+    const body = acceptBlock[0];
+    // Single atomic UPDATE combining bonus_balance + wagering_requirement
+    assert(
+        /UPDATE users SET bonus_balance = COALESCE\(\s*bonus_balance,\s*0\s*\)\s*\+\s*\?,\s*wagering_requirement = COALESCE\(\s*wagering_requirement,\s*0\s*\)\s*\+\s*\?/.test(body),
+        'retention bonus credit must be a single atomic UPDATE with COALESCE on both columns'
+    );
+});
+
+test('withdrawal-enhance /accept-offer double-claim is blocked by offer.accepted flag', () => {
+    const acceptBlock = WE_SRC.match(/router\.post\(\s*['"]\/accept-offer['"][\s\S]+?^\}\);/m);
+    assert(acceptBlock, 'handler not found');
+    const body = acceptBlock[0];
+    // Must SELECT the offer's accepted flag and reject if already accepted
+    assert(/offer\.accepted/.test(body), 'must read offer.accepted');
+    assert(/Offer already accepted/.test(body), 'must return error when offer.accepted is truthy');
+    // And must flip it to 1 within the transaction
+    assert(/UPDATE withdrawal_offers SET accepted = 1 WHERE id = \?/.test(body),
+        'must mark the offer as accepted=1 on successful claim');
+});
+
+test('withdrawal-enhance /accept-offer wraps bonus + offer-flip + withdrawal-refund in one DB tx', () => {
+    const acceptBlock = WE_SRC.match(/router\.post\(\s*['"]\/accept-offer['"][\s\S]+?^\}\);/m);
+    assert(acceptBlock, 'handler not found');
+    const body = acceptBlock[0];
+    const beginIdx   = body.indexOf('beginTransaction');
+    const bonusIdx   = body.search(/UPDATE users SET bonus_balance = COALESCE/);
+    const flipIdx    = body.search(/UPDATE withdrawal_offers SET accepted = 1/);
+    const commitIdx  = body.indexOf('commit()');
+    const rollbackIdx= body.indexOf('rollback()');
+    assert(beginIdx > 0 && bonusIdx > beginIdx && flipIdx > beginIdx,
+        'bonus credit + offer flip must both run AFTER beginTransaction');
+    assert(commitIdx > bonusIdx && commitIdx > flipIdx, 'commit must come after both writes');
+    assert(rollbackIdx > 0, 'rollback must be called on throw');
+});
+
+// ══════════════════════════════════════════════════════════════════════
+console.log('\n=== loss-insurance /claim atomic claimed-guard ===');
+// ══════════════════════════════════════════════════════════════════════
+// CLAUDE.md rule #1 (bonus_balance with wagering for loss compensation),
+// rule #6 (bonusGuard). Loss-insurance claim must use WHERE claimed=0
+// to stop concurrent double-claims; rolls back if someone else already
+// claimed first. ROUND 58 raised 10x → 15x deliberately (see inline comment).
+const LI_SRC = fs.readFileSync(path.join(SERVER_DIR, 'routes', 'loss-insurance.routes.js'), 'utf8');
+
+test('loss-insurance /claim imports + applies bonusGuard (CLAUDE.md rule 6)', () => {
+    assert(/require\(['"]\.\.\/middleware\/bonus-guard['"]\)/.test(LI_SRC),
+        'loss-insurance must require middleware/bonus-guard');
+    assert(/router\.post\(\s*['"]\/claim['"]\s*,\s*authenticate\s*,\s*bonusGuard/.test(LI_SRC),
+        '/claim must list bonusGuard in its middleware chain');
+});
+
+test('loss-insurance /claim uses atomic WHERE claimed=0 guard (stops double-claim)', () => {
+    const claimBlock = LI_SRC.match(/router\.post\(\s*['"]\/claim['"][\s\S]+?^\}\);/m);
+    assert(claimBlock, '/claim handler not found');
+    const body = claimBlock[0];
+    assert(
+        /UPDATE loss_insurance_policies SET claimed = 1,\s*claim_amount = \? WHERE id = \? AND claimed = 0/.test(body),
+        'claim UPDATE must be guarded by WHERE claimed = 0 (atomic idempotency)'
+    );
+    // Must rollback + return 400 when the guard loses the race
+    assert(/changes === 0/.test(body), 'must check changes===0 after the guarded UPDATE');
+    assert(/Policy already claimed/.test(body), 'must return friendly error when claim loses race');
+});
+
+test('loss-insurance /claim credits bonus_balance (NOT balance) with ≥10x wagering (CLAUDE.md rule 1)', () => {
+    const claimBlock = LI_SRC.match(/router\.post\(\s*['"]\/claim['"][\s\S]+?^\}\);/m);
+    assert(claimBlock, 'handler not found');
+    const body = claimBlock[0];
+    // Must credit bonus_balance via COALESCE and accumulate wagering
+    assert(
+        /UPDATE users SET bonus_balance = COALESCE\(\s*bonus_balance,\s*0\s*\)\s*\+\s*\?,\s*wagering_requirement = COALESCE\(\s*wagering_requirement,\s*0\s*\)\s*\+\s*\? WHERE id = \?/.test(body),
+        'must credit bonus_balance + accumulate wagering_requirement in ONE atomic UPDATE'
+    );
+    // Must NOT credit withdrawable balance directly
+    assert(!/UPDATE users SET balance = balance \+ \?/.test(body),
+        'loss-insurance claim must NEVER credit withdrawable balance (revenue leak)');
+    // Wagering multiplier must be at least 10x — CLAUDE.md says 10x minimum for loss
+    // compensation; ROUND 58 raised this route to 15x deliberately.
+    const multMatch = body.match(/claimAmount\s*\*\s*(\d+)/);
+    assert(multMatch, 'wagering multiplier expression not found');
+    const mult = parseInt(multMatch[1], 10);
+    assert(mult >= 10, `loss-insurance wagering multiplier must be ≥ 10x (got ${mult}x)`);
+});
+
+test('loss-insurance /claim wraps guard + credit in a DB transaction with rollback', () => {
+    const claimBlock = LI_SRC.match(/router\.post\(\s*['"]\/claim['"][\s\S]+?^\}\);/m);
+    assert(claimBlock, 'handler not found');
+    const body = claimBlock[0];
+    const beginIdx  = body.indexOf('beginTransaction');
+    const claimIdx  = body.search(/UPDATE loss_insurance_policies SET claimed = 1/);
+    const creditIdx = body.search(/UPDATE users SET bonus_balance = COALESCE/);
+    const commitIdx = body.indexOf('commit()');
+    assert(beginIdx > 0, 'beginTransaction must be called');
+    assert(claimIdx > beginIdx, 'guarded claim UPDATE must run inside the transaction');
+    assert(creditIdx > claimIdx, 'bonus credit must come AFTER the guard claim (not before)');
+    assert(commitIdx > creditIdx, 'commit must follow credit');
+    assert(/rollback/.test(body), 'rollback path must exist for errors');
+});
+
+// ══════════════════════════════════════════════════════════════════════
+console.log('\n=== stripe-checkout webhook: NFT + balance + deposit in one DB tx ===');
+// ══════════════════════════════════════════════════════════════════════
+// The /api/payment/webhook checkout.session.completed branch mints an NFT,
+// credits the player's balance, and records a deposit row. These three
+// writes MUST live inside a single transaction — otherwise a crash between
+// them leaves the player charged with no credit and the idempotency check
+// blocks the Stripe retry.
+const SC_SRC = fs.readFileSync(path.join(SERVER_DIR, 'routes', 'stripe-checkout.routes.js'), 'utf8');
+
+test('stripe-checkout webhook NFT INSERT is inside db.beginTransaction()', () => {
+    // Narrow to the NFT mint/credit block — between the "Mint NFT and credit balance"
+    // anchor and the AML analyseDeposit call that follows the commit.
+    const mintIdx = SC_SRC.indexOf('Mint NFT and credit balance');
+    assert(mintIdx > 0, '"Mint NFT and credit balance" comment anchor not found');
+    const amlIdx = SC_SRC.indexOf('aml.analyseDeposit(', mintIdx);
+    assert(amlIdx > mintIdx, 'aml.analyseDeposit tail anchor not found');
+    const block = SC_SRC.slice(mintIdx, amlIdx);
+
+    const beginIdx = block.indexOf('beginTransaction');
+    const nftInsIdx = block.search(/INSERT INTO nfts\b/);
+    assert(beginIdx > 0, 'beginTransaction() not found in mint block');
+    assert(nftInsIdx > beginIdx,
+        'INSERT INTO nfts must run AFTER beginTransaction (inside the transaction)');
+});
+
+test('stripe-checkout webhook balance credit is inside the same transaction', () => {
+    const mintIdx = SC_SRC.indexOf('Mint NFT and credit balance');
+    const amlIdx  = SC_SRC.indexOf('aml.analyseDeposit(', mintIdx);
+    const block   = SC_SRC.slice(mintIdx, amlIdx);
+
+    const beginIdx   = block.indexOf('beginTransaction');
+    const balanceIdx = block.search(/UPDATE users SET balance = balance \+ \? WHERE id = \?/);
+    const commitIdx  = block.indexOf('commit()');
+    assert(beginIdx > 0 && balanceIdx > beginIdx,
+        'balance credit UPDATE must be inside the transaction');
+    assert(commitIdx > balanceIdx, 'commit() must come after the balance credit');
+});
+
+test('stripe-checkout webhook deposits INSERT is inside the same transaction', () => {
+    const mintIdx = SC_SRC.indexOf('Mint NFT and credit balance');
+    const amlIdx  = SC_SRC.indexOf('aml.analyseDeposit(', mintIdx);
+    const block   = SC_SRC.slice(mintIdx, amlIdx);
+
+    const beginIdx   = block.indexOf('beginTransaction');
+    const depositIdx = block.search(/INSERT INTO deposits\b/);
+    const commitIdx  = block.indexOf('commit()');
+    assert(beginIdx > 0 && depositIdx > beginIdx,
+        'INSERT INTO deposits must be inside the transaction');
+    assert(/'completed'/.test(block.slice(depositIdx, depositIdx + 400)),
+        'webhook deposit row must be created with status=completed (payment already confirmed)');
+    assert(commitIdx > depositIdx, 'commit() must come after the deposit INSERT');
+});
+
+test('stripe-checkout webhook rolls back on throw (no half-state credits)', () => {
+    const mintIdx = SC_SRC.indexOf('Mint NFT and credit balance');
+    const amlIdx  = SC_SRC.indexOf('aml.analyseDeposit(', mintIdx);
+    const block   = SC_SRC.slice(mintIdx, amlIdx);
+
+    // Must have try { … } catch (txErr) { rollback; throw; }
+    assert(/await db\.rollback\(\)/.test(block),
+        'mint/credit block must call await db.rollback() inside the catch');
+    assert(/throw txErr/.test(block),
+        'caught error must be re-thrown so the outer handler returns 5xx (Stripe retry)');
+    // And the outer handler must return 500 on throw so Stripe retries
+    assert(/status\(500\)[\s\S]{0,200}Stripe will retry/.test(SC_SRC),
+        'outer catch must return 500 so Stripe redelivers the webhook');
+});
+
+// ══════════════════════════════════════════════════════════════════════
+console.log('\n=== matrix-money /purchase RG-check + pending deposit ===');
+// ══════════════════════════════════════════════════════════════════════
+// POST /api/matrix-money/purchase must (a) run self-exclusion + deposit
+// limits + velocity checks BEFORE inserting the pending deposit row,
+// (b) insert the deposit with status='pending' (real credit happens via
+// the stripe/crypto webhook), (c) validate the package + amount.
+const MM_SRC = fs.readFileSync(path.join(SERVER_DIR, 'routes', 'matrix-money.routes.js'), 'utf8');
+
+test('matrix-money /purchase runs depositChecks.runAllChecks BEFORE any INSERT', () => {
+    const purchaseBlock = MM_SRC.match(/router\.post\(\s*['"]\/purchase['"][\s\S]+?^\}\);/m);
+    assert(purchaseBlock, '/purchase handler not found');
+    const body = purchaseBlock[0];
+    const checkIdx  = body.indexOf('depositChecks.runAllChecks');
+    const insertIdx = body.search(/INSERT INTO deposits\b/);
+    assert(checkIdx > 0, '/purchase must call depositChecks.runAllChecks');
+    assert(insertIdx > 0, '/purchase must INSERT a pending deposit');
+    assert(checkIdx < insertIdx,
+        'RG/velocity checks MUST run BEFORE the deposit INSERT — otherwise excluded users can bypass limits by just starting a purchase');
+    assert(/allowed/.test(body) && /status\(403\)/.test(body),
+        'blocked purchases must return 403 with the RG check error');
+});
+
+test('matrix-money /purchase creates deposit with status=pending (credit happens in webhook)', () => {
+    const purchaseBlock = MM_SRC.match(/router\.post\(\s*['"]\/purchase['"][\s\S]+?^\}\);/m);
+    assert(purchaseBlock, 'handler not found');
+    const body = purchaseBlock[0];
+    // The INSERT's VALUES row must carry the literal 'pending' state.
+    // We look for the closest 'pending' / 'completed' literal within the INSERT call.
+    const insMatch = body.match(/INSERT INTO deposits[\s\S]+?\)[\s\S]+?\[[^\]]+\]/);
+    assert(insMatch, 'deposit INSERT call not found');
+    assert(/'pending'/.test(insMatch[0]),
+        'matrix-money /purchase MUST create deposits with status=pending (real credit happens via Stripe/crypto webhook)');
+    assert(!/'completed'/.test(insMatch[0]),
+        'matrix-money /purchase must NOT mark deposit completed here — would credit without payment confirmation');
+    // Must NOT directly credit balance here
+    assert(!/UPDATE users SET balance = balance \+ \?/.test(body),
+        'matrix-money /purchase must NOT credit balance directly — webhook owns that');
+});
+
+test('matrix-money /purchase validates package + payment type + method ownership', () => {
+    const purchaseBlock = MM_SRC.match(/router\.post\(\s*['"]\/purchase['"][\s\S]+?^\}\);/m);
+    assert(purchaseBlock, 'handler not found');
+    const body = purchaseBlock[0];
+    // Package validation
+    assert(/MM_PACKAGES\.find\(p\s*=>\s*p\.id\s*===?\s*packageId\)/.test(body),
+        'must look up package by id and reject unknown');
+    assert(/Invalid package selected/.test(body), 'must 400 on unknown package');
+    // Payment type validation
+    assert(/validTypes\.includes\(paymentType\)/.test(body),
+        'must validate paymentType against config.PAYMENT_METHODS');
+    // Payment method ownership
+    assert(/SELECT id FROM payment_methods WHERE id = \? AND user_id = \?/.test(body),
+        'must verify paymentMethodId belongs to the caller');
+});
+
+// ══════════════════════════════════════════════════════════════════════
+console.log('\n=== gem-store + gems.service atomic purchase ===');
+// ══════════════════════════════════════════════════════════════════════
+// Two gem purchase paths exist in-tree:
+//   (A) /api/gem-store/purchase — inline in gem-store.routes.js, credits
+//       users.gems via a single combined atomic UPDATE.
+//   (B) /api/gems/purchase → services/gems.service.purchaseGems(), credits
+//       a separate gem_balances table.
+// Both deduct real credit balance and MUST use the atomic
+// `balance = balance - ? WHERE balance >= ?` pattern inside a DB tx.
+const GS_SRC = fs.readFileSync(path.join(SERVER_DIR, 'routes', 'gem-store.routes.js'), 'utf8');
+const GEMS_SVC_SRC = fs.readFileSync(path.join(SERVER_DIR, 'services', 'gems.service.js'), 'utf8');
+
+test('gem-store /purchase deducts balance atomically with WHERE guard', () => {
+    const purchaseBlock = GS_SRC.match(/router\.post\(\s*['"]\/purchase['"][\s\S]+?^\}\);/m);
+    assert(purchaseBlock, '/purchase handler not found in gem-store.routes.js');
+    const body = purchaseBlock[0];
+    // Atomic combined UPDATE: balance deduction + gems increment in ONE statement
+    assert(
+        /UPDATE users SET balance = balance - \?,\s*gems = COALESCE\(\s*gems,\s*0\s*\)\s*\+\s*\? WHERE id = \? AND balance >= \?/.test(body),
+        'gem-store /purchase must use combined atomic balance-deduct + COALESCE gems-increment with WHERE balance >= ?'
+    );
+    // Must rollback + 400 on insufficient balance
+    assert(/changes === 0/.test(body), 'must check changes===0 after the guarded UPDATE');
+    assert(/Insufficient balance/.test(body), 'must return friendly error when deduction fails');
+});
+
+test('gem-store /purchase wraps balance-deduct + gem_purchases log in one DB tx', () => {
+    const purchaseBlock = GS_SRC.match(/router\.post\(\s*['"]\/purchase['"][\s\S]+?^\}\);/m);
+    assert(purchaseBlock, 'handler not found');
+    const body = purchaseBlock[0];
+    const beginIdx  = body.indexOf('beginTransaction');
+    const updateIdx = body.search(/UPDATE users SET balance = balance - \?,\s*gems = COALESCE/);
+    const logIdx    = body.search(/INSERT INTO gem_purchases\b/);
+    const commitIdx = body.indexOf('commit()');
+    assert(beginIdx > 0, 'beginTransaction must be called');
+    assert(updateIdx > beginIdx && logIdx > beginIdx,
+        'both the balance-deduct UPDATE and the gem_purchases INSERT must run inside the tx');
+    assert(commitIdx > updateIdx && commitIdx > logIdx, 'commit must follow both writes');
+    assert(/rollback/.test(body), 'rollback path must exist');
+});
+
+test('gems.service.purchaseGems uses atomic balance deduct + gem_balances upsert in tx', () => {
+    const fn = GEMS_SVC_SRC.match(/async function purchaseGems[\s\S]+?^}/m);
+    assert(fn, 'purchaseGems function not found in gems.service.js');
+    const body = fn[0];
+    // Atomic balance deduction
+    assert(
+        /UPDATE users SET balance = balance - \? WHERE id = \? AND balance >= \?/.test(body),
+        'gems.service must deduct balance via `balance = balance - ? WHERE balance >= ?` (atomic)'
+    );
+    // Wrapped in transaction
+    const beginIdx  = body.indexOf('beginTransaction');
+    const deductIdx = body.search(/UPDATE users SET balance = balance - \?/);
+    const commitIdx = body.indexOf('commit()');
+    assert(beginIdx > 0 && deductIdx > beginIdx, 'balance deduct must be inside the tx');
+    assert(commitIdx > deductIdx, 'commit must follow deduct');
+    // Must return insufficient-balance error when guard loses
+    assert(/Insufficient credit balance/.test(body),
+        'gems.service must throw "Insufficient credit balance" when the WHERE guard fails');
+});
+
+test('gems.service.purchaseGems increments gem_balances atomically (not read-then-set)', () => {
+    const fn = GEMS_SVC_SRC.match(/async function purchaseGems[\s\S]+?^}/m);
+    assert(fn, 'purchaseGems function not found');
+    const body = fn[0];
+    // Must use `balance = balance + ?` accumulate (never `balance = ?`) when updating gem_balances
+    assert(
+        /UPDATE gem_balances SET balance = balance \+ \?,\s*total_purchased = total_purchased \+ \?/.test(body),
+        'gem_balances update must use `balance = balance + ?` atomic accumulation'
+    );
+    // The non-atomic form `balance = ?` must NOT appear anywhere in the function
+    assert(!/UPDATE gem_balances SET balance\s*=\s*\?\s/.test(body),
+        'gem_balances must NEVER be written as `balance = ?` (read-then-set race)');
 });
 
 // ══════════════════════════════════════════════════════════════════════

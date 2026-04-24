@@ -19,6 +19,14 @@ router.get('/', authenticate, async (req, res) => {
 // Admin-only manual balance credit (for admin-approved deposits or support adjustments).
 // Players cannot call this endpoint directly — all player deposits must go through
 // /api/payments/deposit which creates a pending record for payment processor callback.
+//
+// ROUND 65: Per-call cap tightened from $100,000 to $10,000 (matches the
+// other admin money endpoints and prevents a phished admin from draining
+// the entire casino float at 30-calls-per-minute rate-limit speed).
+// Added admin_audit_log write — this was missing, making forensics on
+// admin-initiated credits much harder than on /user/:id/adjust-balance.
+const ADMIN_MANUAL_DEPOSIT_CAP = 10000;
+
 router.post('/deposit', authenticate, async (req, res) => {
     try {
         // Only admins can directly credit balance
@@ -35,8 +43,11 @@ router.post('/deposit', authenticate, async (req, res) => {
         if (!Number.isFinite(deposit) || deposit <= 0) {
             return res.status(400).json({ error: 'Invalid deposit amount' });
         }
-        if (deposit > 100000) {
-            return res.status(400).json({ error: 'Maximum deposit is $100,000' });
+        if (deposit > ADMIN_MANUAL_DEPOSIT_CAP) {
+            return res.status(400).json({
+                error: `Manual deposit capped at $${ADMIN_MANUAL_DEPOSIT_CAP.toFixed(2)}. For larger credits use the Stripe webhook / approve-deposit flow.`,
+                cap: ADMIN_MANUAL_DEPOSIT_CAP
+            });
         }
 
         const user = await db.get('SELECT balance FROM users WHERE id = ?', [targetUserId]);
@@ -54,6 +65,11 @@ router.post('/deposit', authenticate, async (req, res) => {
                 'INSERT INTO transactions (user_id, type, amount, balance_before, balance_after, reference) VALUES (?, ?, ?, ?, ?, ?)',
                 [targetUserId, 'deposit', deposit, balanceBefore, balanceAfter, paymentRef || 'admin-manual']
             );
+            // ROUND 65: Compliance audit log — track which admin credited which user
+            await db.run(
+                "INSERT INTO admin_audit_log (admin_id, action, target_user_id, details, created_at) VALUES (?, 'manual_deposit', ?, ?, datetime('now'))",
+                [req.user.id, targetUserId, JSON.stringify({ amount: deposit, paymentRef: paymentRef || 'admin-manual', balanceBefore, balanceAfter })]
+            ).catch(() => {});
             await db.commit();
         } catch (txErr) {
             await db.rollback();

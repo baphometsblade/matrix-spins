@@ -197,20 +197,30 @@ router.post('/claim/:id', authenticate, bonusGuard, async (req, res) => {
             return res.status(400).json({ error: 'Invalid gift ID' });
         }
 
-        // --- Fetch the gift (must be pending and addressed to this user) ---
-        var gift = await db.get(
-            'SELECT id, to_user_id, amount, status FROM gifts WHERE id = ? AND to_user_id = ? AND status = \'pending\'',
+        // --- Atomic claim: flip pending → claimed in a single UPDATE.
+        // ROUND 65: Previously the SELECT → UPDATE sequence was racy —
+        // two parallel POSTs would both read status='pending' and both
+        // pass the status check, then both would UPDATE (no WHERE status
+        // guard) and both would credit bonus_balance. Doubled the payout.
+        // Now the UPDATE is the serialisation point: only one request
+        // gets changes === 1; the second sees 0 and 404s. ---
+        var claim = await db.run(
+            "UPDATE gifts SET status = 'claimed', claimed_at = datetime('now') WHERE id = ? AND to_user_id = ? AND status = 'pending'",
             [giftId, req.user.id]
         );
-        if (!gift) {
+        if (!claim || claim.changes === 0) {
             return res.status(404).json({ error: 'Gift not found or already claimed' });
         }
 
-        // --- Mark gift as claimed ---
-        await db.run(
-            'UPDATE gifts SET status = \'claimed\', claimed_at = datetime(\'now\') WHERE id = ?',
+        // Safe to read the row details now — the claim guarantees single-processing.
+        var gift = await db.get(
+            'SELECT id, to_user_id, amount FROM gifts WHERE id = ?',
             [giftId]
         );
+        if (!gift) {
+            // Shouldn't happen after a successful claim, but be defensive
+            return res.status(404).json({ error: 'Gift not found after claim' });
+        }
 
         // --- Credit recipient bonus_balance with 15x wagering (prevents chip dumping/laundering) ---
         var recipient = await db.get('SELECT bonus_balance FROM users WHERE id = ?', [req.user.id]);

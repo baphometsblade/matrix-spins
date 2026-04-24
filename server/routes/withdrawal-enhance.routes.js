@@ -258,15 +258,26 @@ router.post('/accept-offer', authenticate, bonusGuard, async (req, res) => {
 
         await db.beginTransaction();
         try {
+            // ROUND 65: Claim the offer FIRST with a status-guarded UPDATE.
+            // The claim is the atomic serialisation point — two parallel
+            // /accept-offer calls race here and only one's UPDATE matches
+            // `accepted = 0`. The loser rolls back and returns 409; no
+            // double-bonus-credit possible.
+            const claim = await db.run(
+                'UPDATE withdrawal_offers SET accepted = 1 WHERE id = ? AND user_id = ? AND accepted = 0',
+                [offerId, userId]
+            );
+            if (!claim || claim.changes === 0) {
+                await db.rollback();
+                return res.status(409).json({ error: 'Offer already accepted or expired' });
+            }
+
             // ROUND 57: Single atomic UPDATE — bonus + wagering in one statement
             // Previously two separate UPDATEs; if second failed, bonus credited without wagering
             await db.run(
                 'UPDATE users SET bonus_balance = COALESCE(bonus_balance, 0) + ?, wagering_requirement = COALESCE(wagering_requirement, 0) + ?, wagering_progress = COALESCE(wagering_progress, 0) WHERE id = ?',
                 [bonusAmount, wageringRequired, userId]
             );
-
-            // Mark offer as accepted
-            await db.run('UPDATE withdrawal_offers SET accepted = 1 WHERE id = ?', [offerId]);
 
             // Cancel the pending withdrawal that triggered this offer.
             // The withdrawal amount was already deducted from balance when the withdrawal

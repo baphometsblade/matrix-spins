@@ -23,15 +23,27 @@ async function initializeDailyWheelTable() {
     var isPg = db.isPg();
     var idDef = isPg ? 'SERIAL PRIMARY KEY' : 'INTEGER PRIMARY KEY AUTOINCREMENT';
     var tsDef = isPg ? 'TIMESTAMPTZ DEFAULT NOW()' : "TEXT DEFAULT (datetime('now'))";
+    // spin_date is a derived per-day key so we can enforce one spin per
+    // user per UTC day via a UNIQUE index. Without this, two parallel
+    // /spin requests at midnight both see hasSpunToday() = false and both
+    // credit bonus_balance with the wheel payout.
+    var dateDef = isPg ? "DATE" : "TEXT";
     await db.run(
       'CREATE TABLE IF NOT EXISTS daily_wheel_spins (' +
       '  id ' + idDef + ',' +
       '  user_id INTEGER NOT NULL,' +
       '  prize_type TEXT NOT NULL,' +
       '  prize_amount REAL NOT NULL,' +
+      '  spin_date ' + dateDef + ',' +
       '  spun_at ' + tsDef +
       ')'
     );
+    // Migration for pre-existing installs
+    try { await db.run("ALTER TABLE daily_wheel_spins ADD COLUMN spin_date " + dateDef); } catch (_) { /* column exists */ }
+    // Backfill spin_date for any old rows so the UNIQUE index can be built
+    try { await db.run("UPDATE daily_wheel_spins SET spin_date = DATE(spun_at) WHERE spin_date IS NULL"); } catch (_) {}
+    // Atomic one-spin-per-day guarantee
+    await db.run('CREATE UNIQUE INDEX IF NOT EXISTS idx_daily_wheel_user_day ON daily_wheel_spins (user_id, spin_date)');
     console.warn('[DailyWheel] Table initialized');
   } catch (err) {
     console.warn('[DailyWheel] Bootstrap error:', err.message);
@@ -226,12 +238,26 @@ router.post('/spin', authenticate, bonusGuard, async (req, res) => {
 
     await db.beginTransaction();
     try {
-      // Record spin
-      await db.run(
-        `INSERT INTO daily_wheel_spins (user_id, prize_type, prize_amount)
-         VALUES (?, ?, ?)`,
-        [userId, prize.label, finalAmount]
-      );
+      // ROUND 65: Record spin FIRST, with explicit spin_date — the UNIQUE
+      // (user_id, spin_date) index is the true one-per-day guarantee.
+      // hasSpunToday() was a TOCTOU check; two parallel requests around
+      // midnight both got false and both ran through. Now parallel requests
+      // race on the INSERT: the second fails with a UNIQUE violation and
+      // we rollback + return 400 — no double payout possible.
+      try {
+        await db.run(
+          `INSERT INTO daily_wheel_spins (user_id, prize_type, prize_amount, spin_date)
+           VALUES (?, ?, ?, DATE('now'))`,
+          [userId, prize.label, finalAmount]
+        );
+      } catch (insertErr) {
+        await db.rollback();
+        const msg = String(insertErr && insertErr.message || '').toLowerCase();
+        if (msg.includes('unique') || msg.includes('duplicate')) {
+          return res.status(400).json({ error: 'You have already spun today' });
+        }
+        throw insertErr;
+      }
 
       // ROUND 30: CRITICAL FIX — Credit to bonus_balance, NOT real balance.
       // Was: balance = balance + ? → players could spin wheel and withdraw immediately.
