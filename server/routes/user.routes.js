@@ -4,6 +4,7 @@ const crypto = require('crypto');
 const config = require('../config');
 const db = require('../database');
 const { authenticate } = require('../middleware/auth');
+const { bonusGuard } = require('../middleware/bonus-guard');
 const { sendPasswordReset } = require('../services/email.service');
 
 const router = express.Router();
@@ -208,7 +209,8 @@ function getTodayStr() {
 }
 
 // POST /api/user/claim-daily-bonus — server-validated daily bonus
-router.post('/claim-daily-bonus', authenticate, async (req, res) => {
+// bonusGuard: blocks self-excluded users + enforces daily bonus cap
+router.post('/claim-daily-bonus', authenticate, bonusGuard, async (req, res) => {
     try {
         const user = await db.get(
             'SELECT id, balance, last_daily_claim, daily_streak FROM users WHERE id = ?',
@@ -276,7 +278,8 @@ const WHEEL_SEGMENTS_SERVER = [
 const WHEEL_COOLDOWN_HOURS = 4;
 
 // POST /api/user/spin-wheel — server-validated bonus wheel
-router.post('/spin-wheel', authenticate, async (req, res) => {
+// bonusGuard: blocks self-excluded users + enforces daily bonus cap
+router.post('/spin-wheel', authenticate, bonusGuard, async (req, res) => {
     try {
         const user = await db.get(
             'SELECT id, balance, last_wheel_spin FROM users WHERE id = ?',
@@ -341,7 +344,8 @@ const PROMO_CODES_SERVER = {
     XPBOOST:    { type: 'daily',    cash: 0,    xp: 0,   spins: 0,  desc: '2× XP Boost (20 spins)!' },
 };
 
-router.post('/redeem-promo', authenticate, async (req, res) => {
+// bonusGuard: blocks self-excluded users + enforces daily bonus cap
+router.post('/redeem-promo', authenticate, bonusGuard, async (req, res) => {
     try {
         const { code } = req.body;
         if (!code || typeof code !== 'string') {
@@ -456,7 +460,8 @@ router.get('/referral', authenticate, async (req, res) => {
 
 // POST /api/user/claim-referral-bonus — called after first qualifying deposit
 // Awards bonus to both referrer and referee
-router.post('/claim-referral-bonus', authenticate, async (req, res) => {
+// bonusGuard protects the claimer (referee). Referrer is checked inline below.
+router.post('/claim-referral-bonus', authenticate, bonusGuard, async (req, res) => {
     try {
         const user = await db.get(
             'SELECT id, balance, referred_by, referral_bonus_paid FROM users WHERE id = ?',
@@ -484,14 +489,39 @@ router.post('/claim-referral-bonus', authenticate, async (req, res) => {
         );
 
         // Award bonus to referrer → bonus_balance with 15x wagering
+        // bonusGuard on this route covers req.user (the referee); we must check
+        // the REFERRER's self-exclusion independently before crediting them.
         const referrer = await db.get('SELECT id FROM users WHERE id = ?', [user.referred_by]);
         if (referrer) {
-            await db.run('UPDATE users SET bonus_balance = COALESCE(bonus_balance, 0) + ?, wagering_requirement = COALESCE(wagering_requirement, 0) + ? WHERE id = ?',
-                [REFERRAL_BONUS_REFERRER, REFERRAL_BONUS_REFERRER * 15, referrer.id]);
-            await db.run(
-                "INSERT INTO transactions (user_id, type, amount, description) VALUES (?, 'bonus', ?, ?)",
-                [referrer.id, REFERRAL_BONUS_REFERRER, 'Referral bonus — friend joined (bonus, 15x wagering)']
-            );
+            let referrerExcluded = false;
+            try {
+                const rExcl = await db.get(
+                    "SELECT id FROM self_exclusions WHERE user_id = ? AND is_active = 1 AND (ends_at IS NULL OR ends_at > datetime('now'))",
+                    [referrer.id]
+                );
+                if (rExcl) referrerExcluded = true;
+            } catch (_) { /* table may not exist — fall through */ }
+            try {
+                const rLim = await db.get('SELECT self_excluded_until, cooling_off_until FROM user_limits WHERE user_id = ?', [referrer.id]);
+                if (rLim) {
+                    const now = new Date().toISOString().slice(0, 19).replace('T', ' ');
+                    if ((rLim.self_excluded_until && rLim.self_excluded_until > now) ||
+                        (rLim.cooling_off_until && rLim.cooling_off_until > now)) {
+                        referrerExcluded = true;
+                    }
+                }
+            } catch (_) { /* table may not exist — fall through */ }
+
+            if (!referrerExcluded) {
+                await db.run('UPDATE users SET bonus_balance = COALESCE(bonus_balance, 0) + ?, wagering_requirement = COALESCE(wagering_requirement, 0) + ? WHERE id = ?',
+                    [REFERRAL_BONUS_REFERRER, REFERRAL_BONUS_REFERRER * 15, referrer.id]);
+                await db.run(
+                    "INSERT INTO transactions (user_id, type, amount, description) VALUES (?, 'bonus', ?, ?)",
+                    [referrer.id, REFERRAL_BONUS_REFERRER, 'Referral bonus — friend joined (bonus, 15x wagering)']
+                );
+            } else {
+                console.warn('[User] Skipped referrer bonus — referrer ' + referrer.id + ' is self-excluded');
+            }
         }
 
         const updatedRefUser = await db.get('SELECT balance FROM users WHERE id = ?', [user.id]);

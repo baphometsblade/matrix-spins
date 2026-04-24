@@ -282,6 +282,58 @@ test('stripe preserves wagering_progress across new bonus grants', () => {
 });
 
 // ══════════════════════════════════════════════════════════════════════
+console.log('\n=== CLAUDE.md rule #6: bonusGuard on every user-claim bonus route ===');
+// ══════════════════════════════════════════════════════════════════════
+// Every route file that credits bonus_balance via COALESCE MUST either
+// (a) import bonusGuard from middleware/bonus-guard, or
+// (b) appear in the known-exempt list below (non-claim paths: signup,
+//     admin, engine winnings, deposit webhooks, tournament-auto-credit)
+const BONUS_GUARD_EXEMPT = new Set([
+    'spin.routes.js',           // free-spin winnings credited from engine, not user-claim
+    'admin.routes.js',          // admin endpoints — uses checkTargetSelfExclusion()
+    'auth.routes.js',           // signup/register flow — new users by definition not self-excluded
+    'payment.routes.js',        // deposit processing (Stripe webhook side-effect)
+    'stripe-checkout.routes.js',// Stripe payment webhook
+    'premium-tournament.routes.js', // tournament auto-settlement
+    'referralbonus.routes.js',  // internal-only (verifyInternal middleware, triggered by signup)
+]);
+
+test('every user-claim bonus route imports bonusGuard', () => {
+    const routesDir = path.join(SERVER_DIR, 'routes');
+    const missingGuards = [];
+    for (const f of fs.readdirSync(routesDir)) {
+        if (!f.endsWith('.routes.js')) continue;
+        const src = fs.readFileSync(path.join(routesDir, f), 'utf8');
+        const creditsBonus = /bonus_balance\s*=\s*COALESCE\(\s*bonus_balance/i.test(src);
+        if (!creditsBonus) continue;
+        const hasGuard = /require\(.+bonus-guard['"]\)|\bbonusGuard\b/.test(src);
+        if (!hasGuard && !BONUS_GUARD_EXEMPT.has(f)) {
+            missingGuards.push(f);
+        }
+    }
+    assert(missingGuards.length === 0, `routes credit bonus_balance but do not use bonusGuard:\n  ${missingGuards.join('\n  ')}`);
+});
+
+test('user.routes.js applies bonusGuard to every claim endpoint that credits bonus_balance', () => {
+    const src = fs.readFileSync(path.join(SERVER_DIR, 'routes', 'user.routes.js'), 'utf8');
+    // Extract every router.post block up to the closing `});` that contains a bonus_balance COALESCE write
+    const blocks = src.split(/router\.(post|put|delete)\(/g);
+    const offenders = [];
+    for (let i = 1; i < blocks.length; i += 2) {
+        const verb = blocks[i];
+        const body = blocks[i + 1] || '';
+        if (!/bonus_balance\s*=\s*COALESCE\(\s*bonus_balance/i.test(body)) continue;
+        // First ~200 chars of body should contain the middleware list
+        const header = body.slice(0, 300);
+        if (!/\bbonusGuard\b/.test(header)) {
+            const match = header.match(/['"]([^'"]+)['"]/);
+            offenders.push(`${verb} ${match ? match[1] : '(unknown path)'}`);
+        }
+    }
+    assert(offenders.length === 0, `user.routes.js bonus-credit routes missing bonusGuard:\n  ${offenders.join('\n  ')}`);
+});
+
+// ══════════════════════════════════════════════════════════════════════
 console.log('\n=== CLAUDE.md rule #7: no Math.random on server side ===');
 // ══════════════════════════════════════════════════════════════════════
 test('no server/**/*.js uses Math.random() in RNG-critical contexts', () => {
