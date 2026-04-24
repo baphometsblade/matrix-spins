@@ -1,8 +1,34 @@
 ﻿const express = require('express');
 const config = require('../config');
 const { authenticate, requireAdmin } = require('../middleware/auth');
+const fs = require('fs');
+const path = require('path');
 
 const router = express.Router();
+
+// Compute build info once at startup — the deployed git commit hash is
+// sampled from Render's RENDER_GIT_COMMIT env var if present, else from
+// the dist/index.html bundle hash (which changes per content-bundle).
+const BUILD_INFO = (() => {
+    const info = {
+        commit: process.env.RENDER_GIT_COMMIT || null,
+        builtAt: null,
+        bundleJs: null,
+        bundleCss: null
+    };
+    try {
+        const distIndex = path.join(__dirname, '..', '..', 'dist', 'index.html');
+        if (fs.existsSync(distIndex)) {
+            const html = fs.readFileSync(distIndex, 'utf8');
+            const jsMatch = html.match(/bundle\.[a-f0-9]+\.[a-z.]*js/);
+            const cssMatch = html.match(/styles\.[a-f0-9]+\.[a-z.]*css/);
+            info.bundleJs = jsMatch ? jsMatch[0] : null;
+            info.bundleCss = cssMatch ? cssMatch[0] : null;
+            info.builtAt = fs.statSync(distIndex).mtime.toISOString();
+        }
+    } catch (_) { /* keep nulls */ }
+    return info;
+})();
 
 /**
  * GET /api/health â€” Public health check
@@ -45,6 +71,20 @@ router.get('/', async (req, res) => {
             });
         }
     }
+});
+
+/**
+ * GET /api/build — Public build/deploy info
+ * Lets operators verify which commit + bundle is actually live.
+ * Useful for diagnosing deploy lag and cache-bust issues.
+ */
+router.get('/build', (req, res) => {
+    res.json({
+        ...BUILD_INFO,
+        uptime: Math.floor(process.uptime()),
+        startedAt: new Date(Date.now() - process.uptime() * 1000).toISOString(),
+        nodeEnv: process.env.NODE_ENV || 'development'
+    });
 });
 
 /**
