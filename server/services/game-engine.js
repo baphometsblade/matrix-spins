@@ -1,6 +1,7 @@
 const rng = require('./rng.service');
 const houseEdge = require('./house-edge');
 const config = require('../config');
+const bonusMechanics = require('./bonus-mechanics');
 
 /**
  * Server-side game engine.
@@ -461,6 +462,12 @@ async function resolveSpin(game, betAmount, gameStats, freeSpinState = null, db 
         ? generateGrid(game, gameStats, freeSpinState)
         : generateNoWinGrid(game, gameStats);
 
+    // ── Apply post-generation grid mechanics (symbol_upgrade / expanding_wild
+    // / walking_wild). These must run BEFORE win evaluation so the upgraded /
+    // expanded symbols count toward the pay calculation. No-op for the
+    // 90% of games that don't declare these bonus types.
+    const _gridMech = bonusMechanics.applyGridMechanics(grid, game, freeSpinState);
+
     let winAmount = 0;
     let winDetails = { type: 'none', message: '' };
 
@@ -590,20 +597,34 @@ async function resolveSpin(game, betAmount, gameStats, freeSpinState = null, db 
         winAmount += scatterPay;
         scatterTriggered = true;
 
-        if (scatterCount >= fullScatterThreshold) {
-            freeSpinsAwarded = game.freeSpinsCount;
+        // ── pick_bonus: the trigger awards a one-shot prize, not free
+        // spins. The client reveals picks visually; the server has
+        // already picked the winning index so the outcome is auditable.
+        const pickResult = bonusMechanics.resolvePickBonus(game, betAmount);
+        if (pickResult) {
+            winAmount += pickResult.winAmount;
+            winDetails.pickBonus = {
+                chosenIndex: pickResult.chosenIndex,
+                picks: pickResult.picks,
+                winMultiplier: pickResult.winMultiplier,
+                winAmount: pickResult.winAmount
+            };
         } else {
-            freeSpinsAwarded = Math.max(3, Math.floor(game.freeSpinsCount / 2));
-        }
+            if (scatterCount >= fullScatterThreshold) {
+                freeSpinsAwarded = game.freeSpinsCount;
+            } else {
+                freeSpinsAwarded = Math.max(3, Math.floor(game.freeSpinsCount / 2));
+            }
 
-        freeSpinState = {
-            active: true,
-            remaining: freeSpinsAwarded,
-            multiplier: 1,
-            cascadeLevel: 0,
-            totalWin: 0,
-            gameId: game.id || null, // Lock free spins to awarding game
-        };
+            freeSpinState = {
+                active: true,
+                remaining: freeSpinsAwarded,
+                multiplier: 1,
+                cascadeLevel: 0,
+                totalWin: 0,
+                gameId: game.id || null, // Lock free spins to awarding game
+            };
+        }
     }
 
     // Scatter retrigger during free spins.
@@ -633,6 +654,33 @@ async function resolveSpin(game, betAmount, gameStats, freeSpinState = null, db 
         }
     }
 
+    // ── Multiplier trail (consecutive-win multiplier during FS) ──
+    // Applied AFTER applyBonusMultiplier so it stacks on top of the base
+    // cascade/zeus/random multipliers. Capped globally in the helper.
+    if (winAmount > 0 || freeSpinState.active) {
+        const trail = bonusMechanics.applyTrailMultiplier(game, freeSpinState, winAmount);
+        if (trail.extraMult > 1 && winAmount > 0) {
+            winAmount = Math.round(winAmount * trail.extraMult * 100) / 100;
+            if (trail.note) winDetails.trailNote = trail.note;
+        }
+    }
+
+    // ── Collector (threshold-triggered bonus spin award) ──
+    const coll = bonusMechanics.applyCollector(grid, game, freeSpinState);
+    if (coll.awarded > 0) {
+        const room = Math.min(
+            MAX_FREE_SPINS - freeSpinState.remaining,
+            MAX_TOTAL_PER_ROUND - (freeSpinState.totalAwarded || 0)
+        );
+        const addSpins = Math.min(coll.awarded, Math.max(0, room));
+        if (addSpins > 0) {
+            freeSpinState.remaining += addSpins;
+            freeSpinState.totalAwarded = (freeSpinState.totalAwarded || 0) + addSpins;
+            freeSpinsAwarded += addSpins;
+            winDetails.collectorAward = addSpins;
+        }
+    }
+
     // Advance free spins
     if (freeSpinState.active) {
         freeSpinState.remaining--;
@@ -652,6 +700,26 @@ async function resolveSpin(game, betAmount, gameStats, freeSpinState = null, db 
     // Round final win amount
     winAmount = Math.round(winAmount * 100) / 100;
 
+    // ── Progressive jackpot: report contribution + hit to caller.
+    // The caller (spin.routes.js) is responsible for persisting the pool
+    // increment and crediting the jackpot on a hit — we only report what
+    // this particular spin contributed / won. This keeps game-engine.js
+    // pure and auditable.
+    const progressive = {
+        contribution: bonusMechanics.progressiveContribution(game, betAmount),
+        hit: false,
+        award: 0,
+    };
+    if (progressive.contribution > 0) {
+        const hit = bonusMechanics.progressiveHitCheck(game);
+        if (hit.hit) {
+            progressive.hit = true;
+            // Seed amount — caller will top up with the current pool and
+            // replace this value with the real jackpot when awarding.
+            progressive.award = Math.max(250, betAmount * 100);
+        }
+    }
+
     return {
         grid,
         seed,
@@ -660,6 +728,7 @@ async function resolveSpin(game, betAmount, gameStats, freeSpinState = null, db 
         freeSpinState,
         scatterTriggered,
         freeSpinsAwarded,
+        progressive,
     };
 }
 
@@ -673,4 +742,6 @@ module.exports = {
     getGridCols,
     getGridRows,
     getWinType,
+    // re-exports for callers that want direct access
+    bonusMechanics,
 };
