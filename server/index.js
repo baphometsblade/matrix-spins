@@ -244,6 +244,7 @@ app.use('/api/tournaments', tournamentRoutes);
 app.use('/api/tournament', tournamentRoutes);
 app.use('/api/feed', feedRoutes);
 app.use('/api/session', require('./routes/session.routes'));
+app.use('/api/fair', require('./routes/fair.routes'));  // Provably-fair seed + verify (client calls from ui-slot.js)
 app.use('/api/game-of-day', require('./routes/gameofday.routes'));
 app.use('/api/featured-games', (req, res, next) => { req.url = '/featured'; next(); }, require('./routes/gameofday.routes'));
 app.use('/api/game-stats', require('./routes/gamestats.routes'));

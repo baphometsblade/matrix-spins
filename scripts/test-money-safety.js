@@ -1101,6 +1101,81 @@ test('data-export includes GDPR article metadata', () => {
 });
 
 // ══════════════════════════════════════════════════════════════════════
+console.log('\n=== route mounting integrity ===');
+// ══════════════════════════════════════════════════════════════════════
+// Catch the class of bug where a route file is written but never mounted
+// in index.js. Stripe-checkout hit this; fair.routes.js hit it too. We
+// allowlist known-utility-only files that legitimately export without
+// being mounted.
+test('every *.routes.js file is either mounted or on the utility allowlist', () => {
+    const UTILITY_ALLOWLIST = new Set([
+        // These export helpers that OTHER code requires; they are not
+        // themselves express routers that need to be mounted.
+        'admin-dashboard.routes.js',   // exports in-memory store helpers
+        'nft-deposit.routes.js',       // exports ensureNFTTables() used by stripe-checkout
+        'session-insights.routes.js',  // not yet wired; not referenced by client
+        'promos.routes.js',            // legacy — superseded by promocode.routes.js
+        // admin-withdrawals.routes.js is dead code (superseded by admin.routes.js),
+        // but leaving it here would mask real orphans. We explicitly acknowledge
+        // it as dead-but-not-yet-deleted:
+        'admin-withdrawals.routes.js',
+    ]);
+
+    const indexSrc = fs.readFileSync(path.join(SERVER_DIR, 'index.js'), 'utf8');
+    const orphans = [];
+    const routeFiles = fs.readdirSync(path.join(SERVER_DIR, 'routes'))
+        .filter(f => f.endsWith('.routes.js'));
+
+    for (const f of routeFiles) {
+        if (UTILITY_ALLOWLIST.has(f)) continue;
+        const base = f.replace('.routes.js', '');
+        // Match require('./routes/base.routes') OR require('./routes/base')
+        const required =
+            indexSrc.includes(`./routes/${base}.routes`) ||
+            indexSrc.includes(`./routes/${base}'`) ||
+            indexSrc.includes(`./routes/${base}"`);
+        if (!required) orphans.push(f);
+    }
+
+    assert(orphans.length === 0,
+        `route files not mounted in index.js (will 404):\n  ${orphans.join('\n  ')}`);
+});
+
+test('client-called /api/fair endpoints have a mounted server route', () => {
+    const indexSrc = fs.readFileSync(path.join(SERVER_DIR, 'index.js'), 'utf8');
+    assert(/app\.use\(\s*['"]\/api\/fair['"]/.test(indexSrc),
+        '/api/fair must be mounted — client ui-slot.js calls /api/fair/seed and /api/fair/verify');
+});
+
+// ══════════════════════════════════════════════════════════════════════
+console.log('\n=== graceful shutdown + process error handling ===');
+// ══════════════════════════════════════════════════════════════════════
+test('server handles SIGTERM with graceful DB close', () => {
+    const src = fs.readFileSync(path.join(SERVER_DIR, 'index.js'), 'utf8');
+    assert(/process\.on\('SIGTERM'/.test(src), 'must handle SIGTERM');
+    // SIGTERM handler must close the DB backend
+    const sigtermMatch = src.match(/process\.on\('SIGTERM'[\s\S]+?\}\);/);
+    assert(sigtermMatch, 'SIGTERM handler not found');
+    assert(/backend\.close\(\)/.test(sigtermMatch[0]), 'SIGTERM must close DB backend before exit');
+});
+
+test('unhandledRejection does NOT exit the process (keeps serving)', () => {
+    const src = fs.readFileSync(path.join(SERVER_DIR, 'index.js'), 'utf8');
+    const rejectMatch = src.match(/process\.on\(['"]unhandledRejection['"][\s\S]+?\}\);/);
+    assert(rejectMatch, 'unhandledRejection handler not found');
+    assert(!/process\.exit/.test(rejectMatch[0]),
+        'unhandledRejection must NOT exit — log and keep serving');
+});
+
+test('uncaughtException exits after logging (Render restarts us)', () => {
+    const src = fs.readFileSync(path.join(SERVER_DIR, 'index.js'), 'utf8');
+    const exMatch = src.match(/process\.on\(['"]uncaughtException['"][\s\S]+?\}\);/);
+    assert(exMatch, 'uncaughtException handler not found');
+    assert(/process\.exit\(1\)/.test(exMatch[0]),
+        'uncaughtException must exit(1) so the process manager restarts us');
+});
+
+// ══════════════════════════════════════════════════════════════════════
 console.log('\n=== CLAUDE.md rule #7: no Math.random on server side ===');
 // ══════════════════════════════════════════════════════════════════════
 test('no server/**/*.js uses Math.random() in RNG-critical contexts', () => {
