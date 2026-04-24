@@ -685,6 +685,14 @@ if (hasBundle) {
 // Admin dashboard
 app.use('/admin', express.static(path.join(__dirname, '..', 'admin')));
 
+// Free arcade — self-contained HTML games served as static files.
+// /arcade or /arcade/ → arcade/index.html; /arcade/<game>.html → that file.
+app.use('/arcade', express.static(
+    hasBundle ? path.join(distPath, 'arcade') : path.join(__dirname, '..', 'arcade'),
+    { dotfiles: 'deny', maxAge: '1d' }
+));
+app.get('/arcade', (req, res) => res.redirect(301, '/arcade/'));
+
 // SPA fallback — serve index.html for any unmatched route
 app.get('*', (req, res) => {
     if (req.path.startsWith('/api/')) {

@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <title>Tetris — Matrix Spins Arcade</title>
+    <meta name="description" content="Classic falling-block puzzle.">
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+    <link rel="stylesheet" href="arcade.css">
+</head>
+<body>
+    <div class="arcade-header">
+        <a class="arcade-back" href="/#arcade">&larr; Arcade</a>
+        <div class="arcade-title">TETRIS</div>
+        <div style="width: 90px"></div>
+    </div>
+
+    <div class="arcade-scoreboard">
+        <div class="arcade-score-chip">
+            <div class="arcade-score-label">Score</div>
+            <div class="arcade-score-value" id="score">0</div>
+        </div>
+        <div class="arcade-score-chip">
+            <div class="arcade-score-label">Lines</div>
+            <div class="arcade-score-value" id="lines">0</div>
+        </div>
+        <div class="arcade-score-chip">
+            <div class="arcade-score-label">Level</div>
+            <div class="arcade-score-value" id="level">1</div>
+        </div>
+        <div class="arcade-score-chip">
+            <div class="arcade-score-label">Best</div>
+            <div class="arcade-score-value" id="best">0</div>
+        </div>
+    </div>
+
+    <div class="arcade-canvas-wrapper">
+        <canvas id="game" class="arcade-canvas" width="300" height="600"></canvas>
+        <div class="arcade-overlay active" id="overlay">
+            <div class="arcade-overlay-title" id="overlayTitle">READY?</div>
+            <div class="arcade-overlay-sub" id="overlaySub1">Arrows: move/rotate/soft-drop.</div>
+            <div class="arcade-overlay-sub" id="overlaySub2">Space: hard drop.</div>
+            <button class="arcade-btn" id="playBtn">Play</button>
+        </div>
+    </div>
+
+    <div class="arcade-dpad">
+        <button class="arcade-dpad-btn up"    data-dir="rot"   aria-label="Rotate">&#8635;</button>
+        <button class="arcade-dpad-btn left"  data-dir="left"  aria-label="Left">&#9664;</button>
+        <button class="arcade-dpad-btn right" data-dir="right" aria-label="Right">&#9654;</button>
+        <button class="arcade-dpad-btn down"  data-dir="down"  aria-label="Soft drop">&#9660;</button>
+    </div>
+
+    <div class="arcade-controls">
+        <button class="arcade-btn" id="dropBtn">Hard Drop</button>
+        <button class="arcade-btn secondary" id="pauseBtn">Pause</button>
+        <button class="arcade-btn secondary" id="restartBtn">Restart</button>
+    </div>
+
+    <p class="arcade-help">
+        <kbd>&larr;</kbd><kbd>&rarr;</kbd> move &nbsp; <kbd>&uarr;</kbd> rotate &nbsp; <kbd>&darr;</kbd> soft drop &nbsp; <kbd>Space</kbd> hard drop &nbsp; <kbd>P</kbd> pause
+    </p>
+
+<script>
+(function () {
+    'use strict';
+    const canvas = document.getElementById('game');
+    const ctx = canvas.getContext('2d');
+    const COLS = 10, ROWS = 20, CELL = 30;
+    canvas.width = COLS * CELL;
+    canvas.height = ROWS * CELL;
+
+    const scoreEl = document.getElementById('score');
+    const linesEl = document.getElementById('lines');
+    const levelEl = document.getElementById('level');
+    const bestEl  = document.getElementById('best');
+    const overlay = document.getElementById('overlay');
+    const overlayTitle = document.getElementById('overlayTitle');
+    const overlaySub1 = document.getElementById('overlaySub1');
+    const overlaySub2 = document.getElementById('overlaySub2');
+
+    const STORAGE_KEY = 'arcade_tetris_best';
+    let best = +(localStorage.getItem(STORAGE_KEY) || 0);
+    bestEl.textContent = best;
+
+    const PIECES = {
+        I: { shape: [[1,1,1,1]], color: '#00d4ff' },
+        O: { shape: [[1,1],[1,1]], color: '#ffd700' },
+        T: { shape: [[0,1,0],[1,1,1]], color: '#e040fb' },
+        S: { shape: [[0,1,1],[1,1,0]], color: '#00d47a' },
+        Z: { shape: [[1,1,0],[0,1,1]], color: '#ff3358' },
+        J: { shape: [[1,0,0],[1,1,1]], color: '#3b82f6' },
+        L: { shape: [[0,0,1],[1,1,1]], color: '#ff7700' }
+    };
+    const TYPES = Object.keys(PIECES);
+
+    let grid, piece, score, lines, level, gameOver, paused, running;
+    let dropTimer = null, dropInterval = 800;
+
+    function newGrid() {
+        return Array.from({ length: ROWS }, () => new Array(COLS).fill(null));
+    }
+
+    function newPiece() {
+        const type = TYPES[Math.floor(Math.random() * TYPES.length)];
+        const def = PIECES[type];
+        return {
+            shape: def.shape.map(row => row.slice()),
+            color: def.color,
+            x: Math.floor((COLS - def.shape[0].length) / 2),
+            y: 0
+        };
+    }
+
+    function reset() {
+        grid = newGrid();
+        piece = newPiece();
+        score = 0; lines = 0; level = 1;
+        gameOver = false; paused = false; running = false;
+        dropInterval = 800;
+        scoreEl.textContent = 0;
+        linesEl.textContent = 0;
+        levelEl.textContent = 1;
+        draw();
+        showOverlay('READY?', 'Arrows: move/rotate/soft-drop.', 'Space: hard drop.');
+    }
+
+    function start() {
+        if (gameOver) reset();
+        running = true; paused = false;
+        hideOverlay();
+        scheduleDrop();
+    }
+
+    function collides(shape, x, y) {
+        for (let r = 0; r < shape.length; r++) {
+            for (let c = 0; c < shape[r].length; c++) {
+                if (!shape[r][c]) continue;
+                const gx = x + c, gy = y + r;
+                if (gx < 0 || gx >= COLS || gy >= ROWS) return true;
+                if (gy >= 0 && grid[gy][gx]) return true;
+            }
+        }
+        return false;
+    }
+
+    function mergePiece() {
+        for (let r = 0; r < piece.shape.length; r++) {
+            for (let c = 0; c < piece.shape[r].length; c++) {
+                if (piece.shape[r][c]) {
+                    const gy = piece.y + r;
+                    if (gy < 0) { return onGameOver(); }
+                    grid[gy][piece.x + c] = piece.color;
+                }
+            }
+        }
+        clearLines();
+        piece = newPiece();
+        if (collides(piece.shape, piece.x, piece.y)) onGameOver();
+    }
+
+    function clearLines() {
+        let cleared = 0;
+        for (let r = ROWS - 1; r >= 0; r--) {
+            if (grid[r].every(v => v !== null)) {
+                grid.splice(r, 1);
+                grid.unshift(new Array(COLS).fill(null));
+                cleared++;
+                r++;
+            }
+        }
+        if (cleared > 0) {
+            const pts = [0, 40, 100, 300, 1200][cleared] * level;
+            score += pts;
+            lines += cleared;
+            scoreEl.textContent = score;
+            linesEl.textContent = lines;
+            const newLevel = Math.floor(lines / 10) + 1;
+            if (newLevel !== level) {
+                level = newLevel;
+                levelEl.textContent = level;
+                dropInterval = Math.max(80, 800 - (level - 1) * 60);
+            }
+        }
+    }
+
+    function tryMove(dx, dy) {
+        if (!collides(piece.shape, piece.x + dx, piece.y + dy)) {
+            piece.x += dx; piece.y += dy;
+            draw();
+            return true;
+        }
+        return false;
+    }
+
+    function rotate() {
+        const shape = piece.shape;
+        const rotated = shape[0].map((_, i) => shape.map(row => row[i]).reverse());
+        // Wall kick — try offsets
+        for (const dx of [0, -1, 1, -2, 2]) {
+            if (!collides(rotated, piece.x + dx, piece.y)) {
+                piece.shape = rotated;
+                piece.x += dx;
+                draw();
+                return;
+            }
+        }
+    }
+
+    function softDrop() {
+        if (!tryMove(0, 1)) mergePiece();
+        draw();
+    }
+
+    function hardDrop() {
+        while (!collides(piece.shape, piece.x, piece.y + 1)) {
+            piece.y++;
+            score += 2;
+        }
+        mergePiece();
+        scoreEl.textContent = score;
+        draw();
+    }
+
+    function scheduleDrop() {
+        clearTimeout(dropTimer);
+        if (!running || paused || gameOver) return;
+        dropTimer = setTimeout(() => { softDrop(); scheduleDrop(); }, dropInterval);
+    }
+
+    function onGameOver() {
+        gameOver = true; running = false;
+        if (score > best) { best = score; localStorage.setItem(STORAGE_KEY, String(best)); bestEl.textContent = best; }
+        showOverlay('GAME OVER', 'Score: ' + score + ' | Lines: ' + lines, 'Press PLAY to try again.');
+    }
+
+    function draw() {
+        // Background
+        ctx.fillStyle = '#0a0515';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        // Grid lines
+        ctx.strokeStyle = 'rgba(224, 64, 251, 0.08)';
+        ctx.lineWidth = 1;
+        for (let x = 1; x < COLS; x++) {
+            ctx.beginPath(); ctx.moveTo(x * CELL, 0); ctx.lineTo(x * CELL, ROWS * CELL); ctx.stroke();
+        }
+        for (let y = 1; y < ROWS; y++) {
+            ctx.beginPath(); ctx.moveTo(0, y * CELL); ctx.lineTo(COLS * CELL, y * CELL); ctx.stroke();
+        }
+        // Locked cells
+        for (let r = 0; r < ROWS; r++) {
+            for (let c = 0; c < COLS; c++) {
+                const v = grid[r][c];
+                if (v) drawCell(c, r, v);
+            }
+        }
+        // Ghost (where piece would land)
+        if (!gameOver && running) {
+            let ghostY = piece.y;
+            while (!collides(piece.shape, piece.x, ghostY + 1)) ghostY++;
+            ctx.globalAlpha = 0.25;
+            for (let r = 0; r < piece.shape.length; r++) {
+                for (let c = 0; c < piece.shape[r].length; c++) {
+                    if (piece.shape[r][c]) drawCell(piece.x + c, ghostY + r, piece.color);
+                }
+            }
+            ctx.globalAlpha = 1;
+        }
+        // Active piece
+        for (let r = 0; r < piece.shape.length; r++) {
+            for (let c = 0; c < piece.shape[r].length; c++) {
+                if (piece.shape[r][c]) drawCell(piece.x + c, piece.y + r, piece.color);
+            }
+        }
+    }
+
+    function drawCell(cx, cy, color) {
+        const x = cx * CELL, y = cy * CELL;
+        ctx.fillStyle = color;
+        ctx.fillRect(x + 1, y + 1, CELL - 2, CELL - 2);
+        // Highlight
+        ctx.fillStyle = 'rgba(255,255,255,0.3)';
+        ctx.fillRect(x + 2, y + 2, CELL - 4, 3);
+        ctx.fillStyle = 'rgba(0,0,0,0.3)';
+        ctx.fillRect(x + 2, y + CELL - 5, CELL - 4, 3);
+    }
+
+    function showOverlay(title, s1, s2) {
+        overlayTitle.textContent = title;
+        overlaySub1.textContent = s1 || '';
+        overlaySub2.textContent = s2 || '';
+        overlaySub1.style.display = s1 ? 'block' : 'none';
+        overlaySub2.style.display = s2 ? 'block' : 'none';
+        overlay.classList.add('active');
+    }
+    function hideOverlay() { overlay.classList.remove('active'); }
+
+    document.addEventListener('keydown', e => {
+        const k = e.key.toLowerCase();
+        if (!running && k === ' ') { start(); e.preventDefault(); return; }
+        if (!running || paused) {
+            if (k === 'p' && running) { paused = false; hideOverlay(); scheduleDrop(); }
+            return;
+        }
+        if (k === 'arrowleft' || k === 'a') { tryMove(-1, 0); e.preventDefault(); }
+        else if (k === 'arrowright' || k === 'd') { tryMove(1, 0); e.preventDefault(); }
+        else if (k === 'arrowdown' || k === 's') { softDrop(); e.preventDefault(); }
+        else if (k === 'arrowup' || k === 'w') { rotate(); e.preventDefault(); }
+        else if (k === ' ') { hardDrop(); e.preventDefault(); }
+        else if (k === 'p') {
+            paused = !paused;
+            if (paused) showOverlay('PAUSED', 'Press P to resume.', '');
+            else { hideOverlay(); scheduleDrop(); }
+        }
+    });
+
+    document.querySelectorAll('.arcade-dpad-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            if (!running) { start(); return; }
+            const d = btn.dataset.dir;
+            if (d === 'left') tryMove(-1, 0);
+            else if (d === 'right') tryMove(1, 0);
+            else if (d === 'down') softDrop();
+            else if (d === 'rot') rotate();
+        });
+    });
+
+    document.getElementById('playBtn').addEventListener('click', start);
+    document.getElementById('dropBtn').addEventListener('click', () => { if (running && !paused) hardDrop(); });
+    document.getElementById('pauseBtn').addEventListener('click', () => {
+        if (!running) { start(); return; }
+        paused = !paused;
+        if (paused) showOverlay('PAUSED', 'Press P to resume.', '');
+        else { hideOverlay(); scheduleDrop(); }
+    });
+    document.getElementById('restartBtn').addEventListener('click', () => { reset(); start(); });
+
+    reset();
+})();
+</script>
+</body>
+</html>

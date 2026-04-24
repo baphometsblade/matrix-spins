@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <title>Memory Match — Matrix Spins Arcade</title>
+    <meta name="description" content="Classic memory card-matching.">
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+    <link rel="stylesheet" href="arcade.css">
+    <style>
+        .mem-board {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 8px;
+            background: rgba(0,0,0,0.5);
+            border: 2px solid rgba(224, 64, 251, 0.4);
+            border-radius: 14px;
+            padding: 12px;
+            box-shadow: 0 0 40px rgba(224, 64, 251, 0.15), inset 0 0 40px rgba(0,0,0,0.5);
+            width: min(480px, 100%);
+            aspect-ratio: 4/5;
+            margin-bottom: 12px;
+        }
+        .mem-card {
+            background: linear-gradient(135deg, #1a0e2e 0%, #0a0515 100%);
+            border: 2px solid rgba(224, 64, 251, 0.4);
+            border-radius: 12px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: clamp(28px, 6vw, 52px);
+            user-select: none;
+            transition: transform 0.35s, background 0.35s, border-color 0.35s;
+            transform-style: preserve-3d;
+            position: relative;
+        }
+        .mem-card.flipped {
+            background: linear-gradient(135deg, #e040fb 0%, #7c3aed 100%);
+            border-color: #ffccf7;
+            transform: rotateY(180deg);
+        }
+        .mem-card.flipped .mem-face {
+            transform: rotateY(180deg);
+        }
+        .mem-face {
+            transition: transform 0.35s;
+        }
+        .mem-card.matched {
+            background: linear-gradient(135deg, #00d47a 0%, #00a060 100%);
+            border-color: #a3f0c0;
+            cursor: default;
+        }
+        .mem-card:not(.flipped):hover {
+            border-color: #e040fb;
+            transform: translateY(-2px);
+        }
+    </style>
+</head>
+<body>
+    <div class="arcade-header">
+        <a class="arcade-back" href="/#arcade">&larr; Arcade</a>
+        <div class="arcade-title">MEMORY MATCH</div>
+        <div style="width: 90px"></div>
+    </div>
+
+    <div class="arcade-scoreboard">
+        <div class="arcade-score-chip">
+            <div class="arcade-score-label">Moves</div>
+            <div class="arcade-score-value" id="moves">0</div>
+        </div>
+        <div class="arcade-score-chip">
+            <div class="arcade-score-label">Time</div>
+            <div class="arcade-score-value" id="timer">0:00</div>
+        </div>
+        <div class="arcade-score-chip">
+            <div class="arcade-score-label">Best</div>
+            <div class="arcade-score-value" id="best">--</div>
+        </div>
+    </div>
+
+    <div class="mem-board" id="board"></div>
+
+    <div class="arcade-controls">
+        <button class="arcade-btn secondary" id="restartBtn">New Game</button>
+    </div>
+
+    <p class="arcade-help">
+        Flip two matching symbols &middot; clear the board in the fewest moves / shortest time
+    </p>
+
+<script>
+(function () {
+    'use strict';
+    const board = document.getElementById('board');
+    const movesEl = document.getElementById('moves');
+    const timerEl = document.getElementById('timer');
+    const bestEl = document.getElementById('best');
+    const restartBtn = document.getElementById('restartBtn');
+
+    const STORAGE_KEY = 'arcade_memory_best';
+
+    const SYMBOLS = ['\u2660', '\u2665', '\u2666', '\u2663',
+                     '\u2728', '\u26a1', '\u2605', '\u263d',
+                     '\u2600', '\u2602', '\u2618', '\u2692'];
+    const PAIRS = 8;  // 8 pairs = 16 cards = 4x4 grid
+
+    let cards = [];     // DOM references
+    let firstSel = null;
+    let lock = false;
+    let moves = 0;
+    let matchedCount = 0;
+    let startTime = 0;
+    let timerId = null;
+
+    function loadBest() {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (!raw) { bestEl.textContent = '--'; return null; }
+        try {
+            const best = JSON.parse(raw);
+            bestEl.textContent = best.moves + 'm / ' + formatTime(best.seconds);
+            return best;
+        } catch (_) { bestEl.textContent = '--'; return null; }
+    }
+
+    function saveBest(moves, seconds) {
+        const current = loadBest();
+        const better = !current || moves < current.moves || (moves === current.moves && seconds < current.seconds);
+        if (better) {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify({ moves, seconds }));
+            loadBest();
+            return true;
+        }
+        return false;
+    }
+
+    function formatTime(s) {
+        const m = Math.floor(s / 60);
+        const ss = s % 60;
+        return m + ':' + String(ss).padStart(2, '0');
+    }
+
+    function shuffle(a) {
+        for (let i = a.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [a[i], a[j]] = [a[j], a[i]];
+        }
+        return a;
+    }
+
+    function newGame() {
+        board.replaceChildren();
+        cards = [];
+        firstSel = null;
+        lock = false;
+        moves = 0;
+        matchedCount = 0;
+        movesEl.textContent = 0;
+        timerEl.textContent = '0:00';
+        clearInterval(timerId);
+        timerId = null;
+        startTime = 0;
+
+        const deck = [];
+        const pickedSyms = shuffle(SYMBOLS.slice()).slice(0, PAIRS);
+        pickedSyms.forEach(s => { deck.push(s); deck.push(s); });
+        shuffle(deck);
+
+        deck.forEach((sym, idx) => {
+            const card = document.createElement('button');
+            card.className = 'mem-card';
+            card.type = 'button';
+            card.dataset.symbol = sym;
+            card.dataset.index = idx;
+            card.setAttribute('aria-label', 'Card ' + (idx + 1));
+            const face = document.createElement('span');
+            face.className = 'mem-face';
+            face.textContent = '';
+            card.appendChild(face);
+            card.addEventListener('click', () => onCard(card));
+            board.appendChild(card);
+            cards.push(card);
+        });
+    }
+
+    function startTimer() {
+        if (timerId) return;
+        startTime = Date.now();
+        timerId = setInterval(() => {
+            const s = Math.floor((Date.now() - startTime) / 1000);
+            timerEl.textContent = formatTime(s);
+        }, 1000);
+    }
+
+    function onCard(card) {
+        if (lock) return;
+        if (card.classList.contains('flipped') || card.classList.contains('matched')) return;
+
+        startTimer();
+        const face = card.querySelector('.mem-face');
+        face.textContent = card.dataset.symbol;
+        card.classList.add('flipped');
+
+        if (!firstSel) {
+            firstSel = card;
+            return;
+        }
+        moves++;
+        movesEl.textContent = moves;
+
+        if (firstSel.dataset.symbol === card.dataset.symbol) {
+            firstSel.classList.add('matched');
+            card.classList.add('matched');
+            firstSel = null;
+            matchedCount++;
+            if (matchedCount >= PAIRS) return win();
+        } else {
+            lock = true;
+            const a = firstSel, b = card;
+            firstSel = null;
+            setTimeout(() => {
+                a.classList.remove('flipped');
+                b.classList.remove('flipped');
+                a.querySelector('.mem-face').textContent = '';
+                b.querySelector('.mem-face').textContent = '';
+                lock = false;
+            }, 750);
+        }
+    }
+
+    function win() {
+        clearInterval(timerId);
+        timerId = null;
+        const seconds = startTime ? Math.floor((Date.now() - startTime) / 1000) : 0;
+        const newBest = saveBest(moves, seconds);
+        setTimeout(() => {
+            const msg = newBest ? '\u{1F3C6} New personal best!' : 'Nice run!';
+            alert(msg + '\nMoves: ' + moves + '\nTime: ' + formatTime(seconds));
+        }, 300);
+    }
+
+    restartBtn.addEventListener('click', newGame);
+
+    loadBest();
+    newGame();
+})();
+</script>
+</body>
+</html>

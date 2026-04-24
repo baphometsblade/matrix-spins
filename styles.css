@@ -1802,6 +1802,97 @@
             transition: filter 400ms ease-out;
         }
 
+        /* ═══════════════════════════════════════════════════════════
+           Lobby Arcade Section — 5 freeware mini-games at page bottom
+           ═══════════════════════════════════════════════════════════ */
+        .lobby-arcade-section {
+            max-width: 1400px;
+            margin: 48px auto 24px;
+            padding: 32px 16px;
+            border-top: 1px solid rgba(224, 64, 251, 0.18);
+            position: relative;
+        }
+        .lobby-arcade-section::before {
+            content: '';
+            position: absolute;
+            top: -1px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 200px;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, #e040fb, transparent);
+        }
+        .lobby-arcade-header {
+            text-align: center;
+            margin-bottom: 24px;
+        }
+        .lobby-arcade-title {
+            font-size: clamp(24px, 4vw, 36px);
+            font-weight: 900;
+            letter-spacing: 4px;
+            margin: 0 0 8px;
+            background: linear-gradient(135deg, #e040fb 0%, #00d4ff 100%);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+        }
+        .lobby-arcade-sub {
+            color: rgba(232, 224, 255, 0.6);
+            font-size: 14px;
+            margin: 0;
+        }
+        .lobby-arcade-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+            gap: 14px;
+            max-width: 1100px;
+            margin: 0 auto;
+        }
+        .lobby-arcade-tile {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            aspect-ratio: 4/3;
+            border-radius: 14px;
+            border: 1px solid rgba(224, 64, 251, 0.3);
+            text-decoration: none;
+            color: #fff;
+            transition: all 0.2s;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+        }
+        .lobby-arcade-tile::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: radial-gradient(ellipse at 50% 30%, rgba(255,255,255,0.08), transparent 60%);
+            pointer-events: none;
+        }
+        .lobby-arcade-tile:hover {
+            border-color: #e040fb;
+            transform: translateY(-3px);
+            box-shadow: 0 10px 24px rgba(224, 64, 251, 0.3);
+        }
+        .lobby-arcade-emoji {
+            font-size: clamp(44px, 7vw, 64px);
+            margin-bottom: 8px;
+            filter: drop-shadow(0 4px 12px rgba(0,0,0,0.5));
+        }
+        .lobby-arcade-name {
+            font-size: 14px;
+            font-weight: 700;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            color: rgba(255,255,255,0.9);
+        }
+        .tile-snake    { background: linear-gradient(135deg, #0a2e1a, #051a0e); }
+        .tile-breakout { background: linear-gradient(135deg, #2e0a2e, #1a051a); }
+        .tile-2048     { background: linear-gradient(135deg, #2e1a0a, #1a0e05); }
+        .tile-memory   { background: linear-gradient(135deg, #0a1a2e, #05101a); }
+        .tile-tetris   { background: linear-gradient(135deg, #2e0a1a, #1a0510); }
+
         /* Premium: Spinning column glow aura — uses opacity-animated pseudo-element
            to avoid continuous box-shadow repaint on the main thread */
         .reel-column.spinning { position: relative; }

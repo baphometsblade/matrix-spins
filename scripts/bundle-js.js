@@ -358,6 +358,18 @@ function copyStaticAssets() {
         });
         log(`Copied ${sharedFiles.length} files from games/_shared/`);
     }
+
+    // Copy arcade/ — self-contained HTML mini-games (Snake, Tetris, 2048, etc.)
+    const arcadeSrc = path.join(ROOT_DIR, 'arcade');
+    const arcadeDst = path.join(DIST_DIR, 'arcade');
+    if (fs.existsSync(arcadeSrc)) {
+        if (!fs.existsSync(arcadeDst)) fs.mkdirSync(arcadeDst, { recursive: true });
+        const arcadeFiles = fs.readdirSync(arcadeSrc).filter(f => /\.(html|css|js|png|svg|webp)$/.test(f));
+        arcadeFiles.forEach(file => {
+            fs.copyFileSync(path.join(arcadeSrc, file), path.join(arcadeDst, file));
+        });
+        log(`Copied ${arcadeFiles.length} files from arcade/`);
+    }
 }
 
 /**
@@ -397,8 +409,9 @@ async function minifyCSS(cssFileName) {
 
         return { minFile: minFileName, originalSize, minSize, savings };
     } catch (err) {
-        warn(`CSS minification skipped (clean-css not available): ${err.message}`);
-        return null;
+        console.error(`[BUNDLE] FATAL: CSS minification failed (clean-css missing or broken): ${err.message}`);
+        console.error('[BUNDLE]   Fix: npm install --save-dev clean-css');
+        process.exit(1);
     }
 }
 
@@ -453,8 +466,9 @@ async function minifyBundle(bundleFileName) {
             savings
         };
     } catch (err) {
-        warn(`Minification skipped (terser not available): ${err.message}`);
-        return null;
+        console.error(`[BUNDLE] FATAL: JS minification failed (terser missing or broken): ${err.message}`);
+        console.error('[BUNDLE]   Fix: npm install --save-dev terser');
+        process.exit(1);
     }
 }
 

@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <title>Arcade — Matrix Spins</title>
+    <meta name="description" content="Free classic arcade games — Snake, Tetris, Breakout, 2048, Memory Match. Play for fun, no signup.">
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+    <link rel="stylesheet" href="arcade.css">
+    <style>
+        .arcade-lobby {
+            width: 100%;
+            max-width: 1100px;
+            padding: 0 16px;
+        }
+        .arcade-lobby h1 {
+            text-align: center;
+            font-size: clamp(28px, 5vw, 44px);
+            font-weight: 900;
+            letter-spacing: 3px;
+            background: linear-gradient(135deg, #e040fb 0%, #00d4ff 100%);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            margin-bottom: 8px;
+        }
+        .arcade-sub {
+            text-align: center;
+            color: rgba(232, 224, 255, 0.65);
+            font-size: 15px;
+            margin-bottom: 28px;
+        }
+        .arcade-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+            gap: 18px;
+            margin-bottom: 40px;
+        }
+        .arcade-tile {
+            display: block;
+            background: linear-gradient(135deg, #1a0e2e 0%, #0a0515 100%);
+            border: 1px solid rgba(224, 64, 251, 0.3);
+            border-radius: 14px;
+            padding: 0;
+            overflow: hidden;
+            text-decoration: none;
+            color: inherit;
+            transition: all 0.2s;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+        }
+        .arcade-tile:hover {
+            border-color: #e040fb;
+            transform: translateY(-4px);
+            box-shadow: 0 12px 28px rgba(224, 64, 251, 0.3);
+        }
+        .arcade-tile-art {
+            aspect-ratio: 4/3;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 88px;
+            position: relative;
+            overflow: hidden;
+        }
+        .arcade-tile-art::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: radial-gradient(ellipse at top, transparent, rgba(0,0,0,0.5) 100%);
+        }
+        .arcade-tile-body {
+            padding: 14px 16px 18px;
+            border-top: 1px solid rgba(224, 64, 251, 0.15);
+        }
+        .arcade-tile-name {
+            font-size: 18px;
+            font-weight: 800;
+            letter-spacing: 0.5px;
+            margin-bottom: 4px;
+        }
+        .arcade-tile-desc {
+            font-size: 12px;
+            color: rgba(232, 224, 255, 0.55);
+            line-height: 1.45;
+        }
+        .tile-snake    { background: linear-gradient(135deg, #0a2e1a, #051a0e); }
+        .tile-breakout { background: linear-gradient(135deg, #2e0a2e, #1a051a); }
+        .tile-2048     { background: linear-gradient(135deg, #2e1a0a, #1a0e05); }
+        .tile-memory   { background: linear-gradient(135deg, #0a1a2e, #05101a); }
+        .tile-tetris   { background: linear-gradient(135deg, #2e0a1a, #1a0510); }
+    </style>
+</head>
+<body>
+    <div class="arcade-header">
+        <a class="arcade-back" href="/">&larr; Casino</a>
+        <div class="arcade-title">ARCADE</div>
+        <div style="width: 90px"></div>
+    </div>
+
+    <div class="arcade-lobby">
+        <h1>CLASSIC ARCADE</h1>
+        <p class="arcade-sub">Free. No signup. Just play.</p>
+
+        <div class="arcade-grid">
+            <a class="arcade-tile" href="snake.html">
+                <div class="arcade-tile-art tile-snake">&#128013;</div>
+                <div class="arcade-tile-body">
+                    <div class="arcade-tile-name">Snake</div>
+                    <div class="arcade-tile-desc">Eat the apples, grow, don't hit yourself.</div>
+                </div>
+            </a>
+            <a class="arcade-tile" href="breakout.html">
+                <div class="arcade-tile-art tile-breakout">&#128640;</div>
+                <div class="arcade-tile-body">
+                    <div class="arcade-tile-name">Breakout</div>
+                    <div class="arcade-tile-desc">Bounce the ball, smash every brick.</div>
+                </div>
+            </a>
+            <a class="arcade-tile" href="2048.html">
+                <div class="arcade-tile-art tile-2048">&#127937;</div>
+                <div class="arcade-tile-body">
+                    <div class="arcade-tile-name">2048</div>
+                    <div class="arcade-tile-desc">Combine matching tiles. Reach 2048.</div>
+                </div>
+            </a>
+            <a class="arcade-tile" href="memory.html">
+                <div class="arcade-tile-art tile-memory">&#127183;</div>
+                <div class="arcade-tile-body">
+                    <div class="arcade-tile-name">Memory Match</div>
+                    <div class="arcade-tile-desc">Flip two cards, find the pairs.</div>
+                </div>
+            </a>
+            <a class="arcade-tile" href="tetris.html">
+                <div class="arcade-tile-art tile-tetris">&#129513;</div>
+                <div class="arcade-tile-body">
+                    <div class="arcade-tile-name">Tetris</div>
+                    <div class="arcade-tile-desc">Stack the falling blocks, clear lines.</div>
+                </div>
+            </a>
+        </div>
+    </div>
+</body>
+</html>
