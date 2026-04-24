@@ -1,5 +1,5 @@
 /* Royal Slots Casino - Bundled JavaScript */
-/* Generated: 2026-04-24T14:02:48.178Z */
+/* Generated: 2026-04-24T14:59:38.959Z */
 
 
 /* â”€â”€â”€ shared/game-definitions.js (2/56) â”€â”€â”€ */
@@ -60132,6 +60132,7 @@ setInterval(function() {
                 '/api/user/loss-streak-offer',
                 '/api/user/self-exclude',
                 '/api/user/self-exclusion',
+                '/api/user/loss-limit',
                 '/api/slot/',                 // server-authoritative slot engine
                 '/api/withdrawal',             // user-side cash-out
                 '/api/withdrawal/',

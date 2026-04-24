@@ -199,6 +199,7 @@ router.get('/export.json', authenticate, async (req, res) => {
         const user = await db.get(
             `SELECT id, username, email, display_name, date_of_birth, balance_cents, is_admin,
                     deposit_limit_daily_cents, deposit_limit_weekly_cents, deposit_limit_monthly_cents,
+                    loss_limit_daily_cents,
                     created_at
                FROM users WHERE id = ?`,
             [req.user.id]
@@ -474,6 +475,74 @@ router.get('/self-exclusion', authenticate, async (req, res) => {
     } catch (err) {
         console.error('[user/self-exclusion]', err);
         res.status(500).json({ error: 'Failed to fetch self-exclusion.' });
+    }
+});
+
+/**
+ * Daily loss limit (responsible-gambling).
+ *
+ * GET  /api/user/loss-limit
+ *     { limit_cents, used_cents, remaining_cents, reset_at }
+ *
+ * PUT  /api/user/loss-limit { daily_cents }
+ *     Decreases apply immediately. Increases (and moves from a real
+ *     cap back to 0/unlimited) are rejected — same cooling-off
+ *     policy as the deposit-limit endpoint.
+ */
+const LOSS_LIMIT_MAX_CENTS = 10000 * 100; // $10,000
+const LOSS_WINDOW_SEC = 86400;
+
+router.get('/loss-limit', authenticate, async (req, res) => {
+    try {
+        const row = await db.get('SELECT loss_limit_daily_cents FROM users WHERE id = ?', [req.user.id]);
+        if (!row) return res.status(404).json({ error: 'User not found.' });
+        const limit = Number(row.loss_limit_daily_cents || 0);
+        const engine = require('../services/slot-engine.service');
+        const { used, oldestAt } = await engine.sumNetLossSince(req.user.id, LOSS_WINDOW_SEC);
+        const resetAt = oldestAt
+            ? new Date(Date.parse(oldestAt) + LOSS_WINDOW_SEC * 1000).toISOString()
+            : new Date(Date.now() + LOSS_WINDOW_SEC * 1000).toISOString();
+        res.json({
+            limit_cents: limit,
+            used_cents: used,
+            remaining_cents: limit > 0 ? Math.max(0, limit - used) : null,
+            reset_at: resetAt,
+        });
+    } catch (err) {
+        console.error('[user/loss-limit GET]', err);
+        res.status(500).json({ error: 'Failed to fetch loss limit.' });
+    }
+});
+
+router.put('/loss-limit', authenticate, async (req, res) => {
+    const { daily_cents } = req.body || {};
+    const n = Number(daily_cents);
+    if (!Number.isFinite(n) || n < 0 || n > LOSS_LIMIT_MAX_CENTS || Math.round(n) !== n) {
+        return res.status(400).json({
+            error: 'daily_cents must be an integer between 0 and ' + LOSS_LIMIT_MAX_CENTS + '.',
+        });
+    }
+    try {
+        const cur = await db.get('SELECT loss_limit_daily_cents FROM users WHERE id = ?', [req.user.id]);
+        if (!cur) return res.status(404).json({ error: 'User not found.' });
+        const current = Number(cur.loss_limit_daily_cents || 0);
+        if (n === current) return res.json({ limit_cents: current, note: 'No change.' });
+        // Decreases: a real non-zero cap moving down to a smaller non-zero
+        // cap. Moving from some cap to 0 (unlimited) or from 0 to anything
+        // non-zero are both "increases" (weakening the gate). Reject.
+        const isDecrease = current !== 0 && n !== 0 && n < current;
+        if (!isDecrease) {
+            return res.status(403).json({
+                error: 'Loss-limit increases require a 24-hour cooling-off period and must be applied by an operator. Only decreases take effect immediately.',
+                code: 'increase_rejected',
+                current_cents: current,
+            });
+        }
+        await db.run('UPDATE users SET loss_limit_daily_cents = ? WHERE id = ?', [n, req.user.id]);
+        res.json({ limit_cents: n, note: 'Limit decreased.' });
+    } catch (err) {
+        console.error('[user/loss-limit PUT]', err);
+        res.status(500).json({ error: 'Failed to update loss limit.' });
     }
 });
 

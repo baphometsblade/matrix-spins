@@ -198,6 +198,13 @@ async function migrate() {
     // deposit. Once set, it can only be shortened by an operator (never
     // by the user themselves) — encoded in the self-exclude route.
     await addColumnIfMissing('users', 'self_excluded_until', driver.kind === 'pg' ? 'TIMESTAMPTZ' : 'TEXT');
+
+    // Responsible-gambling loss limit. 0 = unlimited. Enforced over a
+    // rolling 24h window of slot_rounds in the engine's spin() gate.
+    // Decreases apply immediately; increases are rejected (same policy
+    // as the deposit-limit columns above). See
+    // server/routes/user.routes.js GET/PUT /api/user/loss-limit.
+    await addColumnIfMissing('users', 'loss_limit_daily_cents', driver.kind === 'pg' ? 'BIGINT NOT NULL DEFAULT 0' : 'INTEGER NOT NULL DEFAULT 0');
     // token_version bumps invalidate every JWT issued before the bump
     // (e.g. password change, 2FA disable, admin-triggered revoke).
     await addColumnIfMissing('users', 'token_version', driver.kind === 'pg' ? 'INTEGER NOT NULL DEFAULT 0' : 'INTEGER NOT NULL DEFAULT 0');
@@ -382,6 +389,12 @@ async function migrate() {
         );
     `);
     await driver.exec(`CREATE INDEX IF NOT EXISTS idx_slot_rounds_user ON slot_rounds (user_id, id DESC);`);
+    // Supports the rolling-window loss-limit aggregate in
+    // server/services/slot-engine.service.js:sumNetLossSince. The
+    // (user_id, id) index above would narrow to one user's rows but
+    // then still scan them for the created_at predicate; (user_id,
+    // created_at) serves the range filter directly.
+    await driver.exec(`CREATE INDEX IF NOT EXISTS idx_slot_rounds_user_created ON slot_rounds (user_id, created_at);`);
 
     // Holds the CURRENT unused commit for each user. On each spin we
     // consume this row (revealing the seed to the user in the response)

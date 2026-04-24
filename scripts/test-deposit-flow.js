@@ -1559,6 +1559,130 @@ async function main() {
         console.log('[test] slot kill switch: admin pause → 503 slot_paused with reason; resume → 200; non-admin + bad key + bad shape rejected');
     }
 
+    // ═══ Daily loss limit ═══════════════════════════════════════════════════
+    // Responsible-gambling gate: user sets a max cumulative net loss per
+    // rolling 24h; the 11th losing spin at $1 against a $10 cap should
+    // fail. A mid-session win relieves the gate. Increases are rejected.
+    //
+    // This block runs late in the suite, after the per-IP auth rate limit
+    // has been exhausted by dozens of earlier registrations. Seeding the
+    // test users directly via INSERT + signToken bypasses the rate
+    // limiter without changing production config.
+    {
+        const { signToken } = require('../server/middleware/auth');
+        async function seedUser(name) {
+            const hash = await require('bcryptjs').hash('Str0ngP@ss!!', 10);
+            await db.run(
+                'INSERT INTO users (username, email, password_hash, date_of_birth, email_verified, balance_cents) VALUES (?, ?, ?, ?, 1, ?)',
+                [name, name + '@example.com', hash, '1990-01-01', 1000000]
+            );
+            const row = await db.get('SELECT id, username, is_admin, token_version FROM users WHERE username = ?', [name]);
+            return { id: row.id, username: row.username, token: signToken(row) };
+        }
+
+        const llUser = 'll_' + Date.now();
+        const seeded = await seedUser(llUser);
+        const llToken = seeded.token;
+        const llId = seeded.id;
+        const llCsrf = (await http('GET', '/api/csrf-token', { token: llToken })).body.csrfToken;
+
+        // Default is 0 (unlimited).
+        const def = await http('GET', '/api/user/loss-limit', { token: llToken });
+        assert.strictEqual(def.status, 200);
+        assert.strictEqual(def.body.limit_cents, 0);
+        assert.strictEqual(def.body.used_cents, 0);
+
+        // Bad input rejected.
+        const bad = await http('PUT', '/api/user/loss-limit', {
+            token: llToken, csrf: llCsrf, body: { daily_cents: -1 },
+        });
+        assert.strictEqual(bad.status, 400);
+
+        // Moving from 0 to anything non-zero is an "increase" (weakening
+        // the gate from infinity) and must be rejected. To set an initial
+        // cap we write it directly; matches how deposit limits default
+        // to the app's policy rather than being user-initialized.
+        const initReject = await http('PUT', '/api/user/loss-limit', {
+            token: llToken, csrf: llCsrf, body: { daily_cents: 1000 },
+        });
+        assert.strictEqual(initReject.status, 403);
+        await db.run('UPDATE users SET loss_limit_daily_cents = ? WHERE id = ?', [1000, llId]);
+
+        // Seed 10 losing rounds ($1 each) in the last 24h. 11th spin should
+        // trip the gate: used=1000, bet=100, 1000+100>1000.
+        for (let i = 0; i < 10; i++) {
+            await db.run(
+                `INSERT INTO slot_rounds
+                 (user_id, game_id, bet_cents, win_cents, balance_after_cents,
+                  server_seed, server_seed_hash, client_seed, nonce, outcome_json)
+                 VALUES (?, 'classic_777', 100, 0, 0, 'x', 'y', 'z', ?, '{}')`,
+                [llId, i + 1]
+            );
+        }
+        const state = await http('GET', '/api/user/loss-limit', { token: llToken });
+        assert.strictEqual(state.body.used_cents, 1000);
+        assert.strictEqual(state.body.remaining_cents, 0);
+
+        const trip = await http('POST', '/api/slot/spin', {
+            token: llToken, csrf: llCsrf,
+            body: { game_id: 'classic_777', bet_cents: 100 },
+        });
+        assert.strictEqual(trip.status, 403, 'expected 403 loss_limit, got ' + trip.status + ': ' + trip.raw);
+        assert.strictEqual(trip.body.code, 'loss_limit_reached');
+        assert.strictEqual(trip.body.limit_cents, 1000);
+        assert.strictEqual(trip.body.used_cents, 1000);
+        assert.ok(trip.body.reset_at);
+
+        // A mid-session win relieves the gate. Insert a winning round to
+        // bring used to 500; next $1 spin must succeed.
+        await db.run(
+            `INSERT INTO slot_rounds
+             (user_id, game_id, bet_cents, win_cents, balance_after_cents,
+              server_seed, server_seed_hash, client_seed, nonce, outcome_json)
+             VALUES (?, 'classic_777', 100, 600, 0, 'x', 'y', 'z', 99, '{}')`,
+            [llId]
+        );
+        const relieved = await http('POST', '/api/slot/spin', {
+            token: llToken, csrf: llCsrf,
+            body: { game_id: 'classic_777', bet_cents: 100 },
+        });
+        assert.strictEqual(relieved.status, 200, 'spin after win-relief failed: ' + relieved.raw);
+
+        // Net-winning window clamps used to 0 (not negative).
+        const winner = await seedUser('llup_' + Date.now());
+        await db.run('UPDATE users SET loss_limit_daily_cents = ? WHERE id = ?', [1000, winner.id]);
+        await db.run(
+            `INSERT INTO slot_rounds
+             (user_id, game_id, bet_cents, win_cents, balance_after_cents,
+              server_seed, server_seed_hash, client_seed, nonce, outcome_json)
+             VALUES (?, 'classic_777', 100, 500, 0, 'x', 'y', 'z', 1, '{}')`,
+            [winner.id]
+        );
+        const up = await http('GET', '/api/user/loss-limit', { token: winner.token });
+        assert.strictEqual(up.body.used_cents, 0, 'net-winner must not have negative used');
+
+        // Decrease (1000 → 500) allowed.
+        const dec = await http('PUT', '/api/user/loss-limit', {
+            token: llToken, csrf: llCsrf, body: { daily_cents: 500 },
+        });
+        assert.strictEqual(dec.status, 200);
+
+        // Increase (500 → 5000) rejected.
+        const inc = await http('PUT', '/api/user/loss-limit', {
+            token: llToken, csrf: llCsrf, body: { daily_cents: 5000 },
+        });
+        assert.strictEqual(inc.status, 403);
+        assert.strictEqual(inc.body.code, 'increase_rejected');
+
+        // Move from real cap back to 0 (unlimited) — also an increase — rejected.
+        const zero = await http('PUT', '/api/user/loss-limit', {
+            token: llToken, csrf: llCsrf, body: { daily_cents: 0 },
+        });
+        assert.strictEqual(zero.status, 403);
+
+        console.log('[test] loss limit: cap enforced on 11th losing spin, wins relieve the gate, decreases apply, increases + unlimit rejected');
+    }
+
     console.log('\n✅ all deposit-flow assertions passed');
     main.server.close();
     await db.close();

@@ -186,6 +186,40 @@ async function publicCommit(userId) {
     return { server_seed_hash: c.server_seed_hash, nonce: Number(c.nonce) };
 }
 
+/* ───────────────────────── loss-limit helper ──────────────────────── */
+
+/**
+ * Rolling-window net loss for `userId` over the last `sinceSec` seconds.
+ *
+ * Sign convention: positive `used` = money lost in the window. A net-
+ * winning window clamps to 0 — a user who is up on the day does not
+ * "earn" headroom against their loss limit (that would defeat the
+ * purpose of the gate).
+ *
+ * Returns `oldestAt` so callers can derive a soft reset_at = that
+ * round's created_at + window. Oldest-out-ages-first is the honest
+ * read of a rolling window; at that instant the oldest contribution
+ * leaves, not the whole balance.
+ */
+async function sumNetLossSince(userId, sinceSec) {
+    const row = await db.get(
+        db.kind === 'pg'
+            ? `SELECT COALESCE(SUM(bet_cents - win_cents), 0) AS net_loss,
+                      MIN(created_at) AS oldest_at
+                 FROM slot_rounds
+                WHERE user_id = ?
+                  AND created_at >= NOW() - (? * INTERVAL '1 second')`
+            : `SELECT COALESCE(SUM(bet_cents - win_cents), 0) AS net_loss,
+                      MIN(created_at) AS oldest_at
+                 FROM slot_rounds
+                WHERE user_id = ?
+                  AND created_at >= datetime('now', ? || ' seconds')`,
+        db.kind === 'pg' ? [userId, sinceSec] : [userId, '-' + sinceSec]
+    );
+    const net = Number((row && row.net_loss) || 0);
+    return { used: Math.max(0, net), oldestAt: (row && row.oldest_at) || null };
+}
+
 /* ──────────────────────────── spin handler ────────────────────────── */
 
 async function spin({ userId, gameId, betCents, clientSeed }) {
@@ -211,6 +245,29 @@ async function spin({ userId, gameId, betCents, clientSeed }) {
         const e = new Error(`Bet must be between ${game.min_bet_cents} and ${game.max_bet_cents} cents.`);
         e.status = 400;
         throw e;
+    }
+
+    // Loss-limit gate. Runs after bet validation so absurd bets fail fast,
+    // and before the debit so we never record a round we'd have to void.
+    // Not folded into the debit UPDATE because the rolling-window aggregate
+    // would run on every spin even when the user has no limit set — this
+    // branch is skipped entirely when loss_limit_daily_cents is 0.
+    const limitRow = await db.get('SELECT loss_limit_daily_cents FROM users WHERE id = ?', [userId]);
+    const lossLimit = Number((limitRow && limitRow.loss_limit_daily_cents) || 0);
+    if (lossLimit > 0) {
+        const { used, oldestAt } = await sumNetLossSince(userId, 86400);
+        if (used + bet > lossLimit) {
+            const resetAt = oldestAt
+                ? new Date(Date.parse(oldestAt) + 86400 * 1000).toISOString()
+                : new Date(Date.now() + 86400 * 1000).toISOString();
+            const e = new Error('Daily loss limit reached.');
+            e.status = 403;
+            e.code = 'loss_limit_reached';
+            e.limit_cents = lossLimit;
+            e.used_cents = used;
+            e.reset_at = resetAt;
+            throw e;
+        }
     }
 
     // 1) Atomically debit the bet AND gate self-exclusion in a single
@@ -344,6 +401,7 @@ module.exports = {
     spin,
     listRounds,
     getRound,
+    sumNetLossSince,
     // exposed for tests — pure helpers with no side effects
     _internals: {
         sha256Hex,

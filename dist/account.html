@@ -159,6 +159,17 @@
         <button class="primary" type="submit">Save limits</button>
         <div class="msg" id="lm-msg"></div>
     </form>
+
+    <form class="card" onsubmit="event.preventDefault();saveLossLimit()">
+        <div class="label" style="margin-bottom:8px">Daily loss limit</div>
+        <p style="font-size:13px;color:#8a8a8a">Maximum net loss per rolling 24 hours. A spin is refused with <code>loss_limit_reached</code> if it would push your cumulative loss over the limit. Set <strong>0</strong> for unlimited. Decreases apply immediately; increases require operator approval and a 24-hour cool-down (server rejects and tells you).</p>
+        <div class="row"><label class="inline" for="ll-daily">Loss cap ($)</label><input type="number" id="ll-daily" min="0" step="1" placeholder="e.g. 200"></div>
+        <div id="ll-daily-used" class="msg"></div>
+        <div class="bar"><div class="bar-fill" id="ll-daily-bar"></div></div>
+        <div id="ll-reset" class="msg"></div>
+        <button class="primary" type="submit">Save loss limit</button>
+        <div class="msg" id="ll-msg"></div>
+    </form>
 </section>
 
 <section id="deposits">
@@ -403,6 +414,29 @@
             setBar('weekly',  data.used.weekly_cents,  data.limits.weekly_cents);
             setBar('monthly', data.used.monthly_cents, data.limits.monthly_cents);
         } catch (e) { /* ignore */ }
+
+        try {
+            var loss = await api('GET', '/api/user/loss-limit');
+            document.getElementById('ll-daily').value = (loss.limit_cents / 100) | 0;
+            var lossBar = document.getElementById('ll-daily-bar');
+            var pct = loss.limit_cents > 0 ? Math.min(100, (loss.used_cents / loss.limit_cents) * 100) : 0;
+            lossBar.style.width = pct.toFixed(1) + '%';
+            lossBar.className = 'bar-fill' + (pct >= 100 ? ' crit' : pct >= 75 ? ' warn' : '');
+            document.getElementById('ll-daily-used').textContent = loss.limit_cents > 0
+                ? 'Lost ' + money(loss.used_cents / 100) + ' of ' + money(loss.limit_cents / 100) + ' cap'
+                : 'No limit set (unlimited).';
+            if (loss.reset_at) {
+                var msLeft = Date.parse(loss.reset_at) - Date.now();
+                var resetEl = document.getElementById('ll-reset');
+                if (msLeft > 0 && loss.limit_cents > 0) {
+                    var h = Math.floor(msLeft / 3600000);
+                    var m = Math.floor((msLeft % 3600000) / 60000);
+                    resetEl.textContent = 'Oldest counted round ages out in ~' + h + 'h ' + m + 'm (rolling window).';
+                } else {
+                    resetEl.textContent = '';
+                }
+            }
+        } catch (e) { /* ignore */ }
     }
 
     async function loadWithdrawals() {
@@ -536,6 +570,20 @@
             document.getElementById('pw-new').value = '';
             document.getElementById('pw-confirm').value = '';
         } catch (e) { msg.className = 'msg err'; msg.textContent = e.message; }
+    };
+
+    window.saveLossLimit = async function () {
+        var msg = document.getElementById('ll-msg'); msg.className = 'msg'; msg.textContent = '';
+        try {
+            var payload = { daily_cents: Math.round(Number(document.getElementById('ll-daily').value) * 100) };
+            var res = await api('PUT', '/api/user/loss-limit', payload);
+            msg.className = 'msg ok';
+            msg.textContent = res.note || 'Saved.';
+            await loadLimits();
+        } catch (e) {
+            msg.className = 'msg err';
+            msg.textContent = e.message || 'Failed to save loss limit.';
+        }
     };
 
     window.saveLimits = async function () {

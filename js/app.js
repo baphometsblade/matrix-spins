@@ -72,6 +72,7 @@
                 '/api/user/loss-streak-offer',
                 '/api/user/self-exclude',
                 '/api/user/self-exclusion',
+                '/api/user/loss-limit',
                 '/api/slot/',                 // server-authoritative slot engine
                 '/api/withdrawal',             // user-side cash-out
                 '/api/withdrawal/',
