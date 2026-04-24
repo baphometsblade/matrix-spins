@@ -83,8 +83,30 @@ app.use(csrfMiddleware);
 
 // ─── Maintenance Mode Middleware ───
 // Checks if system is under maintenance; blocks non-admin API routes
-const { maintenanceMiddleware } = require('./middleware/maintenance');
+const { maintenanceMiddleware, getMaintenanceState } = require('./middleware/maintenance');
 app.use(maintenanceMiddleware);
+
+// Public maintenance status — js/maintenance-check.js polls this so the
+// client can show a banner without tripping the maintenance middleware itself.
+// Responds with 200 OK even when in maintenance so the client can detect it.
+app.get('/api/maintenance/status', (req, res) => {
+    try {
+        const state = getMaintenanceState();
+        // Also surface degraded-mode (PG unreachable, running SQLite fallback)
+        let degraded = false;
+        try {
+            const db = require('./database');
+            if (typeof db.isDegraded === 'function') degraded = db.isDegraded();
+        } catch (_) { /* db not initialised yet */ }
+        res.json({
+            maintenance: Boolean(state.enabled),
+            degraded,
+            message: state.enabled ? (state.message || 'System is under maintenance.') : null,
+        });
+    } catch (err) {
+        res.status(500).json({ error: 'maintenance status unavailable' });
+    }
+});
 
 // Global rate limiter
 const globalLimiter = rateLimit({
@@ -231,11 +253,19 @@ app.use('/api/admin/maintenance', maintenanceRoutes);
 app.use('/api/user', userRoutes);
 app.use('/api/user', require('./routes/lossstreak.routes'));
 app.use('/api/user', require('./routes/vipdeposit.routes'));
+app.use('/api/vipdeposit', require('./routes/vipdeposit.routes'));  // alias — js/ui-wallet.js calls /api/vipdeposit/*
 app.use('/api/user', require('./routes/comeback.routes'));
 app.use('/api/payment', paymentRoutes);
 // Stripe Checkout + canonical webhook handler (defines /payment/create-checkout
 // and /payment/webhook, so mount at /api to get /api/payment/...)
 app.use('/api', require('./routes/stripe-checkout.routes'));
+
+// Client legacy alias: js/phase5-monetise.js fetches /api/stripe-checkout/create-session.
+// Rewrite to the canonical path and forward into the normal handler chain.
+app.post('/api/stripe-checkout/create-session', (req, res, next) => {
+    req.url = '/api/payment/create-checkout';
+    app._router.handle(req, res, next);
+});
 app.use('/api/matrix-money', require('./routes/matrix-money.routes'));
 app.use('/api/crypto', require('./routes/crypto.routes'));
 app.use('/api/jackpot', jackpotRoutes);
@@ -265,6 +295,7 @@ app.use('/api/mystery',      require('./routes/mystery.routes'));
 app.use('/api/streak',       require('./routes/streak.routes'));
 app.use('/api/subscription', require('./routes/subscription.routes'));
 app.use('/api/luckyhours',    require('./routes/luckyhours.routes'));
+app.use('/api/lucky-hour',    require('./routes/luckyhours.routes'));  // alias — client UI uses both spellings
 app.use('/api/milestones',    require('./routes/milestones.routes'));
 app.use('/api/notifications', require('./routes/notifications.routes'));
 app.use('/api/freespins',     require('./routes/freespins.routes'));
