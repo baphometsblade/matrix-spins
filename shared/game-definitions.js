@@ -1,5 +1,19 @@
 // Shared Game Definitions — used by both server and client
 const games = [
+    // ── Live / server-authoritative game ────────────────────────────
+    // classic_777 is the ONLY game settled on the server today (see
+    // server/services/slot-engine.service.js). Clicking this tile opens
+    // the live-slot modal; spins debit and credit balance through real
+    // HTTP calls with commit-reveal fairness. Every other game below
+    // remains a client-side fun-mode slot until wired through.
+    { id: 'classic_777', name: 'Classic 777 (Live)', provider: 'Matrix Spins House', tag: 'LIVE', tagClass: 'tag-new', thumbnail: 'assets/thumbnails/classic_777.svg', bgGradient: 'linear-gradient(135deg, #c0392b 0%, #f1c40f 100%)',
+      symbols: ['cherry','lemon','orange','bar','seven'],
+      reelBg: 'linear-gradient(180deg, #2b0d07 0%, #1a0705 100%)', accentColor: '#f1c40f',
+      gridCols: 3, gridRows: 1, template: 'classic', winType: 'classic',
+      wildSymbol: null, scatterSymbol: null,
+      rtp: 95.2, volatility: 'high', bonusType: null, freeSpinsCount: 0, freeSpinsRetrigger: false,
+      bonusDesc: 'Classic 3-reel single-payline fruit machine. Server-authoritative spins with provably-fair commit-reveal.',
+      payouts: { cherry: 3, lemon: 10, orange: 15, bar: 60, seven: 500 }, minBet: 0.10, maxBet: 100, hot: false, jackpot: 0, liveMode: true },
     { id: 'sugar_rush', name: 'Candy Cascade 1000', provider: 'GoldenEdge Gaming', tag: 'HOT', tagClass: 'tag-hot', thumbnail: 'assets/thumbnails/sugar_rush.svg', bgGradient: 'linear-gradient(135deg, #ff6fd8 0%, #f7a531 100%)',
       symbols: ['s1_lollipop','s2_gummy_bear','s3_candy_cane','s4_cupcake','s5_diamond_candy','wild_sugar'],
       reelBg: 'linear-gradient(180deg, #3d1232 0%, #1a0a14 100%)', accentColor: '#ff6fd8',

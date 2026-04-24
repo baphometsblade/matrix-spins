@@ -13,11 +13,27 @@
     const originalFetch = window.fetch;
 
     /**
+     * Build the fetch init for /api/csrf-token. The server binds the
+     * issued token to the current authenticated user (or 'anon'); it
+     * identifies the user via the Authorization header, so we MUST
+     * forward the bearer token here — otherwise we'd cache an
+     * anon-bound token and every authed mutation would 403.
+     */
+    function csrfFetchInit() {
+        const headers = {};
+        try {
+            const tok = localStorage.getItem('casinoToken');
+            if (tok) headers['Authorization'] = 'Bearer ' + tok;
+        } catch (e) { /* storage unavailable — fall through */ }
+        return { headers: headers, credentials: 'same-origin' };
+    }
+
+    /**
      * Initialize CSRF protection (call after login)
      */
     async function init() {
         try {
-            const response = await originalFetch('/api/csrf-token');
+            const response = await originalFetch('/api/csrf-token', csrfFetchInit());
             if (!response.ok) {
                 console.warn('[CSRF] Failed to fetch initial token:', response.status);
                 return;
@@ -44,7 +60,7 @@
             Date.now() - lastTokenFetchTime > TOKEN_REFRESH_INTERVAL
         ) {
             try {
-                const response = await originalFetch('/api/csrf-token');
+                const response = await originalFetch('/api/csrf-token', csrfFetchInit());
                 if (!response.ok) {
                     console.warn('[CSRF] Failed to refresh token:', response.status);
                     return csrfToken; // Return stale token as fallback

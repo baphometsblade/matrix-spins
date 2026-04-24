@@ -9,6 +9,7 @@
     "buffalo_mega.svg",
     "buffalo_stampede.svg",
     "castle_siege.svg",
+    "classic_777.svg",
     "cleopatra_gold.svg",
     "crystal_shrine.svg",
     "dead_alive.svg",
@@ -148,6 +149,13 @@
       "s4_siege_tower.svg",
       "s5_king_knight.svg",
       "wild_sword.svg"
+    ],
+    "classic_777": [
+      "bar.svg",
+      "cherry.svg",
+      "lemon.svg",
+      "orange.svg",
+      "seven.svg"
     ],
     "cleopatra_gold": [
       "s1_lotus.svg",
@@ -598,5 +606,5 @@
       "wild_golden_ball.svg"
     ]
   },
-  "generated_at": "2026-04-24T05:50:22.686Z"
+  "generated_at": "2026-04-24T06:12:57.923Z"
 }

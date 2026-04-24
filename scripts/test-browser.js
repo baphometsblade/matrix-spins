@@ -200,6 +200,63 @@ async function main() {
             ok('registered ' + regUsername + ' and session is live (authBtn="' + who + '")');
         }
 
+        // Live slot end-to-end — open the classic_777 modal, spin once,
+        // assert a real round was persisted server-side. We credit a
+        // bankroll directly via the DB; deposit flow is exercised in
+        // the API suite, not here.
+        if (registered) {
+            const userRow = await db.get("SELECT id FROM users WHERE username = ?", [regUsername]);
+            if (userRow && userRow.id) {
+                await db.run("UPDATE users SET balance_cents = ? WHERE id = ?", [10000, userRow.id]);
+                // Dismiss any first-visit consent overlay so it does not
+                // intercept the spin-button click. Harmless if absent.
+                await page.evaluate(() => {
+                    var btn = document.getElementById('acceptTermsBtn');
+                    if (btn) btn.click();
+                    var consent = document.getElementById('first-visit-consent');
+                    if (consent && consent.parentNode) consent.parentNode.removeChild(consent);
+                });
+                await page.evaluate(() => { if (typeof window.openLiveSlot === 'function') window.openLiveSlot(); });
+                const modalUp = await page.waitForSelector('#liveSlotSpin', { state: 'visible', timeout: 5000 })
+                    .then(() => true).catch(() => false);
+                if (!modalUp) {
+                    fail('live slot modal did not open (openLiveSlot unavailable or DOM not rendered)');
+                } else {
+                    // Wait for the initial balance fetch to paint.
+                    await page.waitForFunction(
+                        () => /\$100\.00|\$10,000\.00|\$10000\.00|\$100\.00/.test(
+                            (document.getElementById('liveSlotBalance') || {}).textContent || ''
+                        ),
+                        { timeout: 5000 }
+                    ).catch(() => { /* still proceed — we check below */ });
+                    const before = await db.get("SELECT balance_cents FROM users WHERE id = ?", [userRow.id]);
+                    await page.click('#liveSlotSpin');
+                    // Wait for a settled round by polling the DB.
+                    let rounds = 0;
+                    for (let i = 0; i < 50 && rounds === 0; i++) {
+                        const row = await db.get("SELECT COUNT(*) AS n FROM slot_rounds WHERE user_id = ?", [userRow.id]);
+                        rounds = Number(row && row.n) || 0;
+                        if (rounds === 0) await new Promise(r => setTimeout(r, 100));
+                    }
+                    if (rounds < 1) {
+                        fail('live slot spin did not persist a round');
+                    } else {
+                        const after = await db.get("SELECT balance_cents FROM users WHERE id = ?", [userRow.id]);
+                        const round = await db.get("SELECT bet_cents, win_cents FROM slot_rounds WHERE user_id = ? ORDER BY id DESC LIMIT 1", [userRow.id]);
+                        const delta = Number(after.balance_cents) - Number(before.balance_cents);
+                        const expected = Number(round.win_cents) - Number(round.bet_cents);
+                        if (delta !== expected) {
+                            fail('live slot balance math: delta=' + delta + ' expected=' + expected + ' bet=' + round.bet_cents + ' win=' + round.win_cents);
+                        } else {
+                            ok('live slot: 1 round persisted, bet=' + round.bet_cents + 'c win=' + round.win_cents + 'c balance delta matches');
+                        }
+                    }
+                }
+            } else {
+                fail('could not find registered user row for live-slot test');
+            }
+        }
+
         if (consoleErrors.length) {
             // Filter out known-benign noise:
             //   - service-worker registration on a server that doesn't serve /sw.js

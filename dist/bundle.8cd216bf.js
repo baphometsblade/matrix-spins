@@ -1,10 +1,24 @@
 /* Royal Slots Casino - Bundled JavaScript */
-/* Generated: 2026-04-24T05:50:22.180Z */
+/* Generated: 2026-04-24T06:12:57.520Z */
 
 
-/* â”€â”€â”€ shared/game-definitions.js (2/55) â”€â”€â”€ */
+/* â”€â”€â”€ shared/game-definitions.js (2/56) â”€â”€â”€ */
 // Shared Game Definitions — used by both server and client
 const games = [
+    // ── Live / server-authoritative game ────────────────────────────
+    // classic_777 is the ONLY game settled on the server today (see
+    // server/services/slot-engine.service.js). Clicking this tile opens
+    // the live-slot modal; spins debit and credit balance through real
+    // HTTP calls with commit-reveal fairness. Every other game below
+    // remains a client-side fun-mode slot until wired through.
+    { id: 'classic_777', name: 'Classic 777 (Live)', provider: 'Matrix Spins House', tag: 'LIVE', tagClass: 'tag-new', thumbnail: 'assets/thumbnails/classic_777.svg', bgGradient: 'linear-gradient(135deg, #c0392b 0%, #f1c40f 100%)',
+      symbols: ['cherry','lemon','orange','bar','seven'],
+      reelBg: 'linear-gradient(180deg, #2b0d07 0%, #1a0705 100%)', accentColor: '#f1c40f',
+      gridCols: 3, gridRows: 1, template: 'classic', winType: 'classic',
+      wildSymbol: null, scatterSymbol: null,
+      rtp: 95.2, volatility: 'high', bonusType: null, freeSpinsCount: 0, freeSpinsRetrigger: false,
+      bonusDesc: 'Classic 3-reel single-payline fruit machine. Server-authoritative spins with provably-fair commit-reveal.',
+      payouts: { cherry: 3, lemon: 10, orange: 15, bar: 60, seven: 500 }, minBet: 0.10, maxBet: 100, hot: false, jackpot: 0, liveMode: true },
     { id: 'sugar_rush', name: 'Candy Cascade 1000', provider: 'GoldenEdge Gaming', tag: 'HOT', tagClass: 'tag-hot', thumbnail: 'assets/thumbnails/sugar_rush.svg', bgGradient: 'linear-gradient(135deg, #ff6fd8 0%, #f7a531 100%)',
       symbols: ['s1_lollipop','s2_gummy_bear','s3_candy_cane','s4_cupcake','s5_diamond_candy','wild_sugar'],
       reelBg: 'linear-gradient(180deg, #3d1232 0%, #1a0a14 100%)', accentColor: '#ff6fd8',
@@ -587,7 +601,7 @@ const games = [
 // Node.js CommonJS export — browser clients ignore this
 if (typeof module !== 'undefined') module.exports = games;
 
-/* â”€â”€â”€ js/globals.js (8/55) â”€â”€â”€ */
+/* â”€â”€â”€ js/globals.js (8/56) â”€â”€â”€ */
         // Game data loaded from shared/game-definitions.js
         // (60 game definitions moved to separate module)
 
@@ -977,7 +991,7 @@ if (typeof module !== 'undefined') module.exports = games;
             return loadFavorites().includes(gameId);
         }
 
-/* â”€â”€â”€ js/particle-engine.js (9/55) â”€â”€â”€ */
+/* â”€â”€â”€ js/particle-engine.js (9/56) â”€â”€â”€ */
 /**
  * ============================================================
  * Casino App — Canvas Particle Engine
@@ -2042,7 +2056,7 @@ function destroyParticleEngine() {
     _particleEngineInstance = null;
 }
 
-/* â”€â”€â”€ js/auth.js (10/55) â”€â”€â”€ */
+/* â”€â”€â”€ js/auth.js (10/56) â”€â”€â”€ */
 // ═══════════════════════════════════════════════════════
 // AUTH MODULE
 // ═══════════════════════════════════════════════════════
@@ -2743,7 +2757,7 @@ function destroyParticleEngine() {
             });
         }
 
-/* â”€â”€â”€ js/spin-engine.js (11/55) â”€â”€â”€ */
+/* â”€â”€â”€ js/spin-engine.js (11/56) â”€â”€â”€ */
 // ═══════════════════════════════════════════════════════
 // SPIN-ENGINE MODULE
 // ═══════════════════════════════════════════════════════
@@ -2938,7 +2952,7 @@ function destroyParticleEngine() {
             return null;
         }
 
-/* â”€â”€â”€ js/win-logic.js (12/55) â”€â”€â”€ */
+/* â”€â”€â”€ js/win-logic.js (12/56) â”€â”€â”€ */
 // ═══════════════════════════════════════════════════════
 // WIN-LOGIC MODULE
 // ═══════════════════════════════════════════════════════
@@ -4421,7 +4435,7 @@ function destroyParticleEngine() {
             });
         }
 
-/* â”€â”€â”€ js/ui-lobby.js (13/55) â”€â”€â”€ */
+/* â”€â”€â”€ js/ui-lobby.js (13/56) â”€â”€â”€ */
 // ═══════════════════════════════════════════════════════
 // UI-LOBBY MODULE
 // ═══════════════════════════════════════════════════════
@@ -12115,7 +12129,7 @@ function renderGameStatsWidget() {
     });
 }
 
-/* â”€â”€â”€ js/search-autocomplete.js (14/55) â”€â”€â”€ */
+/* â”€â”€â”€ js/search-autocomplete.js (14/56) â”€â”€â”€ */
 (function() {
   'use strict';
 
@@ -12388,7 +12402,7 @@ function renderGameStatsWidget() {
   };
 })();
 
-/* â”€â”€â”€ js/slot-gui-engine.js (15/55) â”€â”€â”€ */
+/* â”€â”€â”€ js/slot-gui-engine.js (15/56) â”€â”€â”€ */
 (function() {
     'use strict';
 
@@ -13030,7 +13044,7 @@ function renderGameStatsWidget() {
     };
 })();
 
-/* â”€â”€â”€ js/ui-slot.js (16/55) â”€â”€â”€ */
+/* â”€â”€â”€ js/ui-slot.js (16/56) â”€â”€â”€ */
 ﻿// -------------------------------------------------------
 // UI-SLOT MODULE
 // -------------------------------------------------------
@@ -14640,6 +14654,14 @@ function renderGameStatsWidget() {
         function openSlot(gameId) {
             try {
             if (!gameId) { console.warn('[openSlot] No gameId provided'); return; }
+            // Live, server-authoritative games bypass the client-side slot
+            // engine entirely. The list here is intentionally narrow —
+            // every id must match a game registered in
+            // server/services/slot-engine.service.js.
+            if (gameId === 'classic_777' && typeof window.openLiveSlot === 'function') {
+                window.openLiveSlot();
+                return;
+            }
             if (typeof games === 'undefined' || !Array.isArray(games)) {
                 console.warn('[openSlot] games array not available');
                 if (typeof showToast === 'function') showToast('Games are still loading, please try again.', 'info');
@@ -40786,7 +40808,276 @@ function _logAudit658(event, data) {
 }
 window._logAudit658 = _logAudit658;
 
-/* â”€â”€â”€ js/ui-modals.js (17/55) â”€â”€â”€ */
+/* â”€â”€â”€ js/live-slot.js (17/56) â”€â”€â”€ */
+/**
+ * Live slot — classic_777.
+ *
+ * Opens a modal UI against /api/slot/spin. Every spin is settled on the
+ * server; this file does no RNG and no balance math. It just paints the
+ * reels and shows the provably-fair commit-reveal chain.
+ *
+ * Entry point: window.openLiveSlot(). ui-lobby.js routes
+ * openSlot('classic_777') here (see js/app.js).
+ */
+(function () {
+    'use strict';
+
+    if (window.openLiveSlot) return; // guard against double-load
+
+    var SYMBOL_GLYPHS = {
+        cherry: '🍒',   // 🍒
+        lemon:  '🍋',   // 🍋
+        orange: '🍊',   // 🍊
+        bar:    'BAR',
+        seven:  '7',
+    };
+    var SYMBOL_COLORS = {
+        cherry: '#ef4444',
+        lemon:  '#fde047',
+        orange: '#fb923c',
+        bar:    '#e5e7eb',
+        seven:  '#f59e0b',
+    };
+
+    var state = {
+        betCents: 100,          // $1 default
+        committedHash: null,    // hash the user can verify post-spin
+        lastResult: null,
+        spinning: false,
+    };
+
+    function fmt(cents) { return '$' + (Number(cents || 0) / 100).toFixed(2); }
+
+    function authToken() {
+        try { return localStorage.getItem('casinoToken'); } catch (e) { return null; }
+    }
+
+    function ensureModal() {
+        var existing = document.getElementById('liveSlotModal');
+        if (existing) return existing;
+        var overlay = document.createElement('div');
+        overlay.id = 'liveSlotModal';
+        overlay.setAttribute('role', 'dialog');
+        overlay.setAttribute('aria-modal', 'true');
+        overlay.style.cssText = [
+            'position:fixed', 'inset:0',
+            'background:rgba(0,0,0,0.85)',
+            'display:flex', 'align-items:center', 'justify-content:center',
+            'z-index:9999', 'padding:16px',
+        ].join(';');
+
+        overlay.innerHTML =
+            '<div id="liveSlotCard" style="' +
+                'width:100%;max-width:440px;background:linear-gradient(180deg,#1a0705 0%,#2b0d07 100%);' +
+                'border:1px solid #f1c40f44;border-radius:14px;padding:22px;color:#fff;font-family:system-ui,sans-serif;' +
+                'box-shadow:0 18px 60px rgba(0,0,0,0.6);"' +
+            '>' +
+                '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">' +
+                    '<div><div style="font-size:11px;letter-spacing:2px;color:#f1c40f;">LIVE</div>' +
+                    '<div style="font-size:20px;font-weight:800;">CLASSIC 777</div></div>' +
+                    '<button id="liveSlotClose" aria-label="Close" style="background:none;border:none;color:#fff;font-size:22px;cursor:pointer;">&times;</button>' +
+                '</div>' +
+
+                '<div id="liveSlotBalance" style="font-size:13px;color:#94a3b8;margin-bottom:8px;">Balance: —</div>' +
+
+                '<div id="liveSlotReels" aria-label="Reels" style="' +
+                    'display:grid;grid-template-columns:repeat(3,1fr);gap:8px;' +
+                    'background:#0b0504;border:1px solid #f1c40f44;border-radius:10px;padding:16px;' +
+                    'margin-bottom:12px;">' +
+                    '<div class="ls-reel" style="aspect-ratio:1/1;display:flex;align-items:center;justify-content:center;font-size:42px;font-weight:900;background:#1a0705;border-radius:8px;">?</div>' +
+                    '<div class="ls-reel" style="aspect-ratio:1/1;display:flex;align-items:center;justify-content:center;font-size:42px;font-weight:900;background:#1a0705;border-radius:8px;">?</div>' +
+                    '<div class="ls-reel" style="aspect-ratio:1/1;display:flex;align-items:center;justify-content:center;font-size:42px;font-weight:900;background:#1a0705;border-radius:8px;">?</div>' +
+                '</div>' +
+
+                '<div id="liveSlotResult" style="min-height:22px;text-align:center;font-size:14px;font-weight:700;margin-bottom:12px;color:#fde047;"></div>' +
+
+                '<div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">' +
+                    '<label for="liveSlotBet" style="font-size:12px;color:#94a3b8;">Bet</label>' +
+                    '<input id="liveSlotBet" type="number" step="0.10" min="0.10" max="100" value="1.00" ' +
+                        'style="width:90px;padding:8px;border-radius:6px;border:1px solid #374151;background:#0b0504;color:#fff;font-weight:700;">' +
+                    '<button id="liveSlotSpin" style="flex:1;padding:12px;border-radius:8px;border:none;' +
+                        'background:linear-gradient(135deg,#c0392b 0%,#f1c40f 100%);color:#111;font-weight:900;font-size:16px;letter-spacing:1px;cursor:pointer;">SPIN</button>' +
+                '</div>' +
+
+                '<details style="margin-top:8px;color:#94a3b8;font-size:12px;">' +
+                    '<summary style="cursor:pointer;outline:none;">Paytable / fairness</summary>' +
+                    '<div style="margin-top:8px;line-height:1.55;">' +
+                        '<div>3 of a kind on the center row pays:</div>' +
+                        '<div style="font-family:monospace;margin:6px 0;">' +
+                            '🍒 cherry &times;3  &nbsp; ' +
+                            '🍋 lemon &times;10<br>' +
+                            '🍊 orange &times;15  &nbsp; ' +
+                            'BAR &times;60<br>' +
+                            '<span style="color:#f1c40f;">7 &times;500</span>' +
+                        '</div>' +
+                        '<div id="liveSlotCommit" style="margin-top:6px;">Commit hash: <span style="font-family:monospace;">loading…</span></div>' +
+                        '<div id="liveSlotRevealed" style="margin-top:4px;"></div>' +
+                    '</div>' +
+                '</details>' +
+            '</div>';
+
+        document.body.appendChild(overlay);
+        return overlay;
+    }
+
+    function setResult(text, color) {
+        var el = document.getElementById('liveSlotResult');
+        if (!el) return;
+        el.textContent = text || '';
+        el.style.color = color || '#fde047';
+    }
+
+    function paintReels(stops) {
+        var reels = document.querySelectorAll('#liveSlotReels .ls-reel');
+        for (var i = 0; i < reels.length; i++) {
+            var sym = stops && stops[i] && stops[i].symbol;
+            var glyph = SYMBOL_GLYPHS[sym] || '?';
+            reels[i].textContent = glyph;
+            reels[i].style.color = SYMBOL_COLORS[sym] || '#fff';
+            reels[i].style.fontSize = sym === 'bar' ? '22px' : '42px';
+        }
+    }
+
+    function shortHash(h) { if (!h) return '—'; return h.slice(0, 10) + '…' + h.slice(-6); }
+
+    function updateCommitUI() {
+        var el = document.getElementById('liveSlotCommit');
+        if (!el) return;
+        var span = el.querySelector('span');
+        if (span) span.textContent = state.committedHash ? shortHash(state.committedHash) : 'loading…';
+    }
+
+    function updateRevealedUI() {
+        var el = document.getElementById('liveSlotRevealed');
+        if (!el) return;
+        if (!state.lastResult) { el.innerHTML = ''; return; }
+        var r = state.lastResult.revealed;
+        el.innerHTML =
+            '<div style="margin-top:4px;">Last round revealed seed:</div>' +
+            '<div style="font-family:monospace;word-break:break-all;color:#cbd5e1;">' + r.server_seed + '</div>' +
+            '<div style="margin-top:4px;">sha256 of seed must equal pre-commit hash: ' +
+                '<span style="font-family:monospace;">' + shortHash(r.server_seed_hash) + '</span></div>';
+    }
+
+    async function fetchJSON(path, opts) {
+        opts = opts || {};
+        var headers = opts.headers || {};
+        var tok = authToken();
+        if (tok) headers['Authorization'] = 'Bearer ' + tok;
+        headers['Content-Type'] = 'application/json';
+        if (opts.method && opts.method !== 'GET' && window.CsrfHelper && CsrfHelper.getToken) {
+            try {
+                var csrf = await CsrfHelper.getToken();
+                if (csrf) headers['X-CSRF-Token'] = csrf;
+            } catch (e) { /* best-effort */ }
+        }
+        var res = await fetch(path, { method: opts.method || 'GET', headers: headers, body: opts.body ? JSON.stringify(opts.body) : undefined });
+        var txt = await res.text();
+        var json = null; try { json = txt ? JSON.parse(txt) : null; } catch (e) {}
+        return { status: res.status, body: json, raw: txt };
+    }
+
+    async function refreshBalance() {
+        var r = await fetchJSON('/api/balance');
+        var el = document.getElementById('liveSlotBalance');
+        if (!el) return;
+        if (r.status === 200 && r.body && typeof r.body.balance_cents === 'number') {
+            el.textContent = 'Balance: ' + fmt(r.body.balance_cents);
+            el.dataset.cents = String(r.body.balance_cents);
+        } else {
+            el.textContent = 'Balance: —';
+        }
+    }
+
+    async function refreshCommit() {
+        var r = await fetchJSON('/api/slot/commit');
+        if (r.status === 200 && r.body && r.body.server_seed_hash) {
+            state.committedHash = r.body.server_seed_hash;
+            updateCommitUI();
+        }
+    }
+
+    async function doSpin() {
+        if (state.spinning) return;
+        var input = document.getElementById('liveSlotBet');
+        var dollars = Number(input.value);
+        if (!Number.isFinite(dollars) || dollars <= 0) {
+            setResult('Enter a valid bet.', '#ef4444');
+            return;
+        }
+        state.betCents = Math.round(dollars * 100);
+
+        state.spinning = true;
+        setResult('Spinning…', '#94a3b8');
+        var reels = document.querySelectorAll('#liveSlotReels .ls-reel');
+        reels.forEach(function (r) { r.textContent = '☄'; r.style.color = '#f1c40f'; });
+
+        var res = await fetchJSON('/api/slot/spin', {
+            method: 'POST',
+            body: { game_id: 'classic_777', bet_cents: state.betCents, client_seed: 'live-ui' },
+        });
+
+        state.spinning = false;
+
+        if (res.status !== 200) {
+            var msg = (res.body && res.body.error) || ('Error ' + res.status);
+            setResult(msg, '#ef4444');
+            // Re-fetch the commit — on 401 / self-exclusion we may be
+            // working with a stale hash.
+            refreshCommit();
+            return;
+        }
+
+        state.lastResult = res.body;
+        paintReels(res.body.outcome.stops);
+        if (res.body.win_cents > 0) {
+            setResult('WIN ' + fmt(res.body.win_cents) + ' (' + (res.body.outcome.line && res.body.outcome.line.multiplier) + 'x)', '#22c55e');
+        } else {
+            setResult('No win — try again.', '#94a3b8');
+        }
+
+        // Commit has rolled — display the NEW unused hash.
+        state.committedHash = res.body.next_commit && res.body.next_commit.server_seed_hash;
+        updateCommitUI();
+        updateRevealedUI();
+
+        var balEl = document.getElementById('liveSlotBalance');
+        if (balEl) balEl.textContent = 'Balance: ' + fmt(res.body.balance_cents);
+    }
+
+    function wireEvents() {
+        var closeBtn = document.getElementById('liveSlotClose');
+        if (closeBtn) closeBtn.addEventListener('click', closeLiveSlot);
+        var spinBtn = document.getElementById('liveSlotSpin');
+        if (spinBtn) spinBtn.addEventListener('click', doSpin);
+        var overlay = document.getElementById('liveSlotModal');
+        if (overlay) overlay.addEventListener('click', function (e) {
+            if (e.target === overlay) closeLiveSlot();
+        });
+    }
+
+    function closeLiveSlot() {
+        var overlay = document.getElementById('liveSlotModal');
+        if (overlay && overlay.parentNode) overlay.parentNode.removeChild(overlay);
+    }
+
+    async function openLiveSlot() {
+        // Must be signed in — otherwise the server will 401 every call.
+        if (!authToken()) {
+            if (typeof showAuthModal === 'function') showAuthModal();
+            else if (typeof window.showToast === 'function') showToast('Please sign in to play.', 'info');
+            return;
+        }
+        ensureModal();
+        wireEvents();
+        await Promise.all([refreshBalance(), refreshCommit()]);
+    }
+
+    window.openLiveSlot = openLiveSlot;
+    window.closeLiveSlot = closeLiveSlot;
+})();
+
+/* â”€â”€â”€ js/ui-modals.js (18/56) â”€â”€â”€ */
 // ═══════════════════════════════════════════════════════
 // UI-MODALS MODULE
 // ═══════════════════════════════════════════════════════
@@ -44019,7 +44310,7 @@ function settingsSetSessionLimit(val) {
     });
 }
 
-/* â”€â”€â”€ js/ui-wallet.js (18/55) â”€â”€â”€ */
+/* â”€â”€â”€ js/ui-wallet.js (19/56) â”€â”€â”€ */
 // ═══════════════════════════════════════════════════════
 // WALLET / CASHIER MODULE
 // ═══════════════════════════════════════════════════════
@@ -51472,7 +51763,7 @@ async function _saveLimits(modal, token, formOverlay) {
     }
 }
 
-/* â”€â”€â”€ js/ui-profile.js (19/55) â”€â”€â”€ */
+/* â”€â”€â”€ js/ui-profile.js (20/56) â”€â”€â”€ */
 // ═══════════════════════════════════════════════════════
 // PROFILE / ACCOUNT MODULE
 // ═══════════════════════════════════════════════════════
@@ -57242,7 +57533,7 @@ function renderLossStreakWidget() {
     return widget;
 }
 
-/* â”€â”€â”€ js/ui-vip.js (20/55) â”€â”€â”€ */
+/* â”€â”€â”€ js/ui-vip.js (21/56) â”€â”€â”€ */
 // =====================================================================
 // VIP / LOYALTY REWARDS MODULE
 // =====================================================================
@@ -59161,7 +59452,7 @@ setInterval(function() {
     }
 }, 30000);
 
-/* â”€â”€â”€ js/qa-tools.js (21/55) â”€â”€â”€ */
+/* â”€â”€â”€ js/qa-tools.js (22/56) â”€â”€â”€ */
 // ═══════════════════════════════════════════════════════
 // QA-TOOLS MODULE
 // ═══════════════════════════════════════════════════════
@@ -59542,7 +59833,7 @@ setInterval(function() {
             return JSON.stringify(payload);
         }
 
-/* â”€â”€â”€ js/session-rtp-client.js (22/55) â”€â”€â”€ */
+/* â”€â”€â”€ js/session-rtp-client.js (23/56) â”€â”€â”€ */
 'use strict';
 
 /**
@@ -59764,7 +60055,7 @@ setInterval(function() {
   }
 })();
 
-/* â”€â”€â”€ js/app.js (23/55) â”€â”€â”€ */
+/* â”€â”€â”€ js/app.js (24/56) â”€â”€â”€ */
 // ═══════════════════════════════════════════════════════
 // APP MODULE
 // ═══════════════════════════════════════════════════════
@@ -59808,8 +60099,14 @@ setInterval(function() {
             if (typeof window === 'undefined' || !window.fetch) return;
             if (window._ghostEndpointSinkInstalled) return;
             window._ghostEndpointSinkInstalled = true;
-            // Prefixes of endpoints that actually exist on the server.
-            // Every other /api/* request is sunk with a synthetic 404.
+            // Allowlist of endpoints that actually exist on the server.
+            // Every other /api/* request is sunk with a synthetic 404
+            // (no network trip). Entries ending with '/' are prefix
+            // matches (e.g. '/api/auth/' allows '/api/auth/login');
+            // entries without a trailing '/' are exact matches (e.g.
+            // '/api/balance' allows '/api/balance' but NOT
+            // '/api/balance/anything') so unimplemented sub-paths stay
+            // sunk locally instead of reaching the server.
             var REAL = [
                 '/api/health',
                 '/api/csrf-token',
@@ -59818,15 +60115,22 @@ setInterval(function() {
                 '/api/auth/',
                 '/api/balance',
                 '/api/deposit',
+                '/api/deposit/',
                 '/api/payment/stripe/webhook',
                 '/api/nfts',
+                '/api/nfts/',
+                '/api/user',                  // DELETE /api/user (account deletion)
                 '/api/user/me',
                 '/api/user/deposits',
                 '/api/user/deposits.csv',
                 '/api/user/login-history',
                 '/api/user/export.json',
-                '/api/user',          // DELETE /api/user (account deletion)
-                '/api/slot/',         // server-authoritative spin engine
+                '/api/user/stats',
+                '/api/user/return-status',
+                '/api/user/loss-streak-offer',
+                '/api/user/self-exclude',
+                '/api/user/self-exclusion',
+                '/api/slot/',                 // server-authoritative slot engine
                 '/api/admin/',
             ];
             var origFetch = window.fetch.bind(window);
@@ -59841,7 +60145,9 @@ setInterval(function() {
                     if (bare.indexOf('/api/') === 0) {
                         var hit = false;
                         for (var i = 0; i < REAL.length; i++) {
-                            if (bare === REAL[i] || bare.indexOf(REAL[i]) === 0) { hit = true; break; }
+                            var entry = REAL[i];
+                            var isPrefix = entry.charAt(entry.length - 1) === '/';
+                            if (isPrefix ? bare.indexOf(entry) === 0 : bare === entry) { hit = true; break; }
                         }
                         if (!hit) {
                             return Promise.resolve(new Response(
@@ -61999,7 +62305,7 @@ setInterval(function() {
             document.body.appendChild(overlay);
         }
 
-/* â”€â”€â”€ js/ui-premium-effects.js (24/55) â”€â”€â”€ */
+/* â”€â”€â”€ js/ui-premium-effects.js (25/56) â”€â”€â”€ */
 /**
  * ui-premium-effects.js
  * Premium micro-interaction effects for Matrix Spins Casino
@@ -62243,7 +62549,7 @@ setInterval(function() {
 
 })();
 
-/* â”€â”€â”€ js/legal-terms.js (25/55) â”€â”€â”€ */
+/* â”€â”€â”€ js/legal-terms.js (26/56) â”€â”€â”€ */
 /**
  * Legal Terms & Conditions Module
  * Matrix Spins Casino - msaart.online
@@ -62641,7 +62947,7 @@ window.showMatrixMoneyInfo = () => LegalTerms.showMatrixMoneyInfo();
     }
 })();
 
-/* â”€â”€â”€ js/matrix-money.js (26/55) â”€â”€â”€ */
+/* â”€â”€â”€ js/matrix-money.js (27/56) â”€â”€â”€ */
 /**
  * Matrix Money System Module
  * Matrix Spins Casino - msaart.online
@@ -63255,7 +63561,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 });
 
-/* â”€â”€â”€ js/session-timeout.js (27/55) â”€â”€â”€ */
+/* â”€â”€â”€ js/session-timeout.js (28/56) â”€â”€â”€ */
 (function() {
   'use strict';
 
@@ -63576,7 +63882,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 })();
 
-/* â”€â”€â”€ js/support-chat.js (28/55) â”€â”€â”€ */
+/* â”€â”€â”€ js/support-chat.js (29/56) â”€â”€â”€ */
 (function() {
   'use strict';
 
@@ -64143,7 +64449,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 })();
 
-/* â”€â”€â”€ js/self-exclusion.js (29/55) â”€â”€â”€ */
+/* â”€â”€â”€ js/self-exclusion.js (30/56) â”€â”€â”€ */
 /**
  * Self-Exclusion UI Module for Matrix Spins Casino
  * Responsible gambling feature — lets users voluntarily exclude themselves from play.
@@ -64303,7 +64609,7 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 })();
 
-/* â”€â”€â”€ js/loading-screen.js (30/55) â”€â”€â”€ */
+/* â”€â”€â”€ js/loading-screen.js (31/56) â”€â”€â”€ */
 /**
  * Loading Screen Module
  * Displays a stylish loading overlay with rotating tips when opening games
@@ -64607,7 +64913,7 @@ window.LoadingScreen = (function() {
 
 })();
 
-/* â”€â”€â”€ js/player-stats-ui.js (31/55) â”€â”€â”€ */
+/* â”€â”€â”€ js/player-stats-ui.js (32/56) â”€â”€â”€ */
 (function() {
   'use strict';
 
@@ -65104,7 +65410,7 @@ window.LoadingScreen = (function() {
   };
 })();
 
-/* â”€â”€â”€ js/win-limit.js (32/55) â”€â”€â”€ */
+/* â”€â”€â”€ js/win-limit.js (33/56) â”€â”€â”€ */
 ﻿/**
  * Win Limit Safety Feature
  * Responsible gambling tool to set session win limits and auto-cashout prompts
@@ -65750,7 +66056,7 @@ window.WinLimit = (function () {
 })();
 
 
-/* â”€â”€â”€ js/loss-limit.js (33/55) â”€â”€â”€ */
+/* â”€â”€â”€ js/loss-limit.js (34/56) â”€â”€â”€ */
 /**
  * Loss Limit Safety Feature
  * Net-loss caps over rolling daily / weekly / monthly windows.
@@ -66061,7 +66367,7 @@ window.LossLimit = (function () {
   document.head.appendChild(el);
 })();
 
-/* â”€â”€â”€ js/wager-cap.js (34/55) â”€â”€â”€ */
+/* â”€â”€â”€ js/wager-cap.js (35/56) â”€â”€â”€ */
 /**
  * Wager Cap (single-bet maximum)
  * Player-controlled cap on individual bet amounts — distinct from
@@ -66250,7 +66556,7 @@ window.WagerCap = (function () {
   document.head.appendChild(el);
 })();
 
-/* â”€â”€â”€ js/login-history.js (35/55) â”€â”€â”€ */
+/* â”€â”€â”€ js/login-history.js (36/56) â”€â”€â”€ */
 /**
  * Login History Tracker
  * Premium account-security feature: persistent local log of auth events
@@ -66431,7 +66737,7 @@ window.LoginHistory = (function () {
   document.head.appendChild(el);
 })();
 
-/* â”€â”€â”€ js/session-clock.js (36/55) â”€â”€â”€ */
+/* â”€â”€â”€ js/session-clock.js (37/56) â”€â”€â”€ */
 /**
  * Session Clock
  * Continuous elapsed-session display — companion to session-timeout.js
@@ -66576,7 +66882,7 @@ window.SessionClock = (function () {
   document.head.appendChild(el);
 })();
 
-/* â”€â”€â”€ js/cookie-consent.js (37/55) â”€â”€â”€ */
+/* â”€â”€â”€ js/cookie-consent.js (38/56) â”€â”€â”€ */
 /**
  * Cookie Consent Manager
  * Implements GDPR/CCPA compliant cookie consent banner with preference management
@@ -67150,7 +67456,7 @@ window.SessionClock = (function () {
 
 })();
 
-/* â”€â”€â”€ js/perf-monitor.js (38/55) â”€â”€â”€ */
+/* â”€â”€â”€ js/perf-monitor.js (39/56) â”€â”€â”€ */
 /**
  * Performance Monitoring Module (IIFE)
  * Collects Core Web Vitals and page performance metrics
@@ -67381,7 +67687,7 @@ if (document.readyState === 'loading') {
     window.PerfMonitor.init();
 }
 
-/* â”€â”€â”€ js/bankroll-calculator.js (39/55) â”€â”€â”€ */
+/* â”€â”€â”€ js/bankroll-calculator.js (40/56) â”€â”€â”€ */
 // ═══════════════════════════════════════════════════════════════════════════════════════
 // BANKROLL MANAGEMENT CALCULATOR
 // A responsible gambling tool to help players manage their bankroll effectively
@@ -67970,7 +68276,7 @@ if (document.readyState === 'loading') {
 
 })();
 
-/* â”€â”€â”€ js/i18n.js (40/55) â”€â”€â”€ */
+/* â”€â”€â”€ js/i18n.js (41/56) â”€â”€â”€ */
 (function() {
   'use strict';
 
@@ -68231,7 +68537,7 @@ if (document.readyState === 'loading') {
 
 })();
 
-/* â”€â”€â”€ js/game-history.js (41/55) â”€â”€â”€ */
+/* â”€â”€â”€ js/game-history.js (42/56) â”€â”€â”€ */
 /**
  * Game History / Spin History Viewer
  * IIFE module: window.GameHistory = { show(), init() }
@@ -68938,7 +69244,7 @@ if (document.readyState === 'loading') {
 
 })();
 
-/* â”€â”€â”€ js/player-chat.js (42/55) â”€â”€â”€ */
+/* â”€â”€â”€ js/player-chat.js (43/56) â”€â”€â”€ */
 (function() {
   'use strict';
 
@@ -69604,7 +69910,7 @@ if (document.readyState === 'loading') {
   };
 })();
 
-/* â”€â”€â”€ js/sound-settings.js (43/55) â”€â”€â”€ */
+/* â”€â”€â”€ js/sound-settings.js (44/56) â”€â”€â”€ */
 // ═══════════════════════════════════════════════════════════════════════════
 // Sound Settings UI Module — Casino Dark Theme with Gold Accents
 // ═══════════════════════════════════════════════════════════════════════════
@@ -70125,7 +70431,7 @@ if (document.readyState === 'loading') {
 
 })();
 
-/* â”€â”€â”€ js/keyboard-shortcuts.js (44/55) â”€â”€â”€ */
+/* â”€â”€â”€ js/keyboard-shortcuts.js (45/56) â”€â”€â”€ */
 /**
  * Keyboard Shortcuts Module
  * Provides keyboard shortcuts for the Royal Slots Casino game
@@ -70585,7 +70891,7 @@ if (document.readyState === 'loading') {
   console.warn('KeyboardShortcuts module loaded');
 })();
 
-/* â”€â”€â”€ js/csrf-helper.js (45/55) â”€â”€â”€ */
+/* â”€â”€â”€ js/csrf-helper.js (46/56) â”€â”€â”€ */
 /**
  * CSRF Token Helper
  * Manages CSRF tokens and automatically injects them into fetch requests
@@ -70601,11 +70907,27 @@ if (document.readyState === 'loading') {
     const originalFetch = window.fetch;
 
     /**
+     * Build the fetch init for /api/csrf-token. The server binds the
+     * issued token to the current authenticated user (or 'anon'); it
+     * identifies the user via the Authorization header, so we MUST
+     * forward the bearer token here — otherwise we'd cache an
+     * anon-bound token and every authed mutation would 403.
+     */
+    function csrfFetchInit() {
+        const headers = {};
+        try {
+            const tok = localStorage.getItem('casinoToken');
+            if (tok) headers['Authorization'] = 'Bearer ' + tok;
+        } catch (e) { /* storage unavailable — fall through */ }
+        return { headers: headers, credentials: 'same-origin' };
+    }
+
+    /**
      * Initialize CSRF protection (call after login)
      */
     async function init() {
         try {
-            const response = await originalFetch('/api/csrf-token');
+            const response = await originalFetch('/api/csrf-token', csrfFetchInit());
             if (!response.ok) {
                 console.warn('[CSRF] Failed to fetch initial token:', response.status);
                 return;
@@ -70632,7 +70954,7 @@ if (document.readyState === 'loading') {
             Date.now() - lastTokenFetchTime > TOKEN_REFRESH_INTERVAL
         ) {
             try {
-                const response = await originalFetch('/api/csrf-token');
+                const response = await originalFetch('/api/csrf-token', csrfFetchInit());
                 if (!response.ok) {
                     console.warn('[CSRF] Failed to refresh token:', response.status);
                     return csrfToken; // Return stale token as fallback
@@ -70689,7 +71011,7 @@ if (document.readyState === 'loading') {
     console.warn('[CSRF] Helper loaded');
 })();
 
-/* â”€â”€â”€ js/reality-check.js (46/55) â”€â”€â”€ */
+/* â”€â”€â”€ js/reality-check.js (47/56) â”€â”€â”€ */
 ﻿// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 // REALITY CHECK TIMER - Responsible Gambling Feature
 // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
@@ -71275,7 +71597,7 @@ window.RealityCheck = (function() {
 console.warn('[RealityCheck] Module loaded â€” call window.RealityCheck.init() to start');
 
 
-/* â”€â”€â”€ js/slot-events.js (47/55) â”€â”€â”€ */
+/* â”€â”€â”€ js/slot-events.js (48/56) â”€â”€â”€ */
 /**
  * Slot Events Widget
  * Limited-time FOMO slot events system with animated banners and scarcity indicators
@@ -71669,7 +71991,7 @@ console.warn('[RealityCheck] Module loaded â€” call window.RealityCheck.ini
 
 })();
 
-/* â”€â”€â”€ js/admin-analytics.js (48/55) â”€â”€â”€ */
+/* â”€â”€â”€ js/admin-analytics.js (49/56) â”€â”€â”€ */
 /**
  * Admin Revenue Analytics Dashboard
  * Real-time metrics, player activity, feature performance
@@ -72098,7 +72420,7 @@ console.warn('[RealityCheck] Module loaded â€” call window.RealityCheck.ini
 
 })();
 
-/* â”€â”€â”€ js/ultra-premium-slot.js (53/55) â”€â”€â”€ */
+/* â”€â”€â”€ js/ultra-premium-slot.js (54/56) â”€â”€â”€ */
 /**
  * ultra-premium-slot.js v2.0
  * Industry-Standard Per-Game Visual Engine for Matrix Spins Casino
@@ -73159,7 +73481,7 @@ var fn = BG_RENDERERS[bgType] || BG_RENDERERS.shine;
 
 })();
 
-/* â”€â”€â”€ js/upx-integration.js (54/55) â”€â”€â”€ */
+/* â”€â”€â”€ js/upx-integration.js (55/56) â”€â”€â”€ */
 /* ================================================================
    UPX Integration Layer  v1.0
    Wires ultra-premium-slot.js (UPX) into the casino game flow.

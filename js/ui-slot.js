@@ -1607,6 +1607,14 @@
         function openSlot(gameId) {
             try {
             if (!gameId) { console.warn('[openSlot] No gameId provided'); return; }
+            // Live, server-authoritative games bypass the client-side slot
+            // engine entirely. The list here is intentionally narrow —
+            // every id must match a game registered in
+            // server/services/slot-engine.service.js.
+            if (gameId === 'classic_777' && typeof window.openLiveSlot === 'function') {
+                window.openLiveSlot();
+                return;
+            }
             if (typeof games === 'undefined' || !Array.isArray(games)) {
                 console.warn('[openSlot] games array not available');
                 if (typeof showToast === 'function') showToast('Games are still loading, please try again.', 'info');

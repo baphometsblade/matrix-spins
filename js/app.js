@@ -41,8 +41,14 @@
             if (typeof window === 'undefined' || !window.fetch) return;
             if (window._ghostEndpointSinkInstalled) return;
             window._ghostEndpointSinkInstalled = true;
-            // Prefixes of endpoints that actually exist on the server.
-            // Every other /api/* request is sunk with a synthetic 404.
+            // Allowlist of endpoints that actually exist on the server.
+            // Every other /api/* request is sunk with a synthetic 404
+            // (no network trip). Entries ending with '/' are prefix
+            // matches (e.g. '/api/auth/' allows '/api/auth/login');
+            // entries without a trailing '/' are exact matches (e.g.
+            // '/api/balance' allows '/api/balance' but NOT
+            // '/api/balance/anything') so unimplemented sub-paths stay
+            // sunk locally instead of reaching the server.
             var REAL = [
                 '/api/health',
                 '/api/csrf-token',
@@ -51,15 +57,22 @@
                 '/api/auth/',
                 '/api/balance',
                 '/api/deposit',
+                '/api/deposit/',
                 '/api/payment/stripe/webhook',
                 '/api/nfts',
+                '/api/nfts/',
+                '/api/user',                  // DELETE /api/user (account deletion)
                 '/api/user/me',
                 '/api/user/deposits',
                 '/api/user/deposits.csv',
                 '/api/user/login-history',
                 '/api/user/export.json',
-                '/api/user',          // DELETE /api/user (account deletion)
-                '/api/slot/',         // server-authoritative spin engine
+                '/api/user/stats',
+                '/api/user/return-status',
+                '/api/user/loss-streak-offer',
+                '/api/user/self-exclude',
+                '/api/user/self-exclusion',
+                '/api/slot/',                 // server-authoritative slot engine
                 '/api/admin/',
             ];
             var origFetch = window.fetch.bind(window);
@@ -74,7 +87,9 @@
                     if (bare.indexOf('/api/') === 0) {
                         var hit = false;
                         for (var i = 0; i < REAL.length; i++) {
-                            if (bare === REAL[i] || bare.indexOf(REAL[i]) === 0) { hit = true; break; }
+                            var entry = REAL[i];
+                            var isPrefix = entry.charAt(entry.length - 1) === '/';
+                            if (isPrefix ? bare.indexOf(entry) === 0 : bare === entry) { hit = true; break; }
                         }
                         if (!hit) {
                             return Promise.resolve(new Response(
