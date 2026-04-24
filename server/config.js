@@ -63,13 +63,13 @@ module.exports = {
     WITHDRAWAL_PROCESSING_DAYS: 3,
     PAYMENT_METHODS: ['visa', 'mastercard', 'payid', 'bank_transfer', 'crypto_btc', 'crypto_eth', 'crypto_usdt'],
 
-    // First-deposit bonus
+    // First-deposit bonus (wagering mults per CLAUDE.md revenue-protection rules)
     FIRST_DEPOSIT_BONUS_PCT: 50,      // 50% match
     FIRST_DEPOSIT_BONUS_MAX: 200,     // cap at $200
-    FIRST_DEPOSIT_WAGERING_MULT: 40,  // 40x playthrough on first deposit bonus
+    FIRST_DEPOSIT_WAGERING_MULT: 45,  // 45x playthrough on first deposit bonus (CLAUDE.md)
     RELOAD_BONUS_PCT: 25,             // 25% match on reload deposits
     RELOAD_BONUS_MAX: 100,            // cap reload bonus at $100
-    RELOAD_WAGERING_MULT: 35,         // 35x playthrough on reload bonus
+    RELOAD_WAGERING_MULT: 30,         // 30x playthrough on reload — deposit match/retention (CLAUDE.md)
 
     // Password reset
     PASSWORD_RESET_EXPIRY_HOURS: 1,

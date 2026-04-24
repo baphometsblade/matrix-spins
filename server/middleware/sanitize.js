@@ -88,8 +88,10 @@ function sanitize(obj, depth = 0) {
  */
 module.exports = function sanitizeMiddleware(req, res, next) {
     try {
-        // Sanitize request body
-        if (req.body && typeof req.body === 'object') {
+        // Sanitize request body — but NEVER touch raw Buffers.
+        // Stripe webhook bodies arrive as Buffers for signature verification;
+        // mangling them into plain objects breaks constructEvent().
+        if (req.body && typeof req.body === 'object' && !Buffer.isBuffer(req.body)) {
             req.body = sanitize(req.body);
         }
 

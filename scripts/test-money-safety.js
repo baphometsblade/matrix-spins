@@ -334,6 +334,214 @@ test('user.routes.js applies bonusGuard to every claim endpoint that credits bon
 });
 
 // ══════════════════════════════════════════════════════════════════════
+console.log('\n=== Stripe deposit flow is wired into production ===');
+// ══════════════════════════════════════════════════════════════════════
+const INDEX_SRC = fs.readFileSync(path.join(SERVER_DIR, 'index.js'), 'utf8');
+const SANITIZE_SRC = fs.readFileSync(path.join(SERVER_DIR, 'middleware', 'sanitize.js'), 'utf8');
+
+test('stripe-checkout router is mounted in index.js', () => {
+    assert(
+        /app\.use\(\s*['"]\/api['"]\s*,\s*require\(['"]\.\/routes\/stripe-checkout\.routes['"]\)\)/.test(INDEX_SRC),
+        'stripe-checkout router must be mounted — otherwise /api/payment/create-checkout + /api/payment/webhook do not exist'
+    );
+});
+
+test('raw body middleware covers /api/payment/webhook BEFORE express.json()', () => {
+    // Find line numbers of the raw-body mount for /api/payment/webhook and the global json parser
+    const lines = INDEX_SRC.split('\n');
+    const rawIdx = lines.findIndex(l => /app\.use\(\s*['"]\/api\/payment\/webhook['"]\s*,\s*express\.raw\(/.test(l));
+    const jsonIdx = lines.findIndex(l => /app\.use\(\s*express\.json\(/.test(l));
+    assert(rawIdx >= 0, 'raw body middleware not mounted for /api/payment/webhook');
+    assert(jsonIdx >= 0, 'express.json() not found');
+    assert(rawIdx < jsonIdx, 'raw body must be mounted BEFORE express.json()');
+});
+
+test('sanitize middleware skips Buffer bodies (preserves Stripe webhook payload)', () => {
+    assert(
+        /!\s*Buffer\.isBuffer\s*\(\s*req\.body\s*\)/.test(SANITIZE_SRC),
+        'sanitize middleware must skip Buffer bodies'
+    );
+    // Simulate the middleware behaviour by requiring it
+    const sanitizeMiddleware = require(path.join(SERVER_DIR, 'middleware', 'sanitize'));
+    const buf = Buffer.from('{"type":"checkout.session.completed"}', 'utf8');
+    const req = { body: buf, query: {}, params: {} };
+    const res = {};
+    let called = false;
+    sanitizeMiddleware(req, res, () => { called = true; });
+    assert(called, 'middleware should call next()');
+    assert(Buffer.isBuffer(req.body), 'Buffer body must remain a Buffer after sanitize');
+    assert(req.body.toString('utf8') === '{"type":"checkout.session.completed"}', 'Buffer contents must be preserved');
+});
+
+test('CSRF middleware exempts /api/payment/webhook', () => {
+    const csrfSrc = fs.readFileSync(path.join(SERVER_DIR, 'middleware', 'csrf.js'), 'utf8');
+    assert(
+        /\^\\\/api\\\/payment\\\/webhook\$/.test(csrfSrc),
+        'csrf middleware must exempt /api/payment/webhook'
+    );
+});
+
+// ══════════════════════════════════════════════════════════════════════
+console.log('\n=== config wagering multipliers match CLAUDE.md ===');
+// ══════════════════════════════════════════════════════════════════════
+const CONFIG = require(path.join(SERVER_DIR, 'config'));
+
+test('FIRST_DEPOSIT_WAGERING_MULT is 45x (CLAUDE.md)', () => {
+    assertEq(CONFIG.FIRST_DEPOSIT_WAGERING_MULT, 45, 'CLAUDE.md mandates 45x first-deposit wagering');
+});
+
+test('RELOAD_WAGERING_MULT is 30x (CLAUDE.md deposit match/retention)', () => {
+    assertEq(CONFIG.RELOAD_WAGERING_MULT, 30, 'CLAUDE.md mandates 30x for deposit match/retention');
+});
+
+test('SESSION_WIN_CAP is a positive finite number', () => {
+    assert(Number.isFinite(CONFIG.SESSION_WIN_CAP) && CONFIG.SESSION_WIN_CAP > 0, 'SESSION_WIN_CAP must be > 0');
+});
+
+test('MAX_WIN_MULTIPLIER is a positive finite number', () => {
+    assert(Number.isFinite(CONFIG.MAX_WIN_MULTIPLIER) && CONFIG.MAX_WIN_MULTIPLIER > 0, 'MAX_WIN_MULTIPLIER must be > 0');
+});
+
+test('TARGET_RTP is between 0 and 1 exclusive of both ends', () => {
+    assert(CONFIG.TARGET_RTP > 0 && CONFIG.TARGET_RTP < 1, 'TARGET_RTP must be in (0,1)');
+});
+
+test('PROFIT_FLOOR is negative (house can run red before emergency)', () => {
+    assert(CONFIG.PROFIT_FLOOR <= 0, 'PROFIT_FLOOR should be ≤ 0');
+});
+
+test('config uses real env values in production (no dev fallbacks)', () => {
+    const src = fs.readFileSync(path.join(SERVER_DIR, 'config.js'), 'utf8');
+    // Must have requireEnv-style check for JWT_SECRET that exits in production
+    assert(
+        /process\.exit\(1\)/.test(src) && /NODE_ENV[^}]*production/.test(src),
+        'config.js must exit if critical env vars are missing in production'
+    );
+    assert(/JWT_SECRET/.test(src), 'JWT_SECRET must be in config');
+});
+
+// ══════════════════════════════════════════════════════════════════════
+console.log('\n=== degraded-mode guard protects money ops ===');
+// ══════════════════════════════════════════════════════════════════════
+test('degraded-mode middleware exists and exports degradedModeGuard', () => {
+    const mod = require(path.join(SERVER_DIR, 'middleware', 'degraded-mode'));
+    assert(typeof mod.degradedModeGuard === 'function', 'degradedModeGuard must be exported as a function');
+});
+
+test('degraded-mode middleware returns 503 when db.isDegraded() is true', () => {
+    // Mock db.isDegraded by monkey-patching the database module's cache
+    const dbPath = require.resolve(path.join(SERVER_DIR, 'database'));
+    const origExports = require.cache[dbPath] ? require.cache[dbPath].exports : null;
+    const guardPath = require.resolve(path.join(SERVER_DIR, 'middleware', 'degraded-mode'));
+    // Clear the cached middleware so it picks up our mock
+    delete require.cache[guardPath];
+    // Install mock
+    require.cache[dbPath] = { id: dbPath, filename: dbPath, loaded: true, exports: { isDegraded: () => true } };
+
+    const { degradedModeGuard } = require(path.join(SERVER_DIR, 'middleware', 'degraded-mode'));
+    let statusCode = 200;
+    let body = null;
+    const res = {
+        status(c) { statusCode = c; return this; },
+        json(b) { body = b; return this; },
+    };
+    let nextCalled = false;
+    degradedModeGuard({}, res, () => { nextCalled = true; });
+
+    // Restore
+    require.cache[dbPath] = origExports ? { id: dbPath, filename: dbPath, loaded: true, exports: origExports } : require.cache[dbPath];
+    delete require.cache[guardPath];
+
+    assertEq(statusCode, 503, 'must return 503 when degraded');
+    assert(body && body.code === 'db_degraded', 'body must carry code: db_degraded');
+    assert(!nextCalled, 'next() must NOT be called when degraded');
+});
+
+test('degraded-mode middleware is applied to all money routes in index.js', () => {
+    const needed = [
+        '/api/payment/deposit',
+        '/api/payment/withdraw',
+        '/api/payment/create-checkout',
+        '/api/crypto/verify-deposit',
+        '/api/balance/deposit',
+        '/api/bundles/purchase',
+        '/api/matrix-money/purchase',
+        '/api/matrix-money/withdraw',
+    ];
+    for (const p of needed) {
+        const re = new RegExp(`app\\.use\\(\\s*['"]${p.replace(/\//g, '\\/')}['"]\\s*,\\s*degradedModeGuard\\)`);
+        assert(re.test(INDEX_SRC), `missing degradedModeGuard on ${p}`);
+    }
+});
+
+test('degraded-mode guard NOT applied to /api/payment/webhook (Stripe must retry)', () => {
+    const re = /app\.use\(\s*['"]\/api\/payment\/webhook['"][^)]*degradedModeGuard/;
+    assert(!re.test(INDEX_SRC), '/api/payment/webhook must NOT use degradedModeGuard — breaks Stripe retry');
+});
+
+// ══════════════════════════════════════════════════════════════════════
+console.log('\n=== rate limits on money routes ===');
+// ══════════════════════════════════════════════════════════════════════
+test('create-checkout endpoint has paymentLimiter + userPaymentLimit', () => {
+    assert(/app\.use\(\s*['"]\/api\/payment\/create-checkout['"]\s*,\s*paymentLimiter/.test(INDEX_SRC),
+        'create-checkout needs per-IP paymentLimiter');
+    assert(/app\.use\(\s*['"]\/api\/payment\/create-checkout['"]\s*,\s*userPaymentLimit/.test(INDEX_SRC),
+        'create-checkout needs per-user userPaymentLimit');
+});
+
+test('paymentLimiter cap is ≤ 10/min (strict for money routes)', () => {
+    const m = INDEX_SRC.match(/const\s+paymentLimiter\s*=\s*rateLimit\(\{[\s\S]*?max:\s*(\d+)/);
+    assert(m, 'paymentLimiter definition not found');
+    const max = parseInt(m[1], 10);
+    assert(max > 0 && max <= 10, `paymentLimiter max should be ≤ 10/min (got ${max})`);
+});
+
+test('auth rate limits are strict enough to stop credential stuffing', () => {
+    // authLimiter declaration is multi-line:
+    //   const authLimiter = rateLimit({
+    //       windowMs: 15 * 60 * 1000,
+    //       max: 20,
+    //       ...
+    //   });
+    const m = INDEX_SRC.match(/const\s+authLimiter\s*=\s*rateLimit\(\{[\s\S]*?windowMs:\s*([^,\n]+),[\s\S]*?max:\s*(\d+)/);
+    assert(m, 'authLimiter definition not found');
+    const windowExpr = m[1].trim();
+    const windowMs = windowExpr.split('*').reduce((a, b) => a * parseFloat(b.trim()), 1);
+    const max = parseInt(m[2], 10);
+    const ratePerMin = max / (windowMs / 60000);
+    // 2 attempts per minute is acceptable (we run 20/15min = 1.33/min)
+    assert(ratePerMin <= 2, `auth rate limit too permissive: ${ratePerMin.toFixed(2)}/min > 2/min`);
+});
+
+// ══════════════════════════════════════════════════════════════════════
+console.log('\n=== stripe-checkout first-deposit bonus uses config multipliers ===');
+// ══════════════════════════════════════════════════════════════════════
+const STRIPE_CHECKOUT_SRC = fs.readFileSync(path.join(SERVER_DIR, 'routes', 'stripe-checkout.routes.js'), 'utf8');
+
+test('stripe-checkout reads FIRST_DEPOSIT_WAGERING_MULT from config (not hardcoded)', () => {
+    assert(/config\.FIRST_DEPOSIT_WAGERING_MULT/.test(STRIPE_CHECKOUT_SRC),
+        'stripe-checkout must use config.FIRST_DEPOSIT_WAGERING_MULT');
+});
+
+test('stripe-checkout reads RELOAD_WAGERING_MULT from config (not hardcoded)', () => {
+    assert(/config\.RELOAD_WAGERING_MULT/.test(STRIPE_CHECKOUT_SRC),
+        'stripe-checkout must use config.RELOAD_WAGERING_MULT');
+});
+
+test('stripe-checkout uses session.amount_total (not metadata) for credited amount', () => {
+    assert(/session\.amount_total/.test(STRIPE_CHECKOUT_SRC),
+        'stripe-checkout must verify charged amount from Stripe, not metadata');
+});
+
+test('stripe-checkout idempotency check fails CLOSED on DB error', () => {
+    // Look for the critical idempotency catch block — must return 5xx not silently continue
+    assert(
+        /CRITICAL:\s*Idempotency check failed/i.test(STRIPE_CHECKOUT_SRC),
+        'stripe-checkout must fail-closed on idempotency DB errors'
+    );
+});
+
+// ══════════════════════════════════════════════════════════════════════
 console.log('\n=== CLAUDE.md rule #7: no Math.random on server side ===');
 // ══════════════════════════════════════════════════════════════════════
 test('no server/**/*.js uses Math.random() in RNG-critical contexts', () => {

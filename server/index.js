@@ -62,7 +62,9 @@ const corsOrigin = config.NODE_ENV === 'production'
 app.use(cors({ origin: corsOrigin }));
 // Stripe webhook needs the raw body (Buffer) for signature verification.
 // Mount express.raw() BEFORE express.json() so the webhook path gets raw bytes.
+// Both paths are covered: /stripe/webhook (legacy) and /webhook (canonical, used by stripe-checkout.routes.js).
 app.use('/api/payment/stripe/webhook', express.raw({ type: 'application/json' }));
+app.use('/api/payment/webhook', express.raw({ type: 'application/json' }));
 app.use(express.json({ limit: '1mb' }));
 
 // ─── Input Sanitization Middleware ───
@@ -135,6 +137,7 @@ const paymentLimiter = rateLimit({
 });
 app.use('/api/payment/deposit', paymentLimiter);
 app.use('/api/payment/withdraw', paymentLimiter);
+app.use('/api/payment/create-checkout', paymentLimiter);  // Stripe checkout session creation
 app.use('/api/crypto/verify-deposit', paymentLimiter);
 app.use('/api/balance/deposit', paymentLimiter);
 app.use('/api/bundles/purchase', paymentLimiter);
@@ -156,10 +159,24 @@ app.use('/api/bundles/purchase',        geoBlock);
 app.use('/api/matrix-money/purchase',   geoBlock);
 app.use('/api/withdrawal-enhance',      geoBlock);
 
+// ── Degraded-mode guard — reject money ops when PG is unreachable ──
+// Prevents lost deposits/withdrawals on ephemeral SQLite fallback.
+// Webhook intentionally excluded so Stripe can retry until PG comes back.
+const { degradedModeGuard } = require('./middleware/degraded-mode');
+app.use('/api/payment/deposit',         degradedModeGuard);
+app.use('/api/payment/withdraw',        degradedModeGuard);
+app.use('/api/payment/create-checkout', degradedModeGuard);
+app.use('/api/crypto/verify-deposit',   degradedModeGuard);
+app.use('/api/balance/deposit',         degradedModeGuard);
+app.use('/api/bundles/purchase',        degradedModeGuard);
+app.use('/api/matrix-money/purchase',   degradedModeGuard);
+app.use('/api/matrix-money/withdraw',   degradedModeGuard);
+
 // Per-user payment limit: 5 requests per minute per authenticated user
 const userPaymentLimit = userRateLimit({ maxRequests: 5, windowMs: 60000 });
 app.use('/api/payment/deposit', userPaymentLimit);
 app.use('/api/payment/withdraw', userPaymentLimit);
+app.use('/api/payment/create-checkout', userPaymentLimit);  // Stripe checkout session creation
 app.use('/api/crypto/verify-deposit', userPaymentLimit);
 app.use('/api/balance/deposit', userPaymentLimit);
 app.use('/api/bundles/purchase', userPaymentLimit);
@@ -216,6 +233,9 @@ app.use('/api/user', require('./routes/lossstreak.routes'));
 app.use('/api/user', require('./routes/vipdeposit.routes'));
 app.use('/api/user', require('./routes/comeback.routes'));
 app.use('/api/payment', paymentRoutes);
+// Stripe Checkout + canonical webhook handler (defines /payment/create-checkout
+// and /payment/webhook, so mount at /api to get /api/payment/...)
+app.use('/api', require('./routes/stripe-checkout.routes'));
 app.use('/api/matrix-money', require('./routes/matrix-money.routes'));
 app.use('/api/crypto', require('./routes/crypto.routes'));
 app.use('/api/jackpot', jackpotRoutes);
