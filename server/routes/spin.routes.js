@@ -243,7 +243,9 @@ router.post('/', authenticate, async (req, res) => {
         }
 
         // ── Validate bet ──
-        const bet = parseFloat(betAmount);
+        // `let` because the bet can be overridden below to the locked
+        // triggering bet when this spin is consuming a free spin.
+        let bet = parseFloat(betAmount);
         // ROUND 55: Use Number.isFinite — isNaN alone allows Infinity to pass
         if (!Number.isFinite(bet) || bet <= 0) {
             activeSpins.delete(userId);
@@ -395,6 +397,20 @@ router.post('/', authenticate, async (req, res) => {
             && existingFreeSpinState.active
             && existingFreeSpinState.remaining > 0
         );
+
+        // SECURITY: bet is locked to the triggering bet during a free-spin
+        // round. Even if the client tampered with its UI and sent a
+        // different bet, we override here so the server's game-engine
+        // calculates wins against the triggering stake (industry standard
+        // in every licensed gaming jurisdiction — the bonus was awarded
+        // against one specific bet and its payout is pinned to it).
+        if (usedFreeSpin && existingFreeSpinState && typeof existingFreeSpinState.triggerBet === 'number' && existingFreeSpinState.triggerBet > 0) {
+            if (Math.abs(bet - existingFreeSpinState.triggerBet) > 0.001) {
+                console.warn(`[Spin] bet-lock override: user ${userId} sent ${bet} during free spins, using locked ${existingFreeSpinState.triggerBet}`);
+                bet = existingFreeSpinState.triggerBet;
+            }
+        }
+
         if (!usedFreeSpin && currentUser.balance < bet) {
             activeSpins.delete(userId);
             return res.status(400).json({ error: 'Insufficient balance' });
@@ -551,8 +567,16 @@ router.post('/', authenticate, async (req, res) => {
             }
         }
 
-        // Persist/clear active free-spin runtime state (Map + DB for restart-safety)
+        // Persist/clear active free-spin runtime state (Map + DB for restart-safety).
+        // On the spin that FIRST activates free spins we pin the triggering
+        // bet into freeSpinState.triggerBet so every subsequent spin in the
+        // round is forced to use it (enforced above in the usedFreeSpin
+        // override block). Industry-standard bet lock.
         if (spinResult.freeSpinState && spinResult.freeSpinState.active && spinResult.freeSpinState.remaining > 0) {
+            if (typeof spinResult.freeSpinState.triggerBet !== 'number' || spinResult.freeSpinState.triggerBet <= 0) {
+                spinResult.freeSpinState.triggerBet = bet;
+            }
+            spinResult.freeSpinState.lastUpdated = Date.now();
             freeSpinStateByUser.set(userId, spinResult.freeSpinState);
             await db.run('UPDATE users SET free_spin_state_json = ? WHERE id = ?',
                 [JSON.stringify(spinResult.freeSpinState), userId]);

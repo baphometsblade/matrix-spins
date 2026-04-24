@@ -3380,9 +3380,41 @@
             if (typeof _updateBetTierBadge === 'function') _updateBetTierBadge();
         }
 
+        // Industry-standard bet lock: the stake cannot change while a free
+        // spin round, respin, hold-and-win, or other bonus feature is in
+        // progress. The bonus was awarded against a specific stake and the
+        // per-spin payout is pinned to that stake; altering it mid-round
+        // would mis-report wins, break the RTP model, and is a regulator
+        // red flag in every jurisdiction with a gaming licence.
+        function _isBetLocked() {
+            if (typeof spinning !== 'undefined' && spinning) return true;
+            if (typeof freeSpinsActive !== 'undefined' && freeSpinsActive) return true;
+            if (typeof respinCount !== 'undefined' && respinCount > 0) return true;
+            if (typeof expandingWildRespinsLeft !== 'undefined' && expandingWildRespinsLeft > 0) return true;
+            if (window._respinCount > 0) return true;
+            if (window._holdAndWinActive) return true;
+            if (window._bonusGameActive) return true;
+            if (window._chamberActive) return true;
+            return false;
+        }
+
+        // Flash the bet pill + show a subtle toast so the user knows why
+        // their click was ignored. Not a destructive modal.
+        function _notifyBetLocked() {
+            var pill = document.querySelector('.slot-bet-display, .bet-display');
+            if (pill) {
+                pill.classList.add('bet-locked-flash');
+                setTimeout(function() { pill.classList.remove('bet-locked-flash'); }, 600);
+            }
+            if (typeof showToast === 'function') {
+                showToast('Bet is locked during bonus rounds', 'info', 2200);
+            }
+        }
+
         // Sprint 33 — Bet Preset: set currentBet to a fixed dollar amount (capped to game bounds)
         function setBetPresetAmount(amount) {
-            if (!currentGame || spinning) return;
+            if (!currentGame) return;
+            if (_isBetLocked()) { _notifyBetLocked(); return; }
             var bounds = (typeof getBetBounds === 'function') ? getBetBounds() : null;
             var maxB = bounds ? bounds.maxBet : 500;
             var minB = bounds ? bounds.minBet : 0.20;
@@ -3426,6 +3458,7 @@
 
         function setPresetBet(index) {
             if (!currentGame) return;
+            if (_isBetLocked()) { _notifyBetLocked(); return; }
             const bounds = getBetBounds();
             if (!bounds) return;
             const validSteps = BET_STEPS.filter(v => v >= bounds.minBet - 0.001 && v <= bounds.maxBet + 0.001);
@@ -3441,7 +3474,8 @@
 
         // --- Pragmatic Play-style bet adjustment (+/- buttons) ---
         function adjustBet(direction) {
-            if (!currentGame || spinning) return;
+            if (!currentGame) return;
+            if (_isBetLocked()) { _notifyBetLocked(); return; }
             const bounds = getBetBounds();
             if (!bounds) return;
             // Build the valid step list for the current game/balance
@@ -10014,7 +10048,8 @@
 
         // ===== Sprint 39: Bet Doubler / Halver =====
         function doubleBet() {
-            if (!currentGame || spinning) return;
+            if (!currentGame) return;
+            if (_isBetLocked()) { _notifyBetLocked(); return; }
             var bounds = getBetBounds();
             if (!bounds) return;
             var validSteps = BET_STEPS.filter(function(v) { return v >= bounds.minBet - 0.001 && v <= bounds.maxBet + 0.001; });
@@ -10031,7 +10066,8 @@
         }
 
         function halveBet() {
-            if (!currentGame || spinning) return;
+            if (!currentGame) return;
+            if (_isBetLocked()) { _notifyBetLocked(); return; }
             var bounds = getBetBounds();
             if (!bounds) return;
             var validSteps = BET_STEPS.filter(function(v) { return v >= bounds.minBet - 0.001 && v <= bounds.maxBet + 0.001; });
