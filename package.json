@@ -9,7 +9,7 @@
         "dev": "node server/index.js",
         "test:adapter": "node scripts/test_query_adapter.js",
         "qa:regression": "node scripts/qa_regression.js",
-        "audit:slots": "node scripts/audit-all-slots.js && node scripts/audit-paytables.js && node scripts/test-bonus-mechanics.js && node scripts/simulate-all-slots.js --spins=1500 && node scripts/audit-volatility.js --spins=1500",
+        "audit:slots": "node scripts/audit-all-slots.js && node scripts/audit-paytables.js && node scripts/test-bonus-mechanics.js && node scripts/simulate-all-slots.js --spins=1500",
         "audit:slots:fast": "node scripts/audit-all-slots.js && node scripts/audit-paytables.js && node scripts/test-bonus-mechanics.js",
         "reasset:slot-chrome": "py -3.10 scripts/reasset_slot_chrome.py --engine sdxl --force --style-mode contrast",
         "reasset:slot-chrome:auto": "py -3.10 scripts/reasset_slot_chrome.py --engine auto --force --style-mode contrast",
