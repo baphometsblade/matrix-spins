@@ -675,4 +675,62 @@ router.post('/reconcile-now', async (_req, res) => {
     }
 });
 
+/**
+ * Withdrawal ops. The user-facing side (POST /api/withdrawal/request
+ * and friends) debits the balance into a pending row; the operator
+ * decides here whether it's paid or denied. All status-machine logic
+ * lives in routes/withdrawal.routes.js -> internal.
+ */
+router.get('/withdrawals', async (req, res) => {
+    try {
+        const { status, limit } = req.query || {};
+        if (status && !['pending', 'paid', 'denied', 'cancelled'].includes(String(status))) {
+            return res.status(400).json({ error: 'status must be one of pending|paid|denied|cancelled.' });
+        }
+        const { internal } = require('./withdrawal.routes');
+        const rows = await internal.listAll({ status: status || null, limit });
+        res.json({ withdrawals: rows });
+    } catch (err) {
+        console.error('[admin/withdrawals]', err);
+        res.status(500).json({ error: 'Failed to list withdrawals.' });
+    }
+});
+
+router.post('/withdrawals/:id/approve', async (req, res) => {
+    try {
+        const { internal } = require('./withdrawal.routes');
+        const note = (req.body && req.body.note) ? String(req.body.note).slice(0, 500) : null;
+        const id = await internal.approve(Number(req.params.id), req.user, note);
+        await require('../services/auth-events.service').log({
+            userId: req.user.id, username: req.user.username,
+            eventType: 'admin_action', outcome: 'success', req,
+            reason: 'withdrawal_approve id=' + id,
+        });
+        res.json({ ok: true, id, status: 'paid' });
+    } catch (err) {
+        if (err && err.status) return res.status(err.status).json({ error: err.message });
+        console.error('[admin/withdrawal/approve]', err);
+        res.status(500).json({ error: 'Approve failed.' });
+    }
+});
+
+router.post('/withdrawals/:id/deny', async (req, res) => {
+    try {
+        const { internal } = require('./withdrawal.routes');
+        const note = (req.body && req.body.note) ? String(req.body.note).slice(0, 500) : null;
+        if (!note) return res.status(400).json({ error: 'note is required when denying a withdrawal so the user sees a reason.' });
+        const id = await internal.deny(Number(req.params.id), req.user, note);
+        await require('../services/auth-events.service').log({
+            userId: req.user.id, username: req.user.username,
+            eventType: 'admin_action', outcome: 'success', req,
+            reason: 'withdrawal_deny id=' + id,
+        });
+        res.json({ ok: true, id, status: 'denied' });
+    } catch (err) {
+        if (err && err.status) return res.status(err.status).json({ error: err.message });
+        console.error('[admin/withdrawal/deny]', err);
+        res.status(500).json({ error: 'Deny failed.' });
+    }
+});
+
 module.exports = router;

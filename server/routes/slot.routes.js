@@ -15,9 +15,16 @@
 const express = require('express');
 const db = require('../database');
 const { authenticate } = require('../middleware/auth');
+const userRateLimit = require('../middleware/user-ratelimit');
 const engine = require('../services/slot-engine.service');
 
 const router = express.Router();
+
+// Per-user spin rate limit. A human cannot spin faster than ~2/s; a
+// motivated script could hammer the engine and churn the DB. 30 spins
+// in 10 s covers turbo-spin and double-click recovery while cutting
+// off scripted abuse and constraining per-user DB write load.
+const spinLimiter = userRateLimit({ maxRequests: 30, windowMs: 10 * 1000 });
 
 router.get('/games', authenticate, (_req, res) => {
     res.json({ games: engine.listGames() });
@@ -33,7 +40,7 @@ router.get('/commit', authenticate, async (req, res) => {
     }
 });
 
-router.post('/spin', authenticate, async (req, res) => {
+router.post('/spin', authenticate, spinLimiter, async (req, res) => {
     const { game_id, bet_cents, client_seed } = req.body || {};
 
     if (!engine.hasGame(game_id)) return res.status(404).json({ error: 'Unknown game.' });

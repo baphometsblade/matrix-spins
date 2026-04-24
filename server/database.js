@@ -396,6 +396,38 @@ async function migrate() {
             created_at ${T.ts}
         );
     `);
+
+    // Withdrawals. When a user requests a cash-out we atomically debit
+    // their balance and create a row here in status='pending'. An
+    // operator approves (marks 'paid' once the real transfer settles
+    // off-system) or denies (status='denied'; the debited amount is
+    // refunded back to the user's balance atomically).
+    //
+    // Status machine:
+    //   pending  → paid           (approved by operator, external
+    //                              transfer done)
+    //   pending  → denied         (operator rejects; balance refunded)
+    //   pending  → cancelled      (user withdrew the request before
+    //                              approval; balance refunded)
+    // No other transitions are allowed. Every state change is logged.
+    await driver.exec(`
+        CREATE TABLE IF NOT EXISTS withdrawals (
+            id ${T.pk},
+            user_id ${driver.kind === 'pg' ? 'INTEGER' : 'INTEGER'} NOT NULL,
+            amount_cents ${driver.kind === 'pg' ? 'BIGINT' : 'INTEGER'} NOT NULL,
+            currency TEXT NOT NULL DEFAULT 'usd',
+            method TEXT NOT NULL,
+            destination TEXT NOT NULL,
+            status TEXT NOT NULL DEFAULT 'pending',
+            admin_id ${driver.kind === 'pg' ? 'INTEGER' : 'INTEGER'},
+            admin_username TEXT,
+            admin_note TEXT,
+            created_at ${T.ts},
+            processed_at ${driver.kind === 'pg' ? 'TIMESTAMPTZ' : 'TEXT'}
+        );
+    `);
+    await driver.exec(`CREATE INDEX IF NOT EXISTS idx_withdrawals_user ON withdrawals (user_id, id DESC);`);
+    await driver.exec(`CREATE INDEX IF NOT EXISTS idx_withdrawals_status ON withdrawals (status);`);
 }
 
 async function initDatabase() {

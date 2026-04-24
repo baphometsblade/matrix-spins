@@ -1164,20 +1164,19 @@ async function main() {
         });
         assert.strictEqual(tooBig.status, 400);
 
-        // RTP sanity: 500 spins at $0.10 each. The theoretical RTP is 95.2%;
-        // the 500x jackpot symbol has probability 1/1000, so variance over
-        // 500 spins is large. We only assert the engine's books close:
-        //   end_balance == start_balance - total_bet + total_win
-        // and that the ratio stays in a sane band [0, 4x]. Tight RTP
-        // convergence would need tens of thousands of spins.
+        // Books-close: 25 spins at $0.10 each. Stays under the 30/10s
+        // per-user rate limit while still exercising the full path
+        // many times. We're checking the ledger, not RTP convergence —
+        // the theoretical 95.2% RTP needs tens of thousands of spins
+        // to emerge from variance (a 500x jackpot dominates).
         const rtpStart = (await http('GET', '/api/balance', { token: slToken })).body.balance_cents;
         let totalBet = 0, totalWin = 0;
-        for (let i = 0; i < 500; i++) {
+        for (let i = 0; i < 25; i++) {
             const s = await http('POST', '/api/slot/spin', {
                 token: slToken, csrf: slCsrf,
                 body: { game_id: 'classic_777', bet_cents: 10, client_seed: 'rtp' + i },
             });
-            if (s.status === 402) break; // ran out, that's fine
+            if (s.status === 402) break;
             assert.strictEqual(s.status, 200, 'rtp spin failed at i=' + i + ': ' + s.raw);
             totalBet += s.body.bet_cents;
             totalWin += s.body.win_cents;
@@ -1185,8 +1184,33 @@ async function main() {
         const rtpEnd = (await http('GET', '/api/balance', { token: slToken })).body.balance_cents;
         assert.strictEqual(rtpEnd, rtpStart - totalBet + totalWin, 'books must close');
         const rtpRatio = totalBet ? totalWin / totalBet : 0;
-        assert.ok(rtpRatio >= 0 && rtpRatio <= 4, 'RTP ratio wildly off: ' + rtpRatio);
-        console.log('[test] slot engine: 500 spins settled, books close, RTP=' + (rtpRatio * 100).toFixed(1) + '%');
+        assert.ok(rtpRatio >= 0 && rtpRatio <= 50, 'RTP ratio wildly off: ' + rtpRatio);
+        console.log('[test] slot engine: 25 spins settled, books close, RTP=' + (rtpRatio * 100).toFixed(1) + '%');
+
+        // Per-user rate limit: a brand-new user runs 31 spins back-to-back;
+        // the 31st must 429. Fresh user avoids polluting the earlier
+        // user's bucket.
+        const rlUser = 'rl_' + Date.now();
+        const rlReg = await http('POST', '/api/auth/register', {
+            csrf,
+            body: {
+                username: rlUser, email: rlUser + '@example.com',
+                password: 'Str0ngP@ss!!', date_of_birth: '1990-01-01',
+            },
+        });
+        const rlTok = rlReg.body.token;
+        const rlCsrf = (await http('GET', '/api/csrf-token', { token: rlTok })).body.csrfToken;
+        await db.run('UPDATE users SET balance_cents = ? WHERE id = ?', [100000, rlReg.body.user.id]);
+        let sawRate = false;
+        for (let i = 0; i < 32 && !sawRate; i++) {
+            const r = await http('POST', '/api/slot/spin', {
+                token: rlTok, csrf: rlCsrf,
+                body: { game_id: 'classic_777', bet_cents: 10 },
+            });
+            if (r.status === 429) sawRate = true;
+        }
+        assert.ok(sawRate, 'per-user spin rate limit never fired');
+        console.log('[test] slot engine: per-user spin rate limit fires on the 31st request within 10 s');
 
         // Rounds history is queryable and has the right user.
         const hist = await http('GET', '/api/slot/rounds?limit=5', { token: slToken });
@@ -1215,6 +1239,138 @@ async function main() {
         const b = engine._internals.spinReels(engine._internals.GAMES.classic_777, 'seed-abc', 'cli', 42);
         assert.deepStrictEqual(a, b, 'engine RNG must be deterministic for fixed seeds');
         console.log('[test] slot engine: commit/reveal verified, round isolation enforced, RNG deterministic');
+    }
+
+    // ═══ Withdrawals ═════════════════════════════════════════════════════════
+    // Full money-out path: request (balance debited, pending row),
+    // user cancel (refunded), admin approve (paid), admin deny (refunded).
+    {
+        const wUser = 'wd_' + Date.now();
+        const wReg = await http('POST', '/api/auth/register', {
+            csrf,
+            body: {
+                username: wUser, email: wUser + '@example.com',
+                password: 'Str0ngP@ss!!', date_of_birth: '1990-01-01',
+            },
+        });
+        assert.strictEqual(wReg.status, 201);
+        const wToken = wReg.body.token;
+        const wId = wReg.body.user.id;
+        await db.run('UPDATE users SET email_verified = 1, balance_cents = ? WHERE id = ?', [50000, wId]);
+        const wCsrf = (await http('GET', '/api/csrf-token', { token: wToken })).body.csrfToken;
+
+        // Bad inputs.
+        const badAmt = await http('POST', '/api/withdrawal/request', {
+            token: wToken, csrf: wCsrf,
+            body: { amount: 0.01, method: 'bank_transfer', destination: 'ACCT123' },
+        });
+        assert.strictEqual(badAmt.status, 400);
+
+        const badMethod = await http('POST', '/api/withdrawal/request', {
+            token: wToken, csrf: wCsrf,
+            body: { amount: 50, method: 'smuggler', destination: 'ACCT123' },
+        });
+        assert.strictEqual(badMethod.status, 400);
+
+        const badDest = await http('POST', '/api/withdrawal/request', {
+            token: wToken, csrf: wCsrf,
+            body: { amount: 50, method: 'bank_transfer', destination: '\x00bad' },
+        });
+        assert.strictEqual(badDest.status, 400);
+
+        // Insufficient balance.
+        const tooBig = await http('POST', '/api/withdrawal/request', {
+            token: wToken, csrf: wCsrf,
+            body: { amount: 5000, method: 'bank_transfer', destination: 'ACCT999' },
+        });
+        assert.strictEqual(tooBig.status, 402);
+
+        // Good request — balance should drop atomically.
+        const req1 = await http('POST', '/api/withdrawal/request', {
+            token: wToken, csrf: wCsrf,
+            body: { amount: 50, method: 'bank_transfer', destination: 'IBAN-TEST-123', currency: 'usd' },
+        });
+        assert.strictEqual(req1.status, 201, 'withdrawal request failed: ' + req1.raw);
+        assert.strictEqual(req1.body.withdrawal.status, 'pending');
+        const wdId1 = req1.body.withdrawal.id;
+        const bal1 = (await http('GET', '/api/balance', { token: wToken })).body.balance_cents;
+        assert.strictEqual(bal1, 50000 - 5000, 'balance must reflect withdrawal debit');
+
+        // List returns the pending row.
+        const list = await http('GET', '/api/withdrawal', { token: wToken });
+        assert.strictEqual(list.status, 200);
+        assert.ok(list.body.withdrawals.find(w => w.id === wdId1 && w.status === 'pending'));
+
+        // User cancels — balance refunded.
+        const cancel = await http('POST', '/api/withdrawal/' + wdId1 + '/cancel', {
+            token: wToken, csrf: wCsrf,
+        });
+        assert.strictEqual(cancel.status, 200);
+        assert.strictEqual(cancel.body.status, 'cancelled');
+        const bal2 = (await http('GET', '/api/balance', { token: wToken })).body.balance_cents;
+        assert.strictEqual(bal2, 50000, 'cancel must refund the full amount');
+        // Can't cancel twice.
+        const cancel2 = await http('POST', '/api/withdrawal/' + wdId1 + '/cancel', {
+            token: wToken, csrf: wCsrf,
+        });
+        assert.strictEqual(cancel2.status, 409);
+
+        // New request → admin approves → status becomes paid, balance stays debited.
+        const req2 = await http('POST', '/api/withdrawal/request', {
+            token: wToken, csrf: wCsrf,
+            body: { amount: 100, method: 'crypto', destination: 'bc1qtest' },
+        });
+        assert.strictEqual(req2.status, 201);
+        const wdId2 = req2.body.withdrawal.id;
+        const balBeforeApprove = (await http('GET', '/api/balance', { token: wToken })).body.balance_cents;
+
+        const adminCsrf2 = (await http('GET', '/api/csrf-token', { token: adminToken })).body.csrfToken;
+        // Admin list shows the row.
+        const adminList = await http('GET', '/api/admin/withdrawals?status=pending', { token: adminToken });
+        assert.strictEqual(adminList.status, 200);
+        assert.ok(adminList.body.withdrawals.find(w => w.id === wdId2));
+        // Non-admin can't reach it.
+        const notAdmin = await http('GET', '/api/admin/withdrawals', { token: wToken });
+        assert.strictEqual(notAdmin.status, 403);
+        const approve = await http('POST', '/api/admin/withdrawals/' + wdId2 + '/approve', {
+            token: adminToken, csrf: adminCsrf2, body: { note: 'paid via wire 2026-04' },
+        });
+        assert.strictEqual(approve.status, 200);
+        assert.strictEqual(approve.body.status, 'paid');
+        const balAfterApprove = (await http('GET', '/api/balance', { token: wToken })).body.balance_cents;
+        assert.strictEqual(balAfterApprove, balBeforeApprove, 'approve must not touch balance');
+        // Approving again fails.
+        const reApprove = await http('POST', '/api/admin/withdrawals/' + wdId2 + '/approve', {
+            token: adminToken, csrf: adminCsrf2, body: { note: 'again' },
+        });
+        assert.strictEqual(reApprove.status, 409);
+
+        // New request → admin denies → balance refunded.
+        const req3 = await http('POST', '/api/withdrawal/request', {
+            token: wToken, csrf: wCsrf,
+            body: { amount: 80, method: 'bank_transfer', destination: 'IBAN-DENY-01' },
+        });
+        assert.strictEqual(req3.status, 201);
+        const wdId3 = req3.body.withdrawal.id;
+        const balBeforeDeny = (await http('GET', '/api/balance', { token: wToken })).body.balance_cents;
+        // Deny without a note is rejected.
+        const denyNoNote = await http('POST', '/api/admin/withdrawals/' + wdId3 + '/deny', {
+            token: adminToken, csrf: adminCsrf2,
+        });
+        assert.strictEqual(denyNoNote.status, 400);
+        const deny = await http('POST', '/api/admin/withdrawals/' + wdId3 + '/deny', {
+            token: adminToken, csrf: adminCsrf2, body: { note: 'KYC unresolved' },
+        });
+        assert.strictEqual(deny.status, 200);
+        assert.strictEqual(deny.body.status, 'denied');
+        const balAfterDeny = (await http('GET', '/api/balance', { token: wToken })).body.balance_cents;
+        assert.strictEqual(balAfterDeny, balBeforeDeny + 8000, 'deny must refund the full amount');
+
+        // Emails were sent.
+        const wdMails = emailSvc.getCaptured().filter(m => /withdrawal/i.test(m.subject));
+        assert.ok(wdMails.length >= 2, 'expected at least request + deny emails: ' + wdMails.length);
+
+        console.log('[test] withdrawal: request debits, cancel/deny refund, approve preserves, bad inputs rejected');
     }
 
     console.log('\n✅ all deposit-flow assertions passed');
