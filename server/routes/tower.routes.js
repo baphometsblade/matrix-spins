@@ -1,3 +1,7 @@
+const _crypto = require('crypto');
+function secureFloat() { return _crypto.randomBytes(4).readUInt32BE(0) / 0x100000000; }
+function secureInt(n) { return _crypto.randomInt(n); }
+
 'use strict';
 
 // Tower — player climbs a multi-row tower, picking one safe tile per row.
@@ -77,7 +81,7 @@ function generateMineMap(cfg) {
     for (var i = 0; i < cfg.tiles; i++) tiles.push(i);
     // Shuffle and pick first cfg.mines as mine positions
     for (var j = tiles.length - 1; j > 0; j--) {
-      var k = Math.floor(Math.random() * (j + 1));
+      var k = secureInt((j + 1));
       var tmp = tiles[j]; tiles[j] = tiles[k]; tiles[k] = tmp;
     }
     map.push(tiles.slice(0, cfg.mines));

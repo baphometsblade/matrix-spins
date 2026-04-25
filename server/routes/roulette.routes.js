@@ -1,3 +1,7 @@
+const _crypto = require('crypto');
+function secureFloat() { return _crypto.randomBytes(4).readUInt32BE(0) / 0x100000000; }
+function secureInt(n) { return _crypto.randomInt(n); }
+
 'use strict';
 
 // European Roulette Route — stateless spin, real European odds (97.3% RTP)
@@ -25,7 +29,7 @@ function numberColor(n) {
 }
 
 function spinNumber() {
-  return Math.floor(Math.random() * 37); // 0-36
+  return secureInt(37); // 0-36
 }
 
 // Returns total payout (stake + winnings) for a single bet, or 0 if lost

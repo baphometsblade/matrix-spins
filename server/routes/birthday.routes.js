@@ -73,10 +73,22 @@ router.post('/claim', authenticate, async (req, res) => {
             return res.status(400).json({ error: 'Birthday bonus already claimed this year' });
         }
 
-        // Credit the bonus
-        var newBalance = (user.balance || 0) + BIRTHDAY_CREDITS;
-        await db.run('UPDATE users SET balance = ?, birthday_claimed = ? WHERE id = ?',
-            [newBalance, String(today.year), req.user.id]);
+        // RACE-SAFE FLAG FLIP — only one claim per year succeeds.
+        var flip = await db.run(
+            'UPDATE users SET birthday_claimed = ? WHERE id = ? AND COALESCE(birthday_claimed, \'\') <> ?',
+            [String(today.year), req.user.id, String(today.year)]
+        );
+        var flipRows = (flip && (flip.changes || flip.rowCount)) || 0;
+        if (flipRows === 0) {
+            return res.status(400).json({ error: 'Birthday bonus already claimed this year (race detected)' });
+        }
+
+        // Credit to bonus_balance with 15x wagering (free credit rule)
+        var birthdayWager = BIRTHDAY_CREDITS * 15;
+        await db.run(
+            'UPDATE users SET bonus_balance = COALESCE(bonus_balance, 0) + ?, wagering_requirement = COALESCE(wagering_requirement, 0) + ? WHERE id = ?',
+            [BIRTHDAY_CREDITS, birthdayWager, req.user.id]
+        );
 
         // Award gems
         await db.run('UPDATE users SET gems = COALESCE(gems, 0) + ? WHERE id = ?',

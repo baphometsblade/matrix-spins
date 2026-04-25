@@ -1,5 +1,7 @@
 'use strict';
 
+const crypto = require('crypto');
+
 /**
  * Virtual Horse Racing Route
  *
@@ -65,7 +67,7 @@ const DUAL_HORSE_TYPES = new Set(['exacta', 'quinella']);
 function simulateRace() {
   const horses = HORSE_NAMES.map((name, id) => {
     const times = Array.from({ length: FURLONGS }, () =>
-      Math.floor(Math.random() * 10) + 1
+      crypto.randomInt(10) + 1   // crypto-secure: race outcomes drive payouts
     );
     const total = times.reduce((sum, t) => sum + t, 0);
     return { id, name, times, total };
@@ -242,12 +244,16 @@ router.post('/race', authenticate, async (req, res) => {
       });
     }
 
-    // --- Deduct total wager first (deduct-then-credit pattern) ---
+    // --- Atomic wager debit (race-safe vs concurrent bets) ---
     const balanceAfterDeduct = parseFloat((currentBalance - totalWager).toFixed(2));
-    await db.run(
-      'UPDATE users SET balance = ? WHERE id = ?',
-      [balanceAfterDeduct, userId]
+    const debit = await db.run(
+      'UPDATE users SET balance = balance - ? WHERE id = ? AND balance >= ?',
+      [totalWager, userId, totalWager]
     );
+    const debitRows = (debit && (debit.changes || debit.rowCount)) || 0;
+    if (debitRows === 0) {
+      return res.status(400).json({ error: 'Insufficient balance (concurrent debit detected)' });
+    }
 
     // --- Simulate race ---
     const { horses, finishOrder } = simulateRace();
@@ -272,12 +278,14 @@ router.post('/race', authenticate, async (req, res) => {
     });
     totalPayout = parseFloat(totalPayout.toFixed(2));
 
-    // --- Credit winnings ---
+    // --- Credit winnings (atomic accumulator) ---
     const finalBalance = parseFloat((balanceAfterDeduct + totalPayout).toFixed(2));
-    await db.run(
-      'UPDATE users SET balance = ? WHERE id = ?',
-      [finalBalance, userId]
-    );
+    if (totalPayout > 0) {
+      await db.run(
+        'UPDATE users SET balance = balance + ? WHERE id = ?',
+        [totalPayout, userId]
+      );
+    }
 
     // --- Build finish-order enriched response ---
     const finishDisplay = finishOrder.map((horseId, position) => ({

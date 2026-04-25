@@ -1,3 +1,7 @@
+const _crypto = require('crypto');
+function secureFloat() { return _crypto.randomBytes(4).readUInt32BE(0) / 0x100000000; }
+function secureInt(n) { return _crypto.randomInt(n); }
+
 'use strict';
 
 // Baccarat — classic punto banco rules
@@ -31,7 +35,7 @@ function buildShoe() {
   }
   // Fisher-Yates
   for (let i = cards.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
+    const j = secureInt((i + 1));
     const tmp = cards[i]; cards[i] = cards[j]; cards[j] = tmp;
   }
   return cards;

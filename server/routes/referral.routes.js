@@ -1,3 +1,7 @@
+const _crypto = require('crypto');
+function secureFloat() { return _crypto.randomBytes(4).readUInt32BE(0) / 0x100000000; }
+function secureInt(n) { return _crypto.randomInt(n); }
+
 'use strict';
 
 const express = require('express');
@@ -41,7 +45,7 @@ async function ensureSchema() {
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
 function generateCode() {
-    return Math.random().toString(36).substring(2, 8).toUpperCase();
+    return _crypto.randomBytes(3).toString('hex').toUpperCase();
 }
 
 async function getOrCreateCode(userId) {

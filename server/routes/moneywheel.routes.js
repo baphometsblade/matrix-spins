@@ -1,3 +1,7 @@
+const _crypto = require('crypto');
+function secureFloat() { return _crypto.randomBytes(4).readUInt32BE(0) / 0x100000000; }
+function secureInt(n) { return _crypto.randomInt(n); }
+
 'use strict';
 
 // Money Wheel — multiplier prize wheel
@@ -53,7 +57,7 @@ router.post('/spin', authenticate, async function(req, res) {
 
     await db.run('UPDATE users SET balance = balance - ? WHERE id = ?', [bet, userId]);
 
-    var slotIndex = Math.floor(Math.random() * TOTAL_SLOTS);
+    var slotIndex = secureInt(TOTAL_SLOTS);
     var mult      = WHEEL[slotIndex];
     var payout    = parseFloat((bet * mult).toFixed(2));
     var profit    = parseFloat((payout - bet).toFixed(2));

@@ -1,5 +1,12 @@
 'use strict';
 
+const crypto = require('crypto');
+
+// Crypto-secure float in [0, 1) — replaces Math.random() for prize-determining rolls.
+function secureFloat() {
+    return crypto.randomBytes(4).readUInt32BE(0) / 0x100000000;
+}
+
 // ── Spin Tier Definitions ───────────────────────────────────────────────────
 
 var SPIN_TIERS = {
@@ -47,7 +54,7 @@ async function initSchema() {
 function _rollWheel() {
     var totalWeight = 0;
     for (var i = 0; i < SEGMENTS.length; i++) totalWeight += SEGMENTS[i].weight;
-    var roll = Math.random() * totalWeight;
+    var roll = secureFloat() * totalWeight;
     var cumulative = 0;
     for (var i = 0; i < SEGMENTS.length; i++) {
         cumulative += SEGMENTS[i].weight;

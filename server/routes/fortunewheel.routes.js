@@ -1,3 +1,7 @@
+const _crypto = require('crypto');
+function secureFloat() { return _crypto.randomBytes(4).readUInt32BE(0) / 0x100000000; }
+function secureInt(n) { return _crypto.randomInt(n); }
+
 'use strict';
 
 // Fortune Wheel Routes (free daily spin for all users)
@@ -27,7 +31,7 @@ function todayStr() {
 
 function pickSegment() {
   const total = SEGMENTS.reduce(function(s, seg) { return s + seg.weight; }, 0);
-  let r = Math.random() * total;
+  let r = secureFloat() * total;
   for (let i = 0; i < SEGMENTS.length; i++) {
     r -= SEGMENTS[i].weight;
     if (r <= 0) return i;

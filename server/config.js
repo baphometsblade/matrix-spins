@@ -1,11 +1,37 @@
 require('dotenv').config();
 
+// ─── Fail-closed in production ───
+// These checks run at module load — any consumer that requires('./config')
+// will fail before it can use a default secret.
+const NODE_ENV = process.env.NODE_ENV || 'development';
+if (NODE_ENV === 'production') {
+    if (!process.env.JWT_SECRET || process.env.JWT_SECRET === 'dev-secret-change-in-production') {
+        throw new Error(
+            '[config] JWT_SECRET must be set to a strong random value in production. ' +
+            'Generate one with: node -e "console.log(require(\'crypto\').randomBytes(32).toString(\'hex\'))"'
+        );
+    }
+    if (process.env.JWT_SECRET.length < 32) {
+        throw new Error('[config] JWT_SECRET must be at least 32 characters in production');
+    }
+    if (!process.env.ADMIN_PASSWORD || process.env.ADMIN_PASSWORD === 'admin123changeme') {
+        throw new Error('[config] ADMIN_PASSWORD must be set to a non-default value in production');
+    }
+    if (!process.env.ALLOWED_ORIGIN) {
+        throw new Error('[config] ALLOWED_ORIGIN must be set in production (e.g. https://msaart.online)');
+    }
+    if (!process.env.WEBHOOK_SECRET) {
+        // Not a hard fail — webhook is optional — but log a clear warning
+        console.warn('[config] WARNING: WEBHOOK_SECRET unset in production — generic /webhook/confirm will refuse all requests');
+    }
+}
+
 module.exports = {
     PORT: parseInt(process.env.PORT, 10) || 3000,
     JWT_SECRET: process.env.JWT_SECRET || 'dev-secret-change-in-production',
     JWT_EXPIRES_IN: '7d',
     ADMIN_PASSWORD: process.env.ADMIN_PASSWORD || 'admin123changeme',
-    NODE_ENV: process.env.NODE_ENV || 'development',
+    NODE_ENV: NODE_ENV,
     DB_PATH: process.env.DB_PATH || './casino.db',
     DATABASE_URL: process.env.DATABASE_URL || null,
 

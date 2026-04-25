@@ -1,3 +1,7 @@
+const _crypto = require('crypto');
+function secureFloat() { return _crypto.randomBytes(4).readUInt32BE(0) / 0x100000000; }
+function secureInt(n) { return _crypto.randomInt(n); }
+
 'use strict';
 
 // Caribbean Stud Poker
@@ -37,7 +41,7 @@ function buildDeck() {
 
 function shuffle(deck) {
   for (var i = deck.length - 1; i > 0; i--) {
-    var j = Math.floor(Math.random() * (i + 1));
+    var j = secureInt((i + 1));
     var t = deck[i]; deck[i] = deck[j]; deck[j] = t;
   }
   return deck;
@@ -120,7 +124,7 @@ function cleanGames() {
 }
 
 function newGameId() {
-  return Math.random().toString(36).slice(2, 12) + Date.now().toString(36);
+  return _crypto.randomBytes(6).toString('hex')+Date.now().toString(36);
 }
 
 // ── POST /deal ────────────────────────────────────────────────────────────────

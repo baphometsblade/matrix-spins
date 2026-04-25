@@ -1,3 +1,7 @@
+const _crypto = require('crypto');
+function secureFloat() { return _crypto.randomBytes(4).readUInt32BE(0) / 0x100000000; }
+function secureInt(n) { return _crypto.randomInt(n); }
+
 'use strict';
 
 // Coinflip — pick heads or tails; 2x payout; ~3% house edge.
@@ -38,7 +42,7 @@ router.post('/play', authenticate, async function(req, res) {
 
     // Biased coin: if rand < WIN_PROB → player wins regardless of pick
     // Else: result is the opposite of pick (house wins)
-    const r      = Math.random();
+    const r      = secureFloat();
     let result;
     if (r < WIN_PROB) {
       result = pick;           // player wins

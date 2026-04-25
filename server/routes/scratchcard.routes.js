@@ -1,3 +1,7 @@
+const _crypto = require('crypto');
+function secureFloat() { return _crypto.randomBytes(4).readUInt32BE(0) / 0x100000000; }
+function secureInt(n) { return _crypto.randomInt(n); }
+
 'use strict';
 const router = require('express').Router();
 const { authenticate } = require('../middleware/auth');
@@ -13,14 +17,14 @@ function todayUTC() {
 }
 
 function rand(min, max) {
-  return Math.floor(Math.random() * (max - min + 1)) + min;
+  return secureInt((max - min + 1)) + min;
 }
 
 function generateResult() {
   // 9 tiles, 3x3
   var tiles = [];
   for (var i = 0; i < 9; i++) {
-    var sym = SYMBOLS[Math.floor(Math.random() * SYMBOLS.length)];
+    var sym = SYMBOLS[secureInt(SYMBOLS.length)];
     tiles.push({ symbol: sym, index: i });
   }
 

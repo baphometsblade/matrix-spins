@@ -1,3 +1,7 @@
+const _crypto = require('crypto');
+function secureFloat() { return _crypto.randomBytes(4).readUInt32BE(0) / 0x100000000; }
+function secureInt(n) { return _crypto.randomInt(n); }
+
 'use strict';
 
 const router = require('express').Router();
@@ -51,7 +55,7 @@ router.get('/', async function(req, res) {
 
     // Add jitter +/-5%
     function jitter(n) {
-      var pct = 1 + (Math.random() * 0.1 - 0.05);
+      var pct = 1 + (secureFloat() * 0.1 - 0.05);
       return Math.max(1, Math.floor(n * pct));
     }
 

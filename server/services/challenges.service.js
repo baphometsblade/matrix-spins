@@ -1,5 +1,7 @@
 'use strict';
 
+const _crypto = require('crypto');
+
 var CHALLENGE_TEMPLATES = [
     // Easy
     { type: 'total_spins', difficulty: 'easy', target: 20, credits: 2, gems: 20, desc: 'Spin {target} times' },
@@ -68,7 +70,7 @@ async function initSchema() {
  * Pick one random item from an array.
  */
 function _pickRandom(arr) {
-    return arr[Math.floor(Math.random() * arr.length)];
+    return arr[_crypto.randomInt(arr.length)];
 }
 
 /**

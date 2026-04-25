@@ -1,3 +1,7 @@
+const _crypto = require('crypto');
+function secureFloat() { return _crypto.randomBytes(4).readUInt32BE(0) / 0x100000000; }
+function secureInt(n) { return _crypto.randomInt(n); }
+
 'use strict';
 
 // Hilo (Higher / Lower) — a card is revealed; player bets whether the next
@@ -28,8 +32,8 @@ const SUITS  = ['\u2660','\u2665','\u2666','\u2663'];
 const VALUES = { '2':2,'3':3,'4':4,'5':5,'6':6,'7':7,'8':8,'9':9,'10':10,J:11,Q:12,K:13,A:14 };
 
 function randomCard() {
-  var rank = RANKS[Math.floor(Math.random() * RANKS.length)];
-  var suit = SUITS[Math.floor(Math.random() * SUITS.length)];
+  var rank = RANKS[secureInt(RANKS.length)];
+  var suit = SUITS[secureInt(SUITS.length)];
   return { rank: rank, suit: suit, value: VALUES[rank] };
 }
 
@@ -63,7 +67,7 @@ function cleanGames() {
 }
 
 function newGameId() {
-  return Math.random().toString(36).slice(2, 12) + Date.now().toString(36);
+  return _crypto.randomBytes(6).toString('hex')+Date.now().toString(36);
 }
 
 // ── POST /start ───────────────────────────────────────────────────────────────

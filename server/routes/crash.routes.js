@@ -1,3 +1,7 @@
+const _crypto = require('crypto');
+function secureFloat() { return _crypto.randomBytes(4).readUInt32BE(0) / 0x100000000; }
+function secureInt(n) { return _crypto.randomInt(n); }
+
 'use strict';
 
 // Crash
@@ -23,7 +27,7 @@ const HOUSE_EDGE = 0.04;   // 4% house edge baked into crash point distribution
 // Generate crash point: exponential distribution biased by house edge
 // E[crash] = 1/(1-HOUSE_EDGE) ≈ 1.042, but right-skewed so big multipliers exist
 function generateCrashPoint() {
-  var r = Math.random();
+  var r = secureFloat();
   if (r < HOUSE_EDGE) return 1.00;   // instant crash (house edge bucket)
   // Geometric series: P(crash >= x) = (1 - HOUSE_EDGE) / x
   // Inverse: x = (1 - HOUSE_EDGE) / (1 - r)  but capped at 10000x
@@ -44,7 +48,7 @@ function cleanGames() {
 }
 
 function newGameId() {
-  return Math.random().toString(36).slice(2, 12) + Date.now().toString(36);
+  return _crypto.randomBytes(6).toString('hex')+Date.now().toString(36);
 }
 
 // ── POST /bet ─────────────────────────────────────────────────────────────────

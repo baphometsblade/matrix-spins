@@ -291,11 +291,16 @@ router.post('/user/:id/adjust-balance', async (req, res) => {
 
         const balanceBefore = user.balance;
         const balanceAfter = Math.max(0, balanceBefore + adjustment);
+        const actualDelta = balanceAfter - balanceBefore;
 
-        await db.run('UPDATE users SET balance = ? WHERE id = ?', [balanceAfter, userId]);
+        // Atomic adjust — guards against concurrent admin edits.
+        // We compute actualDelta after the floor-at-zero clamp so the math stays consistent.
+        if (actualDelta !== 0) {
+            await db.run('UPDATE users SET balance = balance + ? WHERE id = ?', [actualDelta, userId]);
+        }
         await db.run(
             'INSERT INTO transactions (user_id, type, amount, balance_before, balance_after, reference) VALUES (?, ?, ?, ?, ?, ?)',
-            [userId, 'admin_adjustment', adjustment, balanceBefore, balanceAfter, reason || 'Admin adjustment']
+            [userId, 'admin_adjustment', actualDelta, balanceBefore, balanceAfter, reason || 'Admin adjustment']
         );
 
         res.json({ balance: balanceAfter });
@@ -322,13 +327,17 @@ router.post('/user/:id/send-bonus', async (req, res) => {
         const user = await db.get('SELECT id, username, balance FROM users WHERE id = ?', [userId]);
         if (!user) return res.status(404).json({ error: 'User not found' });
 
-        const balanceBefore = user.balance || 0;
-        const balanceAfter = balanceBefore + bonusAmount;
-
-        await db.run('UPDATE users SET balance = ? WHERE id = ?', [balanceAfter, userId]);
+        // Admin "bonus" → bonus_balance with 15x wagering (free credit rule).
+        // If the admin actually wants to credit withdrawable cash (e.g. as a refund
+        // for a service issue), they should use POST /admin/user/:id/adjust-balance.
+        const wagerReq = bonusAmount * 15;
+        await db.run(
+            'UPDATE users SET bonus_balance = COALESCE(bonus_balance, 0) + ?, wagering_requirement = COALESCE(wagering_requirement, 0) + ? WHERE id = ?',
+            [bonusAmount, wagerReq, userId]
+        );
         await db.run(
             'INSERT INTO transactions (user_id, type, amount, balance_before, balance_after, reference) VALUES (?, ?, ?, ?, ?, ?)',
-            [userId, 'bonus', bonusAmount, balanceBefore, balanceAfter, reason || 'Admin bonus']
+            [userId, 'bonus', bonusAmount, user.balance || 0, user.balance || 0, (reason || 'Admin bonus') + ' (15x wagering)']
         );
 
         res.json({
@@ -336,7 +345,8 @@ router.post('/user/:id/send-bonus', async (req, res) => {
             userId,
             username: user.username,
             bonusAmount,
-            newBalance: balanceAfter,
+            creditedTo: 'bonus_balance',
+            wageringRequirement: wagerReq,
         });
     } catch (err) {
         console.error('[Admin] Send bonus error:', err);
@@ -363,6 +373,8 @@ router.post('/bulk-bonus', async (req, res) => {
             return res.status(400).json({ error: 'Maximum 100 users per bulk bonus' });
         }
 
+        // Admin bulk bonuses → bonus_balance with 15x wagering (free credit rule)
+        const wagerReq = bonusAmount * 15;
         let credited = 0;
         for (const uid of userIds) {
             const userId = parseInt(uid);
@@ -371,18 +383,18 @@ router.post('/bulk-bonus', async (req, res) => {
             const user = await db.get('SELECT id, balance FROM users WHERE id = ?', [userId]);
             if (!user) continue;
 
-            const balanceBefore = user.balance || 0;
-            const balanceAfter = balanceBefore + bonusAmount;
-
-            await db.run('UPDATE users SET balance = ? WHERE id = ?', [balanceAfter, userId]);
+            await db.run(
+                'UPDATE users SET bonus_balance = COALESCE(bonus_balance, 0) + ?, wagering_requirement = COALESCE(wagering_requirement, 0) + ? WHERE id = ?',
+                [bonusAmount, wagerReq, userId]
+            );
             await db.run(
                 'INSERT INTO transactions (user_id, type, amount, balance_before, balance_after, reference) VALUES (?, ?, ?, ?, ?, ?)',
-                [userId, 'bonus', bonusAmount, balanceBefore, balanceAfter, reason || 'Admin bulk bonus']
+                [userId, 'bonus', bonusAmount, user.balance || 0, user.balance || 0, (reason || 'Admin bulk bonus') + ' (15x wagering)']
             );
             credited++;
         }
 
-        res.json({ message: 'Bulk bonus sent', credited, totalAmount: credited * bonusAmount });
+        res.json({ message: 'Bulk bonus sent', credited, totalAmount: credited * bonusAmount, creditedTo: 'bonus_balance', wageringMultiplier: 15 });
     } catch (err) {
         console.error('[Admin] Bulk bonus error:', err);
         res.status(500).json({ error: 'Failed to send bulk bonus' });
@@ -534,9 +546,17 @@ router.post('/approve-deposit', async (req, res) => {
             bonusType = 'reload_bonus';
         }
 
-        // Credit deposit to real balance
-        await db.run('UPDATE users SET balance = ? WHERE id = ?', [balanceAfter, deposit.user_id]);
-        await db.run("UPDATE deposits SET status = 'completed', completed_at = datetime('now') WHERE id = ?", [depositId]);
+        // RACE-SAFE STATUS FLIP — only one approval succeeds
+        const flip = await db.run(
+            "UPDATE deposits SET status = 'completed', completed_at = datetime('now') WHERE id = ? AND status = 'pending'",
+            [depositId]
+        );
+        const flipRows = (flip && (flip.changes || flip.rowCount)) || 0;
+        if (flipRows === 0) {
+            return res.status(409).json({ error: 'Deposit already processed (concurrent action detected)' });
+        }
+        // Atomic credit
+        await db.run('UPDATE users SET balance = balance + ? WHERE id = ?', [deposit.amount, deposit.user_id]);
         await db.run(
             'INSERT INTO transactions (user_id, type, amount, balance_before, balance_after, reference) VALUES (?, ?, ?, ?, ?, ?)',
             [deposit.user_id, 'deposit', deposit.amount, balanceBefore, balanceAfter, deposit.reference || 'admin-approved']
@@ -546,7 +566,7 @@ router.post('/approve-deposit', async (req, res) => {
         if (bonusAmount > 0) {
             const wagerReq = bonusAmount * wageringMult;
             await db.run(
-                'UPDATE users SET bonus_balance = bonus_balance + ?, wagering_requirement = ?, wagering_progress = 0 WHERE id = ?',
+                'UPDATE users SET bonus_balance = COALESCE(bonus_balance, 0) + ?, wagering_requirement = COALESCE(wagering_requirement, 0) + ? WHERE id = ?',
                 [bonusAmount, wagerReq, deposit.user_id]
             );
             const refLabel = bonusType === 'first_deposit_bonus'
@@ -656,11 +676,15 @@ router.post('/approve-withdrawal', async (req, res) => {
             }
         }
 
-        // Mark as completed (balance was already deducted at request time)
-        await db.run(
-            "UPDATE withdrawals SET status = 'completed', processed_at = datetime('now'), admin_note = 'Approved by admin' WHERE id = ?",
+        // RACE-SAFE FLIP — only one approval succeeds (prevents double-payout downstream)
+        const flip = await db.run(
+            "UPDATE withdrawals SET status = 'completed', processed_at = datetime('now'), admin_note = 'Approved by admin' WHERE id = ? AND status = 'pending'",
             [withdrawalId]
         );
+        const flipRows = (flip && (flip.changes || flip.rowCount)) || 0;
+        if (flipRows === 0) {
+            return res.status(409).json({ error: 'Withdrawal already processed (concurrent action detected)' });
+        }
 
         res.json({ message: 'Withdrawal approved and ready for payout', withdrawalId, amount: wd.amount });
     } catch (err) {
@@ -679,18 +703,22 @@ router.post('/reject-withdrawal', async (req, res) => {
         if (!wd) return res.status(404).json({ error: 'Withdrawal not found' });
         if (wd.status !== 'pending') return res.status(400).json({ error: `Withdrawal is already ${wd.status}` });
 
-        // Refund the balance back to the user
-        const user = await db.get('SELECT balance FROM users WHERE id = ?', [wd.user_id]);
-        if (!user) return res.status(404).json({ error: 'User not found' });
-
-        const balanceBefore = user.balance;
-        const balanceAfter = balanceBefore + wd.amount;
-
-        await db.run('UPDATE users SET balance = ? WHERE id = ?', [balanceAfter, wd.user_id]);
-        await db.run(
-            "UPDATE withdrawals SET status = 'rejected', processed_at = datetime('now'), admin_note = ? WHERE id = ?",
+        // RACE-SAFE FLIP — only one rejection succeeds (prevents double-refund)
+        const flip = await db.run(
+            "UPDATE withdrawals SET status = 'rejected', processed_at = datetime('now'), admin_note = ? WHERE id = ? AND status = 'pending'",
             [reason || 'Rejected by admin', withdrawalId]
         );
+        const flipRows = (flip && (flip.changes || flip.rowCount)) || 0;
+        if (flipRows === 0) {
+            return res.status(409).json({ error: 'Withdrawal already processed (concurrent action detected)' });
+        }
+
+        // Atomic refund
+        await db.run('UPDATE users SET balance = balance + ? WHERE id = ?', [wd.amount, wd.user_id]);
+        const userAfter = await db.get('SELECT balance FROM users WHERE id = ?', [wd.user_id]);
+        const balanceAfter = userAfter ? userAfter.balance : null;
+        const balanceBefore = balanceAfter !== null ? balanceAfter - wd.amount : null;
+
         await db.run(
             'INSERT INTO transactions (user_id, type, amount, balance_before, balance_after, reference) VALUES (?, ?, ?, ?, ?, ?)',
             [wd.user_id, 'withdrawal_refund', wd.amount, balanceBefore, balanceAfter, `WDR-REJECT-${withdrawalId}`]
@@ -1206,20 +1234,21 @@ router.post('/withdrawals/:id/reject', async (req, res) => {
             return res.status(400).json({ error: `Withdrawal is already ${withdrawal.status}` });
         }
 
-        // Refund the amount back to user's balance
-        const user = await db.get('SELECT balance FROM users WHERE id = ?', [withdrawal.user_id]);
-        if (!user) {
-            return res.status(404).json({ error: 'User not found' });
-        }
-
-        const balanceBefore = user.balance;
-        const balanceAfter = balanceBefore + withdrawal.amount;
-
-        await db.run('UPDATE users SET balance = ? WHERE id = ?', [balanceAfter, withdrawal.user_id]);
-        await db.run(
-            "UPDATE withdrawals SET status = 'rejected', admin_note = ?, processed_at = datetime('now') WHERE id = ?",
+        // RACE-SAFE FLIP — only one rejection succeeds
+        const flip = await db.run(
+            "UPDATE withdrawals SET status = 'rejected', admin_note = ?, processed_at = datetime('now') WHERE id = ? AND status = 'pending'",
             [admin_note.trim(), withdrawalId]
         );
+        const flipRows = (flip && (flip.changes || flip.rowCount)) || 0;
+        if (flipRows === 0) {
+            return res.status(409).json({ error: 'Withdrawal already processed (concurrent action detected)' });
+        }
+
+        // Atomic refund
+        await db.run('UPDATE users SET balance = balance + ? WHERE id = ?', [withdrawal.amount, withdrawal.user_id]);
+        const userAfter = await db.get('SELECT balance FROM users WHERE id = ?', [withdrawal.user_id]);
+        const balanceAfter = userAfter ? userAfter.balance : null;
+        const balanceBefore = balanceAfter !== null ? balanceAfter - withdrawal.amount : null;
 
         // Log refund transaction
         await db.run(

@@ -1,4 +1,5 @@
 const express = require('express');
+const crypto = require('crypto');
 const router = express.Router();
 const db = require('../database');
 const { authenticate } = require('../middleware/auth');
@@ -23,7 +24,10 @@ var PRIZES = [
 ];
 
 function pickPrize() {
-  var roll = Math.random() * 100;
+  // Crypto-secure roll across 0..100 — Math.random is predictable in V8 and
+  // payouts on this wheel reach $25 cash, so prediction = exfil. Floor weights
+  // sum to 100 (validated by the loop guard).
+  var roll = crypto.randomInt(10_000) / 100; // 0.00..99.99 with full uniform spread
   var cumulative = 0;
   for (var i = 0; i < PRIZES.length; i++) {
     cumulative += PRIZES[i].weight;
@@ -103,30 +107,32 @@ router.post('/spin', authenticate, async function(req, res) {
 
     var result = pickPrize();
     var nowISO = new Date(now).toISOString();
-    var newBalance = user.balance;
 
     if (result.prize.type === 'credits') {
-      newBalance = parseFloat((user.balance + result.prize.value).toFixed(2));
+      // Free credit prize → bonus_balance with 15x wagering (CLAUDE.md rule)
+      var wagerReq = parseFloat((result.prize.value * 15).toFixed(2));
       await db.run(
-        "UPDATE users SET balance = ?, vip_wheel_last = ? WHERE id = ?",
-        [newBalance, nowISO, req.user.id]
+        "UPDATE users SET bonus_balance = COALESCE(bonus_balance, 0) + ?, " +
+        "wagering_requirement = COALESCE(wagering_requirement, 0) + ?, " +
+        "vip_wheel_last = ? WHERE id = ?",
+        [result.prize.value, wagerReq, nowISO, req.user.id]
       );
       await db.run(
         "INSERT INTO transactions (user_id, type, amount, balance_after, description) VALUES (?, 'bonus', ?, ?, ?)",
-        [req.user.id, result.prize.value, newBalance, 'VIP Wheel: ' + result.prize.label]
+        [req.user.id, result.prize.value, user.balance, 'VIP Wheel: ' + result.prize.label + ' (15x wagering)']
       );
     } else {
-      var newGems = (user.gems || 0) + result.prize.value;
+      // Gems are an in-game currency, not cashable — atomic accumulate
       await db.run(
-        "UPDATE users SET gems = ?, vip_wheel_last = ? WHERE id = ?",
-        [newGems, nowISO, req.user.id]
+        "UPDATE users SET gems = COALESCE(gems, 0) + ?, vip_wheel_last = ? WHERE id = ?",
+        [result.prize.value, nowISO, req.user.id]
       );
     }
 
     res.json({
       prizeIndex: result.index,
       prize: result.prize,
-      newBalance: newBalance
+      creditedTo: result.prize.type === 'credits' ? 'bonus_balance' : 'gems'
     });
   } catch (e) {
     res.status(500).json({ error: 'Server error' });

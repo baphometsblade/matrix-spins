@@ -134,33 +134,37 @@ router.post('/claim', verifyToken, withSchema, async (req, res) => {
       });
     }
 
-    // Calculate bonus
+    // Calculate bonus and wagering. Use config wagering multiplier (35x by default).
+    const config = require('../config');
     const bonus = parseFloat(Math.min(deposit * MATCH_PERCENT, MAX_BONUS).toFixed(2));
-    const currentBalance = parseFloat(user.balance) || 0;
-    const newBalance = parseFloat((currentBalance + bonus).toFixed(2));
+    const wageringMult = config.RELOAD_WAGERING_MULT || 35;
+    const wagerReq = parseFloat((bonus * wageringMult).toFixed(2));
 
-    // Update user: credit bonus, record claim timestamp, increment count
+    // Reload bonus is FREE money → bonus_balance with accumulating wagering.
+    // Atomic accumulators prevent races and overwrites.
     await db.run(
       `UPDATE users
-       SET balance = ?,
+       SET bonus_balance = COALESCE(bonus_balance, 0) + ?,
+           wagering_requirement = COALESCE(wagering_requirement, 0) + ?,
            reload_bonus_claimed_at = datetime('now'),
            reload_bonus_count = COALESCE(reload_bonus_count, 0) + 1
        WHERE id = ?`,
-      [newBalance, userId]
+      [bonus, wagerReq, userId]
     );
 
     // Insert transaction record
     await db.run(
       `INSERT INTO transactions (user_id, type, amount, description, created_at)
-       VALUES (?, 'bonus', ?, 'Weekly reload bonus (25% match)', datetime('now'))`,
-      [userId, bonus]
+       VALUES (?, 'bonus', ?, ?, datetime('now'))`,
+      [userId, bonus, `Weekly reload bonus (${wageringMult}x wagering)`]
     );
 
     return res.json({
       success: true,
       bonus,
-      newBalance,
-      message: `Reload bonus of $${bonus.toFixed(2)} credited to your account!`
+      creditedTo: 'bonus_balance',
+      wageringRequirement: wagerReq,
+      message: `Reload bonus of $${bonus.toFixed(2)} credited (subject to ${wageringMult}x wagering)`
     });
   } catch (err) {
     console.error('[reloadbonus] POST /claim error:', err);

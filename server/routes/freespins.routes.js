@@ -84,18 +84,31 @@ router.post('/use', authenticate, async function(req, res) {
       return res.status(400).json({ error: 'Free spins have expired' });
     }
 
+    // RACE-SAFE decrement of the spin counter — only one concurrent claim succeeds
+    var dec = await db.run(
+      'UPDATE users SET free_spins_count = free_spins_count - 1 WHERE id = ? AND free_spins_count > 0',
+      [userId]
+    );
+    var decRows = (dec && (dec.changes || dec.rowCount)) || 0;
+    if (decRows === 0) {
+      return res.status(400).json({ error: 'No free spins available (concurrent claim detected)' });
+    }
     var newCount = count - 1;
-    var newBalance = parseFloat(row.balance || 0) + FREE_SPIN_VALUE;
     var newExpires = newCount === 0 ? null : expiresAt;
+    // Free-spin payout → bonus_balance with 10x wagering (CLAUDE.md free-spin rule)
+    var fsWager = FREE_SPIN_VALUE * 10;
     await db.run(
-      'UPDATE users SET free_spins_count = ?, free_spins_expires = ?, balance = ? WHERE id = ?',
-      [newCount, newExpires, newBalance, userId]
+      'UPDATE users SET free_spins_expires = ?, ' +
+      'bonus_balance = COALESCE(bonus_balance, 0) + ?, ' +
+      'wagering_requirement = COALESCE(wagering_requirement, 0) + ? ' +
+      'WHERE id = ?',
+      [newExpires, FREE_SPIN_VALUE, fsWager, userId]
     );
     await db.run(
-      "INSERT INTO transactions (user_id, type, amount, description) VALUES (?, 'free_spin', ?, 'Free spin credit')",
+      "INSERT INTO transactions (user_id, type, amount, description) VALUES (?, 'free_spin', ?, 'Free spin credit (10x wagering)')",
       [userId, FREE_SPIN_VALUE]
     );
-    return res.json({ success: true, remaining: newCount, newBalance: newBalance });
+    return res.json({ success: true, remaining: newCount, creditedTo: 'bonus_balance', wageringRequirement: fsWager });
   } catch(err) {
     return res.status(500).json({ error: 'Internal server error' });
   }

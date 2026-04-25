@@ -1,3 +1,7 @@
+const _crypto = require('crypto');
+function secureFloat() { return _crypto.randomBytes(4).readUInt32BE(0) / 0x100000000; }
+function secureInt(n) { return _crypto.randomInt(n); }
+
 'use strict';
 
 // --- Referral Bonus Routes ---
@@ -78,7 +82,7 @@ function buildCode(userId) {
   const letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
   let suffix    = '';
   for (let i = 0; i < 3; i++) {
-    suffix += letters.charAt(Math.floor(Math.random() * letters.length));
+    suffix += letters.charAt(secureInt(letters.length));
   }
   return 'REF' + padded + suffix;
 }

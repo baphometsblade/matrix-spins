@@ -20,11 +20,12 @@ app.set('trust proxy', 1);
 app.use(helmet({
     contentSecurityPolicy: false, // Allow inline scripts for the casino client
 }));
-// In production restrict CORS to the declared origin; open in development
+// In production restrict CORS to the declared origin; open in development.
+// config.js fails-closed if ALLOWED_ORIGIN is unset in production, so this is just defensive.
 const corsOrigin = config.NODE_ENV === 'production'
     ? (process.env.ALLOWED_ORIGIN || false)
     : true;
-app.use(cors({ origin: corsOrigin }));
+app.use(cors({ origin: corsOrigin, credentials: false }));
 // Stripe webhook needs the raw body (Buffer) for signature verification.
 // Mount express.raw() BEFORE express.json() so the webhook path gets raw bytes.
 app.use('/api/payment/stripe/webhook', express.raw({ type: 'application/json' }));
@@ -46,6 +47,27 @@ const authLimiter = rateLimit({
 });
 app.use('/api/auth/register', authLimiter);
 app.use('/api/auth/login', authLimiter);
+
+// Password-reset / change-password limiter — prevents enumeration + brute-force
+// of reset tokens (3 attempts per 15 min per IP)
+const passwordResetLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000,
+    max: 3,
+    message: { error: 'Too many password reset attempts. Try again later.' },
+});
+app.use('/api/user/forgot-password', passwordResetLimiter);
+app.use('/api/user/reset-password', passwordResetLimiter);
+app.use('/api/auth/forgot-password', passwordResetLimiter);
+app.use('/api/auth/reset-password', passwordResetLimiter);
+
+// Generic webhook is unauthenticated and fires balance credits — needs strict rate limit
+const webhookLimiter = rateLimit({
+    windowMs: 60 * 1000,
+    max: 30, // legitimate processor traffic shouldn't exceed this
+    message: { error: 'Too many webhook calls. Please wait.' },
+});
+app.use('/api/payment/webhook/confirm', webhookLimiter);
+app.use('/api/payments/webhook/confirm', webhookLimiter);
 
 // Strict rate limit for bonus/reward endpoints (prevent rapid-fire exploitation)
 const bonusLimiter = rateLimit({

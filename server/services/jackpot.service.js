@@ -2,6 +2,13 @@
 
 const db = require('../database');
 const config = require('../config');
+const crypto = require('crypto');
+
+// Crypto-secure float in [0, 1) — replaces Math.random() for prize-determining rolls.
+// Predictable RNG on jackpot logic = direct cash exfil.
+function secureFloat() {
+    return crypto.randomBytes(4).readUInt32BE(0) / 0x100000000;
+}
 
 /**
  * Jackpot Pooling Service
@@ -82,7 +89,7 @@ async function processJackpotContribution(userId, betAmount) {
 
         const winChance = getWinChance(tierName);
         const mustHit = row.current_amount >= tierConfig.mustHitAt;
-        const randomHit = Math.random() < winChance;
+        const randomHit = secureFloat() < winChance;
 
         if (mustHit || randomHit) {
             // Jackpot won!
@@ -94,12 +101,12 @@ async function processJackpotContribution(userId, betAmount) {
                 [wonAmount, userId, tierName]
             );
 
-            // Credit user balance
+            // Credit user balance (atomic accumulator)
             const userRow = await db.get('SELECT balance FROM users WHERE id = ?', [userId]);
             if (userRow) {
                 const balanceBefore = userRow.balance;
                 const balanceAfter = balanceBefore + wonAmount;
-                await db.run('UPDATE users SET balance = ? WHERE id = ?', [balanceAfter, userId]);
+                await db.run('UPDATE users SET balance = balance + ? WHERE id = ?', [wonAmount, userId]);
 
                 // Log transaction
                 await db.run(
@@ -177,16 +184,20 @@ async function checkAndAward(userId, betAmount, minBet, isJackpotGame) {
         const prob = baseChance * betMultiplier * gameMultiplier;
 
         const mustHit = row.current_amount >= tierConfig.mustHitAt;
-        const randomHit = Math.random() < prob;
+        const randomHit = secureFloat() < prob;
 
         if (mustHit || randomHit) {
-            const wonAmount = Math.round(row.current_amount * 100) / 100;
-
-            await db.run(
-                "UPDATE jackpot_pool SET current_amount = seed_amount, total_paid_out = total_paid_out + ?, last_won_at = datetime('now'), last_winner_id = ? WHERE tier = ?",
-                [wonAmount, userId, tierName]
+            // RACE-SAFE jackpot claim — concurrent spins can both pass the random check;
+            // only the spin whose UPDATE matches the observed amount wins.
+            const flip = await db.run(
+                "UPDATE jackpot_pool SET current_amount = seed_amount, total_paid_out = total_paid_out + ?, last_won_at = datetime('now'), last_winner_id = ? WHERE tier = ? AND current_amount = ?",
+                [row.current_amount, userId, tierName, row.current_amount]
             );
-
+            const flipRows = (flip && (flip.changes || flip.rowCount)) || 0;
+            if (flipRows === 0) {
+                continue; // Another spin won this tier first
+            }
+            const wonAmount = Math.round(row.current_amount * 100) / 100;
             return { tier: tierName, amount: wonAmount };
         }
     }

@@ -1,3 +1,7 @@
+const _crypto = require('crypto');
+function secureFloat() { return _crypto.randomBytes(4).readUInt32BE(0) / 0x100000000; }
+function secureInt(n) { return _crypto.randomInt(n); }
+
 'use strict';
 
 // Dice Game Route — "Roll Over / Roll Under" style, 97% RTP
@@ -31,7 +35,7 @@ function calcChanceAndMult(target, direction) {
 
 function rollDice() {
   // 0.00 – 100.00 uniform
-  return parseFloat((Math.random() * 100).toFixed(2));
+  return parseFloat((secureFloat() * 100).toFixed(2));
 }
 
 function didWin(roll, target, direction) {

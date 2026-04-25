@@ -1,3 +1,7 @@
+const _crypto = require('crypto');
+function secureFloat() { return _crypto.randomBytes(4).readUInt32BE(0) / 0x100000000; }
+function secureInt(n) { return _crypto.randomInt(n); }
+
 'use strict';
 
 // Mines
@@ -31,7 +35,7 @@ function placeMines(count) {
   for (var i = 0; i < GRID_SIZE; i++) pool.push(i);
   // Fisher-Yates partial shuffle
   for (var m = 0; m < count; m++) {
-    var idx = Math.floor(Math.random() * (pool.length - m)) + m;
+    var idx = secureInt((pool.length - m)) + m;
     var tmp = pool[m]; pool[m] = pool[idx]; pool[idx] = tmp;
     positions.push(pool[m]);
   }
@@ -65,7 +69,7 @@ function cleanGames() {
 }
 
 function newGameId() {
-  return Math.random().toString(36).slice(2, 12) + Date.now().toString(36);
+  return _crypto.randomBytes(6).toString('hex')+Date.now().toString(36);
 }
 
 // ── POST /start ───────────────────────────────────────────────────────────────

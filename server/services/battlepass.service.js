@@ -210,9 +210,14 @@ async function buyPremium(userId) {
     if (!user) throw new Error('User not found');
     if (user.balance < PREMIUM_PRICE) throw new Error('Insufficient balance');
 
-    // Deduct balance
+    // Atomic debit (race-safe vs concurrent purchases)
     const newBal = user.balance - PREMIUM_PRICE;
-    await db.run("UPDATE users SET balance = ? WHERE id = ?", [newBal, userId]);
+    const debit = await db.run(
+        "UPDATE users SET balance = balance - ? WHERE id = ? AND balance >= ?",
+        [PREMIUM_PRICE, userId, PREMIUM_PRICE]
+    );
+    const debitRows = (debit && (debit.changes || debit.rowCount)) || 0;
+    if (debitRows === 0) throw new Error('Insufficient balance (concurrent debit detected)');
 
     // Log transaction
     await db.run(

@@ -1,3 +1,7 @@
+const _crypto = require('crypto');
+function secureFloat() { return _crypto.randomBytes(4).readUInt32BE(0) / 0x100000000; }
+function secureInt(n) { return _crypto.randomInt(n); }
+
 'use strict';
 
 // Limbo — player picks a target multiplier; house generates a result multiplier.
@@ -25,7 +29,7 @@ function generateResult() {
   // result = 1 / (1 - r)  where r in [0, 1)
   // but we apply house edge: multiply random uniform by (1 - HOUSE_EDGE)
   // so P(result >= X) = (1-HOUSE_EDGE)/X = 0.97/X
-  var r = Math.random() * (1 - HOUSE_EDGE);
+  var r = secureFloat() * (1 - HOUSE_EDGE);
   if (r >= 1) r = 1 - 1e-9;
   var raw = 1 / (1 - r);
   // Floor to 2 decimal places, cap at 1,000,000

@@ -1,3 +1,7 @@
+const _crypto = require('crypto');
+function secureFloat() { return _crypto.randomBytes(4).readUInt32BE(0) / 0x100000000; }
+function secureInt(n) { return _crypto.randomInt(n); }
+
 'use strict';
 
 const router = require('express').Router();
@@ -8,11 +12,11 @@ const db = require('../database');
 db.run('ALTER TABLE users ADD COLUMN mystery_next_drop INTEGER DEFAULT 0').catch(function() {});
 
 // Helper: random integer between min and max inclusive
-function randInt(min, max) { return Math.floor(Math.random() * (max - min + 1)) + min; }
+function randInt(min, max) { return secureInt((max - min + 1)) + min; }
 
 // Helper: pick random reward
 function pickReward() {
-    var roll = Math.random();
+    var roll = secureFloat();
     if (roll < 0.40) return { type: 'gems', amount: randInt(50, 500) };
     if (roll < 0.70) return { type: 'credits', amount: randInt(1, 10) };
     if (roll < 0.90) return { type: 'wheel_spins', amount: randInt(3, 10) };

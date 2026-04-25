@@ -13,6 +13,14 @@
 
 'use strict';
 
+const crypto = require('crypto');
+
+// Crypto-secure short ID for transaction references — opaque to clients,
+// non-guessable. Used in place of Math.random().toString(36).slice(2,8).
+function secureRefSuffix() {
+    return crypto.randomBytes(4).toString('hex');
+}
+
 const config = require('../config');
 const db = require('../database');
 
@@ -69,7 +77,7 @@ async function createCheckoutSession(userId, amount, currency, returnUrl) {
     }
 
     // Create a pending deposit record so we can match it on webhook callback
-    const reference = `DEP-STRIPE-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+    const reference = `DEP-STRIPE-${Date.now()}-${secureRefSuffix()}`;
 
     const depositResult = await db.run(
         'INSERT INTO deposits (user_id, amount, currency, payment_type, status, reference) VALUES (?, ?, ?, ?, ?, ?)',
@@ -138,7 +146,7 @@ async function createPaymentIntent(userId, amount, currency) {
         throw new Error('Amount must be at least $0.50');
     }
 
-    const reference = `DEP-PI-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+    const reference = `DEP-PI-${Date.now()}-${secureRefSuffix()}`;
 
     const depositResult = await db.run(
         'INSERT INTO deposits (user_id, amount, currency, payment_type, status, reference) VALUES (?, ?, ?, ?, ?, ?)',
@@ -309,14 +317,19 @@ async function handlePaymentSuccess(metadata, externalId, amountFromStripe, even
         bonusType = 'reload_bonus';
     }
 
-    // Update user balance
-    await db.run('UPDATE users SET balance = ? WHERE id = ?', [balanceAfter, depositUserId]);
-
-    // Mark deposit as completed
-    await db.run(
-        "UPDATE deposits SET status = 'completed', external_ref = ?, completed_at = datetime('now') WHERE id = ?",
+    // RACE-SAFE deposit completion — only one webhook delivery succeeds
+    const flip = await db.run(
+        "UPDATE deposits SET status = 'completed', external_ref = ?, completed_at = datetime('now') WHERE id = ? AND status = 'pending'",
         [externalId, deposit.id]
     );
+    const flipRows = (flip && (flip.changes || flip.rowCount)) || 0;
+    if (flipRows === 0) {
+        console.log('[Stripe] Deposit ' + deposit.id + ' already processed (concurrent webhook)');
+        return { success: true, depositId: deposit.id, alreadyProcessed: true };
+    }
+
+    // Atomic balance credit
+    await db.run('UPDATE users SET balance = balance + ? WHERE id = ?', [depositAmount, depositUserId]);
 
     // Log the deposit transaction
     await db.run(
@@ -324,11 +337,11 @@ async function handlePaymentSuccess(metadata, externalId, amountFromStripe, even
         [depositUserId, 'deposit', depositAmount, balanceBefore, balanceAfter, reference]
     );
 
-    // Apply bonus if applicable
+    // Apply bonus if applicable — ACCUMULATING wagering (preserves any active bonus)
     if (bonusAmount > 0) {
         const wagerReq = bonusAmount * wageringMult;
         await db.run(
-            'UPDATE users SET bonus_balance = bonus_balance + ?, wagering_requirement = ?, wagering_progress = 0 WHERE id = ?',
+            'UPDATE users SET bonus_balance = COALESCE(bonus_balance, 0) + ?, wagering_requirement = COALESCE(wagering_requirement, 0) + ? WHERE id = ?',
             [bonusAmount, wagerReq, depositUserId]
         );
         const refLabel = bonusType === 'first_deposit_bonus'
@@ -387,7 +400,7 @@ async function createPayout(userId, amount, currency, destination) {
     }
 
     const amountInCents = Math.round(amount * 100);
-    const reference = `PAY-STRIPE-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+    const reference = `PAY-STRIPE-${Date.now()}-${secureRefSuffix()}`;
 
     const transfer = await stripe.transfers.create({
         amount: amountInCents,

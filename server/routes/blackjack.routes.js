@@ -1,3 +1,7 @@
+const _crypto = require('crypto');
+function secureFloat() { return _crypto.randomBytes(4).readUInt32BE(0) / 0x100000000; }
+function secureInt(n) { return _crypto.randomInt(n); }
+
 'use strict';
 
 // Blackjack — 6-deck shoe, dealer stands on all 17s, BJ pays 3:2
@@ -31,7 +35,7 @@ function buildShoe() {
   }
   // Fisher-Yates shuffle
   for (var i = shoe.length - 1; i > 0; i--) {
-    var j = Math.floor(Math.random() * (i + 1));
+    var j = secureInt((i + 1));
     var tmp = shoe[i]; shoe[i] = shoe[j]; shoe[j] = tmp;
   }
   return shoe;

@@ -1,3 +1,7 @@
+const _crypto = require('crypto');
+function secureFloat() { return _crypto.randomBytes(4).readUInt32BE(0) / 0x100000000; }
+function secureInt(n) { return _crypto.randomInt(n); }
+
 'use strict';
 
 // Sic Bo — 3 dice, multiple bet types.
@@ -35,9 +39,9 @@ const TOTAL_PAYOUTS = {
 
 function rollDice() {
   return [
-    Math.floor(Math.random() * 6) + 1,
-    Math.floor(Math.random() * 6) + 1,
-    Math.floor(Math.random() * 6) + 1,
+    secureInt(6) + 1,
+    secureInt(6) + 1,
+    secureInt(6) + 1,
   ];
 }
 

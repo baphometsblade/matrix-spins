@@ -1,3 +1,7 @@
+const _crypto = require('crypto');
+function secureFloat() { return _crypto.randomBytes(4).readUInt32BE(0) / 0x100000000; }
+function secureInt(n) { return _crypto.randomInt(n); }
+
 'use strict';
 
 // Wheel of Fortune
@@ -60,7 +64,7 @@ router.post('/play', authenticate, async function(req, res) {
 
     await db.run('UPDATE users SET balance = balance - ? WHERE id = ?', [bet, userId]);
 
-    const segmentIndex = Math.floor(Math.random() * SEGMENTS.length);
+    const segmentIndex = secureInt(SEGMENTS.length);
     const segment      = SEGMENTS[segmentIndex];
     const multiplier   = segment.mult;
     const payout       = parseFloat((bet * multiplier).toFixed(2));

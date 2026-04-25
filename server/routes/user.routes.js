@@ -232,17 +232,23 @@ router.post('/claim-daily-bonus', authenticate, async (req, res) => {
         const dayIndex = Math.min(streak, DAILY_REWARDS_SERVER.length - 1);
         const reward = DAILY_REWARDS_SERVER[dayIndex];
         const newStreak = Math.min(streak + 1, 7);
-        const newBalance = (user.balance || 0) + reward.amount;
+        // 15x wagering on free daily bonuses (CLAUDE.md standard)
+        const wagerReq = reward.amount * 15;
 
+        // Daily bonus is FREE money → goes to bonus_balance with wagering, NOT to
+        // withdrawable balance. Atomic accumulating writes throughout.
         await db.run(
-            "UPDATE users SET balance = ?, last_daily_claim = ?, daily_streak = ?, updated_at = datetime('now') WHERE id = ?",
-            [newBalance, today, newStreak, user.id]
+            "UPDATE users SET bonus_balance = COALESCE(bonus_balance, 0) + ?, " +
+            "wagering_requirement = COALESCE(wagering_requirement, 0) + ?, " +
+            "last_daily_claim = ?, daily_streak = ?, updated_at = datetime('now') " +
+            "WHERE id = ?",
+            [reward.amount, wagerReq, today, newStreak, user.id]
         );
 
-        // Log as a transaction
+        // Log as a transaction (bonus type — note balance_before/after is balance, not bonus_balance)
         await db.run(
             'INSERT INTO transactions (user_id, type, amount, balance_before, balance_after, reference) VALUES (?, ?, ?, ?, ?, ?)',
-            [user.id, 'bonus', reward.amount, user.balance, newBalance, `Daily bonus day ${dayIndex + 1}`]
+            [user.id, 'bonus', reward.amount, user.balance, user.balance, `Daily bonus day ${dayIndex + 1} (15x wagering)`]
         );
 
         res.json({
@@ -250,7 +256,8 @@ router.post('/claim-daily-bonus', authenticate, async (req, res) => {
             amount: reward.amount,
             xp: reward.xp,
             streak: newStreak,
-            newBalance: newBalance,
+            wageringRequirement: wagerReq,
+            creditedTo: 'bonus_balance',
         });
     } catch (err) {
         console.error('[User] Daily bonus error:', err);
@@ -293,21 +300,23 @@ router.post('/spin-wheel', authenticate, async (req, res) => {
             }
         }
 
-        // Server determines the prize (RNG server-side)
-        const winIndex = Math.floor(Math.random() * WHEEL_SEGMENTS_SERVER.length);
+        // Server determines the prize via crypto-secure RNG (CLAUDE.md rule: no Math.random server-side)
+        const winIndex = crypto.randomInt(WHEEL_SEGMENTS_SERVER.length);
         const seg = WHEEL_SEGMENTS_SERVER[winIndex];
 
-        let newBalance = user.balance;
         if (!seg.type) {
-            // Cash prize
-            newBalance = (user.balance || 0) + seg.value;
+            // Cash prize → bonus_balance with 15x wagering (free money rule)
+            const wagerReq = seg.value * 15;
             await db.run(
-                "UPDATE users SET balance = ?, last_wheel_spin = datetime('now'), updated_at = datetime('now') WHERE id = ?",
-                [newBalance, user.id]
+                "UPDATE users SET bonus_balance = COALESCE(bonus_balance, 0) + ?, " +
+                "wagering_requirement = COALESCE(wagering_requirement, 0) + ?, " +
+                "last_wheel_spin = datetime('now'), updated_at = datetime('now') " +
+                "WHERE id = ?",
+                [seg.value, wagerReq, user.id]
             );
             await db.run(
                 'INSERT INTO transactions (user_id, type, amount, balance_before, balance_after, reference) VALUES (?, ?, ?, ?, ?, ?)',
-                [user.id, 'bonus', seg.value, user.balance, newBalance, 'Bonus wheel prize']
+                [user.id, 'bonus', seg.value, user.balance, user.balance, 'Bonus wheel prize (15x wagering)']
             );
         } else {
             // Free spins — just record the spin time, no balance change
@@ -320,7 +329,7 @@ router.post('/spin-wheel', authenticate, async (req, res) => {
         res.json({
             winIndex,
             segment: seg,
-            newBalance,
+            creditedTo: seg.type ? 'free_spins' : 'bonus_balance',
             xp: seg.xp,
         });
     } catch (err) {
@@ -372,22 +381,28 @@ router.post('/redeem-promo', authenticate, async (req, res) => {
             return res.status(400).json({ error: 'Already used today', alreadyUsed: true });
         }
 
-        // Award cash if applicable
-        let newBalance = user.balance;
+        // Promo cash → bonus_balance with 15x wagering (free credit rule)
+        let creditedTo = null;
         if (def.cash > 0) {
-            newBalance = (user.balance || 0) + def.cash;
+            const wagerReq = def.cash * 15;
+            await db.run(
+                "UPDATE users SET bonus_balance = COALESCE(bonus_balance, 0) + ?, " +
+                "wagering_requirement = COALESCE(wagering_requirement, 0) + ? " +
+                "WHERE id = ?",
+                [def.cash, wagerReq, user.id]
+            );
             await db.run(
                 'INSERT INTO transactions (user_id, type, amount, balance_before, balance_after, reference) VALUES (?, ?, ?, ?, ?, ?)',
-                [user.id, 'bonus', def.cash, user.balance, newBalance, `Promo code: ${upperCode}`]
+                [user.id, 'bonus', def.cash, user.balance, user.balance, `Promo: ${upperCode} (15x wagering)`]
             );
+            creditedTo = 'bonus_balance';
         }
 
-        // Mark as used
+        // Mark as used (separate write — promo_codes_used)
         used[upperCode] = def.type === 'daily' ? today : true;
-
         await db.run(
-            "UPDATE users SET balance = ?, promo_codes_used = ?, updated_at = datetime('now') WHERE id = ?",
-            [newBalance, JSON.stringify(used), user.id]
+            "UPDATE users SET promo_codes_used = ?, updated_at = datetime('now') WHERE id = ?",
+            [JSON.stringify(used), user.id]
         );
 
         res.json({
@@ -397,7 +412,7 @@ router.post('/redeem-promo', authenticate, async (req, res) => {
             cash: def.cash,
             xp: def.xp,
             spins: def.spins,
-            newBalance
+            creditedTo,
         });
     } catch (err) {
         console.error('[User] Promo code error:', err);
@@ -471,32 +486,46 @@ router.post('/claim-referral-bonus', authenticate, async (req, res) => {
             return res.status(400).json({ error: 'Qualifying deposit required', minDeposit: REFERRAL_MIN_DEPOSIT });
         }
 
-        // Award bonus to referee
-        const newBalance = (user.balance || 0) + REFERRAL_BONUS_REFEREE;
-        await db.run('UPDATE users SET balance = ?, referral_bonus_paid = 1 WHERE id = ?',
-            [newBalance, user.id]);
+        // RACE-SAFE FLAG FLIP: only one referral-bonus claim succeeds.
+        const flip = await db.run(
+            'UPDATE users SET referral_bonus_paid = 1 WHERE id = ? AND COALESCE(referral_bonus_paid, 0) = 0',
+            [user.id]
+        );
+        const flipRows = (flip && (flip.changes || flip.rowCount)) || 0;
+        if (flipRows === 0) {
+            return res.status(400).json({ error: 'Referral bonus already claimed (race detected)' });
+        }
+
+        // Referee: free credit → bonus_balance with 15x wagering
+        const refereeWager = REFERRAL_BONUS_REFEREE * 15;
+        await db.run(
+            'UPDATE users SET bonus_balance = COALESCE(bonus_balance, 0) + ?, wagering_requirement = COALESCE(wagering_requirement, 0) + ? WHERE id = ?',
+            [REFERRAL_BONUS_REFEREE, refereeWager, user.id]
+        );
         await db.run(
             'INSERT INTO transactions (user_id, type, amount, balance_before, balance_after, reference) VALUES (?, ?, ?, ?, ?, ?)',
-            [user.id, 'bonus', REFERRAL_BONUS_REFEREE, user.balance, newBalance, 'Referral bonus — welcome reward']
+            [user.id, 'bonus', REFERRAL_BONUS_REFEREE, user.balance, user.balance, 'Referral bonus — welcome reward (15x wagering)']
         );
 
-        // Award bonus to referrer
+        // Referrer: free credit → bonus_balance with 15x wagering
         const referrer = await db.get('SELECT id, balance FROM users WHERE id = ?', [user.referred_by]);
         if (referrer) {
-            const referrerNewBalance = (referrer.balance || 0) + REFERRAL_BONUS_REFERRER;
-            await db.run('UPDATE users SET balance = ? WHERE id = ?',
-                [referrerNewBalance, referrer.id]);
+            const referrerWager = REFERRAL_BONUS_REFERRER * 15;
+            await db.run(
+                'UPDATE users SET bonus_balance = COALESCE(bonus_balance, 0) + ?, wagering_requirement = COALESCE(wagering_requirement, 0) + ? WHERE id = ?',
+                [REFERRAL_BONUS_REFERRER, referrerWager, referrer.id]
+            );
             await db.run(
                 'INSERT INTO transactions (user_id, type, amount, balance_before, balance_after, reference) VALUES (?, ?, ?, ?, ?, ?)',
-                [referrer.id, 'bonus', REFERRAL_BONUS_REFERRER, referrer.balance, referrerNewBalance,
-                 'Referral bonus — friend joined']
+                [referrer.id, 'bonus', REFERRAL_BONUS_REFERRER, referrer.balance, referrer.balance,
+                 'Referral bonus — friend joined (15x wagering)']
             );
         }
 
         res.json({
             awarded: true,
             bonusAmount: REFERRAL_BONUS_REFEREE,
-            newBalance,
+            creditedTo: 'bonus_balance',
         });
     } catch (err) {
         console.error('[User] Referral bonus error:', err);

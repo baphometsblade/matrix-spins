@@ -153,10 +153,17 @@ router.post('/', authenticate, async (req, res) => {
             });
         }
 
-        // ── Deduct buy price ──
+        // ── Deduct buy price (atomic, race-safe) ──
         const balanceBefore = currentUser.balance;
         const balanceAfterBuy = Math.round((balanceBefore - buyPrice) * 100) / 100;
-        await db.run('UPDATE users SET balance = ? WHERE id = ?', [balanceAfterBuy, userId]);
+        const debit = await db.run(
+            'UPDATE users SET balance = balance - ? WHERE id = ? AND balance >= ?',
+            [buyPrice, userId, buyPrice]
+        );
+        const debitRows = (debit && (debit.changes || debit.rowCount)) || 0;
+        if (debitRows === 0) {
+            return res.status(400).json({ error: 'Insufficient balance (concurrent debit detected)' });
+        }
 
         // Log buy-feature transaction
         await db.run(
@@ -211,11 +218,11 @@ router.post('/', authenticate, async (req, res) => {
             );
         }
 
-        // ── Credit win ──
+        // ── Credit win (atomic accumulator) ──
         let finalBalance = balanceAfterBuy;
         if (spinResult.winAmount > 0) {
             finalBalance = Math.round((balanceAfterBuy + spinResult.winAmount) * 100) / 100;
-            await db.run('UPDATE users SET balance = ? WHERE id = ?', [finalBalance, userId]);
+            await db.run('UPDATE users SET balance = balance + ? WHERE id = ?', [spinResult.winAmount, userId]);
 
             await db.run(
                 'INSERT INTO transactions (user_id, type, amount, balance_before, balance_after, reference) VALUES (?, ?, ?, ?, ?, ?)',

@@ -1,3 +1,7 @@
+const _crypto = require('crypto');
+function secureFloat() { return _crypto.randomBytes(4).readUInt32BE(0) / 0x100000000; }
+function secureInt(n) { return _crypto.randomInt(n); }
+
 'use strict';
 
 // Big Six Wheel — high house edge (~11–22% per segment type)
@@ -74,7 +78,7 @@ router.post('/spin', authenticate, async function(req, res) {
     await db.run('UPDATE users SET balance = balance - ? WHERE id = ?', [totalBet, userId]);
 
     // Spin
-    var slotIdx = Math.floor(Math.random() * TOTAL_SLOTS);
+    var slotIdx = secureInt(TOTAL_SLOTS);
     var result  = WHEEL[slotIdx];
     var seg     = segById(result);
 

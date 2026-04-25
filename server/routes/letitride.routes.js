@@ -1,3 +1,7 @@
+const _crypto = require('crypto');
+function secureFloat() { return _crypto.randomBytes(4).readUInt32BE(0) / 0x100000000; }
+function secureInt(n) { return _crypto.randomInt(n); }
+
 'use strict';
 
 // Let It Ride
@@ -44,7 +48,7 @@ function buildDeck() {
   return deck;
 }
 function shuffle(d) {
-  for (var i = d.length-1; i > 0; i--) { var j=Math.floor(Math.random()*(i+1)); var t=d[i]; d[i]=d[j]; d[j]=t; }
+  for (var i = d.length-1; i > 0; i--) { var j=secureInt((i+1)); var t=d[i]; d[i]=d[j]; d[j]=t; }
   return d;
 }
 
@@ -90,7 +94,7 @@ var GAME_TTL = 10*60*1000;
 function cleanGames() {
   var now=Date.now(); Object.keys(_games).forEach(function(id){ if(now-_games[id].ts>GAME_TTL) delete _games[id]; });
 }
-function newGameId() { return Math.random().toString(36).slice(2,12)+Date.now().toString(36); }
+function newGameId() { return _crypto.randomBytes(6).toString('hex')+Date.now().toString(36); }
 
 // ── POST /deal ────────────────────────────────────────────────────────────────
 

@@ -101,14 +101,16 @@ router.post('/record', authenticate, async (req, res) => {
                 [reward.gems, req.user.id]).catch(function() {});
         }
 
-        // Award credits
-        var newBalance = user.balance;
+        // Award credits → bonus_balance with 15x wagering (free credit rule)
         if (reward.credits > 0) {
-            newBalance = (user.balance || 0) + reward.credits;
-            await db.run('UPDATE users SET balance = ? WHERE id = ?', [newBalance, req.user.id]);
+            var streakWager = reward.credits * 15;
+            await db.run(
+                'UPDATE users SET bonus_balance = COALESCE(bonus_balance, 0) + ?, wagering_requirement = COALESCE(wagering_requirement, 0) + ? WHERE id = ?',
+                [reward.credits, streakWager, req.user.id]
+            );
             await db.run(
                 "INSERT INTO transactions (user_id, type, amount, description) VALUES (?, 'deposit_streak', ?, ?)",
-                [req.user.id, reward.credits, 'Deposit Streak Day ' + newStreak + ' — ' + reward.label]
+                [req.user.id, reward.credits, 'Deposit Streak Day ' + newStreak + ' — ' + reward.label + ' (15x wagering)']
             ).catch(function() {});
         }
 
@@ -123,7 +125,7 @@ router.post('/record', authenticate, async (req, res) => {
             gemsAwarded:  reward.gems,
             creditsAwarded: reward.credits,
             label:        reward.label,
-            newBalance:   newBalance
+            creditedTo:   reward.credits > 0 ? 'bonus_balance' : null
         });
     } catch (err) {
         console.error('[DepositStreak] Record error:', err.message);
@@ -154,10 +156,15 @@ async function recordForUser(userId) {
             [reward.gems, userId]).catch(function() {});
     }
     if (reward.credits > 0) {
-        await db.run('UPDATE users SET balance = balance + ? WHERE id = ?', [reward.credits, userId]);
+        // Free credit → bonus_balance with 15x wagering
+        var streakWager = reward.credits * 15;
+        await db.run(
+            'UPDATE users SET bonus_balance = COALESCE(bonus_balance, 0) + ?, wagering_requirement = COALESCE(wagering_requirement, 0) + ? WHERE id = ?',
+            [reward.credits, streakWager, userId]
+        );
         await db.run(
             "INSERT INTO transactions (user_id, type, amount, description) VALUES (?, 'deposit_streak', ?, ?)",
-            [userId, reward.credits, 'Deposit Streak Day ' + newStreak + ' — ' + reward.label]
+            [userId, reward.credits, 'Deposit Streak Day ' + newStreak + ' — ' + reward.label + ' (15x wagering)']
         ).catch(function() {});
     }
     await db.run(

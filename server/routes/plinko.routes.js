@@ -1,3 +1,7 @@
+const _crypto = require('crypto');
+function secureFloat() { return _crypto.randomBytes(4).readUInt32BE(0) / 0x100000000; }
+function secureInt(n) { return _crypto.randomInt(n); }
+
 'use strict';
 
 // Plinko - ball drops through a Galton board and lands in a multiplier slot.
@@ -24,7 +28,7 @@ function dropBall() {
   var bucket = 0;
   var path   = [];
   for (var r = 0; r < ROWS; r++) {
-    var goRight = Math.random() < 0.5 ? 1 : 0;
+    var goRight = secureFloat() < 0.5 ? 1 : 0;
     path.push(goRight);
     bucket += goRight;
   }

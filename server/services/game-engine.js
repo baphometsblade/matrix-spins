@@ -435,7 +435,7 @@ async function resolveSpin(game, betAmount, gameStats, freeSpinState = null, db 
     // Determine if this spin is allowed to produce a win.
     // Free spins have a higher but still controlled chance
     const allowWin = freeSpinState.active
-        ? (await houseEdge.shouldAllowWin(game, gameStats, db)) || Math.random() < 0.35
+        ? (await houseEdge.shouldAllowWin(game, gameStats, db)) || rng.randomFloat() < 0.35
         : await houseEdge.shouldAllowWin(game, gameStats, db);
 
     // Generate appropriate grid

@@ -1,3 +1,7 @@
+const _crypto = require('crypto');
+function secureFloat() { return _crypto.randomBytes(4).readUInt32BE(0) / 0x100000000; }
+function secureInt(n) { return _crypto.randomInt(n); }
+
 'use strict';
 
 // Keno — pick 1-10 numbers (1-80), house draws 20, win on matches
@@ -37,7 +41,7 @@ function drawNumbers() {
   const pool = [];
   for (let i = 1; i <= POOL_SIZE; i++) pool.push(i);
   for (let i = POOL_SIZE - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
+    const j = secureInt((i + 1));
     const tmp = pool[i]; pool[i] = pool[j]; pool[j] = tmp;
   }
   return pool.slice(0, DRAW_SIZE).sort(function(a, b) { return a - b; });

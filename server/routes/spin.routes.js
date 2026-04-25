@@ -197,12 +197,22 @@ router.post('/', authenticate, async (req, res) => {
             return res.status(400).json({ error: 'Insufficient balance' });
         }
 
-        // ── Deduct bet ──
+        // ── Deduct bet (atomic, race-safe) ──
         const balanceBefore = currentUser.balance;
         let balanceAfterBet = balanceBefore;
         if (!usedFreeSpin) {
             balanceAfterBet = balanceBefore - bet;
-            await db.run('UPDATE users SET balance = ? WHERE id = ?', [balanceAfterBet, userId]);
+            // Atomic debit. Concurrent spin requests cannot double-spend: the
+            // WHERE balance >= ? clause makes the UPDATE a no-op if a concurrent
+            // request already debited.
+            const debit = await db.run(
+                'UPDATE users SET balance = balance - ? WHERE id = ? AND balance >= ?',
+                [bet, userId, bet]
+            );
+            const debitRows = (debit && (debit.changes || debit.rowCount)) || 0;
+            if (debitRows === 0) {
+                return res.status(400).json({ error: 'Insufficient balance (concurrent debit detected)' });
+            }
 
             // Log bet transaction
             await db.run(
@@ -305,11 +315,11 @@ router.post('/', authenticate, async (req, res) => {
             }
         }
 
-        // ── Credit win ──
+        // ── Credit win (atomic accumulator) ──
         let finalBalance = balanceAfterBet;
         if (spinResult.winAmount > 0) {
             finalBalance = balanceAfterBet + spinResult.winAmount;
-            await db.run('UPDATE users SET balance = ? WHERE id = ?', [finalBalance, userId]);
+            await db.run('UPDATE users SET balance = balance + ? WHERE id = ?', [spinResult.winAmount, userId]);
 
             await db.run(
                 'INSERT INTO transactions (user_id, type, amount, balance_before, balance_after, reference) VALUES (?, ?, ?, ?, ?, ?)',
@@ -326,10 +336,10 @@ router.post('/', authenticate, async (req, res) => {
             const isJackpotGame = Boolean(game.jackpot);
             const jackpotWin = await jackpotService.checkAndAward(userId, bet, game.minBet || 0.20, isJackpotGame);
             if (jackpotWin) {
-                // Credit jackpot amount to user
+                // Credit jackpot amount to user (atomic accumulator)
                 const balanceBeforeJp = finalBalance;
                 finalBalance = balanceBeforeJp + jackpotWin.amount;
-                await db.run('UPDATE users SET balance = ? WHERE id = ?', [finalBalance, userId]);
+                await db.run('UPDATE users SET balance = balance + ? WHERE id = ?', [jackpotWin.amount, userId]);
                 await db.run(
                     'INSERT INTO transactions (user_id, type, amount, balance_before, balance_after, reference) VALUES (?, ?, ?, ?, ?, ?)',
                     [userId, 'jackpot', jackpotWin.amount, balanceBeforeJp, finalBalance, 'jackpot:' + jackpotWin.tier]

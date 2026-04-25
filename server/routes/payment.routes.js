@@ -521,8 +521,17 @@ router.post('/withdraw', authenticate, async (req, res) => {
         const balanceBefore = user.balance;
         const balanceAfter = balanceBefore - withdrawal;
 
-        // Deduct balance immediately
-        await db.run('UPDATE users SET balance = ? WHERE id = ?', [balanceAfter, req.user.id]);
+        // Atomic deduct — guarantees no double-spend under concurrent withdraw requests.
+        // The WHERE balance >= ? clause makes the UPDATE a no-op if a concurrent
+        // request already debited; we check rowcount to detect that and abort.
+        const debit = await db.run(
+            'UPDATE users SET balance = balance - ? WHERE id = ? AND balance >= ?',
+            [withdrawal, req.user.id, withdrawal]
+        );
+        const rowsAffected = (debit && (debit.changes || debit.rowCount)) || 0;
+        if (rowsAffected === 0) {
+            return res.status(400).json({ error: 'Insufficient balance (concurrent debit detected)' });
+        }
 
         // Create withdrawal record as pending (awaits admin processing)
         const wdResult = await db.run(
@@ -598,14 +607,23 @@ router.post('/withdraw/verify-otp', authenticate, otpLimiter, async (req, res) =
 
         // Check DB-level attempt count
         const attempts = (wd.otp_attempts || 0) + 1;
-        if (otp !== wd.otp_code) {
+        // Constant-time compare to prevent timing oracles. Pad to equal length first;
+        // a length mismatch is itself a failure (timingSafeEqual throws on unequal length).
+        const otpStr = String(otp || '');
+        const expectedStr = String(wd.otp_code || '');
+        const otpBuf = Buffer.from(otpStr.padEnd(16, '\0'));
+        const expectedBuf = Buffer.from(expectedStr.padEnd(16, '\0'));
+        const otpMatches = otpStr.length === expectedStr.length &&
+            otpStr.length > 0 &&
+            crypto.timingSafeEqual(otpBuf, expectedBuf);
+        if (!otpMatches) {
             if (attempts >= 5) {
                 // Invalidate the OTP and cancel the withdrawal
                 await db.run(
                     "UPDATE withdrawals SET otp_code = NULL, otp_attempts = ?, status = 'cancelled', admin_note = 'OTP invalidated after 5 failed attempts', processed_at = datetime('now') WHERE id = ?",
                     [attempts, wd.id]
                 );
-                // Refund balance
+                // Refund balance (already atomic — uses balance + ?)
                 await db.run('UPDATE users SET balance = balance + ? WHERE id = ?', [wd.amount, req.user.id]);
                 await db.run(
                     "INSERT INTO transactions (user_id, type, amount, balance_before, balance_after, reference) SELECT ?, 'withdrawal_cancel', ?, balance - ?, balance, ? FROM users WHERE id = ?",
@@ -648,21 +666,24 @@ router.post('/withdraw/:id/cancel', authenticate, async (req, res) => {
             return res.status(400).json({ error: `Cannot cancel a withdrawal with status: ${wd.status}` });
         }
 
-        // Refund the balance
-        const user = await db.get('SELECT balance FROM users WHERE id = ?', [req.user.id]);
-        if (!user) {
-            return res.status(404).json({ error: 'User not found' });
-        }
-
-        const balanceBefore = user.balance;
-        const balanceAfter = balanceBefore + wd.amount;
-
-        await db.run('UPDATE users SET balance = ? WHERE id = ?', [balanceAfter, req.user.id]);
-
-        await db.run(
-            "UPDATE withdrawals SET status = 'cancelled', processed_at = datetime('now'), admin_note = 'Cancelled by user' WHERE id = ?",
+        // RACE-SAFE CANCEL: status transition is the gate; refund only if WE flipped it.
+        // Two concurrent cancel requests for the same withdrawal will see status='pending'
+        // here, but only the first UPDATE will affect a row.
+        const flip = await db.run(
+            "UPDATE withdrawals SET status = 'cancelled', processed_at = datetime('now'), admin_note = 'Cancelled by user' WHERE id = ? AND status = 'pending'",
             [withdrawalId]
         );
+        const flipRows = (flip && (flip.changes || flip.rowCount)) || 0;
+        if (flipRows === 0) {
+            return res.status(409).json({ error: 'Withdrawal already processed (concurrent action detected)' });
+        }
+
+        // Atomic refund — race-safe vs concurrent cancels (now impossible because of status flip)
+        // and concurrent debits in this user's session.
+        await db.run('UPDATE users SET balance = balance + ? WHERE id = ?', [wd.amount, req.user.id]);
+        const userAfter = await db.get('SELECT balance FROM users WHERE id = ?', [req.user.id]);
+        const balanceAfter = userAfter ? userAfter.balance : null;
+        const balanceBefore = balanceAfter !== null ? balanceAfter - wd.amount : null;
 
         await db.run(
             'INSERT INTO transactions (user_id, type, amount, balance_before, balance_after, reference) VALUES (?, ?, ?, ?, ?, ?)',
@@ -875,7 +896,8 @@ router.post('/admin/approve-deposit', authenticate, async (req, res) => {
             bonusType = 'reload_bonus';
         }
 
-        await db.run('UPDATE users SET balance = ? WHERE id = ?', [balanceAfter, deposit.user_id]);
+        // Atomic deposit credit (race-safe)
+        await db.run('UPDATE users SET balance = balance + ? WHERE id = ?', [deposit.amount, deposit.user_id]);
 
         await db.run(
             "UPDATE deposits SET status = 'completed', completed_at = datetime('now') WHERE id = ?",
@@ -889,8 +911,12 @@ router.post('/admin/approve-deposit', authenticate, async (req, res) => {
 
         if (bonusAmount > 0) {
             const wagerReq = bonusAmount * wageringMult;
+            // ACCUMULATING wagering: COALESCE+= preserves any existing requirement
+            // (e.g. a still-active first-deposit bonus when reload is granted).
+            // Resetting to a smaller new requirement would let the larger bonus
+            // become withdrawable instantly.
             await db.run(
-                'UPDATE users SET bonus_balance = bonus_balance + ?, wagering_requirement = ?, wagering_progress = 0 WHERE id = ?',
+                'UPDATE users SET bonus_balance = COALESCE(bonus_balance, 0) + ?, wagering_requirement = COALESCE(wagering_requirement, 0) + ? WHERE id = ?',
                 [bonusAmount, wagerReq, deposit.user_id]
             );
             const refLabel = bonusType === 'first_deposit_bonus'
@@ -907,7 +933,7 @@ router.post('/admin/approve-deposit', authenticate, async (req, res) => {
         await db.run('UPDATE users SET gems = COALESCE(gems, 0) + ? WHERE id = ?', [depositGems, deposit.user_id]).catch(function() {});
 
         // ── Deposit Streak (fire-and-forget) ──
-        
+
         require('./depositstreak.routes').recordForUser(deposit.user_id).catch(function() {});
 
         const bonusMsg = bonusAmount > 0 ? ` + $${bonusAmount.toFixed(2)} first-deposit bonus!` : '';
@@ -929,18 +955,50 @@ router.post('/admin/approve-deposit', authenticate, async (req, res) => {
 // ═══════════════════════════════════════════════════
 
 // POST /api/payments/webhook/confirm — Payment processor callback
-// Validates the deposit reference and secret, then credits the player.
-// Call this from Stripe/PayPal webhook handlers or manually via curl.
+// Validates the deposit reference and HMAC signature, then credits the player.
+// The signature must be in the X-Webhook-Signature header as hex(HMAC-SHA256(rawBody, WEBHOOK_SECRET)).
 router.post('/webhook/confirm', async (req, res) => {
     try {
-        const { reference, webhookSecret } = req.body;
-
-        // Validate webhook secret (must match WEBHOOK_SECRET env var)
-        const expectedSecret = process.env.WEBHOOK_SECRET || config.JWT_SECRET;
-        if (!webhookSecret || webhookSecret !== expectedSecret) {
-            return res.status(403).json({ error: 'Invalid webhook secret' });
+        // CRITICAL: WEBHOOK_SECRET must be set explicitly in env. We refuse to fall back
+        // to JWT_SECRET because cross-using auth and webhook trust roots is a serious
+        // security smell — leaking either grants both capabilities.
+        const expectedSecret = process.env.WEBHOOK_SECRET;
+        if (!expectedSecret) {
+            return res.status(503).json({ error: 'Webhook not configured' });
         }
 
+        // Prefer HMAC signature in header; accept legacy plaintext body secret only
+        // when explicitly enabled via WEBHOOK_ALLOW_LEGACY=1 (intended for deprecation).
+        const sigHeader = req.get('X-Webhook-Signature') || '';
+        const rawBody = JSON.stringify(req.body || {});
+        const expectedSig = crypto
+            .createHmac('sha256', expectedSecret)
+            .update(rawBody)
+            .digest('hex');
+
+        let authorized = false;
+        if (sigHeader) {
+            // Constant-time compare; equal-length precondition handled by length check
+            const a = Buffer.from(sigHeader);
+            const b = Buffer.from(expectedSig);
+            authorized = a.length === b.length && crypto.timingSafeEqual(a, b);
+        } else if (process.env.WEBHOOK_ALLOW_LEGACY === '1' && req.body && req.body.webhookSecret) {
+            // Legacy plaintext-secret-in-body path — disabled by default; deprecated.
+            const provided = String(req.body.webhookSecret);
+            if (provided.length === expectedSecret.length) {
+                authorized = crypto.timingSafeEqual(
+                    Buffer.from(provided),
+                    Buffer.from(expectedSecret)
+                );
+            }
+        }
+
+        if (!authorized) {
+            // Generic message to avoid leaking which check failed
+            return res.status(403).json({ error: 'Webhook authorization failed' });
+        }
+
+        const { reference } = req.body || {};
         if (!reference) {
             return res.status(400).json({ error: 'reference is required' });
         }
@@ -982,8 +1040,18 @@ router.post('/webhook/confirm', async (req, res) => {
             bonusType = 'reload_bonus';
         }
 
-        await db.run('UPDATE users SET balance = ? WHERE id = ?', [balanceAfter, deposit.user_id]);
-        await db.run("UPDATE deposits SET status = 'completed', completed_at = datetime('now') WHERE id = ?", [deposit.id]);
+        // RACE-SAFE STATUS FLIP: only the first concurrent webhook delivery succeeds.
+        // This is the idempotency guard that prevents double-credit on webhook retries.
+        const flip = await db.run(
+            "UPDATE deposits SET status = 'completed', completed_at = datetime('now') WHERE id = ? AND status = 'pending'",
+            [deposit.id]
+        );
+        const flipRows = (flip && (flip.changes || flip.rowCount)) || 0;
+        if (flipRows === 0) {
+            return res.status(200).json({ message: 'Deposit already processed (concurrent webhook detected)', depositId: deposit.id });
+        }
+
+        await db.run('UPDATE users SET balance = balance + ? WHERE id = ?', [deposit.amount, deposit.user_id]);
         await db.run(
             'INSERT INTO transactions (user_id, type, amount, balance_before, balance_after, reference) VALUES (?, ?, ?, ?, ?, ?)',
             [deposit.user_id, 'deposit', deposit.amount, balanceBefore, balanceAfter, deposit.reference]
@@ -991,8 +1059,9 @@ router.post('/webhook/confirm', async (req, res) => {
 
         if (bonusAmount > 0) {
             const wagerReq = bonusAmount * wageringMult;
+            // ACCUMULATING wagering — see deposit-approve route for rationale
             await db.run(
-                'UPDATE users SET bonus_balance = bonus_balance + ?, wagering_requirement = ?, wagering_progress = 0 WHERE id = ?',
+                'UPDATE users SET bonus_balance = COALESCE(bonus_balance, 0) + ?, wagering_requirement = COALESCE(wagering_requirement, 0) + ? WHERE id = ?',
                 [bonusAmount, wagerReq, deposit.user_id]
             );
             const refLabel = bonusType === 'first_deposit_bonus'

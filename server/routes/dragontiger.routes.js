@@ -1,3 +1,7 @@
+const _crypto = require('crypto');
+function secureFloat() { return _crypto.randomBytes(4).readUInt32BE(0) / 0x100000000; }
+function secureInt(n) { return _crypto.randomInt(n); }
+
 'use strict';
 
 // Dragon Tiger — simplest card game; one card each, higher wins.
@@ -26,8 +30,8 @@ const RANKS  = ['A', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K'
 const VALUES = { A:1, '2':2, '3':3, '4':4, '5':5, '6':6, '7':7, '8':8, '9':9, '10':10, J:11, Q:12, K:13 };
 
 function randomCard() {
-  const suit  = SUITS[Math.floor(Math.random() * SUITS.length)];
-  const rank  = RANKS[Math.floor(Math.random() * RANKS.length)];
+  const suit  = SUITS[secureInt(SUITS.length)];
+  const rank  = RANKS[secureInt(RANKS.length)];
   return { r: rank, s: suit, v: VALUES[rank] };
 }
 

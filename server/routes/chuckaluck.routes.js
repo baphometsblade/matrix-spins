@@ -1,3 +1,7 @@
+const _crypto = require('crypto');
+function secureFloat() { return _crypto.randomBytes(4).readUInt32BE(0) / 0x100000000; }
+function secureInt(n) { return _crypto.randomInt(n); }
+
 'use strict';
 
 // Chuck-a-Luck — 3 dice, bets on single numbers (1-6)
@@ -18,9 +22,9 @@ const MAX_BET = 500;
 
 function roll3() {
   return [
-    Math.floor(Math.random() * 6) + 1,
-    Math.floor(Math.random() * 6) + 1,
-    Math.floor(Math.random() * 6) + 1,
+    secureInt(6) + 1,
+    secureInt(6) + 1,
+    secureInt(6) + 1,
   ];
 }
 

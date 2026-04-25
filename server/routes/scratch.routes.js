@@ -1,3 +1,7 @@
+const _crypto = require('crypto');
+function secureFloat() { return _crypto.randomBytes(4).readUInt32BE(0) / 0x100000000; }
+function secureInt(n) { return _crypto.randomInt(n); }
+
 'use strict';
 
 // Scratch Cards
@@ -37,7 +41,7 @@ var HOUSE_EDGE = 0.05;
 
 function pickSymbol(tier) {
   var syms = TIERS[tier].symbols;
-  return syms[Math.floor(Math.random() * syms.length)];
+  return syms[secureInt(syms.length)];
 }
 
 function generateCard(tier) {
@@ -47,9 +51,9 @@ function generateCard(tier) {
 
   // Check if already a natural winner — if so, occasionally reroll to enforce house edge
   var prize = calcPrize(cells, tier);
-  if (prize > 0 && Math.random() < HOUSE_EDGE) {
+  if (prize > 0 && secureFloat() < HOUSE_EDGE) {
     // Scramble one cell to break a win line
-    var lineIdx = Math.floor(Math.random() * WIN_LINES.length);
+    var lineIdx = secureInt(WIN_LINES.length);
     var line    = WIN_LINES[lineIdx];
     // Change middle cell to something different
     var mid = line[1];
@@ -81,7 +85,7 @@ function cleanGames() {
   var now = Date.now();
   Object.keys(_games).forEach(function(id) { if (now - _games[id].ts > GAME_TTL) delete _games[id]; });
 }
-function newGameId() { return Math.random().toString(36).slice(2,12)+Date.now().toString(36); }
+function newGameId() { return _crypto.randomBytes(8).toString('hex')+Date.now().toString(36); }
 
 // ── POST /buy ─────────────────────────────────────────────────────────────────
 

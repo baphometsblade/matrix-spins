@@ -1,3 +1,7 @@
+const _crypto = require('crypto');
+function secureFloat() { return _crypto.randomBytes(4).readUInt32BE(0) / 0x100000000; }
+function secureInt(n) { return _crypto.randomInt(n); }
+
 'use strict';
 
 // Keno Turbo — pick 1-10 numbers from 1-80, 20 balls drawn
@@ -35,7 +39,7 @@ function drawBalls() {
   var pool = [];
   for (var i = 1; i <= BALLS; i++) pool.push(i);
   for (var j = 0; j < DRAWN; j++) {
-    var k = j + Math.floor(Math.random() * (BALLS - j));
+    var k = j + secureInt((BALLS - j));
     var t = pool[j]; pool[j] = pool[k]; pool[k] = t;
   }
   return pool.slice(0, DRAWN).sort(function(a, b) { return a - b; });
