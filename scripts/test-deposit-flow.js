@@ -2087,6 +2087,57 @@ async function main() {
         assert.strictEqual(csvLines.length, 4); // header + 3 data rows
 
         console.log('[test] slot stats + history CSV: empty-state, populated aggregate, biggest-win round, by-game ordering, cross-user isolation, CSV header + BOM');
+
+        // CSV formula-injection defuse: validateClientSeed accepts any
+        // printable ASCII, so a user can persist a leading-formula
+        // client_seed and have it land in the CSV verbatim. A
+        // recipient who opens the file in Excel would otherwise execute
+        // the formula. csvEscape must prefix a single quote to
+        // neutralize. Surfaced by the security-review skill (MEDIUM
+        // confidence 8); regression test below pins the fix.
+        const fiName = ssName + '_fi';
+        await db.run(
+            'INSERT INTO users (username, email, password_hash, date_of_birth, email_verified, balance_cents) VALUES (?, ?, ?, ?, 1, ?)',
+            [fiName, fiName + '@example.com', ssHash, '1990-01-01', 0]
+        );
+        const fiRow = await db.get('SELECT id, username, is_admin, token_version FROM users WHERE username = ?', [fiName]);
+        const fiTok = signTok2(fiRow);
+        // Seed a slot_round with a formula payload as the client_seed.
+        await db.run(
+            `INSERT INTO slot_rounds
+             (user_id, game_id, bet_cents, win_cents, balance_after_cents,
+              server_seed, server_seed_hash, client_seed, nonce, outcome_json)
+             VALUES (?, 'classic_777', 100, 0, 0, 'x', 'y', ?, 1, '{}')`,
+            [fiRow.id, '=HYPERLINK("evil","x")']
+        );
+        // Also seed a benign one to confirm we don't accidentally prefix
+        // strings that don't start with a dangerous char.
+        await db.run(
+            `INSERT INTO slot_rounds
+             (user_id, game_id, bet_cents, win_cents, balance_after_cents,
+              server_seed, server_seed_hash, client_seed, nonce, outcome_json)
+             VALUES (?, 'classic_777', 100, 0, 0, 'x', 'y', 'tester', 2, '{}')`,
+            [fiRow.id]
+        );
+        const fiCsv = await http('GET', '/api/user/slot-history.csv', { token: fiTok });
+        assert.strictEqual(fiCsv.status, 200);
+        const fiLines = fiCsv.raw.replace(/^﻿/, '').trim().split('\n');
+        // Two data rows + header.
+        assert.strictEqual(fiLines.length, 3);
+        // The formula payload contains a comma and a quote, so csvEscape
+        // wraps it in quotes. Must start with the single-quote-prefix
+        // INSIDE the wrapping double-quotes.
+        const formulaLine = fiLines.find(function (l) { return /HYPERLINK/.test(l); });
+        assert.ok(formulaLine, 'expected the formula row in CSV');
+        assert.ok(
+            /,"'=HYPERLINK\("/.test(formulaLine),
+            'formula payload must be defused with a leading single quote, got: ' + formulaLine
+        );
+        // The benign 'tester' row must NOT have a leading single quote.
+        const benignLine = fiLines.find(function (l) { return /,tester,/.test(l); });
+        assert.ok(benignLine, 'expected benign row in CSV: ' + fiLines.join(' || '));
+        assert.ok(!/,'tester,/.test(benignLine), 'benign cells must not pick up a single quote');
+        console.log('[test] csv injection: formula-leading client_seed gets a leading single quote in the CSV; benign cells unchanged');
     }
 
     console.log('\n✅ all deposit-flow assertions passed');

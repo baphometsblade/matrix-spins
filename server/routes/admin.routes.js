@@ -11,9 +11,13 @@ const router = express.Router();
 
 router.use(authenticate, requireAdmin);
 
+// Same shape as the user-side helper — kept duplicated rather than
+// imported to avoid a route-to-route require. See user.routes.js for
+// the full rationale on the formula-injection defuse.
 function csvEscape(v) {
     if (v == null) return '';
-    const s = String(v);
+    let s = String(v);
+    if (/^[=+\-@\t\r]/.test(s)) s = "'" + s;
     if (/[",\n\r]/.test(s)) return '"' + s.replace(/"/g, '""') + '"';
     return s;
 }
