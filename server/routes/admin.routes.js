@@ -861,4 +861,118 @@ router.put('/feature-flags/:key', async (req, res) => {
     }
 });
 
+/**
+ * Slot analytics — per-game observability for ops. Returns lifetime
+ * + last-window aggregates and the drift between empirical and
+ * theoretical RTP. Pair with `slot.paused.<game_id>` (the per-game
+ * kill switch) for a complete detect → pause → investigate loop.
+ *
+ * Query: ?window_days=N (default 30, capped to 365). Lifetime totals
+ * are unbounded; the rolling-window aggregates respect this knob.
+ *
+ * Drift is empirical minus theoretical, expressed as a percentage of
+ * theoretical. Negative = paying out less than designed (suspicious
+ * for a hot game; cold variance is normal at low volume). Positive
+ * is the more dangerous direction (paying out more than designed —
+ * potential exploit). The `drift_warn` flag fires when |drift_pct|
+ * exceeds DRIFT_WARN_PCT for games with at least
+ * MIN_SPINS_FOR_DRIFT_WARN spins (small samples are too noisy to
+ * trust).
+ */
+const DRIFT_WARN_PCT = 5;
+const MIN_SPINS_FOR_DRIFT_WARN = 1000;
+
+router.get('/slot-analytics', async (req, res) => {
+    try {
+        let windowDays = Number(req.query.window_days);
+        if (!Number.isFinite(windowDays) || windowDays < 1 || windowDays > 365) {
+            windowDays = 30;
+        }
+        const sinceSec = windowDays * 86400;
+
+        // Lifetime aggregate per game.
+        const lifetime = await db.all(
+            `SELECT game_id,
+                    COUNT(*)                      AS spins,
+                    COALESCE(SUM(bet_cents), 0)   AS wagered,
+                    COALESCE(SUM(win_cents), 0)   AS won,
+                    COALESCE(MAX(win_cents), 0)   AS biggest_win,
+                    COUNT(DISTINCT user_id)       AS unique_players
+               FROM slot_rounds
+              GROUP BY game_id`
+        );
+
+        // Windowed aggregate per game (last N days).
+        const isPg = db.kind === 'pg';
+        const windowSql = isPg
+            ? `SELECT game_id,
+                      COUNT(*)                    AS spins,
+                      COALESCE(SUM(bet_cents), 0) AS wagered,
+                      COALESCE(SUM(win_cents), 0) AS won
+                 FROM slot_rounds
+                WHERE created_at >= NOW() - (? * INTERVAL '1 second')
+                GROUP BY game_id`
+            : `SELECT game_id,
+                      COUNT(*)                    AS spins,
+                      COALESCE(SUM(bet_cents), 0) AS wagered,
+                      COALESCE(SUM(win_cents), 0) AS won
+                 FROM slot_rounds
+                WHERE created_at >= datetime('now', ? || ' seconds')
+                GROUP BY game_id`;
+        const windowParam = isPg ? sinceSec : ('-' + sinceSec);
+        const windowed = await db.all(windowSql, [windowParam]);
+        const windowedMap = new Map(windowed.map(r => [r.game_id, r]));
+        const lifetimeMap = new Map(lifetime.map(r => [r.game_id, r]));
+
+        const engine = require('../services/slot-engine.service');
+        const games = engine.listGames();
+
+        const out = games.map(g => {
+            const life = lifetimeMap.get(g.id) || { spins: 0, wagered: 0, won: 0, biggest_win: 0, unique_players: 0 };
+            const win = windowedMap.get(g.id) || { spins: 0, wagered: 0, won: 0 };
+            const lifeWagered = Number(life.wagered) || 0;
+            const lifeWon = Number(life.won) || 0;
+            const winWagered = Number(win.wagered) || 0;
+            const winWon = Number(win.won) || 0;
+            const empirical = lifeWagered > 0 ? lifeWon / lifeWagered : null;
+            const empiricalWindow = winWagered > 0 ? winWon / winWagered : null;
+            const driftPct = (empirical != null) ? ((empirical - g.rtp) / g.rtp) * 100 : null;
+            const driftWarn = (driftPct != null)
+                && Number(life.spins) >= MIN_SPINS_FOR_DRIFT_WARN
+                && Math.abs(driftPct) > DRIFT_WARN_PCT;
+            return {
+                game_id: g.id,
+                name: g.name,
+                theoretical_rtp: g.rtp,
+                spins: Number(life.spins) || 0,
+                wagered_cents: lifeWagered,
+                won_cents: lifeWon,
+                net_cents: lifeWagered - lifeWon, // house net (positive = house ahead)
+                biggest_win_cents: Number(life.biggest_win) || 0,
+                unique_players: Number(life.unique_players) || 0,
+                empirical_rtp: empirical,
+                drift_pct: driftPct,
+                drift_warn: driftWarn,
+                window: {
+                    days: windowDays,
+                    spins: Number(win.spins) || 0,
+                    wagered_cents: winWagered,
+                    won_cents: winWon,
+                    empirical_rtp: empiricalWindow,
+                },
+            };
+        });
+
+        res.json({
+            window_days: windowDays,
+            drift_warn_pct: DRIFT_WARN_PCT,
+            min_spins_for_drift_warn: MIN_SPINS_FOR_DRIFT_WARN,
+            games: out,
+        });
+    } catch (err) {
+        console.error('[admin/slot-analytics]', err);
+        res.status(500).json({ error: 'Failed to compute slot analytics.' });
+    }
+});
+
 module.exports = router;

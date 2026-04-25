@@ -1802,6 +1802,42 @@ async function main() {
         assert.strictEqual(spin77Ok.status, 200, 'classic_777 should work after resume: ' + spin77Ok.raw);
 
         console.log('[test] per-game kill switch: pause one game leaves the other open, error echoes game_id + reason; unknown game key 400');
+
+        // Slot analytics — per-game drift detector. Both wired games
+        // must be present, with theoretical RTP from the engine and an
+        // empirical RTP computed from the rounds we just played.
+        const analytics = await http('GET', '/api/admin/slot-analytics?window_days=30', { token: adminToken });
+        assert.strictEqual(analytics.status, 200);
+        assert.strictEqual(analytics.body.window_days, 30);
+        assert.ok(typeof analytics.body.drift_warn_pct === 'number');
+        assert.ok(typeof analytics.body.min_spins_for_drift_warn === 'number');
+        assert.strictEqual(analytics.body.games.length, 2);
+        const ag = analytics.body.games.reduce(function (m, g) { m[g.game_id] = g; return m; }, {});
+        for (const id of ['classic_777', 'neon_burst']) {
+            assert.ok(ag[id], id + ' missing from analytics: ' + JSON.stringify(analytics.body));
+            assert.strictEqual(typeof ag[id].theoretical_rtp, 'number');
+            assert.ok(ag[id].theoretical_rtp > 0 && ag[id].theoretical_rtp < 1);
+            // Drift fields are present even if empirical_rtp is null
+            // (no spins yet for that game) — but classic_777 has spins
+            // by this point in the suite.
+            if (ag[id].spins > 0) {
+                assert.strictEqual(typeof ag[id].empirical_rtp, 'number');
+                assert.strictEqual(typeof ag[id].drift_pct, 'number');
+                assert.strictEqual(typeof ag[id].drift_warn, 'boolean');
+            }
+            assert.ok(ag[id].window && typeof ag[id].window.days === 'number');
+            assert.strictEqual(ag[id].window.days, 30);
+        }
+        // Bad window param falls back to default (no error).
+        const badWindow = await http('GET', '/api/admin/slot-analytics?window_days=9999', { token: adminToken });
+        assert.strictEqual(badWindow.status, 200);
+        assert.strictEqual(badWindow.body.window_days, 30);
+
+        // Non-admin can't reach the endpoint.
+        const blocked = await http('GET', '/api/admin/slot-analytics', { token: pgTok });
+        assert.strictEqual(blocked.status, 403);
+
+        console.log('[test] slot analytics: per-game theoretical+empirical RTP and drift; admin-only; bad window_days falls back to default');
     }
 
     // ═══ Daily loss limit ═══════════════════════════════════════════════════

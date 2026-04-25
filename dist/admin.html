@@ -120,6 +120,19 @@
         </div>
     </div>
 
+    <h2 style="display:flex;align-items:center;gap:12px">Slot analytics
+        <select id="analytics-window" style="margin-left:auto;padding:5px 8px;font-size:11px;background:rgba(255,255,255,.08);color:#e0e0e0;border:1px solid #333;border-radius:4px;">
+            <option value="7">last 7d</option>
+            <option value="30" selected>last 30d</option>
+            <option value="90">last 90d</option>
+            <option value="365">last 365d</option>
+        </select>
+        <button class="row-actions-inline" id="btn-load-analytics" style="padding:5px 10px;font-size:11px;background:rgba(255,255,255,.08);color:#e0e0e0;border:1px solid #333;border-radius:4px;cursor:pointer">Refresh</button>
+    </h2>
+    <table id="tbl-analytics"><thead><tr>
+        <th>Game</th><th>Spins</th><th>Players</th><th>Wagered</th><th>Won</th><th>House net</th><th>Theo RTP</th><th>Empirical RTP</th><th>Drift</th><th>Window</th>
+    </tr></thead><tbody><tr><td colspan="10" style="color:#666;padding:18px;text-align:center">— loading —</td></tr></tbody></table>
+
     <h2 style="display:flex;align-items:center;gap:12px">Recent slot rounds
         <button class="row-actions-inline" id="btn-load-rounds" style="margin-left:auto;padding:5px 10px;font-size:11px;background:rgba(255,255,255,.08);color:#e0e0e0;border:1px solid #333;border-radius:4px;cursor:pointer">Load recent</button>
     </h2>
@@ -192,6 +205,7 @@
             loadOverview();
             if (typeof loadPendingWithdrawals === 'function') loadPendingWithdrawals();
             if (typeof refreshSlotKill === 'function') refreshSlotKill();
+            if (typeof loadSlotAnalytics === 'function') loadSlotAnalytics();
         }
     }
 
@@ -542,6 +556,51 @@
             this.disabled = false;
         }
     });
+
+    // Slot analytics — per-game RTP drift detector. Pair with the
+    // per-game pause buttons above to detect → pause → investigate.
+    window.loadSlotAnalytics = async function () {
+        const btn = document.getElementById('btn-load-analytics');
+        if (btn) { btn.disabled = true; btn.textContent = 'Loading…'; }
+        try {
+            const days = Number(document.getElementById('analytics-window').value) || 30;
+            const data = await api('GET', '/api/admin/slot-analytics?window_days=' + days);
+            const rows = data.games || [];
+            const tbody = document.querySelector('#tbl-analytics tbody');
+            tbody.innerHTML = rows.length === 0
+                ? '<tr><td colspan="10" style="color:#666;padding:18px;text-align:center">— no games —</td></tr>'
+                : rows.map(g => {
+                    const empirical = g.empirical_rtp != null ? (g.empirical_rtp * 100).toFixed(2) + '%' : '—';
+                    const empWindow = g.window.empirical_rtp != null ? (g.window.empirical_rtp * 100).toFixed(2) + '%' : '—';
+                    const driftStr = g.drift_pct != null
+                        ? (g.drift_pct > 0 ? '+' : '') + g.drift_pct.toFixed(2) + '%'
+                        : '—';
+                    const driftCol = g.drift_warn ? '#ff9f9f' : (g.drift_pct != null && Math.abs(g.drift_pct) > 2 ? '#fde047' : '#9aa1ad');
+                    const houseNet = g.net_cents / 100;
+                    return '<tr>' +
+                        '<td><div style="font-weight:700">' + esc(g.name) + '</div><div class="mono" style="font-size:11px;color:#888">' + esc(g.game_id) + '</div></td>' +
+                        '<td>' + g.spins.toLocaleString() + '</td>' +
+                        '<td>' + g.unique_players.toLocaleString() + '</td>' +
+                        '<td>' + money(g.wagered_cents / 100) + '</td>' +
+                        '<td>' + money(g.won_cents / 100) + '</td>' +
+                        '<td style="color:' + (houseNet >= 0 ? '#5fd489' : '#ff9f9f') + '">' + money(houseNet) + '</td>' +
+                        '<td class="mono">' + (g.theoretical_rtp * 100).toFixed(2) + '%</td>' +
+                        '<td class="mono">' + empirical + '</td>' +
+                        '<td class="mono" style="color:' + driftCol + '">' +
+                            driftStr + (g.drift_warn ? ' &#9888;' : '') +
+                        '</td>' +
+                        '<td><span style="color:#9aa1ad;font-size:11px">' + g.window.spins.toLocaleString() + ' spins · ' + empWindow + '</span></td>' +
+                    '</tr>';
+                }).join('');
+        } catch (e) {
+            const tbody = document.querySelector('#tbl-analytics tbody');
+            tbody.innerHTML = '<tr><td colspan="10" style="color:#ff9f9f;padding:18px;text-align:center">' + esc(e.message) + '</td></tr>';
+        } finally {
+            if (btn) { btn.disabled = false; btn.textContent = 'Refresh'; }
+        }
+    };
+    document.getElementById('btn-load-analytics').addEventListener('click', loadSlotAnalytics);
+    document.getElementById('analytics-window').addEventListener('change', loadSlotAnalytics);
 
     // Load recent slot rounds across all users.
     document.getElementById('btn-load-rounds').addEventListener('click', async function () {
