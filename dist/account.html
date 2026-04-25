@@ -298,6 +298,15 @@
     <table id="tbl-redemptions"><thead><tr>
         <th>Code</th><th>Credited</th><th>When</th>
     </tr></thead><tbody><tr><td colspan="3" style="text-align:center;color:#666">— none yet —</td></tr></tbody></table>
+
+    <div class="card" id="bonus-grants-card" style="margin-top:14px;display:none">
+        <div class="label" style="margin-bottom:8px">Bonus playthrough</div>
+        <p style="font-size:13px;color:#8a8a8a">Some bonuses come with a wagering requirement &mdash; you have to wager <em>multiplier × bonus</em> on slot rounds before you can withdraw. Forfeit returns the unwagered portion of the bonus to the house and clears the gate.</p>
+        <table id="tbl-grants"><thead><tr>
+            <th>Source</th><th>Bonus</th><th>Wagered / required</th><th>Status</th><th></th>
+        </tr></thead><tbody></tbody></table>
+        <div class="msg" id="grants-msg"></div>
+    </div>
 </section>
 
 <section id="activity">
@@ -351,8 +360,9 @@
             t.classList.add('active');
             document.getElementById(t.dataset.tab).classList.add('active');
             // Lazy-load tab data the first time a tab is opened.
-            if (t.dataset.tab === 'bonus' && typeof window.loadRedemptions === 'function') {
-                window.loadRedemptions();
+            if (t.dataset.tab === 'bonus') {
+                if (typeof window.loadRedemptions === 'function') window.loadRedemptions();
+                if (typeof window.loadBonusGrants === 'function') window.loadBonusGrants();
             }
         });
     });
@@ -895,12 +905,66 @@
             msg.className = 'msg ok';
             msg.textContent = (res.message || 'Redeemed.') + ' New balance: $' + ((res.balance_after_cents || 0) / 100).toFixed(2);
             input.value = '';
-            // Refresh the overview balance + the redemptions list.
+            // Refresh the overview balance + the redemptions list +
+            // the bonus playthrough card if the code carried wagering.
             try { await loadOverview(); } catch (e) { /* tab not loaded yet */ }
-            await loadRedemptions();
+            await Promise.all([loadRedemptions(), loadBonusGrants()]);
         } catch (e) {
             msg.className = 'msg err';
             msg.textContent = e.message || 'Redemption failed.';
+        }
+    };
+
+    window.loadBonusGrants = async function () {
+        var card = document.getElementById('bonus-grants-card');
+        var tbody = document.querySelector('#tbl-grants tbody');
+        try {
+            var data = await api('GET', '/api/promo/bonus');
+            var grants = (data && data.grants) || [];
+            // Hide the section entirely if the user has never had a grant.
+            if (!grants.length) { card.style.display = 'none'; tbody.innerHTML = ''; return; }
+            card.style.display = '';
+            tbody.innerHTML = grants.map(function (g) {
+                var amt = (Number(g.amount_cents) || 0) / 100;
+                var wagered = (Number(g.wagered_cents) || 0) / 100;
+                var required = (Number(g.wagering_required_cents) || 0) / 100;
+                var pct = required > 0 ? Math.min(100, Math.round((wagered / required) * 100)) : 100;
+                var statusColor = g.status === 'active' ? '#f1c40f' : (g.status === 'completed' ? '#5fd489' : '#9aa1ad');
+                var bar = required > 0
+                    ? '<div class="bar" style="margin-top:4px"><div class="bar-fill" style="width:' + pct + '%"></div></div>' +
+                      '<div style="font-size:11px;color:#9aa1ad;margin-top:2px">' + money(wagered) + ' / ' + money(required) + ' (' + pct + '%)</div>'
+                    : '<span style="color:#9aa1ad">no playthrough</span>';
+                var btn = g.status === 'active'
+                    ? '<button class="row-deny" onclick="forfeitGrant(' + (Number(g.id) | 0) + ', this)">Forfeit</button>'
+                    : '<span style="color:#666">—</span>';
+                return '<tr>' +
+                    '<td>' + esc(g.source || '') + '</td>' +
+                    '<td>' + money(amt) + '</td>' +
+                    '<td>' + bar + '</td>' +
+                    '<td style="color:' + statusColor + '">' + esc(g.status) + '</td>' +
+                    '<td>' + btn + '</td>' +
+                    '</tr>';
+            }).join('');
+        } catch (e) {
+            card.style.display = '';
+            tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:#ff9f9f">' + esc(e.message || 'Failed to load') + '</td></tr>';
+        }
+    };
+
+    window.forfeitGrant = async function (id, btn) {
+        var msg = document.getElementById('grants-msg');
+        msg.className = 'msg'; msg.textContent = '';
+        if (!confirm('Forfeit this bonus? The unwagered portion is debited from your balance, and the playthrough gate clears so you can withdraw.')) return;
+        if (btn) btn.disabled = true;
+        try {
+            var res = await api('POST', '/api/promo/bonus/' + id + '/forfeit');
+            msg.className = 'msg ok';
+            msg.textContent = 'Forfeited. ' + (res.debited_cents ? '$' + ((res.debited_cents / 100).toFixed(2)) + ' was debited from your balance.' : 'No debit.');
+            await Promise.all([loadBonusGrants(), loadOverview(), loadWagering()]);
+        } catch (e) {
+            if (btn) btn.disabled = false;
+            msg.className = 'msg err';
+            msg.textContent = e.message || 'Failed to forfeit.';
         }
     };
 

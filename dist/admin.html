@@ -155,10 +155,13 @@
         <div><div style="color:#9aa1ad;margin-bottom:2px">Expires (ISO)</div><input id="pc-expires" placeholder="2026-12-31T23:59:59Z" style="width:100%;padding:5px 8px;background:#0b0e14;color:#e0e0e0;border:1px solid #2a2f3a;border-radius:4px;font-family:ui-monospace,Menlo,monospace"></div>
         <div><button id="btn-create-promo" class="row-approve" style="width:100%">Create</button></div>
     </div>
-    <div><input id="pc-note" placeholder="optional admin note (e.g. 'Friday newsletter')" style="width:100%;padding:5px 8px;font-size:11px;background:#0b0e14;color:#e0e0e0;border:1px solid #2a2f3a;border-radius:4px;margin-bottom:8px"></div>
+    <div style="display:grid;grid-template-columns:1fr 3fr;gap:6px;margin-bottom:8px;font-size:11px;align-items:center">
+        <div><div style="color:#9aa1ad;margin-bottom:2px">Wagering ×</div><input id="pc-mult" type="number" min="0" max="100" step="1" placeholder="0" style="width:100%;padding:5px 8px;background:#0b0e14;color:#e0e0e0;border:1px solid #2a2f3a;border-radius:4px"></div>
+        <input id="pc-note" placeholder="optional admin note (e.g. 'Friday newsletter')" style="width:100%;padding:5px 8px;background:#0b0e14;color:#e0e0e0;border:1px solid #2a2f3a;border-radius:4px">
+    </div>
     <table id="tbl-promo"><thead><tr>
-        <th>Code</th><th>Value</th><th>Used</th><th>Cap</th><th>Expires</th><th>Status</th><th>Note</th><th>Created</th><th></th>
-    </tr></thead><tbody><tr><td colspan="9" style="color:#666;padding:18px;text-align:center">— click Refresh —</td></tr></tbody></table>
+        <th>Code</th><th>Value</th><th>×</th><th>Used</th><th>Cap</th><th>Expires</th><th>Status</th><th>Note</th><th>Created</th><th></th>
+    </tr></thead><tbody><tr><td colspan="10" style="color:#666;padding:18px;text-align:center">— click Refresh —</td></tr></tbody></table>
 
     <h2 style="display:flex;align-items:center;gap:12px">Stripe webhook events
         <button class="row-actions-inline" id="btn-load-events" style="margin-left:auto;padding:5px 10px;font-size:11px;background:rgba(255,255,255,.08);color:#e0e0e0;border:1px solid #333;border-radius:4px;cursor:pointer">Load recent</button>
@@ -688,16 +691,18 @@
             const tbody = document.querySelector('#tbl-promo tbody');
             const codes = (data && data.codes) || [];
             tbody.innerHTML = codes.length === 0
-                ? '<tr><td colspan="9" style="color:#666;padding:18px;text-align:center">— no codes yet —</td></tr>'
+                ? '<tr><td colspan="10" style="color:#666;padding:18px;text-align:center">— no codes yet —</td></tr>'
                 : codes.map(c => {
                     const used = Number(c.redemption_count) || 0;
                     const cap  = c.max_redemptions == null ? '∞' : Number(c.max_redemptions);
                     const exp  = c.expires_at ? String(c.expires_at).replace('T',' ').slice(0,19) : '—';
                     const statusLabel = c.active_now ? 'active' : (c.active ? 'capped/expired' : 'disabled');
                     const statusColor = c.active_now ? '#5fd489' : '#ff9f9f';
+                    const mult = Number(c.wagering_multiplier) || 0;
                     return '<tr>' +
                         '<td class="mono">' + esc(c.code) + '</td>' +
                         '<td>' + money((Number(c.value_cents) || 0) / 100) + '</td>' +
+                        '<td>' + (mult > 0 ? mult + '×' : '—') + '</td>' +
                         '<td>' + used + '</td>' +
                         '<td>' + cap + '</td>' +
                         '<td class="mono" style="font-size:11px">' + esc(exp) + '</td>' +
@@ -739,6 +744,7 @@
         const maxStr   = String(document.getElementById('pc-max').value || '').trim();
         const expStr   = String(document.getElementById('pc-expires').value || '').trim();
         const note     = String(document.getElementById('pc-note').value || '').trim();
+        const multStr  = String(document.getElementById('pc-mult').value || '').trim();
         if (!code) return alert('Code required.');
         if (!Number.isFinite(valueDol) || valueDol <= 0) return alert('Value must be a positive number of dollars.');
         const payload = {
@@ -747,6 +753,7 @@
             max_redemptions: maxStr ? Number(maxStr) : null,
             expires_at: expStr || null,
             note: note || null,
+            wagering_multiplier: multStr ? Number(multStr) : 0,
         };
         btn.disabled = true; btn.textContent = 'Creating…';
         try {
@@ -756,6 +763,7 @@
             document.getElementById('pc-max').value = '';
             document.getElementById('pc-expires').value = '';
             document.getElementById('pc-note').value = '';
+            document.getElementById('pc-mult').value = '';
             loadPromoCodes();
         } catch (e) {
             alert('Create failed: ' + e.message);

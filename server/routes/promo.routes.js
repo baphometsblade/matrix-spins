@@ -43,6 +43,8 @@ router.post('/redeem', authenticate, redeemLimiter, async (req, res) => {
             code: result.code,
             value_cents: result.value_cents,
             balance_after_cents: result.balance_after_cents,
+            wagering_multiplier: result.wagering_multiplier,
+            wagering_required_cents: result.wagering_required_cents,
             message: 'Redeemed +$' + (result.value_cents / 100).toFixed(2) + '.',
         });
     } catch (err) {
@@ -62,6 +64,33 @@ router.get('/me', authenticate, async (req, res) => {
     } catch (err) {
         console.error('[promo/me]', err);
         res.status(500).json({ error: 'Failed to load redemptions.' });
+    }
+});
+
+// Bonus / wagering surface. List active + completed grants; forfeit
+// the active one(s) so the user can withdraw without finishing the
+// playthrough at the cost of the unwagered portion of the bonus.
+const bonusGrants = require('../services/bonus-grants.service');
+
+router.get('/bonus', authenticate, async (req, res) => {
+    try {
+        const grants = await bonusGrants.listForUser(req.user.id);
+        const activeRemaining = await bonusGrants.totalRemaining(req.user.id);
+        res.json({ grants, active_remaining_cents: activeRemaining });
+    } catch (err) {
+        console.error('[promo/bonus:list]', err);
+        res.status(500).json({ error: 'Failed to load bonus status.' });
+    }
+});
+
+router.post('/bonus/:id/forfeit', authenticate, async (req, res) => {
+    try {
+        const result = await bonusGrants.forfeit(req.user.id, req.params.id);
+        res.json(result);
+    } catch (err) {
+        const status = err.status || 500;
+        if (status >= 500) console.error('[promo/bonus:forfeit]', err);
+        res.status(status).json({ error: err.message });
     }
 });
 

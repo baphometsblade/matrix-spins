@@ -211,6 +211,23 @@ router.post('/request', authenticate, reqLimiter, async (req, res) => {
             });
         }
 
+        // Bonus playthrough gate. If the user has any active bonus
+        // grants (e.g. an unfinished promo-code playthrough) cashout
+        // is refused with the bonus_active code; the UI surfaces a
+        // forfeit option that lets the player walk with their
+        // winnings at the cost of the unplayed bonus.
+        const bonusGrants = require('../services/bonus-grants.service');
+        if (await bonusGrants.hasActive(req.user.id)) {
+            const remaining = await bonusGrants.totalRemaining(req.user.id);
+            return res.status(403).json({
+                error: 'Bonus playthrough not yet complete. Wager $' +
+                    (remaining / 100).toFixed(2) +
+                    ' more, or forfeit the bonus from your account page.',
+                code: 'bonus_active',
+                remaining_cents: remaining,
+            });
+        }
+
         // Atomic debit. Conditional UPDATE refuses when balance < amount
         // so no negative balance can slip through a concurrent spin.
         const debit = await db.run(

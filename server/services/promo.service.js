@@ -40,7 +40,9 @@ function normalizeCode(raw) {
  *   expires_at:      ISO date string or null (never)
  *   note:            optional admin-facing memo
  */
-async function createCode({ code, value_cents, max_redemptions, expires_at, note, created_by, created_by_username }) {
+const MAX_WAGERING_MULTIPLIER = 100;
+
+async function createCode({ code, value_cents, max_redemptions, expires_at, note, created_by, created_by_username, wagering_multiplier }) {
     const c = normalizeCode(code);
     if (!CODE_REGEX.test(c)) {
         const e = new Error('Code must be 4–32 chars, A–Z 0–9 dash only.');
@@ -74,11 +76,20 @@ async function createCode({ code, value_cents, max_redemptions, expires_at, note
     }
     const noteVal = note == null ? null : String(note).slice(0, 500);
 
+    let mult = 0;
+    if (wagering_multiplier != null && wagering_multiplier !== '') {
+        mult = Number(wagering_multiplier);
+        if (!Number.isInteger(mult) || mult < 0 || mult > MAX_WAGERING_MULTIPLIER) {
+            const e = new Error('wagering_multiplier must be 0–' + MAX_WAGERING_MULTIPLIER + '.');
+            e.status = 400; e.code = 'invalid_multiplier'; throw e;
+        }
+    }
+
     try {
         await db.run(
-            `INSERT INTO promo_codes (code, value_cents, max_redemptions, expires_at, active, note, created_by, created_by_username)
-             VALUES (?, ?, ?, ?, ${db.kind === 'pg' ? 'true' : '1'}, ?, ?, ?)`,
-            [c, v, max, exp, noteVal, created_by || null, created_by_username || null]
+            `INSERT INTO promo_codes (code, value_cents, max_redemptions, expires_at, active, note, created_by, created_by_username, wagering_multiplier)
+             VALUES (?, ?, ?, ?, ${db.kind === 'pg' ? 'true' : '1'}, ?, ?, ?, ?)`,
+            [c, v, max, exp, noteVal, created_by || null, created_by_username || null, mult]
         );
     } catch (err) {
         const msg = (err && err.message || '').toLowerCase();
@@ -100,7 +111,8 @@ async function createCode({ code, value_cents, max_redemptions, expires_at, note
 async function listCodes() {
     const rows = await db.all(
         `SELECT id, code, value_cents, max_redemptions, redemption_count,
-                expires_at, active, note, created_at, created_by_username
+                expires_at, active, note, created_at, created_by_username,
+                wagering_multiplier
            FROM promo_codes
           ORDER BY id DESC
           LIMIT 500`
@@ -162,7 +174,8 @@ async function redeem(userId, rawCode) {
     //    "invalid or unavailable" message until we know it's a
     //    legitimate user state issue (already redeemed).
     const code = await db.get(
-        `SELECT id, value_cents, max_redemptions, redemption_count, expires_at, active
+        `SELECT id, value_cents, max_redemptions, redemption_count, expires_at, active,
+                wagering_multiplier
            FROM promo_codes WHERE code = ?`,
         [c]
     );
@@ -232,10 +245,33 @@ async function redeem(userId, rawCode) {
     );
     const after = await db.get('SELECT balance_cents FROM users WHERE id = ?', [userId]);
 
+    // 5) If the code carries a wagering requirement, record a bonus
+    //    grant. Withdrawals refuse while any grant is 'active'; the
+    //    slot engine attributes each spin's bet against the oldest
+    //    active grant via bonusGrants.recordWager() until the
+    //    requirement is met. multiplier=0 still records (audit) but
+    //    flips status='completed' immediately so it doesn't gate.
+    let grant = null;
+    try {
+        const bonusGrants = require('./bonus-grants.service');
+        grant = await bonusGrants.grant(userId, {
+            source: 'promo',
+            sourceId: String(code.id),
+            amountCents: Number(code.value_cents),
+            multiplier: Number(code.wagering_multiplier) || 0,
+        });
+    } catch (err) {
+        // Don't fail the redeem if grant insert hiccups — credit was
+        // applied; ops can backfill from promo_redemptions if needed.
+        console.warn('[promo/redeem] grant insert warn:', err && err.message);
+    }
+
     return {
         code: c,
         value_cents: Number(code.value_cents),
         balance_after_cents: Number(after && after.balance_cents) || 0,
+        wagering_multiplier: Number(code.wagering_multiplier) || 0,
+        wagering_required_cents: grant ? Number(grant.wagering_required_cents) || 0 : 0,
     };
 }
 

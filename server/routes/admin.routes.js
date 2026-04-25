@@ -1035,9 +1035,9 @@ router.get('/promo-codes', async (_req, res) => {
 
 router.post('/promo-codes', async (req, res) => {
     try {
-        const { code, value_cents, max_redemptions, expires_at, note } = req.body || {};
+        const { code, value_cents, max_redemptions, expires_at, note, wagering_multiplier } = req.body || {};
         const created = await promo.createCode({
-            code, value_cents, max_redemptions, expires_at, note,
+            code, value_cents, max_redemptions, expires_at, note, wagering_multiplier,
             created_by: req.user.id,
             created_by_username: req.user.username || null,
         });

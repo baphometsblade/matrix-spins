@@ -3000,7 +3000,202 @@ async function main() {
         console.log('[test] active sessions: jti issued; lazy-create on first auth; per-jti revoke blocks (session_revoked) + cache invalidated; self-revoke 400; cross-user 404; revoke-others kills others while sparing current; isNewDevice classifies same vs different (ip-net, label); sendNewDeviceLogin email shaped correctly');
     }
 
-    console.log('\n✅ all deposit-flow assertions passed');
+    // ═══ Promo wagering / bonus grants ═══════════════════════════════════
+    // A code with wagering_multiplier > 0 creates a bonus grant on
+    // redemption. The user's balance is credited immediately, but
+    // withdrawals refuse until the playthrough completes.
+    {
+        const { signToken, newJti } = require('../server/middleware/auth');
+        const sessionsService = require('../server/services/sessions.service');
+        const bonusGrants = require('../server/services/bonus-grants.service');
+
+        async function seedBonusUser(name, balanceCents) {
+            const hash = await require('bcryptjs').hash('Str0ngP@ss!!', 10);
+            await db.run(
+                'INSERT INTO users (username, email, password_hash, date_of_birth, email_verified, balance_cents) VALUES (?, ?, ?, ?, 1, ?)',
+                [name, name + '@example.com', hash, '1990-01-01', balanceCents]
+            );
+            const row = await db.get('SELECT id, username, is_admin, token_version FROM users WHERE username = ?', [name]);
+            const j = newJti();
+            const token = signToken(row, j);
+            await sessionsService.recordSession(j, row.id, { headers: {} });
+            return { id: row.id, username: row.username, token, jti: j };
+        }
+        const adminCsrfBg = (await http('GET', '/api/csrf-token', { token: adminToken })).body.csrfToken;
+
+        // 1) Admin creates a code with multiplier=3.
+        const wagerCode = 'WAGER-' + Date.now();
+        const created = await http('POST', '/api/admin/promo-codes', {
+            token: adminToken, csrf: adminCsrfBg,
+            body: { code: wagerCode, value_cents: 500, max_redemptions: 1, wagering_multiplier: 3 },
+        });
+        assert.strictEqual(created.status, 201, 'create with multiplier failed: ' + created.raw);
+        assert.strictEqual(Number(created.body.code.wagering_multiplier), 3,
+            'wagering_multiplier must round-trip on the row');
+
+        // 2) Validation: reject negative + >100 multipliers.
+        const badMult1 = await http('POST', '/api/admin/promo-codes', {
+            token: adminToken, csrf: adminCsrfBg,
+            body: { code: 'BADMULT-' + Date.now(), value_cents: 100, wagering_multiplier: -1 },
+        });
+        assert.strictEqual(badMult1.status, 400);
+        const badMult2 = await http('POST', '/api/admin/promo-codes', {
+            token: adminToken, csrf: adminCsrfBg,
+            body: { code: 'BADMULT-' + (Date.now() + 1), value_cents: 100, wagering_multiplier: 101 },
+        });
+        assert.strictEqual(badMult2.status, 400);
+
+        // 3) User redeems.
+        const u = await seedBonusUser('bn_' + Date.now(), 0);
+        const csrfU = (await http('GET', '/api/csrf-token', { token: u.token })).body.csrfToken;
+        const redeem = await http('POST', '/api/promo/redeem', {
+            token: u.token, csrf: csrfU, body: { code: wagerCode },
+        });
+        assert.strictEqual(redeem.status, 200, 'redeem failed: ' + redeem.raw);
+        assert.strictEqual(Number(redeem.body.value_cents), 500);
+        assert.strictEqual(Number(redeem.body.wagering_multiplier), 3);
+        assert.strictEqual(Number(redeem.body.wagering_required_cents), 1500,
+            '$5 × 3 = $15 wagering required');
+
+        // 4) Balance credited immediately ($5 = 500 cents).
+        const bal = await db.get('SELECT balance_cents FROM users WHERE id = ?', [u.id]);
+        assert.strictEqual(Number(bal.balance_cents), 500);
+
+        // 5) GET /api/promo/bonus returns the grant in 'active'.
+        const status1 = await http('GET', '/api/promo/bonus', { token: u.token });
+        assert.strictEqual(status1.status, 200);
+        assert.strictEqual(status1.body.grants.length, 1);
+        const g = status1.body.grants[0];
+        assert.strictEqual(g.source, 'promo');
+        assert.strictEqual(Number(g.amount_cents), 500);
+        assert.strictEqual(Number(g.wagering_required_cents), 1500);
+        assert.strictEqual(Number(g.wagered_cents), 0);
+        assert.strictEqual(g.status, 'active');
+        assert.strictEqual(Number(status1.body.active_remaining_cents), 1500);
+
+        // 6) Withdrawal is blocked with bonus_active even though balance
+        //    is sufficient. We deliberately DO NOT seed a paid deposit —
+        //    no deposits means no deposit-wagering requirement, so the
+        //    only gate that should fire is bonus_active.
+        await db.run('UPDATE users SET balance_cents = balance_cents + ? WHERE id = ?', [3000, u.id]);
+        await db.run(
+            `INSERT INTO withdrawal_destinations (user_id, method, destination, currency, status, cooldown_until)
+             VALUES (?, 'crypto', ?, 'usd', 'active', '2020-01-01T00:00:00Z')`,
+            [u.id, 'addr_bonus_' + Date.now()]
+        );
+        const destRow = await db.get(
+            'SELECT id FROM withdrawal_destinations WHERE user_id = ? ORDER BY id DESC LIMIT 1',
+            [u.id]
+        );
+        const wdAttempt = await http('POST', '/api/withdrawal/request', {
+            token: u.token, csrf: csrfU,
+            body: { amount: 25, destination_id: destRow.id },
+        });
+        assert.strictEqual(wdAttempt.status, 403, 'wd must be blocked; got ' + wdAttempt.status);
+        assert.strictEqual(wdAttempt.body.code, 'bonus_active');
+        assert.ok(Number(wdAttempt.body.remaining_cents) > 0);
+
+        // 7) recordWager attribution: wager $10 in $1 chunks → still active.
+        for (let i = 0; i < 10; i++) await bonusGrants.recordWager(u.id, 100);
+        const status2 = await http('GET', '/api/promo/bonus', { token: u.token });
+        const g2 = status2.body.grants[0];
+        assert.strictEqual(Number(g2.wagered_cents), 1000);
+        assert.strictEqual(g2.status, 'active', '$10 wagered of $15 required → still active');
+
+        // 8) Spill-over: add a 2nd grant, then a single $10 wager that
+        //    crosses both thresholds. Pre-state: g1 needs $5 more; g2
+        //    has $2 required. Apply $10 → g1 closes, $5 spills, $2
+        //    closes g2, $3 falls off.
+        await bonusGrants.grant(u.id, { source: 'promo', sourceId: 'test-2', amountCents: 200, multiplier: 1 });
+        await bonusGrants.recordWager(u.id, 1000);
+        const status3 = await http('GET', '/api/promo/bonus', { token: u.token });
+        const g1Done = status3.body.grants.find(x => Number(x.amount_cents) === 500);
+        const g2Done = status3.body.grants.find(x => Number(x.amount_cents) === 200);
+        assert.strictEqual(g1Done.status, 'completed', 'oldest grant must complete first');
+        assert.strictEqual(Number(g1Done.wagered_cents), 1500);
+        assert.strictEqual(g2Done.status, 'completed', 'spill-over must complete the 2nd grant');
+        assert.strictEqual(Number(g2Done.wagered_cents), 200);
+
+        // 9) Withdrawal now succeeds (no active grants).
+        const wdNow = await http('POST', '/api/withdrawal/request', {
+            token: u.token, csrf: csrfU,
+            body: { amount: 25, destination_id: destRow.id },
+        });
+        assert.strictEqual(wdNow.status, 201, 'wd should now succeed: ' + wdNow.raw);
+
+        // 10) Forfeit path: half-played grant → 50% of bonus debited.
+        const u2 = await seedBonusUser('bn2_' + Date.now(), 1000);
+        const csrfU2 = (await http('GET', '/api/csrf-token', { token: u2.token })).body.csrfToken;
+        const wager2 = 'WAGER2-' + Date.now();
+        const created2 = await http('POST', '/api/admin/promo-codes', {
+            token: adminToken, csrf: adminCsrfBg,
+            body: { code: wager2, value_cents: 1000, max_redemptions: 1, wagering_multiplier: 4 },
+        });
+        assert.strictEqual(created2.status, 201);
+        const r2 = await http('POST', '/api/promo/redeem', {
+            token: u2.token, csrf: csrfU2, body: { code: wager2 },
+        });
+        assert.strictEqual(r2.status, 200);
+        // 4× $10 = $40 required; wager $20 → 50% played.
+        await bonusGrants.recordWager(u2.id, 2000);
+        const beforeForfeit = await db.get('SELECT balance_cents FROM users WHERE id = ?', [u2.id]);
+        const grantRow = await db.get(
+            `SELECT id FROM bonus_grants WHERE user_id = ? AND status = 'active' ORDER BY id ASC LIMIT 1`,
+            [u2.id]
+        );
+        const forfeit = await http('POST', '/api/promo/bonus/' + grantRow.id + '/forfeit', {
+            token: u2.token, csrf: csrfU2,
+        });
+        assert.strictEqual(forfeit.status, 200, 'forfeit failed: ' + forfeit.raw);
+        // 50%-played → 50% of $10 forfeited = $5 debit.
+        assert.strictEqual(Number(forfeit.body.debited_cents), 500,
+            '50%-played → 50% of bonus = $5 debit; got $' + (forfeit.body.debited_cents / 100));
+        const afterForfeit = await db.get('SELECT balance_cents FROM users WHERE id = ?', [u2.id]);
+        assert.strictEqual(
+            Number(afterForfeit.balance_cents),
+            Number(beforeForfeit.balance_cents) - 500,
+            'balance debit must equal forfeit amount'
+        );
+        // Forfeit-twice is blocked (status guard).
+        const forfeit2 = await http('POST', '/api/promo/bonus/' + grantRow.id + '/forfeit', {
+            token: u2.token, csrf: csrfU2,
+        });
+        assert.strictEqual(forfeit2.status, 409, 'double-forfeit must 409; got ' + forfeit2.status);
+
+        // 11) Cross-user forfeit: another user can't forfeit our grant.
+        const u3 = await seedBonusUser('bn3_' + Date.now(), 0);
+        const csrfU3 = (await http('GET', '/api/csrf-token', { token: u3.token })).body.csrfToken;
+        await bonusGrants.grant(u2.id, { source: 'promo', sourceId: 'cross', amountCents: 100, multiplier: 2 });
+        const targetGrant = await db.get(
+            `SELECT id FROM bonus_grants WHERE user_id = ? AND status = 'active' ORDER BY id DESC LIMIT 1`,
+            [u2.id]
+        );
+        const cross = await http('POST', '/api/promo/bonus/' + targetGrant.id + '/forfeit', {
+            token: u3.token, csrf: csrfU3,
+        });
+        assert.strictEqual(cross.status, 404, 'cross-user forfeit must 404; got ' + cross.status);
+
+        // 12) Multiplier=0 path: code creates a grant immediately marked
+        //     'completed' (audit trail) and does NOT gate withdrawal.
+        const u4 = await seedBonusUser('bn4_' + Date.now(), 0);
+        const csrfU4 = (await http('GET', '/api/csrf-token', { token: u4.token })).body.csrfToken;
+        const cashCode = 'CASH-' + Date.now();
+        await http('POST', '/api/admin/promo-codes', {
+            token: adminToken, csrf: adminCsrfBg,
+            body: { code: cashCode, value_cents: 500, max_redemptions: 1, wagering_multiplier: 0 },
+        });
+        const r4 = await http('POST', '/api/promo/redeem', {
+            token: u4.token, csrf: csrfU4, body: { code: cashCode },
+        });
+        assert.strictEqual(r4.status, 200);
+        assert.strictEqual(Number(r4.body.wagering_required_cents), 0);
+        const stat4 = await http('GET', '/api/promo/bonus', { token: u4.token });
+        assert.strictEqual(stat4.body.grants[0].status, 'completed');
+        assert.strictEqual(Number(stat4.body.active_remaining_cents), 0,
+            'multiplier=0 must not contribute to active remaining');
+
+        console.log('[test] bonus wagering: multiplier round-trips on create + bad mult 400; redeem creates active grant; balance credited; withdrawal blocked with bonus_active; recordWager FIFO progresses; spill-over completes oldest first; withdrawal unblocks once all completed; forfeit debits proportional unwagered remainder; double-forfeit 409; cross-user forfeit 404; multiplier=0 path completes immediately');
+    }
 
     console.log('\n✅ all deposit-flow assertions passed');
     main.server.close();

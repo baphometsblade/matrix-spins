@@ -493,7 +493,18 @@ async function spinImpl({ userId, gameId, betCents, clientSeed }) {
     );
     const roundId = roundRow && roundRow.id;
 
-    // 6) Roll a fresh commit for the next spin so the just-revealed seed
+    // 6) Attribute the bet to any active bonus grants (FIFO, spill-
+    //    over). Best-effort — failures don't unwind the spin since
+    //    the slot_rounds row is the source of truth and ops can
+    //    backfill from there. Inside the per-user spin lock so
+    //    concurrent attribution races are impossible.
+    try {
+        await require('./bonus-grants.service').recordWager(userId, bet);
+    } catch (err) {
+        console.warn('[slot/spin] bonus wager attribution warn:', err && err.message);
+    }
+
+    // 7) Roll a fresh commit for the next spin so the just-revealed seed
     //    can never be reused. The client immediately sees the next hash
     //    in `next_commit` and can verify the one it just consumed.
     const next = await rollNewCommit(userId);

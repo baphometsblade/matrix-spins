@@ -567,6 +567,39 @@ async function migrate() {
         );
     `);
     await driver.exec(`CREATE INDEX IF NOT EXISTS idx_auth_sessions_user ON auth_sessions (user_id, last_seen_at DESC);`);
+
+    // Bonus grants. Each promo redemption (or operator grant, or
+    // future cashback) creates a row here when the source carries a
+    // wagering requirement. The user must wager `wagering_required_cents`
+    // across slot rounds before status flips to 'completed'; while
+    // any grant is 'active', withdrawals are refused with the
+    // bonus_active code. Multi-grant stacking is FIFO: each spin
+    // attributes its bet to the oldest active grant first.
+    //
+    // Existing wagering-on-deposits (1× paid_deposits via withdrawal
+    // computeWagering) remains as a separate gate; both must pass
+    // before a withdrawal succeeds.
+    await driver.exec(`
+        CREATE TABLE IF NOT EXISTS bonus_grants (
+            id ${T.pk},
+            user_id ${driver.kind === 'pg' ? 'INTEGER' : 'INTEGER'} NOT NULL,
+            source TEXT NOT NULL,
+            source_id TEXT,
+            amount_cents ${driver.kind === 'pg' ? 'BIGINT' : 'INTEGER'} NOT NULL,
+            wagering_required_cents ${driver.kind === 'pg' ? 'BIGINT' : 'INTEGER'} NOT NULL,
+            wagered_cents ${driver.kind === 'pg' ? 'BIGINT' : 'INTEGER'} NOT NULL DEFAULT 0,
+            status TEXT NOT NULL DEFAULT 'active',
+            created_at ${T.ts},
+            completed_at ${driver.kind === 'pg' ? 'TIMESTAMPTZ' : 'TEXT'}
+        );
+    `);
+    await driver.exec(`CREATE INDEX IF NOT EXISTS idx_bonus_grants_user_active ON bonus_grants (user_id, status, id);`);
+
+    // Wagering multiplier on promo codes — the X in "wager X× the
+    // bonus before withdraw". 0 means "instant cash, no wagering"
+    // (back-compat with codes minted before this migration).
+    await addColumnIfMissing('promo_codes', 'wagering_multiplier',
+        driver.kind === 'pg' ? 'INTEGER NOT NULL DEFAULT 0' : 'INTEGER NOT NULL DEFAULT 0');
 }
 
 async function initDatabase() {
