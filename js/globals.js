@@ -162,7 +162,20 @@
 
         // ===== Daily Bonus System =====
         const DAILY_BONUS_KEY = STORAGE_KEY_DAILY_BONUS;
-        // DAILY_REWARDS — from constants.js
+        // DAILY_REWARDS — 7-day login-bonus ladder. Used by ui-modals.js
+        // to render the streak grid; client-side fun-mode only (live
+        // money never crosses this path). Was supposed to live in a
+        // never-committed constants.js — defining here so callers don't
+        // throw ReferenceError at module load.
+        var DAILY_REWARDS = [
+            { amount: 100,    xp: 10 },
+            { amount: 250,    xp: 25 },
+            { amount: 500,    xp: 50 },
+            { amount: 1000,   xp: 100 },
+            { amount: 2500,   xp: 250 },
+            { amount: 5000,   xp: 500 },
+            { amount: 10000,  xp: 1000 },
+        ];
 
         let dailyBonusState = { streak: 0, lastClaim: null, claimedToday: false };
 

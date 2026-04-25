@@ -1,5 +1,5 @@
 /* Royal Slots Casino - Bundled JavaScript */
-/* Generated: 2026-04-25T06:57:24.549Z */
+/* Generated: 2026-04-25T07:13:14.637Z */
 
 
 /* â”€â”€â”€ shared/game-definitions.js (2/56) â”€â”€â”€ */
@@ -774,7 +774,20 @@ if (typeof module !== 'undefined') module.exports = games;
 
         // ===== Daily Bonus System =====
         const DAILY_BONUS_KEY = STORAGE_KEY_DAILY_BONUS;
-        // DAILY_REWARDS — from constants.js
+        // DAILY_REWARDS — 7-day login-bonus ladder. Used by ui-modals.js
+        // to render the streak grid; client-side fun-mode only (live
+        // money never crosses this path). Was supposed to live in a
+        // never-committed constants.js — defining here so callers don't
+        // throw ReferenceError at module load.
+        var DAILY_REWARDS = [
+            { amount: 100,    xp: 10 },
+            { amount: 250,    xp: 25 },
+            { amount: 500,    xp: 50 },
+            { amount: 1000,   xp: 100 },
+            { amount: 2500,   xp: 250 },
+            { amount: 5000,   xp: 500 },
+            { amount: 10000,  xp: 1000 },
+        ];
 
         let dailyBonusState = { streak: 0, lastClaim: null, claimedToday: false };
 
@@ -40860,6 +40873,7 @@ window._logAudit658 = _logAudit658;
         clientSeed: null,       // persistent seed loaded from /api/slot/client-seed
         lastResult: null,
         spinning: false,
+        autoCancel: false,      // user-driven stop flag for the auto-spin loop
     };
 
     function fmt(cents) { return '$' + (Number(cents || 0) / 100).toFixed(2); }
@@ -40940,11 +40954,26 @@ window._logAudit658 = _logAudit658;
                         'background:linear-gradient(135deg,#c0392b 0%,#f1c40f 100%);color:#111;font-weight:900;font-size:16px;letter-spacing:1px;cursor:pointer;">SPIN</button>' +
                 '</div>' +
 
+                '<div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;font-size:12px;color:#94a3b8;">' +
+                    '<label for="liveSlotAutoCount">Auto</label>' +
+                    '<select id="liveSlotAutoCount" style="padding:6px;border-radius:6px;border:1px solid #374151;background:#0b0504;color:#fff;font-weight:700;">' +
+                        '<option value="0">Off</option>' +
+                        '<option value="10">10×</option>' +
+                        '<option value="25">25×</option>' +
+                        '<option value="50">50×</option>' +
+                        '<option value="100">100×</option>' +
+                    '</select>' +
+                    '<label for="liveSlotAutoStop" title="Auto stops when a single spin pays at least this much">stop on win ≥ $</label>' +
+                    '<input id="liveSlotAutoStop" type="number" step="0.10" min="0" value="0" ' +
+                        'style="width:70px;padding:6px;border-radius:6px;border:1px solid #374151;background:#0b0504;color:#fff;font-weight:700;">' +
+                    '<button id="liveSlotAutoCancel" style="margin-left:auto;padding:6px 10px;border-radius:5px;border:1px solid #374151;background:transparent;color:#cbd5e1;font-size:11px;cursor:pointer;display:none;">Stop</button>' +
+                '</div>' +
+
                 '<details style="margin-top:8px;color:#94a3b8;font-size:12px;">' +
                     '<summary style="cursor:pointer;outline:none;">Paytable / fairness</summary>' +
                     '<div style="margin-top:8px;line-height:1.55;">' +
                         '<div id="liveSlotPaytable">' + buildPaytableHtml(def) + '</div>' +
-                        '<div id="liveSlotCommit" style="margin-top:6px;">Commit hash: <span style="font-family:monospace;">loading…</span></div>' +
+                        '<div id="liveSlotCommit" style="margin-top:6px;display:flex;align-items:center;gap:8px;">Commit hash: <span style="font-family:monospace;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;">loading…</span><button id="liveSlotRotateBtn" title="Reveal current server seed and roll a fresh one" style="padding:4px 8px;border-radius:5px;border:1px solid #f1c40f55;background:transparent;color:#f1c40f;font-size:11px;font-weight:700;cursor:pointer;">Rotate</button></div>' +
                         '<div id="liveSlotRevealed" style="margin-top:4px;"></div>' +
                         '<div id="liveSlotPfSettings" style="margin-top:10px;border-top:1px solid #f1c40f22;padding-top:8px;">' +
                             '<div style="font-weight:700;color:#cbd5e1;margin-bottom:4px;">Your client seed</div>' +
@@ -41057,6 +41086,72 @@ window._logAudit658 = _logAudit658;
         }
     }
 
+    async function rotateCommit() {
+        var btn = document.getElementById('liveSlotRotateBtn');
+        if (btn) btn.disabled = true;
+        var r = await fetchJSON('/api/slot/rotate-commit', { method: 'POST' });
+        if (btn) btn.disabled = false;
+        if (r.status !== 200) {
+            setResult((r.body && r.body.error) || 'Rotate failed.', '#ef4444');
+            return;
+        }
+        // Show the revealed seed transiently in the result line; the
+        // Commit display rolls to the new hash.
+        state.committedHash = r.body.next_commit && r.body.next_commit.server_seed_hash;
+        updateCommitUI();
+        setResult('Server seed rotated. Old seed revealed: ' + shortHash(r.body.revealed.server_seed), '#94a3b8');
+    }
+
+    function autoStopThresholdCents() {
+        var input = document.getElementById('liveSlotAutoStop');
+        var v = input ? Number(input.value) : 0;
+        return Number.isFinite(v) && v > 0 ? Math.round(v * 100) : 0;
+    }
+
+    function autoCount() {
+        var sel = document.getElementById('liveSlotAutoCount');
+        var n = sel ? Number(sel.value) : 0;
+        return Number.isFinite(n) && n > 0 ? Math.floor(n) : 0;
+    }
+
+    function setAutoUI(running) {
+        var cancelBtn = document.getElementById('liveSlotAutoCancel');
+        if (cancelBtn) cancelBtn.style.display = running ? '' : 'none';
+        var sel = document.getElementById('liveSlotAutoCount');
+        if (sel) sel.disabled = running;
+        var stopInput = document.getElementById('liveSlotAutoStop');
+        if (stopInput) stopInput.disabled = running;
+    }
+
+    async function runAutoLoop(total) {
+        state.autoCancel = false;
+        setAutoUI(true);
+        var threshold = autoStopThresholdCents();
+        var done = 0;
+        var stoppedReason = null;
+        for (var i = 0; i < total; i++) {
+            if (state.autoCancel) { stoppedReason = 'cancelled'; break; }
+            await doSingleSpin(); // throws nothing — sets state.lastResult or surfaces an error
+            done = i + 1;
+            if (!state.lastResult) { stoppedReason = 'error'; break; }
+            var win = Number(state.lastResult.win_cents || 0);
+            if (threshold > 0 && win >= threshold) { stoppedReason = 'big_win'; break; }
+            // Light pacing so the rate limit (30/10s) never trips on
+            // a turbo-spin user. ~350ms gives ~3/s — well under cap.
+            await new Promise(function (r) { setTimeout(r, 350); });
+        }
+        setAutoUI(false);
+        if (stoppedReason === 'big_win') {
+            setResult('Auto-spin stopped on a big win after ' + done + ' spin' + (done === 1 ? '' : 's') + '.', '#22c55e');
+        } else if (stoppedReason === 'cancelled') {
+            setResult('Auto-spin cancelled after ' + done + ' spin' + (done === 1 ? '' : 's') + '.', '#94a3b8');
+        } else if (stoppedReason === 'error') {
+            // setResult was already updated by doSingleSpin's error path
+        } else {
+            setResult('Auto-spin done — ' + done + ' spin' + (done === 1 ? '' : 's') + ' completed.', '#94a3b8');
+        }
+    }
+
     async function saveClientSeed() {
         var input = document.getElementById('liveSlotClientSeedInput');
         var msg = document.getElementById('liveSlotClientSeedMsg');
@@ -41074,12 +41169,25 @@ window._logAudit658 = _logAudit658;
     }
 
     async function doSpin() {
+        // Auto-spin entry: if a count > 0 is selected and we're not
+        // already running, kick off the loop. Single-spin click is
+        // the natural fall-through.
+        var n = autoCount();
+        if (n > 0 && !state.spinning) {
+            await runAutoLoop(n);
+            return;
+        }
+        await doSingleSpin();
+    }
+
+    async function doSingleSpin() {
         if (state.spinning) return;
         var def = state.gameDef;
         var input = document.getElementById('liveSlotBet');
         var dollars = Number(input.value);
         if (!Number.isFinite(dollars) || dollars <= 0) {
             setResult('Enter a valid bet.', '#ef4444');
+            state.lastResult = null;
             return;
         }
         state.betCents = Math.round(dollars * 100);
@@ -41103,6 +41211,7 @@ window._logAudit658 = _logAudit658;
         if (res.status !== 200) {
             var msg = (res.body && res.body.error) || ('Error ' + res.status);
             setResult(msg, '#ef4444');
+            state.lastResult = null;
             // Re-fetch the commit — on 401 / self-exclusion we may be
             // working with a stale hash.
             refreshCommit();
@@ -41137,6 +41246,10 @@ window._logAudit658 = _logAudit658;
         if (spinBtn) spinBtn.addEventListener('click', doSpin);
         var saveBtn = document.getElementById('liveSlotClientSeedSave');
         if (saveBtn) saveBtn.addEventListener('click', saveClientSeed);
+        var rotateBtn = document.getElementById('liveSlotRotateBtn');
+        if (rotateBtn) rotateBtn.addEventListener('click', rotateCommit);
+        var autoCancelBtn = document.getElementById('liveSlotAutoCancel');
+        if (autoCancelBtn) autoCancelBtn.addEventListener('click', function () { state.autoCancel = true; });
         var overlay = document.getElementById('liveSlotModal');
         if (overlay) overlay.addEventListener('click', function (e) {
             if (e.target === overlay) closeLiveSlot();
@@ -41144,6 +41257,9 @@ window._logAudit658 = _logAudit658;
     }
 
     function closeLiveSlot() {
+        // Cancel any in-flight auto-spin so the loop stops on the next
+        // iteration even though the modal is gone.
+        state.autoCancel = true;
         var overlay = document.getElementById('liveSlotModal');
         if (overlay && overlay.parentNode) overlay.parentNode.removeChild(overlay);
         state.gameId = null;

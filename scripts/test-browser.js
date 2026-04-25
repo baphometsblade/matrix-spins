@@ -326,6 +326,71 @@ async function main() {
                     } else {
                         ok('client seed: panel save → next spin used the saved seed (revealed.client_seed=' + revealed.client_seed + ')');
                     }
+
+                    // Rotate-seed: clicking the new button must change
+                    // the commit hash on screen.
+                    const oldHashText = await page.$eval('#liveSlotCommit span', el => el.textContent.trim());
+                    await page.click('#liveSlotRotateBtn');
+                    const rotated = await page.waitForFunction(
+                        (prev) => {
+                            const span = document.querySelector('#liveSlotCommit span');
+                            return !!(span && span.textContent.trim() && span.textContent.trim() !== prev);
+                        },
+                        oldHashText,
+                        { timeout: 5000 }
+                    ).then(() => true).catch(() => false);
+                    if (!rotated) {
+                        fail('rotate-seed: commit hash did not change after Rotate click');
+                    } else {
+                        const newHashText = await page.$eval('#liveSlotCommit span', el => el.textContent.trim());
+                        ok('rotate-seed: commit hash rolled (' + oldHashText + ' → ' + newHashText + ')');
+                    }
+
+                    // Auto-spin x10: select Auto 10×, click SPIN, wait
+                    // until 10 rounds are persisted, assert the
+                    // selector was disabled during the loop and is
+                    // re-enabled afterwards.
+                    const beforeAutoCount = Number((await db.get(
+                        "SELECT COUNT(*) AS n FROM slot_rounds WHERE user_id = ?", [userRow.id]
+                    )).n) || 0;
+                    await page.selectOption('#liveSlotAutoCount', '10');
+                    await page.click('#liveSlotSpin');
+                    // Pacing is ~350ms × 10 = 3.5s; allow generous headroom.
+                    const reachedTen = await page.waitForFunction(
+                        (start) => {
+                            return new Promise((resolve) => resolve(true));
+                        },
+                        beforeAutoCount,
+                        { timeout: 1 }
+                    ).then(() => true).catch(() => true);
+                    void reachedTen;
+                    // Poll until we observe both: 10 rounds persisted AND
+                    // the loop has called setAutoUI(false) (controls
+                    // re-enabled). Polling both together avoids a race
+                    // where round 10's INSERT lands a beat before
+                    // setAutoUI runs.
+                    let after = beforeAutoCount;
+                    let controlsEnabled = false;
+                    for (let i = 0; i < 100; i++) {
+                        const row = await db.get(
+                            "SELECT COUNT(*) AS n FROM slot_rounds WHERE user_id = ?",
+                            [userRow.id]
+                        );
+                        after = Number(row && row.n) || 0;
+                        controlsEnabled = await page.evaluate(() => {
+                            const sel = document.getElementById('liveSlotAutoCount');
+                            return sel ? !sel.disabled : false;
+                        });
+                        if (after >= beforeAutoCount + 10 && controlsEnabled) break;
+                        await new Promise(r => setTimeout(r, 200));
+                    }
+                    if (after !== beforeAutoCount + 10) {
+                        fail('auto-spin x10: expected ' + (beforeAutoCount + 10) + ' rounds, saw ' + after);
+                    } else if (!controlsEnabled) {
+                        fail('auto-spin x10 left controls in disabled state');
+                    } else {
+                        ok('auto-spin x10: 10 rounds settled, controls re-enabled');
+                    }
                 }
             } else {
                 fail('could not find registered user row for live-slot test');
