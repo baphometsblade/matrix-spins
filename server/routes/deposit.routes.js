@@ -21,6 +21,11 @@ const router = express.Router();
 const MIN_DEPOSIT_CENTS = 500;      // $5
 const MAX_DEPOSIT_CENTS = 500000;   // $5000 per transaction hard cap
 
+// NOTE: this rolling-window aggregate is deliberately divergent from
+// the wagering helper in routes/withdrawal.routes.js: deposit caps
+// gate gross intake (so partial-refunds still count toward the cap),
+// while the wagering AML gate gates cash-out (so partial-refunds drop
+// out of the denominator). Don't unify them without rethinking both.
 async function sumDepositsSince(userId, sinceSec) {
     const row = await db.get(
         db.kind === 'pg'

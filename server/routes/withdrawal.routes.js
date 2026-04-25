@@ -36,6 +36,61 @@ const ALLOWED_METHODS = new Set(['bank_transfer', 'crypto']);
 // double-submits and trivial abuse.
 const reqLimiter = userRateLimit({ maxRequests: 10, windowMs: 60 * 1000 });
 
+/**
+ * Wagering / playthrough gate (AML).
+ *
+ * A user must wager WAGERING_MULTIPLIER × (sum of paid deposits) before
+ * any withdrawal is allowed. With multiplier=1 this is the lightest
+ * possible chip-dump prevention: deposits must be turned over once.
+ *
+ * Counts only deposits.status = 'paid'. A deposit that is later
+ * refunded (status 'refunded') or partially refunded (status
+ * 'partial_refund') drops out of the denominator — the user can no
+ * longer move that money out without first wagering anew. SUM stays
+ * deliberately divergent from sumDepositsSince() in deposit.routes.js,
+ * which counts 'partial_refund' to enforce the deposit cap on gross
+ * intake. Both files have a comment pointing at each other to flag the
+ * intentional divergence.
+ *
+ * No TOCTOU concern parallel to the loss-limit gate: wagering is a
+ * monotonic lifetime aggregate, never "spent" by a withdrawal, so two
+ * concurrent withdrawal POSTs that each pass the check are not in
+ * conflict — they then race on the `balance_cents >= ?` conditional
+ * UPDATE, which already enforces single-spend.
+ */
+const WAGERING_MULTIPLIER = 1;
+
+async function fetchWageringTotals(userId) {
+    // One round-trip; both totals come back from a single SELECT. The
+    // db wrapper auto-rewrites '?' to '$1, $2…' for pg, so the SQL
+    // works against either backend without per-dialect branching.
+    const row = await db.get(
+        `SELECT
+            (SELECT COALESCE(SUM(amount_cents), 0) FROM deposits
+                WHERE user_id = ? AND status = 'paid')   AS deposits_cents,
+            (SELECT COALESCE(SUM(bet_cents), 0) FROM slot_rounds
+                WHERE user_id = ?)                       AS wagered_cents`,
+        [userId, userId]
+    );
+    return {
+        deposits_cents: Number((row && row.deposits_cents) || 0),
+        wagered_cents:  Number((row && row.wagered_cents)  || 0),
+    };
+}
+
+async function computeWagering(userId) {
+    const t = await fetchWageringTotals(userId);
+    const required_cents = t.deposits_cents * WAGERING_MULTIPLIER;
+    const remaining_cents = Math.max(0, required_cents - t.wagered_cents);
+    return {
+        wagered_cents: t.wagered_cents,
+        deposits_cents: t.deposits_cents,
+        required_cents,
+        remaining_cents,
+        met: remaining_cents === 0,
+    };
+}
+
 function sanitizeDestination(raw) {
     if (typeof raw !== 'string') return null;
     const s = raw.trim().slice(0, 200);
@@ -105,6 +160,24 @@ router.post('/request', authenticate, reqLimiter, async (req, res) => {
             }
         }
 
+        // Wagering / playthrough gate. Real-money AML: at least
+        // WAGERING_MULTIPLIER × paid_deposits must be wagered before
+        // any cash-out. See the helper definitions above for the
+        // monotonic-aggregate argument that makes this safe under
+        // concurrent withdrawal requests without an extra lock.
+        const wagering = await computeWagering(req.user.id);
+        if (!wagering.met) {
+            return res.status(403).json({
+                error: 'Wagering requirement not met. Wager $' +
+                    (wagering.remaining_cents / 100).toFixed(2) +
+                    ' more before you can withdraw.',
+                code: 'wagering_unmet',
+                wagered_cents:  wagering.wagered_cents,
+                required_cents: wagering.required_cents,
+                remaining_cents: wagering.remaining_cents,
+            });
+        }
+
         // Atomic debit. Conditional UPDATE refuses when balance < amount
         // so no negative balance can slip through a concurrent spin.
         const debit = await db.run(
@@ -145,6 +218,25 @@ router.post('/request', authenticate, reqLimiter, async (req, res) => {
     } catch (err) {
         console.error('[withdrawal/request]', err);
         res.status(500).json({ error: 'Could not request withdrawal.' });
+    }
+});
+
+router.get('/wagering', authenticate, async (req, res) => {
+    try {
+        const w = await computeWagering(req.user.id);
+        res.json({
+            wagering: {
+                multiplier: WAGERING_MULTIPLIER,
+                wagered_cents: w.wagered_cents,
+                deposits_cents: w.deposits_cents,
+                required_cents: w.required_cents,
+                remaining_cents: w.remaining_cents,
+                met: w.met,
+            },
+        });
+    } catch (err) {
+        console.error('[withdrawal/wagering]', err);
+        res.status(500).json({ error: 'Failed to fetch wagering status.' });
     }
 });
 

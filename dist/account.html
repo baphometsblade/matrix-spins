@@ -189,6 +189,10 @@
             operations team within 1&ndash;3 business days. You can cancel a
             still-pending request at any time.
         </p>
+        <div id="wd-wagering" style="margin-bottom:12px">
+            <div class="msg" id="wd-wager-text">Loading wagering status&hellip;</div>
+            <div class="bar"><div class="bar-fill" id="wd-wager-bar"></div></div>
+        </div>
         <div class="row"><label class="inline" for="wd-amount">Amount (USD)</label><input type="number" id="wd-amount" min="10" max="5000" step="0.01" required placeholder="25.00"></div>
         <div class="row"><label class="inline" for="wd-method">Method</label>
             <select id="wd-method" required>
@@ -331,7 +335,7 @@
                     alert('Email verification failed: ' + ((consume.data && consume.data.error) || 'unknown error'));
                 }
             }
-            await Promise.all([loadOverview(), loadDeposits(), loadNfts(), loadLimits(), loadActivity(), load2FA(), loadWithdrawals()]);
+            await Promise.all([loadOverview(), loadDeposits(), loadNfts(), loadLimits(), loadActivity(), load2FA(), loadWithdrawals(), loadWagering()]);
         } catch (e) {
             document.getElementById('signed-in-as').innerHTML = 'Session invalid or expired. <a href="/">Sign in again</a>.';
             document.getElementById('login-wrap').style.display = '';
@@ -439,6 +443,36 @@
         } catch (e) { /* ignore */ }
     }
 
+    async function loadWagering() {
+        try {
+            var data = await api('GET', '/api/withdrawal/wagering');
+            var w = data.wagering || {};
+            var bar = document.getElementById('wd-wager-bar');
+            var text = document.getElementById('wd-wager-text');
+            var btn = document.getElementById('wd-submit');
+            var pct = w.required_cents > 0
+                ? Math.min(100, (w.wagered_cents / w.required_cents) * 100)
+                : 100;
+            bar.style.width = pct.toFixed(1) + '%';
+            bar.className = 'bar-fill' + (w.met ? '' : pct >= 75 ? ' warn' : ' crit');
+            if (w.required_cents === 0) {
+                text.className = 'msg ok';
+                text.textContent = 'No wagering requirement (no paid deposits yet).';
+            } else if (w.met) {
+                text.className = 'msg ok';
+                text.textContent = 'Wagering requirement met (' + money(w.wagered_cents / 100) + ' wagered).';
+            } else {
+                text.className = 'msg';
+                text.textContent = 'You’ve wagered ' + money(w.wagered_cents / 100) + ' of ' + money(w.required_cents / 100) +
+                    ' required. ' + money(w.remaining_cents / 100) + ' to go.';
+            }
+            if (btn) {
+                btn.disabled = !w.met;
+                btn.title = w.met ? '' : 'Wager ' + money(w.remaining_cents / 100) + ' more before you can withdraw.';
+            }
+        } catch (e) { /* ignore */ }
+    }
+
     async function loadWithdrawals() {
         try {
             var data = await api('GET', '/api/withdrawal');
@@ -493,7 +527,7 @@
             document.getElementById('wd-amount').value = '';
             document.getElementById('wd-destination').value = '';
             if (totpInput) totpInput.value = '';
-            await Promise.all([loadWithdrawals(), loadOverview()]);
+            await Promise.all([loadWithdrawals(), loadOverview(), loadWagering()]);
         } catch (e) {
             msg.textContent = e.message || 'Failed to request withdrawal.';
             msg.className = 'msg err';
@@ -505,7 +539,7 @@
         if (btn) btn.disabled = true;
         try {
             await api('POST', '/api/withdrawal/' + id + '/cancel');
-            await Promise.all([loadWithdrawals(), loadOverview()]);
+            await Promise.all([loadWithdrawals(), loadOverview(), loadWagering()]);
         } catch (e) {
             if (btn) btn.disabled = false;
             alert(e.message || 'Could not cancel withdrawal.');

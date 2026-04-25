@@ -1705,6 +1705,123 @@ async function main() {
         console.log('[test] loss limit: concurrent spins are serialized — 1 wins, 4 blocked, 1 round logged');
     }
 
+    // ═══ Wagering / playthrough requirement (AML) ═══════════════════════════
+    // 1× the user's paid deposits must be wagered before any cash-out.
+    // Counts only deposits.status='paid'; refunds drop the deposit out of
+    // the denominator. Admin-credited balance with no paid deposits has
+    // required=0 → free to withdraw.
+    {
+        const { signToken } = require('../server/middleware/auth');
+        async function seedUser2(name) {
+            const hash = await require('bcryptjs').hash('Str0ngP@ss!!', 10);
+            await db.run(
+                'INSERT INTO users (username, email, password_hash, date_of_birth, email_verified, balance_cents) VALUES (?, ?, ?, ?, 1, ?)',
+                [name, name + '@example.com', hash, '1990-01-01', 0]
+            );
+            const row = await db.get('SELECT id, username, is_admin, token_version FROM users WHERE username = ?', [name]);
+            return { id: row.id, username: row.username, token: signToken(row) };
+        }
+
+        // Helper: seed a paid deposit row directly. Status='paid' makes
+        // it count toward the wagering denominator.
+        async function seedPaidDeposit(userId, cents) {
+            await db.run(
+                "INSERT INTO deposits (user_id, provider, amount_cents, currency, status, completed_at) VALUES (?, 'stripe', ?, 'usd', 'paid', " + db.sqlNow() + ")",
+                [userId, cents]
+            );
+        }
+
+        // Helper: seed a slot_rounds row representing a wager.
+        async function seedSpin(userId, betCents, winCents) {
+            await db.run(
+                `INSERT INTO slot_rounds
+                 (user_id, game_id, bet_cents, win_cents, balance_after_cents,
+                  server_seed, server_seed_hash, client_seed, nonce, outcome_json)
+                 VALUES (?, 'classic_777', ?, ?, 0, 'x', 'y', 'z', 1, '{}')`,
+                [userId, betCents, winCents]
+            );
+        }
+
+        // (a) No deposits, no spins → met=true, withdrawal allowed.
+        const w1 = await seedUser2('w1_' + Date.now());
+        await db.run('UPDATE users SET balance_cents = ? WHERE id = ?', [10000, w1.id]); // admin-credited
+        const w1Csrf = (await http('GET', '/api/csrf-token', { token: w1.token })).body.csrfToken;
+        const stat1 = await http('GET', '/api/withdrawal/wagering', { token: w1.token });
+        assert.strictEqual(stat1.status, 200);
+        assert.strictEqual(stat1.body.wagering.met, true);
+        assert.strictEqual(stat1.body.wagering.required_cents, 0);
+        const wd1 = await http('POST', '/api/withdrawal/request', {
+            token: w1.token, csrf: w1Csrf,
+            body: { amount: 25, method: 'bank_transfer', destination: 'NO-DEPOSIT' },
+        });
+        assert.strictEqual(wd1.status, 201, 'no-deposit user should withdraw freely: ' + wd1.raw);
+
+        // (b) $100 paid deposit, $0 wagered → met=false, request 403.
+        const w2 = await seedUser2('w2_' + Date.now());
+        await seedPaidDeposit(w2.id, 10000);
+        await db.run('UPDATE users SET balance_cents = ? WHERE id = ?', [10000, w2.id]);
+        const w2Csrf = (await http('GET', '/api/csrf-token', { token: w2.token })).body.csrfToken;
+        const stat2 = await http('GET', '/api/withdrawal/wagering', { token: w2.token });
+        assert.strictEqual(stat2.body.wagering.met, false);
+        assert.strictEqual(stat2.body.wagering.required_cents, 10000);
+        assert.strictEqual(stat2.body.wagering.remaining_cents, 10000);
+        const wd2 = await http('POST', '/api/withdrawal/request', {
+            token: w2.token, csrf: w2Csrf,
+            body: { amount: 25, method: 'bank_transfer', destination: 'UNWAGERED' },
+        });
+        assert.strictEqual(wd2.status, 403, 'unwagered user should be blocked: ' + wd2.status);
+        assert.strictEqual(wd2.body.code, 'wagering_unmet');
+        assert.strictEqual(wd2.body.remaining_cents, 10000);
+
+        // (c) $100 deposit, $99 wagered → still 403, remaining=100.
+        const w3 = await seedUser2('w3_' + Date.now());
+        await seedPaidDeposit(w3.id, 10000);
+        await seedSpin(w3.id, 9900, 0);
+        await db.run('UPDATE users SET balance_cents = ? WHERE id = ?', [10000, w3.id]);
+        const w3Csrf = (await http('GET', '/api/csrf-token', { token: w3.token })).body.csrfToken;
+        const stat3 = await http('GET', '/api/withdrawal/wagering', { token: w3.token });
+        assert.strictEqual(stat3.body.wagering.remaining_cents, 100);
+        const wd3 = await http('POST', '/api/withdrawal/request', {
+            token: w3.token, csrf: w3Csrf,
+            body: { amount: 25, method: 'bank_transfer', destination: 'ALMOST' },
+        });
+        assert.strictEqual(wd3.status, 403);
+        assert.strictEqual(wd3.body.code, 'wagering_unmet');
+
+        // (d) $100 deposit, $100 wagered → 201, balance debited.
+        const w4 = await seedUser2('w4_' + Date.now());
+        await seedPaidDeposit(w4.id, 10000);
+        await seedSpin(w4.id, 10000, 0);
+        await db.run('UPDATE users SET balance_cents = ? WHERE id = ?', [10000, w4.id]);
+        const w4Csrf = (await http('GET', '/api/csrf-token', { token: w4.token })).body.csrfToken;
+        const stat4 = await http('GET', '/api/withdrawal/wagering', { token: w4.token });
+        assert.strictEqual(stat4.body.wagering.met, true);
+        const wd4 = await http('POST', '/api/withdrawal/request', {
+            token: w4.token, csrf: w4Csrf,
+            body: { amount: 25, method: 'bank_transfer', destination: 'WAGERED-OK' },
+        });
+        assert.strictEqual(wd4.status, 201, 'wagered-met user blocked: ' + wd4.raw);
+
+        // (e) Same w4 — wagering is lifetime, second withdrawal does not
+        //     require re-wagering even though a chunk of balance just left.
+        const wd4b = await http('POST', '/api/withdrawal/request', {
+            token: w4.token, csrf: w4Csrf,
+            body: { amount: 50, method: 'bank_transfer', destination: 'WAGERED-OK-2' },
+        });
+        assert.strictEqual(wd4b.status, 201, 'second withdrawal should not require re-wagering: ' + wd4b.raw);
+
+        // (f) Refund of an unwagered deposit drops it from the denominator.
+        const w5 = await seedUser2('w5_' + Date.now());
+        await seedPaidDeposit(w5.id, 10000);
+        await db.run("UPDATE deposits SET status = 'refunded' WHERE user_id = ?", [w5.id]);
+        await db.run('UPDATE users SET balance_cents = ? WHERE id = ?', [5000, w5.id]);
+        const stat5 = await http('GET', '/api/withdrawal/wagering', { token: w5.token });
+        assert.strictEqual(stat5.body.wagering.required_cents, 0, 'refunded deposits drop out of denominator');
+        assert.strictEqual(stat5.body.wagering.met, true);
+
+        console.log('[test] wagering: 1× deposits required, met=true on no-deposit + on full-wager, blocks at 99%, lifetime (no re-wager), refunds drop denominator');
+    }
+
     console.log('\n✅ all deposit-flow assertions passed');
     main.server.close();
     await db.close();
