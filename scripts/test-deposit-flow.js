@@ -1109,10 +1109,24 @@ async function main() {
         const slToken = slReg.body.token;
         const slId = slReg.body.user.id;
 
-        // Game list is populated.
+        // Game list is populated and includes both wired games. Each
+        // entry now also exposes the full reel data the verify-round
+        // page needs to recompute outcomes client-side.
         const games = await http('GET', '/api/slot/games', { token: slToken });
         assert.strictEqual(games.status, 200);
-        assert.ok(games.body.games.find(g => g.id === 'classic_777'), 'classic_777 must be listed');
+        const cg = games.body.games.find(g => g.id === 'classic_777');
+        const ng = games.body.games.find(g => g.id === 'neon_burst');
+        assert.ok(cg, 'classic_777 must be listed');
+        assert.ok(ng, 'neon_burst must be listed');
+        for (const g of [cg, ng]) {
+            assert.ok(typeof g.reels_count === 'number' && g.reels_count > 0, g.id + ' reels_count');
+            assert.ok(typeof g.reel_length === 'number' && g.reel_length > 0, g.id + ' reel_length');
+            assert.ok(Array.isArray(g.symbols) && g.symbols.length > 0, g.id + ' symbols');
+            assert.ok(g.paytable && typeof g.paytable === 'object', g.id + ' paytable');
+            assert.ok(Array.isArray(g.reels) && g.reels.length === g.reels_count, g.id + ' reels');
+        }
+        assert.strictEqual(ng.reels_count, 5);
+        assert.strictEqual(ng.reel_length, 15);
 
         // With $0 balance a spin must 402 — no negative balance possible.
         const slCsrf = (await http('GET', '/api/csrf-token', { token: slToken })).body.csrfToken;
@@ -1239,6 +1253,99 @@ async function main() {
         const b = engine._internals.spinReels(engine._internals.GAMES.classic_777, 'seed-abc', 'cli', 42);
         assert.deepStrictEqual(a, b, 'engine RNG must be deterministic for fixed seeds');
         console.log('[test] slot engine: commit/reveal verified, round isolation enforced, RNG deterministic');
+
+        // Second game: neon_burst (5 reels × reel-length-15). Same engine,
+        // different shape — exercises the N-reel claim of the architecture.
+        // Fresh seeded user so the 30-spin/10s rate limit on the earlier
+        // classic_777 user doesn't bleed into this block.
+        const { signToken } = require('../server/middleware/auth');
+        const nbName = 'nb_' + Date.now();
+        const nbHash = await require('bcryptjs').hash('Str0ngP@ss!!', 10);
+        await db.run(
+            'INSERT INTO users (username, email, password_hash, date_of_birth, email_verified, balance_cents) VALUES (?, ?, ?, ?, 1, ?)',
+            [nbName, nbName + '@example.com', nbHash, '1990-01-01', 50000]
+        );
+        const nbUser = await db.get('SELECT id, username, is_admin, token_version FROM users WHERE username = ?', [nbName]);
+        const nbToken = signToken(nbUser);
+        const nbId = nbUser.id;
+        const nbCsrf = (await http('GET', '/api/csrf-token', { token: nbToken })).body.csrfToken;
+
+        const nbBalBefore = (await http('GET', '/api/balance', { token: nbToken })).body.balance_cents;
+        const nbSpin = await http('POST', '/api/slot/spin', {
+            token: nbToken, csrf: nbCsrf,
+            body: { game_id: 'neon_burst', bet_cents: 100, client_seed: 'neon-test' },
+        });
+        assert.strictEqual(nbSpin.status, 200, 'neon_burst spin failed: ' + nbSpin.raw);
+        assert.strictEqual(nbSpin.body.outcome.stops.length, 5, 'neon_burst must produce 5 stops');
+        assert.strictEqual(nbSpin.body.outcome.reels_meta.count, 5);
+        assert.strictEqual(nbSpin.body.outcome.reels_meta.length, 15);
+        assert.strictEqual(
+            nbSpin.body.balance_cents,
+            nbBalBefore - 100 + nbSpin.body.win_cents,
+            'neon_burst balance math wrong'
+        );
+        // Determinism: recompute the indices in JS using the same HMAC
+        // chain the engine uses, against the revealed seed.
+        const NEON_REEL = [
+            'neon','neon','neon','neon','neon',
+            'pulse','pulse','pulse','pulse',
+            'star','star','star',
+            'comet','comet',
+            'nova',
+        ];
+        const seed = nbSpin.body.revealed.server_seed;
+        const cs   = nbSpin.body.revealed.client_seed;
+        const non  = nbSpin.body.revealed.nonce;
+        const mac  = crypto.createHmac('sha256', seed).update(cs + ':' + non + ':0').digest('hex');
+        const recomputed = [];
+        for (let i = 0; i < 5; i++) {
+            const u32 = parseInt(mac.slice(i * 8, i * 8 + 8), 16);
+            const idx = Math.min(Math.floor((u32 / 0x100000000) * 15), 14);
+            recomputed.push({ index: idx, symbol: NEON_REEL[idx] });
+        }
+        assert.deepStrictEqual(
+            nbSpin.body.outcome.stops.map(s => ({ index: s.index, symbol: s.symbol })),
+            recomputed,
+            'neon_burst reel indices differ from independent recomputation'
+        );
+
+        // Round logged with the right game_id, fetchable via /api/slot/rounds.
+        const nbRound = await http('GET', '/api/slot/rounds/' + nbSpin.body.round_id, { token: nbToken });
+        assert.strictEqual(nbRound.status, 200);
+        assert.strictEqual(nbRound.body.round.game_id, 'neon_burst');
+
+        // Cross-game history: same user has both classic and neon rounds.
+        const nbClassicSpin = await http('POST', '/api/slot/spin', {
+            token: nbToken, csrf: nbCsrf,
+            body: { game_id: 'classic_777', bet_cents: 100 },
+        });
+        assert.strictEqual(nbClassicSpin.status, 200);
+        const mixed = await http('GET', '/api/slot/rounds?limit=20', { token: nbToken });
+        const gids = new Set(mixed.body.rounds.map(r => r.game_id));
+        assert.ok(gids.has('classic_777'), 'classic_777 missing from cross-game history');
+        assert.ok(gids.has('neon_burst'), 'neon_burst missing from cross-game history');
+
+        // Bet limits enforced for neon_burst the same way as classic.
+        const nbTooSmall = await http('POST', '/api/slot/spin', {
+            token: nbToken, csrf: nbCsrf,
+            body: { game_id: 'neon_burst', bet_cents: 1 },
+        });
+        assert.strictEqual(nbTooSmall.status, 400);
+
+        // evaluate() generalizes to 5-of-a-kind for free: sanity check
+        // via the engine's _internals.
+        const evalGames = engine._internals.GAMES;
+        const handCraftedNova = [
+            { index: 14, symbol: 'nova' }, { index: 14, symbol: 'nova' }, { index: 14, symbol: 'nova' },
+            { index: 14, symbol: 'nova' }, { index: 14, symbol: 'nova' },
+        ];
+        const evalNova = engine._internals.evaluate(evalGames.neon_burst, handCraftedNova, 100);
+        assert.strictEqual(evalNova.win_cents, 110000, 'nova × 1100 × 100c bet should pay 110000c');
+        const handCraftedNeon = handCraftedNova.map(() => ({ index: 0, symbol: 'neon' }));
+        const evalNeon = engine._internals.evaluate(evalGames.neon_burst, handCraftedNeon, 100);
+        assert.strictEqual(evalNeon.win_cents, 40, 'neon × 0.4 × 100c bet should pay 40c');
+
+        console.log('[test] slot engine: neon_burst (5×15) — deterministic, indices reproducible client-side, cross-game history, evaluate generalizes');
     }
 
     // ═══ Withdrawals ═════════════════════════════════════════════════════════

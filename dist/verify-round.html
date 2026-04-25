@@ -73,7 +73,10 @@
         </p>
         <div class="row">
             <label class="inline" for="m-game">Game</label>
-            <select id="m-game"><option value="classic_777">Classic 777</option></select>
+            <select id="m-game">
+                <option value="classic_777">Classic 777</option>
+                <option value="neon_burst">Neon Burst</option>
+            </select>
         </div>
         <div class="row"><label class="inline" for="m-server-seed">Server seed</label><input id="m-server-seed" class="mono" placeholder="64-hex-char string"></div>
         <div class="row"><label class="inline" for="m-server-hash">Committed hash</label><input id="m-server-hash" class="mono" placeholder="sha256 of the server seed, 64 hex chars"></div>
@@ -103,16 +106,26 @@
     // Mirror of server/services/slot-engine.service.js GAMES. Hardcoded
     // on purpose: if the server ever changes the reel strip, stale
     // clients will loudly fail verification — that's the correct signal.
-    var GAMES = {
-        classic_777: {
-            reels: [
-                ['cherry','cherry','cherry','cherry','lemon','lemon','orange','orange','bar','seven'],
-                ['cherry','cherry','cherry','cherry','lemon','lemon','orange','orange','bar','seven'],
-                ['cherry','cherry','cherry','cherry','lemon','lemon','orange','orange','bar','seven'],
-            ],
-            paytable: { cherry: 3, lemon: 10, orange: 15, bar: 60, seven: 500 },
-        },
-    };
+    var GAMES = (function () {
+        var CLASSIC_REEL = ['cherry','cherry','cherry','cherry','lemon','lemon','orange','orange','bar','seven'];
+        var NEON_REEL = [
+            'neon','neon','neon','neon','neon',
+            'pulse','pulse','pulse','pulse',
+            'star','star','star',
+            'comet','comet',
+            'nova',
+        ];
+        return {
+            classic_777: {
+                reels: [CLASSIC_REEL, CLASSIC_REEL, CLASSIC_REEL],
+                paytable: { cherry: 3, lemon: 10, orange: 15, bar: 60, seven: 500 },
+            },
+            neon_burst: {
+                reels: [NEON_REEL, NEON_REEL, NEON_REEL, NEON_REEL, NEON_REEL],
+                paytable: { neon: 0.4, pulse: 1, star: 8, comet: 60, nova: 1100 },
+            },
+        };
+    })();
 
     var SUBTLE = window.crypto && window.crypto.subtle;
     var enc = new TextEncoder();

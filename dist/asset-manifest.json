@@ -41,6 +41,7 @@
     "monaco_million.svg",
     "money_train.svg",
     "mystic_wolf.svg",
+    "neon_burst.svg",
     "neon_viper.svg",
     "norse_vaults.svg",
     "olympian_gods.svg",
@@ -405,6 +406,13 @@
       "s5_blood_moon.svg",
       "wild_spirit_wolf.svg"
     ],
+    "neon_burst": [
+      "comet.svg",
+      "neon.svg",
+      "nova.svg",
+      "pulse.svg",
+      "star.svg"
+    ],
     "neon_viper": [
       "s1_pixel_byte.svg",
       "s2_circuit.svg",
@@ -606,5 +614,5 @@
       "wild_golden_ball.svg"
     ]
   },
-  "generated_at": "2026-04-25T06:12:04.652Z"
+  "generated_at": "2026-04-25T06:38:01.527Z"
 }

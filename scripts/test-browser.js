@@ -251,6 +251,53 @@ async function main() {
                             ok('live slot: 1 round persisted, bet=' + round.bet_cents + 'c win=' + round.win_cents + 'c balance delta matches');
                         }
                     }
+
+                    // Second game: open neon_burst, assert the modal
+                    // re-renders with 5 reel cells and the right header.
+                    await page.evaluate(() => { if (window.closeLiveSlot) window.closeLiveSlot(); });
+                    await page.evaluate(() => { window.openLiveSlot('neon_burst'); });
+                    await page.waitForFunction(
+                        () => {
+                            const t = document.getElementById('liveSlotTitle');
+                            return t && /NEON BURST/i.test(t.textContent || '');
+                        },
+                        { timeout: 5000 }
+                    ).catch(() => { /* reported below */ });
+                    const cells = await page.$$('#liveSlotReels .ls-reel');
+                    if (cells.length !== 5) {
+                        fail('neon_burst modal should render 5 reel cells, got ' + cells.length);
+                    } else {
+                        const beforeNb = await db.get("SELECT balance_cents FROM users WHERE id = ?", [userRow.id]);
+                        const roundCountBefore = Number((await db.get(
+                            "SELECT COUNT(*) AS n FROM slot_rounds WHERE user_id = ?", [userRow.id]
+                        )).n) || 0;
+                        await page.click('#liveSlotSpin');
+                        let nbRound = null;
+                        for (let i = 0; i < 50 && !nbRound; i++) {
+                            nbRound = await db.get(
+                                "SELECT id, game_id, bet_cents, win_cents FROM slot_rounds WHERE user_id = ? AND game_id = 'neon_burst' ORDER BY id DESC LIMIT 1",
+                                [userRow.id]
+                            );
+                            if (!nbRound) await new Promise(r => setTimeout(r, 100));
+                        }
+                        if (!nbRound) {
+                            fail('neon_burst spin did not persist a round');
+                        } else {
+                            const afterNb = await db.get("SELECT balance_cents FROM users WHERE id = ?", [userRow.id]);
+                            const roundCountAfter = Number((await db.get(
+                                "SELECT COUNT(*) AS n FROM slot_rounds WHERE user_id = ?", [userRow.id]
+                            )).n) || 0;
+                            const delta = Number(afterNb.balance_cents) - Number(beforeNb.balance_cents);
+                            const expected = Number(nbRound.win_cents) - Number(nbRound.bet_cents);
+                            if (delta !== expected) {
+                                fail('neon_burst balance math: delta=' + delta + ' expected=' + expected);
+                            } else if (roundCountAfter !== roundCountBefore + 1) {
+                                fail('neon_burst should add exactly 1 round');
+                            } else {
+                                ok('neon_burst: 5-reel modal opened, spin persisted (#' + nbRound.id + '), balance delta matches');
+                            }
+                        }
+                    }
                 }
             } else {
                 fail('could not find registered user row for live-slot test');

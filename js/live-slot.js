@@ -1,49 +1,85 @@
 /**
- * Live slot — classic_777.
+ * Live slot — game-agnostic.
  *
- * Opens a modal UI against /api/slot/spin. Every spin is settled on the
- * server; this file does no RNG and no balance math. It just paints the
+ * Opens a modal UI against /api/slot/spin for whichever game id is
+ * passed to openLiveSlot(gameId). All game-specific data (reel count,
+ * symbols, paytable, bet limits) comes from /api/slot/games at open
+ * time; this file does no RNG and no balance math, just paints the
  * reels and shows the provably-fair commit-reveal chain.
  *
- * Entry point: window.openLiveSlot(). ui-lobby.js routes
- * openSlot('classic_777') here (see js/app.js).
+ * Entry point: window.openLiveSlot(gameId). ui-slot.js routes any
+ * lobby tile with `liveMode: true` here (see shared/game-definitions.js
+ * + js/ui-slot.js).
  */
 (function () {
     'use strict';
 
     if (window.openLiveSlot) return; // guard against double-load
 
+    // Static glyph + color tables. New symbols added by future games
+    // pick up sensible defaults (see glyphFor / colorFor below) so
+    // adding a game purely server-side doesn't render '?' cells until
+    // an art entry lands here.
     var SYMBOL_GLYPHS = {
-        cherry: '🍒',   // 🍒
-        lemon:  '🍋',   // 🍋
-        orange: '🍊',   // 🍊
-        bar:    'BAR',
-        seven:  '7',
+        cherry: '🍒', lemon: '🍋', orange: '🍊', bar: 'BAR', seven: '7',
+        neon: 'NEON', pulse: '~', star: '★', comet: '☄', nova: '✦',
     };
     var SYMBOL_COLORS = {
-        cherry: '#ef4444',
-        lemon:  '#fde047',
-        orange: '#fb923c',
-        bar:    '#e5e7eb',
-        seven:  '#f59e0b',
+        cherry: '#ef4444', lemon: '#fde047', orange: '#fb923c', bar: '#e5e7eb', seven: '#f59e0b',
+        neon: '#22d3ee',   pulse: '#a855f7', star: '#facc15',   comet: '#60a5fa', nova: '#f472b6',
     };
+    function glyphFor(sym) { return SYMBOL_GLYPHS[sym] || (sym ? sym.slice(0, 3).toUpperCase() : '?'); }
+    function colorFor(sym) { return SYMBOL_COLORS[sym] || '#fff'; }
 
     var state = {
-        betCents: 100,          // $1 default
-        committedHash: null,    // hash the user can verify post-spin
+        gameId: null,
+        gameDef: null,          // /api/slot/games row for the open game
+        betCents: 100,
+        committedHash: null,
         lastResult: null,
         spinning: false,
     };
 
     function fmt(cents) { return '$' + (Number(cents || 0) / 100).toFixed(2); }
-
     function authToken() {
         try { return localStorage.getItem('casinoToken'); } catch (e) { return null; }
     }
 
+    function reelCellHtml(fontSize) {
+        return '<div class="ls-reel" style="aspect-ratio:1/1;display:flex;align-items:center;' +
+            'justify-content:center;font-size:' + fontSize + 'px;font-weight:900;' +
+            'background:#1a0705;border-radius:8px;">?</div>';
+    }
+
+    function buildReelsGrid(def) {
+        var n = def.reels_count;
+        // 3 reels at 42px is the classic; 5 reels in a 440-wide modal
+        // need to drop to 28px so the glyphs don't clip.
+        var fontSize = n >= 5 ? 28 : 42;
+        var cells = '';
+        for (var i = 0; i < n; i++) cells += reelCellHtml(fontSize);
+        return '<div id="liveSlotReels" aria-label="Reels" style="display:grid;' +
+            'grid-template-columns:repeat(' + n + ',1fr);gap:8px;background:#0b0504;' +
+            'border:1px solid #f1c40f44;border-radius:10px;padding:16px;margin-bottom:12px;">' +
+            cells + '</div>';
+    }
+
+    function buildPaytableHtml(def) {
+        var rows = Object.keys(def.paytable).map(function (sym) {
+            return '<div><span style="color:' + colorFor(sym) + ';font-weight:800;">' +
+                glyphFor(sym) + '</span> ' + sym + ' &times;' + def.paytable[sym] + '</div>';
+        }).join('');
+        return '<div>' + def.reels_count + ' of a kind on the center row pays:</div>' +
+            '<div style="font-family:monospace;margin:6px 0;line-height:1.7">' + rows + '</div>';
+    }
+
     function ensureModal() {
         var existing = document.getElementById('liveSlotModal');
-        if (existing) return existing;
+        if (existing && existing.parentNode) existing.parentNode.removeChild(existing);
+        var def = state.gameDef;
+        var minDollars = (def.min_bet_cents / 100).toFixed(2);
+        var maxDollars = (def.max_bet_cents / 100).toFixed(2);
+
         var overlay = document.createElement('div');
         overlay.id = 'liveSlotModal';
         overlay.setAttribute('role', 'dialog');
@@ -57,32 +93,26 @@
 
         overlay.innerHTML =
             '<div id="liveSlotCard" style="' +
-                'width:100%;max-width:440px;background:linear-gradient(180deg,#1a0705 0%,#2b0d07 100%);' +
+                'width:100%;max-width:520px;background:linear-gradient(180deg,#1a0705 0%,#2b0d07 100%);' +
                 'border:1px solid #f1c40f44;border-radius:14px;padding:22px;color:#fff;font-family:system-ui,sans-serif;' +
                 'box-shadow:0 18px 60px rgba(0,0,0,0.6);"' +
             '>' +
                 '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">' +
                     '<div><div style="font-size:11px;letter-spacing:2px;color:#f1c40f;">LIVE</div>' +
-                    '<div style="font-size:20px;font-weight:800;">CLASSIC 777</div></div>' +
+                    '<div id="liveSlotTitle" style="font-size:20px;font-weight:800;">' + (def.name || def.id).toUpperCase() + '</div></div>' +
                     '<button id="liveSlotClose" aria-label="Close" style="background:none;border:none;color:#fff;font-size:22px;cursor:pointer;">&times;</button>' +
                 '</div>' +
 
                 '<div id="liveSlotBalance" style="font-size:13px;color:#94a3b8;margin-bottom:8px;">Balance: —</div>' +
 
-                '<div id="liveSlotReels" aria-label="Reels" style="' +
-                    'display:grid;grid-template-columns:repeat(3,1fr);gap:8px;' +
-                    'background:#0b0504;border:1px solid #f1c40f44;border-radius:10px;padding:16px;' +
-                    'margin-bottom:12px;">' +
-                    '<div class="ls-reel" style="aspect-ratio:1/1;display:flex;align-items:center;justify-content:center;font-size:42px;font-weight:900;background:#1a0705;border-radius:8px;">?</div>' +
-                    '<div class="ls-reel" style="aspect-ratio:1/1;display:flex;align-items:center;justify-content:center;font-size:42px;font-weight:900;background:#1a0705;border-radius:8px;">?</div>' +
-                    '<div class="ls-reel" style="aspect-ratio:1/1;display:flex;align-items:center;justify-content:center;font-size:42px;font-weight:900;background:#1a0705;border-radius:8px;">?</div>' +
-                '</div>' +
+                buildReelsGrid(def) +
 
                 '<div id="liveSlotResult" style="min-height:22px;text-align:center;font-size:14px;font-weight:700;margin-bottom:12px;color:#fde047;"></div>' +
 
                 '<div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">' +
                     '<label for="liveSlotBet" style="font-size:12px;color:#94a3b8;">Bet</label>' +
-                    '<input id="liveSlotBet" type="number" step="0.10" min="0.10" max="100" value="1.00" ' +
+                    '<input id="liveSlotBet" type="number" step="0.10" ' +
+                        'min="' + minDollars + '" max="' + maxDollars + '" value="' + minDollars + '" ' +
                         'style="width:90px;padding:8px;border-radius:6px;border:1px solid #374151;background:#0b0504;color:#fff;font-weight:700;">' +
                     '<button id="liveSlotSpin" style="flex:1;padding:12px;border-radius:8px;border:none;' +
                         'background:linear-gradient(135deg,#c0392b 0%,#f1c40f 100%);color:#111;font-weight:900;font-size:16px;letter-spacing:1px;cursor:pointer;">SPIN</button>' +
@@ -91,14 +121,7 @@
                 '<details style="margin-top:8px;color:#94a3b8;font-size:12px;">' +
                     '<summary style="cursor:pointer;outline:none;">Paytable / fairness</summary>' +
                     '<div style="margin-top:8px;line-height:1.55;">' +
-                        '<div>3 of a kind on the center row pays:</div>' +
-                        '<div style="font-family:monospace;margin:6px 0;">' +
-                            '🍒 cherry &times;3  &nbsp; ' +
-                            '🍋 lemon &times;10<br>' +
-                            '🍊 orange &times;15  &nbsp; ' +
-                            'BAR &times;60<br>' +
-                            '<span style="color:#f1c40f;">7 &times;500</span>' +
-                        '</div>' +
+                        '<div id="liveSlotPaytable">' + buildPaytableHtml(def) + '</div>' +
                         '<div id="liveSlotCommit" style="margin-top:6px;">Commit hash: <span style="font-family:monospace;">loading…</span></div>' +
                         '<div id="liveSlotRevealed" style="margin-top:4px;"></div>' +
                     '</div>' +
@@ -120,10 +143,12 @@
         var reels = document.querySelectorAll('#liveSlotReels .ls-reel');
         for (var i = 0; i < reels.length; i++) {
             var sym = stops && stops[i] && stops[i].symbol;
-            var glyph = SYMBOL_GLYPHS[sym] || '?';
-            reels[i].textContent = glyph;
-            reels[i].style.color = SYMBOL_COLORS[sym] || '#fff';
-            reels[i].style.fontSize = sym === 'bar' ? '22px' : '42px';
+            reels[i].textContent = glyphFor(sym);
+            reels[i].style.color = colorFor(sym);
+            // Wide-text symbols like "BAR" / "NEON" get a smaller font
+            // so they don't overflow the cell.
+            var glyph = glyphFor(sym);
+            reels[i].style.fontSize = (glyph.length > 1 ? 22 : (state.gameDef.reels_count >= 5 ? 28 : 42)) + 'px';
         }
     }
 
@@ -190,6 +215,7 @@
 
     async function doSpin() {
         if (state.spinning) return;
+        var def = state.gameDef;
         var input = document.getElementById('liveSlotBet');
         var dollars = Number(input.value);
         if (!Number.isFinite(dollars) || dollars <= 0) {
@@ -205,7 +231,7 @@
 
         var res = await fetchJSON('/api/slot/spin', {
             method: 'POST',
-            body: { game_id: 'classic_777', bet_cents: state.betCents, client_seed: 'live-ui' },
+            body: { game_id: state.gameId, bet_cents: state.betCents, client_seed: 'live-ui' },
         });
 
         state.spinning = false;
@@ -250,15 +276,29 @@
     function closeLiveSlot() {
         var overlay = document.getElementById('liveSlotModal');
         if (overlay && overlay.parentNode) overlay.parentNode.removeChild(overlay);
+        state.gameId = null;
+        state.gameDef = null;
     }
 
-    async function openLiveSlot() {
-        // Must be signed in — otherwise the server will 401 every call.
+    async function openLiveSlot(gameId) {
+        gameId = gameId || 'classic_777';
         if (!authToken()) {
             if (typeof showAuthModal === 'function') showAuthModal();
             else if (typeof window.showToast === 'function') showToast('Please sign in to play.', 'info');
             return;
         }
+        var listRes = await fetchJSON('/api/slot/games');
+        var list = (listRes.body && listRes.body.games) || [];
+        var def = list.find(function (g) { return g.id === gameId; });
+        if (!def) {
+            if (typeof window.showToast === 'function') showToast('Game not available right now.', 'error');
+            return;
+        }
+        state.gameId = gameId;
+        state.gameDef = def;
+        state.betCents = def.min_bet_cents;
+        state.committedHash = null;
+        state.lastResult = null;
         ensureModal();
         wireEvents();
         await Promise.all([refreshBalance(), refreshCommit()]);

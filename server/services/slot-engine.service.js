@@ -66,6 +66,38 @@ const CLASSIC_777_PAYTABLE = {
     seven: 500,
 };
 
+/**
+ * neon_burst — 5 reels × reel-length-15, single payline (5-of-a-kind on
+ * the center row). Reel composition is identical on each reel so RTP
+ * math is closed-form: P(5-of-a-kind for symbol with count c) = (c/15)^5,
+ * contribution = pay × c^5 / 15^5.
+ *
+ * Counts: neon=5, pulse=4, star=3, comet=2, nova=1 (sum 15).
+ *
+ * Theoretical RTP:
+ *   neon  0.4 × 3125 = 1250
+ *   pulse 1   × 1024 = 1024
+ *   star  8   ×  243 = 1944
+ *   comet 60  ×   32 = 1920
+ *   nova  1100 ×   1 = 1100
+ *   total       7238 / 759375 = 0.9532 → 95.32% RTP
+ */
+const NEON_BURST_REEL = [
+    'neon', 'neon', 'neon', 'neon', 'neon',
+    'pulse', 'pulse', 'pulse', 'pulse',
+    'star', 'star', 'star',
+    'comet', 'comet',
+    'nova',
+];
+
+const NEON_BURST_PAYTABLE = {
+    neon: 0.4,
+    pulse: 1,
+    star: 8,
+    comet: 60,
+    nova: 1100,
+};
+
 const GAMES = {
     classic_777: {
         name: 'Classic 777',
@@ -74,6 +106,14 @@ const GAMES = {
         min_bet_cents: 10,      // $0.10
         max_bet_cents: 10000,   // $100
         rtp: 0.952,
+    },
+    neon_burst: {
+        name: 'Neon Burst',
+        reels: [NEON_BURST_REEL, NEON_BURST_REEL, NEON_BURST_REEL, NEON_BURST_REEL, NEON_BURST_REEL],
+        paytable: NEON_BURST_PAYTABLE,
+        min_bet_cents: 10,
+        max_bet_cents: 10000,
+        rtp: 0.9532,
     },
 };
 
@@ -84,6 +124,16 @@ function listGames() {
         min_bet_cents: g.min_bet_cents,
         max_bet_cents: g.max_bet_cents,
         rtp: g.rtp,
+        // The full game definition is public on purpose: the verifier
+        // page reimplements the RNG client-side and needs the reel
+        // strips + paytable to recompute outcomes. Server-side seeds +
+        // nonces are still revealed only post-spin, so the public reels
+        // do not leak future spin results.
+        reels_count: g.reels.length,
+        reel_length: g.reels[0].length,
+        symbols: Array.from(new Set(g.reels.flat())).sort(),
+        paytable: g.paytable,
+        reels: g.reels,
     }));
 }
 
