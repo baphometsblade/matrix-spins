@@ -228,6 +228,30 @@ async function sendWithdrawalPaid({ to, amount, currency }) {
     return send({ to, subject, text });
 }
 
+async function sendDestinationAdded({ to, username, method, destination, cooldown_until }) {
+    // Tip-off mail when a payout destination is added. The point is
+    // that the legitimate user sees this even if a session-hijacker
+    // added the destination — they have until cooldown_until elapses
+    // to log in and DELETE it. Truncate the destination so we never
+    // print a full bank account number / wallet in plaintext.
+    const masked = String(destination || '').slice(0, 4) + '…' + String(destination || '').slice(-4);
+    const cd = cooldown_until ? new Date(cooldown_until).toUTCString() : 'unknown';
+    const subject = 'Matrix Spins — payout destination added';
+    const text = [
+        'Hi ' + (username || 'there') + ',',
+        '',
+        'A new payout destination was just added to your account:',
+        '  Method:      ' + (method || ''),
+        '  Destination: ' + masked,
+        '',
+        'It will become usable for withdrawals after ' + cd + '.',
+        '',
+        'If you did NOT add this, log in and delete it from your account page right away,',
+        'and rotate your password and 2FA.',
+    ].join('\n');
+    return send({ to, subject, text });
+}
+
 async function sendWithdrawalDenied({ to, amount, currency, reason }) {
     const cur = String(currency || 'usd').toUpperCase();
     const amountStr = '$' + Number(amount || 0).toFixed(2) + ' ' + cur;
@@ -251,6 +275,7 @@ module.exports = {
     sendWithdrawalRequested,
     sendWithdrawalPaid,
     sendWithdrawalDenied,
+    sendDestinationAdded,
     getCaptured,
     clearCaptured,
     hasTransport,

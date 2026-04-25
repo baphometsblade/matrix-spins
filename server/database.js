@@ -501,6 +501,47 @@ async function migrate() {
     `);
     await driver.exec(`CREATE INDEX IF NOT EXISTS idx_promo_redemptions_user ON promo_redemptions (user_id, id DESC);`);
     await driver.exec(`CREATE INDEX IF NOT EXISTS idx_promo_redemptions_code ON promo_redemptions (code_id);`);
+
+    // Saved withdrawal destinations / payout whitelist. A user adds a
+    // destination once, waits out a 24-hour cooldown, then references
+    // it by id when requesting a withdrawal. Defends against session
+    // hijack: an attacker who steals a session can't immediately drain
+    // funds to a fresh wallet — the cooldown gives the legitimate
+    // owner a window to log in and DELETE the rogue entry, and the
+    // notification email tips them off.
+    //
+    // Status is computed at read time as a function of:
+    //   raw_status     ('pending_verification' | 'active' | 'blocked')
+    //   cooldown_until (NULL = no cooldown; otherwise must be in the past)
+    //
+    // UNIQUE(user_id, method, destination) prevents the same wallet
+    // address being whitelisted twice on the same account (the second
+    // attempt could be used to reset the cooldown timer otherwise).
+    await driver.exec(`
+        CREATE TABLE IF NOT EXISTS withdrawal_destinations (
+            id ${T.pk},
+            user_id ${driver.kind === 'pg' ? 'INTEGER' : 'INTEGER'} NOT NULL,
+            method TEXT NOT NULL,
+            destination TEXT NOT NULL,
+            currency TEXT NOT NULL DEFAULT 'usd',
+            label TEXT,
+            status TEXT NOT NULL DEFAULT 'pending_verification',
+            cooldown_until ${driver.kind === 'pg' ? 'TIMESTAMPTZ' : 'TEXT'},
+            created_at ${T.ts},
+            verified_at ${driver.kind === 'pg' ? 'TIMESTAMPTZ' : 'TEXT'},
+            last_used_at ${driver.kind === 'pg' ? 'TIMESTAMPTZ' : 'TEXT'},
+            UNIQUE (user_id, method, destination)
+        );
+    `);
+    await driver.exec(`CREATE INDEX IF NOT EXISTS idx_withdrawal_destinations_user ON withdrawal_destinations (user_id, id DESC);`);
+
+    // Withdrawals reference an optional saved destination so audits
+    // can link payouts back to the originating whitelist entry. The
+    // raw destination/method on the withdrawal row is still the
+    // source of truth (snapshot at request time) — destination_id is
+    // for traceability, not state.
+    await addColumnIfMissing('withdrawals', 'destination_id',
+        driver.kind === 'pg' ? 'INTEGER' : 'INTEGER');
 }
 
 async function initDatabase() {

@@ -2695,6 +2695,167 @@ async function main() {
         console.log('[test] promo codes: admin CRUD + validation; non-admin 403; redeem credits balance; idempotent per-user (409); cap-reject 410 + count not consumed; unknown code = same 410 (no enumeration); disabled & expired both 410; multi-user cap; /promo/me scoped to caller');
     }
 
+    // ═══ Saved withdrawal destinations / payout whitelist ═══════════════════
+    // 24-hour cooldown gates use; UNIQUE(user, method, destination) blocks
+    // dupes; raw-destination path on /request still works for back-compat.
+    {
+        const { signToken } = require('../server/middleware/auth');
+        async function seedDestUser(name) {
+            const hash = await require('bcryptjs').hash('Str0ngP@ss!!', 10);
+            await db.run(
+                'INSERT INTO users (username, email, password_hash, date_of_birth, email_verified, balance_cents) VALUES (?, ?, ?, ?, 1, ?)',
+                [name, name + '@example.com', hash, '1990-01-01', 5000000]
+            );
+            const row = await db.get('SELECT id, username, is_admin, token_version FROM users WHERE username = ?', [name]);
+            return { id: row.id, username: row.username, token: signToken(row) };
+        }
+
+        const u = await seedDestUser('dest_' + Date.now());
+        const c = (await http('GET', '/api/csrf-token', { token: u.token })).body.csrfToken;
+
+        // Empty list to start.
+        const empty = await http('GET', '/api/withdrawal/destinations', { token: u.token });
+        assert.strictEqual(empty.status, 200);
+        assert.deepStrictEqual(empty.body.destinations, []);
+
+        // Validation rejections.
+        const badCases = [
+            { name: 'bad method', body: { method: 'paypal', destination: 'foo' }, expect: 400 },
+            { name: 'empty dest', body: { method: 'crypto', destination: '' },    expect: 400 },
+            { name: 'control chars', body: { method: 'crypto', destination: 'a\nb' }, expect: 400 },
+            { name: 'bad currency', body: { method: 'crypto', destination: 'addr1', currency: 'xxx' }, expect: 400 },
+        ];
+        for (const tc of badCases) {
+            const r = await http('POST', '/api/withdrawal/destinations', {
+                token: u.token, csrf: c, body: tc.body,
+            });
+            assert.strictEqual(r.status, tc.expect, tc.name + ' must be ' + tc.expect + '; got ' + r.status);
+        }
+
+        // Happy path.
+        const created = await http('POST', '/api/withdrawal/destinations', {
+            token: u.token, csrf: c,
+            body: { method: 'crypto', destination: 'bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh', label: 'My BTC' },
+        });
+        assert.strictEqual(created.status, 201);
+        assert.strictEqual(created.body.destination.method, 'crypto');
+        assert.strictEqual(created.body.destination.status, 'pending_verification');
+        assert.ok(created.body.destination.cooldown_until, 'cooldown_until must be set');
+        const destId = created.body.destination.id;
+
+        // Duplicate add → 409 already_saved (UNIQUE constraint).
+        const dup = await http('POST', '/api/withdrawal/destinations', {
+            token: u.token, csrf: c,
+            body: { method: 'crypto', destination: 'bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh' },
+        });
+        assert.strictEqual(dup.status, 409);
+        assert.strictEqual(dup.body.code, 'already_saved');
+
+        // Withdrawal request before cooldown elapses → 403 destination_cooldown.
+        const tooSoon = await http('POST', '/api/withdrawal/request', {
+            token: u.token, csrf: c, body: { amount: 25, destination_id: destId },
+        });
+        assert.strictEqual(tooSoon.status, 403, 'pre-cooldown must 403; got ' + tooSoon.status);
+        assert.strictEqual(tooSoon.body.code, 'destination_cooldown');
+        assert.ok(tooSoon.body.cooldown_until, 'cooldown_until echoed back');
+
+        // Cross-user ownership: user B uses user A's destination_id → 404.
+        const u2 = await seedDestUser('dest_b_' + Date.now());
+        const c2 = (await http('GET', '/api/csrf-token', { token: u2.token })).body.csrfToken;
+        const cross = await http('POST', '/api/withdrawal/request', {
+            token: u2.token, csrf: c2, body: { amount: 25, destination_id: destId },
+        });
+        assert.strictEqual(cross.status, 404, 'cross-user destination_id must 404; got ' + cross.status);
+
+        // Mixed-mode rejected: destination_id + raw destination together.
+        const mixed = await http('POST', '/api/withdrawal/request', {
+            token: u.token, csrf: c,
+            body: { amount: 25, destination_id: destId, method: 'crypto', destination: 'X' },
+        });
+        assert.strictEqual(mixed.status, 400);
+        assert.strictEqual(mixed.body.code, 'mixed_destination');
+
+        // Backdate cooldown so we can test the active path.
+        await db.run(
+            'UPDATE withdrawal_destinations SET cooldown_until = ? WHERE id = ?',
+            ['2020-01-01T00:00:00Z', destId]
+        );
+
+        // List now reflects status='active' via the lazy flip.
+        const listed = await http('GET', '/api/withdrawal/destinations', { token: u.token });
+        const found = listed.body.destinations.find(d => d.id === destId);
+        assert.strictEqual(found.status, 'active');
+
+        // Withdrawal with destination_id succeeds, snapshot persisted on row.
+        const balBefore = await db.get('SELECT balance_cents FROM users WHERE id = ?', [u.id]);
+        const ok = await http('POST', '/api/withdrawal/request', {
+            token: u.token, csrf: c, body: { amount: 25, destination_id: destId },
+        });
+        assert.strictEqual(ok.status, 201, 'withdrawal failed: ' + ok.raw);
+        assert.strictEqual(ok.body.withdrawal.method, 'crypto');
+        const balAfter = await db.get('SELECT balance_cents FROM users WHERE id = ?', [u.id]);
+        assert.strictEqual(Number(balBefore.balance_cents) - 2500, Number(balAfter.balance_cents),
+            'balance must be debited by exactly $25');
+        // Withdrawal row carries destination_id for audit.
+        const wdRow = await db.get('SELECT destination_id, destination, method FROM withdrawals WHERE id = ?', [ok.body.withdrawal.id]);
+        assert.strictEqual(Number(wdRow.destination_id), destId);
+        assert.strictEqual(wdRow.destination, 'bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh');
+        assert.strictEqual(wdRow.method, 'crypto');
+
+        // last_used_at and (lazy-promoted) status='active' persisted.
+        const persisted = await db.get('SELECT status, last_used_at FROM withdrawal_destinations WHERE id = ?', [destId]);
+        assert.strictEqual(persisted.status, 'active');
+        assert.ok(persisted.last_used_at, 'last_used_at must be set after a successful use');
+
+        // Per-user limit enforced (insert MAX-1 so the next add hits 409).
+        const MAX = 20;
+        // Already have 1 saved → seed MAX-1 more directly so the next API
+        // call is the one that crosses the threshold.
+        for (let i = 0; i < MAX - 1; i++) {
+            await db.run(
+                `INSERT INTO withdrawal_destinations (user_id, method, destination, currency, status, cooldown_until)
+                 VALUES (?, 'crypto', ?, 'usd', 'active', '2020-01-01T00:00:00Z')`,
+                [u.id, 'addr_' + i + '_' + Date.now()]
+            );
+        }
+        const overLimit = await http('POST', '/api/withdrawal/destinations', {
+            token: u.token, csrf: c,
+            body: { method: 'crypto', destination: 'addr_overflow_' + Date.now() },
+        });
+        assert.strictEqual(overLimit.status, 409);
+        assert.strictEqual(overLimit.body.code, 'limit_reached');
+
+        // DELETE: own destination removed.
+        const del = await http('DELETE', '/api/withdrawal/destinations/' + destId, { token: u.token, csrf: c });
+        assert.strictEqual(del.status, 200);
+        const gone = await db.get('SELECT id FROM withdrawal_destinations WHERE id = ?', [destId]);
+        assert.strictEqual(gone, null);
+
+        // Cross-user DELETE → 404.
+        const crossDel = await http('DELETE', '/api/withdrawal/destinations/9999999', { token: u.token, csrf: c });
+        assert.strictEqual(crossDel.status, 404);
+
+        // Legacy raw-destination path on /request still works (no destination_id).
+        const u3 = await seedDestUser('dest_legacy_' + Date.now());
+        const c3 = (await http('GET', '/api/csrf-token', { token: u3.token })).body.csrfToken;
+        const legacy = await http('POST', '/api/withdrawal/request', {
+            token: u3.token, csrf: c3,
+            body: { amount: 25, method: 'bank_transfer', destination: 'IBAN:DE89...0532' },
+        });
+        assert.strictEqual(legacy.status, 201, 'legacy path broken: ' + legacy.raw);
+
+        // Notification email captured by the test SMTP buffer.
+        const captured = require('../server/services/email.service').getCaptured();
+        const notice = captured.find(m => /payout destination added/i.test(m.subject || ''));
+        assert.ok(notice, 'expected destination-added notification email');
+        // Body should mask the destination — neither full string nor any
+        // long contiguous substring of it should appear.
+        const fullDest = 'bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh';
+        assert.ok(!notice.text.includes(fullDest), 'email must not echo full destination');
+
+        console.log('[test] withdrawal destinations: validation; UNIQUE; pre-cooldown 403; ownership 404; mixed-mode 400; cooldown-elapsed flips active; balance debited; destination_id persisted on withdrawal row; per-user cap; DELETE 200/404; legacy raw path still works; notification email masks destination');
+    }
+
     console.log('\n✅ all deposit-flow assertions passed');
     main.server.close();
     await db.close();

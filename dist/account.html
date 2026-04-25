@@ -184,6 +184,34 @@
 </section>
 
 <section id="withdrawals">
+    <div class="card" id="wd-destinations-card">
+        <div class="label" style="margin-bottom:8px">Saved payout destinations</div>
+        <p style="font-size:13px;color:#8a8a8a;margin:0 0 12px 0;">
+            Save destinations once and reference them on each withdrawal &mdash; new
+            entries enter a 24-hour cooldown so a stolen session can&rsquo;t
+            immediately drain funds to a fresh wallet. Delete any entry you
+            don&rsquo;t recognize. We email you whenever a new destination is added.
+        </p>
+        <table id="tbl-destinations" style="margin-bottom:12px"><thead><tr>
+            <th>Method</th><th>Destination</th><th>Label</th><th>Status</th><th></th>
+        </tr></thead><tbody><tr><td colspan="5" style="text-align:center;color:#666">&mdash; none yet &mdash;</td></tr></tbody></table>
+        <details>
+            <summary style="cursor:pointer;color:#d4af37;font-size:13px">Add a new destination</summary>
+            <form onsubmit="event.preventDefault();addDestination()" style="margin-top:10px">
+                <div class="row"><label class="inline" for="wd-add-method">Method</label>
+                    <select id="wd-add-method" required>
+                        <option value="bank_transfer">Bank transfer</option>
+                        <option value="crypto">Crypto (BTC / ETH / USDC)</option>
+                    </select>
+                </div>
+                <div class="row"><label class="inline" for="wd-add-dest">Destination</label><input type="text" id="wd-add-dest" maxlength="200" required placeholder="IBAN / wallet address"></div>
+                <div class="row"><label class="inline" for="wd-add-label">Label (optional)</label><input type="text" id="wd-add-label" maxlength="64" placeholder="e.g. Coinbase BTC"></div>
+                <button class="primary" type="submit">Save destination</button>
+                <div class="msg" id="wd-add-msg"></div>
+            </form>
+        </details>
+    </div>
+
     <form class="card" id="wd-form" onsubmit="event.preventDefault();requestWithdrawal()">
         <div class="label" style="margin-bottom:8px">Request a withdrawal</div>
         <p style="font-size:13px;color:#8a8a8a;margin:0 0 12px 0;">
@@ -196,13 +224,18 @@
             <div class="bar"><div class="bar-fill" id="wd-wager-bar"></div></div>
         </div>
         <div class="row"><label class="inline" for="wd-amount">Amount (USD)</label><input type="number" id="wd-amount" min="10" max="5000" step="0.01" required placeholder="25.00"></div>
-        <div class="row"><label class="inline" for="wd-method">Method</label>
-            <select id="wd-method" required>
+        <div class="row" id="wd-saved-row"><label class="inline" for="wd-saved">Destination</label>
+            <select id="wd-saved">
+                <option value="">— pick a saved destination —</option>
+            </select>
+        </div>
+        <div class="row" id="wd-method-row" style="display:none"><label class="inline" for="wd-method">Method</label>
+            <select id="wd-method">
                 <option value="bank_transfer">Bank transfer</option>
                 <option value="crypto">Crypto (BTC / ETH / USDC)</option>
             </select>
         </div>
-        <div class="row"><label class="inline" for="wd-destination">Destination</label><input type="text" id="wd-destination" maxlength="200" required placeholder="IBAN / wallet address"></div>
+        <div class="row" id="wd-destination-row" style="display:none"><label class="inline" for="wd-destination">Destination</label><input type="text" id="wd-destination" maxlength="200" placeholder="IBAN / wallet address"></div>
         <div class="row" id="wd-2fa-row" style="display:none"><label class="inline" for="wd-2fa">2FA code</label><input type="text" id="wd-2fa" inputmode="numeric" autocomplete="one-time-code" maxlength="10" placeholder="6-digit code or recovery code"></div>
         <button class="primary" type="submit" id="wd-submit">Request withdrawal</button>
         <div class="msg" id="wd-msg"></div>
@@ -381,7 +414,7 @@
                     alert('Email verification failed: ' + ((consume.data && consume.data.error) || 'unknown error'));
                 }
             }
-            await Promise.all([loadOverview(), loadDeposits(), loadNfts(), loadLimits(), loadActivity(), load2FA(), loadWithdrawals(), loadWagering(), loadSlotStats()]);
+            await Promise.all([loadOverview(), loadDeposits(), loadNfts(), loadLimits(), loadActivity(), load2FA(), loadWithdrawals(), loadWagering(), loadSlotStats(), loadDestinations()]);
         } catch (e) {
             document.getElementById('signed-in-as').innerHTML = 'Session invalid or expired. <a href="/">Sign in again</a>.';
             document.getElementById('login-wrap').style.display = '';
@@ -545,8 +578,8 @@
 
     window.requestWithdrawal = async function () {
         var amt = Number(document.getElementById('wd-amount').value);
-        var method = document.getElementById('wd-method').value;
-        var dest = document.getElementById('wd-destination').value;
+        var savedSel = document.getElementById('wd-saved');
+        var savedId = savedSel ? savedSel.value : '';
         var totpInput = document.getElementById('wd-2fa');
         var totpVisible = document.getElementById('wd-2fa-row').style.display !== 'none';
         var totp = totpVisible ? (totpInput.value || '').trim() : '';
@@ -565,13 +598,29 @@
         }
         btn.disabled = true;
         try {
-            var body = { amount: amt, method: method, destination: dest };
+            var body = { amount: amt };
+            if (savedId) {
+                body.destination_id = Number(savedId);
+            } else {
+                // Fallback (no saved destination yet) — legacy raw input.
+                var method = document.getElementById('wd-method').value;
+                var dest = document.getElementById('wd-destination').value;
+                if (!dest) {
+                    msg.textContent = 'Pick a saved destination or enter one.';
+                    msg.className = 'msg err';
+                    btn.disabled = false;
+                    return;
+                }
+                body.method = method;
+                body.destination = dest;
+            }
             if (totp) body.totp_code = totp;
             await api('POST', '/api/withdrawal/request', body);
             msg.textContent = 'Withdrawal requested. It will be reviewed by our operations team.';
             msg.className = 'msg ok';
             document.getElementById('wd-amount').value = '';
-            document.getElementById('wd-destination').value = '';
+            var destEl = document.getElementById('wd-destination'); if (destEl) destEl.value = '';
+            if (savedSel) savedSel.value = '';
             if (totpInput) totpInput.value = '';
             await Promise.all([loadWithdrawals(), loadOverview(), loadWagering()]);
         } catch (e) {
@@ -579,6 +628,87 @@
             msg.className = 'msg err';
         }
         btn.disabled = false;
+    };
+
+    window.loadDestinations = async function () {
+        var tbody = document.querySelector('#tbl-destinations tbody');
+        var savedSel = document.getElementById('wd-saved');
+        try {
+            var data = await api('GET', '/api/withdrawal/destinations');
+            var list = (data && data.destinations) || [];
+            // Repaint the picker dropdown (active only).
+            var firstOpt = '<option value="">— pick a saved destination —</option>';
+            savedSel.innerHTML = firstOpt + list
+                .filter(function (d) { return d.status === 'active'; })
+                .map(function (d) {
+                    var label = (d.label ? esc(d.label) + ' — ' : '') +
+                                esc(d.method) + ': ' +
+                                esc(String(d.destination).slice(0, 6) + '…' + String(d.destination).slice(-4));
+                    return '<option value="' + d.id + '">' + label + '</option>';
+                }).join('');
+            // Repaint the saved-destinations table (all entries).
+            // Toggle the legacy raw inputs ON only when there are no
+            // active destinations — otherwise users always pick.
+            var anyActive = list.some(function (d) { return d.status === 'active'; });
+            document.getElementById('wd-saved-row').style.display = list.length ? '' : 'none';
+            document.getElementById('wd-method-row').style.display = anyActive ? 'none' : '';
+            document.getElementById('wd-destination-row').style.display = anyActive ? 'none' : '';
+            if (!list.length) {
+                tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:#666">— none yet —</td></tr>';
+                return;
+            }
+            tbody.innerHTML = list.map(function (d) {
+                var statusBadge;
+                if (d.status === 'active') statusBadge = '<span style="color:#5fd489">active</span>';
+                else if (d.status === 'blocked') statusBadge = '<span style="color:#ff9f9f">blocked</span>';
+                else {
+                    var hrs = Math.ceil((d.cooldown_remaining_ms || 0) / 3600000);
+                    statusBadge = '<span style="color:#f1c40f">cooldown · ' + hrs + 'h</span>';
+                }
+                return '<tr>' +
+                    '<td>' + esc(d.method) + '</td>' +
+                    '<td class="mono" style="font-size:12px">' + esc(String(d.destination).slice(0, 6) + '…' + String(d.destination).slice(-4)) + '</td>' +
+                    '<td>' + esc(d.label || '') + '</td>' +
+                    '<td>' + statusBadge + '</td>' +
+                    '<td><button class="row-deny" data-id="' + d.id + '" onclick="deleteDestination(' + d.id + ', this)">Delete</button></td>' +
+                '</tr>';
+            }).join('');
+        } catch (e) {
+            tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:#ff9f9f">' + esc(e.message || 'Failed to load') + '</td></tr>';
+        }
+    };
+
+    window.addDestination = async function () {
+        var msg = document.getElementById('wd-add-msg');
+        msg.className = 'msg'; msg.textContent = '';
+        var body = {
+            method: document.getElementById('wd-add-method').value,
+            destination: document.getElementById('wd-add-dest').value,
+            label: document.getElementById('wd-add-label').value || null,
+        };
+        try {
+            var res = await api('POST', '/api/withdrawal/destinations', body);
+            msg.className = 'msg ok';
+            msg.textContent = 'Saved. Usable in ~24 hours; check your email for confirmation.';
+            document.getElementById('wd-add-dest').value = '';
+            document.getElementById('wd-add-label').value = '';
+            await loadDestinations();
+        } catch (e) {
+            msg.className = 'msg err';
+            msg.textContent = e.message || 'Failed to save destination.';
+        }
+    };
+
+    window.deleteDestination = async function (id, btn) {
+        if (!confirm('Delete this saved destination? Pending withdrawals using it are unaffected.')) return;
+        if (btn) btn.disabled = true;
+        try {
+            await api('DELETE', '/api/withdrawal/destinations/' + id);
+            await loadDestinations();
+        } catch (e) {
+            if (btn) btn.disabled = false;
+            alert(e.message || 'Could not delete destination.');
+        }
     };
 
     window.cancelWithdrawal = async function (id, btn) {

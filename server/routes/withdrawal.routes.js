@@ -102,8 +102,10 @@ function sanitizeDestination(raw) {
     return s;
 }
 
+const destinations = require('../services/withdrawal-destinations.service');
+
 router.post('/request', authenticate, reqLimiter, async (req, res) => {
-    const { amount, method, destination, currency } = req.body || {};
+    const { amount, method, destination, currency, destination_id } = req.body || {};
 
     const amt = Number(amount);
     const cents = Math.round(amt * 100);
@@ -112,14 +114,45 @@ router.post('/request', authenticate, reqLimiter, async (req, res) => {
             error: `Amount must be between $${MIN_WITHDRAWAL_CENTS / 100} and $${MAX_WITHDRAWAL_CENTS / 100}.`,
         });
     }
-    if (!ALLOWED_METHODS.has(method)) {
-        return res.status(400).json({ error: 'method must be one of: ' + Array.from(ALLOWED_METHODS).join(', ') });
+
+    // destination_id branch: pull method/destination/currency from the
+    // saved whitelist entry. assertUsable enforces ownership, blocked
+    // status, and the cooldown gate; raw-destination input on the same
+    // request is ignored. Mixed-mode submissions are rejected to avoid
+    // any ambiguity about WHICH destination was authorized.
+    let dest, cur, methodFinal, destinationIdFinal = null;
+    if (destination_id != null && destination_id !== '') {
+        if (destination !== undefined || method !== undefined) {
+            return res.status(400).json({
+                error: 'Send either destination_id OR (method, destination), not both.',
+                code: 'mixed_destination',
+            });
+        }
+        try {
+            const saved = await destinations.assertUsable(req.user.id, destination_id);
+            methodFinal = saved.method;
+            dest = saved.destination;
+            cur = String(currency || saved.currency || 'usd').toLowerCase();
+            destinationIdFinal = saved.id;
+        } catch (err) {
+            const status = err.status || 500;
+            if (status >= 500) console.error('[withdrawal/request:saved]', err);
+            const body = { error: err.message, code: err.code };
+            if (err.cooldown_until) body.cooldown_until = err.cooldown_until;
+            return res.status(status).json(body);
+        }
+    } else {
+        if (!ALLOWED_METHODS.has(method)) {
+            return res.status(400).json({ error: 'method must be one of: ' + Array.from(ALLOWED_METHODS).join(', ') });
+        }
+        const sanitized = sanitizeDestination(destination);
+        if (!sanitized) {
+            return res.status(400).json({ error: 'destination is required (bank account details or wallet address, ASCII, ≤ 200 chars).' });
+        }
+        methodFinal = method;
+        dest = sanitized;
+        cur = String(currency || 'usd').toLowerCase();
     }
-    const dest = sanitizeDestination(destination);
-    if (!dest) {
-        return res.status(400).json({ error: 'destination is required (bank account details or wallet address, ASCII, ≤ 200 chars).' });
-    }
-    const cur = String(currency || 'usd').toLowerCase();
     if (!/^[a-z]{3}$/.test(cur)) {
         return res.status(400).json({ error: 'Invalid currency.' });
     }
@@ -189,9 +222,9 @@ router.post('/request', authenticate, reqLimiter, async (req, res) => {
         }
 
         await db.run(
-            `INSERT INTO withdrawals (user_id, amount_cents, currency, method, destination, status)
-             VALUES (?, ?, ?, ?, ?, 'pending')`,
-            [req.user.id, cents, cur, method, dest]
+            `INSERT INTO withdrawals (user_id, amount_cents, currency, method, destination, destination_id, status)
+             VALUES (?, ?, ?, ?, ?, ?, 'pending')`,
+            [req.user.id, cents, cur, methodFinal, dest, destinationIdFinal]
         );
         const row = await db.get(
             'SELECT id, amount_cents, currency, method, status, created_at FROM withdrawals WHERE user_id = ? ORDER BY id DESC LIMIT 1',
@@ -295,6 +328,59 @@ router.post('/:id/cancel', authenticate, async (req, res) => {
     } catch (err) {
         console.error('[withdrawal/cancel]', err);
         res.status(500).json({ error: 'Could not cancel withdrawal.' });
+    }
+});
+
+// ─── Saved destinations / payout whitelist ──────────────────────────
+//
+// Users save destinations once and reference them by id later. New
+// destinations enter a 24-hour cooldown so a session-hijacker can't
+// immediately drain funds to their own wallet. Notification email
+// fires on every successful add so the legitimate owner sees it.
+router.get('/destinations', authenticate, async (req, res) => {
+    try {
+        const list = await destinations.listForUser(req.user.id);
+        res.json({ destinations: list });
+    } catch (err) {
+        console.error('[withdrawal/destinations:list]', err);
+        res.status(500).json({ error: 'Failed to load destinations.' });
+    }
+});
+
+router.post('/destinations', authenticate, reqLimiter, async (req, res) => {
+    try {
+        const { method, destination, currency, label } = req.body || {};
+        const created = await destinations.create(req.user.id, { method, destination, currency, label });
+        // Email the user so any unauthorized addition during a session
+        // hijack is visible. Best-effort; never blocks the response.
+        try {
+            const u = await db.get('SELECT email, username FROM users WHERE id = ?', [req.user.id]);
+            if (u && u.email && mailer.sendDestinationAdded) {
+                mailer.sendDestinationAdded({
+                    to: u.email,
+                    username: u.username,
+                    method: created.method,
+                    destination: created.destination,
+                    cooldown_until: created.cooldown_until,
+                }).catch(function () {});
+            }
+        } catch (e) { /* swallow */ }
+        res.status(201).json({ destination: created });
+    } catch (err) {
+        const status = err.status || 500;
+        if (status >= 500) console.error('[withdrawal/destinations:create]', err);
+        res.status(status).json({ error: err.message, code: err.code });
+    }
+});
+
+router.delete('/destinations/:id', authenticate, async (req, res) => {
+    try {
+        const result = await destinations.remove(req.user.id, req.params.id);
+        res.json(result);
+    } catch (err) {
+        const status = err.status || 500;
+        if (status >= 500) console.error('[withdrawal/destinations:delete]', err);
+        res.status(status).json({ error: err.message, code: err.code });
     }
 });
 
