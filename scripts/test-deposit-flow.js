@@ -1838,6 +1838,80 @@ async function main() {
         assert.strictEqual(blocked.status, 403);
 
         console.log('[test] slot analytics: per-game theoretical+empirical RTP and drift; admin-only; bad window_days falls back to default');
+
+        // Public hot-wins ticker. No auth required, usernames
+        // anonymized, server-side cache. We also blow the cache
+        // between assertions so seeded wins land immediately.
+        const publicMod = require('../server/routes/public.routes');
+        publicMod._test.resetCache();
+
+        // Empty state (we'll seed below; this is the minimum branch).
+        const emptyHot = await http('GET', '/api/public/hot-wins?limit=5');
+        assert.strictEqual(emptyHot.status, 200);
+        assert.strictEqual(typeof emptyHot.body.window_seconds, 'number');
+        assert.ok(Array.isArray(emptyHot.body.wins));
+
+        // Seed some wins on the analytics user (pgUserName from above
+        // is still around, plus we make a clearly-identifiable name).
+        const hotName = 'hotwinner_' + Date.now();
+        const hotHash = await require('bcryptjs').hash('Str0ngP@ss!!', 10);
+        await db.run(
+            'INSERT INTO users (username, email, password_hash, date_of_birth, email_verified, balance_cents) VALUES (?, ?, ?, ?, 1, ?)',
+            [hotName, hotName + '@example.com', hotHash, '1990-01-01', 1000000]
+        );
+        const hotRow = await db.get('SELECT id FROM users WHERE username = ?', [hotName]);
+        await db.run(
+            `INSERT INTO slot_rounds
+             (user_id, game_id, bet_cents, win_cents, balance_after_cents,
+              server_seed, server_seed_hash, client_seed, nonce, outcome_json)
+             VALUES (?, 'classic_777', 100, 50000, 0, 'x', 'y', 'z', 1, '{}')`,
+            [hotRow.id]
+        );
+        await db.run(
+            `INSERT INTO slot_rounds
+             (user_id, game_id, bet_cents, win_cents, balance_after_cents,
+              server_seed, server_seed_hash, client_seed, nonce, outcome_json)
+             VALUES (?, 'neon_burst', 100, 110000, 0, 'x', 'y', 'z', 2, '{}')`,
+            [hotRow.id]
+        );
+        publicMod._test.resetCache();
+
+        const hot = await http('GET', '/api/public/hot-wins?limit=5');
+        assert.strictEqual(hot.status, 200);
+        assert.ok(hot.body.wins.length >= 2);
+        // Order is biggest-first.
+        assert.strictEqual(hot.body.wins[0].game_id, 'neon_burst');
+        assert.strictEqual(hot.body.wins[0].win_cents, 110000);
+        assert.strictEqual(hot.body.wins[1].win_cents, 50000);
+        // Anonymization: '<2-char prefix>***<2-char suffix>'.
+        const expected = hotName.slice(0, 2) + '***' + hotName.slice(-2);
+        assert.strictEqual(hot.body.wins[0].user, expected, 'username must be anonymized');
+        // No raw username, no seeds, no round id.
+        for (const w of hot.body.wins) {
+            assert.strictEqual(w.username, undefined);
+            assert.strictEqual(w.server_seed, undefined);
+            assert.strictEqual(w.id, undefined);
+            assert.strictEqual(w.round_id, undefined);
+        }
+        // Multiplier = win/bet (50000/100 = 500, 110000/100 = 1100).
+        assert.strictEqual(hot.body.wins[0].multiplier, 1100);
+        assert.strictEqual(hot.body.wins[1].multiplier, 500);
+        // Cap honored: limit=2 → ≤ 2 results.
+        const limited = await http('GET', '/api/public/hot-wins?limit=2');
+        assert.strictEqual(limited.status, 200);
+        assert.ok(limited.body.wins.length <= 2);
+        // Bad / oversized limit falls back to default (20).
+        publicMod._test.resetCache();
+        const badLim = await http('GET', '/api/public/hot-wins?limit=999');
+        assert.strictEqual(badLim.status, 200);
+        // No auth required: succeeds without a token.
+        assert.strictEqual((await http('GET', '/api/public/hot-wins')).status, 200);
+        // Cache: a second call within 30s returns the same payload byte-for-byte.
+        const c1 = await http('GET', '/api/public/hot-wins?limit=5');
+        const c2 = await http('GET', '/api/public/hot-wins?limit=5');
+        assert.strictEqual(c1.raw, c2.raw, 'cache should produce identical payload');
+
+        console.log('[test] hot wins: public no-auth; anonymized usernames; biggest-first; multipliers; cap; bad limit falls back; cache stable; no PII or seeds leaked');
     }
 
     // ═══ Daily loss limit ═══════════════════════════════════════════════════

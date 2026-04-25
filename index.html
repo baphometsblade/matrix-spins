@@ -247,6 +247,64 @@
     <!-- Main Content -->
     <div class="casino-main-wrap" id="casinoMainWrap">
     <div class="container">
+        <!-- Hot Wins Ticker (public, anonymized, 30s server-cached) -->
+        <div id="hotWinsTicker" class="hot-wins-ticker" aria-label="Recent big wins" style="display:none;background:linear-gradient(90deg, rgba(0,0,0,0.6) 0%, rgba(20,5,5,0.6) 100%);border:1px solid rgba(241,196,15,0.18);border-radius:8px;margin:0 0 14px;padding:0;overflow:hidden;height:34px;position:relative;">
+            <div style="position:absolute;left:0;top:0;bottom:0;display:flex;align-items:center;padding:0 12px;font-size:11px;letter-spacing:2px;color:#f1c40f;font-weight:800;background:rgba(0,0,0,0.55);z-index:2;">HOT WINS</div>
+            <div id="hotWinsScroll" style="display:flex;gap:24px;align-items:center;height:100%;padding-left:96px;white-space:nowrap;font-size:13px;color:#cbd5e1;animation:hot-wins-scroll 60s linear infinite;"></div>
+        </div>
+        <style>
+            @keyframes hot-wins-scroll { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+            .hot-wins-ticker:hover #hotWinsScroll { animation-play-state: paused; }
+            .hot-wins-ticker .hw-game { color: #f1c40f; font-weight: 700; }
+            .hot-wins-ticker .hw-user { color: #94a3b8; font-family: ui-monospace, monospace; }
+            .hot-wins-ticker .hw-win  { color: #5fd489; font-weight: 700; }
+            .hot-wins-ticker .hw-mult { color: #00d4ff; font-size: 11px; }
+        </style>
+        <script>
+            (function () {
+                'use strict';
+                if (window.__hotWinsBooted) return;
+                window.__hotWinsBooted = true;
+                var ticker = document.getElementById('hotWinsTicker');
+                var scroll = document.getElementById('hotWinsScroll');
+                if (!ticker || !scroll) return;
+                function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' })[c]; }); }
+                function fmt(cents) { return '$' + (Number(cents || 0) / 100).toFixed(2); }
+                function gameLabel(id) {
+                    if (typeof games !== 'undefined' && Array.isArray(games)) {
+                        var g = games.find(function (x) { return x.id === id; });
+                        if (g) return g.name;
+                    }
+                    return id;
+                }
+                async function poll() {
+                    try {
+                        var r = await fetch('/api/public/hot-wins?limit=20');
+                        if (!r.ok) return;
+                        var data = await r.json();
+                        var wins = (data && data.wins) || [];
+                        if (wins.length === 0) {
+                            ticker.style.display = 'none';
+                            return;
+                        }
+                        // Duplicate the run so the CSS translateX(-50%)
+                        // produces a seamless scroll.
+                        var item = function (w) {
+                            return '<span><span class="hw-game">' + esc(gameLabel(w.game_id)) + '</span> &middot; ' +
+                                '<span class="hw-user">' + esc(w.user) + '</span> ' +
+                                '<span class="hw-win">won ' + fmt(w.win_cents) + '</span> ' +
+                                (w.multiplier ? '<span class="hw-mult">(' + Number(w.multiplier).toFixed(2) + 'x)</span>' : '') +
+                            '</span>';
+                        };
+                        scroll.innerHTML = wins.map(item).join('') + wins.map(item).join('');
+                        ticker.style.display = '';
+                    } catch (e) { /* network blip — skip */ }
+                }
+                poll();
+                setInterval(poll, 30000);
+            })();
+        </script>
+
         <!-- Hero Banner -->
         <div class="hero-banner">
             <div class="hero-content">

@@ -51,6 +51,7 @@
             // sunk locally instead of reaching the server.
             var REAL = [
                 '/api/health',
+                '/api/public/',
                 '/api/csrf-token',
                 '/api/csp-report',
                 '/api/stripe/config',

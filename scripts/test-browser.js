@@ -313,6 +313,10 @@ async function main() {
                         () => /Saved\./.test((document.getElementById('liveSlotClientSeedMsg') || {}).textContent || ''),
                         { timeout: 4000 }
                     ).catch(() => { /* reported below */ });
+                    // Clear window.__lastSlotResult so the wait below
+                    // can't satisfy itself with stale state from the
+                    // previous neon_burst spin.
+                    await page.evaluate(() => { try { delete window.__lastSlotResult; } catch (e) { window.__lastSlotResult = null; } });
                     await page.click('#liveSlotSpin');
                     await page.waitForFunction(
                         () => window.__lastSlotResult && window.__lastSlotResult.revealed,
@@ -513,6 +517,47 @@ async function main() {
                         }
                     }
                 }
+            }
+        }
+
+        // Hot-wins ticker — runs LAST so the page reload doesn't
+        // disturb upstream auth/CSRF state. Seed a public win row,
+        // reload the lobby, assert the ticker shows the anonymized
+        // username and the win amount.
+        const tickerName = 'tick_' + Date.now();
+        const tickerHash = await require('bcryptjs').hash('Str0ngP@ss!!', 10);
+        await db.run(
+            'INSERT INTO users (username, email, password_hash, date_of_birth, email_verified, balance_cents) VALUES (?, ?, ?, ?, 1, ?)',
+            [tickerName, tickerName + '@example.com', tickerHash, '1990-01-01', 1000000]
+        );
+        const tickerUser = await db.get('SELECT id FROM users WHERE username = ?', [tickerName]);
+        await db.run(
+            `INSERT INTO slot_rounds
+             (user_id, game_id, bet_cents, win_cents, balance_after_cents,
+              server_seed, server_seed_hash, client_seed, nonce, outcome_json)
+             VALUES (?, 'classic_777', 100, 90000, 0, 'x', 'y', 'z', 1, '{}')`,
+            [tickerUser.id]
+        );
+        try { require('../server/routes/public.routes')._test.resetCache(); } catch (e) { /* ignore */ }
+        await page.goto('http://localhost:' + process.env.PORT + '/', { waitUntil: 'networkidle', timeout: 15000 });
+        const tickerVisible = await page.waitForFunction(() => {
+            const t = document.getElementById('hotWinsTicker');
+            const s = document.getElementById('hotWinsScroll');
+            return t && t.style.display !== 'none' && s && s.children.length > 0;
+        }, { timeout: 8000 }).then(() => true).catch(() => false);
+        if (!tickerVisible) {
+            fail('hot-wins ticker did not become visible after seeding a public win');
+        } else {
+            const expectedAnon = tickerName.slice(0, 2) + '***' + tickerName.slice(-2);
+            const tickerText = await page.$eval('#hotWinsScroll', el => el.textContent || '');
+            if (tickerText.indexOf(expectedAnon) < 0) {
+                fail('hot-wins ticker missing anonymized username "' + expectedAnon + '" in: ' + tickerText.slice(0, 200));
+            } else if (tickerText.indexOf(tickerName) >= 0) {
+                fail('hot-wins ticker leaked the raw username: ' + tickerText.slice(0, 200));
+            } else if (tickerText.indexOf('won $900.00') < 0) {
+                fail('hot-wins ticker missing the win amount: ' + tickerText.slice(0, 200));
+            } else {
+                ok('hot-wins ticker: rendered the anonymized win (' + expectedAnon + ')');
             }
         }
 

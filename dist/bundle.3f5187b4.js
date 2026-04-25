@@ -1,5 +1,5 @@
 /* Royal Slots Casino - Bundled JavaScript */
-/* Generated: 2026-04-25T08:10:59.172Z */
+/* Generated: 2026-04-25T08:29:17.641Z */
 
 
 /* â”€â”€â”€ shared/game-definitions.js (2/56) â”€â”€â”€ */
@@ -60326,6 +60326,7 @@ setInterval(function() {
             // sunk locally instead of reaching the server.
             var REAL = [
                 '/api/health',
+                '/api/public/',
                 '/api/csrf-token',
                 '/api/csp-report',
                 '/api/stripe/config',
