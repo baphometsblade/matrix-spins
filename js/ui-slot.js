@@ -24767,24 +24767,39 @@ function _loadWithdrawals(status) {
                 el.innerHTML = '<p class="awd-empty">No ' + status + ' withdrawals</p>';
                 return;
             }
-            el.innerHTML = data.withdrawals.map(function(wd) {
-                var actions = '';
-                if (wd.status === 'pending') {
-                    actions = '<div class="awd-actions">' +
-                        '<button class="awd-approve" onclick="_approveWithdrawal(&quot;' + wd.id + '&quot;)">Approve</button>' +
-                        '<button class="awd-deny" onclick="_denyWithdrawal(&quot;' + wd.id + '&quot;)">Deny</button>' +
-                        '</div>';
-                }
-                return '<div class="awd-item">' +
-                    '<div class="awd-item-header"><span class="awd-item-id">' + wd.id + '</span><span class="awd-item-amount">$' + wd.amount.toFixed(2) + '</span></div>' +
-                    '<div class="awd-item-details"><span>User: ' + (wd.username || wd.user_id) + '</span><span>Ref: ' + (wd.ref_id || 'N/A') + '</span><span>Requested: ' + new Date(wd.requested_at).toLocaleString() + '</span></div>' +
-                    (wd.admin_notes ? '<div class="awd-item-notes">Notes: ' + wd.admin_notes + '</div>' : '') +
-                    actions + '</div>';
-            }).join('');
+            // ROUND 66: This legacy in-page admin panel was a stored-XSS vector.
+            // The renderer concatenated server fields (username, admin_note,
+            // reference) into innerHTML with no escaping. Today the wrong field
+            // names (`admin_notes` plural / `ref_id`) made it inert, but a
+            // one-character maintenance fix would have made it active. The
+            // canonical admin console at /admin uses safe DOM construction
+            // (admin/index.html → el() helper). This in-page panel is now
+            // disabled — it points operators at /admin instead of rendering
+            // anything from the API response.
+            el.innerHTML = '';
+            var hint = document.createElement('div');
+            hint.className = 'awd-item';
+            hint.style.padding = '16px';
+            hint.style.color = '#aaa';
+            var msg = document.createElement('p');
+            msg.textContent = 'The withdrawal queue has moved to the dedicated admin console.';
+            var link = document.createElement('a');
+            link.href = '/admin';
+            link.textContent = 'Open /admin →';
+            link.style.color = '#ffd700';
+            link.style.fontWeight = 'bold';
+            hint.appendChild(msg);
+            hint.appendChild(link);
+            el.appendChild(hint);
         })
         .catch(function() {
             var el = document.getElementById('awd-list');
-            if (el) el.innerHTML = '<p>Error loading withdrawals</p>';
+            if (el) {
+                while (el.firstChild) el.removeChild(el.firstChild);
+                var p = document.createElement('p');
+                p.textContent = 'Error loading withdrawals';
+                el.appendChild(p);
+            }
         });
 }
 

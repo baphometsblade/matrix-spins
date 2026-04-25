@@ -69,8 +69,10 @@
         options = options || {};
         const method = (options.method || 'GET').toUpperCase();
 
-        // Only add CSRF token for mutations (POST, PUT, DELETE) to /api/* routes
-        if (['POST', 'PUT', 'DELETE'].includes(method) && url.includes('/api/')) {
+        // ROUND 66: Include PATCH in the mutation list (was POST/PUT/DELETE).
+        // No PATCH endpoints exist today, but if any are added the client
+        // would have silently bypassed CSRF without this fix.
+        if (['POST', 'PUT', 'DELETE', 'PATCH'].includes(method) && url.includes('/api/')) {
             // Add CSRF token header if we have one
             if (csrfToken) {
                 options.headers = options.headers || {};

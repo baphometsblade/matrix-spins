@@ -430,26 +430,19 @@ db.run(`CREATE TABLE IF NOT EXISTS email_verification_tokens (
     used INTEGER DEFAULT 0
 )`).catch(function(e) { if (e && !String(e.message || e).match(/already exists/i)) console.warn('[Auth] Email verification tokens table create failed:', e.message || e); });
 
-// ROUND 36: Rate limit password reset — max 3 per 15 minutes per IP
-var _forgotPasswordAttempts = new Map();
-setInterval(function() { _forgotPasswordAttempts.clear(); }, 15 * 60 * 1000);
-
-// IP-based rate limiting for /reset-password and /verify-email (10 attempts per 15 min)
-var _resetPwAttempts = new Map();
-var _verifyEmailAttempts = new Map();
-setInterval(function() { _resetPwAttempts.clear(); _verifyEmailAttempts.clear(); }, 15 * 60 * 1000);
+// ROUND 66: Removed the per-process inner-Map rate limiters (was 4 separate
+// Maps wiped wholesale via setInterval(clear, 15min)). The outer
+// `sensitiveAuthLimiter` mounted at /api/auth/forgot-password,
+// /api/auth/reset-password, and /api/user/change-password in server/index.js
+// (5 attempts / 15 minutes per IP via express-rate-limit's proper sliding
+// window) is the real protection. The blanket Map.clear() also gave a
+// false sense of precision — at the tick boundary an attacker could get 6
+// requests off in 2 seconds. Now the express middleware (correct sliding
+// window) is the single source of truth.
 
 // POST /api/auth/forgot-password
 router.post('/forgot-password', async (req, res) => {
     try {
-        // Rate limit
-        var fpIp = req.ip || req.connection.remoteAddress || 'unknown';
-        var fpCount = _forgotPasswordAttempts.get(fpIp) || 0;
-        if (fpCount >= 3) {
-            return res.status(429).json({ error: 'Too many reset requests. Please try again later.' });
-        }
-        _forgotPasswordAttempts.set(fpIp, fpCount + 1);
-
         const { email } = req.body;
         if (!email) {
             return res.status(400).json({ error: 'Email is required' });
@@ -499,13 +492,9 @@ router.post('/forgot-password', async (req, res) => {
 });
 
 // POST /api/auth/reset-password
+// Outer rate limit: sensitiveAuthLimiter (index.js) — 5 per 15min per IP.
 router.post('/reset-password', async (req, res) => {
     try {
-        var rpIp = req.ip || req.connection.remoteAddress || 'unknown';
-        var rpCount = _resetPwAttempts.get(rpIp) || 0;
-        if (rpCount >= 10) return res.status(429).json({ error: 'Too many reset attempts. Try again later.' });
-        _resetPwAttempts.set(rpIp, rpCount + 1);
-
         const { token, newPassword } = req.body;
         if (!token || !newPassword) {
             return res.status(400).json({ error: 'Token and new password are required' });
@@ -623,13 +612,9 @@ router.get('/me', authenticate, (req, res) => {
 });
 
 // POST /api/auth/verify-email
+// Outer rate limit: emailVerifyLimiter mounted in index.js — 10 per 15min per IP.
 router.post('/verify-email', async (req, res) => {
     try {
-        var veIp = req.ip || req.connection.remoteAddress || 'unknown';
-        var veCount = _verifyEmailAttempts.get(veIp) || 0;
-        if (veCount >= 10) return res.status(429).json({ error: 'Too many verification attempts. Try again later.' });
-        _verifyEmailAttempts.set(veIp, veCount + 1);
-
         const { token } = req.body;
         if (!token) {
             return res.status(400).json({ error: 'Verification token is required' });
@@ -667,20 +652,10 @@ router.post('/verify-email', async (req, res) => {
     }
 });
 
-// ROUND 36: Rate limit resend-verification — max 3 per 15 minutes per IP
-var _resendVerifyAttempts = new Map();
-setInterval(function() { _resendVerifyAttempts.clear(); }, 15 * 60 * 1000);
-
 // POST /api/auth/resend-verification
+// Outer rate limit: emailResendLimiter mounted in index.js — 3 per 15min per IP.
 router.post('/resend-verification', async (req, res) => {
     try {
-        var rvIp = req.ip || req.connection.remoteAddress || 'unknown';
-        var rvCount = _resendVerifyAttempts.get(rvIp) || 0;
-        if (rvCount >= 3) {
-            return res.status(429).json({ error: 'Too many requests. Please try again later.' });
-        }
-        _resendVerifyAttempts.set(rvIp, rvCount + 1);
-
         const { email } = req.body;
         if (!email) {
             return res.status(400).json({ error: 'Email is required' });

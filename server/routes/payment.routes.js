@@ -38,16 +38,39 @@ setInterval(function sweepStaleWithdrawLocks() {
     }
 }, 60 * 1000).unref();
 
-// ─── OTP Rate Limiter ───
-const otpLimiter = rateLimit({
-    windowMs: 15 * 60 * 1000, // 15 minutes
-    max: 5, // 5 attempts per window
-    keyGenerator: (req) => `otp:${req.user ? req.user.id : req.ip}`,
+// ─── OTP Rate Limiters (ROUND 66: split) ───
+//
+// Previously a single otpLimiter (5/15min per user) was shared across both
+// /verify-otp and /resend-otp. An attacker who burned the budget on resend
+// could prevent the legit user from verifying their own code, and that
+// shared budget mixed two distinct security concerns. Now:
+//
+//   otpVerifyLimiter:  5 verify attempts / 15 min (matches the cumulative
+//                      cancel threshold on incorrect codes — a legit user
+//                      who needs >5 verify attempts has bigger problems)
+//   otpResendLimiter:  3 resends / 15 min (rate-limit the email sender;
+//                      legit users almost never need >1 resend)
+const otpVerifyLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000,
+    max: 5,
+    keyGenerator: (req) => `otp_verify:${req.user ? req.user.id : req.ip}`,
     handler: (req, res) => {
-        res.status(429).json({ error: 'Too many OTP attempts. Please wait 15 minutes and request a new withdrawal.' });
+        res.status(429).json({ error: 'Too many OTP verification attempts. Please wait 15 minutes.' });
     },
     skipSuccessfulRequests: false,
 });
+const otpResendLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000,
+    max: 3,
+    keyGenerator: (req) => `otp_resend:${req.user ? req.user.id : req.ip}`,
+    handler: (req, res) => {
+        res.status(429).json({ error: 'Too many resend requests. Please wait 15 minutes.' });
+    },
+    skipSuccessfulRequests: false,
+});
+// Backwards-compat alias for any code path that still uses otpLimiter; we
+// route those to the verify limiter (the more restrictive of the two).
+const otpLimiter = otpVerifyLimiter;
 
 // ─── Helpers ───
 
@@ -731,7 +754,7 @@ router.get('/withdrawals', authenticate, async (req, res) => {
 });
 
 // POST /api/payments/withdraw/verify-otp — verify OTP to confirm a withdrawal
-router.post('/withdraw/verify-otp', authenticate, otpLimiter, async (req, res) => {
+router.post('/withdraw/verify-otp', authenticate, otpVerifyLimiter, async (req, res) => {
     try {
         const { withdrawal_id, otp } = req.body;
         if (!withdrawal_id || !otp) {
@@ -856,8 +879,9 @@ router.post('/withdraw/verify-otp', authenticate, otpLimiter, async (req, res) =
 });
 
 // POST /api/payments/withdraw/:id/resend-otp — rotate + resend the OTP
-// Rate-limited via otpLimiter to prevent abusing it as a free email sender.
-router.post('/withdraw/:id/resend-otp', authenticate, otpLimiter, async (req, res) => {
+// Rate-limited via otpResendLimiter (3/15min, separate from verify limiter)
+// to prevent abuse as a free email sender + keep verify budget for the user.
+router.post('/withdraw/:id/resend-otp', authenticate, otpResendLimiter, async (req, res) => {
     try {
         const withdrawalId = parseInt(req.params.id, 10);
         if (!Number.isInteger(withdrawalId) || withdrawalId <= 0) {

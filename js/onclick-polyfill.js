@@ -16,11 +16,27 @@
     /**
      * Convert an element's onclick attribute to an event listener.
      */
-    // SECURITY: Block dangerous patterns in onclick code.
-    // While we can't fully prevent all injection via new Function(),
-    // we reject onclick code containing known dangerous constructs.
-    // ROUND 37: Expanded dangerous pattern filter for onclick polyfill
-    var _dangerousPatterns = /\b(fetch|XMLHttpRequest|eval|Function|import|require|localStorage\.set|localStorage\.setItem|sessionStorage|document\.cookie|window\.location|\.src\s*=|\.href\s*=|postMessage|Worker|WebSocket|crypto|atob|btoa)\b/;
+    // SECURITY (ROUND 66): The previous DENYLIST was bypassable
+    // (`\u0066etch`, `'fet'+'ch'`, `globalThis['fetch']`,
+    // `String.fromCharCode(...)`, `parent`, `top`, `Reflect`, `Proxy`, etc.).
+    // Replaced with a strict ALLOWLIST: the polyfill only compiles onclick
+    // code that matches one of three safe shapes used by our static HTML:
+    //   1. funcName(literalArgs?)   — bare function call with literals only
+    //   2. this.<tail>(literalArgs?) — dotted method chain rooted at `this`
+    //   3. this.<tail> = literal     — simple property reset
+    // Anything else (template literals, bracket access, string concat,
+    // unicode escapes, char codes) fails every regex and is refused.
+    var _allowedShapes = [
+        /^\s*[A-Za-z_$][\w$]*\s*\(\s*([\d.,'"\s]|true|false|null|this|event|-)*\s*\)\s*;?\s*$/,
+        /^\s*this(?:\.[A-Za-z_$][\w$]*)+\s*\(\s*([\d.,'"\s]|true|false|null)*\s*\)\s*;?\s*$/,
+        /^\s*this(?:\.[A-Za-z_$][\w$]*)+\s*=\s*(?:["'][^"'<>]*["']|\d+|true|false|null)\s*;?\s*$/,
+    ];
+    function _isAllowedOnclickShape(code) {
+        for (var i = 0; i < _allowedShapes.length; i++) {
+            if (_allowedShapes[i].test(code)) return true;
+        }
+        return false;
+    }
 
     function patchElement(el) {
         if (el._onclickPolyfilled) return;
@@ -29,9 +45,9 @@
         el._onclickPolyfilled = true;
         // Note: Removed el.onclick check — accessing .onclick throws SyntaxError
         // when the attribute contains certain JS patterns (e.g., template literals)
-        // SECURITY: Block onclick attributes containing dangerous code patterns
-        if (_dangerousPatterns.test(code)) {
-            console.warn('[onclick-polyfill] Blocked suspicious onclick:', code.slice(0, 80));
+        // SECURITY: refuse anything that doesn't match a known-safe shape.
+        if (!_isAllowedOnclickShape(code)) {
+            console.warn('[onclick-polyfill] Refused onclick (not in safe shape):', code.slice(0, 80));
             return;
         }
         try {

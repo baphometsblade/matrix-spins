@@ -19,18 +19,46 @@
     function showPromoPopup(promo) {
         if (SHOWN_PROMOS.has(promo.id)) return;
         SHOWN_PROMOS.add(promo.id);
-        
+
+        // ROUND 66: Build the popup with safe DOM construction (textContent /
+        // createElement) instead of innerHTML interpolation. The promo fields
+        // come from the future /api/promos/active endpoint which is admin-
+        // controlled; an admin who can edit promo copy could inject script
+        // tags reaching every logged-in user. textContent escapes everything.
         const overlay = document.createElement('div');
         overlay.className = 'promo-overlay';
-        overlay.innerHTML = '<div class="promo-popup">' +
-            '<button class="promo-close" onclick="this.parentElement.parentElement.remove()">&times;</button>' +
-            '<div class="promo-icon">&#127881;</div>' +
-            '<h2>' + promo.title + '</h2>' +
-            '<p>' + promo.message + '</p>' +
-            '<button class="promo-cta" onclick="this.closest(\'.promo-overlay\').remove()">' + promo.cta + '</button>' +
-            '</div>';
+
+        const popup = document.createElement('div');
+        popup.className = 'promo-popup';
+
+        const closeBtn = document.createElement('button');
+        closeBtn.className = 'promo-close';
+        closeBtn.textContent = '\u00d7';
+        closeBtn.addEventListener('click', function() { overlay.remove(); });
+
+        const icon = document.createElement('div');
+        icon.className = 'promo-icon';
+        icon.textContent = '\uD83C\uDF89';
+
+        const title = document.createElement('h2');
+        title.textContent = String(promo.title || '');
+
+        const message = document.createElement('p');
+        message.textContent = String(promo.message || '');
+
+        const ctaBtn = document.createElement('button');
+        ctaBtn.className = 'promo-cta';
+        ctaBtn.textContent = String(promo.cta || 'OK');
+        ctaBtn.addEventListener('click', function() { overlay.remove(); });
+
+        popup.appendChild(closeBtn);
+        popup.appendChild(icon);
+        popup.appendChild(title);
+        popup.appendChild(message);
+        popup.appendChild(ctaBtn);
+        overlay.appendChild(popup);
         document.body.appendChild(overlay);
-        
+
         // Auto-dismiss after 15 seconds
         setTimeout(function() { if (overlay.parentElement) overlay.remove(); }, 15000);
     }

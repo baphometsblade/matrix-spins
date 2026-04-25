@@ -852,8 +852,11 @@ test('verify-email rejects expired tokens', () => {
 });
 
 test('verify-email is rate-limited (stops enumeration)', () => {
-    const src = fs.readFileSync(path.join(SERVER_DIR, 'routes', 'auth.routes.js'), 'utf8');
-    assert(/_verifyEmailAttempts/.test(src), 'verify-email must rate-limit per IP');
+    // ROUND 66: Rate limiter moved to express-rate-limit at app level
+    // (was a leaky in-memory Map in auth.routes.js).
+    const indexSrc = fs.readFileSync(path.join(SERVER_DIR, 'index.js'), 'utf8');
+    assert(/app\.use\('\/api\/auth\/verify-email',\s*emailVerifyLimiter\)/.test(indexSrc),
+        'verify-email must be mounted with emailVerifyLimiter (express-rate-limit) in index.js');
 });
 
 test('withdraw requires email_verified before processing', () => {
@@ -1751,6 +1754,93 @@ test('MED#6: sanitize middleware returns 400 (not bypass) on depth overflow', ()
     assertEq(statusCode, 400, 'depth-overflow request must 400');
     assert(body && /depth/i.test(body.error), 'error should reference depth overflow');
     assert(!nextCalled, 'next() must NOT be called on rejection');
+});
+
+// ══════════════════════════════════════════════════════════════════════
+console.log('\n=== round 66: frontend XSS hardening + rate-limiter cleanup ===');
+// ══════════════════════════════════════════════════════════════════════
+const PAY_R66    = fs.readFileSync(path.join(SERVER_DIR, 'routes', 'payment.routes.js'), 'utf8');
+const AUTH_R66   = fs.readFileSync(path.join(SERVER_DIR, 'routes', 'auth.routes.js'), 'utf8');
+const INDEX_R66  = fs.readFileSync(path.join(SERVER_DIR, 'index.js'), 'utf8');
+const POLYFILL   = fs.readFileSync(path.join(__dirname, '..', 'js', 'onclick-polyfill.js'), 'utf8');
+const PROMO_SRC  = fs.readFileSync(path.join(__dirname, '..', 'js', 'promo-popups.js'), 'utf8');
+const CSRF_SRC   = fs.readFileSync(path.join(__dirname, '..', 'js', 'csrf-helper.js'), 'utf8');
+const UI_SLOT    = fs.readFileSync(path.join(__dirname, '..', 'js', 'ui-slot.js'), 'utf8');
+
+// FE-HIGH#1 — legacy admin withdrawal panel no longer renders user-controlled data
+test('FE-HIGH#1: legacy ui-slot admin withdrawal panel no longer interpolates server fields', () => {
+    // Find the _loadWithdrawals function and verify the fix message
+    assert(/withdrawal queue has moved to the dedicated admin console/.test(UI_SLOT),
+        'legacy panel must redirect operators to /admin instead of rendering API data');
+    // The old admin_notes innerHTML interpolation must NOT be present anymore
+    assert(!/innerHTML[\s\S]{0,300}wd\.admin_notes/.test(UI_SLOT),
+        'must NOT interpolate wd.admin_notes (or any wd.* server field) into innerHTML');
+});
+
+// FE-HIGH#2 — onclick polyfill uses allowlist
+test('FE-HIGH#2: onclick polyfill uses an allowlist (not a denylist)', () => {
+    assert(/_allowedShapes/.test(POLYFILL), 'polyfill must declare an allowlist');
+    assert(/_isAllowedOnclickShape/.test(POLYFILL), 'polyfill must check shape against allowlist');
+    // Old denylist pattern must be gone
+    assert(!/_dangerousPatterns/.test(POLYFILL),
+        'old denylist (_dangerousPatterns) must be removed — bypassable via unicode escapes etc.');
+});
+
+// FE-MED#3 — promo popups use safe DOM
+test('FE-MED#3: promo popups use createElement + textContent (no innerHTML interpolation)', () => {
+    // The showPromoPopup function must not use innerHTML for the fields
+    const fn = PROMO_SRC.match(/function showPromoPopup[\s\S]+?^\s*\}/m);
+    assert(fn, 'showPromoPopup not found');
+    assert(!/innerHTML\s*=/.test(fn[0]),
+        'showPromoPopup must NOT assign innerHTML — use createElement + textContent');
+    assert(/createElement\(['"]h2['"]\)/.test(fn[0]) && /textContent/.test(fn[0]),
+        'must use createElement + textContent for title/message/cta');
+});
+
+// FE-MED#5 — CSRF helper covers PATCH
+test('FE-MED#5: CSRF helper includes PATCH in the mutation method list', () => {
+    assert(/\['POST',\s*'PUT',\s*'DELETE',\s*'PATCH'\]/.test(CSRF_SRC),
+        'CSRF helper must include PATCH alongside POST/PUT/DELETE');
+});
+
+// Sec-M5 — split OTP limiters
+test('Sec-M5: payment.routes splits otpVerifyLimiter + otpResendLimiter', () => {
+    assert(/const otpVerifyLimiter\s*=\s*rateLimit/.test(PAY_R66),
+        'must declare otpVerifyLimiter');
+    assert(/const otpResendLimiter\s*=\s*rateLimit/.test(PAY_R66),
+        'must declare otpResendLimiter');
+    // verify endpoint uses verify limiter
+    assert(/router\.post\(\s*['"]\/withdraw\/verify-otp['"]\s*,\s*authenticate\s*,\s*otpVerifyLimiter/.test(PAY_R66),
+        'verify-otp must use otpVerifyLimiter');
+    // resend endpoint uses resend limiter
+    assert(/router\.post\(\s*['"]\/withdraw\/:id\/resend-otp['"]\s*,\s*authenticate\s*,\s*otpResendLimiter/.test(PAY_R66),
+        'resend-otp must use otpResendLimiter');
+});
+
+// Sec-M6 — leaky inner Maps removed
+test('Sec-M6: leaky _*Attempts Maps removed from auth.routes', () => {
+    assert(!/_forgotPasswordAttempts\s*=\s*new Map/.test(AUTH_R66),
+        '_forgotPasswordAttempts Map must be deleted');
+    assert(!/_resetPwAttempts\s*=\s*new Map/.test(AUTH_R66),
+        '_resetPwAttempts Map must be deleted');
+    assert(!/_verifyEmailAttempts\s*=\s*new Map/.test(AUTH_R66),
+        '_verifyEmailAttempts Map must be deleted');
+    assert(!/_resendVerifyAttempts\s*=\s*new Map/.test(AUTH_R66),
+        '_resendVerifyAttempts Map must be deleted');
+    // No setInterval(map.clear) leftovers
+    assert(!/setInterval\(function\(\)\s*\{\s*_forgotPasswordAttempts\.clear/.test(AUTH_R66),
+        'leaky setInterval(_forgotPasswordAttempts.clear) must be deleted');
+});
+
+test('Sec-M6: verify-email + resend-verification have proper express-rate-limit at app level', () => {
+    assert(/const emailVerifyLimiter\s*=\s*rateLimit/.test(INDEX_R66),
+        'must declare emailVerifyLimiter');
+    assert(/const emailResendLimiter\s*=\s*rateLimit/.test(INDEX_R66),
+        'must declare emailResendLimiter');
+    assert(/app\.use\('\/api\/auth\/verify-email',\s*emailVerifyLimiter\)/.test(INDEX_R66),
+        '/api/auth/verify-email must use emailVerifyLimiter');
+    assert(/app\.use\('\/api\/auth\/resend-verification',\s*emailResendLimiter\)/.test(INDEX_R66),
+        '/api/auth/resend-verification must use emailResendLimiter');
 });
 
 // ══════════════════════════════════════════════════════════════════════

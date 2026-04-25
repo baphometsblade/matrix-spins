@@ -130,6 +130,23 @@ const authLimiter = rateLimit({
 app.use('/api/auth/register', authLimiter);
 app.use('/api/auth/login', authLimiter);
 
+// ROUND 66: Email-token endpoints get proper express-rate-limit middleware
+// (sliding window) instead of the per-process leaky Map.clear() pattern
+// that was inside auth.routes.js. Same per-IP budget, real protection
+// against tick-boundary bursts.
+const emailVerifyLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000,
+    max: 10,
+    message: { error: 'Too many verification attempts. Try again later.' },
+});
+const emailResendLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000,
+    max: 3,
+    message: { error: 'Too many resend requests. Please try again later.' },
+});
+app.use('/api/auth/verify-email', emailVerifyLimiter);
+app.use('/api/auth/resend-verification', emailResendLimiter);
+
 // Per-user auth limit: 20 requests per minute per authenticated user
 const userAuthLimit = userRateLimit({ maxRequests: 20, windowMs: 60000 });
 app.use('/api/auth/', userAuthLimit);
