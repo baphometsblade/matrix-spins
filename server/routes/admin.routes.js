@@ -743,7 +743,15 @@ router.post('/withdrawals/:id/deny', async (req, res) => {
  * username so ops can scan for anomalies (e.g. a user hitting the 500×
  * jackpot multiple times in a row, an unexpected spike in volume).
  *
- * Filters: ?user_id=<n> to scope to one user, ?limit=<n> capped at 500.
+ * Filters: any combination of
+ *   ?user_id=<n>            scope to one user
+ *   ?username=<s>           scope by exact username (case-insensitive)
+ *   ?round_id=<n>           jump to one round
+ *   ?server_seed_hash=<h>   find the round bound to a specific commit
+ *                           (dispute investigation: a user emails a
+ *                           screenshot, ops pastes the hash here)
+ *   ?limit=<n>              capped at 500.
+ *
  * Revealed seeds are included by design — an operator reviewing a
  * dispute can plug (server_seed, client_seed, nonce) into the
  * /verify-round.html page to confirm the outcome matches what we
@@ -752,15 +760,48 @@ router.post('/withdrawals/:id/deny', async (req, res) => {
 router.get('/slot-rounds', async (req, res) => {
     try {
         const limit = Math.min(Math.max(Number(req.query.limit) || 100, 1), 500);
+
+        const where = [];
+        const params = [];
+
         const userId = req.query.user_id ? Number(req.query.user_id) : null;
+        if (Number.isFinite(userId) && userId > 0) {
+            where.push('r.user_id = ?');
+            params.push(userId);
+        }
+
+        const username = (req.query.username || '').toString().trim();
+        if (username) {
+            where.push('lower(u.username) = lower(?)');
+            params.push(username);
+        }
+
+        const roundId = req.query.round_id ? Number(req.query.round_id) : null;
+        if (Number.isFinite(roundId) && roundId > 0) {
+            where.push('r.id = ?');
+            params.push(roundId);
+        }
+
+        const seedHash = (req.query.server_seed_hash || '').toString().trim().toLowerCase();
+        if (seedHash) {
+            // Strict format gate so a typo'd hash doesn't silently scan
+            // every row. Real hashes from the engine are 64 hex chars.
+            if (!/^[0-9a-f]{64}$/.test(seedHash)) {
+                return res.status(400).json({ error: 'server_seed_hash must be 64 hex characters.' });
+            }
+            where.push('r.server_seed_hash = ?');
+            params.push(seedHash);
+        }
+
         const sql =
             'SELECT r.id, r.user_id, u.username, r.game_id, r.bet_cents, r.win_cents, ' +
             'r.balance_after_cents, r.server_seed, r.server_seed_hash, r.client_seed, ' +
             'r.nonce, r.outcome_json, r.created_at ' +
             'FROM slot_rounds r LEFT JOIN users u ON u.id = r.user_id ' +
-            (userId ? 'WHERE r.user_id = ? ' : '') +
+            (where.length ? 'WHERE ' + where.join(' AND ') + ' ' : '') +
             'ORDER BY r.id DESC LIMIT ?';
-        const params = userId ? [userId, limit] : [limit];
+        params.push(limit);
+
         const rows = await db.all(sql, params);
         res.json({
             rounds: rows.map(r => {

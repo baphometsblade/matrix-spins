@@ -133,12 +133,17 @@
         <th>Game</th><th>Spins</th><th>Players</th><th>Wagered</th><th>Won</th><th>House net</th><th>Theo RTP</th><th>Empirical RTP</th><th>Drift</th><th>Window</th>
     </tr></thead><tbody><tr><td colspan="10" style="color:#666;padding:18px;text-align:center">— loading —</td></tr></tbody></table>
 
-    <h2 style="display:flex;align-items:center;gap:12px">Recent slot rounds
-        <button class="row-actions-inline" id="btn-load-rounds" style="margin-left:auto;padding:5px 10px;font-size:11px;background:rgba(255,255,255,.08);color:#e0e0e0;border:1px solid #333;border-radius:4px;cursor:pointer">Load recent</button>
-    </h2>
+    <h2 style="display:flex;align-items:center;gap:12px">Recent slot rounds</h2>
+    <div id="rounds-filter" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px;align-items:center;font-size:11px;">
+        <input id="f-username" placeholder="username" style="padding:5px 8px;font-size:11px;background:#0b0e14;color:#e0e0e0;border:1px solid #2a2f3a;border-radius:4px;width:140px;">
+        <input id="f-round-id" placeholder="round id" type="number" min="1" style="padding:5px 8px;font-size:11px;background:#0b0e14;color:#e0e0e0;border:1px solid #2a2f3a;border-radius:4px;width:100px;">
+        <input id="f-seed-hash" placeholder="server_seed_hash (64 hex)" style="padding:5px 8px;font-size:11px;background:#0b0e14;color:#e0e0e0;border:1px solid #2a2f3a;border-radius:4px;flex:1;min-width:240px;font-family:ui-monospace,Menlo,monospace;">
+        <button class="row-actions-inline" id="btn-load-rounds" style="padding:5px 10px;font-size:11px;background:rgba(255,255,255,.08);color:#e0e0e0;border:1px solid #333;border-radius:4px;cursor:pointer">Search / load recent</button>
+        <button class="row-actions-inline" id="btn-clear-rounds-filter" style="padding:5px 10px;font-size:11px;background:transparent;color:#9aa1ad;border:1px solid #2a2f3a;border-radius:4px;cursor:pointer">Clear</button>
+    </div>
     <table id="tbl-rounds"><thead><tr>
         <th>ID</th><th>User</th><th>Game</th><th>Bet</th><th>Win</th><th>Balance after</th><th>Nonce</th><th>When</th><th></th>
-    </tr></thead><tbody><tr><td colspan="9" style="color:#666;padding:18px;text-align:center">— click Load recent —</td></tr></tbody></table>
+    </tr></thead><tbody><tr><td colspan="9" style="color:#666;padding:18px;text-align:center">— enter a filter or click Search —</td></tr></tbody></table>
 
     <h2 style="display:flex;align-items:center;gap:12px">Stripe webhook events
         <button class="row-actions-inline" id="btn-load-events" style="margin-left:auto;padding:5px 10px;font-size:11px;background:rgba(255,255,255,.08);color:#e0e0e0;border:1px solid #333;border-radius:4px;cursor:pointer">Load recent</button>
@@ -602,17 +607,25 @@
     document.getElementById('btn-load-analytics').addEventListener('click', loadSlotAnalytics);
     document.getElementById('analytics-window').addEventListener('change', loadSlotAnalytics);
 
-    // Load recent slot rounds across all users.
-    document.getElementById('btn-load-rounds').addEventListener('click', async function () {
-        const btn = this;
+    // Load slot rounds — honors the three filter inputs above the
+    // table. Empty filters means "most recent 100" (the original
+    // behavior); any non-empty filter is appended as a query param.
+    async function loadSlotRounds() {
+        const btn = document.getElementById('btn-load-rounds');
         btn.disabled = true; btn.textContent = 'Loading…';
         try {
-            const data = await api('GET', '/api/admin/slot-rounds?limit=100');
+            const params = new URLSearchParams({ limit: '100' });
+            const u = (document.getElementById('f-username').value || '').trim();
+            const r = (document.getElementById('f-round-id').value || '').trim();
+            const h = (document.getElementById('f-seed-hash').value || '').trim();
+            if (u) params.set('username', u);
+            if (r) params.set('round_id', r);
+            if (h) params.set('server_seed_hash', h);
+            const data = await api('GET', '/api/admin/slot-rounds?' + params.toString());
             const tbody = document.querySelector('#tbl-rounds tbody');
             tbody.innerHTML = data.rounds.length === 0
-                ? '<tr><td colspan="9" style="color:#666;padding:18px;text-align:center">— no rounds yet —</td></tr>'
+                ? '<tr><td colspan="9" style="color:#666;padding:18px;text-align:center">— no matching rounds —</td></tr>'
                 : data.rounds.map(r => {
-                    const net = r.win_cents - r.bet_cents;
                     const verifyUrl = '/verify-round.html?round=' + r.id;
                     return '<tr>' +
                         '<td class="mono">#' + r.id + '</td>' +
@@ -631,8 +644,21 @@
         } catch (e) {
             alert('Failed to load slot rounds: ' + e.message);
         } finally {
-            btn.disabled = false; btn.textContent = 'Reload';
+            btn.disabled = false; btn.textContent = 'Search / load recent';
         }
+    }
+    document.getElementById('btn-load-rounds').addEventListener('click', loadSlotRounds);
+    document.getElementById('btn-clear-rounds-filter').addEventListener('click', function () {
+        document.getElementById('f-username').value = '';
+        document.getElementById('f-round-id').value = '';
+        document.getElementById('f-seed-hash').value = '';
+        loadSlotRounds();
+    });
+    // Submit on Enter inside any of the three inputs.
+    ['f-username', 'f-round-id', 'f-seed-hash'].forEach(function (id) {
+        document.getElementById(id).addEventListener('keydown', function (e) {
+            if (e.key === 'Enter') { e.preventDefault(); loadSlotRounds(); }
+        });
     });
 
     // Load recent Stripe webhook events into the events table.

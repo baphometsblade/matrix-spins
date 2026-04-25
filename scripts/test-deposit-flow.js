@@ -1668,7 +1668,48 @@ async function main() {
         const filtered = await http('GET', '/api/admin/slot-rounds?user_id=' + r0.user_id + '&limit=3', { token: adminToken });
         assert.strictEqual(filtered.status, 200);
         assert.ok(filtered.body.rounds.every(r => r.user_id === r0.user_id));
-        console.log('[test] admin /api/admin/slot-rounds: admin sees joined-user rows with seeds; non-admin 403; user_id filter scopes correctly');
+
+        // Search filters: username, round_id, server_seed_hash. Pick a
+        // round we already know about and confirm each filter narrows
+        // to it. Combinations AND together.
+        const someRound = adminRounds.body.rounds[0];
+        // username (case-insensitive). The joined username may be null
+        // for rounds whose user was hard-deleted; pick one that still
+        // has a username.
+        const namedRound = adminRounds.body.rounds.find(r => r.username);
+        if (namedRound) {
+            const byUser = await http('GET', '/api/admin/slot-rounds?username=' + encodeURIComponent(namedRound.username.toUpperCase()), { token: adminToken });
+            assert.strictEqual(byUser.status, 200);
+            assert.ok(byUser.body.rounds.length > 0);
+            assert.ok(byUser.body.rounds.every(r => r.username && r.username.toLowerCase() === namedRound.username.toLowerCase()));
+        }
+        // round_id
+        const byId = await http('GET', '/api/admin/slot-rounds?round_id=' + someRound.id, { token: adminToken });
+        assert.strictEqual(byId.status, 200);
+        assert.strictEqual(byId.body.rounds.length, 1);
+        assert.strictEqual(byId.body.rounds[0].id, someRound.id);
+        // server_seed_hash (the engine produces 64-hex hashes; rounds
+        // seeded directly with stub 'y' won't match any real hash).
+        const realHashRound = adminRounds.body.rounds.find(r => /^[0-9a-f]{64}$/.test(String(r.server_seed_hash || '')));
+        if (realHashRound) {
+            const byHash = await http('GET', '/api/admin/slot-rounds?server_seed_hash=' + realHashRound.server_seed_hash, { token: adminToken });
+            assert.strictEqual(byHash.status, 200);
+            assert.ok(byHash.body.rounds.length > 0);
+            assert.ok(byHash.body.rounds.every(r => r.server_seed_hash === realHashRound.server_seed_hash));
+        }
+        // Bad server_seed_hash (not 64 hex) → 400.
+        const badHash = await http('GET', '/api/admin/slot-rounds?server_seed_hash=not-a-hash', { token: adminToken });
+        assert.strictEqual(badHash.status, 400);
+        // Combined filters AND together.
+        const combined = await http('GET', '/api/admin/slot-rounds?round_id=' + someRound.id + '&user_id=' + someRound.user_id, { token: adminToken });
+        assert.strictEqual(combined.status, 200);
+        assert.strictEqual(combined.body.rounds.length, 1);
+        // Combined filters that don't co-exist → 0 rows.
+        const empty = await http('GET', '/api/admin/slot-rounds?round_id=' + someRound.id + '&user_id=999999', { token: adminToken });
+        assert.strictEqual(empty.status, 200);
+        assert.strictEqual(empty.body.rounds.length, 0);
+
+        console.log('[test] admin /api/admin/slot-rounds: admin sees joined rows; non-admin 403; user_id/username/round_id/server_seed_hash filters work; bad hash 400; combined ANDs');
     }
 
     // ═══ Slot-engine kill switch ════════════════════════════════════════════
