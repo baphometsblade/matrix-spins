@@ -93,6 +93,7 @@
     <button class="tab" data-tab="withdrawals">Withdrawals</button>
     <button class="tab" data-tab="slots">Slots</button>
     <button class="tab" data-tab="receipts">Receipt NFTs</button>
+    <button class="tab" data-tab="bonus">Bonus codes</button>
     <button class="tab" data-tab="activity">Activity</button>
 </div>
 
@@ -242,6 +243,19 @@
     <div id="nft-grid" class="nft-grid"></div>
 </section>
 
+<section id="bonus">
+    <form class="card" onsubmit="event.preventDefault();redeemPromo()">
+        <div class="label" style="margin-bottom:8px">Redeem a bonus code</div>
+        <p style="font-size:13px;color:#8a8a8a">Codes are issued by operators and credit your balance instantly. Each code is single-use per account; bad codes return a generic error so they can't be enumerated.</p>
+        <div class="row"><label class="inline" for="pr-code">Code</label><input type="text" id="pr-code" maxlength="32" autocomplete="off" placeholder="e.g. WELCOME-25" style="text-transform:uppercase"></div>
+        <button class="primary" type="submit">Redeem</button>
+        <div class="msg" id="pr-msg"></div>
+    </form>
+    <table id="tbl-redemptions"><thead><tr>
+        <th>Code</th><th>Credited</th><th>When</th>
+    </tr></thead><tbody><tr><td colspan="3" style="text-align:center;color:#666">— none yet —</td></tr></tbody></table>
+</section>
+
 <section id="activity">
     <table id="tbl-activity"><thead><tr>
         <th>Event</th><th>Outcome</th><th>IP</th><th>Device</th><th>When</th>
@@ -292,6 +306,10 @@
             document.querySelectorAll('section').forEach(function (s) { s.classList.remove('active'); });
             t.classList.add('active');
             document.getElementById(t.dataset.tab).classList.add('active');
+            // Lazy-load tab data the first time a tab is opened.
+            if (t.dataset.tab === 'bonus' && typeof window.loadRedemptions === 'function') {
+                window.loadRedemptions();
+            }
         });
     });
 
@@ -665,6 +683,49 @@
             await loadLimits();
         } catch (e) { msg.className = 'msg err'; msg.textContent = e.message; }
     };
+
+    window.redeemPromo = async function () {
+        var msg = document.getElementById('pr-msg');
+        msg.className = 'msg'; msg.textContent = '';
+        var input = document.getElementById('pr-code');
+        var code = String(input.value || '').trim().toUpperCase();
+        if (!code) { msg.className = 'msg err'; msg.textContent = 'Enter a code first.'; return; }
+        try {
+            var res = await api('POST', '/api/promo/redeem', { code: code });
+            msg.className = 'msg ok';
+            msg.textContent = (res.message || 'Redeemed.') + ' New balance: $' + ((res.balance_after_cents || 0) / 100).toFixed(2);
+            input.value = '';
+            // Refresh the overview balance + the redemptions list.
+            try { await loadOverview(); } catch (e) { /* tab not loaded yet */ }
+            await loadRedemptions();
+        } catch (e) {
+            msg.className = 'msg err';
+            msg.textContent = e.message || 'Redemption failed.';
+        }
+    };
+
+    async function loadRedemptions() {
+        var tbody = document.querySelector('#tbl-redemptions tbody');
+        try {
+            var data = await api('GET', '/api/promo/me');
+            var rows = (data && data.redemptions) || [];
+            if (!rows.length) {
+                tbody.innerHTML = '<tr><td colspan="3" style="text-align:center;color:#666">— none yet —</td></tr>';
+                return;
+            }
+            tbody.innerHTML = rows.map(function (r) {
+                var ts = r.redeemed_at ? String(r.redeemed_at).replace('T', ' ').slice(0, 19) : '';
+                return '<tr>' +
+                    '<td><span class="mono">' + esc(r.code) + '</span></td>' +
+                    '<td>+' + money((Number(r.value_cents) || 0) / 100) + '</td>' +
+                    '<td>' + esc(ts) + '</td>' +
+                    '</tr>';
+            }).join('');
+        } catch (e) {
+            tbody.innerHTML = '<tr><td colspan="3" style="text-align:center;color:#ff9f9f">' + esc(e.message || 'Failed to load') + '</td></tr>';
+        }
+    }
+    window.loadRedemptions = loadRedemptions;
 
     window.downloadMyExport = async function () {
         const msg = document.getElementById('export-msg');

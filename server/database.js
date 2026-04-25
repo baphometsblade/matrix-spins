@@ -463,6 +463,44 @@ async function migrate() {
     `);
     await driver.exec(`CREATE INDEX IF NOT EXISTS idx_withdrawals_user ON withdrawals (user_id, id DESC);`);
     await driver.exec(`CREATE INDEX IF NOT EXISTS idx_withdrawals_status ON withdrawals (status);`);
+
+    // Promo / bonus codes. Operators issue codes (one-time-per-user)
+    // that credit the user's balance on redemption. `redemption_count`
+    // is incremented atomically via a conditional UPDATE; the
+    // UNIQUE(code_id, user_id) on promo_redemptions blocks the same
+    // user redeeming twice. Both gates run inside the redeem service
+    // and roll back balance state on failure.
+    //
+    //   max_redemptions IS NULL  → unlimited (subject to per-user UNIQUE)
+    //   expires_at      IS NULL  → never expires
+    //   active = false           → operator-disabled, locks new redemptions
+    await driver.exec(`
+        CREATE TABLE IF NOT EXISTS promo_codes (
+            id ${T.pk},
+            code TEXT UNIQUE NOT NULL,
+            value_cents ${driver.kind === 'pg' ? 'BIGINT' : 'INTEGER'} NOT NULL,
+            max_redemptions ${driver.kind === 'pg' ? 'INTEGER' : 'INTEGER'},
+            redemption_count ${driver.kind === 'pg' ? 'INTEGER' : 'INTEGER'} NOT NULL DEFAULT 0,
+            expires_at ${driver.kind === 'pg' ? 'TIMESTAMPTZ' : 'TEXT'},
+            active ${T.bool} NOT NULL DEFAULT ${driver.kind === 'pg' ? 'true' : '1'},
+            note TEXT,
+            created_at ${T.ts},
+            created_by ${driver.kind === 'pg' ? 'INTEGER' : 'INTEGER'},
+            created_by_username TEXT
+        );
+    `);
+    await driver.exec(`
+        CREATE TABLE IF NOT EXISTS promo_redemptions (
+            id ${T.pk},
+            code_id ${driver.kind === 'pg' ? 'INTEGER' : 'INTEGER'} NOT NULL,
+            user_id ${driver.kind === 'pg' ? 'INTEGER' : 'INTEGER'} NOT NULL,
+            value_cents ${driver.kind === 'pg' ? 'BIGINT' : 'INTEGER'} NOT NULL,
+            redeemed_at ${T.ts},
+            UNIQUE (code_id, user_id)
+        );
+    `);
+    await driver.exec(`CREATE INDEX IF NOT EXISTS idx_promo_redemptions_user ON promo_redemptions (user_id, id DESC);`);
+    await driver.exec(`CREATE INDEX IF NOT EXISTS idx_promo_redemptions_code ON promo_redemptions (code_id);`);
 }
 
 async function initDatabase() {

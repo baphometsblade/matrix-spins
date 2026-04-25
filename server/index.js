@@ -173,6 +173,7 @@ app.use('/api/nfts', require('./routes/nft.routes'));
 app.use('/api/user', require('./routes/user.routes'));
 app.use('/api/slot', require('./routes/slot.routes'));
 app.use('/api/withdrawal', require('./routes/withdrawal.routes').router);
+app.use('/api/promo', require('./routes/promo.routes'));
 app.use('/api/admin', require('./routes/admin.routes'));
 
 /* ─── 404 for unknown API routes ─── */

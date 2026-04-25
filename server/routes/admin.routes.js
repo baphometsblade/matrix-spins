@@ -1016,4 +1016,67 @@ router.get('/slot-analytics', async (req, res) => {
     }
 });
 
+// ─── Promo / bonus codes ────────────────────────────────────────────
+//
+// Operator surface: list/create/deactivate codes. Redemption itself
+// happens at /api/promo/redeem (user-facing, a separate router).
+// All endpoints here pass through the file-level admin auth gate.
+const promo = require('../services/promo.service');
+
+router.get('/promo-codes', async (_req, res) => {
+    try {
+        const codes = await promo.listCodes();
+        res.json({ codes });
+    } catch (err) {
+        console.error('[admin/promo-codes:list]', err);
+        res.status(500).json({ error: 'Failed to load codes.' });
+    }
+});
+
+router.post('/promo-codes', async (req, res) => {
+    try {
+        const { code, value_cents, max_redemptions, expires_at, note } = req.body || {};
+        const created = await promo.createCode({
+            code, value_cents, max_redemptions, expires_at, note,
+            created_by: req.user.id,
+            created_by_username: req.user.username || null,
+        });
+        res.status(201).json({ code: created });
+    } catch (err) {
+        const status = err.status || 500;
+        if (status >= 500) console.error('[admin/promo-codes:create]', err);
+        res.status(status).json({ error: err.message || 'Failed to create code.', code: err.code });
+    }
+});
+
+router.delete('/promo-codes/:id', async (req, res) => {
+    try {
+        const updated = await promo.deactivateCode(req.params.id);
+        res.json({ code: updated });
+    } catch (err) {
+        const status = err.status || 500;
+        if (status >= 500) console.error('[admin/promo-codes:deactivate]', err);
+        res.status(status).json({ error: err.message || 'Failed to deactivate code.' });
+    }
+});
+
+router.get('/promo-codes/:id/redemptions', async (req, res) => {
+    try {
+        const id = Number(req.params.id);
+        if (!Number.isInteger(id) || id < 1) return res.status(400).json({ error: 'Invalid id.' });
+        const rows = await db.all(
+            `SELECT pr.id, pr.user_id, u.username, pr.value_cents, pr.redeemed_at
+               FROM promo_redemptions pr LEFT JOIN users u ON u.id = pr.user_id
+              WHERE pr.code_id = ?
+              ORDER BY pr.id DESC
+              LIMIT 500`,
+            [id]
+        );
+        res.json({ redemptions: rows });
+    } catch (err) {
+        console.error('[admin/promo-codes:redemptions]', err);
+        res.status(500).json({ error: 'Failed to load redemptions.' });
+    }
+});
+
 module.exports = router;

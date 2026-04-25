@@ -2488,6 +2488,213 @@ async function main() {
         console.log('[test] csv injection: formula-leading client_seed gets a leading single quote in the CSV; benign cells unchanged');
     }
 
+    // ═══ Promo / bonus codes ════════════════════════════════════════════════
+    // Operator-issued codes that credit a user's balance. Race-safe via
+    // a CAS UPDATE on redemption_count + a per-user UNIQUE constraint.
+    {
+        const { signToken } = require('../server/middleware/auth');
+        async function seedPromoUser(name) {
+            const hash = await require('bcryptjs').hash('Str0ngP@ss!!', 10);
+            await db.run(
+                'INSERT INTO users (username, email, password_hash, date_of_birth, email_verified, balance_cents) VALUES (?, ?, ?, ?, 1, ?)',
+                [name, name + '@example.com', hash, '1990-01-01', 0]
+            );
+            const row = await db.get('SELECT id, username, is_admin, token_version FROM users WHERE username = ?', [name]);
+            return { id: row.id, username: row.username, token: signToken(row) };
+        }
+
+        const adminCsrf = (await http('GET', '/api/csrf-token', { token: adminToken })).body.csrfToken;
+
+        // Non-admin trying to create a code → 403.
+        const nonAdmin = await seedPromoUser('promo_blocker_' + Date.now());
+        const blockerCsrf = (await http('GET', '/api/csrf-token', { token: nonAdmin.token })).body.csrfToken;
+        const blocked = await http('POST', '/api/admin/promo-codes', {
+            token: nonAdmin.token, csrf: blockerCsrf,
+            body: { code: 'NOPE-' + Date.now(), value_cents: 100 },
+        });
+        assert.strictEqual(blocked.status, 403, 'non-admin must be 403; got ' + blocked.status);
+
+        // Admin: validation rejections.
+        const badCases = [
+            { name: 'bad chars',  body: { code: 'has space', value_cents: 100 } },
+            { name: 'too short',  body: { code: 'AB',        value_cents: 100 } },
+            { name: 'zero value', body: { code: 'ZERO-' + Date.now(), value_cents: 0 } },
+            { name: 'past expiry',body: { code: 'PAST-' + Date.now(), value_cents: 100, expires_at: '2020-01-01T00:00:00Z' } },
+            { name: 'bad max',    body: { code: 'MAX0-' + Date.now(), value_cents: 100, max_redemptions: 0 } },
+        ];
+        for (const tc of badCases) {
+            const r = await http('POST', '/api/admin/promo-codes', {
+                token: adminToken, csrf: adminCsrf, body: tc.body,
+            });
+            assert.strictEqual(r.status, 400, 'expected 400 for ' + tc.name + '; got ' + r.status + ': ' + r.raw);
+        }
+
+        // Admin: create a happy-path code (one-shot, $5).
+        const codeStr = 'WELCOME-' + Date.now();
+        const created = await http('POST', '/api/admin/promo-codes', {
+            token: adminToken, csrf: adminCsrf,
+            body: { code: codeStr, value_cents: 500, max_redemptions: 1, note: 'test' },
+        });
+        assert.strictEqual(created.status, 201, 'create failed: ' + created.raw);
+        assert.strictEqual(created.body.code.code, codeStr.toUpperCase());
+        assert.strictEqual(Number(created.body.code.value_cents), 500);
+
+        // Duplicate creation rejected with 409.
+        const dup = await http('POST', '/api/admin/promo-codes', {
+            token: adminToken, csrf: adminCsrf,
+            body: { code: codeStr, value_cents: 500 },
+        });
+        assert.strictEqual(dup.status, 409, 'duplicate code must be 409; got ' + dup.status);
+
+        // List shows the new code with active_now=true.
+        const listed = await http('GET', '/api/admin/promo-codes', { token: adminToken });
+        assert.strictEqual(listed.status, 200);
+        const found = listed.body.codes.find(c => c.code === codeStr.toUpperCase());
+        assert.ok(found, 'created code missing from listing');
+        assert.strictEqual(found.active_now, true);
+        assert.strictEqual(Number(found.redemption_count), 0);
+
+        // ─── User redeem ─────────────────────────────────────────────
+        const ua = await seedPromoUser('promo_a_' + Date.now());
+        const uaCsrf = (await http('GET', '/api/csrf-token', { token: ua.token })).body.csrfToken;
+
+        // CSRF gate runs before auth (it's an /api-wide middleware), so an
+        // unsafe POST with no CSRF token always returns 403 regardless of auth.
+        const noCsrf = await http('POST', '/api/promo/redeem', { token: ua.token, body: { code: codeStr } });
+        assert.strictEqual(noCsrf.status, 403, 'redeem without csrf must 403; got ' + noCsrf.status);
+
+        // Auth required: with a valid anon-issued CSRF but no Bearer, the
+        // route's authenticate middleware refuses with 401.
+        const anonCsrf = (await http('GET', '/api/csrf-token')).body.csrfToken;
+        const noAuth = await http('POST', '/api/promo/redeem', { csrf: anonCsrf, body: { code: codeStr } });
+        assert.strictEqual(noAuth.status, 401, 'redeem without auth must 401; got ' + noAuth.status);
+
+        // Happy path. Lower-case input gets normalized to upper.
+        const beforeBal = await db.get('SELECT balance_cents FROM users WHERE id = ?', [ua.id]);
+        const ok1 = await http('POST', '/api/promo/redeem', {
+            token: ua.token, csrf: uaCsrf, body: { code: codeStr.toLowerCase() },
+        });
+        assert.strictEqual(ok1.status, 200, 'redeem failed: ' + ok1.raw);
+        assert.strictEqual(ok1.body.success, true);
+        assert.strictEqual(Number(ok1.body.value_cents), 500);
+        assert.strictEqual(Number(ok1.body.balance_after_cents), Number(beforeBal.balance_cents) + 500);
+        const afterBal = await db.get('SELECT balance_cents FROM users WHERE id = ?', [ua.id]);
+        assert.strictEqual(Number(afterBal.balance_cents), Number(beforeBal.balance_cents) + 500);
+
+        // Idempotent: same user, second attempt → 409 already_redeemed.
+        const dupRedeem = await http('POST', '/api/promo/redeem', {
+            token: ua.token, csrf: uaCsrf, body: { code: codeStr },
+        });
+        assert.strictEqual(dupRedeem.status, 409);
+        assert.strictEqual(dupRedeem.body.code, 'already_redeemed');
+        // Balance unchanged after the rejected double-redeem.
+        const stillBal = await db.get('SELECT balance_cents FROM users WHERE id = ?', [ua.id]);
+        assert.strictEqual(Number(stillBal.balance_cents), Number(afterBal.balance_cents));
+
+        // Cap enforced: a SECOND user trying the same max=1 code → 410.
+        const ub = await seedPromoUser('promo_b_' + Date.now());
+        const ubCsrf = (await http('GET', '/api/csrf-token', { token: ub.token })).body.csrfToken;
+        const capped = await http('POST', '/api/promo/redeem', {
+            token: ub.token, csrf: ubCsrf, body: { code: codeStr },
+        });
+        assert.strictEqual(capped.status, 410, 'max-cap reject must 410; got ' + capped.status);
+        assert.strictEqual(capped.body.code, 'code_unavailable');
+        // Crucially: count stayed at 1 (the rejection didn't consume a slot).
+        const codeAfterCap = await db.get('SELECT redemption_count FROM promo_codes WHERE code = ?', [codeStr.toUpperCase()]);
+        assert.strictEqual(Number(codeAfterCap.redemption_count), 1, 'cap-rejected attempt must not bump count');
+
+        // Unknown code returns the SAME generic 410 + same code as a
+        // capped/expired code, so a probing attacker can't distinguish.
+        const unknown = await http('POST', '/api/promo/redeem', {
+            token: ub.token, csrf: ubCsrf, body: { code: 'BOGUS-' + Date.now() },
+        });
+        assert.strictEqual(unknown.status, 410);
+        assert.strictEqual(unknown.body.code, 'code_unavailable');
+        assert.strictEqual(unknown.body.error, capped.body.error,
+            'unknown vs capped error message must match to prevent enumeration');
+
+        // Bad-format codes are 400 invalid_code (client-side mistake, not enumeration).
+        const malformed = await http('POST', '/api/promo/redeem', {
+            token: ub.token, csrf: ubCsrf, body: { code: 'has space!' },
+        });
+        assert.strictEqual(malformed.status, 400);
+        assert.strictEqual(malformed.body.code, 'invalid_code');
+
+        // Disable: admin DELETE → user attempt → 410. Balance not credited.
+        const delResp = await http('DELETE', '/api/admin/promo-codes/' + found.id, {
+            token: adminToken, csrf: adminCsrf,
+        });
+        assert.strictEqual(delResp.status, 200);
+        assert.strictEqual(delResp.body.code.active, false);
+        const ub2Bal = await db.get('SELECT balance_cents FROM users WHERE id = ?', [ub.id]);
+        const disabled = await http('POST', '/api/promo/redeem', {
+            token: ub.token, csrf: ubCsrf, body: { code: codeStr },
+        });
+        assert.strictEqual(disabled.status, 410);
+        const ub2BalAfter = await db.get('SELECT balance_cents FROM users WHERE id = ?', [ub.id]);
+        assert.strictEqual(Number(ub2Bal.balance_cents), Number(ub2BalAfter.balance_cents),
+            'disabled-code reject must not credit balance');
+
+        // Expired code → 410. We seed a code with expires_at in the past
+        // (bypassing validation since the validation is on createCode);
+        // matches the path where a timer simply elapsed since creation.
+        await db.run(
+            `INSERT INTO promo_codes (code, value_cents, max_redemptions, expires_at, active, created_by)
+             VALUES (?, ?, NULL, ?, ${db.kind === 'pg' ? 'true' : '1'}, ?)`,
+            ['EXPIRED-' + Date.now(), 100, '2020-01-01T00:00:00Z', adminLogin.body.user.id]
+        );
+        const expiredCode = await db.get(`SELECT code FROM promo_codes WHERE code LIKE 'EXPIRED-%' ORDER BY id DESC LIMIT 1`);
+        const expiredResp = await http('POST', '/api/promo/redeem', {
+            token: ub.token, csrf: ubCsrf, body: { code: expiredCode.code },
+        });
+        assert.strictEqual(expiredResp.status, 410);
+
+        // Multi-redemption code: max=3, three different users; the 4th
+        // user is told the code is unavailable; per-user UNIQUE still
+        // blocks any of the three from redeeming twice.
+        const multiCode = 'MULTI-' + Date.now();
+        const multiCreate = await http('POST', '/api/admin/promo-codes', {
+            token: adminToken, csrf: adminCsrf,
+            body: { code: multiCode, value_cents: 100, max_redemptions: 3 },
+        });
+        assert.strictEqual(multiCreate.status, 201);
+        const users = [];
+        for (let i = 0; i < 4; i++) {
+            const u = await seedPromoUser('multi_' + i + '_' + Date.now());
+            const c = (await http('GET', '/api/csrf-token', { token: u.token })).body.csrfToken;
+            users.push({ ...u, csrf: c });
+        }
+        const r1 = await http('POST', '/api/promo/redeem', { token: users[0].token, csrf: users[0].csrf, body: { code: multiCode } });
+        const r2 = await http('POST', '/api/promo/redeem', { token: users[1].token, csrf: users[1].csrf, body: { code: multiCode } });
+        const r3 = await http('POST', '/api/promo/redeem', { token: users[2].token, csrf: users[2].csrf, body: { code: multiCode } });
+        const r4 = await http('POST', '/api/promo/redeem', { token: users[3].token, csrf: users[3].csrf, body: { code: multiCode } });
+        assert.strictEqual(r1.status, 200);
+        assert.strictEqual(r2.status, 200);
+        assert.strictEqual(r3.status, 200);
+        assert.strictEqual(r4.status, 410, '4th redemption must be capped; got ' + r4.status);
+        // u1 retry → 409.
+        const r1Dup = await http('POST', '/api/promo/redeem', { token: users[0].token, csrf: users[0].csrf, body: { code: multiCode } });
+        assert.strictEqual(r1Dup.status, 409);
+
+        // /api/promo/me lists own redemptions only.
+        const meU0 = await http('GET', '/api/promo/me', { token: users[0].token });
+        assert.strictEqual(meU0.status, 200);
+        assert.ok(Array.isArray(meU0.body.redemptions));
+        assert.ok(meU0.body.redemptions.some(r => r.code === multiCode));
+        // u1's history shouldn't show u0's redemption.
+        const meU1 = await http('GET', '/api/promo/me', { token: users[1].token });
+        assert.ok(meU1.body.redemptions.every(r => Number(r.value_cents) > 0));
+        assert.strictEqual(meU1.body.redemptions.filter(r => r.code === multiCode).length, 1);
+
+        // Admin can pull per-code redemption history.
+        const codeRow = await db.get('SELECT id FROM promo_codes WHERE code = ?', [multiCode]);
+        const adminRed = await http('GET', '/api/admin/promo-codes/' + codeRow.id + '/redemptions', { token: adminToken });
+        assert.strictEqual(adminRed.status, 200);
+        assert.strictEqual(adminRed.body.redemptions.length, 3);
+
+        console.log('[test] promo codes: admin CRUD + validation; non-admin 403; redeem credits balance; idempotent per-user (409); cap-reject 410 + count not consumed; unknown code = same 410 (no enumeration); disabled & expired both 410; multi-user cap; /promo/me scoped to caller');
+    }
+
     console.log('\n✅ all deposit-flow assertions passed');
     main.server.close();
     await db.close();

@@ -145,6 +145,21 @@
         <th>ID</th><th>User</th><th>Game</th><th>Bet</th><th>Win</th><th>Balance after</th><th>Nonce</th><th>When</th><th></th>
     </tr></thead><tbody><tr><td colspan="9" style="color:#666;padding:18px;text-align:center">— enter a filter or click Search —</td></tr></tbody></table>
 
+    <h2 style="display:flex;align-items:center;gap:12px">Promo codes
+        <button class="row-actions-inline" id="btn-load-promo" style="margin-left:auto;padding:5px 10px;font-size:11px;background:rgba(255,255,255,.08);color:#e0e0e0;border:1px solid #333;border-radius:4px;cursor:pointer">Refresh</button>
+    </h2>
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr 1fr;gap:6px;align-items:end;margin-bottom:8px;font-size:11px">
+        <div><div style="color:#9aa1ad;margin-bottom:2px">Code</div><input id="pc-code" placeholder="WELCOME-25" style="width:100%;padding:5px 8px;background:#0b0e14;color:#e0e0e0;border:1px solid #2a2f3a;border-radius:4px;text-transform:uppercase"></div>
+        <div><div style="color:#9aa1ad;margin-bottom:2px">Value ($)</div><input id="pc-value" type="number" min="0.01" step="0.01" style="width:100%;padding:5px 8px;background:#0b0e14;color:#e0e0e0;border:1px solid #2a2f3a;border-radius:4px"></div>
+        <div><div style="color:#9aa1ad;margin-bottom:2px">Max redemptions</div><input id="pc-max" type="number" min="1" step="1" placeholder="unlimited" style="width:100%;padding:5px 8px;background:#0b0e14;color:#e0e0e0;border:1px solid #2a2f3a;border-radius:4px"></div>
+        <div><div style="color:#9aa1ad;margin-bottom:2px">Expires (ISO)</div><input id="pc-expires" placeholder="2026-12-31T23:59:59Z" style="width:100%;padding:5px 8px;background:#0b0e14;color:#e0e0e0;border:1px solid #2a2f3a;border-radius:4px;font-family:ui-monospace,Menlo,monospace"></div>
+        <div><button id="btn-create-promo" class="row-approve" style="width:100%">Create</button></div>
+    </div>
+    <div><input id="pc-note" placeholder="optional admin note (e.g. 'Friday newsletter')" style="width:100%;padding:5px 8px;font-size:11px;background:#0b0e14;color:#e0e0e0;border:1px solid #2a2f3a;border-radius:4px;margin-bottom:8px"></div>
+    <table id="tbl-promo"><thead><tr>
+        <th>Code</th><th>Value</th><th>Used</th><th>Cap</th><th>Expires</th><th>Status</th><th>Note</th><th>Created</th><th></th>
+    </tr></thead><tbody><tr><td colspan="9" style="color:#666;padding:18px;text-align:center">— click Refresh —</td></tr></tbody></table>
+
     <h2 style="display:flex;align-items:center;gap:12px">Stripe webhook events
         <button class="row-actions-inline" id="btn-load-events" style="margin-left:auto;padding:5px 10px;font-size:11px;background:rgba(255,255,255,.08);color:#e0e0e0;border:1px solid #333;border-radius:4px;cursor:pointer">Load recent</button>
     </h2>
@@ -662,6 +677,93 @@
     });
 
     // Load recent Stripe webhook events into the events table.
+    // Promo / bonus codes — list, create, deactivate. Uses the
+    // operator-only /api/admin/promo-codes surface; redemption itself
+    // happens at the user-facing /api/promo/redeem.
+    async function loadPromoCodes() {
+        const btn = document.getElementById('btn-load-promo');
+        if (btn) { btn.disabled = true; btn.textContent = 'Loading…'; }
+        try {
+            const data = await api('GET', '/api/admin/promo-codes');
+            const tbody = document.querySelector('#tbl-promo tbody');
+            const codes = (data && data.codes) || [];
+            tbody.innerHTML = codes.length === 0
+                ? '<tr><td colspan="9" style="color:#666;padding:18px;text-align:center">— no codes yet —</td></tr>'
+                : codes.map(c => {
+                    const used = Number(c.redemption_count) || 0;
+                    const cap  = c.max_redemptions == null ? '∞' : Number(c.max_redemptions);
+                    const exp  = c.expires_at ? String(c.expires_at).replace('T',' ').slice(0,19) : '—';
+                    const statusLabel = c.active_now ? 'active' : (c.active ? 'capped/expired' : 'disabled');
+                    const statusColor = c.active_now ? '#5fd489' : '#ff9f9f';
+                    return '<tr>' +
+                        '<td class="mono">' + esc(c.code) + '</td>' +
+                        '<td>' + money((Number(c.value_cents) || 0) / 100) + '</td>' +
+                        '<td>' + used + '</td>' +
+                        '<td>' + cap + '</td>' +
+                        '<td class="mono" style="font-size:11px">' + esc(exp) + '</td>' +
+                        '<td style="color:' + statusColor + '">' + statusLabel + '</td>' +
+                        '<td style="font-size:11px;color:#9aa1ad">' + esc(c.note || '') + '</td>' +
+                        '<td class="mono" style="font-size:11px">' + esc(String(c.created_at || '').replace('T',' ').slice(0,19)) + '</td>' +
+                        '<td>' + (c.active
+                            ? '<button class="row-deny" data-id="' + c.id + '">Disable</button>'
+                            : '<span style="color:#666">disabled</span>')
+                        + '</td>' +
+                    '</tr>';
+                }).join('');
+            tbody.querySelectorAll('.row-deny').forEach(b => {
+                b.addEventListener('click', async function () {
+                    const id = this.dataset.id;
+                    if (!confirm('Disable code #' + id + '? Existing redemptions are kept; new redemptions will fail.')) return;
+                    this.disabled = true; this.textContent = 'Disabling…';
+                    try {
+                        await api('DELETE', '/api/admin/promo-codes/' + id);
+                        loadPromoCodes();
+                    } catch (e) {
+                        alert('Disable failed: ' + e.message);
+                        this.disabled = false; this.textContent = 'Disable';
+                    }
+                });
+            });
+        } catch (e) {
+            alert('Failed to load promo codes: ' + e.message);
+        } finally {
+            if (btn) { btn.disabled = false; btn.textContent = 'Refresh'; }
+        }
+    }
+    window.loadPromoCodes = loadPromoCodes;
+    document.getElementById('btn-load-promo').addEventListener('click', loadPromoCodes);
+    document.getElementById('btn-create-promo').addEventListener('click', async function () {
+        const btn = this;
+        const code     = String(document.getElementById('pc-code').value || '').trim().toUpperCase();
+        const valueDol = Number(document.getElementById('pc-value').value);
+        const maxStr   = String(document.getElementById('pc-max').value || '').trim();
+        const expStr   = String(document.getElementById('pc-expires').value || '').trim();
+        const note     = String(document.getElementById('pc-note').value || '').trim();
+        if (!code) return alert('Code required.');
+        if (!Number.isFinite(valueDol) || valueDol <= 0) return alert('Value must be a positive number of dollars.');
+        const payload = {
+            code: code,
+            value_cents: Math.round(valueDol * 100),
+            max_redemptions: maxStr ? Number(maxStr) : null,
+            expires_at: expStr || null,
+            note: note || null,
+        };
+        btn.disabled = true; btn.textContent = 'Creating…';
+        try {
+            await api('POST', '/api/admin/promo-codes', payload);
+            document.getElementById('pc-code').value = '';
+            document.getElementById('pc-value').value = '';
+            document.getElementById('pc-max').value = '';
+            document.getElementById('pc-expires').value = '';
+            document.getElementById('pc-note').value = '';
+            loadPromoCodes();
+        } catch (e) {
+            alert('Create failed: ' + e.message);
+        } finally {
+            btn.disabled = false; btn.textContent = 'Create';
+        }
+    });
+
     document.getElementById('btn-load-events').addEventListener('click', async function () {
         const btn = this;
         btn.disabled = true; btn.textContent = 'Loading…';
