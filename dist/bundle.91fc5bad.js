@@ -1,5 +1,5 @@
 /* Royal Slots Casino - Bundled JavaScript */
-/* Generated: 2026-04-25T08:29:17.641Z */
+/* Generated: 2026-04-25T12:59:20.907Z */
 
 
 /* â”€â”€â”€ shared/game-definitions.js (2/56) â”€â”€â”€ */
@@ -40954,7 +40954,7 @@ window._logAudit658 = _logAudit658;
                         'background:linear-gradient(135deg,#c0392b 0%,#f1c40f 100%);color:#111;font-weight:900;font-size:16px;letter-spacing:1px;cursor:pointer;">SPIN</button>' +
                 '</div>' +
 
-                '<div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;font-size:12px;color:#94a3b8;">' +
+                '<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;font-size:12px;color:#94a3b8;flex-wrap:wrap;">' +
                     '<label for="liveSlotAutoCount">Auto</label>' +
                     '<select id="liveSlotAutoCount" style="padding:6px;border-radius:6px;border:1px solid #374151;background:#0b0504;color:#fff;font-weight:700;">' +
                         '<option value="0">Off</option>' +
@@ -40967,6 +40967,14 @@ window._logAudit658 = _logAudit658;
                     '<input id="liveSlotAutoStop" type="number" step="0.10" min="0" value="0" ' +
                         'style="width:70px;padding:6px;border-radius:6px;border:1px solid #374151;background:#0b0504;color:#fff;font-weight:700;">' +
                     '<button id="liveSlotAutoCancel" style="margin-left:auto;padding:6px 10px;border-radius:5px;border:1px solid #374151;background:transparent;color:#cbd5e1;font-size:11px;cursor:pointer;display:none;">Stop</button>' +
+                '</div>' +
+                '<div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;font-size:12px;color:#94a3b8;flex-wrap:wrap;">' +
+                    '<label for="liveSlotAutoLoss" title="Auto stops once net session loss reaches this much">stop on session loss ≥ $</label>' +
+                    '<input id="liveSlotAutoLoss" type="number" step="0.10" min="0" value="0" ' +
+                        'style="width:70px;padding:6px;border-radius:6px;border:1px solid #374151;background:#0b0504;color:#fff;font-weight:700;">' +
+                    '<label for="liveSlotAutoFloor" title="Auto stops if balance falls below this">stop if balance &lt; $</label>' +
+                    '<input id="liveSlotAutoFloor" type="number" step="0.10" min="0" value="0" ' +
+                        'style="width:70px;padding:6px;border-radius:6px;border:1px solid #374151;background:#0b0504;color:#fff;font-weight:700;">' +
                 '</div>' +
 
                 '<details style="margin-top:8px;color:#94a3b8;font-size:12px;">' +
@@ -41102,11 +41110,15 @@ window._logAudit658 = _logAudit658;
         setResult('Server seed rotated. Old seed revealed: ' + shortHash(r.body.revealed.server_seed), '#94a3b8');
     }
 
-    function autoStopThresholdCents() {
-        var input = document.getElementById('liveSlotAutoStop');
+    function readDollarsCents(id) {
+        var input = document.getElementById(id);
         var v = input ? Number(input.value) : 0;
         return Number.isFinite(v) && v > 0 ? Math.round(v * 100) : 0;
     }
+
+    function autoStopThresholdCents() { return readDollarsCents('liveSlotAutoStop'); }
+    function autoLossLimitCents()     { return readDollarsCents('liveSlotAutoLoss'); }
+    function autoBalanceFloorCents()  { return readDollarsCents('liveSlotAutoFloor'); }
 
     function autoCount() {
         var sel = document.getElementById('liveSlotAutoCount');
@@ -41117,38 +41129,52 @@ window._logAudit658 = _logAudit658;
     function setAutoUI(running) {
         var cancelBtn = document.getElementById('liveSlotAutoCancel');
         if (cancelBtn) cancelBtn.style.display = running ? '' : 'none';
-        var sel = document.getElementById('liveSlotAutoCount');
-        if (sel) sel.disabled = running;
-        var stopInput = document.getElementById('liveSlotAutoStop');
-        if (stopInput) stopInput.disabled = running;
+        ['liveSlotAutoCount', 'liveSlotAutoStop', 'liveSlotAutoLoss', 'liveSlotAutoFloor'].forEach(function (id) {
+            var el = document.getElementById(id);
+            if (el) el.disabled = running;
+        });
     }
 
     async function runAutoLoop(total) {
         state.autoCancel = false;
         setAutoUI(true);
-        var threshold = autoStopThresholdCents();
+        var bigWinCents = autoStopThresholdCents();
+        var lossLimitCents = autoLossLimitCents();
+        var floorCents = autoBalanceFloorCents();
+        var sessionLossCents = 0; // cumulative bet - win across the loop, ≥0
         var done = 0;
         var stoppedReason = null;
         for (var i = 0; i < total; i++) {
             if (state.autoCancel) { stoppedReason = 'cancelled'; break; }
-            await doSingleSpin(); // throws nothing — sets state.lastResult or surfaces an error
+            await doSingleSpin(); // sets state.lastResult or null on error
             done = i + 1;
             if (!state.lastResult) { stoppedReason = 'error'; break; }
             var win = Number(state.lastResult.win_cents || 0);
-            if (threshold > 0 && win >= threshold) { stoppedReason = 'big_win'; break; }
+            var bet = Number(state.lastResult.bet_cents || 0);
+            var bal = Number(state.lastResult.balance_cents || 0);
+            sessionLossCents += (bet - win);
+            if (sessionLossCents < 0) sessionLossCents = 0; // never negative — winning sessions don't earn headroom
+            if (bigWinCents > 0 && win >= bigWinCents) { stoppedReason = 'big_win'; break; }
+            if (lossLimitCents > 0 && sessionLossCents >= lossLimitCents) { stoppedReason = 'loss_cap'; break; }
+            if (floorCents > 0 && bal < floorCents) { stoppedReason = 'balance_floor'; break; }
             // Light pacing so the rate limit (30/10s) never trips on
             // a turbo-spin user. ~350ms gives ~3/s — well under cap.
             await new Promise(function (r) { setTimeout(r, 350); });
         }
         setAutoUI(false);
+        var spinsLabel = done + ' spin' + (done === 1 ? '' : 's');
         if (stoppedReason === 'big_win') {
-            setResult('Auto-spin stopped on a big win after ' + done + ' spin' + (done === 1 ? '' : 's') + '.', '#22c55e');
+            setResult('Auto-spin stopped on a big win after ' + spinsLabel + '.', '#22c55e');
+        } else if (stoppedReason === 'loss_cap') {
+            setResult('Auto-spin stopped — session loss cap reached after ' + spinsLabel + ' (lost ' + fmt(sessionLossCents) + ').', '#ef4444');
+        } else if (stoppedReason === 'balance_floor') {
+            setResult('Auto-spin stopped — balance dropped below your floor after ' + spinsLabel + '.', '#ef4444');
         } else if (stoppedReason === 'cancelled') {
-            setResult('Auto-spin cancelled after ' + done + ' spin' + (done === 1 ? '' : 's') + '.', '#94a3b8');
+            setResult('Auto-spin cancelled after ' + spinsLabel + '.', '#94a3b8');
         } else if (stoppedReason === 'error') {
             // setResult was already updated by doSingleSpin's error path
         } else {
-            setResult('Auto-spin done — ' + done + ' spin' + (done === 1 ? '' : 's') + ' completed.', '#94a3b8');
+            setResult('Auto-spin done — ' + spinsLabel + ' completed.', '#94a3b8');
         }
     }
 

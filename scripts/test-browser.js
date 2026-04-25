@@ -395,6 +395,53 @@ async function main() {
                     } else {
                         ok('auto-spin x10: 10 rounds settled, controls re-enabled');
                     }
+
+                    // Auto-spin session-loss cap: bet $1, cap loss at
+                    // $0.05. classic_777's RTP is 95.2% but the 7-of-a-
+                    // kind jackpot is 1/1000 — at $1 a single losing
+                    // spin already exceeds 5¢ of net loss, so the cap
+                    // must trip on (at most) the very first spin.
+                    await page.evaluate(() => {
+                        delete window.__lastSlotResult;
+                        const inp = document.getElementById('liveSlotBet');
+                        if (inp) inp.value = '1.00';
+                        document.getElementById('liveSlotAutoLoss').value = '0.05';
+                        document.getElementById('liveSlotAutoFloor').value = '0';
+                    });
+                    const beforeCap = Number((await db.get(
+                        "SELECT COUNT(*) AS n FROM slot_rounds WHERE user_id = ?", [userRow.id]
+                    )).n) || 0;
+                    await page.selectOption('#liveSlotAutoCount', '25');
+                    await page.click('#liveSlotSpin');
+                    let lossCapText = '';
+                    let after2 = beforeCap;
+                    for (let i = 0; i < 100; i++) {
+                        const row = await db.get(
+                            "SELECT COUNT(*) AS n FROM slot_rounds WHERE user_id = ?", [userRow.id]
+                        );
+                        after2 = Number(row && row.n) || 0;
+                        lossCapText = await page.evaluate(() =>
+                            (document.getElementById('liveSlotResult') || {}).textContent || ''
+                        );
+                        if (/loss cap reached/i.test(lossCapText)) break;
+                        await new Promise(r => setTimeout(r, 200));
+                    }
+                    const triggered = /loss cap reached/i.test(lossCapText);
+                    const spinsRun = after2 - beforeCap;
+                    if (!triggered) {
+                        fail('auto-spin loss cap: never triggered. Result text: ' + lossCapText.slice(0, 160));
+                    } else if (spinsRun >= 25) {
+                        fail('auto-spin loss cap: ran the full 25 (cap should stop early), got ' + spinsRun);
+                    } else {
+                        ok('auto-spin loss cap: stopped after ' + spinsRun + ' spin(s) — "' + lossCapText.slice(0, 80) + '"');
+                    }
+                    // Reset the inputs so any subsequent assertions
+                    // aren't affected.
+                    await page.evaluate(() => {
+                        document.getElementById('liveSlotAutoCount').value = '0';
+                        document.getElementById('liveSlotAutoLoss').value = '0';
+                        document.getElementById('liveSlotAutoFloor').value = '0';
+                    });
                 }
             } else {
                 fail('could not find registered user row for live-slot test');
