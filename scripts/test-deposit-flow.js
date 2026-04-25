@@ -1681,6 +1681,28 @@ async function main() {
         assert.strictEqual(zero.status, 403);
 
         console.log('[test] loss limit: cap enforced on 11th losing spin, wins relieve the gate, decreases apply, increases + unlimit rejected');
+
+        // Concurrent-spin race: with a $1 cap and zero prior loss, firing
+        // 5 spins in parallel must let exactly one through (the rest
+        // 403 loss_limit_reached). Without the per-user spin lock the
+        // pre-debit gate read used=0 in every request and all 5 raced
+        // through, blowing past the cap.
+        const raceUser = await seedUser('llrace_' + Date.now());
+        await db.run('UPDATE users SET loss_limit_daily_cents = 100, balance_cents = 1000 WHERE id = ?', [raceUser.id]);
+        const raceCsrf = (await http('GET', '/api/csrf-token', { token: raceUser.token })).body.csrfToken;
+        const concurrent = await Promise.all(
+            Array.from({ length: 5 }, () => http('POST', '/api/slot/spin', {
+                token: raceUser.token, csrf: raceCsrf,
+                body: { game_id: 'classic_777', bet_cents: 100 },
+            }))
+        );
+        const wins = concurrent.filter(r => r.status === 200);
+        const blocks = concurrent.filter(r => r.status === 403 && r.body && r.body.code === 'loss_limit_reached');
+        assert.strictEqual(wins.length, 1, 'race: exactly one spin must win, got ' + wins.length);
+        assert.strictEqual(blocks.length, 4, 'race: four spins must be blocked, got ' + blocks.length);
+        const dbRows = await db.get('SELECT COUNT(*) AS n FROM slot_rounds WHERE user_id = ?', [raceUser.id]);
+        assert.strictEqual(Number(dbRows.n), 1, 'race: exactly one round logged, got ' + dbRows.n);
+        console.log('[test] loss limit: concurrent spins are serialized — 1 wins, 4 blocked, 1 round logged');
     }
 
     console.log('\n✅ all deposit-flow assertions passed');

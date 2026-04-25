@@ -220,9 +220,65 @@ async function sumNetLossSince(userId, sinceSec) {
     return { used: Math.max(0, net), oldestAt: (row && row.oldest_at) || null };
 }
 
+/* ──────────────────────── per-user spin lock ──────────────────────── */
+
+/**
+ * Serializes spins per-user inside a single Node process.
+ *
+ * Why this exists: the loss-limit gate reads SUM(bet_cents - win_cents)
+ * over slot_rounds and compares to the user's cap. The check + the
+ * subsequent atomic balance debit + the round insert are not in one DB
+ * transaction. Without serialization, two concurrent spins from the
+ * same user can both observe used=X, both pass the gate, both debit,
+ * both insert — net loss can exceed the cap by N×bet. That's a
+ * regulator-mandated responsible-gambling control being bypassed under
+ * pipelined requests.
+ *
+ * Single-instance fix: chain each user's spin off a Promise queue.
+ * Within one process this is correct and cheap. The deploy target
+ * (Render, single instance) makes this enough today.
+ *
+ * If we ever scale to multiple app instances we need DB-side
+ * serialization too — pg_advisory_xact_lock(userId) inside a
+ * transaction is the canonical answer; sqlite's single-writer file
+ * lock already gives us cross-instance serialization for that backend.
+ * Track this as a hard prerequisite of horizontal-scale work.
+ */
+const userSpinLocks = new Map(); // userId -> Promise
+
+async function withSpinLock(userId, fn) {
+    const prev = userSpinLocks.get(userId) || Promise.resolve();
+    let release;
+    const next = new Promise((r) => { release = r; });
+    const chained = prev.then(() => next);
+    userSpinLocks.set(userId, chained);
+    try {
+        await prev;
+        return await fn();
+    } finally {
+        release();
+        // Drop the entry only if a later caller hasn't already replaced
+        // our slot — otherwise we'd leak that caller's promise off
+        // the queue and break ordering for subsequent spins.
+        if (userSpinLocks.get(userId) === chained) {
+            userSpinLocks.delete(userId);
+        }
+    }
+}
+
 /* ──────────────────────────── spin handler ────────────────────────── */
 
-async function spin({ userId, gameId, betCents, clientSeed }) {
+async function spin(args) {
+    // The spin body runs under a per-user lock so the loss-limit
+    // check-and-debit cannot race against a concurrent spin from the
+    // same user. The pause-flag check and bet validation could run
+    // outside the lock, but keeping everything inside makes the
+    // failure modes easier to reason about (errors surface from one
+    // place) and the lock is only contended on hot per-user spam.
+    return withSpinLock(args.userId, () => spinImpl(args));
+}
+
+async function spinImpl({ userId, gameId, betCents, clientSeed }) {
     // Operator kill switch. If an ops engineer flipped the slot-engine
     // paused flag (incident response, suspected exploit, maintenance
     // window), every spin refuses with 503 until the flag is cleared.
