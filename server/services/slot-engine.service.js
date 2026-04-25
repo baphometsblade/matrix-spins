@@ -376,6 +376,21 @@ async function spinImpl({ userId, gameId, betCents, clientSeed }) {
         throw e;
     }
 
+    // Per-game pause: ops can take down a single game (e.g. a suspect
+    // paytable, a partial deploy) without disabling the whole engine.
+    // Same shape as the global flag; the same in-memory cache makes
+    // the second read free after warm-up.
+    const gamePause = await featureFlags.getFlag('slot.paused.' + gameId, { paused: false, reason: null });
+    if (gamePause && gamePause.paused) {
+        const e = new Error(gamePause.reason
+            ? gameId + ' is paused: ' + gamePause.reason
+            : gameId + ' is temporarily unavailable.');
+        e.status = 503;
+        e.code = 'slot_paused';
+        e.game_id = gameId;
+        throw e;
+    }
+
     const game = GAMES[gameId];
     if (!game) { const e = new Error('Unknown game.'); e.status = 404; throw e; }
     const bet = Math.round(Number(betCents));

@@ -1747,6 +1747,61 @@ async function main() {
         });
         assert.strictEqual(open.status, 200, 'spin after resume failed: ' + open.raw);
         console.log('[test] slot kill switch: admin pause → 503 slot_paused with reason; resume → 200; non-admin + bad key + bad shape rejected');
+
+        // Per-game kill switch: pause classic_777 only, neon_burst is
+        // unaffected. Then resume. Engine reads two flags per spin
+        // (global + per-game) — each is in-memory cached for 5s.
+        const pgUserName = 'pg_' + Date.now();
+        const pgHash = await require('bcryptjs').hash('Str0ngP@ss!!', 10);
+        await db.run(
+            'INSERT INTO users (username, email, password_hash, date_of_birth, email_verified, balance_cents) VALUES (?, ?, ?, ?, 1, ?)',
+            [pgUserName, pgUserName + '@example.com', pgHash, '1990-01-01', 100000]
+        );
+        const pgRow = await db.get('SELECT id, username, is_admin, token_version FROM users WHERE username = ?', [pgUserName]);
+        const pgTok = require('../server/middleware/auth').signToken(pgRow);
+        const pgCsrf = (await http('GET', '/api/csrf-token', { token: pgTok })).body.csrfToken;
+
+        // Reject unknown game key.
+        const ksCsrf2 = (await http('GET', '/api/csrf-token', { token: adminToken })).body.csrfToken;
+        const unknown = await http('PUT', '/api/admin/feature-flags/slot.paused.no_such_game', {
+            token: adminToken, csrf: ksCsrf2, body: { value: { paused: true, reason: 'x' } },
+        });
+        assert.strictEqual(unknown.status, 400);
+        assert.ok(Array.isArray(unknown.body.allowed));
+        assert.ok(unknown.body.allowed.includes('slot.paused.classic_777'));
+        assert.ok(unknown.body.allowed.includes('slot.paused.neon_burst'));
+
+        // Pause classic_777 only.
+        const pause77 = await http('PUT', '/api/admin/feature-flags/slot.paused.classic_777', {
+            token: adminToken, csrf: ksCsrf2, body: { value: { paused: true, reason: 'paytable check' } },
+        });
+        assert.strictEqual(pause77.status, 200);
+
+        // classic_777 spin → 503 with code + game_id echoed; neon_burst still works.
+        const spin77 = await http('POST', '/api/slot/spin', {
+            token: pgTok, csrf: pgCsrf, body: { game_id: 'classic_777', bet_cents: 100 },
+        });
+        assert.strictEqual(spin77.status, 503);
+        assert.strictEqual(spin77.body.code, 'slot_paused');
+        assert.strictEqual(spin77.body.game_id, 'classic_777');
+        assert.ok(/paytable check/.test(spin77.body.error));
+
+        const spinNeon = await http('POST', '/api/slot/spin', {
+            token: pgTok, csrf: pgCsrf, body: { game_id: 'neon_burst', bet_cents: 100 },
+        });
+        assert.strictEqual(spinNeon.status, 200, 'neon_burst should be unaffected by classic_777 pause: ' + spinNeon.raw);
+
+        // Resume classic_777 → spins succeed again.
+        const resume77 = await http('PUT', '/api/admin/feature-flags/slot.paused.classic_777', {
+            token: adminToken, csrf: ksCsrf2, body: { value: { paused: false, reason: null } },
+        });
+        assert.strictEqual(resume77.status, 200);
+        const spin77Ok = await http('POST', '/api/slot/spin', {
+            token: pgTok, csrf: pgCsrf, body: { game_id: 'classic_777', bet_cents: 100 },
+        });
+        assert.strictEqual(spin77Ok.status, 200, 'classic_777 should work after resume: ' + spin77Ok.raw);
+
+        console.log('[test] per-game kill switch: pause one game leaves the other open, error echoes game_id + reason; unknown game key 400');
     }
 
     // ═══ Daily loss limit ═══════════════════════════════════════════════════

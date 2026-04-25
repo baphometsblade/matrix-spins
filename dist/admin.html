@@ -104,7 +104,7 @@
     <div id="slot-kill" style="background:rgba(255,255,255,.04);border:1px solid rgba(212,175,55,.18);border-radius:8px;padding:14px 16px;margin-bottom:14px">
         <div style="display:flex;gap:14px;align-items:center;flex-wrap:wrap">
             <div style="flex:1 1 auto;min-width:0">
-                <div style="font-size:13px;color:#8a8a8a;margin-bottom:4px">Status</div>
+                <div style="font-size:13px;color:#8a8a8a;margin-bottom:4px">Global status</div>
                 <div id="slot-kill-status" style="font-size:15px;font-weight:700">&mdash;</div>
                 <div id="slot-kill-reason" style="font-size:12px;color:#9aa1ad;margin-top:2px"></div>
                 <div id="slot-kill-meta" style="font-size:11px;color:#666;margin-top:4px"></div>
@@ -113,6 +113,10 @@
                 <button id="btn-slot-pause" class="row-deny">Pause spin engine</button>
                 <button id="btn-slot-resume" class="row-approve">Resume</button>
             </div>
+        </div>
+        <div id="per-game-kill" style="margin-top:14px;padding-top:12px;border-top:1px solid rgba(212,175,55,.12);">
+            <div style="font-size:13px;color:#8a8a8a;margin-bottom:8px">Per-game kill switch</div>
+            <div id="per-game-rows" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:8px;"></div>
         </div>
     </div>
 
@@ -434,11 +438,18 @@
     document.getElementById('btn-load-wd').addEventListener('click', loadPendingWithdrawals);
 
     // Slot-engine kill switch. Paints the current flag state, gives
-    // ops a one-click pause/resume.
+    // ops a one-click pause/resume — globally and per-game.
     async function refreshSlotKill() {
         try {
-            const data = await api('GET', '/api/admin/feature-flags');
-            const f = (data.flags || []).find(x => x.key === 'slot.paused');
+            const [flagsResp, gamesResp] = await Promise.all([
+                api('GET', '/api/admin/feature-flags'),
+                api('GET', '/api/slot/games'),
+            ]);
+            const flags = flagsResp.flags || [];
+            const games = gamesResp.games || [];
+
+            // Global card.
+            const f = flags.find(x => x.key === 'slot.paused');
             const v = (f && f.value) || { paused: false, reason: null };
             const statusEl = document.getElementById('slot-kill-status');
             const reasonEl = document.getElementById('slot-kill-reason');
@@ -456,6 +467,52 @@
                 ? ('Last change: ' + String(f.updated_at || '').replace('T',' ').slice(0,19) +
                    ' by ' + esc(f.updated_by_username || '—'))
                 : 'Never toggled.';
+
+            // Per-game grid.
+            const rows = document.getElementById('per-game-rows');
+            rows.innerHTML = games.map(g => {
+                const key = 'slot.paused.' + g.id;
+                const flag = flags.find(x => x.key === key);
+                const fv = (flag && flag.value) || { paused: false, reason: null };
+                const stateLabel = fv.paused
+                    ? '<span style="color:#ff9f9f;font-weight:700">PAUSED</span>' +
+                      (fv.reason ? ' <span style="color:#9aa1ad;font-size:11px">— ' + esc(fv.reason) + '</span>' : '')
+                    : '<span style="color:#5fd489;font-weight:700">Running</span>';
+                const btn = fv.paused
+                    ? '<button class="row-approve" data-game="' + esc(g.id) + '" data-action="resume">Resume</button>'
+                    : '<button class="row-deny" data-game="' + esc(g.id) + '" data-action="pause">Pause</button>';
+                return '<div style="background:rgba(255,255,255,.03);border:1px solid #232a36;border-radius:6px;padding:10px;display:flex;align-items:center;gap:10px;">' +
+                    '<div style="flex:1;min-width:0;">' +
+                        '<div style="font-weight:700;color:#e0e0e0">' + esc(g.name) + '</div>' +
+                        '<div class="mono" style="font-size:11px;color:#9aa1ad">' + esc(g.id) + '</div>' +
+                        '<div style="font-size:12px;margin-top:2px">' + stateLabel + '</div>' +
+                    '</div>' +
+                    btn +
+                '</div>';
+            }).join('');
+            rows.querySelectorAll('button[data-game]').forEach(b => {
+                b.addEventListener('click', async function () {
+                    const gid = this.dataset.game;
+                    const action = this.dataset.action;
+                    const key = 'slot.paused.' + gid;
+                    if (action === 'pause') {
+                        const reason = prompt('Reason for pausing ' + gid + '?', '');
+                        if (reason === null) return;
+                        this.disabled = true;
+                        try {
+                            await api('PUT', '/api/admin/feature-flags/' + key, { value: { paused: true, reason: reason.trim() || null } });
+                            await refreshSlotKill();
+                        } catch (e) { alert('Pause failed: ' + e.message); this.disabled = false; }
+                    } else {
+                        if (!confirm('Resume ' + gid + '?')) return;
+                        this.disabled = true;
+                        try {
+                            await api('PUT', '/api/admin/feature-flags/' + key, { value: { paused: false, reason: null } });
+                            await refreshSlotKill();
+                        } catch (e) { alert('Resume failed: ' + e.message); this.disabled = false; }
+                    }
+                });
+            });
         } catch (e) {
             document.getElementById('slot-kill-status').textContent = 'Status unavailable: ' + e.message;
         }

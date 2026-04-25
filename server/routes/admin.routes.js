@@ -793,14 +793,35 @@ router.get('/slot-rounds', async (req, res) => {
  * Feature flags — operator toggles.
  *
  * Today's keys:
- *   slot.paused = { paused: bool, reason: string|null }
+ *   slot.paused                 = { paused: bool, reason: string|null }   global kill switch
+ *   slot.paused.<game_id>       = { paused: bool, reason: string|null }   per-game kill switch
  *
- * PUT accepts any well-formed JSON value; schema-validation for
- * individual keys lives in the caller (here, each handler understands
- * the shape it writes). A short allowlist of keys prevents operators
- * from creating arbitrary garbage rows.
+ * PUT accepts any well-formed JSON value; per-key shape validation
+ * lives in the handler. The allowlist is built from the engine's live
+ * games registry so adding a new game registers its pause key
+ * automatically.
  */
-const FEATURE_FLAG_KEYS = new Set(['slot.paused']);
+function allowedFeatureFlagKeys() {
+    const engine = require('../services/slot-engine.service');
+    const keys = new Set(['slot.paused']);
+    for (const g of engine.listGames()) {
+        keys.add('slot.paused.' + g.id);
+    }
+    return keys;
+}
+
+function validatePauseValue(value) {
+    if (!value || typeof value !== 'object' || Array.isArray(value)) {
+        return 'value must be { paused: bool, reason: string|null }.';
+    }
+    if (typeof value.paused !== 'boolean') {
+        return 'value.paused must be a boolean.';
+    }
+    if (value.reason != null && (typeof value.reason !== 'string' || value.reason.length > 500)) {
+        return 'value.reason must be null or a string ≤ 500 chars.';
+    }
+    return null;
+}
 
 router.get('/feature-flags', async (_req, res) => {
     try {
@@ -814,21 +835,16 @@ router.get('/feature-flags', async (_req, res) => {
 
 router.put('/feature-flags/:key', async (req, res) => {
     const key = req.params.key;
-    if (!FEATURE_FLAG_KEYS.has(key)) {
-        return res.status(400).json({ error: 'Unknown feature flag key.', allowed: Array.from(FEATURE_FLAG_KEYS) });
+    const allowed = allowedFeatureFlagKeys();
+    if (!allowed.has(key)) {
+        return res.status(400).json({ error: 'Unknown feature flag key.', allowed: Array.from(allowed) });
     }
     const value = req.body && req.body.value;
-    // Per-key validation. Add a branch here when introducing a new flag.
-    if (key === 'slot.paused') {
-        if (!value || typeof value !== 'object' || Array.isArray(value)) {
-            return res.status(400).json({ error: 'slot.paused value must be { paused: bool, reason: string|null }.' });
-        }
-        if (typeof value.paused !== 'boolean') {
-            return res.status(400).json({ error: 'slot.paused.paused must be a boolean.' });
-        }
-        if (value.reason != null && (typeof value.reason !== 'string' || value.reason.length > 500)) {
-            return res.status(400).json({ error: 'slot.paused.reason must be null or a string ≤ 500 chars.' });
-        }
+    // All current keys (slot.paused + slot.paused.<game_id>) share the
+    // pause-shape contract.
+    if (key === 'slot.paused' || key.indexOf('slot.paused.') === 0) {
+        const err = validatePauseValue(value);
+        if (err) return res.status(400).json({ error: key + ': ' + err });
     }
     try {
         const flags = require('../services/feature-flags.service');

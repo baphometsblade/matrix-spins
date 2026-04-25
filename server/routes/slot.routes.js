@@ -64,6 +64,7 @@ router.post('/spin', authenticate, spinLimiter, async (req, res) => {
             if (err.limit_cents != null) body.limit_cents = err.limit_cents;
             if (err.used_cents != null) body.used_cents = err.used_cents;
             if (err.reset_at) body.reset_at = err.reset_at;
+            if (err.game_id) body.game_id = err.game_id;
             return res.status(err.status).json(body);
         }
         console.error('[slot/spin]', err);
