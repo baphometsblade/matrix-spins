@@ -236,6 +236,38 @@ async function publicCommit(userId) {
     return { server_seed_hash: c.server_seed_hash, nonce: Number(c.nonce) };
 }
 
+/* ─────────────────────── persistent client seed ────────────────────── */
+
+/**
+ * Stake-style rotatable client seed. Stored on users.slot_client_seed
+ * (NULL = treated as 'default'). Per-spin overrides via the request
+ * body still win — the persistent seed is the default the engine uses
+ * when the caller didn't supply one.
+ *
+ * Validation here is strict (typed + length + printable-ASCII). The
+ * per-spin path goes through normalizeClientSeed() which is lossy by
+ * design (silently strips non-printable). Asymmetric on purpose: the
+ * persistent value must round-trip cleanly; per-spin tolerates noise.
+ */
+function validateClientSeed(raw) {
+    if (typeof raw !== 'string') return { ok: false, error: 'client_seed must be a string.' };
+    if (raw.length < 1 || raw.length > 64) return { ok: false, error: 'client_seed must be 1–64 chars.' };
+    if (/[^\x20-\x7e]/.test(raw)) return { ok: false, error: 'client_seed must be printable ASCII.' };
+    return { ok: true, normalized: raw };
+}
+
+async function getClientSeed(userId) {
+    const row = await db.get('SELECT slot_client_seed FROM users WHERE id = ?', [userId]);
+    return normalizeClientSeed(row && row.slot_client_seed);
+}
+
+async function setClientSeed(userId, raw) {
+    const v = validateClientSeed(raw);
+    if (!v.ok) { const e = new Error(v.error); e.status = 400; throw e; }
+    await db.run('UPDATE users SET slot_client_seed = ? WHERE id = ?', [v.normalized, userId]);
+    return v.normalized;
+}
+
 /* ───────────────────────── loss-limit helper ──────────────────────── */
 
 /**
@@ -358,8 +390,13 @@ async function spinImpl({ userId, gameId, betCents, clientSeed }) {
     // Not folded into the debit UPDATE because the rolling-window aggregate
     // would run on every spin even when the user has no limit set — this
     // branch is skipped entirely when loss_limit_daily_cents is 0.
-    const limitRow = await db.get('SELECT loss_limit_daily_cents FROM users WHERE id = ?', [userId]);
-    const lossLimit = Number((limitRow && limitRow.loss_limit_daily_cents) || 0);
+    // Folded SELECT: loss-limit + persistent client seed in one round trip.
+    const userRow = await db.get(
+        'SELECT loss_limit_daily_cents, slot_client_seed FROM users WHERE id = ?',
+        [userId]
+    );
+    const lossLimit = Number((userRow && userRow.loss_limit_daily_cents) || 0);
+    const persistedClientSeed = userRow && userRow.slot_client_seed;
     if (lossLimit > 0) {
         const { used, oldestAt } = await sumNetLossSince(userId, 86400);
         if (used + bet > lossLimit) {
@@ -404,7 +441,12 @@ async function spinImpl({ userId, gameId, betCents, clientSeed }) {
     // 2) Pull (or lazy-create) the commit, bump nonce, derive stops.
     const commit = await getOrCreateCommit(userId);
     const nonce = Number(commit.nonce) + 1;
-    const normalizedClientSeed = normalizeClientSeed(clientSeed);
+    // Per-spin override beats the persistent seed (back-compat for the
+    // existing API tests that pass client_seed in the body, and for
+    // power users hitting the API directly). Otherwise fall back to
+    // the user's rotatable seed; normalize handles NULL → 'default'.
+    const effectiveSeed = (clientSeed != null && clientSeed !== '') ? clientSeed : persistedClientSeed;
+    const normalizedClientSeed = normalizeClientSeed(effectiveSeed);
     const stops = spinReels(game, commit.server_seed, normalizedClientSeed, nonce);
     const { win_cents, line } = evaluate(game, stops, bet);
 
@@ -508,6 +550,11 @@ module.exports = {
     listRounds,
     getRound,
     sumNetLossSince,
+    getClientSeed,
+    setClientSeed,
+    validateClientSeed,
+    getOrCreateCommit,
+    rollNewCommit,
     // exposed for tests — pure helpers with no side effects
     _internals: {
         sha256Hex,

@@ -303,6 +303,13 @@ async function migrate() {
 
     await addColumnIfMissing('users', 'display_name', 'TEXT');
 
+    // Persistent slot client seed. NULL = treated as the engine's
+    // 'default' sentinel by normalizeClientSeed. The user can rotate
+    // via PUT /api/slot/client-seed; per-spin requests may still
+    // override by including client_seed in the body (used by tests
+    // and direct API callers).
+    await addColumnIfMissing('users', 'slot_client_seed', 'TEXT');
+
     await driver.exec(`
         CREATE TABLE IF NOT EXISTS auth_events (
             id ${T.pk},

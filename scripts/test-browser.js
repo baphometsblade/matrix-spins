@@ -298,6 +298,34 @@ async function main() {
                             }
                         }
                     }
+
+                    // Persistent client seed: type a value into the new
+                    // panel, save, spin, assert revealed.client_seed matches.
+                    // The panel lives inside a collapsed <details> — open
+                    // it so the input is interactable.
+                    await page.evaluate(() => {
+                        var d = document.querySelector('#liveSlotCard details');
+                        if (d) d.open = true;
+                    });
+                    await page.fill('#liveSlotClientSeedInput', 'browser-smoke-seed');
+                    await page.click('#liveSlotClientSeedSave');
+                    await page.waitForFunction(
+                        () => /Saved\./.test((document.getElementById('liveSlotClientSeedMsg') || {}).textContent || ''),
+                        { timeout: 4000 }
+                    ).catch(() => { /* reported below */ });
+                    await page.click('#liveSlotSpin');
+                    await page.waitForFunction(
+                        () => window.__lastSlotResult && window.__lastSlotResult.revealed,
+                        { timeout: 5000 }
+                    ).catch(() => { /* reported below */ });
+                    const revealed = await page.evaluate(() => window.__lastSlotResult && window.__lastSlotResult.revealed);
+                    if (!revealed) {
+                        fail('client seed: live-slot spin produced no revealed payload');
+                    } else if (revealed.client_seed !== 'browser-smoke-seed') {
+                        fail('client seed: revealed.client_seed=' + JSON.stringify(revealed.client_seed) + ' (expected browser-smoke-seed)');
+                    } else {
+                        ok('client seed: panel save → next spin used the saved seed (revealed.client_seed=' + revealed.client_seed + ')');
+                    }
                 }
             } else {
                 fail('could not find registered user row for live-slot test');

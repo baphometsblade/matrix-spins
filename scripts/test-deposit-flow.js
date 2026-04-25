@@ -1346,6 +1346,89 @@ async function main() {
         assert.strictEqual(evalNeon.win_cents, 40, 'neon × 0.4 × 100c bet should pay 40c');
 
         console.log('[test] slot engine: neon_burst (5×15) — deterministic, indices reproducible client-side, cross-game history, evaluate generalizes');
+
+        // Persistent + rotatable client seed (Stake-style provably fair).
+        // Fresh seeded user so rate limits + state from earlier blocks
+        // don't bleed in.
+        const csUser = nbName + '_cs';
+        await db.run(
+            'INSERT INTO users (username, email, password_hash, date_of_birth, email_verified, balance_cents) VALUES (?, ?, ?, ?, 1, ?)',
+            [csUser, csUser + '@example.com', nbHash, '1990-01-01', 200000]
+        );
+        const csRow = await db.get('SELECT id, username, is_admin, token_version FROM users WHERE username = ?', [csUser]);
+        const csTok = signToken(csRow);
+        const csCsrf = (await http('GET', '/api/csrf-token', { token: csTok })).body.csrfToken;
+
+        // (a) Default for a brand-new user is 'default' (matches engine normalize).
+        const seedDef = await http('GET', '/api/slot/client-seed', { token: csTok });
+        assert.strictEqual(seedDef.status, 200);
+        assert.strictEqual(seedDef.body.client_seed, 'default');
+
+        // (b) PUT round-trip.
+        const seedPut = await http('PUT', '/api/slot/client-seed', {
+            token: csTok, csrf: csCsrf, body: { client_seed: 'persistent-xyz' },
+        });
+        assert.strictEqual(seedPut.status, 200);
+        assert.strictEqual(seedPut.body.client_seed, 'persistent-xyz');
+        const seedGet = await http('GET', '/api/slot/client-seed', { token: csTok });
+        assert.strictEqual(seedGet.body.client_seed, 'persistent-xyz');
+
+        // (c) Validation: bad inputs all 400 with a useful error string.
+        for (const bad of [undefined, '', 'a'.repeat(65), 'has null', 'tab\there', 42, null, {}]) {
+            const r = await http('PUT', '/api/slot/client-seed', {
+                token: csTok, csrf: csCsrf, body: { client_seed: bad },
+            });
+            assert.strictEqual(r.status, 400, 'expected 400 for ' + JSON.stringify(bad) + ', got ' + r.status);
+            assert.ok(r.body && typeof r.body.error === 'string');
+        }
+        // PUT with persistent seed unchanged.
+        const seedAfterBads = await http('GET', '/api/slot/client-seed', { token: csTok });
+        assert.strictEqual(seedAfterBads.body.client_seed, 'persistent-xyz');
+
+        // (d) Spin without client_seed in body → uses persisted seed.
+        const spinNoBody = await http('POST', '/api/slot/spin', {
+            token: csTok, csrf: csCsrf,
+            body: { game_id: 'classic_777', bet_cents: 100 },
+        });
+        assert.strictEqual(spinNoBody.status, 200, 'spin without body seed failed: ' + spinNoBody.raw);
+        assert.strictEqual(spinNoBody.body.revealed.client_seed, 'persistent-xyz');
+
+        // (e) Spin with client_seed in body → per-spin override wins.
+        //     Persistent seed unchanged afterwards (no write-back).
+        const spinOverride = await http('POST', '/api/slot/spin', {
+            token: csTok, csrf: csCsrf,
+            body: { game_id: 'classic_777', bet_cents: 100, client_seed: 'override-abc' },
+        });
+        assert.strictEqual(spinOverride.body.revealed.client_seed, 'override-abc');
+        const seedStill = await http('GET', '/api/slot/client-seed', { token: csTok });
+        assert.strictEqual(seedStill.body.client_seed, 'persistent-xyz', 'override must not write back');
+
+        // (f) Cross-user isolation.
+        const otherName = csUser + '_other';
+        await db.run(
+            'INSERT INTO users (username, email, password_hash, date_of_birth, email_verified, balance_cents) VALUES (?, ?, ?, ?, 1, ?)',
+            [otherName, otherName + '@example.com', nbHash, '1990-01-01', 200000]
+        );
+        const otherRow = await db.get('SELECT id, username, is_admin, token_version FROM users WHERE username = ?', [otherName]);
+        const otherTok = signToken(otherRow);
+        const otherSeed = await http('GET', '/api/slot/client-seed', { token: otherTok });
+        assert.strictEqual(otherSeed.body.client_seed, 'default', 'cross-user seed leak');
+
+        // (g) Rotate commit — revealed seed sha256 = pre-rotate hash; new commit fresh.
+        const preCommit = await http('GET', '/api/slot/commit', { token: csTok });
+        const preHash = preCommit.body.server_seed_hash;
+        const rotate = await http('POST', '/api/slot/rotate-commit', { token: csTok, csrf: csCsrf });
+        assert.strictEqual(rotate.status, 200);
+        assert.strictEqual(rotate.body.revealed.server_seed_hash, preHash, 'revealed hash must match what was committed');
+        assert.strictEqual(
+            crypto.createHash('sha256').update(rotate.body.revealed.server_seed).digest('hex'),
+            preHash,
+            'sha256(revealed seed) must equal pre-rotate hash'
+        );
+        assert.notStrictEqual(rotate.body.next_commit.server_seed_hash, preHash, 'must roll a fresh commit');
+        assert.strictEqual(rotate.body.next_commit.nonce, 0);
+
+        console.log('[test] client seed: default for new users; PUT round-trip; bad inputs 400; persisted seed used when body omits; per-spin override wins; cross-user isolation; rotate-commit reveals + rolls');
     }
 
     // ═══ Withdrawals ═════════════════════════════════════════════════════════

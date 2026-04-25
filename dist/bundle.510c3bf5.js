@@ -1,5 +1,5 @@
 /* Royal Slots Casino - Bundled JavaScript */
-/* Generated: 2026-04-25T06:38:01.022Z */
+/* Generated: 2026-04-25T06:57:24.549Z */
 
 
 /* â”€â”€â”€ shared/game-definitions.js (2/56) â”€â”€â”€ */
@@ -40857,6 +40857,7 @@ window._logAudit658 = _logAudit658;
         gameDef: null,          // /api/slot/games row for the open game
         betCents: 100,
         committedHash: null,
+        clientSeed: null,       // persistent seed loaded from /api/slot/client-seed
         lastResult: null,
         spinning: false,
     };
@@ -40945,6 +40946,18 @@ window._logAudit658 = _logAudit658;
                         '<div id="liveSlotPaytable">' + buildPaytableHtml(def) + '</div>' +
                         '<div id="liveSlotCommit" style="margin-top:6px;">Commit hash: <span style="font-family:monospace;">loading…</span></div>' +
                         '<div id="liveSlotRevealed" style="margin-top:4px;"></div>' +
+                        '<div id="liveSlotPfSettings" style="margin-top:10px;border-top:1px solid #f1c40f22;padding-top:8px;">' +
+                            '<div style="font-weight:700;color:#cbd5e1;margin-bottom:4px;">Your client seed</div>' +
+                            '<div style="font-size:11px;color:#9aa1ad;margin-bottom:6px;">Set ahead of the next spin so the server cannot tailor its committed seed to yours. 1–64 printable ASCII chars.</div>' +
+                            '<div style="display:flex;gap:6px;align-items:center;">' +
+                                '<input id="liveSlotClientSeedInput" type="text" maxlength="64" ' +
+                                    'style="flex:1;min-width:0;padding:6px;border-radius:6px;border:1px solid #374151;' +
+                                    'background:#0b0504;color:#fff;font-family:monospace;font-size:12px;" />' +
+                                '<button id="liveSlotClientSeedSave" style="padding:6px 10px;border-radius:6px;' +
+                                    'border:none;background:#f1c40f;color:#111;font-weight:800;cursor:pointer;">Save</button>' +
+                            '</div>' +
+                            '<div id="liveSlotClientSeedMsg" style="font-size:11px;margin-top:4px;color:#94a3b8;">&nbsp;</div>' +
+                        '</div>' +
                     '</div>' +
                 '</details>' +
             '</div>';
@@ -40991,6 +41004,7 @@ window._logAudit658 = _logAudit658;
         el.innerHTML =
             '<div style="margin-top:4px;">Last round revealed seed:</div>' +
             '<div style="font-family:monospace;word-break:break-all;color:#cbd5e1;">' + r.server_seed + '</div>' +
+            '<div style="margin-top:4px;">Client seed used: <span style="font-family:monospace;color:#cbd5e1;">' + r.client_seed + '</span> &nbsp; nonce <span style="font-family:monospace;">' + r.nonce + '</span></div>' +
             '<div style="margin-top:4px;">sha256 of seed must equal pre-commit hash: ' +
                 '<span style="font-family:monospace;">' + shortHash(r.server_seed_hash) + '</span></div>' +
             '<div style="margin-top:6px;"><a href="/verify-round.html?round=' + rid + '" target="_blank" rel="noopener" style="color:#00d4ff;">Verify this round &rarr;</a></div>';
@@ -41034,6 +41048,31 @@ window._logAudit658 = _logAudit658;
         }
     }
 
+    async function refreshClientSeed() {
+        var r = await fetchJSON('/api/slot/client-seed');
+        if (r.status === 200 && r.body && typeof r.body.client_seed === 'string') {
+            state.clientSeed = r.body.client_seed;
+            var input = document.getElementById('liveSlotClientSeedInput');
+            if (input) input.value = state.clientSeed;
+        }
+    }
+
+    async function saveClientSeed() {
+        var input = document.getElementById('liveSlotClientSeedInput');
+        var msg = document.getElementById('liveSlotClientSeedMsg');
+        if (!input || !msg) return;
+        var val = input.value;
+        var r = await fetchJSON('/api/slot/client-seed', { method: 'PUT', body: { client_seed: val } });
+        if (r.status === 200) {
+            state.clientSeed = r.body.client_seed;
+            msg.textContent = 'Saved. Next spin uses this seed.';
+            msg.style.color = '#22c55e';
+        } else {
+            msg.textContent = (r.body && r.body.error) || 'Save failed.';
+            msg.style.color = '#ef4444';
+        }
+    }
+
     async function doSpin() {
         if (state.spinning) return;
         var def = state.gameDef;
@@ -41050,9 +41089,13 @@ window._logAudit658 = _logAudit658;
         var reels = document.querySelectorAll('#liveSlotReels .ls-reel');
         reels.forEach(function (r) { r.textContent = '☄'; r.style.color = '#f1c40f'; });
 
+        // Don't echo the client seed back — let the server use the
+        // persistent value the user set via the "Your client seed"
+        // panel. The post-spin response's `revealed.client_seed`
+        // remains the source of truth for "what was actually used".
         var res = await fetchJSON('/api/slot/spin', {
             method: 'POST',
-            body: { game_id: state.gameId, bet_cents: state.betCents, client_seed: 'live-ui' },
+            body: { game_id: state.gameId, bet_cents: state.betCents },
         });
 
         state.spinning = false;
@@ -41067,6 +41110,10 @@ window._logAudit658 = _logAudit658;
         }
 
         state.lastResult = res.body;
+        // Expose for browser-smoke assertions; harmless in production
+        // (the round details are already echoed in the visible reveal
+        // panel for the user who just made the spin).
+        try { window.__lastSlotResult = res.body; } catch (e) { /* noop */ }
         paintReels(res.body.outcome.stops);
         if (res.body.win_cents > 0) {
             setResult('WIN ' + fmt(res.body.win_cents) + ' (' + (res.body.outcome.line && res.body.outcome.line.multiplier) + 'x)', '#22c55e');
@@ -41088,6 +41135,8 @@ window._logAudit658 = _logAudit658;
         if (closeBtn) closeBtn.addEventListener('click', closeLiveSlot);
         var spinBtn = document.getElementById('liveSlotSpin');
         if (spinBtn) spinBtn.addEventListener('click', doSpin);
+        var saveBtn = document.getElementById('liveSlotClientSeedSave');
+        if (saveBtn) saveBtn.addEventListener('click', saveClientSeed);
         var overlay = document.getElementById('liveSlotModal');
         if (overlay) overlay.addEventListener('click', function (e) {
             if (e.target === overlay) closeLiveSlot();
@@ -41122,7 +41171,7 @@ window._logAudit658 = _logAudit658;
         state.lastResult = null;
         ensureModal();
         wireEvents();
-        await Promise.all([refreshBalance(), refreshCommit()]);
+        await Promise.all([refreshBalance(), refreshCommit(), refreshClientSeed()]);
     }
 
     window.openLiveSlot = openLiveSlot;
