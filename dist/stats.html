@@ -1,0 +1,146 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Live stats — Matrix Spins</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<link rel="icon" type="image/svg+xml" href="/favicon.svg">
+<style>
+    :root { color-scheme: dark; }
+    * { box-sizing: border-box; }
+    body { margin: 0; padding: 40px 24px; font-family: -apple-system, Segoe UI, Roboto, sans-serif; background: #0d1117; color: #e0e0e0; line-height: 1.55; }
+    .wrap { max-width: 920px; margin: 0 auto; }
+    h1 { color: #d4af37; font-size: 28px; margin: 0 0 4px; letter-spacing: 1px; }
+    .sub { color: #8a8a8a; margin-bottom: 28px; font-size: 13px; }
+    h2 { color: #d4af37; font-size: 16px; text-transform: uppercase; letter-spacing: 2px; margin: 28px 0 14px; }
+    p { margin: 0 0 12px; color: #d8d8d8; }
+    .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; margin: 0 0 18px; }
+    .card { background: rgba(255,255,255,0.04); border: 1px solid rgba(212,175,55,0.18); border-radius: 10px; padding: 16px; }
+    .card .label { font-size: 11px; letter-spacing: 1.5px; color: #94a3b8; text-transform: uppercase; }
+    .card .value { font-size: 24px; font-weight: 800; color: #f1c40f; margin-top: 4px; font-variant-numeric: tabular-nums; }
+    .card .sub-value { font-size: 11px; color: #94a3b8; margin-top: 2px; }
+    table { width: 100%; border-collapse: collapse; background: rgba(255,255,255,0.03); border-radius: 10px; overflow: hidden; font-size: 13px; }
+    th, td { text-align: left; padding: 10px 14px; border-bottom: 1px solid #1f2937; font-variant-numeric: tabular-nums; }
+    th { color: #d4af37; text-transform: uppercase; letter-spacing: 1px; font-size: 11px; }
+    tr:last-child td { border-bottom: none; }
+    .mono { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12px; color: #00d4ff; }
+    .pos { color: #5fd489; }
+    .neg { color: #ff9f9f; }
+    .meta { color: #888; font-size: 12px; margin-top: 18px; }
+    a { color: #00d4ff; }
+    .back { display: inline-block; margin-top: 28px; color: #8a8a8a; }
+</style>
+</head>
+<body>
+<div class="wrap">
+    <h1>Live stats</h1>
+    <div class="sub">
+        Aggregate slot performance, refreshed every 5 minutes. The
+        third leg of the trust stool: <a href="/verify-round.html">verify any round</a> ·
+        <a href="/provably-fair.html">how it works</a> · <strong>see the numbers</strong>.
+    </div>
+
+    <h2>Lifetime</h2>
+    <div class="grid" id="totals">
+        <div class="card"><div class="label">Spins played</div><div class="value" id="t-spins">—</div></div>
+        <div class="card"><div class="label">Total wagered</div><div class="value" id="t-wagered">—</div></div>
+        <div class="card"><div class="label">Total won</div><div class="value" id="t-won">—</div></div>
+        <div class="card">
+            <div class="label">Empirical RTP</div>
+            <div class="value" id="t-rtp">—</div>
+            <div class="sub-value" id="t-rtp-sub"></div>
+        </div>
+        <div class="card"><div class="label">Unique players</div><div class="value" id="t-players">—</div></div>
+        <div class="card"><div class="label">Biggest single win</div><div class="value" id="t-biggest">—</div></div>
+    </div>
+
+    <h2>Per game</h2>
+    <table id="tbl-games">
+        <thead><tr>
+            <th>Game</th>
+            <th>Theoretical RTP</th>
+            <th>Empirical RTP</th>
+            <th>Spins</th>
+            <th>Wagered</th>
+            <th>Won</th>
+            <th>Biggest win</th>
+        </tr></thead>
+        <tbody><tr><td colspan="7" style="text-align:center;color:#666">— loading —</td></tr></tbody>
+    </table>
+
+    <p class="meta">
+        Data is direct from the slot-rounds ledger. Every row is also visible to
+        the round's owner via <code>GET /api/slot/rounds</code> and to operators
+        via <code>GET /api/admin/slot-rounds</code>; the public surface here is
+        the same data, aggregated and stripped of any per-user identifier.
+        <span id="generated"></span>
+    </p>
+
+    <a href="/" class="back">← Back to the lobby</a>
+</div>
+
+<script>
+(function () {
+    'use strict';
+
+    function esc(s) {
+        return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
+            return ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' })[c];
+        });
+    }
+    function fmt(cents) { return '$' + (Number(cents || 0) / 100).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
+    function pct(r) { return r == null ? '—' : (r * 100).toFixed(2) + '%'; }
+
+    function paint(data) {
+        document.getElementById('t-spins').textContent = (data.total_spins || 0).toLocaleString();
+        document.getElementById('t-wagered').textContent = fmt(data.total_wagered_cents);
+        document.getElementById('t-won').textContent = fmt(data.total_won_cents);
+        document.getElementById('t-rtp').textContent = pct(data.empirical_rtp);
+        document.getElementById('t-rtp-sub').textContent = data.empirical_rtp != null ? '(won ÷ wagered, lifetime)' : '';
+        document.getElementById('t-players').textContent = (data.unique_players || 0).toLocaleString();
+        document.getElementById('t-biggest').textContent = fmt(data.biggest_single_win_cents);
+        var tbody = document.querySelector('#tbl-games tbody');
+        if (!data.games || data.games.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:#666">No games wired yet.</td></tr>';
+        } else {
+            tbody.innerHTML = data.games.map(function (g) {
+                var theo = (g.theoretical_rtp * 100).toFixed(2) + '%';
+                var emp = pct(g.empirical_rtp);
+                var driftCls = '';
+                if (g.empirical_rtp != null && g.spins > 100) {
+                    var drift = (g.empirical_rtp - g.theoretical_rtp) / g.theoretical_rtp;
+                    if (drift > 0.02) driftCls = 'pos';
+                    else if (drift < -0.02) driftCls = 'neg';
+                }
+                return '<tr>' +
+                    '<td><strong>' + esc(g.name) + '</strong><br><span class="mono">' + esc(g.game_id) + '</span></td>' +
+                    '<td class="mono">' + theo + '</td>' +
+                    '<td class="mono ' + driftCls + '">' + emp + '</td>' +
+                    '<td>' + (g.spins || 0).toLocaleString() + '</td>' +
+                    '<td>' + fmt(g.wagered_cents) + '</td>' +
+                    '<td>' + fmt(g.won_cents) + '</td>' +
+                    '<td>' + fmt(g.biggest_win_cents) + '</td>' +
+                '</tr>';
+            }).join('');
+        }
+        if (data.generated_at) {
+            document.getElementById('generated').textContent = ' Snapshot at ' + String(data.generated_at).replace('T', ' ').slice(0, 19) + ' UTC.';
+        }
+    }
+
+    function showError(msg) {
+        document.querySelector('#tbl-games tbody').innerHTML =
+            '<tr><td colspan="7" style="text-align:center;color:#ff9f9f">' + esc(msg) + '</td></tr>';
+    }
+
+    fetch('/api/public/stats')
+        .then(function (r) {
+            if (!r.ok) throw new Error('HTTP ' + r.status);
+            return r.json();
+        })
+        .then(paint)
+        .catch(function (e) { showError('Could not load stats: ' + e.message); });
+})();
+</script>
+</body>
+</html>

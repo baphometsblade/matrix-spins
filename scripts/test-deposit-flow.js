@@ -1912,6 +1912,56 @@ async function main() {
         assert.strictEqual(c1.raw, c2.raw, 'cache should produce identical payload');
 
         console.log('[test] hot wins: public no-auth; anonymized usernames; biggest-first; multipliers; cap; bad limit falls back; cache stable; no PII or seeds leaked');
+
+        // /api/public/stats — fully-aggregate, public, no PII. Pairs
+        // with /provably-fair.html and /verify-round.html as the
+        // third leg of the trust story.
+        publicMod._test.resetCache();
+        const stats = await http('GET', '/api/public/stats');
+        assert.strictEqual(stats.status, 200);
+        const s = stats.body;
+        // Required keys with sane types.
+        assert.strictEqual(typeof s.total_spins, 'number');
+        assert.strictEqual(typeof s.unique_players, 'number');
+        assert.strictEqual(typeof s.total_wagered_cents, 'number');
+        assert.strictEqual(typeof s.total_won_cents, 'number');
+        assert.strictEqual(typeof s.biggest_single_win_cents, 'number');
+        assert.ok(Array.isArray(s.games));
+        assert.ok(typeof s.generated_at === 'string' && /Z$/.test(s.generated_at));
+        // empirical_rtp is a number when there are spins, null otherwise.
+        if (s.total_spins > 0) {
+            assert.strictEqual(typeof s.empirical_rtp, 'number');
+            // Must equal won/wagered.
+            const expected = s.total_won_cents / Math.max(1, s.total_wagered_cents);
+            assert.ok(Math.abs(s.empirical_rtp - expected) < 1e-9);
+        }
+        // Both wired games surface; theoretical_rtp populated; no PII.
+        const gMap = new Map(s.games.map(g => [g.game_id, g]));
+        for (const id of ['classic_777', 'neon_burst']) {
+            assert.ok(gMap.has(id), 'public stats missing ' + id);
+            const g = gMap.get(id);
+            assert.strictEqual(typeof g.theoretical_rtp, 'number');
+            assert.ok(g.theoretical_rtp > 0 && g.theoretical_rtp < 1);
+            assert.strictEqual(typeof g.spins, 'number');
+            // Strictly no PII / no seeds in any per-game entry.
+            assert.strictEqual(g.user_id,        undefined);
+            assert.strictEqual(g.username,       undefined);
+            assert.strictEqual(g.user,           undefined);
+            assert.strictEqual(g.server_seed,    undefined);
+            assert.strictEqual(g.server_seed_hash, undefined);
+            assert.strictEqual(g.client_seed,    undefined);
+        }
+        // Top-level shape also has zero PII.
+        assert.strictEqual(s.user_id,    undefined);
+        assert.strictEqual(s.username,   undefined);
+        // Cache: two consecutive calls return identical raw bytes.
+        const sc1 = await http('GET', '/api/public/stats');
+        const sc2 = await http('GET', '/api/public/stats');
+        assert.strictEqual(sc1.raw, sc2.raw, 'cache should produce identical payload');
+        // No auth required.
+        assert.strictEqual((await http('GET', '/api/public/stats')).status, 200);
+
+        console.log('[test] public stats: shape + types; both games surfaced with theoretical RTP; zero PII; cache stable; no auth required');
     }
 
     // ═══ Daily loss limit ═══════════════════════════════════════════════════

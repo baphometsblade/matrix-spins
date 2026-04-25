@@ -35,7 +35,7 @@ reel_index_i = floor(reel_float_i * reel_length)</pre>
 
     <p>The <code>client_seed</code> is yours to choose — use any ASCII string up to 64 characters; we substitute <code>"default"</code> if you leave it blank. The <code>nonce</code> increments within the life of a server seed and is reset to 0 each time a new commit is rolled, i.e. after every spin.</p>
 
-    <p><a href="/verify-round.html">Verify a past spin &rarr;</a> &nbsp; (recomputes the reel stops in your browser via WebCrypto)</p>
+    <p><a href="/verify-round.html">Verify a past spin &rarr;</a> &nbsp; (recomputes the reel stops in your browser via WebCrypto) &nbsp;&middot;&nbsp; <a href="/stats.html">See live RTP &rarr;</a></p>
 
     <h2>Deposit receipts</h2>
     <p>Every deposit that clears Stripe mints a receipt NFT to your account. The receipt's metadata is signed with HMAC-SHA256 using a server-held <code>NFT_SIGNING_SECRET</code>. A recorded signature cannot be altered without detection, and the <code>token_id</code> is deterministic — the same <em>(user id, deposit id)</em> pair always hashes to the same id.</p>

@@ -608,6 +608,37 @@ async function main() {
             }
         }
 
+        // Public stats page — visit /stats.html and assert the
+        // lifetime cards populate with $ amounts and the per-game
+        // table fills with both wired games.
+        try { require('../server/routes/public.routes')._test.resetCache(); } catch (e) { /* ignore */ }
+        await page.goto('http://localhost:' + process.env.PORT + '/stats.html', { waitUntil: 'networkidle', timeout: 15000 });
+        const statsReady = await page.waitForFunction(() => {
+            const wagered = (document.getElementById('t-wagered') || {}).textContent || '';
+            const tbody = document.querySelector('#tbl-games tbody');
+            return /\$/.test(wagered) && tbody && tbody.children.length >= 1 && !/loading/i.test(tbody.textContent || '');
+        }, { timeout: 8000 }).then(() => true).catch(() => false);
+        if (!statsReady) {
+            fail('stats page never populated');
+        } else {
+            const view = await page.evaluate(() => ({
+                spins: (document.getElementById('t-spins') || {}).textContent || '',
+                wagered: (document.getElementById('t-wagered') || {}).textContent || '',
+                won: (document.getElementById('t-won') || {}).textContent || '',
+                rtp: (document.getElementById('t-rtp') || {}).textContent || '',
+                rows: Array.from(document.querySelectorAll('#tbl-games tbody tr')).map(r => r.textContent.trim().slice(0, 40)),
+            }));
+            const ok77 = view.rows.some(t => /classic_777/.test(t));
+            const okNeon = view.rows.some(t => /neon_burst/.test(t));
+            if (!ok77 || !okNeon) {
+                fail('stats page: per-game rows missing classic_777 or neon_burst — ' + JSON.stringify(view.rows));
+            } else if (!/\$/.test(view.wagered) || !/\$/.test(view.won)) {
+                fail('stats page: wagered/won did not render as $ amounts');
+            } else {
+                ok('stats page: ' + view.spins + ' spins, wagered ' + view.wagered + ', won ' + view.won + ', RTP ' + view.rtp);
+            }
+        }
+
         if (consoleErrors.length) {
             // Filter out known-benign noise:
             //   - service-worker registration on a server that doesn't serve /sw.js
