@@ -187,6 +187,92 @@ router.get('/stats', async (_req, res) => {
     }
 });
 
+/**
+ * Public leaderboard — top users by NET WIN (won − wagered) over a
+ * rolling window. Fully aggregate, anonymized, no PII. Built for
+ * /stats.html and any third-party that wants "is anyone actually
+ * winning?" answered honestly.
+ *
+ * MIN_QUALIFYING_SPINS keeps the board honest at low volume: a user
+ * who happened to land one big win on their first spin would
+ * dominate forever otherwise. Industry standard ranks high-volume
+ * players, not lucky one-shots.
+ */
+const LB_DEFAULT_WINDOW_DAYS = 30;
+const LB_MAX_WINDOW_DAYS = 365;
+const LB_DEFAULT_LIMIT = 10;
+const LB_MAX_LIMIT = 50;
+const LB_MIN_SPINS = 10;
+const LB_CACHE_TTL_MS = 60 * 1000;
+
+router.get('/leaderboard', async (req, res) => {
+    let windowDays = Number(req.query.window_days);
+    if (!Number.isFinite(windowDays) || windowDays < 1 || windowDays > LB_MAX_WINDOW_DAYS) {
+        windowDays = LB_DEFAULT_WINDOW_DAYS;
+    }
+    let limit = Number(req.query.limit);
+    if (!Number.isFinite(limit) || limit < 1 || limit > LB_MAX_LIMIT) limit = LB_DEFAULT_LIMIT;
+    const sinceSec = windowDays * 86400;
+
+    const cacheKey = 'leaderboard:' + windowDays + ':' + limit;
+    const entry = cache.get(cacheKey);
+    if (entry && entry.expiresAt > Date.now()) return res.json(entry.value);
+
+    try {
+        const isPg = db.kind === 'pg';
+        // Per-user net = SUM(win - bet) over the window; only users
+        // with >= LB_MIN_SPINS qualify; ORDER BY net DESC LIMIT N.
+        // Both backends use the same SQL via the wrapper's auto-rewrite
+        // of '?' placeholders.
+        const sql = isPg
+            ? `SELECT u.username,
+                      COUNT(*) AS spins,
+                      COALESCE(SUM(r.bet_cents), 0) AS wagered,
+                      COALESCE(SUM(r.win_cents), 0) AS won,
+                      COALESCE(SUM(r.win_cents - r.bet_cents), 0) AS net
+                 FROM slot_rounds r LEFT JOIN users u ON u.id = r.user_id
+                WHERE r.created_at >= NOW() - (? * INTERVAL '1 second')
+                GROUP BY u.username
+               HAVING COUNT(*) >= ?
+                ORDER BY net DESC
+                LIMIT ?`
+            : `SELECT u.username,
+                      COUNT(*) AS spins,
+                      COALESCE(SUM(r.bet_cents), 0) AS wagered,
+                      COALESCE(SUM(r.win_cents), 0) AS won,
+                      COALESCE(SUM(r.win_cents - r.bet_cents), 0) AS net
+                 FROM slot_rounds r LEFT JOIN users u ON u.id = r.user_id
+                WHERE r.created_at >= datetime('now', ? || ' seconds')
+                GROUP BY u.username
+               HAVING COUNT(*) >= ?
+                ORDER BY net DESC
+                LIMIT ?`;
+        const params = isPg
+            ? [sinceSec, LB_MIN_SPINS, limit]
+            : ['-' + sinceSec, LB_MIN_SPINS, limit];
+        const rows = await db.all(sql, params);
+
+        const payload = {
+            generated_at: new Date().toISOString(),
+            window_days: windowDays,
+            min_qualifying_spins: LB_MIN_SPINS,
+            entries: rows.map((r, i) => ({
+                rank: i + 1,
+                user: anonymizeUsername(r.username),
+                spins: Number(r.spins) || 0,
+                wagered_cents: Number(r.wagered) || 0,
+                won_cents: Number(r.won) || 0,
+                net_cents: Number(r.net) || 0,
+            })),
+        };
+        cache.set(cacheKey, { value: payload, expiresAt: Date.now() + LB_CACHE_TTL_MS });
+        res.json(payload);
+    } catch (err) {
+        console.error('[public/leaderboard]', err);
+        res.status(500).json({ error: 'Failed to compute leaderboard.' });
+    }
+});
+
 module.exports = router;
 // Exposed for tests so they can blow the in-process cache between
 // assertions without restarting the server.

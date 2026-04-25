@@ -2003,6 +2003,98 @@ async function main() {
         assert.strictEqual((await http('GET', '/api/public/stats')).status, 200);
 
         console.log('[test] public stats: shape + types; both games surfaced with theoretical RTP; zero PII; cache stable; no auth required');
+
+        // /api/public/leaderboard — top users by net win over a rolling
+        // window. Anonymized, no PII, MIN_SPINS qualifying floor keeps
+        // one-shot lucky users from dominating.
+        publicMod._test.resetCache();
+        // Seed: a high-volume winner (15 spins, big net) and a low-volume
+        // big winner (3 spins, huge net) to verify the spins floor filters
+        // the latter while keeping the former. Names use distinct prefixes
+        // so anonymizeUsername() produces distinguishable outputs.
+        const lbWinner = 'aawin_' + Date.now();
+        const lbLucky  = 'zzluk_' + Date.now();
+        const lbHash = await require('bcryptjs').hash('Str0ngP@ss!!', 10);
+        for (const name of [lbWinner, lbLucky]) {
+            await db.run(
+                'INSERT INTO users (username, email, password_hash, date_of_birth, email_verified, balance_cents) VALUES (?, ?, ?, ?, 1, ?)',
+                [name, name + '@example.com', lbHash, '1990-01-01', 1000000]
+            );
+        }
+        const lbWinnerRow = await db.get('SELECT id FROM users WHERE username = ?', [lbWinner]);
+        const lbLuckyRow  = await db.get('SELECT id FROM users WHERE username = ?', [lbLucky]);
+        // Winner: 15 spins, bet 100 each, win 300 each → net +200 × 15 = +3000.
+        for (let i = 0; i < 15; i++) {
+            await db.run(
+                `INSERT INTO slot_rounds
+                 (user_id, game_id, bet_cents, win_cents, balance_after_cents,
+                  server_seed, server_seed_hash, client_seed, nonce, outcome_json)
+                 VALUES (?, 'classic_777', 100, 300, 0, 'x', 'y', 'z', ?, '{}')`,
+                [lbWinnerRow.id, 100 + i]
+            );
+        }
+        // Lucky: 3 spins, one giant win → would top the board if it qualified.
+        for (let i = 0; i < 3; i++) {
+            await db.run(
+                `INSERT INTO slot_rounds
+                 (user_id, game_id, bet_cents, win_cents, balance_after_cents,
+                  server_seed, server_seed_hash, client_seed, nonce, outcome_json)
+                 VALUES (?, 'classic_777', 100, ?, 0, 'x', 'y', 'z', ?, '{}')`,
+                [lbLuckyRow.id, i === 0 ? 999999 : 0, 200 + i]
+            );
+        }
+
+        publicMod._test.resetCache();
+        const lb = await http('GET', '/api/public/leaderboard');
+        assert.strictEqual(lb.status, 200);
+        assert.strictEqual(typeof lb.body.generated_at, 'string');
+        assert.strictEqual(lb.body.window_days, 30);
+        assert.strictEqual(lb.body.min_qualifying_spins, 10);
+        assert.ok(Array.isArray(lb.body.entries));
+        // High-volume winner must appear; lucky-3-spin user must NOT.
+        const lbExpectedUser = lbWinner.slice(0, 2) + '***' + lbWinner.slice(-2);
+        const lbLuckyAnon    = lbLucky.slice(0, 2) + '***' + lbLucky.slice(-2);
+        const winnerEntry = lb.body.entries.find(e => e.user === lbExpectedUser);
+        assert.ok(winnerEntry, 'qualifying winner missing from leaderboard');
+        assert.strictEqual(winnerEntry.spins, 15);
+        assert.strictEqual(winnerEntry.wagered_cents, 1500);
+        assert.strictEqual(winnerEntry.won_cents, 4500);
+        assert.strictEqual(winnerEntry.net_cents, 3000);
+        assert.ok(typeof winnerEntry.rank === 'number' && winnerEntry.rank >= 1);
+        assert.ok(!lb.body.entries.some(e => e.user === lbLuckyAnon),
+            'sub-MIN_SPINS user must not appear on leaderboard');
+        // Descending net order.
+        for (let i = 1; i < lb.body.entries.length; i++) {
+            assert.ok(lb.body.entries[i - 1].net_cents >= lb.body.entries[i].net_cents,
+                'leaderboard not sorted by net DESC');
+        }
+        // Strictly no PII / no seeds in any entry.
+        for (const e of lb.body.entries) {
+            assert.strictEqual(e.username,         undefined);
+            assert.strictEqual(e.user_id,          undefined);
+            assert.strictEqual(e.email,            undefined);
+            assert.strictEqual(e.server_seed,      undefined);
+            assert.strictEqual(e.server_seed_hash, undefined);
+            assert.strictEqual(e.client_seed,      undefined);
+        }
+        // Bad / oversized params fall back to defaults (no 4xx).
+        publicMod._test.resetCache();
+        const lbBad = await http('GET', '/api/public/leaderboard?window_days=99999&limit=9999');
+        assert.strictEqual(lbBad.status, 200);
+        assert.strictEqual(lbBad.body.window_days, 30);
+        // Custom limit honored.
+        publicMod._test.resetCache();
+        const lbCap = await http('GET', '/api/public/leaderboard?limit=1');
+        assert.strictEqual(lbCap.status, 200);
+        assert.ok(lbCap.body.entries.length <= 1);
+        // Cache stable: two consecutive calls byte-for-byte identical.
+        const lbc1 = await http('GET', '/api/public/leaderboard');
+        const lbc2 = await http('GET', '/api/public/leaderboard');
+        assert.strictEqual(lbc1.raw, lbc2.raw, 'cache should produce identical payload');
+        // No auth required.
+        assert.strictEqual((await http('GET', '/api/public/leaderboard')).status, 200);
+
+        console.log('[test] public leaderboard: shape + types; net DESC; MIN_SPINS qualifier filters one-shot users; anonymized; zero PII; bad params fall back; cache stable; no auth required');
     }
 
     // ═══ Daily loss limit ═══════════════════════════════════════════════════

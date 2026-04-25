@@ -68,6 +68,24 @@
         <tbody><tr><td colspan="7" style="text-align:center;color:#666">— loading —</td></tr></tbody>
     </table>
 
+    <h2>Leaderboard — last 30 days</h2>
+    <p style="font-size:12px;color:#94a3b8;margin-bottom:10px">
+        Top players by net win (won − wagered) over the last 30 days. Minimum
+        <span id="lb-min-spins">10</span> qualifying spins. Usernames are
+        anonymized; the same data underlies the hot-wins ticker on the lobby.
+    </p>
+    <table id="tbl-leaderboard">
+        <thead><tr>
+            <th>#</th>
+            <th>Player</th>
+            <th>Spins</th>
+            <th>Wagered</th>
+            <th>Won</th>
+            <th>Net</th>
+        </tr></thead>
+        <tbody><tr><td colspan="6" style="text-align:center;color:#666">— loading —</td></tr></tbody>
+    </table>
+
     <p class="meta">
         Data is direct from the slot-rounds ledger. Every row is also visible to
         the round's owner via <code>GET /api/slot/rounds</code> and to operators
@@ -133,6 +151,35 @@
             '<tr><td colspan="7" style="text-align:center;color:#ff9f9f">' + esc(msg) + '</td></tr>';
     }
 
+    function paintLeaderboard(data) {
+        var tbody = document.querySelector('#tbl-leaderboard tbody');
+        if (data.min_qualifying_spins != null) {
+            document.getElementById('lb-min-spins').textContent = data.min_qualifying_spins;
+        }
+        if (!data.entries || data.entries.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:#666">No qualifying players yet.</td></tr>';
+            return;
+        }
+        tbody.innerHTML = data.entries.map(function (e) {
+            var net = Number(e.net_cents) || 0;
+            var netCls = net > 0 ? 'pos' : (net < 0 ? 'neg' : '');
+            var netStr = (net > 0 ? '+' : '') + fmt(net);
+            return '<tr>' +
+                '<td>' + (e.rank || 0) + '</td>' +
+                '<td><span class="mono">' + esc(e.user) + '</span></td>' +
+                '<td>' + (e.spins || 0).toLocaleString() + '</td>' +
+                '<td>' + fmt(e.wagered_cents) + '</td>' +
+                '<td>' + fmt(e.won_cents) + '</td>' +
+                '<td class="' + netCls + '">' + netStr + '</td>' +
+            '</tr>';
+        }).join('');
+    }
+
+    function showLbError(msg) {
+        document.querySelector('#tbl-leaderboard tbody').innerHTML =
+            '<tr><td colspan="6" style="text-align:center;color:#ff9f9f">' + esc(msg) + '</td></tr>';
+    }
+
     fetch('/api/public/stats')
         .then(function (r) {
             if (!r.ok) throw new Error('HTTP ' + r.status);
@@ -140,6 +187,14 @@
         })
         .then(paint)
         .catch(function (e) { showError('Could not load stats: ' + e.message); });
+
+    fetch('/api/public/leaderboard')
+        .then(function (r) {
+            if (!r.ok) throw new Error('HTTP ' + r.status);
+            return r.json();
+        })
+        .then(paintLeaderboard)
+        .catch(function (e) { showLbError('Could not load leaderboard: ' + e.message); });
 })();
 </script>
 </body>

@@ -637,6 +637,23 @@ async function main() {
             } else {
                 ok('stats page: ' + view.spins + ' spins, wagered ' + view.wagered + ', won ' + view.won + ', RTP ' + view.rtp);
             }
+
+            // Leaderboard table must populate (or render the empty-state
+            // copy if no qualifying users yet — both prove the JS ran).
+            const lbReady = await page.waitForFunction(() => {
+                const tbody = document.querySelector('#tbl-leaderboard tbody');
+                return tbody && tbody.children.length >= 1 && !/loading/i.test(tbody.textContent || '');
+            }, { timeout: 8000 }).then(() => true).catch(() => false);
+            if (!lbReady) {
+                fail('stats page: leaderboard table never populated');
+            } else {
+                const lb = await page.evaluate(() => {
+                    const rows = Array.from(document.querySelectorAll('#tbl-leaderboard tbody tr'))
+                        .map(r => r.textContent.trim().slice(0, 80));
+                    return { rows, rowCount: rows.length };
+                });
+                ok('stats page: leaderboard rendered (' + lb.rowCount + ' row(s))');
+            }
         }
 
         if (consoleErrors.length) {
