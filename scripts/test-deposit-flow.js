@@ -2012,6 +2012,83 @@ async function main() {
         console.log('[test] wagering: 1× deposits required, met=true on no-deposit + on full-wager, blocks at 99%, lifetime (no re-wager), refunds drop denominator');
     }
 
+    // ═══ Slot stats + history CSV ═══════════════════════════════════════════
+    {
+        const { signToken: signTok2 } = require('../server/middleware/auth');
+        const ssName = 'ss_' + Date.now();
+        const ssHash = await require('bcryptjs').hash('Str0ngP@ss!!', 10);
+        await db.run(
+            'INSERT INTO users (username, email, password_hash, date_of_birth, email_verified, balance_cents) VALUES (?, ?, ?, ?, 1, ?)',
+            [ssName, ssName + '@example.com', ssHash, '1990-01-01', 0]
+        );
+        const ssRow = await db.get('SELECT id, username, is_admin, token_version FROM users WHERE username = ?', [ssName]);
+        const ssTok = signTok2(ssRow);
+
+        // Empty stats for a brand-new user.
+        const empty = await http('GET', '/api/user/slot-stats', { token: ssTok });
+        assert.strictEqual(empty.status, 200);
+        assert.strictEqual(empty.body.total_spins, 0);
+        assert.strictEqual(empty.body.wagered_cents, 0);
+        assert.strictEqual(empty.body.won_cents, 0);
+        assert.strictEqual(empty.body.net_cents, 0);
+        assert.strictEqual(empty.body.biggest_win_cents, 0);
+        assert.strictEqual(empty.body.empirical_rtp, null);
+        assert.strictEqual(empty.body.biggest_win_round, null);
+        assert.deepStrictEqual(empty.body.by_game, []);
+
+        // Seed three rounds across two games. Round 2 is the biggest win.
+        async function seedRound(game, bet, win) {
+            await db.run(
+                `INSERT INTO slot_rounds
+                 (user_id, game_id, bet_cents, win_cents, balance_after_cents,
+                  server_seed, server_seed_hash, client_seed, nonce, outcome_json)
+                 VALUES (?, ?, ?, ?, 0, 'x', 'y', 'z', 1, '{}')`,
+                [ssRow.id, game, bet, win]
+            );
+        }
+        await seedRound('classic_777', 100, 0);
+        await seedRound('classic_777', 100, 5000); // biggest win 50.00
+        await seedRound('neon_burst', 200, 50);
+
+        const populated = await http('GET', '/api/user/slot-stats', { token: ssTok });
+        assert.strictEqual(populated.status, 200);
+        assert.strictEqual(populated.body.total_spins, 3);
+        assert.strictEqual(populated.body.wagered_cents, 400);
+        assert.strictEqual(populated.body.won_cents, 5050);
+        assert.strictEqual(populated.body.net_cents, 4650);
+        assert.strictEqual(populated.body.biggest_win_cents, 5000);
+        // Empirical RTP = 5050 / 400 = 12.625
+        assert.ok(Math.abs(populated.body.empirical_rtp - 12.625) < 1e-9);
+        assert.ok(populated.body.biggest_win_round, 'biggest_win_round should be present');
+        assert.strictEqual(populated.body.biggest_win_round.game_id, 'classic_777');
+        assert.strictEqual(populated.body.biggest_win_round.win_cents, 5000);
+        // by_game ordered by spin count desc; classic_777 has 2, neon_burst has 1.
+        assert.strictEqual(populated.body.by_game.length, 2);
+        assert.strictEqual(populated.body.by_game[0].game_id, 'classic_777');
+        assert.strictEqual(populated.body.by_game[0].spins, 2);
+        assert.strictEqual(populated.body.by_game[0].wagered_cents, 200);
+        assert.strictEqual(populated.body.by_game[0].won_cents, 5000);
+        assert.strictEqual(populated.body.by_game[0].biggest_win_cents, 5000);
+        assert.strictEqual(populated.body.by_game[1].game_id, 'neon_burst');
+        assert.strictEqual(populated.body.by_game[1].spins, 1);
+
+        // Cross-user isolation.
+        const otherStats = await http('GET', '/api/user/slot-stats', { token: adminToken });
+        assert.notStrictEqual(otherStats.body.total_spins, 3, 'admin must see their own stats, not the test user\'s');
+
+        // CSV download — header + 3 rows. (BOM is asserted byte-exact
+        // by the existing /deposits.csv test; fetch's res.text() strips
+        // the BOM during UTF-8 decode in some envs, so we test the
+        // payload structure here instead.)
+        const csvRes = await http('GET', '/api/user/slot-history.csv', { token: ssTok });
+        assert.strictEqual(csvRes.status, 200);
+        const csvLines = csvRes.raw.replace(/^﻿/, '').trim().split('\n');
+        assert.strictEqual(csvLines[0], 'id,game_id,bet,win,net,balance_after,server_seed,server_seed_hash,client_seed,nonce,created_at');
+        assert.strictEqual(csvLines.length, 4); // header + 3 data rows
+
+        console.log('[test] slot stats + history CSV: empty-state, populated aggregate, biggest-win round, by-game ordering, cross-user isolation, CSV header + BOM');
+    }
+
     console.log('\n✅ all deposit-flow assertions passed');
     main.server.close();
     await db.close();

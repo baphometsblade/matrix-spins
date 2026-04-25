@@ -480,6 +480,38 @@ async function main() {
                             ok('withdrawal UI: $25 request submitted, row=' + wdRow.id + ' status=pending, balance debited exactly');
                         }
                     }
+
+                    // Slots tab — assert stats card populates with the
+                    // per-user spin history accumulated by earlier
+                    // assertions (live-slot, neon_burst, auto-spin x10).
+                    await page.evaluate(() => {
+                        var tab = document.querySelector('[data-tab="slots"]');
+                        if (tab) tab.click();
+                    });
+                    const slotsTabUp = await page.waitForFunction(
+                        () => {
+                            const v = document.getElementById('ss-spins');
+                            return v && /^\d+$/.test((v.textContent || '').replace(/,/g, ''));
+                        },
+                        { timeout: 5000 }
+                    ).then(() => true).catch(() => false);
+                    if (!slotsTabUp) {
+                        fail('slots tab: stats card never populated');
+                    } else {
+                        const cents = await page.evaluate(() => ({
+                            spins:    Number((document.getElementById('ss-spins').textContent || '').replace(/,/g, '')),
+                            wagered:  document.getElementById('ss-wagered').textContent,
+                            won:      document.getElementById('ss-won').textContent,
+                            biggest:  document.getElementById('ss-biggest').textContent,
+                        }));
+                        if (cents.spins < 10) {
+                            fail('slots tab: expected ≥10 spins from earlier blocks, saw ' + cents.spins);
+                        } else if (!/\$/.test(cents.wagered) || !/\$/.test(cents.won)) {
+                            fail('slots tab: wagered/won did not render as $ amounts');
+                        } else {
+                            ok('slots tab: ' + cents.spins + ' spins, wagered ' + cents.wagered + ', won ' + cents.won);
+                        }
+                    }
                 }
             }
         }

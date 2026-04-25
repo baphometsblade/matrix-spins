@@ -91,6 +91,7 @@
     <button class="tab" data-tab="limits">Limits</button>
     <button class="tab" data-tab="deposits">Deposits</button>
     <button class="tab" data-tab="withdrawals">Withdrawals</button>
+    <button class="tab" data-tab="slots">Slots</button>
     <button class="tab" data-tab="receipts">Receipt NFTs</button>
     <button class="tab" data-tab="activity">Activity</button>
 </div>
@@ -208,6 +209,33 @@
     <table id="tbl-withdrawals"><thead><tr>
         <th>ID</th><th>Amount</th><th>Method</th><th>Status</th><th>Note</th><th>Requested</th><th>Processed</th><th></th>
     </tr></thead><tbody></tbody></table>
+</section>
+
+<section id="slots">
+    <div class="cards">
+        <div class="card"><div class="label">Spins played</div><div class="value" id="ss-spins">—</div></div>
+        <div class="card"><div class="label">Total wagered</div><div class="value" id="ss-wagered">—</div></div>
+        <div class="card"><div class="label">Total won</div><div class="value" id="ss-won">—</div></div>
+        <div class="card"><div class="label">Net</div><div class="value" id="ss-net">—</div></div>
+    </div>
+    <div class="card">
+        <div class="label" style="margin-bottom:8px">Biggest single win</div>
+        <div id="ss-biggest" class="msg">No spins yet.</div>
+    </div>
+    <div class="card">
+        <div class="label" style="margin-bottom:8px">Empirical RTP</div>
+        <p style="font-size:13px;color:#8a8a8a;margin:0 0 6px">Your observed return on play (won &divide; wagered). Converges toward the published per-game RTP over many spins; short sessions can swing wildly.</p>
+        <div id="ss-rtp" class="value">—</div>
+    </div>
+    <div class="card">
+        <div class="label" style="margin-bottom:8px">By game</div>
+        <table id="tbl-slot-by-game"><thead><tr>
+            <th>Game</th><th>Spins</th><th>Wagered</th><th>Won</th><th>Biggest</th>
+        </tr></thead><tbody></tbody></table>
+    </div>
+    <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:8px">
+        <button class="secondary" onclick="downloadSlotHistoryCsv()">Download spin history (CSV)</button>
+    </div>
 </section>
 
 <section id="receipts">
@@ -335,7 +363,7 @@
                     alert('Email verification failed: ' + ((consume.data && consume.data.error) || 'unknown error'));
                 }
             }
-            await Promise.all([loadOverview(), loadDeposits(), loadNfts(), loadLimits(), loadActivity(), load2FA(), loadWithdrawals(), loadWagering()]);
+            await Promise.all([loadOverview(), loadDeposits(), loadNfts(), loadLimits(), loadActivity(), load2FA(), loadWithdrawals(), loadWagering(), loadSlotStats()]);
         } catch (e) {
             document.getElementById('signed-in-as').innerHTML = 'Session invalid or expired. <a href="/">Sign in again</a>.';
             document.getElementById('login-wrap').style.display = '';
@@ -654,6 +682,68 @@
             msg.className = 'msg ok'; msg.textContent = 'Downloaded.';
         } catch (e) {
             msg.className = 'msg err'; msg.textContent = e.message;
+        }
+    };
+
+    async function loadSlotStats() {
+        try {
+            var data = await api('GET', '/api/user/slot-stats');
+            document.getElementById('ss-spins').textContent = (data.total_spins || 0).toLocaleString();
+            document.getElementById('ss-wagered').textContent = money(data.wagered_cents / 100);
+            document.getElementById('ss-won').textContent = money(data.won_cents / 100);
+            var net = (data.net_cents || 0) / 100;
+            var netEl = document.getElementById('ss-net');
+            netEl.textContent = (net >= 0 ? '+' : '−') + money(Math.abs(net));
+            netEl.style.color = net >= 0 ? '#5fd489' : '#ff9f9f';
+
+            var rtpEl = document.getElementById('ss-rtp');
+            if (data.empirical_rtp != null) {
+                rtpEl.textContent = (data.empirical_rtp * 100).toFixed(1) + '%';
+                rtpEl.title = 'won / wagered over your full history';
+            } else {
+                rtpEl.textContent = '—';
+            }
+
+            var biggest = document.getElementById('ss-biggest');
+            if (data.biggest_win_round) {
+                var r = data.biggest_win_round;
+                biggest.className = 'msg ok';
+                biggest.innerHTML = money(r.win_cents / 100) + ' on ' + esc(r.game_id) +
+                    ' (round #' + r.id + ', bet ' + money(r.bet_cents / 100) + ', ' +
+                    esc(String(r.created_at || '').replace('T', ' ').slice(0, 19)) + ') ' +
+                    '&nbsp;<a href="/verify-round.html?round=' + r.id + '" target="_blank" rel="noopener">verify &rarr;</a>';
+            } else {
+                biggest.className = 'msg';
+                biggest.textContent = 'No spins yet.';
+            }
+
+            var tbody = document.querySelector('#tbl-slot-by-game tbody');
+            tbody.innerHTML = data.by_game.length === 0
+                ? '<tr><td colspan="5" class="empty">No spins yet.</td></tr>'
+                : data.by_game.map(function (g) {
+                    return '<tr>' +
+                        '<td>' + esc(g.game_id) + '</td>' +
+                        '<td>' + g.spins.toLocaleString() + '</td>' +
+                        '<td>' + money(g.wagered_cents / 100) + '</td>' +
+                        '<td>' + money(g.won_cents / 100) + '</td>' +
+                        '<td>' + money(g.biggest_win_cents / 100) + '</td>' +
+                    '</tr>';
+                }).join('');
+        } catch (e) { /* ignore */ }
+    }
+
+    window.downloadSlotHistoryCsv = async function () {
+        try {
+            const res = await fetch('/api/user/slot-history.csv', { headers: { Authorization: 'Bearer ' + token() } });
+            if (!res.ok) throw new Error('HTTP ' + res.status);
+            const blob = await res.blob();
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url; a.download = 'my-slot-history.csv';
+            document.body.appendChild(a); a.click(); document.body.removeChild(a);
+            setTimeout(() => URL.revokeObjectURL(url), 1000);
+        } catch (e) {
+            alert('Download failed: ' + e.message);
         }
     };
 

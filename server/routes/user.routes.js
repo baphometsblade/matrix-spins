@@ -158,6 +158,120 @@ router.get('/deposits.csv', authenticate, async (req, res) => {
     }
 });
 
+/**
+ * Slot stats — total spins, total wagered, total won, biggest single
+ * win, last spin time, and a per-game breakdown. Pure aggregate over
+ * slot_rounds; nothing here changes balance or settles anything.
+ *
+ * The `?` placeholder reused via the db wrapper is rewritten to $N for
+ * pg automatically — same SQL serves both backends.
+ */
+router.get('/slot-stats', authenticate, async (req, res) => {
+    try {
+        const totals = await db.get(
+            `SELECT COUNT(*) AS spins,
+                    COALESCE(SUM(bet_cents), 0) AS wagered,
+                    COALESCE(SUM(win_cents), 0) AS won,
+                    COALESCE(MAX(win_cents), 0) AS biggest_win,
+                    MAX(created_at) AS last_spin_at
+               FROM slot_rounds WHERE user_id = ?`,
+            [req.user.id]
+        );
+        const wagered = Number((totals && totals.wagered) || 0);
+        const won = Number((totals && totals.won) || 0);
+        const biggest = Number((totals && totals.biggest_win) || 0);
+
+        let biggestWinRound = null;
+        if (biggest > 0) {
+            const row = await db.get(
+                `SELECT id, game_id, bet_cents, win_cents, created_at
+                   FROM slot_rounds
+                  WHERE user_id = ? AND win_cents = ?
+                  ORDER BY id DESC LIMIT 1`,
+                [req.user.id, biggest]
+            );
+            if (row) {
+                biggestWinRound = {
+                    id: row.id,
+                    game_id: row.game_id,
+                    bet_cents: Number(row.bet_cents),
+                    win_cents: Number(row.win_cents),
+                    created_at: row.created_at,
+                };
+            }
+        }
+
+        const byGameRows = await db.all(
+            `SELECT game_id,
+                    COUNT(*) AS spins,
+                    COALESCE(SUM(bet_cents), 0) AS wagered,
+                    COALESCE(SUM(win_cents), 0) AS won,
+                    COALESCE(MAX(win_cents), 0) AS biggest_win
+               FROM slot_rounds WHERE user_id = ?
+              GROUP BY game_id ORDER BY spins DESC`,
+            [req.user.id]
+        );
+
+        res.json({
+            total_spins: Number((totals && totals.spins) || 0),
+            wagered_cents: wagered,
+            won_cents: won,
+            net_cents: won - wagered,
+            biggest_win_cents: biggest,
+            // Empirical RTP from the user's own play history. Useful for
+            // sanity-checking long-term variance against the published
+            // theoretical RTP (95.2% / 95.32%).
+            empirical_rtp: wagered > 0 ? won / wagered : null,
+            biggest_win_round: biggestWinRound,
+            last_spin_at: (totals && totals.last_spin_at) || null,
+            by_game: byGameRows.map(r => ({
+                game_id: r.game_id,
+                spins: Number(r.spins),
+                wagered_cents: Number(r.wagered),
+                won_cents: Number(r.won),
+                biggest_win_cents: Number(r.biggest_win),
+            })),
+        });
+    } catch (err) {
+        console.error('[user/slot-stats]', err);
+        res.status(500).json({ error: 'Failed to fetch slot stats.' });
+    }
+});
+
+/**
+ * Streamed CSV download of the user's full spin history (capped at
+ * 50,000 rows). Mirrors /api/user/deposits.csv: UTF-8 BOM so Excel
+ * doesn't mojibake the header, attachment Content-Disposition.
+ */
+router.get('/slot-history.csv', authenticate, async (req, res) => {
+    try {
+        const rows = await db.all(
+            `SELECT id, game_id, bet_cents, win_cents, balance_after_cents,
+                    server_seed, server_seed_hash, client_seed, nonce, created_at
+               FROM slot_rounds
+              WHERE user_id = ?
+              ORDER BY id DESC LIMIT 50000`,
+            [req.user.id]
+        );
+        const header = 'id,game_id,bet,win,net,balance_after,server_seed,server_seed_hash,client_seed,nonce,created_at\n';
+        const body = rows.map(r => [
+            r.id,
+            r.game_id,
+            (Number(r.bet_cents) / 100).toFixed(2),
+            (Number(r.win_cents) / 100).toFixed(2),
+            ((Number(r.win_cents) - Number(r.bet_cents)) / 100).toFixed(2),
+            (Number(r.balance_after_cents) / 100).toFixed(2),
+            r.server_seed, r.server_seed_hash, r.client_seed, r.nonce, r.created_at,
+        ].map(csvEscape).join(',')).join('\n');
+        res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+        res.setHeader('Content-Disposition', 'attachment; filename="my-slot-history-' + new Date().toISOString().slice(0, 10) + '.csv"');
+        res.send('﻿' + header + body + '\n');
+    } catch (err) {
+        console.error('[user/slot-history.csv]', err);
+        res.status(500).json({ error: 'Export failed.' });
+    }
+});
+
 router.get('/deposits', authenticate, async (req, res) => {
     try {
         const rows = await db.all(

@@ -65,6 +65,8 @@
                 '/api/user/me',
                 '/api/user/deposits',
                 '/api/user/deposits.csv',
+                '/api/user/slot-stats',
+                '/api/user/slot-history.csv',
                 '/api/user/login-history',
                 '/api/user/export.json',
                 '/api/user/stats',
