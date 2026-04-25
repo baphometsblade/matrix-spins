@@ -2856,6 +2856,152 @@ async function main() {
         console.log('[test] withdrawal destinations: validation; UNIQUE; pre-cooldown 403; ownership 404; mixed-mode 400; cooldown-elapsed flips active; balance debited; destination_id persisted on withdrawal row; per-user cap; DELETE 200/404; legacy raw path still works; notification email masks destination');
     }
 
+    // ═══ Active sessions / per-device sign-out ════════════════════════════
+    // Each issued JWT carries a jti; revoking the matching auth_sessions
+    // row blocks the next request from that token. Token-version bump
+    // stays the nuclear "all sessions" path.
+    //
+    // The /api/auth/login per-IP rate limit is already exhausted at
+    // this point in the suite, so we mint sessions directly via
+    // signToken(user, jti) + sessions.recordSession() — that exercises
+    // the same code path the login flow uses.
+    {
+        const jwt = require('jsonwebtoken');
+        const { signToken, newJti } = require('../server/middleware/auth');
+        const sessionsService = require('../server/services/sessions.service');
+        const mailerSvc = require('../server/services/email.service');
+
+        const sessHash = await require('bcryptjs').hash('Str0ngP@ss!!', 10);
+        const sessUserName = 'sess_' + Date.now();
+        await db.run(
+            'INSERT INTO users (username, email, password_hash, date_of_birth, email_verified, balance_cents) VALUES (?, ?, ?, ?, 1, ?)',
+            [sessUserName, sessUserName + '@example.com', sessHash, '1990-01-01', 100000]
+        );
+        const sessUserRow = await db.get(
+            'SELECT id, username, email, is_admin, token_version FROM users WHERE username = ?',
+            [sessUserName]
+        );
+
+        // signToken(user, jti) embeds the jti in the JWT payload. Without
+        // an explicit jti, signToken still mints a random one.
+        const jti1 = newJti();
+        const sessTok = signToken(sessUserRow, jti1);
+        const decoded = jwt.decode(sessTok);
+        assert.ok(decoded && typeof decoded.jti === 'string' && /^[a-f0-9]{32}$/.test(decoded.jti),
+            'JWT must carry a 128-bit hex jti');
+        assert.strictEqual(decoded.jti, jti1, 'explicit jti must round-trip into the JWT');
+        await sessionsService.recordSession(jti1, sessUserRow.id, { headers: { 'user-agent': 'Mozilla/5.0 Chrome/Test', 'x-forwarded-for': '203.0.113.10' } });
+
+        // Lazy-create path: a token whose jti has no row yet still
+        // authenticates AND triggers a row to be created. Verify by
+        // hitting /api/user/me with a freshly-minted-but-unrecorded token.
+        const lazyJti = newJti();
+        const lazyTok = signToken(sessUserRow, lazyJti);
+        const lazyMe = await http('GET', '/api/user/me', { token: lazyTok });
+        assert.strictEqual(lazyMe.status, 200, 'lazy session must authenticate; got ' + lazyMe.status);
+        const lazyRow = await db.get('SELECT jti FROM auth_sessions WHERE jti = ?', [lazyJti]);
+        assert.ok(lazyRow, 'lazy authentication must create the session row');
+
+        // /sessions lists both sessions and marks the calling jti as current.
+        const list1 = await http('GET', '/api/user/sessions', { token: sessTok });
+        assert.strictEqual(list1.status, 200);
+        assert.ok(Array.isArray(list1.body.sessions));
+        assert.ok(list1.body.sessions.length >= 2, 'expected ≥2 sessions: ' + list1.body.sessions.length);
+        const here = list1.body.sessions.find(s => s.current === true);
+        assert.ok(here, 'one session must be marked current=true');
+        assert.strictEqual(here.jti, jti1);
+        assert.ok(!here.revoked_at, 'current session must not be revoked');
+
+        // Per-jti revoke: revoke lazyJti from sessTok's session.
+        const revokeCsrf = (await http('GET', '/api/csrf-token', { token: sessTok })).body.csrfToken;
+        const rev = await http('POST', '/api/user/sessions/' + lazyJti + '/revoke', {
+            token: sessTok, csrf: revokeCsrf,
+        });
+        assert.strictEqual(rev.status, 200);
+        // Cache TTL is 30s; bypass it directly so the next request sees
+        // the new revoked_at immediately.
+        sessionsService.invalidate(lazyJti);
+        const blocked = await http('GET', '/api/user/me', { token: lazyTok });
+        assert.strictEqual(blocked.status, 401, 'revoked session must 401; got ' + blocked.status);
+        assert.strictEqual(blocked.body.code, 'session_revoked');
+
+        // Self-revoke is blocked (use /logout instead).
+        const selfRev = await http('POST', '/api/user/sessions/' + jti1 + '/revoke', {
+            token: sessTok, csrf: revokeCsrf,
+        });
+        assert.strictEqual(selfRev.status, 400);
+
+        // Cross-user revoke: another user can't revoke our jti (404).
+        const otherName = 'sess_other_' + Date.now();
+        await db.run(
+            'INSERT INTO users (username, email, password_hash, date_of_birth, email_verified, balance_cents) VALUES (?, ?, ?, ?, 1, ?)',
+            [otherName, otherName + '@example.com', sessHash, '1990-01-01', 0]
+        );
+        const otherRow = await db.get('SELECT id, username, is_admin, token_version FROM users WHERE username = ?', [otherName]);
+        const otherJti = newJti();
+        const otherTok = signToken(otherRow, otherJti);
+        await sessionsService.recordSession(otherJti, otherRow.id, { headers: { 'user-agent': 'Other' } });
+        const otherCsrf = (await http('GET', '/api/csrf-token', { token: otherTok })).body.csrfToken;
+        const cross = await http('POST', '/api/user/sessions/' + jti1 + '/revoke', {
+            token: otherTok, csrf: otherCsrf,
+        });
+        assert.strictEqual(cross.status, 404, 'cross-user revoke must 404; got ' + cross.status);
+        // jti1 still alive after the failed cross-user attempt.
+        sessionsService.invalidate(jti1);
+        const stillAlive = await http('GET', '/api/user/me', { token: sessTok });
+        assert.strictEqual(stillAlive.status, 200, 'cross-user revoke must not affect the targeted session');
+
+        // revoke-others: mint a third session; revoke-others from sessTok
+        // kills it but spares sessTok.
+        const thirdJti = newJti();
+        const thirdTok = signToken(sessUserRow, thirdJti);
+        await sessionsService.recordSession(thirdJti, sessUserRow.id, { headers: { 'user-agent': 'Phone' } });
+        const ro = await http('POST', '/api/user/sessions/revoke-others', {
+            token: sessTok, csrf: revokeCsrf,
+        });
+        assert.strictEqual(ro.status, 200);
+        assert.ok(Number(ro.body.revoked) >= 1, 'revoke-others must affect at least one session');
+        sessionsService.invalidate(thirdJti);
+        const t3Blocked = await http('GET', '/api/user/me', { token: thirdTok });
+        assert.strictEqual(t3Blocked.status, 401, 'revoke-others must kill the third session');
+        sessionsService.invalidate(jti1);
+        const stillMe = await http('GET', '/api/user/me', { token: sessTok });
+        assert.strictEqual(stillMe.status, 200, 'current session must survive revoke-others');
+
+        // New-device detection. The user already has a session from
+        // 203.0.113.10 / Chrome on Mac/Linux. A "new" sign-in (different
+        // ip-net + different label) makes isNewDevice true. We exercise
+        // sendNewDeviceLogin directly from the captured-mail buffer to
+        // avoid the rate-limited /login endpoint.
+        const isNew = await sessionsService.isNewDevice(sessUserRow.id,
+            { headers: { 'user-agent': 'TestBot/1.0', 'x-forwarded-for': '198.51.100.7' } });
+        assert.strictEqual(isNew, true, 'isNewDevice must flag a different ip-net + label');
+        const isOld = await sessionsService.isNewDevice(sessUserRow.id,
+            { headers: { 'user-agent': 'Mozilla/5.0 Chrome/x.y.z', 'x-forwarded-for': '203.0.113.10' } });
+        assert.strictEqual(isOld, false, 'isNewDevice must NOT flag the previously-recorded device');
+
+        mailerSvc.clearCaptured();
+        await mailerSvc.sendNewDeviceLogin({
+            to: sessUserRow.email, username: sessUserRow.username,
+            device_label: 'Curl on Linux', ip: '198.51.100.7',
+        });
+        const captured = mailerSvc.getCaptured();
+        const alert = captured.find(m => /new device/i.test(m.subject || ''));
+        assert.ok(alert, 'sendNewDeviceLogin must capture an email');
+        assert.ok(/Curl on Linux/.test(alert.text), 'alert body must include device label');
+        assert.ok(/198\.51\.100\.7/.test(alert.text), 'alert body must include the IP');
+
+        // Bad jti format on revoke → 400 (input sanity).
+        const badJti = await http('POST', '/api/user/sessions/not-hex/revoke', {
+            token: sessTok, csrf: revokeCsrf,
+        });
+        assert.strictEqual(badJti.status, 400);
+
+        console.log('[test] active sessions: jti issued; lazy-create on first auth; per-jti revoke blocks (session_revoked) + cache invalidated; self-revoke 400; cross-user 404; revoke-others kills others while sparing current; isNewDevice classifies same vs different (ip-net, label); sendNewDeviceLogin email shaped correctly');
+    }
+
+    console.log('\n✅ all deposit-flow assertions passed');
+
     console.log('\n✅ all deposit-flow assertions passed');
     main.server.close();
     await db.close();

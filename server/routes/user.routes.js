@@ -709,4 +709,58 @@ router.delete('/', authenticate, async (req, res) => {
     }
 });
 
+// ─── Active sessions / device management ────────────────────────────
+//
+// Per-session JWT tracking. Each issued token carries a jti that
+// indexes a row in auth_sessions; revoking that row makes the next
+// authed request fail with 401 session_revoked.
+const sessionsService = require('../services/sessions.service');
+
+router.get('/sessions', authenticate, async (req, res) => {
+    try {
+        const list = await sessionsService.listForUser(req.user.id);
+        // Mark the caller's own session so the UI can label it and
+        // disable the revoke button on it. The current jti is on the
+        // verified JWT payload — the user can't fake another jti
+        // because we'd never have populated req.user from it.
+        const here = req.user.jti || null;
+        res.json({
+            sessions: list.map(s => Object.assign({}, s, { current: s.jti === here })),
+            current: here,
+        });
+    } catch (err) {
+        console.error('[user/sessions:list]', err);
+        res.status(500).json({ error: 'Failed to load sessions.' });
+    }
+});
+
+router.post('/sessions/revoke-others', authenticate, async (req, res) => {
+    try {
+        const result = await sessionsService.revokeOthers(req.user.id, req.user.jti);
+        res.json(result);
+    } catch (err) {
+        const status = err.status || 500;
+        if (status >= 500) console.error('[user/sessions:revoke-others]', err);
+        res.status(status).json({ error: err.message });
+    }
+});
+
+router.post('/sessions/:jti/revoke', authenticate, async (req, res) => {
+    try {
+        // Refuse self-revoke at this endpoint — the UI uses /logout
+        // for that and the round-trip flow expects a valid response
+        // to the request that just killed itself, not a 401 from the
+        // CSRF token-fetch on the next call.
+        if (req.params.jti === req.user.jti) {
+            return res.status(400).json({ error: 'Use /api/auth/logout to end your current session.' });
+        }
+        const result = await sessionsService.revoke(req.user.id, req.params.jti);
+        res.json(result);
+    } catch (err) {
+        const status = err.status || 500;
+        if (status >= 500) console.error('[user/sessions:revoke]', err);
+        res.status(status).json({ error: err.message });
+    }
+});
+
 module.exports = router;

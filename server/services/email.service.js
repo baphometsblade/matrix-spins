@@ -228,6 +228,26 @@ async function sendWithdrawalPaid({ to, amount, currency }) {
     return send({ to, subject, text });
 }
 
+async function sendNewDeviceLogin({ to, username, device_label, ip }) {
+    // Tip-off mail when a successful login appears from an
+    // ip-network + device-label signature we haven't seen before.
+    // Same threat model as the destination-added mail: if a
+    // legitimate user gets one of these without recognizing the
+    // device, they should rotate their password and 2FA.
+    const subject = 'Matrix Spins — sign-in from a new device';
+    const text = [
+        'Hi ' + (username || 'there') + ',',
+        '',
+        'A new device just signed in to your account:',
+        '  Device: ' + (device_label || 'Unknown'),
+        '  IP:     ' + (ip || 'unknown'),
+        '',
+        'If this was not you, sign in and revoke the session from your',
+        'account page, then change your password and rotate 2FA.',
+    ].join('\n');
+    return send({ to, subject, text });
+}
+
 async function sendDestinationAdded({ to, username, method, destination, cooldown_until }) {
     // Tip-off mail when a payout destination is added. The point is
     // that the legitimate user sees this even if a session-hijacker
@@ -276,6 +296,7 @@ module.exports = {
     sendWithdrawalPaid,
     sendWithdrawalDenied,
     sendDestinationAdded,
+    sendNewDeviceLogin,
     getCaptured,
     clearCaptured,
     hasTransport,

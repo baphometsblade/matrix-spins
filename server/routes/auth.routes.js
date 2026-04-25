@@ -5,11 +5,32 @@ const bcrypt = require('bcryptjs');
 const crypto = require('crypto');
 const config = require('../config');
 const db = require('../database');
-const { signToken, sign2faChallenge, authenticate, verifyTokenString, bumpTokenVersion } = require('../middleware/auth');
+const { signToken, sign2faChallenge, authenticate, verifyTokenString, bumpTokenVersion, newJti } = require('../middleware/auth');
 const { selfExclusionResponse } = require('../middleware/self-exclusion');
 const mailer = require('../services/email.service');
 const authEvents = require('../services/auth-events.service');
+const sessions = require('../services/sessions.service');
 const { verifyTotpOrRecovery, currentSecret } = require('./twofa.routes');
+
+/**
+ * Mint a token + record the matching session row + fire new-device
+ * alert if applicable. Centralized so /login, /login/2fa, /register,
+ * and /change-password all do the same thing without drift.
+ */
+async function issueSession(user, req) {
+    const jti = newJti();
+    let isNew = false;
+    try { isNew = await sessions.isNewDevice(user.id, req); } catch (e) { /* swallow */ }
+    const token = signToken(user, jti);
+    try { await sessions.recordSession(jti, user.id, req); } catch (e) { /* swallow */ }
+    if (isNew && user.email) {
+        const label = sessions.deviceLabel(sessions.uaOf(req));
+        const ip = sessions.ipOf(req);
+        mailer.sendNewDeviceLogin({ to: user.email, username: user.username, device_label: label, ip })
+            .catch(function () { /* best-effort */ });
+    }
+    return { token, jti };
+}
 
 function reqIp(req) {
     const fwd = req && req.headers && req.headers['x-forwarded-for'];
@@ -130,7 +151,8 @@ router.post('/register', async (req, res) => {
         if (!userId) throw new Error('User id not returned after insert');
 
         const user = await db.get('SELECT * FROM users WHERE id = ?', [userId]);
-        const token = signToken(user);
+        const issued = await issueSession(user, req);
+        const token = issued.token;
         await authEvents.log({ userId: user.id, username: user.username, eventType: 'register', outcome: 'success', req });
         // Fire-and-forget welcome + verification emails. Failures log a
         // warning but never block account creation or leak as a 500.
@@ -195,9 +217,9 @@ router.post('/login', async (req, res) => {
             return res.json({ requires_2fa: true, challenge, user: { id: user.id, username: user.username } });
         }
 
-        const token = signToken(user);
+        const issued = await issueSession(user, req);
         await authEvents.log({ userId: user.id, username: user.username, eventType: 'login', outcome: 'success', req });
-        res.json({ token, user: publicUser(user) });
+        res.json({ token: issued.token, user: publicUser(user) });
     } catch (err) {
         console.error('[auth/login]', err);
         await authEvents.log({ username, eventType: 'login', outcome: 'error', reason: err.message, req });
@@ -226,9 +248,9 @@ router.post('/login/2fa', async (req, res) => {
             await authEvents.log({ userId: user.id, username: user.username, eventType: 'login', outcome: 'failed', reason: '2fa_wrong_code', req });
             return res.status(401).json({ error: 'Code does not match.' });
         }
-        const token = signToken(user);
+        const issued = await issueSession(user, req);
         await authEvents.log({ userId: user.id, username: user.username, eventType: 'login', outcome: 'success', reason: verdict.via, req });
-        res.json({ token, user: publicUser(user), via: verdict.via });
+        res.json({ token: issued.token, user: publicUser(user), via: verdict.via });
     } catch (err) {
         console.error('[auth/login/2fa]', err);
         res.status(500).json({ error: '2FA verification failed.' });
@@ -278,7 +300,8 @@ router.post('/change-password', authenticate, async (req, res) => {
         // The current JWT is invalidated by the token_version bump, so
         // issue a fresh one so this endpoint doesn't lock the caller out.
         const fresh = await db.get('SELECT * FROM users WHERE id = ?', [user.id]);
-        res.json({ ok: true, token: signToken(fresh) });
+        const issued = await issueSession(fresh, req);
+        res.json({ ok: true, token: issued.token });
     } catch (err) {
         console.error('[auth/change-password]', err);
         res.status(500).json({ error: 'Failed to change password.' });

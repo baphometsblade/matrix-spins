@@ -542,6 +542,31 @@ async function migrate() {
     // for traceability, not state.
     await addColumnIfMissing('withdrawals', 'destination_id',
         driver.kind === 'pg' ? 'INTEGER' : 'INTEGER');
+
+    // Authenticated sessions. Each issued JWT carries a `jti` that
+    // points at a row here; the middleware refuses any token whose
+    // jti row is missing AND not lazy-creatable, or whose row is
+    // marked revoked. This gives users per-device sign-out and gives
+    // ops a forensic record of where each session was issued. The
+    // existing token_version bump remains the nuclear "revoke all"
+    // path; revoked_at is the surgical per-session option.
+    //
+    // jti is the sole primary key — it's already a 128-bit random
+    // hex from crypto.randomBytes(16), so no per-user UNIQUE needed
+    // and the global-PK saves a JOIN on the auth hot path.
+    await driver.exec(`
+        CREATE TABLE IF NOT EXISTS auth_sessions (
+            jti TEXT PRIMARY KEY,
+            user_id ${driver.kind === 'pg' ? 'INTEGER' : 'INTEGER'} NOT NULL,
+            ip TEXT,
+            user_agent TEXT,
+            device_label TEXT,
+            created_at ${T.ts},
+            last_seen_at ${T.ts},
+            revoked_at ${driver.kind === 'pg' ? 'TIMESTAMPTZ' : 'TEXT'}
+        );
+    `);
+    await driver.exec(`CREATE INDEX IF NOT EXISTS idx_auth_sessions_user ON auth_sessions (user_id, last_seen_at DESC);`);
 }
 
 async function initDatabase() {

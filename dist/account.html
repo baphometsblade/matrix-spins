@@ -132,6 +132,17 @@
         <div class="msg" id="pw-msg"></div>
     </form>
     <div class="card">
+        <div class="label" style="margin-bottom:8px">Active sessions</div>
+        <p style="font-size:13px;color:#8a8a8a">Each device that signs in to your account holds its own session. Revoke any you don&rsquo;t recognize &mdash; they immediately stop working. We email you whenever a sign-in arrives from an unfamiliar device.</p>
+        <table id="tbl-sessions"><thead><tr>
+            <th>Device</th><th>IP</th><th>Last seen</th><th>Started</th><th></th>
+        </tr></thead><tbody><tr><td colspan="5" style="text-align:center;color:#666">&mdash; loading &mdash;</td></tr></tbody></table>
+        <div style="display:flex;justify-content:flex-end;margin-top:8px">
+            <button class="secondary" type="button" onclick="revokeOtherSessions()">Sign out everywhere else</button>
+        </div>
+        <div class="msg" id="sess-msg"></div>
+    </div>
+    <div class="card">
         <div class="label" style="margin-bottom:8px">Download my data</div>
         <p style="font-size:13px">Full JSON export of everything the server stores about your account: profile, deposits, refunds, receipt NFTs, balance adjustments, account activity, and 2FA status. Password and recovery-code hashes are not included.</p>
         <button class="secondary" type="button" onclick="downloadMyExport()">Download JSON</button>
@@ -414,7 +425,7 @@
                     alert('Email verification failed: ' + ((consume.data && consume.data.error) || 'unknown error'));
                 }
             }
-            await Promise.all([loadOverview(), loadDeposits(), loadNfts(), loadLimits(), loadActivity(), load2FA(), loadWithdrawals(), loadWagering(), loadSlotStats(), loadDestinations()]);
+            await Promise.all([loadOverview(), loadDeposits(), loadNfts(), loadLimits(), loadActivity(), load2FA(), loadWithdrawals(), loadWagering(), loadSlotStats(), loadDestinations(), loadSessions()]);
         } catch (e) {
             document.getElementById('signed-in-as').innerHTML = 'Session invalid or expired. <a href="/">Sign in again</a>.';
             document.getElementById('login-wrap').style.display = '';
@@ -696,6 +707,65 @@
         } catch (e) {
             msg.className = 'msg err';
             msg.textContent = e.message || 'Failed to save destination.';
+        }
+    };
+
+    window.loadSessions = async function () {
+        var tbody = document.querySelector('#tbl-sessions tbody');
+        try {
+            var data = await api('GET', '/api/user/sessions');
+            var list = (data && data.sessions) || [];
+            var alive = list.filter(function (s) { return !s.revoked_at; });
+            if (!alive.length) {
+                tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:#666">— none —</td></tr>';
+                return;
+            }
+            tbody.innerHTML = alive.map(function (s) {
+                var last = s.last_seen_at ? String(s.last_seen_at).replace('T', ' ').slice(0, 19) : '—';
+                var when = s.created_at  ? String(s.created_at).replace('T',  ' ').slice(0, 19) : '—';
+                var label = esc(s.device_label || 'Unknown');
+                if (s.current) label = '<strong style="color:#5fd489">' + label + '</strong> <span style="color:#9aa1ad;font-size:11px">(this device)</span>';
+                var btn = s.current
+                    ? '<span style="color:#666">—</span>'
+                    : '<button class="row-deny" onclick="revokeSession(\'' + esc(s.jti) + '\', this)">Revoke</button>';
+                return '<tr>' +
+                    '<td>' + label + '</td>' +
+                    '<td class="mono" style="font-size:12px">' + esc(s.ip || '—') + '</td>' +
+                    '<td class="mono" style="font-size:12px">' + esc(last) + '</td>' +
+                    '<td class="mono" style="font-size:12px">' + esc(when) + '</td>' +
+                    '<td>' + btn + '</td>' +
+                    '</tr>';
+            }).join('');
+        } catch (e) {
+            tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:#ff9f9f">' + esc(e.message || 'Failed to load') + '</td></tr>';
+        }
+    };
+
+    window.revokeSession = async function (jti, btn) {
+        var msg = document.getElementById('sess-msg');
+        msg.className = 'msg'; msg.textContent = '';
+        if (!confirm('Revoke this session? The other device will be signed out.')) return;
+        if (btn) btn.disabled = true;
+        try {
+            await api('POST', '/api/user/sessions/' + encodeURIComponent(jti) + '/revoke');
+            msg.className = 'msg ok'; msg.textContent = 'Session revoked.';
+            await loadSessions();
+        } catch (e) {
+            if (btn) btn.disabled = false;
+            msg.className = 'msg err'; msg.textContent = e.message || 'Failed to revoke session.';
+        }
+    };
+
+    window.revokeOtherSessions = async function () {
+        var msg = document.getElementById('sess-msg');
+        msg.className = 'msg'; msg.textContent = '';
+        if (!confirm('Sign out every other device? Any other tabs / phones / browsers will be signed out within 30 seconds.')) return;
+        try {
+            var res = await api('POST', '/api/user/sessions/revoke-others');
+            msg.className = 'msg ok'; msg.textContent = 'Signed out ' + (res.revoked || 0) + ' other session(s).';
+            await loadSessions();
+        } catch (e) {
+            msg.className = 'msg err'; msg.textContent = e.message || 'Failed to revoke sessions.';
         }
     };
 

@@ -1,18 +1,32 @@
 'use strict';
 
 const jwt = require('jsonwebtoken');
+const crypto = require('crypto');
 const config = require('../config');
 const db = require('../database');
 
-function signToken(user) {
+function newJti() {
+    return crypto.randomBytes(16).toString('hex');
+}
+
+/**
+ * Sign a session token. The optional `jti` lets the caller pre-mint
+ * one and pass it to the sessions service so the JWT and the row
+ * share the same id. Without it we generate one inline; the row is
+ * lazy-created by the auth middleware on first use.
+ */
+function signToken(user, jti) {
+    const id = jti || newJti();
     return jwt.sign(
-        { id: user.id, username: user.username, is_admin: !!user.is_admin, tv: Number(user.token_version || 0) },
+        { id: user.id, username: user.username, is_admin: !!user.is_admin, tv: Number(user.token_version || 0), jti: id },
         config.JWT_SECRET,
         { expiresIn: '30d' }
     );
 }
 
 function sign2faChallenge(user) {
+    // Challenge tokens are short-lived and not session-tracked — they
+    // exist solely to bridge from /login to /login/2fa.
     return jwt.sign(
         { id: user.id, username: user.username, pending_2fa: true, tv: Number(user.token_version || 0) },
         config.JWT_SECRET,
@@ -71,6 +85,25 @@ async function authenticate(req, res, next) {
     if (currentTv == null || Number(payload.tv || 0) !== currentTv) {
         return res.status(401).json({ error: 'Session revoked. Sign in again.' });
     }
+    // Per-session revocation. If the JWT carries a jti, look up the
+    // backing session row. Missing → lazy-create (legacy/test tokens
+    // pre-dating the migration); revoked_at set → reject. The lookup
+    // is cached 30s in the sessions service so the auth hot path
+    // stays at "verify JWT + read user TV" cost in the common case.
+    if (payload.jti) {
+        const sessions = require('../services/sessions.service');
+        const sess = await sessions.findByJti(payload.jti);
+        if (sess && sess.revoked_at) {
+            return res.status(401).json({ error: 'Session revoked. Sign in again.', code: 'session_revoked' });
+        }
+        if (!sess) {
+            // Lazy-create. Capture the current ip + ua so the user can
+            // see this session on the management page immediately.
+            try { await sessions.recordSession(payload.jti, payload.id, req); } catch (e) { /* swallow */ }
+        } else {
+            sessions.bumpLastSeen(payload.jti);
+        }
+    }
     req.user = payload;
     next();
 }
@@ -113,4 +146,5 @@ module.exports = {
     verifyTokenString,
     bumpTokenVersion,
     invalidateTokenVersionCache,
+    newJti,
 };
