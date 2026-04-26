@@ -1,8 +1,8 @@
 /* Royal Slots Casino - Bundled JavaScript */
-/* Generated: 2026-04-26T19:11:15.788Z */
+/* Generated: 2026-04-26T19:22:03.124Z */
 
 
-/* â”€â”€â”€ shared/game-definitions.js (2/56) â”€â”€â”€ */
+/* â”€â”€â”€ shared/game-definitions.js (2/57) â”€â”€â”€ */
 // Shared Game Definitions — used by both server and client
 const games = [
     // ── Live / server-authoritative game ────────────────────────────
@@ -277,7 +277,7 @@ const games = [
       wildSymbol: 'wild_rune', scatterSymbol: 's5_shield_gem',
       rtp: 95.98, volatility: 'medium', bonusType: 'tumble', freeSpinsCount: 10, freeSpinsRetrigger: true,
       tumbleMultipliers: [1, 2, 3, 5, 8, 15, 25],
-      bonusDesc: 'Valhalla Gems: 6×5 Norse cascade — Shield multipliers & Bonus Buy! 97% RTP, 5,000x max!',
+      bonusDesc: 'Valhalla Gems: 6×5 Norse cascade — Shield multipliers up to 25× & Bonus Buy.',
       payouts: { triple: 110, double: 11, wildTriple: 165, scatterPay: 4, cluster5: 4, cluster8: 12, cluster12: 40, cluster15: 110 }, minBet: 0.20, maxBet: 1500, hot: true, jackpot: 0 },
     { id: 'buffalo_extreme', name: 'Buffalo Blitz Extreme', provider: 'IronReel Entertainment', tag: 'HOT', tagClass: 'tag-hot', thumbnail: 'assets/thumbnails/buffalo_extreme.svg', bgGradient: 'linear-gradient(135deg, #795548 0%, #ff9800 100%)',
       symbols: ['s1_eagle','s2_cougar','s3_wolf_hw','s4_buffalo','s5_coin_gold','wild_bison'],
@@ -304,7 +304,7 @@ const games = [
       wildSymbol: 'wild_rainbow', scatterSymbol: 's5_bomb_candy',
       rtp: 95.96, volatility: 'medium-high', bonusType: 'random_multiplier', freeSpinsCount: 10, freeSpinsRetrigger: true,
       randomMultiplierRange: [2, 3, 5, 10, 25, 50, 100],
-      bonusDesc: 'Sweet Bonanza: 6×5 scatter tumble — Bomb multipliers up to 100x! 21,100x max win!',
+      bonusDesc: 'Sweet Bonanza: 6×5 cluster pays — Bomb multipliers from 2× up to 100× drop on every cluster win.',
       payouts: { triple: 100, double: 10, wildTriple: 150, scatterPay: 3, cluster5: 3, cluster8: 10, cluster12: 30, cluster15: 100 }, minBet: 0.20, maxBet: 2500, hot: true, jackpot: 0 },
     { id: 'dog_house_mega', name: 'Dog House Unleashed', provider: 'GoldenEdge Gaming', tag: 'POPULAR', tagClass: 'tag-popular', thumbnail: 'assets/thumbnails/dog_house_mega.svg', bgGradient: 'linear-gradient(135deg, #4caf50 0%, #ff5722 100%)',
       symbols: ['s1_bone','s2_collar','s3_paw','s4_doberman','s5_bulldog','wild_doghouse'],
@@ -689,7 +689,7 @@ if (typeof module !== 'undefined') {
     module.exports.getPaylineGeometry = getPaylineGeometry;
 }
 
-/* â”€â”€â”€ js/globals.js (8/56) â”€â”€â”€ */
+/* â”€â”€â”€ js/globals.js (8/57) â”€â”€â”€ */
         // Game data loaded from shared/game-definitions.js
         // (60 game definitions moved to separate module)
 
@@ -1100,7 +1100,7 @@ if (typeof module !== 'undefined') {
             return loadFavorites().includes(gameId);
         }
 
-/* â”€â”€â”€ js/particle-engine.js (9/56) â”€â”€â”€ */
+/* â”€â”€â”€ js/particle-engine.js (9/57) â”€â”€â”€ */
 /**
  * ============================================================
  * Casino App — Canvas Particle Engine
@@ -2165,7 +2165,7 @@ function destroyParticleEngine() {
     _particleEngineInstance = null;
 }
 
-/* â”€â”€â”€ js/auth.js (10/56) â”€â”€â”€ */
+/* â”€â”€â”€ js/auth.js (10/57) â”€â”€â”€ */
 // ═══════════════════════════════════════════════════════
 // AUTH MODULE
 // ═══════════════════════════════════════════════════════
@@ -2866,7 +2866,7 @@ function destroyParticleEngine() {
             });
         }
 
-/* â”€â”€â”€ js/spin-engine.js (11/56) â”€â”€â”€ */
+/* â”€â”€â”€ js/spin-engine.js (11/57) â”€â”€â”€ */
 // ═══════════════════════════════════════════════════════
 // SPIN-ENGINE MODULE
 // ═══════════════════════════════════════════════════════
@@ -3061,7 +3061,7 @@ function destroyParticleEngine() {
             return null;
         }
 
-/* â”€â”€â”€ js/win-logic.js (12/56) â”€â”€â”€ */
+/* â”€â”€â”€ js/win-logic.js (12/57) â”€â”€â”€ */
 // ═══════════════════════════════════════════════════════
 // WIN-LOGIC MODULE
 // ═══════════════════════════════════════════════════════
@@ -4486,7 +4486,7 @@ function destroyParticleEngine() {
             });
         }
 
-/* â”€â”€â”€ js/ui-lobby.js (13/56) â”€â”€â”€ */
+/* â”€â”€â”€ js/ui-lobby.js (13/57) â”€â”€â”€ */
 // ═══════════════════════════════════════════════════════
 // UI-LOBBY MODULE
 // ═══════════════════════════════════════════════════════
@@ -12168,7 +12168,7 @@ function renderGameStatsWidget() {
     });
 }
 
-/* â”€â”€â”€ js/search-autocomplete.js (14/56) â”€â”€â”€ */
+/* â”€â”€â”€ js/search-autocomplete.js (14/57) â”€â”€â”€ */
 (function() {
   'use strict';
 
@@ -12441,7 +12441,7 @@ function renderGameStatsWidget() {
   };
 })();
 
-/* â”€â”€â”€ js/slot-gui-engine.js (15/56) â”€â”€â”€ */
+/* â”€â”€â”€ js/slot-gui-engine.js (15/57) â”€â”€â”€ */
 (function() {
     'use strict';
 
@@ -13083,7 +13083,7 @@ function renderGameStatsWidget() {
     };
 })();
 
-/* â”€â”€â”€ js/ui-slot.js (16/56) â”€â”€â”€ */
+/* â”€â”€â”€ js/ui-slot.js (16/57) â”€â”€â”€ */
 ﻿// -------------------------------------------------------
 // UI-SLOT MODULE
 // -------------------------------------------------------
@@ -40701,7 +40701,7 @@ function _logAudit658(event, data) {
 }
 window._logAudit658 = _logAudit658;
 
-/* â”€â”€â”€ js/live-slot.js (17/56) â”€â”€â”€ */
+/* â”€â”€â”€ js/live-slot.js (17/57) â”€â”€â”€ */
 /**
  * Live slot — game-agnostic.
  *
@@ -40778,6 +40778,8 @@ window._logAudit658 = _logAudit658;
         autoCancel: false,      // user-driven stop flag for the auto-spin loop
         cellNodes: null,        // {col,row} -> reel cell element, populated at modal open
         bonusSession: null,     // active free-spin session, mirrored from server
+        quickSpin: false,       // turbo / animation skip
+        anteEnabled: false,     // ante bet adds 25% cost for boosted bonus
     };
 
     // Per-game paytable HTML — game definitions don't change at
@@ -40919,13 +40921,38 @@ window._logAudit658 = _logAudit658;
 
                 '<div id="liveSlotResult" style="min-height:22px;text-align:center;font-size:14px;font-weight:700;margin-bottom:12px;color:#fde047;"></div>' +
 
-                '<div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">' +
+                '<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">' +
                     '<label for="liveSlotBet" style="font-size:12px;color:#94a3b8;">Bet</label>' +
                     '<input id="liveSlotBet" type="number" step="0.10" ' +
                         'min="' + minDollars + '" max="' + maxDollars + '" value="' + minDollars + '" ' +
                         'style="width:90px;padding:8px;border-radius:6px;border:1px solid #374151;background:#0b0504;color:#fff;font-weight:700;">' +
                     '<button id="liveSlotSpin" style="flex:1;padding:12px;border-radius:8px;border:none;' +
                         'background:linear-gradient(135deg,#c0392b 0%,#f1c40f 100%);color:#111;font-weight:900;font-size:16px;letter-spacing:1px;cursor:pointer;">SPIN</button>' +
+                '</div>' +
+
+                // Bet shortcuts: 25% / 50% / MAX of the user's balance,
+                // clamped to game's min/max. Industry-standard quick-bet
+                // controls. The MIN button drops to game's floor.
+                '<div id="liveSlotBetShortcuts" style="display:flex;gap:4px;margin-bottom:10px;flex-wrap:wrap;">' +
+                    '<button class="ls-bet-shortcut" data-pct="min" style="flex:1;padding:5px;border-radius:5px;border:1px solid #374151;background:transparent;color:#94a3b8;font-size:11px;font-weight:700;cursor:pointer;">MIN</button>' +
+                    '<button class="ls-bet-shortcut" data-pct="0.25" style="flex:1;padding:5px;border-radius:5px;border:1px solid #374151;background:transparent;color:#94a3b8;font-size:11px;font-weight:700;cursor:pointer;">25%</button>' +
+                    '<button class="ls-bet-shortcut" data-pct="0.5" style="flex:1;padding:5px;border-radius:5px;border:1px solid #374151;background:transparent;color:#94a3b8;font-size:11px;font-weight:700;cursor:pointer;">50%</button>' +
+                    '<button class="ls-bet-shortcut" data-pct="max" style="flex:1;padding:5px;border-radius:5px;border:1px solid #374151;background:transparent;color:#94a3b8;font-size:11px;font-weight:700;cursor:pointer;">MAX</button>' +
+                '</div>' +
+
+                // Industry-standard premium controls: quick-spin toggle
+                // (animation skip), ante bet (+25% bet, easier bonus
+                // trigger and bigger free-spin count), buy bonus
+                // (instantly enter free spins for 100× bet).
+                '<div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;flex-wrap:wrap;font-size:11px;color:#94a3b8;">' +
+                    '<label style="display:flex;align-items:center;gap:4px;cursor:pointer;">' +
+                        '<input type="checkbox" id="liveSlotQuickSpin"> Turbo' +
+                    '</label>' +
+                    '<label style="display:flex;align-items:center;gap:4px;cursor:pointer;" title="Pay 25% extra; bonus trigger drops to 2 scatters and free-spin count is +50%.">' +
+                        '<input type="checkbox" id="liveSlotAnte"> Ante (+25%)' +
+                    '</label>' +
+                    '<button id="liveSlotBuyBonus" style="margin-left:auto;padding:6px 10px;border-radius:5px;border:1px solid #f1c40f55;background:rgba(241,196,15,0.08);color:#f1c40f;font-size:11px;font-weight:800;cursor:pointer;letter-spacing:0.5px;">BUY BONUS &middot; 100×</button>' +
+                    '<button id="liveSlotInfo" style="padding:6px 10px;border-radius:5px;border:1px solid #374151;background:transparent;color:#cbd5e1;font-size:11px;font-weight:700;cursor:pointer;" title="Game info, paytable, paylines, RTP">i</button>' +
                 '</div>' +
 
                 '<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;font-size:12px;color:#94a3b8;flex-wrap:wrap;">' +
@@ -40983,6 +41010,84 @@ window._logAudit658 = _logAudit658;
         el.textContent = text || '';
         el.style.color = color || '#fde047';
     }
+
+    /**
+     * Industry-standard win-celebration tiers. Threshold ratios match
+     * Pragmatic / NetEnt convention:
+     *   ≥10× bet  → "BIG WIN"
+     *   ≥25× bet  → "MEGA WIN"
+     *   ≥50× bet  → "EPIC WIN"
+     *   ≥100× bet → "MAX WIN"
+     *
+     * Renders an animated overlay with the tier label and the win
+     * amount counting up. Tap-to-dismiss; auto-clears after 3.5s.
+     */
+    function showWinCelebration(winCents, betCents) {
+        if (!winCents || !betCents) return;
+        var ratio = winCents / betCents;
+        var tier = null, color = '#22c55e';
+        if (ratio >= 100) { tier = 'MAX WIN';  color = '#fde047'; }
+        else if (ratio >= 50)  { tier = 'EPIC WIN'; color = '#a855f7'; }
+        else if (ratio >= 25)  { tier = 'MEGA WIN'; color = '#22d3ee'; }
+        else if (ratio >= 10)  { tier = 'BIG WIN';  color = '#22c55e'; }
+        if (!tier) return;
+        var existing = document.getElementById('liveSlotWinCelebration');
+        if (existing && existing.parentNode) existing.parentNode.removeChild(existing);
+        var card = document.getElementById('liveSlotCard');
+        if (!card) return;
+        var el = document.createElement('div');
+        el.id = 'liveSlotWinCelebration';
+        el.style.cssText = [
+            'position:absolute', 'inset:0',
+            'display:flex', 'flex-direction:column',
+            'align-items:center', 'justify-content:center',
+            'background:rgba(0,0,0,0.78)',
+            'border-radius:14px', 'cursor:pointer',
+            'animation:lsCelebrationIn 0.4s ease-out',
+            'z-index:5',
+        ].join(';');
+        el.innerHTML =
+            '<div style="font-size:28px;font-weight:900;letter-spacing:2px;color:' + color + ';' +
+                'text-shadow:0 0 30px ' + color + 'aa, 0 4px 20px rgba(0,0,0,0.6);' +
+                'animation:lsCelebrationPulse 1.4s ease-in-out infinite;">' + tier + '</div>' +
+            '<div id="liveSlotWinCelebrationAmount" style="font-size:42px;font-weight:900;color:#fff;margin-top:6px;' +
+                'text-shadow:0 4px 20px rgba(0,0,0,0.7);">$0.00</div>' +
+            '<div style="font-size:11px;color:#94a3b8;margin-top:14px;letter-spacing:1px;">' +
+                Math.round(ratio) + '× BET &middot; tap to dismiss' +
+            '</div>';
+        // Position relative to card for inset:0 to mean "fill the card"
+        var origPos = window.getComputedStyle(card).position;
+        if (origPos === 'static') card.style.position = 'relative';
+        card.appendChild(el);
+        // Count-up animation
+        var amountEl = document.getElementById('liveSlotWinCelebrationAmount');
+        var startTs = Date.now();
+        var dur = state.quickSpin ? 600 : 1500;
+        function tick() {
+            var t = Math.min(1, (Date.now() - startTs) / dur);
+            // ease-out cubic
+            var eased = 1 - Math.pow(1 - t, 3);
+            var v = Math.round(winCents * eased);
+            if (amountEl) amountEl.textContent = fmt(v);
+            if (t < 1) requestAnimationFrame(tick);
+        }
+        tick();
+        var dismiss = function () { if (el && el.parentNode) el.parentNode.removeChild(el); };
+        el.addEventListener('click', dismiss);
+        setTimeout(dismiss, dur + (state.quickSpin ? 1500 : 3500));
+    }
+
+    // Inject the keyframes once at module load — much smaller than
+    // shipping a full-blown CSS file.
+    (function injectCelebrationStyles() {
+        if (document.getElementById('lsCelebrationStyles')) return;
+        var s = document.createElement('style');
+        s.id = 'lsCelebrationStyles';
+        s.textContent =
+            '@keyframes lsCelebrationIn{from{opacity:0;transform:scale(0.92);}to{opacity:1;transform:scale(1);}}' +
+            '@keyframes lsCelebrationPulse{0%,100%{transform:scale(1);}50%{transform:scale(1.07);}}';
+        document.head.appendChild(s);
+    })();
 
     /**
      * Render reel cells. Universal games come back with a 2-D
@@ -41209,7 +41314,8 @@ window._logAudit658 = _logAudit658;
             if (floorCents > 0 && bal < floorCents) { stoppedReason = 'balance_floor'; break; }
             // Light pacing so the rate limit (30/10s) never trips on
             // a turbo-spin user. ~350ms gives ~3/s — well under cap.
-            await new Promise(function (r) { setTimeout(r, 350); });
+            // Quick-spin halves the pacing.
+            await new Promise(function (r) { setTimeout(r, state.quickSpin ? 180 : 350); });
         }
         setAutoUI(false);
         var spinsLabel = done + ' spin' + (done === 1 ? '' : 's');
@@ -41284,9 +41390,13 @@ window._logAudit658 = _logAudit658;
         // remains the source of truth for "what was actually used".
         // If we're inside a free-spin session, send the session id and
         // skip the bet — the server won't debit.
-        var spinBody = state.bonusSession
-            ? { bonus_session_id: state.bonusSession.id }
-            : { game_id: state.gameId, bet_cents: state.betCents };
+        var spinBody;
+        if (state.bonusSession) {
+            spinBody = { bonus_session_id: state.bonusSession.id };
+        } else {
+            spinBody = { game_id: state.gameId, bet_cents: state.betCents };
+            if (state.anteEnabled) spinBody.ante = true;
+        }
         var res = await fetchJSON('/api/slot/spin', {
             method: 'POST',
             body: spinBody,
@@ -41324,6 +41434,15 @@ window._logAudit658 = _logAudit658;
                 msg += ' on ' + hits;
             }
             setResult(msg, '#22c55e');
+            // Win celebration tier overlay for ≥10× bet wins.
+            // bet_cents on the response is 0 during a free-spin
+            // session — fall back to the session's original_bet_cents
+            // so the ratio is honest. Skip celebrations during turbo
+            // unless the win is genuinely massive.
+            var celebBet = Number(res.body.bet_cents)
+                || (state.bonusSession && state.bonusSession.original_bet_cents)
+                || state.betCents;
+            if (celebBet > 0) showWinCelebration(res.body.win_cents, celebBet);
         } else {
             setResult('No win — try again.', '#94a3b8');
         }
@@ -41390,6 +41509,163 @@ window._logAudit658 = _logAudit658;
         if (overlay) overlay.addEventListener('click', function (e) {
             if (e.target === overlay) closeLiveSlot();
         });
+        // Bet shortcuts
+        document.querySelectorAll('.ls-bet-shortcut').forEach(function (btn) {
+            btn.addEventListener('click', function () {
+                applyBetShortcut(btn.getAttribute('data-pct'));
+            });
+        });
+        // Turbo / quick spin toggle
+        var turboCb = document.getElementById('liveSlotQuickSpin');
+        if (turboCb) turboCb.addEventListener('change', function () {
+            state.quickSpin = !!turboCb.checked;
+        });
+        // Ante
+        var anteCb = document.getElementById('liveSlotAnte');
+        if (anteCb) anteCb.addEventListener('change', function () {
+            state.anteEnabled = !!anteCb.checked;
+            updateBetMultiplierLabel();
+        });
+        // Bonus buy
+        var buyBtn = document.getElementById('liveSlotBuyBonus');
+        if (buyBtn) buyBtn.addEventListener('click', doBuyBonus);
+        // Game info
+        var infoBtn = document.getElementById('liveSlotInfo');
+        if (infoBtn) infoBtn.addEventListener('click', openInfoModal);
+    }
+
+    /**
+     * Update the bet shortcut buttons' visual hint when ante is on —
+     * effective cost is 1.25× the displayed value so the user knows.
+     */
+    function updateBetMultiplierLabel() {
+        var spinBtn = document.getElementById('liveSlotSpin');
+        if (!spinBtn) return;
+        spinBtn.textContent = state.anteEnabled ? 'SPIN +25%' : 'SPIN';
+    }
+
+    /**
+     * Bet-shortcut handler. `min` and `max` clamp to the game's range;
+     * percentage shortcuts use the user's current balance (read from
+     * the displayed amount, since the engine is the source of truth
+     * and we don't store balance separately).
+     */
+    function applyBetShortcut(pct) {
+        var input = document.getElementById('liveSlotBet');
+        if (!input || !state.gameDef) return;
+        var min = state.gameDef.min_bet_cents / 100;
+        var max = state.gameDef.max_bet_cents / 100;
+        var target;
+        if (pct === 'min') target = min;
+        else if (pct === 'max') target = max;
+        else {
+            // Percentage of balance: read from the balance label.
+            var balEl = document.getElementById('liveSlotBalance');
+            var balCents = balEl ? Number(balEl.dataset.cents || 0) : 0;
+            var balDollars = balCents / 100;
+            target = balDollars * Number(pct);
+        }
+        // Clamp to game range; round to step (0.10).
+        target = Math.max(min, Math.min(max, target || 0));
+        target = Math.max(min, Math.round(target * 10) / 10);
+        input.value = target.toFixed(2);
+        state.betCents = Math.round(target * 100);
+    }
+
+    /**
+     * Bonus Buy click. Confirms the price, calls /api/slot/buy-bonus,
+     * and on success switches the UI into bonus mode (the next spin
+     * is a free spin, no debit).
+     */
+    async function doBuyBonus() {
+        if (state.spinning) return;
+        if (state.bonusSession) {
+            setResult('Already in a bonus session.', '#94a3b8');
+            return;
+        }
+        var input = document.getElementById('liveSlotBet');
+        var dollars = Number(input && input.value);
+        if (!Number.isFinite(dollars) || dollars <= 0) {
+            setResult('Enter a valid bet first.', '#ef4444');
+            return;
+        }
+        state.betCents = Math.round(dollars * 100);
+        var price = state.betCents * 100; // BONUS_BUY_PRICE_MULT
+        var ok = window.confirm('Buy free spins for ' + fmt(price) + ' (100× your bet)?');
+        if (!ok) return;
+        state.spinning = true;
+        setResult('Buying bonus…', '#94a3b8');
+        var res = await fetchJSON('/api/slot/buy-bonus', {
+            method: 'POST',
+            body: { game_id: state.gameId, bet_cents: state.betCents },
+        });
+        state.spinning = false;
+        if (res.status !== 200) {
+            setResult((res.body && res.body.error) || 'Bonus buy failed.', '#ef4444');
+            return;
+        }
+        if (res.body.bonus_session) {
+            state.bonusSession = res.body.bonus_session;
+            updateBonusUI(res.body.bonus_session, null);
+            setResult('Bonus opened — press Spin to play!', '#fde047');
+            // Refresh balance display from the response.
+            var balEl = document.getElementById('liveSlotBalance');
+            if (balEl) {
+                balEl.textContent = 'Balance: ' + fmt(res.body.balance_cents);
+                balEl.dataset.cents = String(res.body.balance_cents);
+            }
+        }
+    }
+
+    /**
+     * Game-info modal: full paytable, RTP, volatility, bonus
+     * description, win-celebration tier thresholds. Renders inside
+     * a sub-overlay on top of the live-slot modal.
+     */
+    function openInfoModal() {
+        var existing = document.getElementById('liveSlotInfoModal');
+        if (existing) { existing.style.display = 'flex'; return; }
+        var def = state.gameDef;
+        if (!def) return;
+        var modal = document.createElement('div');
+        modal.id = 'liveSlotInfoModal';
+        modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.92);z-index:10001;display:flex;align-items:center;justify-content:center;padding:16px;';
+        var rtpPct = (def.rtp != null ? (def.rtp * 100).toFixed(2) : '—') + '%';
+        var symbolsList = (def.symbols || []).map(function (s) {
+            return '<span style="display:inline-block;padding:4px 8px;margin:2px;background:rgba(255,255,255,0.06);border-radius:4px;font-family:monospace;font-size:11px;">' + s + '</span>';
+        }).join('');
+        modal.innerHTML =
+            '<div style="background:#0d1117;border:1px solid #f1c40f55;border-radius:12px;padding:24px;max-width:500px;width:100%;max-height:88vh;overflow:auto;color:#e0e0e0;font-family:system-ui,sans-serif;">' +
+                '<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:14px;">' +
+                    '<div><div style="font-size:11px;letter-spacing:2px;color:#f1c40f;">GAME INFO</div>' +
+                        '<div style="font-size:18px;font-weight:800;">' + (def.name || def.id) + '</div></div>' +
+                    '<button id="liveSlotInfoClose" style="background:none;border:none;color:#fff;font-size:22px;cursor:pointer;">&times;</button>' +
+                '</div>' +
+                '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px;font-size:13px;">' +
+                    '<div><span style="color:#94a3b8;">RTP</span> <strong>' + rtpPct + '</strong></div>' +
+                    '<div><span style="color:#94a3b8;">Grid</span> <strong>' + def.cols + '×' + def.rows + '</strong></div>' +
+                    '<div><span style="color:#94a3b8;">Win type</span> <strong>' + def.win_type + '</strong></div>' +
+                    '<div><span style="color:#94a3b8;">Bonus</span> <strong>' + (def.bonus_type || '—') + '</strong></div>' +
+                '</div>' +
+                (def.bonus_desc ? '<div style="font-size:13px;color:#cbd5e1;margin-bottom:14px;line-height:1.5;">' + def.bonus_desc + '</div>' : '') +
+                '<div style="font-size:12px;color:#94a3b8;margin-bottom:6px;">Symbols</div>' +
+                '<div style="margin-bottom:14px;">' + symbolsList + '</div>' +
+                '<div style="font-size:12px;color:#94a3b8;margin-bottom:6px;">Paytable</div>' +
+                '<div style="margin-bottom:14px;">' + buildPaytableHtml(def) + '</div>' +
+                '<div style="font-size:12px;color:#94a3b8;margin-bottom:6px;">Win tiers</div>' +
+                '<div style="font-size:12px;color:#cbd5e1;line-height:1.7;">' +
+                    '<div><span style="color:#22c55e;font-weight:800;">BIG WIN</span> &middot; 10× bet</div>' +
+                    '<div><span style="color:#22d3ee;font-weight:800;">MEGA WIN</span> &middot; 25× bet</div>' +
+                    '<div><span style="color:#a855f7;font-weight:800;">EPIC WIN</span> &middot; 50× bet</div>' +
+                    '<div><span style="color:#fde047;font-weight:800;">MAX WIN</span> &middot; 100× bet</div>' +
+                '</div>' +
+            '</div>';
+        document.body.appendChild(modal);
+        var closeBtn = document.getElementById('liveSlotInfoClose');
+        if (closeBtn) closeBtn.addEventListener('click', function () { modal.style.display = 'none'; });
+        modal.addEventListener('click', function (e) {
+            if (e.target === modal) modal.style.display = 'none';
+        });
     }
 
     function closeLiveSlot() {
@@ -41455,7 +41731,7 @@ window._logAudit658 = _logAudit658;
     window.closeLiveSlot = closeLiveSlot;
 })();
 
-/* â”€â”€â”€ js/ui-modals.js (18/56) â”€â”€â”€ */
+/* â”€â”€â”€ js/ui-modals.js (18/57) â”€â”€â”€ */
 // ═══════════════════════════════════════════════════════
 // UI-MODALS MODULE
 // ═══════════════════════════════════════════════════════
@@ -44523,7 +44799,7 @@ function settingsSetSessionLimit(val) {
     });
 }
 
-/* â”€â”€â”€ js/ui-wallet.js (19/56) â”€â”€â”€ */
+/* â”€â”€â”€ js/ui-wallet.js (19/57) â”€â”€â”€ */
 // ═══════════════════════════════════════════════════════
 // WALLET / CASHIER MODULE
 // ═══════════════════════════════════════════════════════
@@ -51976,7 +52252,7 @@ async function _saveLimits(modal, token, formOverlay) {
     }
 }
 
-/* â”€â”€â”€ js/ui-profile.js (20/56) â”€â”€â”€ */
+/* â”€â”€â”€ js/ui-profile.js (20/57) â”€â”€â”€ */
 // ═══════════════════════════════════════════════════════
 // PROFILE / ACCOUNT MODULE
 // ═══════════════════════════════════════════════════════
@@ -57746,7 +58022,7 @@ function renderLossStreakWidget() {
     return widget;
 }
 
-/* â”€â”€â”€ js/ui-vip.js (21/56) â”€â”€â”€ */
+/* â”€â”€â”€ js/ui-vip.js (21/57) â”€â”€â”€ */
 // =====================================================================
 // VIP / LOYALTY REWARDS MODULE
 // =====================================================================
@@ -59665,7 +59941,7 @@ setInterval(function() {
     }
 }, 30000);
 
-/* â”€â”€â”€ js/qa-tools.js (22/56) â”€â”€â”€ */
+/* â”€â”€â”€ js/qa-tools.js (22/57) â”€â”€â”€ */
 // ═══════════════════════════════════════════════════════
 // QA-TOOLS MODULE
 // ═══════════════════════════════════════════════════════
@@ -60046,7 +60322,7 @@ setInterval(function() {
             return JSON.stringify(payload);
         }
 
-/* â”€â”€â”€ js/session-rtp-client.js (23/56) â”€â”€â”€ */
+/* â”€â”€â”€ js/session-rtp-client.js (23/57) â”€â”€â”€ */
 'use strict';
 
 /**
@@ -60268,7 +60544,7 @@ setInterval(function() {
   }
 })();
 
-/* â”€â”€â”€ js/app.js (24/56) â”€â”€â”€ */
+/* â”€â”€â”€ js/app.js (24/57) â”€â”€â”€ */
 // ═══════════════════════════════════════════════════════
 // APP MODULE
 // ═══════════════════════════════════════════════════════
@@ -62520,7 +62796,7 @@ setInterval(function() {
             document.body.appendChild(overlay);
         }
 
-/* â”€â”€â”€ js/ui-premium-effects.js (25/56) â”€â”€â”€ */
+/* â”€â”€â”€ js/ui-premium-effects.js (25/57) â”€â”€â”€ */
 /**
  * ui-premium-effects.js
  * Premium micro-interaction effects for Matrix Spins Casino
@@ -62764,7 +63040,7 @@ setInterval(function() {
 
 })();
 
-/* â”€â”€â”€ js/legal-terms.js (26/56) â”€â”€â”€ */
+/* â”€â”€â”€ js/legal-terms.js (26/57) â”€â”€â”€ */
 /**
  * Legal Terms & Conditions Module
  * Matrix Spins Casino - msaart.online
@@ -63162,7 +63438,7 @@ window.showMatrixMoneyInfo = () => LegalTerms.showMatrixMoneyInfo();
     }
 })();
 
-/* â”€â”€â”€ js/matrix-money.js (27/56) â”€â”€â”€ */
+/* â”€â”€â”€ js/matrix-money.js (27/57) â”€â”€â”€ */
 /**
  * Matrix Money System Module
  * Matrix Spins Casino - msaart.online
@@ -63776,7 +64052,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 });
 
-/* â”€â”€â”€ js/session-timeout.js (28/56) â”€â”€â”€ */
+/* â”€â”€â”€ js/session-timeout.js (28/57) â”€â”€â”€ */
 (function() {
   'use strict';
 
@@ -64097,7 +64373,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 })();
 
-/* â”€â”€â”€ js/support-chat.js (29/56) â”€â”€â”€ */
+/* â”€â”€â”€ js/support-chat.js (29/57) â”€â”€â”€ */
 (function() {
   'use strict';
 
@@ -64664,7 +64940,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 })();
 
-/* â”€â”€â”€ js/self-exclusion.js (30/56) â”€â”€â”€ */
+/* â”€â”€â”€ js/self-exclusion.js (30/57) â”€â”€â”€ */
 /**
  * Self-Exclusion UI Module for Matrix Spins Casino
  * Responsible gambling feature — lets users voluntarily exclude themselves from play.
@@ -64824,7 +65100,7 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 })();
 
-/* â”€â”€â”€ js/loading-screen.js (31/56) â”€â”€â”€ */
+/* â”€â”€â”€ js/loading-screen.js (31/57) â”€â”€â”€ */
 /**
  * Loading Screen Module
  * Displays a stylish loading overlay with rotating tips when opening games
@@ -65128,7 +65404,7 @@ window.LoadingScreen = (function() {
 
 })();
 
-/* â”€â”€â”€ js/player-stats-ui.js (32/56) â”€â”€â”€ */
+/* â”€â”€â”€ js/player-stats-ui.js (32/57) â”€â”€â”€ */
 (function() {
   'use strict';
 
@@ -65625,7 +65901,7 @@ window.LoadingScreen = (function() {
   };
 })();
 
-/* â”€â”€â”€ js/win-limit.js (33/56) â”€â”€â”€ */
+/* â”€â”€â”€ js/win-limit.js (33/57) â”€â”€â”€ */
 ﻿/**
  * Win Limit Safety Feature
  * Responsible gambling tool to set session win limits and auto-cashout prompts
@@ -66271,7 +66547,7 @@ window.WinLimit = (function () {
 })();
 
 
-/* â”€â”€â”€ js/loss-limit.js (34/56) â”€â”€â”€ */
+/* â”€â”€â”€ js/loss-limit.js (34/57) â”€â”€â”€ */
 /**
  * Loss Limit Safety Feature
  * Net-loss caps over rolling daily / weekly / monthly windows.
@@ -66582,7 +66858,7 @@ window.LossLimit = (function () {
   document.head.appendChild(el);
 })();
 
-/* â”€â”€â”€ js/wager-cap.js (35/56) â”€â”€â”€ */
+/* â”€â”€â”€ js/wager-cap.js (35/57) â”€â”€â”€ */
 /**
  * Wager Cap (single-bet maximum)
  * Player-controlled cap on individual bet amounts — distinct from
@@ -66771,7 +67047,7 @@ window.WagerCap = (function () {
   document.head.appendChild(el);
 })();
 
-/* â”€â”€â”€ js/login-history.js (36/56) â”€â”€â”€ */
+/* â”€â”€â”€ js/login-history.js (36/57) â”€â”€â”€ */
 /**
  * Login History Tracker
  * Premium account-security feature: persistent local log of auth events
@@ -66952,7 +67228,7 @@ window.LoginHistory = (function () {
   document.head.appendChild(el);
 })();
 
-/* â”€â”€â”€ js/session-clock.js (37/56) â”€â”€â”€ */
+/* â”€â”€â”€ js/session-clock.js (37/57) â”€â”€â”€ */
 /**
  * Session Clock
  * Continuous elapsed-session display — companion to session-timeout.js
@@ -67097,7 +67373,7 @@ window.SessionClock = (function () {
   document.head.appendChild(el);
 })();
 
-/* â”€â”€â”€ js/cookie-consent.js (38/56) â”€â”€â”€ */
+/* â”€â”€â”€ js/cookie-consent.js (38/57) â”€â”€â”€ */
 /**
  * Cookie Consent Manager
  * Implements GDPR/CCPA compliant cookie consent banner with preference management
@@ -67671,7 +67947,7 @@ window.SessionClock = (function () {
 
 })();
 
-/* â”€â”€â”€ js/perf-monitor.js (39/56) â”€â”€â”€ */
+/* â”€â”€â”€ js/perf-monitor.js (39/57) â”€â”€â”€ */
 /**
  * Performance Monitoring Module (IIFE)
  * Collects Core Web Vitals and page performance metrics
@@ -67902,7 +68178,7 @@ if (document.readyState === 'loading') {
     window.PerfMonitor.init();
 }
 
-/* â”€â”€â”€ js/bankroll-calculator.js (40/56) â”€â”€â”€ */
+/* â”€â”€â”€ js/bankroll-calculator.js (40/57) â”€â”€â”€ */
 // ═══════════════════════════════════════════════════════════════════════════════════════
 // BANKROLL MANAGEMENT CALCULATOR
 // A responsible gambling tool to help players manage their bankroll effectively
@@ -68491,7 +68767,7 @@ if (document.readyState === 'loading') {
 
 })();
 
-/* â”€â”€â”€ js/i18n.js (41/56) â”€â”€â”€ */
+/* â”€â”€â”€ js/i18n.js (41/57) â”€â”€â”€ */
 (function() {
   'use strict';
 
@@ -68752,7 +69028,7 @@ if (document.readyState === 'loading') {
 
 })();
 
-/* â”€â”€â”€ js/game-history.js (42/56) â”€â”€â”€ */
+/* â”€â”€â”€ js/game-history.js (42/57) â”€â”€â”€ */
 /**
  * Game History / Spin History Viewer
  * IIFE module: window.GameHistory = { show(), init() }
@@ -69459,7 +69735,7 @@ if (document.readyState === 'loading') {
 
 })();
 
-/* â”€â”€â”€ js/player-chat.js (43/56) â”€â”€â”€ */
+/* â”€â”€â”€ js/player-chat.js (43/57) â”€â”€â”€ */
 (function() {
   'use strict';
 
@@ -70125,7 +70401,7 @@ if (document.readyState === 'loading') {
   };
 })();
 
-/* â”€â”€â”€ js/sound-settings.js (44/56) â”€â”€â”€ */
+/* â”€â”€â”€ js/sound-settings.js (44/57) â”€â”€â”€ */
 // ═══════════════════════════════════════════════════════════════════════════
 // Sound Settings UI Module — Casino Dark Theme with Gold Accents
 // ═══════════════════════════════════════════════════════════════════════════
@@ -70646,7 +70922,7 @@ if (document.readyState === 'loading') {
 
 })();
 
-/* â”€â”€â”€ js/keyboard-shortcuts.js (45/56) â”€â”€â”€ */
+/* â”€â”€â”€ js/keyboard-shortcuts.js (45/57) â”€â”€â”€ */
 /**
  * Keyboard Shortcuts Module
  * Provides keyboard shortcuts for the Royal Slots Casino game
@@ -71106,7 +71382,7 @@ if (document.readyState === 'loading') {
   console.warn('KeyboardShortcuts module loaded');
 })();
 
-/* â”€â”€â”€ js/csrf-helper.js (46/56) â”€â”€â”€ */
+/* â”€â”€â”€ js/csrf-helper.js (46/57) â”€â”€â”€ */
 /**
  * CSRF Token Helper
  * Manages CSRF tokens and automatically injects them into fetch requests
@@ -71225,7 +71501,7 @@ if (document.readyState === 'loading') {
     console.warn('[CSRF] Helper loaded');
 })();
 
-/* â”€â”€â”€ js/reality-check.js (47/56) â”€â”€â”€ */
+/* â”€â”€â”€ js/reality-check.js (47/57) â”€â”€â”€ */
 ﻿// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 // REALITY CHECK TIMER - Responsible Gambling Feature
 // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
@@ -71811,7 +72087,7 @@ window.RealityCheck = (function() {
 console.warn('[RealityCheck] Module loaded â€” call window.RealityCheck.init() to start');
 
 
-/* â”€â”€â”€ js/slot-events.js (48/56) â”€â”€â”€ */
+/* â”€â”€â”€ js/slot-events.js (48/57) â”€â”€â”€ */
 /**
  * Slot Events Widget
  * Limited-time FOMO slot events system with animated banners and scarcity indicators
@@ -72205,7 +72481,7 @@ console.warn('[RealityCheck] Module loaded â€” call window.RealityCheck.ini
 
 })();
 
-/* â”€â”€â”€ js/admin-analytics.js (49/56) â”€â”€â”€ */
+/* â”€â”€â”€ js/admin-analytics.js (49/57) â”€â”€â”€ */
 /**
  * Admin Revenue Analytics Dashboard
  * Real-time metrics, player activity, feature performance
@@ -72634,7 +72910,645 @@ console.warn('[RealityCheck] Module loaded â€” call window.RealityCheck.ini
 
 })();
 
-/* â”€â”€â”€ js/ultra-premium-slot.js (54/56) â”€â”€â”€ */
+/* â”€â”€â”€ js/deposit-booster.js (50/57) â”€â”€â”€ */
+/* ============================================================
+   Matrix Spins Casino — Deposit Booster Modal
+   Auto-injecting IIFE — converts demo players into depositors
+   Self-contained: no dependencies, paste <script> tag anywhere
+   ============================================================ */
+(function () {
+  'use strict';
+
+  /* ------------------------------------------------------------------ */
+  /* CONFIG                                                               */
+  /* ------------------------------------------------------------------ */
+  var DEMO_SPIN_THRESHOLD  = 5;
+  var TIME_ON_PAGE_MS      = 90000;   // 90 s
+  var LOW_DEMO_BALANCE     = 200;     // $200
+  var POLL_INTERVAL_MS     = 2000;
+  var DISMISS_COOLDOWN_MS  = 4 * 60 * 60 * 1000; // 4 hours
+  var COUNTDOWN_TOTAL_S    = 600;     // 10 minutes
+  var PULSE_DELAY_MS       = 30000;   // 30 s after show
+  var WALLET_URL           = 'wallet.html';
+  var PROMO_CODE           = 'booster50';
+  var BONUS_MULTIPLIER     = 1.5;     // 50% match
+
+  var LS_AUTH_TOKEN        = 'ms_auth_token';
+  var LS_DISMISSED         = 'ms_booster_dismissed';
+  var LS_HAS_DEPOSITED     = 'ms_has_deposited';
+  var LS_DEMO_SPINS        = 'ms_demo_spins';
+  var SS_SHOWN             = 'ms_booster_shown';
+  var SS_TIMER_START       = 'ms_booster_timer_start';
+
+  /* ------------------------------------------------------------------ */
+  /* SUPPRESSION GUARD                                                    */
+  /* ------------------------------------------------------------------ */
+  function isSuppressed() {
+    // Already deposited
+    if (localStorage.getItem(LS_HAS_DEPOSITED)) return true;
+    // Already shown this session
+    if (sessionStorage.getItem(SS_SHOWN)) return true;
+    // Dismissed within 4 hours
+    var dismissed = localStorage.getItem(LS_DISMISSED);
+    if (dismissed && (Date.now() - parseInt(dismissed, 10)) < DISMISS_COOLDOWN_MS) return true;
+    // Logged-in user with real balance
+    var token = localStorage.getItem(LS_AUTH_TOKEN);
+    if (token) {
+      var bal = window.MSPlayer && typeof window.MSPlayer.balance === 'number'
+        ? window.MSPlayer.balance : 0;
+      if (bal > 0) return true;
+    }
+    return false;
+  }
+
+  /* ------------------------------------------------------------------ */
+  /* CSS INJECTION                                                        */
+  /* ------------------------------------------------------------------ */
+  function injectCSS() {
+    if (document.getElementById('ms-booster-style')) return;
+    var style = document.createElement('style');
+    style.id = 'ms-booster-style';
+    style.textContent = [
+      /* Overlay */
+      '#ms-booster-overlay{',
+        'position:fixed;inset:0;z-index:99999;',
+        'background:rgba(0,0,0,0.85);',
+        'display:flex;align-items:center;justify-content:center;',
+        'padding:16px;box-sizing:border-box;',
+        'animation:ms-fadein 0.25s ease;',
+      '}',
+
+      '@keyframes ms-fadein{from{opacity:0}to{opacity:1}}',
+
+      /* Card */
+      '#ms-booster-card{',
+        'background:#13151C;',
+        'border:2px solid #D4A853;',
+        'border-radius:16px;',
+        'width:100%;max-width:480px;',
+        'position:relative;',
+        'overflow:hidden;',
+        'box-shadow:0 8px 48px rgba(0,0,0,0.8),0 0 0 1px rgba(212,168,83,0.2);',
+        'animation:ms-slidein 0.3s cubic-bezier(0.34,1.56,0.64,1);',
+      '}',
+
+      '@keyframes ms-slidein{',
+        'from{transform:translateY(24px) scale(0.96);opacity:0}',
+        'to{transform:translateY(0) scale(1);opacity:1}',
+      '}',
+
+      /* Pulsing gold border (added after 30 s) */
+      '#ms-booster-card.ms-pulse{',
+        'animation:ms-slidein 0s,ms-border-pulse 1.6s ease-in-out infinite;',
+      '}',
+
+      '@keyframes ms-border-pulse{',
+        '0%,100%{box-shadow:0 8px 48px rgba(0,0,0,0.8),0 0 0 1px rgba(212,168,83,0.2),0 0 12px 2px rgba(212,168,83,0.25)}',
+        '50%{box-shadow:0 8px 48px rgba(0,0,0,0.8),0 0 0 3px rgba(212,168,83,0.9),0 0 32px 8px rgba(212,168,83,0.45)}',
+      '}',
+
+      /* Gold header bar */
+      '#ms-booster-header{',
+        'background:linear-gradient(135deg,#B8860B 0%,#D4A853 40%,#FFD700 60%,#D4A853 80%,#B8860B 100%);',
+        'padding:18px 48px 18px 24px;',
+        'display:flex;align-items:center;gap:12px;',
+      '}',
+
+      /* Slot reel spin emoji */
+      '#ms-booster-reel{',
+        'font-size:32px;',
+        'display:inline-block;',
+        'animation:ms-spin-reel 1.2s cubic-bezier(0.4,0,0.2,1) infinite;',
+      '}',
+
+      '@keyframes ms-spin-reel{',
+        '0%{transform:rotateY(0deg)}',
+        '50%{transform:rotateY(180deg)}',
+        '100%{transform:rotateY(360deg)}',
+      '}',
+
+      '#ms-booster-header-text{',
+        'color:#13151C;font-weight:800;font-size:13px;letter-spacing:1px;text-transform:uppercase;',
+      '}',
+
+      /* Close button */
+      '#ms-booster-close{',
+        'position:absolute;top:12px;right:14px;',
+        'background:none;border:none;',
+        'color:#13151C;font-size:22px;font-weight:700;',
+        'cursor:pointer;line-height:1;',
+        'width:32px;height:32px;',
+        'display:flex;align-items:center;justify-content:center;',
+        'border-radius:50%;',
+        'transition:background 0.15s;',
+        'z-index:2;',
+      '}',
+
+      '#ms-booster-close:hover{background:rgba(0,0,0,0.15)}',
+      '#ms-booster-close:focus-visible{outline:2px solid #13151C;outline-offset:2px}',
+
+      /* Body */
+      '#ms-booster-body{padding:24px 28px 20px;}',
+
+      /* Headline */
+      '#ms-booster-headline{',
+        'text-align:center;margin:0 0 4px;',
+        'font-size:22px;font-weight:900;',
+        'color:#FFFFFF;letter-spacing:0.5px;',
+      '}',
+
+      '#ms-booster-sub{',
+        'text-align:center;margin:0 0 20px;',
+        'font-size:14px;color:#9AA0B2;',
+      '}',
+
+      /* Offer box */
+      '#ms-booster-offer{',
+        'border:1px solid #D4A853;',
+        'border-radius:10px;',
+        'padding:14px 16px;',
+        'text-align:center;',
+        'margin-bottom:20px;',
+        'background:rgba(212,168,83,0.07);',
+      '}',
+
+      '#ms-booster-offer-title{',
+        'font-size:17px;font-weight:800;',
+        'color:#D4A853;letter-spacing:0.5px;',
+        'text-transform:uppercase;margin-bottom:4px;',
+      '}',
+
+      '#ms-booster-offer-detail{',
+        'font-size:13px;color:#C8D0E0;',
+      '}',
+
+      /* Countdown */
+      '#ms-booster-timer-wrap{',
+        'text-align:center;margin-bottom:18px;',
+        'font-size:13px;color:#9AA0B2;',
+      '}',
+
+      '#ms-booster-timer{',
+        'font-size:20px;font-weight:700;',
+        'color:#FFD700;font-variant-numeric:tabular-nums;',
+        'letter-spacing:1px;',
+      '}',
+
+      '#ms-booster-timer-label{font-size:12px;color:#9AA0B2;margin-top:4px;}',
+
+      /* Last chance */
+      '#ms-booster-last-chance{',
+        'display:none;text-align:center;margin-bottom:18px;',
+        'font-size:14px;font-weight:700;color:#FFD700;',
+        'animation:ms-flash 1s ease infinite alternate;',
+      '}',
+
+      '@keyframes ms-flash{from{opacity:0.6}to{opacity:1}}',
+
+      /* Quick-select buttons */
+      '#ms-booster-amounts{',
+        'display:flex;gap:10px;margin-bottom:12px;',
+      '}',
+
+      '.ms-amount-btn{',
+        'flex:1;padding:10px 4px;',
+        'background:rgba(212,168,83,0.1);',
+        'border:1.5px solid #D4A853;',
+        'border-radius:8px;',
+        'color:#D4A853;font-weight:700;font-size:15px;',
+        'cursor:pointer;transition:background 0.15s,color 0.15s;',
+      '}',
+
+      '.ms-amount-btn:hover,.ms-amount-btn.ms-selected{',
+        'background:#D4A853;color:#13151C;',
+      '}',
+
+      '.ms-amount-btn:focus-visible{outline:2px solid #FFD700;outline-offset:2px}',
+
+      /* Play-with label */
+      '#ms-booster-play-with{',
+        'text-align:center;font-size:13px;color:#9AA0B2;',
+        'margin-bottom:20px;min-height:18px;',
+      '}',
+
+      '#ms-booster-play-amount{color:#FFD700;font-weight:700;}',
+
+      /* CTA */
+      '#ms-booster-cta{',
+        'display:block;width:100%;',
+        'padding:15px;',
+        'background:linear-gradient(135deg,#B8860B,#D4A853,#FFD700,#D4A853,#B8860B);',
+        'background-size:200% auto;',
+        'border:none;border-radius:10px;',
+        'color:#13151C;font-weight:900;font-size:16px;',
+        'letter-spacing:0.5px;text-transform:uppercase;',
+        'cursor:pointer;text-decoration:none;',
+        'text-align:center;',
+        'transition:background-position 0.4s,box-shadow 0.2s;',
+        'box-shadow:0 4px 20px rgba(212,168,83,0.4);',
+        'margin-bottom:16px;',
+      '}',
+
+      '#ms-booster-cta:hover{',
+        'background-position:right center;',
+        'box-shadow:0 6px 28px rgba(212,168,83,0.65);',
+      '}',
+
+      '#ms-booster-cta:focus-visible{outline:3px solid #FFD700;outline-offset:3px}',
+
+      /* Sign-in row */
+      '#ms-booster-signin{',
+        'text-align:center;font-size:12px;color:#9AA0B2;margin-bottom:14px;',
+      '}',
+
+      '#ms-booster-signin a{color:#D4A853;text-decoration:none;}',
+      '#ms-booster-signin a:hover{text-decoration:underline;}',
+
+      /* Responsible gambling */
+      '#ms-booster-rg{',
+        'text-align:center;font-size:11px;color:#5A6070;',
+        'padding-bottom:4px;',
+      '}',
+
+      /* Mobile: full screen below 520px */
+      '@media(max-width:519px){',
+        '#ms-booster-overlay{padding:0;align-items:flex-end;}',
+        '#ms-booster-card{max-width:100%;border-radius:20px 20px 0 0;border-bottom:none;}',
+        '#ms-booster-body{padding:20px 20px 24px;}',
+      '}',
+    ].join('');
+    document.head.appendChild(style);
+  }
+
+  /* ------------------------------------------------------------------ */
+  /* HTML INJECTION                                                       */
+  /* ------------------------------------------------------------------ */
+  function buildModal() {
+    var overlay = document.createElement('div');
+    overlay.id = 'ms-booster-overlay';
+    overlay.setAttribute('role', 'dialog');
+    overlay.setAttribute('aria-modal', 'true');
+    overlay.setAttribute('aria-labelledby', 'ms-booster-headline');
+    overlay.setAttribute('aria-describedby', 'ms-booster-sub');
+
+    overlay.innerHTML = [
+      '<div id="ms-booster-card">',
+
+        /* Header */
+        '<div id="ms-booster-header">',
+          '<span id="ms-booster-reel" aria-hidden="true">&#127920;</span>',
+          '<div id="ms-booster-header-text">Matrix Spins &mdash; Exclusive Offer</div>',
+        '</div>',
+
+        /* Close */
+        '<button id="ms-booster-close" aria-label="Close this offer">&#10005;</button>',
+
+        /* Body */
+        '<div id="ms-booster-body">',
+
+          '<h2 id="ms-booster-headline">YOU\'RE ON A ROLL!</h2>',
+          '<p id="ms-booster-sub">Turn your hot streak into real cash</p>',
+
+          /* Offer box */
+          '<div id="ms-booster-offer" role="region" aria-label="Current offer">',
+            '<div id="ms-booster-offer-title">50% Match on First Deposit</div>',
+            '<div id="ms-booster-offer-detail">Deposit $100 &rarr; Play with $150</div>',
+          '</div>',
+
+          /* Countdown */
+          '<div id="ms-booster-timer-wrap" aria-live="polite" aria-atomic="true">',
+            '<div id="ms-booster-timer">10:00</div>',
+            '<div id="ms-booster-timer-label">This offer expires in</div>',
+          '</div>',
+
+          /* Last-chance message (shown when timer = 0) */
+          '<div id="ms-booster-last-chance" aria-live="assertive">⚡ LAST CHANCE &mdash; Bonus still active!</div>',
+
+          /* Quick-select amounts */
+          '<div id="ms-booster-amounts" role="group" aria-label="Select deposit amount">',
+            '<button class="ms-amount-btn" data-amount="25" aria-pressed="false">$25</button>',
+            '<button class="ms-amount-btn" data-amount="50" aria-pressed="false">$50</button>',
+            '<button class="ms-amount-btn ms-selected" data-amount="100" aria-pressed="true">$100</button>',
+          '</div>',
+
+          /* Play-with label */
+          '<div id="ms-booster-play-with">',
+            'You\'ll play with: <span id="ms-booster-play-amount">$150.00</span>',
+          '</div>',
+
+          /* CTA */
+          '<a id="ms-booster-cta" href="wallet.html?amount=100&promo=booster50" role="button" aria-label="Claim 50% bonus now with $100 deposit">',
+            '&rarr; CLAIM MY BONUS NOW',
+          '</a>',
+
+          /* Sign-in */
+          '<div id="ms-booster-signin">',
+            'Already have an account? <a href="login.html" id="ms-booster-signin-link">Sign In</a>',
+          '</div>',
+
+          /* Responsible gambling */
+          '<div id="ms-booster-rg">18+ | Gamble Responsibly | T&amp;Cs Apply</div>',
+
+        '</div>', // /body
+      '</div>', // /card
+    ].join('');
+
+    return overlay;
+  }
+
+  /* ------------------------------------------------------------------ */
+  /* FOCUS TRAP                                                           */
+  /* ------------------------------------------------------------------ */
+  function getFocusable(container) {
+    return Array.prototype.slice.call(
+      container.querySelectorAll(
+        'a[href],button:not([disabled]),input:not([disabled]),[tabindex]:not([tabindex="-1"])'
+      )
+    );
+  }
+
+  function trapFocus(e, container) {
+    var nodes = getFocusable(container);
+    if (!nodes.length) return;
+    var first = nodes[0];
+    var last  = nodes[nodes.length - 1];
+    if (e.key === 'Tab') {
+      if (e.shiftKey) {
+        if (document.activeElement === first) { e.preventDefault(); last.focus(); }
+      } else {
+        if (document.activeElement === last) { e.preventDefault(); first.focus(); }
+      }
+    }
+  }
+
+  /* ------------------------------------------------------------------ */
+  /* ANALYTICS HELPER                                                     */
+  /* ------------------------------------------------------------------ */
+  function fireEvent(detail) {
+    try {
+      window.dispatchEvent(new CustomEvent('ms-booster-event', { detail: detail }));
+    } catch (_) {}
+  }
+
+  /* ------------------------------------------------------------------ */
+  /* COUNTDOWN TIMER                                                      */
+  /* ------------------------------------------------------------------ */
+  var countdownInterval = null;
+
+  function startCountdown(timerEl, timerWrapEl, lastChanceEl) {
+    var storedStart = sessionStorage.getItem(SS_TIMER_START);
+    if (!storedStart) {
+      storedStart = String(Date.now());
+      sessionStorage.setItem(SS_TIMER_START, storedStart);
+    }
+    var startTime = parseInt(storedStart, 10);
+
+    function tick() {
+      var elapsed = Math.floor((Date.now() - startTime) / 1000);
+      var remaining = COUNTDOWN_TOTAL_S - elapsed;
+
+      if (remaining <= 0) {
+        timerEl.textContent = '00:00';
+        timerWrapEl.style.display = 'none';
+        lastChanceEl.style.display = 'block';
+        clearInterval(countdownInterval);
+        countdownInterval = null;
+        return;
+      }
+
+      var mins = Math.floor(remaining / 60);
+      var secs = remaining % 60;
+      timerEl.textContent =
+        (mins < 10 ? '0' : '') + mins + ':' + (secs < 10 ? '0' : '') + secs;
+    }
+
+    tick();
+    countdownInterval = setInterval(tick, 1000);
+  }
+
+  /* ------------------------------------------------------------------ */
+  /* SHOW MODAL                                                           */
+  /* ------------------------------------------------------------------ */
+  var selectedAmount = 100;
+  var modalEl        = null;
+  var previousFocus  = null;
+  var keyHandler     = null;
+  var pulseTimeout   = null;
+
+  function showModal(triggerName) {
+    if (isSuppressed()) return;
+    if (document.getElementById('ms-booster-overlay')) return;
+
+    injectCSS();
+
+    previousFocus = document.activeElement;
+    modalEl = buildModal();
+    document.body.appendChild(modalEl);
+
+    sessionStorage.setItem(SS_SHOWN, '1');
+    fireEvent({ action: 'shown', trigger: triggerName });
+    console.debug('[ms-booster] shown — trigger:', triggerName);
+
+    /* Wire up elements */
+    var card       = document.getElementById('ms-booster-card');
+    var closeBtn   = document.getElementById('ms-booster-close');
+    var amountBtns = modalEl.querySelectorAll('.ms-amount-btn');
+    var ctaLink    = document.getElementById('ms-booster-cta');
+    var playAmt    = document.getElementById('ms-booster-play-amount');
+    var timerEl    = document.getElementById('ms-booster-timer');
+    var timerWrap  = document.getElementById('ms-booster-timer-wrap');
+    var lastChance = document.getElementById('ms-booster-last-chance');
+
+    /* Set initial state */
+    updateCTA();
+
+    /* Amount selection */
+    function updateCTA() {
+      var play = (selectedAmount * BONUS_MULTIPLIER).toFixed(2);
+      playAmt.textContent = '$' + play;
+      ctaLink.href = WALLET_URL + '?amount=' + selectedAmount + '&promo=' + PROMO_CODE;
+      ctaLink.setAttribute('aria-label', 'Claim 50% bonus now with $' + selectedAmount + ' deposit');
+    }
+
+    amountBtns.forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        amountBtns.forEach(function (b) {
+          b.classList.remove('ms-selected');
+          b.setAttribute('aria-pressed', 'false');
+        });
+        btn.classList.add('ms-selected');
+        btn.setAttribute('aria-pressed', 'true');
+        selectedAmount = parseInt(btn.getAttribute('data-amount'), 10);
+        updateCTA();
+      });
+    });
+
+    /* CTA click analytics */
+    ctaLink.addEventListener('click', function () {
+      fireEvent({ action: 'clicked', amount: selectedAmount });
+    });
+
+    /* Close */
+    function dismiss() {
+      localStorage.setItem(LS_DISMISSED, String(Date.now()));
+      cleanup();
+      fireEvent({ action: 'dismissed' });
+      console.debug('[ms-booster] dismissed');
+    }
+
+    closeBtn.addEventListener('click', dismiss);
+
+    /* ESC key */
+    keyHandler = function (e) {
+      if (e.key === 'Escape') { dismiss(); return; }
+      trapFocus(e, modalEl);
+    };
+    document.addEventListener('keydown', keyHandler);
+
+    /* Click outside card */
+    modalEl.addEventListener('click', function (e) {
+      if (e.target === modalEl) dismiss();
+    });
+
+    /* Initial focus on close button for accessibility */
+    closeBtn.focus();
+
+    /* Start countdown */
+    startCountdown(timerEl, timerWrap, lastChance);
+
+    /* Add pulsing border after 30 s */
+    pulseTimeout = setTimeout(function () {
+      if (card) card.classList.add('ms-pulse');
+    }, PULSE_DELAY_MS);
+  }
+
+  /* ------------------------------------------------------------------ */
+  /* CLEANUP                                                              */
+  /* ------------------------------------------------------------------ */
+  function cleanup() {
+    if (countdownInterval) { clearInterval(countdownInterval); countdownInterval = null; }
+    if (pulseTimeout)      { clearTimeout(pulseTimeout);       pulseTimeout = null; }
+    if (keyHandler)        { document.removeEventListener('keydown', keyHandler); keyHandler = null; }
+    if (modalEl && modalEl.parentNode) { modalEl.parentNode.removeChild(modalEl); }
+    modalEl = null;
+    if (previousFocus && previousFocus.focus) { try { previousFocus.focus(); } catch (_) {} }
+    previousFocus = null;
+    clearAllTriggers();
+  }
+
+  /* ------------------------------------------------------------------ */
+  /* TRIGGER MANAGEMENT                                                   */
+  /* ------------------------------------------------------------------ */
+  var pollingInterval = null;
+  var timeTrigger     = null;
+  var spinListener    = null;
+  var exitListener    = null;
+
+  function clearAllTriggers() {
+    if (pollingInterval) { clearInterval(pollingInterval);             pollingInterval = null; }
+    if (timeTrigger)     { clearTimeout(timeTrigger);                  timeTrigger     = null; }
+    if (spinListener)    { window.removeEventListener('matrix-spin-complete', spinListener); spinListener = null; }
+    if (exitListener)    { document.removeEventListener('mouseleave', exitListener);          exitListener = null; }
+  }
+
+  function trigger(name) {
+    if (isSuppressed()) { clearAllTriggers(); return; }
+    clearAllTriggers();
+    showModal(name);
+  }
+
+  /* ------------------------------------------------------------------ */
+  /* TRIGGER 1 — DEMO SPIN COUNT                                         */
+  /* ------------------------------------------------------------------ */
+  function setupSpinTrigger() {
+    // Via custom event
+    spinListener = function () {
+      if (isSuppressed()) return;
+      var spins = parseInt(localStorage.getItem(LS_DEMO_SPINS) || '0', 10);
+      if (spins >= DEMO_SPIN_THRESHOLD) trigger('demo_spins');
+    };
+    window.addEventListener('matrix-spin-complete', spinListener);
+  }
+
+  /* ------------------------------------------------------------------ */
+  /* TRIGGER 2 — TIME ON PAGE (first visit only)                        */
+  /* ------------------------------------------------------------------ */
+  function setupTimeTrigger() {
+    // Only fire for first visit (no session shown yet covered by isSuppressed,
+    // but also only if this is first page visit — check referrer is same site)
+    var isReturn = document.referrer &&
+      document.referrer.indexOf(window.location.hostname) !== -1;
+    if (isReturn) return;
+
+    timeTrigger = setTimeout(function () {
+      trigger('time_on_page');
+    }, TIME_ON_PAGE_MS);
+  }
+
+  /* ------------------------------------------------------------------ */
+  /* TRIGGER 3 — EXIT INTENT (desktop only)                             */
+  /* ------------------------------------------------------------------ */
+  function setupExitIntent() {
+    var isMobile = window.matchMedia && window.matchMedia('(max-width:768px)').matches;
+    if (isMobile) return;
+    if ('ontouchstart' in window) return;
+
+    exitListener = function (e) {
+      if (e.clientY > 20) return; // cursor above top 20px
+      if (isSuppressed()) return;
+      trigger('exit_intent');
+    };
+    document.addEventListener('mouseleave', exitListener);
+  }
+
+  /* ------------------------------------------------------------------ */
+  /* TRIGGER 4 — LOW DEMO BALANCE (polling)                             */
+  /* ------------------------------------------------------------------ */
+  function setupBalancePoll() {
+    pollingInterval = setInterval(function () {
+      if (isSuppressed()) { clearInterval(pollingInterval); return; }
+
+      // Check localStorage spins (catches spin count even without events)
+      var spins = parseInt(localStorage.getItem(LS_DEMO_SPINS) || '0', 10);
+      if (spins >= DEMO_SPIN_THRESHOLD) { trigger('demo_spins'); return; }
+
+      // Check demo balance
+      if (window.MSPlayer && typeof window.MSPlayer.demoBalance === 'number') {
+        if (window.MSPlayer.demoBalance < LOW_DEMO_BALANCE) {
+          trigger('low_demo_balance');
+          return;
+        }
+      }
+    }, POLL_INTERVAL_MS);
+  }
+
+  /* ------------------------------------------------------------------ */
+  /* BOOT                                                                 */
+  /* ------------------------------------------------------------------ */
+  function boot() {
+    if (isSuppressed()) {
+      console.debug('[ms-booster] suppressed — skipping all triggers');
+      return;
+    }
+
+    setupSpinTrigger();
+    setupTimeTrigger();
+    setupExitIntent();
+    setupBalancePoll();
+
+    console.debug('[ms-booster] active — watching for triggers');
+  }
+
+  /* Run after DOM is ready */
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', boot);
+  } else {
+    boot();
+  }
+
+})();
+
+/* â”€â”€â”€ js/ultra-premium-slot.js (55/57) â”€â”€â”€ */
 /**
  * ultra-premium-slot.js v2.0
  * Industry-Standard Per-Game Visual Engine for Matrix Spins Casino
@@ -73695,7 +74609,7 @@ var fn = BG_RENDERERS[bgType] || BG_RENDERERS.shine;
 
 })();
 
-/* â”€â”€â”€ js/upx-integration.js (55/56) â”€â”€â”€ */
+/* â”€â”€â”€ js/upx-integration.js (56/57) â”€â”€â”€ */
 /* ================================================================
    UPX Integration Layer  v1.0
    Wires ultra-premium-slot.js (UPX) into the casino game flow.

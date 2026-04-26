@@ -74,6 +74,8 @@
         autoCancel: false,      // user-driven stop flag for the auto-spin loop
         cellNodes: null,        // {col,row} -> reel cell element, populated at modal open
         bonusSession: null,     // active free-spin session, mirrored from server
+        quickSpin: false,       // turbo / animation skip
+        anteEnabled: false,     // ante bet adds 25% cost for boosted bonus
     };
 
     // Per-game paytable HTML — game definitions don't change at
@@ -215,13 +217,38 @@
 
                 '<div id="liveSlotResult" style="min-height:22px;text-align:center;font-size:14px;font-weight:700;margin-bottom:12px;color:#fde047;"></div>' +
 
-                '<div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">' +
+                '<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">' +
                     '<label for="liveSlotBet" style="font-size:12px;color:#94a3b8;">Bet</label>' +
                     '<input id="liveSlotBet" type="number" step="0.10" ' +
                         'min="' + minDollars + '" max="' + maxDollars + '" value="' + minDollars + '" ' +
                         'style="width:90px;padding:8px;border-radius:6px;border:1px solid #374151;background:#0b0504;color:#fff;font-weight:700;">' +
                     '<button id="liveSlotSpin" style="flex:1;padding:12px;border-radius:8px;border:none;' +
                         'background:linear-gradient(135deg,#c0392b 0%,#f1c40f 100%);color:#111;font-weight:900;font-size:16px;letter-spacing:1px;cursor:pointer;">SPIN</button>' +
+                '</div>' +
+
+                // Bet shortcuts: 25% / 50% / MAX of the user's balance,
+                // clamped to game's min/max. Industry-standard quick-bet
+                // controls. The MIN button drops to game's floor.
+                '<div id="liveSlotBetShortcuts" style="display:flex;gap:4px;margin-bottom:10px;flex-wrap:wrap;">' +
+                    '<button class="ls-bet-shortcut" data-pct="min" style="flex:1;padding:5px;border-radius:5px;border:1px solid #374151;background:transparent;color:#94a3b8;font-size:11px;font-weight:700;cursor:pointer;">MIN</button>' +
+                    '<button class="ls-bet-shortcut" data-pct="0.25" style="flex:1;padding:5px;border-radius:5px;border:1px solid #374151;background:transparent;color:#94a3b8;font-size:11px;font-weight:700;cursor:pointer;">25%</button>' +
+                    '<button class="ls-bet-shortcut" data-pct="0.5" style="flex:1;padding:5px;border-radius:5px;border:1px solid #374151;background:transparent;color:#94a3b8;font-size:11px;font-weight:700;cursor:pointer;">50%</button>' +
+                    '<button class="ls-bet-shortcut" data-pct="max" style="flex:1;padding:5px;border-radius:5px;border:1px solid #374151;background:transparent;color:#94a3b8;font-size:11px;font-weight:700;cursor:pointer;">MAX</button>' +
+                '</div>' +
+
+                // Industry-standard premium controls: quick-spin toggle
+                // (animation skip), ante bet (+25% bet, easier bonus
+                // trigger and bigger free-spin count), buy bonus
+                // (instantly enter free spins for 100× bet).
+                '<div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;flex-wrap:wrap;font-size:11px;color:#94a3b8;">' +
+                    '<label style="display:flex;align-items:center;gap:4px;cursor:pointer;">' +
+                        '<input type="checkbox" id="liveSlotQuickSpin"> Turbo' +
+                    '</label>' +
+                    '<label style="display:flex;align-items:center;gap:4px;cursor:pointer;" title="Pay 25% extra; bonus trigger drops to 2 scatters and free-spin count is +50%.">' +
+                        '<input type="checkbox" id="liveSlotAnte"> Ante (+25%)' +
+                    '</label>' +
+                    '<button id="liveSlotBuyBonus" style="margin-left:auto;padding:6px 10px;border-radius:5px;border:1px solid #f1c40f55;background:rgba(241,196,15,0.08);color:#f1c40f;font-size:11px;font-weight:800;cursor:pointer;letter-spacing:0.5px;">BUY BONUS &middot; 100×</button>' +
+                    '<button id="liveSlotInfo" style="padding:6px 10px;border-radius:5px;border:1px solid #374151;background:transparent;color:#cbd5e1;font-size:11px;font-weight:700;cursor:pointer;" title="Game info, paytable, paylines, RTP">i</button>' +
                 '</div>' +
 
                 '<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;font-size:12px;color:#94a3b8;flex-wrap:wrap;">' +
@@ -279,6 +306,84 @@
         el.textContent = text || '';
         el.style.color = color || '#fde047';
     }
+
+    /**
+     * Industry-standard win-celebration tiers. Threshold ratios match
+     * Pragmatic / NetEnt convention:
+     *   ≥10× bet  → "BIG WIN"
+     *   ≥25× bet  → "MEGA WIN"
+     *   ≥50× bet  → "EPIC WIN"
+     *   ≥100× bet → "MAX WIN"
+     *
+     * Renders an animated overlay with the tier label and the win
+     * amount counting up. Tap-to-dismiss; auto-clears after 3.5s.
+     */
+    function showWinCelebration(winCents, betCents) {
+        if (!winCents || !betCents) return;
+        var ratio = winCents / betCents;
+        var tier = null, color = '#22c55e';
+        if (ratio >= 100) { tier = 'MAX WIN';  color = '#fde047'; }
+        else if (ratio >= 50)  { tier = 'EPIC WIN'; color = '#a855f7'; }
+        else if (ratio >= 25)  { tier = 'MEGA WIN'; color = '#22d3ee'; }
+        else if (ratio >= 10)  { tier = 'BIG WIN';  color = '#22c55e'; }
+        if (!tier) return;
+        var existing = document.getElementById('liveSlotWinCelebration');
+        if (existing && existing.parentNode) existing.parentNode.removeChild(existing);
+        var card = document.getElementById('liveSlotCard');
+        if (!card) return;
+        var el = document.createElement('div');
+        el.id = 'liveSlotWinCelebration';
+        el.style.cssText = [
+            'position:absolute', 'inset:0',
+            'display:flex', 'flex-direction:column',
+            'align-items:center', 'justify-content:center',
+            'background:rgba(0,0,0,0.78)',
+            'border-radius:14px', 'cursor:pointer',
+            'animation:lsCelebrationIn 0.4s ease-out',
+            'z-index:5',
+        ].join(';');
+        el.innerHTML =
+            '<div style="font-size:28px;font-weight:900;letter-spacing:2px;color:' + color + ';' +
+                'text-shadow:0 0 30px ' + color + 'aa, 0 4px 20px rgba(0,0,0,0.6);' +
+                'animation:lsCelebrationPulse 1.4s ease-in-out infinite;">' + tier + '</div>' +
+            '<div id="liveSlotWinCelebrationAmount" style="font-size:42px;font-weight:900;color:#fff;margin-top:6px;' +
+                'text-shadow:0 4px 20px rgba(0,0,0,0.7);">$0.00</div>' +
+            '<div style="font-size:11px;color:#94a3b8;margin-top:14px;letter-spacing:1px;">' +
+                Math.round(ratio) + '× BET &middot; tap to dismiss' +
+            '</div>';
+        // Position relative to card for inset:0 to mean "fill the card"
+        var origPos = window.getComputedStyle(card).position;
+        if (origPos === 'static') card.style.position = 'relative';
+        card.appendChild(el);
+        // Count-up animation
+        var amountEl = document.getElementById('liveSlotWinCelebrationAmount');
+        var startTs = Date.now();
+        var dur = state.quickSpin ? 600 : 1500;
+        function tick() {
+            var t = Math.min(1, (Date.now() - startTs) / dur);
+            // ease-out cubic
+            var eased = 1 - Math.pow(1 - t, 3);
+            var v = Math.round(winCents * eased);
+            if (amountEl) amountEl.textContent = fmt(v);
+            if (t < 1) requestAnimationFrame(tick);
+        }
+        tick();
+        var dismiss = function () { if (el && el.parentNode) el.parentNode.removeChild(el); };
+        el.addEventListener('click', dismiss);
+        setTimeout(dismiss, dur + (state.quickSpin ? 1500 : 3500));
+    }
+
+    // Inject the keyframes once at module load — much smaller than
+    // shipping a full-blown CSS file.
+    (function injectCelebrationStyles() {
+        if (document.getElementById('lsCelebrationStyles')) return;
+        var s = document.createElement('style');
+        s.id = 'lsCelebrationStyles';
+        s.textContent =
+            '@keyframes lsCelebrationIn{from{opacity:0;transform:scale(0.92);}to{opacity:1;transform:scale(1);}}' +
+            '@keyframes lsCelebrationPulse{0%,100%{transform:scale(1);}50%{transform:scale(1.07);}}';
+        document.head.appendChild(s);
+    })();
 
     /**
      * Render reel cells. Universal games come back with a 2-D
@@ -505,7 +610,8 @@
             if (floorCents > 0 && bal < floorCents) { stoppedReason = 'balance_floor'; break; }
             // Light pacing so the rate limit (30/10s) never trips on
             // a turbo-spin user. ~350ms gives ~3/s — well under cap.
-            await new Promise(function (r) { setTimeout(r, 350); });
+            // Quick-spin halves the pacing.
+            await new Promise(function (r) { setTimeout(r, state.quickSpin ? 180 : 350); });
         }
         setAutoUI(false);
         var spinsLabel = done + ' spin' + (done === 1 ? '' : 's');
@@ -580,9 +686,13 @@
         // remains the source of truth for "what was actually used".
         // If we're inside a free-spin session, send the session id and
         // skip the bet — the server won't debit.
-        var spinBody = state.bonusSession
-            ? { bonus_session_id: state.bonusSession.id }
-            : { game_id: state.gameId, bet_cents: state.betCents };
+        var spinBody;
+        if (state.bonusSession) {
+            spinBody = { bonus_session_id: state.bonusSession.id };
+        } else {
+            spinBody = { game_id: state.gameId, bet_cents: state.betCents };
+            if (state.anteEnabled) spinBody.ante = true;
+        }
         var res = await fetchJSON('/api/slot/spin', {
             method: 'POST',
             body: spinBody,
@@ -620,6 +730,15 @@
                 msg += ' on ' + hits;
             }
             setResult(msg, '#22c55e');
+            // Win celebration tier overlay for ≥10× bet wins.
+            // bet_cents on the response is 0 during a free-spin
+            // session — fall back to the session's original_bet_cents
+            // so the ratio is honest. Skip celebrations during turbo
+            // unless the win is genuinely massive.
+            var celebBet = Number(res.body.bet_cents)
+                || (state.bonusSession && state.bonusSession.original_bet_cents)
+                || state.betCents;
+            if (celebBet > 0) showWinCelebration(res.body.win_cents, celebBet);
         } else {
             setResult('No win — try again.', '#94a3b8');
         }
@@ -685,6 +804,163 @@
         var overlay = document.getElementById('liveSlotModal');
         if (overlay) overlay.addEventListener('click', function (e) {
             if (e.target === overlay) closeLiveSlot();
+        });
+        // Bet shortcuts
+        document.querySelectorAll('.ls-bet-shortcut').forEach(function (btn) {
+            btn.addEventListener('click', function () {
+                applyBetShortcut(btn.getAttribute('data-pct'));
+            });
+        });
+        // Turbo / quick spin toggle
+        var turboCb = document.getElementById('liveSlotQuickSpin');
+        if (turboCb) turboCb.addEventListener('change', function () {
+            state.quickSpin = !!turboCb.checked;
+        });
+        // Ante
+        var anteCb = document.getElementById('liveSlotAnte');
+        if (anteCb) anteCb.addEventListener('change', function () {
+            state.anteEnabled = !!anteCb.checked;
+            updateBetMultiplierLabel();
+        });
+        // Bonus buy
+        var buyBtn = document.getElementById('liveSlotBuyBonus');
+        if (buyBtn) buyBtn.addEventListener('click', doBuyBonus);
+        // Game info
+        var infoBtn = document.getElementById('liveSlotInfo');
+        if (infoBtn) infoBtn.addEventListener('click', openInfoModal);
+    }
+
+    /**
+     * Update the bet shortcut buttons' visual hint when ante is on —
+     * effective cost is 1.25× the displayed value so the user knows.
+     */
+    function updateBetMultiplierLabel() {
+        var spinBtn = document.getElementById('liveSlotSpin');
+        if (!spinBtn) return;
+        spinBtn.textContent = state.anteEnabled ? 'SPIN +25%' : 'SPIN';
+    }
+
+    /**
+     * Bet-shortcut handler. `min` and `max` clamp to the game's range;
+     * percentage shortcuts use the user's current balance (read from
+     * the displayed amount, since the engine is the source of truth
+     * and we don't store balance separately).
+     */
+    function applyBetShortcut(pct) {
+        var input = document.getElementById('liveSlotBet');
+        if (!input || !state.gameDef) return;
+        var min = state.gameDef.min_bet_cents / 100;
+        var max = state.gameDef.max_bet_cents / 100;
+        var target;
+        if (pct === 'min') target = min;
+        else if (pct === 'max') target = max;
+        else {
+            // Percentage of balance: read from the balance label.
+            var balEl = document.getElementById('liveSlotBalance');
+            var balCents = balEl ? Number(balEl.dataset.cents || 0) : 0;
+            var balDollars = balCents / 100;
+            target = balDollars * Number(pct);
+        }
+        // Clamp to game range; round to step (0.10).
+        target = Math.max(min, Math.min(max, target || 0));
+        target = Math.max(min, Math.round(target * 10) / 10);
+        input.value = target.toFixed(2);
+        state.betCents = Math.round(target * 100);
+    }
+
+    /**
+     * Bonus Buy click. Confirms the price, calls /api/slot/buy-bonus,
+     * and on success switches the UI into bonus mode (the next spin
+     * is a free spin, no debit).
+     */
+    async function doBuyBonus() {
+        if (state.spinning) return;
+        if (state.bonusSession) {
+            setResult('Already in a bonus session.', '#94a3b8');
+            return;
+        }
+        var input = document.getElementById('liveSlotBet');
+        var dollars = Number(input && input.value);
+        if (!Number.isFinite(dollars) || dollars <= 0) {
+            setResult('Enter a valid bet first.', '#ef4444');
+            return;
+        }
+        state.betCents = Math.round(dollars * 100);
+        var price = state.betCents * 100; // BONUS_BUY_PRICE_MULT
+        var ok = window.confirm('Buy free spins for ' + fmt(price) + ' (100× your bet)?');
+        if (!ok) return;
+        state.spinning = true;
+        setResult('Buying bonus…', '#94a3b8');
+        var res = await fetchJSON('/api/slot/buy-bonus', {
+            method: 'POST',
+            body: { game_id: state.gameId, bet_cents: state.betCents },
+        });
+        state.spinning = false;
+        if (res.status !== 200) {
+            setResult((res.body && res.body.error) || 'Bonus buy failed.', '#ef4444');
+            return;
+        }
+        if (res.body.bonus_session) {
+            state.bonusSession = res.body.bonus_session;
+            updateBonusUI(res.body.bonus_session, null);
+            setResult('Bonus opened — press Spin to play!', '#fde047');
+            // Refresh balance display from the response.
+            var balEl = document.getElementById('liveSlotBalance');
+            if (balEl) {
+                balEl.textContent = 'Balance: ' + fmt(res.body.balance_cents);
+                balEl.dataset.cents = String(res.body.balance_cents);
+            }
+        }
+    }
+
+    /**
+     * Game-info modal: full paytable, RTP, volatility, bonus
+     * description, win-celebration tier thresholds. Renders inside
+     * a sub-overlay on top of the live-slot modal.
+     */
+    function openInfoModal() {
+        var existing = document.getElementById('liveSlotInfoModal');
+        if (existing) { existing.style.display = 'flex'; return; }
+        var def = state.gameDef;
+        if (!def) return;
+        var modal = document.createElement('div');
+        modal.id = 'liveSlotInfoModal';
+        modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.92);z-index:10001;display:flex;align-items:center;justify-content:center;padding:16px;';
+        var rtpPct = (def.rtp != null ? (def.rtp * 100).toFixed(2) : '—') + '%';
+        var symbolsList = (def.symbols || []).map(function (s) {
+            return '<span style="display:inline-block;padding:4px 8px;margin:2px;background:rgba(255,255,255,0.06);border-radius:4px;font-family:monospace;font-size:11px;">' + s + '</span>';
+        }).join('');
+        modal.innerHTML =
+            '<div style="background:#0d1117;border:1px solid #f1c40f55;border-radius:12px;padding:24px;max-width:500px;width:100%;max-height:88vh;overflow:auto;color:#e0e0e0;font-family:system-ui,sans-serif;">' +
+                '<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:14px;">' +
+                    '<div><div style="font-size:11px;letter-spacing:2px;color:#f1c40f;">GAME INFO</div>' +
+                        '<div style="font-size:18px;font-weight:800;">' + (def.name || def.id) + '</div></div>' +
+                    '<button id="liveSlotInfoClose" style="background:none;border:none;color:#fff;font-size:22px;cursor:pointer;">&times;</button>' +
+                '</div>' +
+                '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px;font-size:13px;">' +
+                    '<div><span style="color:#94a3b8;">RTP</span> <strong>' + rtpPct + '</strong></div>' +
+                    '<div><span style="color:#94a3b8;">Grid</span> <strong>' + def.cols + '×' + def.rows + '</strong></div>' +
+                    '<div><span style="color:#94a3b8;">Win type</span> <strong>' + def.win_type + '</strong></div>' +
+                    '<div><span style="color:#94a3b8;">Bonus</span> <strong>' + (def.bonus_type || '—') + '</strong></div>' +
+                '</div>' +
+                (def.bonus_desc ? '<div style="font-size:13px;color:#cbd5e1;margin-bottom:14px;line-height:1.5;">' + def.bonus_desc + '</div>' : '') +
+                '<div style="font-size:12px;color:#94a3b8;margin-bottom:6px;">Symbols</div>' +
+                '<div style="margin-bottom:14px;">' + symbolsList + '</div>' +
+                '<div style="font-size:12px;color:#94a3b8;margin-bottom:6px;">Paytable</div>' +
+                '<div style="margin-bottom:14px;">' + buildPaytableHtml(def) + '</div>' +
+                '<div style="font-size:12px;color:#94a3b8;margin-bottom:6px;">Win tiers</div>' +
+                '<div style="font-size:12px;color:#cbd5e1;line-height:1.7;">' +
+                    '<div><span style="color:#22c55e;font-weight:800;">BIG WIN</span> &middot; 10× bet</div>' +
+                    '<div><span style="color:#22d3ee;font-weight:800;">MEGA WIN</span> &middot; 25× bet</div>' +
+                    '<div><span style="color:#a855f7;font-weight:800;">EPIC WIN</span> &middot; 50× bet</div>' +
+                    '<div><span style="color:#fde047;font-weight:800;">MAX WIN</span> &middot; 100× bet</div>' +
+                '</div>' +
+            '</div>';
+        document.body.appendChild(modal);
+        var closeBtn = document.getElementById('liveSlotInfoClose');
+        if (closeBtn) closeBtn.addEventListener('click', function () { modal.style.display = 'none'; });
+        modal.addEventListener('click', function (e) {
+            if (e.target === modal) modal.style.display = 'none';
         });
     }
 

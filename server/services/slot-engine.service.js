@@ -404,6 +404,114 @@ async function spin(args) {
 }
 
 /**
+ * Industry-standard Bonus Buy: pay BONUS_BUY_PRICE_MULT × bet to
+ * skip straight into a free-spin session. The base spin is itself
+ * spun honestly (HMAC RNG, real grid, real win) but the trigger is
+ * forced — we open a bonus session regardless of scatter count, with
+ * spins_remaining = freeSpinsCount.
+ *
+ * Refused for games whose catalog declares no bonusType / freeSpinsCount.
+ *
+ * Pricing: 100× bet is the de-facto industry default for "buy free
+ * spins" on payline / cluster slots (Pragmatic, Push Gaming, etc.).
+ */
+const BONUS_BUY_PRICE_MULT = 100;
+
+function buyBonus(args) {
+    return withSpinLock(args.userId, () => buyBonusImpl(args));
+}
+
+async function buyBonusImpl({ userId, gameId, betCents, clientSeed }) {
+    const universalGame = universal.getGame(gameId);
+    if (!universalGame) { const e = new Error('Unknown game.'); e.status = 404; throw e; }
+    const def = require('../../shared/game-definitions.js').find(g => g.id === gameId);
+    if (!def || !def.freeSpinsCount || !def.bonusType) {
+        const e = new Error('This game does not support Bonus Buy.');
+        e.status = 400;
+        e.code = 'bonus_buy_unsupported';
+        throw e;
+    }
+    const bet = Math.round(Number(betCents));
+    if (!Number.isFinite(bet) || bet < universalGame.min_bet_cents || bet > universalGame.max_bet_cents) {
+        const e = new Error('Bet outside game range.'); e.status = 400; throw e;
+    }
+    const price = bet * BONUS_BUY_PRICE_MULT;
+
+    // Check that the user already has an open session — refuse to
+    // stack buys, otherwise free spins compound past the player's
+    // intent.
+    const existing = await bonusSessions.getActiveForUser(userId);
+    if (existing) {
+        const e = new Error('You already have an active bonus session.');
+        e.status = 409;
+        e.code = 'bonus_session_active';
+        throw e;
+    }
+
+    // Atomic conditional debit. Same self-exclusion gate as a normal
+    // spin so a paused account can't buy bonuses.
+    const debit = await db.run(
+        'UPDATE users SET balance_cents = balance_cents - ? ' +
+        'WHERE id = ? AND balance_cents >= ? ' +
+        'AND (self_excluded_until IS NULL OR self_excluded_until < ' + db.sqlNow() + ')',
+        [price, userId, price]
+    );
+    if (Number(debit && debit.changes) < 1) {
+        const u = await db.get('SELECT balance_cents, self_excluded_until FROM users WHERE id = ?', [userId]);
+        if (u && u.self_excluded_until && Date.parse(u.self_excluded_until) > Date.now()) {
+            const e = new Error('Account is self-excluded.'); e.status = 403; e.code = 'self_excluded'; throw e;
+        }
+        const e = new Error('Insufficient balance.'); e.status = 402; throw e;
+    }
+    try {
+        const sessionId = await bonusSessions.open({
+            userId, gameId,
+            gameDef: { freeSpinsCount: def.freeSpinsCount, bonusType: def.bonusType },
+            betCents: bet,
+            triggerRoundId: null,
+        });
+        if (!sessionId) {
+            // Refund — open() refused for some reason.
+            await db.run('UPDATE users SET balance_cents = balance_cents + ? WHERE id = ?', [price, userId]);
+            const e = new Error('Bonus session could not be opened.'); e.status = 500; throw e;
+        }
+        const balRow = await db.get('SELECT balance_cents FROM users WHERE id = ?', [userId]);
+        const balanceAfter = Number((balRow && balRow.balance_cents) || 0);
+        // Log the buy as a slot_round so analytics see the cost (bet=price,
+        // win=0, outcome notes the buy).
+        const commit = await getOrCreateCommit(userId);
+        await db.run(
+            `INSERT INTO slot_rounds
+                (user_id, game_id, bet_cents, win_cents, balance_after_cents,
+                 server_seed, server_seed_hash, client_seed, nonce, outcome_json)
+             VALUES (?, ?, ?, 0, ?, ?, ?, ?, ?, ?)`,
+            [userId, gameId, price, balanceAfter,
+             commit.server_seed, commit.server_seed_hash,
+             normalizeClientSeed(clientSeed || ''), Number(commit.nonce),
+             JSON.stringify({ bonus_buy: true, price_cents: price, bonus_session_id: sessionId })]
+        );
+        const row = await bonusSessions.getById(sessionId);
+        return {
+            bonus_buy: true,
+            game_id: gameId,
+            bet_cents: bet,
+            price_cents: price,
+            balance_cents: balanceAfter,
+            bonus_session: bonusSessions.publicShape(row),
+        };
+    } catch (err) {
+        // Refund on any post-debit failure.
+        try {
+            await db.run('UPDATE users SET balance_cents = balance_cents + ? WHERE id = ?', [price, userId]);
+            console.warn('[bonus-buy/refunded]', 'user=' + userId, 'price=' + price, 'reason=' + (err && err.message));
+        } catch (refundErr) {
+            console.error('[bonus-buy/CRITICAL refund failed]', userId, price, err && err.message, refundErr && refundErr.message);
+        }
+        throw err;
+    }
+}
+
+/**
  * Free-spin consume path. Caller passes `bonus_session_id` instead of
  * `bet_cents`; we look up the active session, refuse if it's stale or
  * not owned by this user, spin with the original bet, credit the win
@@ -553,7 +661,22 @@ async function consumeBonusSpinImpl({ userId, bonusSessionId, clientSeed }) {
     };
 }
 
-async function spinImpl({ userId, gameId, betCents, clientSeed }) {
+/**
+ * Ante Bet: industry-standard "play extra to boost bonus probability".
+ * The player pays ANTE_MULT × bet (typically 1.25×); the trigger
+ * threshold drops to 2 scatters instead of 3, and the awarded
+ * freeSpinsCount is boosted by 50%.
+ *
+ * Implemented as a spinImpl flag so the route can pass `ante: true`
+ * and everything else flows through the normal path. The actual debit
+ * uses the boosted `effectiveBet` so analytics see the real cost.
+ */
+const ANTE_MULT = 1.25;
+const ANTE_TRIGGER_THRESHOLD = 2;          // scatters needed during ante
+const NORMAL_TRIGGER_THRESHOLD = 3;
+const ANTE_FREE_SPINS_BONUS = 1.5;         // 50% more free spins on trigger
+
+async function spinImpl({ userId, gameId, betCents, clientSeed, ante }) {
     // Operator kill switch. If an ops engineer flipped the slot-engine
     // paused flag (incident response, suspected exploit, maintenance
     // window), every spin refuses with 503 until the flag is cleared.
@@ -589,12 +712,18 @@ async function spinImpl({ userId, gameId, betCents, clientSeed }) {
     if (!tunedGame && !universalGame) { const e = new Error('Unknown game.'); e.status = 404; throw e; }
     const minBet = tunedGame ? tunedGame.min_bet_cents : universalGame.min_bet_cents;
     const maxBet = tunedGame ? tunedGame.max_bet_cents : universalGame.max_bet_cents;
-    const bet = Math.round(Number(betCents));
-    if (!Number.isFinite(bet) || bet < minBet || bet > maxBet) {
+    const baseBet = Math.round(Number(betCents));
+    if (!Number.isFinite(baseBet) || baseBet < minBet || baseBet > maxBet) {
         const e = new Error(`Bet must be between ${minBet} and ${maxBet} cents.`);
         e.status = 400;
         throw e;
     }
+    // Ante bet: pay extra to lower the trigger threshold and boost
+    // free-spin count. Tuned games (classic_777, neon_burst) don't have
+    // a bonus to trigger, so ante is silently ignored on those.
+    const anteEnabled = !!ante && !!universalGame;
+    const bet = anteEnabled ? Math.round(baseBet * ANTE_MULT) : baseBet;
+    const triggerThreshold = anteEnabled ? ANTE_TRIGGER_THRESHOLD : NORMAL_TRIGGER_THRESHOLD;
 
     // Loss-limit gate. Runs after bet validation so absurd bets fail fast,
     // and before the debit so we never record a round we'd have to void.
@@ -728,13 +857,17 @@ async function spinImpl({ userId, gameId, betCents, clientSeed }) {
         //    session — the client switches into bonus mode for the next
         //    `spins_remaining` spins.
         let bonusSession = null;
-        if (universalGame && scatterCount >= 3) {
-            const spinsCount = Number(universalGame.bonusType ? (require('../../shared/game-definitions.js').find(g => g.id === gameId) || {}).freeSpinsCount : 0) || 0;
-            if (spinsCount > 0) {
+        if (universalGame && scatterCount >= triggerThreshold) {
+            const def = require('../../shared/game-definitions.js').find(g => g.id === gameId);
+            const baseSpins = Number(def && def.freeSpinsCount) || 0;
+            // Ante boosts the awarded count by 50% — players who paid
+            // the 25% premium see the value on the trigger.
+            const spinsCount = anteEnabled ? Math.round(baseSpins * ANTE_FREE_SPINS_BONUS) : baseSpins;
+            if (spinsCount > 0 && def && def.bonusType) {
                 const sessionId = await bonusSessions.open({
                     userId, gameId,
-                    gameDef: { freeSpinsCount: spinsCount, bonusType: universalGame.bonusType },
-                    betCents: bet,
+                    gameDef: { freeSpinsCount: spinsCount, bonusType: def.bonusType },
+                    betCents: baseBet, // session always uses the base bet (not ante-inflated)
                     triggerRoundId: roundId,
                 });
                 if (sessionId) {
@@ -828,6 +961,7 @@ module.exports = {
     hasGame,
     publicCommit,
     spin,
+    buyBonus,
     listRounds,
     getRound,
     sumNetLossSince,

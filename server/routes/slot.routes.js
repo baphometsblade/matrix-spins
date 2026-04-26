@@ -45,7 +45,7 @@ router.get('/commit', authenticate, async (req, res) => {
 });
 
 router.post('/spin', authenticate, spinLimiter, async (req, res) => {
-    const { game_id, bet_cents, client_seed, bonus_session_id } = req.body || {};
+    const { game_id, bet_cents, client_seed, bonus_session_id, ante } = req.body || {};
 
     // Free-spin (bonus session) consume path: no game_id / bet needed,
     // engine looks up the active session by user. We still validate
@@ -81,6 +81,7 @@ router.post('/spin', authenticate, spinLimiter, async (req, res) => {
             gameId: game_id,
             betCents: bet_cents,
             clientSeed: client_seed,
+            ante: ante === true,
         });
         res.json(result);
     } catch (err) {
@@ -140,6 +141,34 @@ router.post('/rotate-commit', authenticate, async (req, res) => {
     } catch (err) {
         console.error('[slot/rotate-commit]', err);
         res.status(500).json({ error: 'Failed to rotate commit.' });
+    }
+});
+
+/**
+ * POST /api/slot/buy-bonus
+ * Industry-standard "Bonus Buy" — pay 100× bet to instantly trigger
+ * a free-spin session on a game whose catalog declares a bonus.
+ * Refused if the user already has an active bonus session.
+ */
+router.post('/buy-bonus', authenticate, spinLimiter, async (req, res) => {
+    const { game_id, bet_cents, client_seed } = req.body || {};
+    if (!engine.hasGame(game_id)) return res.status(404).json({ error: 'Unknown game.' });
+    try {
+        const result = await engine.buyBonus({
+            userId: req.user.id,
+            gameId: game_id,
+            betCents: bet_cents,
+            clientSeed: client_seed,
+        });
+        res.json(result);
+    } catch (err) {
+        if (err && err.status) {
+            const body = { error: err.message };
+            if (err.code) body.code = err.code;
+            return res.status(err.status).json(body);
+        }
+        console.error('[slot/buy-bonus]', err);
+        res.status(500).json({ error: 'Bonus buy failed.' });
     }
 });
 
