@@ -1,0 +1,215 @@
+/* ─────────────────────────────────────────────────────────────────────────
+   MATRIX SPINS — Mobile Fixes
+   Targets ≤768px. Fixes:
+     1. Button label overflow ("words popping out" on small screens)
+     2. Cluttered header / hero on mobile
+     3. Cramped tap targets
+   Rules use moderate specificity so JS-injected base styles still win
+   for non-mobile sizes.
+   ───────────────────────────────────────────────────────────────────── */
+
+/* === Universal button overflow guard (all viewports) === */
+.btn,
+.btn-deposit,
+.btn-deposit-hero,
+.btn-play,
+.btn-user,
+.csb-deposit-btn,
+.filter-tab,
+.section-see-all {
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    box-sizing: border-box;
+}
+
+/* === Tablet & smaller === */
+@media (max-width: 768px) {
+    /* Header — tighten spacing, allow wrap so nothing gets clipped */
+    .casino-header,
+    .header-inner {
+        padding-left: 8px !important;
+        padding-right: 8px !important;
+    }
+    .header-actions {
+        gap: 6px !important;
+        flex-wrap: nowrap;
+    }
+    /* Header search collapses on mobile — sidebar provides discovery */
+    .header-search {
+        display: none !important;
+    }
+    /* Reduce the visual weight of the XP / level display */
+    .xp-level-display .xp-bar-text,
+    .xp-level-display .vip-mini-text {
+        font-size: 9px !important;
+    }
+    /* Header buttons — keep label, prevent text from spilling out */
+    .btn,
+    .btn-deposit,
+    .btn-user {
+        font-size: 11px !important;
+        padding: 8px 10px !important;
+        min-height: 38px;
+        letter-spacing: 0.02em !important;
+    }
+    .btn svg,
+    .btn-deposit svg,
+    .btn-user svg {
+        flex-shrink: 0;
+    }
+
+    /* Hero — calmer on mobile */
+    .hero-banner {
+        padding: 16px 12px !important;
+    }
+    .hero-content {
+        flex-direction: column !important;
+        gap: 12px !important;
+    }
+    .hero-title {
+        font-size: 26px !important;
+        line-height: 1.15 !important;
+    }
+    .hero-subtitle {
+        font-size: 13px !important;
+        line-height: 1.4 !important;
+    }
+    .hero-tags {
+        flex-wrap: wrap;
+        gap: 6px !important;
+    }
+    .hero-tag {
+        font-size: 10px !important;
+        padding: 4px 8px !important;
+    }
+    .hero-stats,
+    .hero-jackpot {
+        align-self: stretch;
+    }
+    .hero-buttons {
+        flex-wrap: wrap;
+        gap: 8px !important;
+    }
+    .hero-buttons .btn {
+        flex: 1 1 auto;
+        min-width: 0;
+        padding: 12px 10px !important;
+        font-size: 13px !important;
+    }
+
+    /* Hot-wins ticker — keep but reduce vertical noise */
+    #hotWinsTicker {
+        height: 28px !important;
+        font-size: 12px !important;
+    }
+
+    /* Filter tabs — let them scroll horizontally instead of wrapping
+       into 3 rows of bouncing buttons */
+    .filter-tabs {
+        overflow-x: auto;
+        flex-wrap: nowrap !important;
+        scrollbar-width: none;
+        -webkit-overflow-scrolling: touch;
+    }
+    .filter-tabs::-webkit-scrollbar { display: none; }
+    .filter-tab {
+        flex: 0 0 auto;
+        font-size: 12px !important;
+        padding: 8px 12px !important;
+    }
+
+    /* Provider filter chips — same horizontal-scroll treatment */
+    .provider-filter-row {
+        overflow-x: auto;
+        flex-wrap: nowrap !important;
+        scrollbar-width: none;
+    }
+    .provider-filter-row::-webkit-scrollbar { display: none; }
+
+    /* Sidebar deposit CTA */
+    .csb-deposit-btn {
+        font-size: 13px !important;
+        padding: 12px 10px !important;
+    }
+}
+
+/* === Phones === */
+@media (max-width: 480px) {
+    /* Even more aggressive: drop label text on icon-only header buttons,
+       leaving the SVG visible. WALLET/LOGIN keep their label since
+       they're the primary CTAs. */
+    .btn-user[id="soundToggle"] span,
+    .btn-user.btn-settings span {
+        display: none !important;
+    }
+    .btn-user[id="soundToggle"],
+    .btn-user.btn-settings {
+        padding: 8px !important;
+        min-width: 38px;
+    }
+    /* Tight header buttons */
+    .btn-deposit,
+    .btn-user {
+        font-size: 10px !important;
+        padding: 7px 8px !important;
+    }
+    /* Balance — keep visible but compact */
+    .balance-display .balance-label {
+        font-size: 8px !important;
+        letter-spacing: 0.5px !important;
+    }
+    .balance-display .balance-amount {
+        font-size: 14px !important;
+    }
+    /* XP display competes with balance for space — hide it on very small
+       screens. The full XP info is still available in the profile modal. */
+    .xp-level-display .xp-info {
+        display: none !important;
+    }
+    .xp-level-display {
+        padding: 4px !important;
+    }
+    .level-badge {
+        width: 28px !important;
+        height: 28px !important;
+        font-size: 12px !important;
+    }
+    /* Hero — even calmer */
+    .hero-title {
+        font-size: 22px !important;
+    }
+    .hero-subtitle {
+        font-size: 12px !important;
+    }
+    /* Session timer competes with balance for header space */
+    .session-timer-display {
+        font-size: 10px !important;
+        padding: 3px 6px !important;
+    }
+    /* Win ticker — quieter */
+    .win-ticker-bar {
+        font-size: 11px !important;
+    }
+}
+
+/* === Very narrow / older phones === */
+@media (max-width: 360px) {
+    /* Wallet button — text out, icon stays. Cuts the worst overflow case. */
+    .btn-deposit {
+        font-size: 0 !important;
+        padding: 8px 10px !important;
+    }
+    .btn-deposit svg {
+        font-size: 14px;
+    }
+    /* Login button keeps its label but shrinks */
+    .btn-user.btn-profile {
+        font-size: 10px !important;
+        padding: 7px 8px !important;
+    }
+    .header-actions {
+        gap: 4px !important;
+    }
+}
