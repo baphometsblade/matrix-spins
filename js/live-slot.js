@@ -16,10 +16,11 @@
 
     if (window.openLiveSlot) return; // guard against double-load
 
-    // Static glyph + color tables. New symbols added by future games
-    // pick up sensible defaults (see glyphFor / colorFor below) so
-    // adding a game purely server-side doesn't render '?' cells until
-    // an art entry lands here.
+    // Symbol display table. Catalog symbols (s1_*, s2_*, …, wild_*) are
+    // rendered with a short rank label; legacy classic_777 / neon_burst
+    // glyphs keep their unicode glyph. New game symbols fall through to
+    // a 3-letter abbreviation so a server-only game still shows
+    // recognizable cells until art ships.
     var SYMBOL_GLYPHS = {
         cherry: '🍒', lemon: '🍋', orange: '🍊', bar: 'BAR', seven: '7',
         neon: 'NEON', pulse: '~', star: '★', comet: '☄', nova: '✦',
@@ -28,8 +29,39 @@
         cherry: '#ef4444', lemon: '#fde047', orange: '#fb923c', bar: '#e5e7eb', seven: '#f59e0b',
         neon: '#22d3ee',   pulse: '#a855f7', star: '#facc15',   comet: '#60a5fa', nova: '#f472b6',
     };
-    function glyphFor(sym) { return SYMBOL_GLYPHS[sym] || (sym ? sym.slice(0, 3).toUpperCase() : '?'); }
-    function colorFor(sym) { return SYMBOL_COLORS[sym] || '#fff'; }
+    // Catalog symbols look like s1_lollipop / s2_gummy_bear / wild_sugar.
+    // Render rank ribbons (S1..S5, WILD) so each cell is legible without
+    // per-symbol art. Color ramps run high-pay → low-pay.
+    var RANK_COLORS = ['#94a3b8', '#22d3ee', '#a855f7', '#f59e0b', '#ef4444'];
+    function rankFromSymbol(sym) {
+        if (!sym) return null;
+        if (/^wild[_ ]/.test(sym) || sym === 'wild') return { label: 'WILD', color: '#fde047' };
+        var m = /^s(\d+)/.exec(sym);
+        if (m) {
+            var i = Math.min(RANK_COLORS.length - 1, Math.max(0, Number(m[1]) - 1));
+            return { label: 'S' + m[1], color: RANK_COLORS[i] };
+        }
+        return null;
+    }
+    function glyphFor(sym) {
+        if (SYMBOL_GLYPHS[sym]) return SYMBOL_GLYPHS[sym];
+        var r = rankFromSymbol(sym);
+        if (r) return r.label;
+        return sym ? sym.slice(0, 3).toUpperCase() : '?';
+    }
+    function colorFor(sym) {
+        if (SYMBOL_COLORS[sym]) return SYMBOL_COLORS[sym];
+        var r = rankFromSymbol(sym);
+        if (r) return r.color;
+        return '#fff';
+    }
+
+    // Number of grid rows for a given game definition. Tuned games
+    // (classic_777, neon_burst) come back from /api/slot/games without
+    // a `rows` field and are single-row; universal games declare both
+    // `cols` and `rows` so we can lay out a true 2-D grid.
+    function rowsOf(def) { return Math.max(1, Number(def.rows) || 1); }
+    function colsOf(def) { return Math.max(1, Number(def.cols) || Number(def.reels_count) || 3); }
 
     var state = {
         gameId: null,
@@ -47,32 +79,88 @@
         try { return localStorage.getItem('casinoToken'); } catch (e) { return null; }
     }
 
-    function reelCellHtml(fontSize) {
-        return '<div class="ls-reel" style="aspect-ratio:1/1;display:flex;align-items:center;' +
+    function reelCellHtml(fontSize, key) {
+        return '<div class="ls-reel" data-cell="' + key + '" style="aspect-ratio:1/1;display:flex;align-items:center;' +
             'justify-content:center;font-size:' + fontSize + 'px;font-weight:900;' +
-            'background:#1a0705;border-radius:8px;">?</div>';
+            'background:#1a0705;border-radius:8px;transition:background 0.2s ease;">?</div>';
     }
 
     function buildReelsGrid(def) {
-        var n = def.reels_count;
-        // 3 reels at 42px is the classic; 5 reels in a 440-wide modal
-        // need to drop to 28px so the glyphs don't clip.
-        var fontSize = n >= 5 ? 28 : 42;
+        var cols = colsOf(def);
+        var rows = rowsOf(def);
+        // Font size scales with grid density: a 7×7 grid in a 520-wide
+        // modal can't render 28px glyphs without clipping.
+        var maxDim = Math.max(cols, rows);
+        var fontSize = maxDim >= 7 ? 14 : maxDim >= 6 ? 18 : maxDim >= 5 ? 22 : 36;
         var cells = '';
-        for (var i = 0; i < n; i++) cells += reelCellHtml(fontSize);
+        for (var r = 0; r < rows; r++) {
+            for (var c = 0; c < cols; c++) {
+                cells += reelCellHtml(fontSize, c + ',' + r);
+            }
+        }
         return '<div id="liveSlotReels" aria-label="Reels" style="display:grid;' +
-            'grid-template-columns:repeat(' + n + ',1fr);gap:8px;background:#0b0504;' +
-            'border:1px solid #f1c40f44;border-radius:10px;padding:16px;margin-bottom:12px;">' +
+            'grid-template-columns:repeat(' + cols + ',1fr);gap:6px;background:#0b0504;' +
+            'border:1px solid #f1c40f44;border-radius:10px;padding:12px;margin-bottom:12px;">' +
             cells + '</div>';
     }
 
+    function paytableHeader(def) {
+        switch (def.win_type) {
+            case 'cluster':
+                return 'Cluster of ' + (def.cluster_min || 5) + '+ matching symbols pays:';
+            case 'classic':
+                return colsOf(def) + ' of a kind on the line pays:';
+            case 'payline':
+            default:
+                return 'Matching symbols left-to-right on a payline:';
+        }
+    }
+
     function buildPaytableHtml(def) {
-        var rows = Object.keys(def.paytable).map(function (sym) {
-            return '<div><span style="color:' + colorFor(sym) + ';font-weight:800;">' +
-                glyphFor(sym) + '</span> ' + sym + ' &times;' + def.paytable[sym] + '</div>';
-        }).join('');
-        return '<div>' + def.reels_count + ' of a kind on the center row pays:</div>' +
-            '<div style="font-family:monospace;margin:6px 0;line-height:1.7">' + rows + '</div>';
+        var pt = def.paytable || {};
+        // Catalog payouts use category keys (cluster5/cluster8/...,
+        // payline3/4/5, triple/double/wildTriple, scatterPay) rather
+        // than per-symbol multipliers. Render the category that
+        // matches the game's win_type and skip empty fields.
+        var prettyKey = function (k) {
+            if (k === 'cluster5')  return 'Cluster 5–7';
+            if (k === 'cluster8')  return 'Cluster 8–11';
+            if (k === 'cluster12') return 'Cluster 12–14';
+            if (k === 'cluster15') return 'Cluster 15+';
+            if (k === 'payline3')  return '3 in a row';
+            if (k === 'payline4')  return '4 in a row';
+            if (k === 'payline5')  return '5 in a row';
+            if (k === 'triple')    return 'Three of a kind';
+            if (k === 'double')    return 'Two of a kind';
+            if (k === 'wildTriple')return 'Three wilds';
+            if (k === 'scatterPay')return 'Per scatter';
+            return k;
+        };
+        var keys;
+        if (def.win_type === 'cluster') keys = ['cluster5', 'cluster8', 'cluster12', 'cluster15', 'wildTriple', 'scatterPay'];
+        else if (def.win_type === 'payline') keys = ['payline3', 'payline4', 'payline5', 'wildTriple', 'scatterPay'];
+        else if (def.win_type === 'classic') {
+            // Per-symbol pay table on classic single-payline games.
+            keys = (def.symbols || []).filter(function (s) { return pt[s] != null; });
+            return '<div>' + paytableHeader(def) + '</div>' +
+                '<div style="font-family:monospace;margin:6px 0;line-height:1.7">' +
+                keys.map(function (sym) {
+                    return '<div><span style="color:' + colorFor(sym) + ';font-weight:800;">' +
+                        glyphFor(sym) + '</span> ' + sym + ' &times;' + pt[sym] + '</div>';
+                }).join('') + '</div>';
+        } else {
+            keys = Object.keys(pt);
+        }
+        var rows = keys
+            .filter(function (k) { return pt[k] != null && Number(pt[k]) > 0; })
+            .map(function (k) {
+                return '<div>' + prettyKey(k) + ' &mdash; pays ' +
+                    '<span style="color:#fde047;font-weight:800">×' + pt[k] + ' bet</span></div>';
+            }).join('');
+        var rtp = (typeof def.rtp === 'number') ? (def.rtp * 100).toFixed(2) + '% RTP' : '';
+        return '<div>' + paytableHeader(def) + '</div>' +
+            '<div style="font-family:monospace;margin:6px 0;line-height:1.7">' + rows + '</div>' +
+            (rtp ? '<div style="color:#94a3b8;font-size:11px;">' + rtp + '</div>' : '');
     }
 
     function ensureModal() {
@@ -176,17 +264,79 @@
         el.style.color = color || '#fde047';
     }
 
-    function paintReels(stops) {
-        var reels = document.querySelectorAll('#liveSlotReels .ls-reel');
-        for (var i = 0; i < reels.length; i++) {
-            var sym = stops && stops[i] && stops[i].symbol;
-            reels[i].textContent = glyphFor(sym);
-            reels[i].style.color = colorFor(sym);
-            // Wide-text symbols like "BAR" / "NEON" get a smaller font
-            // so they don't overflow the cell.
-            var glyph = glyphFor(sym);
-            reels[i].style.fontSize = (glyph.length > 1 ? 22 : (state.gameDef.reels_count >= 5 ? 28 : 42)) + 'px';
+    /**
+     * Render reel cells. Universal games come back with a 2-D
+     * `outcome.grid[col][row]`; tuned games keep the legacy
+     * `outcome.stops[i].symbol` (single row). We accept both.
+     */
+    function paintReels(outcome) {
+        var def = state.gameDef;
+        var cols = colsOf(def);
+        var rows = rowsOf(def);
+        var maxDim = Math.max(cols, rows);
+        var baseFont = maxDim >= 7 ? 14 : maxDim >= 6 ? 18 : maxDim >= 5 ? 22 : 36;
+        function symAt(c, r) {
+            if (outcome && Array.isArray(outcome.grid) && outcome.grid[c]) {
+                return outcome.grid[c][r];
+            }
+            // Tuned single-row game: use stops[c].symbol.
+            if (r === 0 && outcome && Array.isArray(outcome.stops) && outcome.stops[c]) {
+                var s = outcome.stops[c];
+                return typeof s === 'string' ? s : s && s.symbol;
+            }
+            return null;
         }
+        for (var c = 0; c < cols; c++) {
+            for (var r = 0; r < rows; r++) {
+                var sel = '#liveSlotReels [data-cell="' + c + ',' + r + '"]';
+                var cell = document.querySelector(sel);
+                if (!cell) continue;
+                var sym = symAt(c, r);
+                cell.textContent = glyphFor(sym);
+                cell.style.color = colorFor(sym);
+                cell.style.background = '#1a0705';
+                var glyph = glyphFor(sym);
+                cell.style.fontSize = (glyph.length > 2 ? Math.max(11, baseFont - 6) : baseFont) + 'px';
+            }
+        }
+    }
+
+    function highlightWinningCells(outcome) {
+        if (!outcome) return;
+        // Universal games attach `outcome.lines` with cluster cells or
+        // payline indices; tuned games keep `outcome.line.symbols`.
+        var lines = outcome.lines || (outcome.line ? [outcome.line] : []);
+        if (!lines.length) return;
+        var def = state.gameDef;
+        var rows = rowsOf(def);
+        function highlight(c, r) {
+            var sel = '#liveSlotReels [data-cell="' + c + ',' + r + '"]';
+            var cell = document.querySelector(sel);
+            if (cell) cell.style.background = 'linear-gradient(180deg,#3d2a08,#1a1004)';
+        }
+        lines.forEach(function (l) {
+            if (Array.isArray(l.cells)) {
+                // cluster pays
+                l.cells.forEach(function (xy) { highlight(xy[0], xy[1]); });
+            } else if (l.scatter && l.count) {
+                // any-position scatter pay — highlight all scatter cells
+                var cols = colsOf(def);
+                var sc = def.scatter_symbol;
+                if (!sc || !outcome.grid) return;
+                for (var c = 0; c < cols; c++) {
+                    for (var r = 0; r < rows; r++) {
+                        if (outcome.grid[c] && outcome.grid[c][r] === sc) highlight(c, r);
+                    }
+                }
+            } else if (typeof l.line === 'number' && Number.isFinite(l.length)) {
+                // payline run, leftmost-aligned, length cells. The payline
+                // index references the canonical 5×3 / 3×3 grid lines.
+                // We don't know which row each column lands on without
+                // re-deriving the payline; fall back to highlighting the
+                // run on row 0 (visually clear that something paid).
+                for (var i = 0; i < l.length; i++) highlight(i, 0);
+            }
+        });
     }
 
     function shortHash(h) { if (!h) return '—'; return h.slice(0, 10) + '…' + h.slice(-6); }
@@ -415,9 +565,21 @@
         // (the round details are already echoed in the visible reveal
         // panel for the user who just made the spin).
         try { window.__lastSlotResult = res.body; } catch (e) { /* noop */ }
-        paintReels(res.body.outcome.stops);
+        paintReels(res.body.outcome);
+        highlightWinningCells(res.body.outcome);
         if (res.body.win_cents > 0) {
-            setResult('WIN ' + fmt(res.body.win_cents) + ' (' + (res.body.outcome.line && res.body.outcome.line.multiplier) + 'x)', '#22c55e');
+            // Tuned games carry a single `line.multiplier`; universal
+            // games carry `lines[]` (zero-or-more cluster/payline hits).
+            var msg = 'WIN ' + fmt(res.body.win_cents);
+            var line = res.body.outcome && res.body.outcome.line;
+            var lines = res.body.outcome && res.body.outcome.lines;
+            if (line && line.multiplier) {
+                msg += ' (' + line.multiplier + 'x)';
+            } else if (Array.isArray(lines) && lines.length) {
+                var hits = lines.length === 1 ? '1 line' : lines.length + ' lines';
+                msg += ' on ' + hits;
+            }
+            setResult(msg, '#22c55e');
         } else {
             setResult('No win — try again.', '#94a3b8');
         }

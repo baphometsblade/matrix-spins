@@ -1621,11 +1621,14 @@
             currentGame = games.find(g => g.id === gameId);
             if (!currentGame) { console.warn('[openSlot] Game not found:', gameId); return; }
 
-            // Live, server-authoritative games bypass the client-side
-            // slot engine entirely. The dispatch is keyed off
-            // shared/game-definitions.js's `liveMode: true` so adding
-            // a new live game requires no edits here.
-            if (currentGame.liveMode === true && typeof window.openLiveSlot === 'function') {
+            // Every game is now server-authoritative through the
+            // universal slot engine (server/services/slot-engine-
+            // universal.service.js). The previous client-side fun-mode
+            // path generated outcomes from Math.random() with no
+            // accountability — that's gone. Routes default to live;
+            // a game opts out only by declaring `liveMode: false`
+            // (currently no game does).
+            if (currentGame.liveMode !== false && typeof window.openLiveSlot === 'function') {
                 window.openLiveSlot(gameId);
                 currentGame = null;
                 return;
