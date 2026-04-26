@@ -37,14 +37,10 @@
         var _resumeBannerTimer = null;
         var _lastPlayedGameForResume = null;
 
-        // Live player counts were previously fabricated per-game from
-        // a hash of the game id + random ±2 drift every 15s. Stripped
-        // out — the badges won't render until there's a real metrics
-        // endpoint that returns concurrent players per game. Keep the
-        // function signatures as no-ops so callers don't crash.
-        function _seedCount(_gameId, _isHot) { /* no-op: no fake data */ }
-        function _getLiveCount(_gameId) { return null; }
-        function _tickLiveCounts() { /* no-op: no fake data */ }
+        // Live player counts were previously fabricated per-game.
+        // Both the helpers and their callers have been removed. When a
+        // real /api/public/live-counts endpoint exists, reintroduce a
+        // single seeder fed from that response — no fabricated data.
 
 
         // Procedural monogram styles for game cards whose thumbnail
@@ -956,7 +952,6 @@ function renderGames() {
             var maxWinHtml = maxWin > 0
                 ? '<div class="game-max-win-badge" title="Max win multiplier">' + (maxWin >= 1000 ? (maxWin/1000).toFixed(1) + 'K' : maxWin) + 'x</div>'
                 : '';
-            _seedCount(game.id, isHot || _hotIds.has(game.id));
             return `
                 <div class="game-card${isHot ? ' game-card-hot' : ''}${isJackpot ? ' game-card-jackpot' : ''}${gameDayCardClass}" onclick="try{if(typeof _compareMode!=='undefined'&&_compareMode){_addToCompare('${game.id}');this.classList.toggle('compare-selected',typeof _compareGames!=='undefined'&&_compareGames.indexOf('${game.id}')>=0);}else{(window.openSlot||openSlot)('${game.id}');}}catch(e){console.warn('Game click error:',e.message);}" style="position:relative" data-game-name="${(game.name || game.id || '').toLowerCase()}" data-game-id="${(game.id || '').toLowerCase()}">
                     <button class="fav-btn${favored ? ' fav-active' : ''}" data-game-id="${game.id}" title="${favored ? 'Remove from favourites' : 'Add to favourites'}" onclick="event.stopPropagation(); (function(btn){var nowFav=toggleFavorite('${game.id}'); btn.textContent=nowFav?'\u2764\uFE0F':'\u2661'; btn.title=nowFav?'Remove from favourites':'Add to favourites'; btn.classList.add('fav-active'); setTimeout(function(){btn.classList.remove('fav-active');},350); updateFavTabBadge();})(this)">${favIcon}</button>
@@ -1379,48 +1374,46 @@ function renderGames() {
         }
 
 
-        // Track recently used names so the same player doesn't appear back-to-back
-        let _tickerRecentNames = [];
-
-        function generateTickerMessage() {
-            // Pick a name that wasn't used in the last 5 messages
-            let name;
-            const avoidSet = new Set(_tickerRecentNames.slice(-5));
-            const available = TICKER_NAMES.filter(n => !avoidSet.has(n));
-            name = (available.length ? available : TICKER_NAMES)[Math.floor(Math.random() * (available.length || TICKER_NAMES.length))];
-            _tickerRecentNames.push(name);
-            if (_tickerRecentNames.length > 10) _tickerRecentNames.shift();
-
-            const tickerPool = games.filter(g => g.payouts && g.payouts.triple && g.payouts.double);
-            const game = tickerPool[Math.floor(Math.random() * tickerPool.length)];
-            const multiplier = Math.floor(Math.random() * game.payouts.triple) + game.payouts.double;
-            const bet = game.minBet + Math.floor(Math.random() * (game.maxBet - game.minBet) / game.minBet) * game.minBet;
-            const win = bet * multiplier;
-            return `${name} won $${win.toLocaleString()} on ${game.name}!`;
+        // Real win ticker — fed from /api/public/hot-wins. No fake names,
+        // no fabricated multipliers. If the endpoint returns nothing the
+        // ticker stays empty (it's hidden by renderTickerContent).
+        async function _fetchHotWinsTickerMessages() {
+            try {
+                const res = await fetch('/api/public/hot-wins?limit=' + TICKER_MAX_MESSAGES);
+                if (!res.ok) return [];
+                const data = await res.json();
+                const wins = Array.isArray(data) ? data : (data.wins || []);
+                return wins.map(w => {
+                    const name = w.username || w.player || 'Player';
+                    const amount = typeof w.amount === 'number'
+                        ? '$' + w.amount.toLocaleString(undefined, { maximumFractionDigits: 0 })
+                        : w.amount;
+                    const game = w.gameName || w.game || '';
+                    return name + ' won ' + amount + (game ? ' on ' + game : '') + '!';
+                });
+            } catch (e) {
+                return [];
+            }
         }
 
-
-        function startWinTicker() {
+        async function startWinTicker() {
             const content = document.getElementById('tickerContent');
             if (!content) return;
 
             // Clear any existing ticker interval to prevent leaks on re-init
             if (tickerInterval) clearInterval(tickerInterval);
 
-            // Build initial messages
-            let messages = [];
-            for (let i = 0; i < TICKER_INITIAL_MESSAGE_COUNT; i++) {
-                messages.push(generateTickerMessage());
-            }
-
-            // Render two identical copies side-by-side for seamless loop
+            // Initial pull from the real endpoint
+            let messages = await _fetchHotWinsTickerMessages();
             renderTickerContent(messages);
 
-            // Periodically swap in new messages (update both copies in sync)
-            tickerInterval = setInterval(() => {
-                messages.push(generateTickerMessage());
-                if (messages.length > TICKER_MAX_MESSAGES) messages.shift();
-                renderTickerContent(messages);
+            // Periodic refresh — still pulls only real wins
+            tickerInterval = setInterval(async () => {
+                const fresh = await _fetchHotWinsTickerMessages();
+                if (fresh.length) {
+                    messages = fresh.slice(0, TICKER_MAX_MESSAGES);
+                    renderTickerContent(messages);
+                }
             }, WIN_TICKER_INTERVAL);
         }
 
@@ -2404,21 +2397,16 @@ function _hbRefresh() {
 }
 
 function claimHourlyBonus() {
-    var state = _hbGetState();
-    var now = Date.now();
-    var last = state.lastClaim || 0;
-    if (now - last < _HB_COOLDOWN) return; // on cooldown
-    var award = 25 + Math.floor(Math.random() * 76); // $25-$100
-    if (typeof balance !== 'undefined') balance += award;
-    if (typeof updateBalance === 'function') updateBalance();
-    if (typeof saveStats === 'function') saveStats();
-    state.lastClaim = now;
-    try { localStorage.setItem(_HB_KEY, JSON.stringify(state)); } catch (e) { /* ignore */ }
-    _hbRefresh();
-    if (typeof showToast === 'function') showToast('🎁 Free Bonus: $' + award + ' added!', 'success');
-    else if (typeof showMessage === 'function') showMessage('🎁 Free Bonus: $' + award + '!', 'win');
-    // coin burst
-    if (typeof createConfetti === 'function') createConfetti();
+    // DISABLED: this used to credit $25–$100 to the player's balance from
+    // a Math.random() roll, with no server authority. Real promo grants
+    // go through /api/promo/redeem (see server/services/promo.service.js)
+    // which records the credit and enforces single-use / max-redemption
+    // gates. Hide the FAB to avoid surfacing a button that does nothing.
+    var fab = document.getElementById('hourlyBonusFab');
+    if (fab) fab.style.display = 'none';
+    if (typeof showToast === 'function') {
+        showToast('Hourly bonus moved to server-issued promo codes — see Promotions.', 'info');
+    }
 }
 
 // ══════════════════════════════════════════════════════════

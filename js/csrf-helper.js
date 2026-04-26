@@ -50,7 +50,10 @@
     }
 
     /**
-     * Get current token (fetch new one if expired)
+     * Get current token (fetch new one if expired).
+     * Fail-closed: if a fresh fetch fails, the cached token is invalidated
+     * and the error is propagated. We never return a stale token — that
+     * would be a security regression (CSRF tokens must be live).
      */
     async function getToken() {
         // If no token or refresh interval exceeded, fetch new one
@@ -59,20 +62,16 @@
             !lastTokenFetchTime ||
             Date.now() - lastTokenFetchTime > TOKEN_REFRESH_INTERVAL
         ) {
-            try {
-                const response = await originalFetch('/api/csrf-token', csrfFetchInit());
-                if (!response.ok) {
-                    console.warn('[CSRF] Failed to refresh token:', response.status);
-                    return csrfToken; // Return stale token as fallback
-                }
-
-                const data = await response.json();
-                csrfToken = data.csrfToken;
-                lastTokenFetchTime = Date.now();
-            } catch (err) {
-                console.warn('[CSRF] Failed to refresh token:', err.message);
-                // Return stale token as fallback
+            const response = await originalFetch('/api/csrf-token', csrfFetchInit());
+            if (!response.ok) {
+                csrfToken = null;
+                lastTokenFetchTime = null;
+                throw new Error('[CSRF] Failed to fetch token: HTTP ' + response.status);
             }
+
+            const data = await response.json();
+            csrfToken = data.csrfToken;
+            lastTokenFetchTime = Date.now();
         }
 
         return csrfToken;

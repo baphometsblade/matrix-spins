@@ -1975,13 +1975,9 @@
                 return;
             }
 
-            // Guest balance: only grant $1,000 if they have zero or no saved balance
-            // (prevents infinite-reload exploit while still giving new guests starter funds)
-            if (currentUser.isGuest && (!balance || balance <= 0)) {
-                balance = 1000;
-                updateBalance();
-                saveBalance();
-            }
+            // No client-side guest balance grant. Real balance is sourced from
+            // the server only — guests start at 0 and must register/log in
+            // (or fund via a real deposit endpoint) to play for credits.
 
             // Successfully authenticated — ensure auth-gate is removed
             document.body.classList.remove('auth-gate');

@@ -1,5 +1,5 @@
 /* Royal Slots Casino - Bundled JavaScript */
-/* Generated: 2026-04-26T05:40:03.197Z */
+/* Generated: 2026-04-26T05:47:28.397Z */
 
 
 /* â”€â”€â”€ shared/game-definitions.js (2/56) â”€â”€â”€ */
@@ -4501,14 +4501,10 @@ function destroyParticleEngine() {
         var _resumeBannerTimer = null;
         var _lastPlayedGameForResume = null;
 
-        // Live player counts were previously fabricated per-game from
-        // a hash of the game id + random ±2 drift every 15s. Stripped
-        // out — the badges won't render until there's a real metrics
-        // endpoint that returns concurrent players per game. Keep the
-        // function signatures as no-ops so callers don't crash.
-        function _seedCount(_gameId, _isHot) { /* no-op: no fake data */ }
-        function _getLiveCount(_gameId) { return null; }
-        function _tickLiveCounts() { /* no-op: no fake data */ }
+        // Live player counts were previously fabricated per-game.
+        // Both the helpers and their callers have been removed. When a
+        // real /api/public/live-counts endpoint exists, reintroduce a
+        // single seeder fed from that response — no fabricated data.
 
 
         // Procedural monogram styles for game cards whose thumbnail
@@ -5420,7 +5416,6 @@ function renderGames() {
             var maxWinHtml = maxWin > 0
                 ? '<div class="game-max-win-badge" title="Max win multiplier">' + (maxWin >= 1000 ? (maxWin/1000).toFixed(1) + 'K' : maxWin) + 'x</div>'
                 : '';
-            _seedCount(game.id, isHot || _hotIds.has(game.id));
             return `
                 <div class="game-card${isHot ? ' game-card-hot' : ''}${isJackpot ? ' game-card-jackpot' : ''}${gameDayCardClass}" onclick="try{if(typeof _compareMode!=='undefined'&&_compareMode){_addToCompare('${game.id}');this.classList.toggle('compare-selected',typeof _compareGames!=='undefined'&&_compareGames.indexOf('${game.id}')>=0);}else{(window.openSlot||openSlot)('${game.id}');}}catch(e){console.warn('Game click error:',e.message);}" style="position:relative" data-game-name="${(game.name || game.id || '').toLowerCase()}" data-game-id="${(game.id || '').toLowerCase()}">
                     <button class="fav-btn${favored ? ' fav-active' : ''}" data-game-id="${game.id}" title="${favored ? 'Remove from favourites' : 'Add to favourites'}" onclick="event.stopPropagation(); (function(btn){var nowFav=toggleFavorite('${game.id}'); btn.textContent=nowFav?'\u2764\uFE0F':'\u2661'; btn.title=nowFav?'Remove from favourites':'Add to favourites'; btn.classList.add('fav-active'); setTimeout(function(){btn.classList.remove('fav-active');},350); updateFavTabBadge();})(this)">${favIcon}</button>
@@ -5843,48 +5838,46 @@ function renderGames() {
         }
 
 
-        // Track recently used names so the same player doesn't appear back-to-back
-        let _tickerRecentNames = [];
-
-        function generateTickerMessage() {
-            // Pick a name that wasn't used in the last 5 messages
-            let name;
-            const avoidSet = new Set(_tickerRecentNames.slice(-5));
-            const available = TICKER_NAMES.filter(n => !avoidSet.has(n));
-            name = (available.length ? available : TICKER_NAMES)[Math.floor(Math.random() * (available.length || TICKER_NAMES.length))];
-            _tickerRecentNames.push(name);
-            if (_tickerRecentNames.length > 10) _tickerRecentNames.shift();
-
-            const tickerPool = games.filter(g => g.payouts && g.payouts.triple && g.payouts.double);
-            const game = tickerPool[Math.floor(Math.random() * tickerPool.length)];
-            const multiplier = Math.floor(Math.random() * game.payouts.triple) + game.payouts.double;
-            const bet = game.minBet + Math.floor(Math.random() * (game.maxBet - game.minBet) / game.minBet) * game.minBet;
-            const win = bet * multiplier;
-            return `${name} won $${win.toLocaleString()} on ${game.name}!`;
+        // Real win ticker — fed from /api/public/hot-wins. No fake names,
+        // no fabricated multipliers. If the endpoint returns nothing the
+        // ticker stays empty (it's hidden by renderTickerContent).
+        async function _fetchHotWinsTickerMessages() {
+            try {
+                const res = await fetch('/api/public/hot-wins?limit=' + TICKER_MAX_MESSAGES);
+                if (!res.ok) return [];
+                const data = await res.json();
+                const wins = Array.isArray(data) ? data : (data.wins || []);
+                return wins.map(w => {
+                    const name = w.username || w.player || 'Player';
+                    const amount = typeof w.amount === 'number'
+                        ? '$' + w.amount.toLocaleString(undefined, { maximumFractionDigits: 0 })
+                        : w.amount;
+                    const game = w.gameName || w.game || '';
+                    return name + ' won ' + amount + (game ? ' on ' + game : '') + '!';
+                });
+            } catch (e) {
+                return [];
+            }
         }
 
-
-        function startWinTicker() {
+        async function startWinTicker() {
             const content = document.getElementById('tickerContent');
             if (!content) return;
 
             // Clear any existing ticker interval to prevent leaks on re-init
             if (tickerInterval) clearInterval(tickerInterval);
 
-            // Build initial messages
-            let messages = [];
-            for (let i = 0; i < TICKER_INITIAL_MESSAGE_COUNT; i++) {
-                messages.push(generateTickerMessage());
-            }
-
-            // Render two identical copies side-by-side for seamless loop
+            // Initial pull from the real endpoint
+            let messages = await _fetchHotWinsTickerMessages();
             renderTickerContent(messages);
 
-            // Periodically swap in new messages (update both copies in sync)
-            tickerInterval = setInterval(() => {
-                messages.push(generateTickerMessage());
-                if (messages.length > TICKER_MAX_MESSAGES) messages.shift();
-                renderTickerContent(messages);
+            // Periodic refresh — still pulls only real wins
+            tickerInterval = setInterval(async () => {
+                const fresh = await _fetchHotWinsTickerMessages();
+                if (fresh.length) {
+                    messages = fresh.slice(0, TICKER_MAX_MESSAGES);
+                    renderTickerContent(messages);
+                }
             }, WIN_TICKER_INTERVAL);
         }
 
@@ -6868,21 +6861,16 @@ function _hbRefresh() {
 }
 
 function claimHourlyBonus() {
-    var state = _hbGetState();
-    var now = Date.now();
-    var last = state.lastClaim || 0;
-    if (now - last < _HB_COOLDOWN) return; // on cooldown
-    var award = 25 + Math.floor(Math.random() * 76); // $25-$100
-    if (typeof balance !== 'undefined') balance += award;
-    if (typeof updateBalance === 'function') updateBalance();
-    if (typeof saveStats === 'function') saveStats();
-    state.lastClaim = now;
-    try { localStorage.setItem(_HB_KEY, JSON.stringify(state)); } catch (e) { /* ignore */ }
-    _hbRefresh();
-    if (typeof showToast === 'function') showToast('🎁 Free Bonus: $' + award + ' added!', 'success');
-    else if (typeof showMessage === 'function') showMessage('🎁 Free Bonus: $' + award + '!', 'win');
-    // coin burst
-    if (typeof createConfetti === 'function') createConfetti();
+    // DISABLED: this used to credit $25–$100 to the player's balance from
+    // a Math.random() roll, with no server authority. Real promo grants
+    // go through /api/promo/redeem (see server/services/promo.service.js)
+    // which records the credit and enforces single-use / max-redemption
+    // gates. Hide the FAB to avoid surfacing a button that does nothing.
+    var fab = document.getElementById('hourlyBonusFab');
+    if (fab) fab.style.display = 'none';
+    if (typeof showToast === 'function') {
+        showToast('Hourly bonus moved to server-issued promo codes — see Promotions.', 'info');
+    }
 }
 
 // ══════════════════════════════════════════════════════════
@@ -15123,15 +15111,16 @@ function renderGameStatsWidget() {
                 const jackpotBannerEl = document.getElementById('slotJackpotBanner');
                 const jackpotValueEl  = document.getElementById('slotJackpotValue');
                 if (jackpotBannerEl) {
-                    const isJackpotGame = currentGame && (currentGame.jackpot || currentGame.tag === 'JACKPOT' || currentGame.tag === 'MEGA');
-                    if (isJackpotGame) {
-                        if (jackpotValueEl) jackpotValueEl.textContent = '$' + jackpotValue.toLocaleString();
+                    // Authentic value only — show the static per-game jackpot
+                    // declared in shared/game-definitions.js, never a random
+                    // ticker. If the game has no real jackpot configured, hide
+                    // the banner.
+                    const declaredJackpot = currentGame && Number(currentGame.jackpot) > 0
+                        ? Number(currentGame.jackpot) : 0;
+                    if (_slotJackpotTickInterval) { clearInterval(_slotJackpotTickInterval); _slotJackpotTickInterval = null; }
+                    if (declaredJackpot > 0) {
+                        if (jackpotValueEl) jackpotValueEl.textContent = '$' + declaredJackpot.toLocaleString();
                         jackpotBannerEl.style.display = '';
-                        if (_slotJackpotTickInterval) clearInterval(_slotJackpotTickInterval);
-                        _slotJackpotTickInterval = setInterval(function() {
-                            jackpotValue += Math.floor(Math.random() * (JACKPOT_TICKER_INCREMENT_MAX - JACKPOT_TICKER_INCREMENT_MIN + 1) + JACKPOT_TICKER_INCREMENT_MIN);
-                            if (jackpotValueEl) jackpotValueEl.textContent = '$' + jackpotValue.toLocaleString();
-                        }, JACKPOT_TICKER_INTERVAL);
                     } else {
                         jackpotBannerEl.style.display = 'none';
                     }
@@ -16059,7 +16048,7 @@ function renderGameStatsWidget() {
             // Sprint 41 — hide quick switch
             var _qss = document.getElementById('quickSwitchStrip'); if (_qss) _qss.style.display = 'none';
             // Sprint 37 — clean up demo mode if active
-            if (typeof _demoMode !== 'undefined' && _demoMode) { exitDemoMode(false); return; }
+            // Demo mode removed.
             // Sprint 36 — rating prompt (after a short delay so modal closes first)
             (function() {
                 if (_closingGame && typeof showRatingPrompt === 'function') {
@@ -16483,7 +16472,7 @@ function renderGameStatsWidget() {
             if (freeSpinsActive) return false;
             if (forcedSpinQueue.length > 0) return false;
             if (deterministicRng) return false;
-            if (typeof _demoMode !== 'undefined' && _demoMode) return false; // Sprint 37 demo
+            // Demo mode removed.
             const freeSpinCount = Number(game.freeSpinsCount || 0);
             return freeSpinCount <= 0;
         }
@@ -16641,7 +16630,7 @@ function renderGameStatsWidget() {
                     finalGrid = generateSpinResult(spinGame);
                     balance -= currentBet;
                     updateBalance();
-                    if (!(typeof _demoMode !== 'undefined' && _demoMode)) saveBalance(); // skip save in demo
+                    saveBalance();
                 }
             } catch (error) {
                 stopReelScrollingImmediately();
@@ -17566,8 +17555,7 @@ function renderGameStatsWidget() {
                     }
                 }
                 if (typeof recordSpinHistory === 'function') recordSpinHistory({ game: (game && game.name) || '', gameId: (game && game.id) || '', bet: currentBet, win: winAmount, mult: currentBet > 0 ? Math.round(winAmount / currentBet) : 0 });
-                if (typeof saveWinReplay === 'function' && !_demoMode && currentBet > 0 && winAmount >= currentBet * 10) { saveWinReplay({ game: (game && game.name) || '', gameId: (game && game.id) || '', bet: currentBet, win: winAmount, mult: Math.round(winAmount / currentBet), ts: Date.now() }); }
-                _demoOnSpinEnd();
+                if (typeof saveWinReplay === 'function' && currentBet > 0 && winAmount >= currentBet * 10) { saveWinReplay({ game: (game && game.name) || '', gameId: (game && game.id) || '', bet: currentBet, win: winAmount, mult: Math.round(winAmount / currentBet), ts: Date.now() }); }
                 if (typeof _updateWinGoal === 'function' && winAmount > 0) _updateWinGoal(winAmount);
                 if (typeof _incrementStreak === 'function') _incrementStreak();
                 if (typeof _updateSparkline === 'function') _updateSparkline(balance);
@@ -18217,7 +18205,6 @@ function renderGameStatsWidget() {
 
             if (typeof awardXP === "function") { var _godMult2 = (typeof gameOfDayId !== 'undefined' && gameOfDayId && currentGame && currentGame.id === gameOfDayId && typeof GAME_OF_DAY_XP_BONUS !== 'undefined') ? GAME_OF_DAY_XP_BONUS : 1; awardXP(Math.round(XP_AWARD_PER_SPIN * _godMult2)); }
             if (typeof recordSpinHistory === 'function' && winAmount <= 0) recordSpinHistory({ game: (game && game.name) || '', gameId: (game && game.id) || '', bet: currentBet, win: 0, mult: 0 });
-            if (winAmount <= 0) _demoOnSpinEnd();
             if (winAmount <= 0 && typeof _resetStreak === 'function') _resetStreak();
             _updateHotCold(winAmount > 0); // Sprint 53
             _updateWinRate(winAmount > 0); // Sprint 56
@@ -22282,15 +22269,9 @@ function renderGameStatsWidget() {
         }
 
         // ----------------------------------------------------------
-        // Demo Mode — REMOVED. Previously temporarily swapped the user's
-        // balance with a hardcoded $10,000 and let them spin 3 times.
-        // Replaced with no-ops so any stale call site degrades safely:
-        // the real balance is authoritative and never mutated here.
+        // Demo Mode — REMOVED entirely. All call sites have been pruned;
+        // the user's real balance is the only source of truth.
         // ----------------------------------------------------------
-        var _demoMode = false;
-        var _demoSpinsLeft = 0;
-        function _demoOnSpinEnd() { /* no-op: demo mode removed */ }
-        function exitDemoMode() { /* no-op: demo mode removed */ }
 
         // ----------------------------------------------------------
         // SPRINT 38 — Session Time Tracker
@@ -28329,24 +28310,15 @@ function _updateCurrencyBadge() {
     el.style.display = '';
 }
 
-// Sprint 254 — Live player count
-var _playerCount254 = { base: 1247, variance: 200 };
+// Sprint 254 — Live player count REMOVED
+// Was a Math.random() simulation around a hardcoded base of 1247 with a
+// time-of-day boost, deceiving players into believing the lobby tracked
+// concurrent users. No real backing source is wired up; hide the badge.
 function _initPlayerCount() {
-    _updatePlayerCount();
-    setInterval(_updatePlayerCount, 30000); // Update every 30s
-}
-function _updatePlayerCount() {
     var el = document.getElementById('playerCountBadge');
-    if (!el) return;
-    var count = _playerCount254.base + Math.floor(Math.random() * _playerCount254.variance) - Math.floor(_playerCount254.variance / 2);
-    // Time-based variation (more players in evening)
-    var hour = new Date().getHours();
-    if (hour >= 18 && hour <= 23) count = Math.floor(count * 1.4);
-    else if (hour >= 0 && hour <= 5) count = Math.floor(count * 0.6);
-    el.textContent = count.toLocaleString() + ' playing now';
-    el.className = 'player-count-badge';
-    el.style.display = '';
+    if (el) el.style.display = 'none';
 }
+function _updatePlayerCount() { /* removed: no real player-count source */ }
 
 // Sprint 255 — Recent big wins feed
 var _bigWins255 = [];
@@ -28874,14 +28846,10 @@ var _tournament271 = {
     myScore: 0
 };
 function _initTournament() {
-    // Seed leaderboard with bot entries
-    var names = ['DragonMaster', 'LuckyStar99', 'VegasKing', 'SlotPro420', 'NeonQueen', 'GoldRush7', 'SpinWizard', 'CryptoAce', 'JackpotHunter', 'DiamondHand'];
+    // Real leaderboard data must come from a server endpoint. Until then,
+    // start with an empty entries array so we never display fabricated bot
+    // players ("DragonMaster", "LuckyStar99", etc.) with random scores.
     _tournament271.entries = [];
-    names.forEach(function(n, i) {
-        _tournament271.entries.push({ name: n, score: Math.floor(Math.random() * 50000) + 5000, rank: 0 });
-    });
-    _tournament271.entries.sort(function(a, b) { return b.score - a.score; });
-    _tournament271.entries.forEach(function(e, i) { e.rank = i + 1; });
     _updateTournamentBadge();
 }
 function _updateTournamentScore(winAmount) {
@@ -32837,25 +32805,13 @@ function _contributeToJackpot(betAmount) {
     _jackpotPool.grand += contribution * 0.4;
 }
 function _updateJackpotDisplay() {
+    // Widget removed — the pool values were fake. Ensure no element is created.
     var el = document.getElementById('jackpotTicker395');
-    if (!el) {
-        el = document.createElement('div');
-        el.id = 'jackpotTicker395';
-        el.className = 'jackpot-ticker';
-        document.body.appendChild(el);
-    }
-    el.innerHTML = '<div class="jt-inner">' +
-        '<div class="jt-item jt-grand"><span class="jt-label">GRAND</span><span class="jt-amount">$' + _jackpotPool.grand.toLocaleString(undefined, {minimumFractionDigits:2, maximumFractionDigits:2}) + '</span></div>' +
-        '<div class="jt-item jt-major"><span class="jt-label">MAJOR</span><span class="jt-amount">$' + _jackpotPool.major.toLocaleString(undefined, {minimumFractionDigits:2, maximumFractionDigits:2}) + '</span></div>' +
-        '<div class="jt-item jt-minor"><span class="jt-label">MINOR</span><span class="jt-amount">$' + _jackpotPool.minor.toLocaleString(undefined, {minimumFractionDigits:2, maximumFractionDigits:2}) + '</span></div>' +
-        '<div class="jt-item jt-mini"><span class="jt-label">MINI</span><span class="jt-amount">$' + _jackpotPool.mini.toLocaleString(undefined, {minimumFractionDigits:2, maximumFractionDigits:2}) + '</span></div></div>';
+    if (el) el.style.display = 'none';
 }
 function _checkJackpotWin(betAmount) {
-    var rand = Math.random();
-    if (rand < 0.00001 && betAmount >= 5) { _triggerJackpot('grand'); return true; }
-    if (rand < 0.0001 && betAmount >= 2) { _triggerJackpot('major'); return true; }
-    if (rand < 0.001) { _triggerJackpot('minor'); return true; }
-    if (rand < 0.005) { _triggerJackpot('mini'); return true; }
+    // Disabled: jackpot wins must come from the server, not from a client-side
+    // Math.random() coin-flip that could otherwise credit real balance.
     return false;
 }
 function _triggerJackpot(tier) {
@@ -33600,17 +33556,15 @@ function _sliderBet(val) {
 }
 
 
-// --- Sprint 418 — Mini-Bonus Rounds ---
+// --- Sprint 418 — Mini-Bonus Rounds DISABLED ---
+// The mystery-prize amounts were generated client-side via Math.random()
+// and would credit real balance. Until a server endpoint provides the
+// authoritative prize list, this round is guarded so it cannot run.
 var _bonusRoundActive = false;
 function _initBonusRound() { _bonusRoundActive = false; }
 function _triggerBonusRound(bet) {
-    if (_bonusRoundActive) return;
-    _bonusRoundActive = true;
-    var prizes = [];
-    for (var i = 0; i < 9; i++) {
-        prizes.push(Math.floor(Math.random() * 10 + 1) * (bet || 1));
-    }
-    _showBonusRoundUI(prizes);
+    // No-op: bonus round disabled (no server-backed prize source).
+    return;
 }
 function _showBonusRoundUI(prizes) {
     var el = document.getElementById('bonusRoundOverlay');
@@ -34115,32 +34069,14 @@ function _openABDashboard() {
 }
 
 
-// --- Sprint 430 — Revenue Forecast ---
+// --- Sprint 430 — Revenue Forecast REMOVED ---
+// This is admin-only analytics. The numbers were fabricated client-side
+// via Math.random(); the real admin-analytics page already serves true
+// data. Hide the panel and refuse to open it from this surface.
 function _initRevenueForecast() {}
 function _openRevenueForecast() {
     var el = document.getElementById('revForecastOverlay');
-    if (!el) {
-        el = document.createElement('div');
-        el.id = 'revForecastOverlay';
-        el.className = 'rev-forecast-overlay';
-        document.body.appendChild(el);
-    }
-    var dailyRev = Math.floor(Math.random() * 500 + 200);
-    var weeklyProj = dailyRev * 7;
-    var monthlyProj = dailyRev * 30;
-    var html = '<div class="rev-forecast-card"><h3>Revenue Forecast</h3>';
-    html += '<div class="rev-row"><span>Today (est)</span><span>$' + dailyRev + '</span></div>';
-    html += '<div class="rev-row"><span>This Week</span><span>$' + weeklyProj + '</span></div>';
-    html += '<div class="rev-row"><span>This Month</span><span>$' + monthlyProj + '</span></div>';
-    html += '<div class="rev-chart">';
-    for (var i = 0; i < 7; i++) {
-        var h = Math.floor(Math.random() * 60 + 20);
-        html += '<div class="rev-bar" style="height:' + h + 'px"></div>';
-    }
-    html += '</div>';
-    html += '<button onclick="document.getElementById(&quot;revForecastOverlay&quot;).style.display=&quot;none&quot;" class="rev-close">Close</button></div>';
-    el.innerHTML = html;
-    el.style.display = 'flex';
+    if (el) el.style.display = 'none';
 }
 
 
@@ -34930,40 +34866,26 @@ function _showDepositMatchPreview(amount) {
 }
 
 
-// --- Sprint 457 — ARPU Widget ---
+// --- Sprint 457 — ARPU Widget DISABLED ---
+// Showed Math.random()-derived "Total Players" labelled as a real metric.
+// Real revenue/ARPU live in the server-backed admin dashboard at /admin.
 function _initARPUWidget() {}
 function _openARPUDashboard() {
-    var totalPlayers = Math.floor(Math.random() * 500 + 100);
-    var totalRev = _totalRevenue || 0;
-    var arpu = totalPlayers > 0 ? (totalRev / totalPlayers) : 0;
-    var arppu = arpu * 3.2;
     var el = document.getElementById('arpuDashOverlay');
-    if (!el) { el = document.createElement('div'); el.id = 'arpuDashOverlay'; el.className = 'arpu-dash-overlay'; document.body.appendChild(el); }
-    el.innerHTML = '<div class="arpu-card"><h3>Revenue Metrics (Admin)</h3>' +
-        '<div class="arpu-row"><span>Total Players</span><span>' + totalPlayers + '</span></div>' +
-        '<div class="arpu-row"><span>Total Revenue</span><span>$' + totalRev.toFixed(2) + '</span></div>' +
-        '<div class="arpu-row"><span>ARPU</span><span>$' + arpu.toFixed(2) + '</span></div>' +
-        '<div class="arpu-row"><span>ARPPU</span><span>$' + arppu.toFixed(2) + '</span></div>' +
-        '<button onclick="document.getElementById(&quot;arpuDashOverlay&quot;).style.display=&quot;none&quot;" class="arpu-close">Close</button></div>';
-    el.style.display = 'flex';
+    if (el) el.style.display = 'none';
+    if (typeof window !== 'undefined' && window.location) window.location.href = '/admin';
 }
 
 
-// --- Sprint 458 — Dynamic House Edge ---
-var _houseEdgeConfig = { base: 0.04, minRTP: 0.92, maxRTP: 0.97, currentRTP: 0.95 };
-function _initDynamicHouseEdge() {
-    try { var saved = localStorage.getItem('ms_houseEdgeConfig'); if (saved) _houseEdgeConfig = JSON.parse(saved); } catch(e) {}
-}
-function _adjustHouseEdge(playerSegment, sessionLength) {
-    var rtp = _houseEdgeConfig.currentRTP;
-    if (playerSegment === 'whale') rtp = Math.min(_houseEdgeConfig.maxRTP, rtp + 0.01);
-    if (playerSegment === 'new') rtp = Math.min(_houseEdgeConfig.maxRTP, rtp + 0.005);
-    if (sessionLength > 60) rtp = Math.max(_houseEdgeConfig.minRTP, rtp - 0.005);
-    _houseEdgeConfig.currentRTP = Math.max(_houseEdgeConfig.minRTP, Math.min(_houseEdgeConfig.maxRTP, rtp));
-    try { localStorage.setItem('ms_houseEdgeConfig', JSON.stringify(_houseEdgeConfig)); } catch(e) {}
-    return 1 - _houseEdgeConfig.currentRTP;
-}
-function _getHouseEdge() { return 1 - _houseEdgeConfig.currentRTP; }
+// --- Sprint 458 — Dynamic House Edge REMOVED ---
+// This module would have lowered RTP for "whale" segments and long
+// sessions. Per-player RTP manipulation is unethical and almost
+// certainly illegal under most gaming regulators. RTP is fixed per
+// game in shared/game-definitions.js and enforced by the server slot
+// engine — no client-side adjustment is permitted.
+function _initDynamicHouseEdge() {}
+function _adjustHouseEdge() { /* refused: RTP is per-game, fixed, server-authoritative */ return null; }
+function _getHouseEdge() { /* refused: see _adjustHouseEdge */ return null; }
 
 
 // --- Sprint 459 — Lazy Loading ---
@@ -35844,70 +35766,37 @@ function _sendVIPMsg() {
 }
 
 
-// --- Sprint 491 — Real-Time Revenue Dashboard ---
+// --- Sprint 491 — Real-Time Revenue Dashboard DISABLED ---
+// "Online Now", "Deposits Today", and the hourly chart bars were all
+// Math.random()-derived and labelled as "Live". Real metrics live in
+// the server-backed admin dashboard at /admin.
 function _initRealtimeDashboard() {}
 function _openRealtimeDashboard() {
     var el = document.getElementById('rtDashOverlay');
-    if (!el) { el = document.createElement('div'); el.id = 'rtDashOverlay'; el.className = 'rt-dash-overlay'; document.body.appendChild(el); }
-    var rev = _totalRevenue || 0;
-    var players = Math.floor(Math.random() * 50 + 10);
-    var depositsToday = Math.floor(Math.random() * 20 + 5);
-    var avgBet = rev > 0 ? (rev / Math.max(1, depositsToday)).toFixed(2) : '0.00';
-    var html = '<div class="rtd-card"><h3>Revenue Dashboard (Live)</h3>' +
-        '<div class="rtd-grid">' +
-        '<div class="rtd-metric"><span class="rtd-value">$' + rev.toFixed(2) + '</span><span class="rtd-label">Total Revenue</span></div>' +
-        '<div class="rtd-metric"><span class="rtd-value">' + players + '</span><span class="rtd-label">Online Now</span></div>' +
-        '<div class="rtd-metric"><span class="rtd-value">' + depositsToday + '</span><span class="rtd-label">Deposits Today</span></div>' +
-        '<div class="rtd-metric"><span class="rtd-value">$' + avgBet + '</span><span class="rtd-label">Avg Deposit</span></div>' +
-        '</div>' +
-        '<div class="rtd-chart">';
-    for (var i = 0; i < 12; i++) { html += '<div class="rtd-bar" style="height:' + (Math.random() * 60 + 10) + 'px"></div>'; }
-    html += '</div><span class="rtd-chart-label">Hourly Revenue (last 12h)</span>' +
-        '<button onclick="document.getElementById(&quot;rtDashOverlay&quot;).style.display=&quot;none&quot;" class="rtd-close">Close</button></div>';
-    el.innerHTML = html;
-    el.style.display = 'flex';
+    if (el) el.style.display = 'none';
+    if (typeof window !== 'undefined' && window.location) window.location.href = '/admin';
 }
 
 
-// --- Sprint 492 — Cohort LTV ---
+// --- Sprint 492 — Cohort LTV DISABLED ---
+// The cohort table was hardcoded fake numbers ($2.50/$8.30/...) labeled
+// as real cohort analysis. Real cohort data lives in /admin.
 function _initCohortLTV() {}
 function _openCohortLTV() {
     var el = document.getElementById('cohortLTVOverlay');
-    if (!el) { el = document.createElement('div'); el.id = 'cohortLTVOverlay'; el.className = 'cohort-ltv-overlay'; document.body.appendChild(el); }
-    var cohorts = [
-        { name: 'Week 1', day1: '$2.50', day7: '$8.30', day30: '$22.00', day90: '$45.00' },
-        { name: 'Week 2', day1: '$3.10', day7: '$9.50', day30: '$28.00', day90: '$52.00' },
-        { name: 'Week 3', day1: '$2.80', day7: '$7.90', day30: '$19.00', day90: '$38.00' },
-        { name: 'This Week', day1: '$3.50', day7: 'TBD', day30: 'TBD', day90: 'TBD' }
-    ];
-    var html = '<div class="cltv-card"><h3>Cohort LTV Analysis</h3><table class="cltv-table"><tr><th>Cohort</th><th>Day 1</th><th>Day 7</th><th>Day 30</th><th>Day 90</th></tr>';
-    cohorts.forEach(function(c) { html += '<tr><td>' + c.name + '</td><td>' + c.day1 + '</td><td>' + c.day7 + '</td><td>' + c.day30 + '</td><td>' + c.day90 + '</td></tr>'; });
-    html += '</table><button onclick="document.getElementById(&quot;cohortLTVOverlay&quot;).style.display=&quot;none&quot;" class="cltv-close">Close</button></div>';
-    el.innerHTML = html;
-    el.style.display = 'flex';
+    if (el) el.style.display = 'none';
+    if (typeof window !== 'undefined' && window.location) window.location.href = '/admin';
 }
 
 
-// --- Sprint 493 — Deposit Funnel Metrics ---
+// --- Sprint 493 — Deposit Funnel Metrics DISABLED ---
+// Hardcoded funnel counts (1000/350/120/...) labeled as real conversion
+// data. Real funnel metrics live in /admin.
 function _initDepositFunnel() {}
 function _openDepositFunnelView() {
     var el = document.getElementById('depFunnelOverlay');
-    if (!el) { el = document.createElement('div'); el.id = 'depFunnelOverlay'; el.className = 'dep-funnel-overlay'; document.body.appendChild(el); }
-    var steps = [
-        { name: 'Visited Site', count: 1000, pct: 100 },
-        { name: 'Created Account', count: 350, pct: 35 },
-        { name: 'Opened Cashier', count: 120, pct: 12 },
-        { name: 'Started Deposit', count: 80, pct: 8 },
-        { name: 'Completed Deposit', count: 55, pct: 5.5 },
-        { name: 'Made 2nd Deposit', count: 18, pct: 1.8 }
-    ];
-    var html = '<div class="df-card"><h3>Deposit Funnel</h3>';
-    steps.forEach(function(s) {
-        html += '<div class="df-step"><div class="df-bar-bg"><div class="df-bar-fill" style="width:' + s.pct + '%"></div></div><span class="df-name">' + s.name + '</span><span class="df-count">' + s.count + ' (' + s.pct + '%)</span></div>';
-    });
-    html += '<button onclick="document.getElementById(&quot;depFunnelOverlay&quot;).style.display=&quot;none&quot;" class="df-close">Close</button></div>';
-    el.innerHTML = html;
-    el.style.display = 'flex';
+    if (el) el.style.display = 'none';
+    if (typeof window !== 'undefined' && window.location) window.location.href = '/admin';
 }
 
 
@@ -35943,53 +35832,25 @@ function _openChurnDashboard() {
 }
 
 
-// --- Sprint 495 — Promo ROI Tracker ---
+// --- Sprint 495 — Promo ROI Tracker DISABLED ---
+// Hardcoded promo ROI numbers labeled as real performance data.
+// Real promo metrics live in /admin.
 function _initPromoROI() {}
 function _openPromoROI() {
     var el = document.getElementById('promoROIOverlay');
-    if (!el) { el = document.createElement('div'); el.id = 'promoROIOverlay'; el.className = 'promo-roi-overlay'; document.body.appendChild(el); }
-    var promos = [
-        { name: 'First Deposit 200%', spent: 5000, revenue: 12000, roi: '+140%' },
-        { name: 'Happy Hour 2x', spent: 1200, revenue: 3500, roi: '+192%' },
-        { name: 'Comeback Bonus', spent: 800, revenue: 2100, roi: '+163%' },
-        { name: 'Loss Recovery 25%', spent: 600, revenue: 1400, roi: '+133%' }
-    ];
-    var html = '<div class="proi-card"><h3>Promo ROI Tracker</h3><table class="proi-table"><tr><th>Promo</th><th>Cost</th><th>Revenue</th><th>ROI</th></tr>';
-    promos.forEach(function(p) { html += '<tr><td>' + p.name + '</td><td>$' + p.spent + '</td><td>$' + p.revenue + '</td><td class="proi-positive">' + p.roi + '</td></tr>'; });
-    html += '</table><button onclick="document.getElementById(&quot;promoROIOverlay&quot;).style.display=&quot;none&quot;" class="proi-close">Close</button></div>';
-    el.innerHTML = html;
-    el.style.display = 'flex';
+    if (el) el.style.display = 'none';
+    if (typeof window !== 'undefined' && window.location) window.location.href = '/admin';
 }
 
 
-// --- Sprint 496 — Player Activity Heatmap ---
+// --- Sprint 496 — Player Activity Heatmap DISABLED ---
+// Heatmap intensity was Math.random() per cell, labeled as real activity.
+// Real per-hour activity data lives in /admin.
 function _initPlayerHeatmap() {}
 function _openPlayerHeatmap() {
     var el = document.getElementById('heatmapOverlay');
-    if (!el) { el = document.createElement('div'); el.id = 'heatmapOverlay'; el.className = 'heatmap-overlay'; document.body.appendChild(el); }
-    var hours = [];
-    for (var d = 0; d < 7; d++) {
-        for (var h = 0; h < 24; h++) {
-            hours.push({ day: d, hour: h, intensity: Math.random() });
-        }
-    }
-    var days = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
-    var html = '<div class="hm-card"><h3>Player Activity Heatmap</h3><div class="hm-grid">';
-    html += '<div class="hm-row hm-header"><span></span>';
-    for (var hh = 0; hh < 24; hh += 3) html += '<span>' + hh + '</span>';
-    html += '</div>';
-    for (var dd = 0; dd < 7; dd++) {
-        html += '<div class="hm-row"><span class="hm-day">' + days[dd] + '</span>';
-        for (var hh2 = 0; hh2 < 24; hh2++) {
-            var val = hours[dd * 24 + hh2].intensity;
-            var opacity = (val * 0.8 + 0.1).toFixed(2);
-            html += '<div class="hm-cell" style="opacity:' + opacity + '" title="' + days[dd] + ' ' + hh2 + ':00"></div>';
-        }
-        html += '</div>';
-    }
-    html += '</div><button onclick="document.getElementById(&quot;heatmapOverlay&quot;).style.display=&quot;none&quot;" class="hm-close">Close</button></div>';
-    el.innerHTML = html;
-    el.style.display = 'flex';
+    if (el) el.style.display = 'none';
+    if (typeof window !== 'undefined' && window.location) window.location.href = '/admin';
 }
 
 
@@ -37004,7 +36865,8 @@ function _initFriendSystem() {
         document.getElementById('fr-add-btn').addEventListener('click', function() {
             var code = document.getElementById('fr-add-input').value.trim();
             if (!code) return;
-            friends.push({name: code, online: Math.random()>0.5, added: Date.now()});
+            // Online status defaults to false — no real social-graph backing data.
+            friends.push({name: code, online: false, added: Date.now()});
             localStorage.setItem('ms_friends', JSON.stringify(friends));
             btn.textContent = 'Friends (' + friends.length + ')';
             modal.remove(); 
@@ -37360,14 +37222,13 @@ function _initLeaderboardSeasons() {
     var endOfMonth = new Date(now.getFullYear(), now.getMonth()+1, 0, 23, 59, 59);
     _leaderboardSeason.endsAt = endOfMonth.getTime();
     var daysLeft = Math.ceil((endOfMonth - now) / 86400000);
+    // Seasonal leaderboard: only show real entries (saved from prior real
+    // submissions). No more Player100..Player119 fake seed with random scores.
     var saved = JSON.parse(localStorage.getItem('ms_lb_season') || '[]');
-    if (saved.length === 0) {
-        for (var i = 0; i < 20; i++) {
-            saved.push({ name: 'Player' + (100+i), score: Math.floor(Math.random()*50000), avatar: String.fromCodePoint(0x1F600 + i) });
-        }
-    }
     var myScore = parseInt(localStorage.getItem('ms_total_wagered') || '0');
-    saved.push({ name: 'You', score: myScore, avatar: String.fromCodePoint(0x1F451) });
+    if (myScore > 0) {
+        saved.push({ name: 'You', score: myScore, avatar: String.fromCodePoint(0x1F451) });
+    }
     saved.sort(function(a,b) { return b.score - a.score; });
     localStorage.setItem('ms_lb_season', JSON.stringify(saved.slice(0,50)));
     var widget = document.createElement('div');
@@ -37376,10 +37237,11 @@ function _initLeaderboardSeasons() {
     var top5 = saved.slice(0,5).map(function(p,i) {
         return '<div class="lb-row' + (p.name==='You'?' lb-you':'') + '"><span class="lb-rank">#' + (i+1) + '</span><span class="lb-avatar">' + p.avatar + '</span><span class="lb-name">' + p.name + '</span><span class="lb-score">$' + p.score.toLocaleString() + '</span></div>';
     }).join('');
+    var listHtml = top5 || '<div class="lb-empty">No participants yet</div>';
     widget.innerHTML = '<div class="lb-inner"><h3>Season Leaderboard</h3>' +
         '<div class="lb-season-info"><span>Season: ' + _leaderboardSeason.id + '</span><span>' + daysLeft + ' days left</span></div>' +
         '<div class="lb-prizes"><span>1st: $500</span><span>2nd: $250</span><span>3rd: $100</span></div>' +
-        top5 + '</div>';
+        listHtml + '</div>';
     document.body.appendChild(widget);
     console.log('[Sprint 523-530] Leaderboard Seasons ready');
 }
@@ -37407,7 +37269,8 @@ function _initFriendSystem() {
     document.getElementById('fr-add-btn').addEventListener('click', function() {
         var name = document.getElementById('fr-search-input').value.trim();
         if (!name) return;
-        friends.push({ name: name, online: Math.random() > 0.5, level: Math.floor(Math.random()*20)+1, added: Date.now() });
+        // Online status and level default to known-safe values; no real social graph.
+        friends.push({ name: name, online: false, level: 1, added: Date.now() });
         localStorage.setItem('ms_friends', JSON.stringify(friends));
         document.getElementById('fr-search-input').value = '';
         renderFriends();
@@ -37495,35 +37358,12 @@ function _initDailyChallenges() {
 /* ---- Feature 6: Community Jackpot ---- */
 var _communityJackpot = { pool: 0, contributors: 0, threshold: 10000 };
 function _initCommunityJackpot() {
-    var saved = JSON.parse(localStorage.getItem('ms_community_jp') || 'null');
-    if (saved) _communityJackpot = saved;
-    else {
-        _communityJackpot = { pool: Math.floor(Math.random()*5000) + 2000, contributors: Math.floor(Math.random()*50)+10, threshold: 10000 };
-        localStorage.setItem('ms_community_jp', JSON.stringify(_communityJackpot));
-    }
-    if (document.getElementById('community-jp')) return;
-    var widget = document.createElement('div');
-    widget.id = 'community-jp';
-    widget.className = 'community-jp';
-    var pct = Math.floor(_communityJackpot.pool / _communityJackpot.threshold * 100);
-    widget.innerHTML = '<div class="cjp-inner">' +
-        '<span class="cjp-label">COMMUNITY JACKPOT</span>' +
-        '<span class="cjp-amount">$' + _communityJackpot.pool.toLocaleString() + '</span>' +
-        '<div class="cjp-bar"><div class="cjp-fill" style="width:' + pct + '%"></div></div>' +
-        '<span class="cjp-info">' + _communityJackpot.contributors + ' players contributing</span>' +
-        '</div>';
-    document.body.appendChild(widget);
-    setInterval(function() {
-        _communityJackpot.pool += Math.random() * 5;
-        _communityJackpot.contributors += Math.random() < 0.1 ? 1 : 0;
-        localStorage.setItem('ms_community_jp', JSON.stringify(_communityJackpot));
-        var el = document.getElementById('community-jp');
-        if (el) {
-            el.querySelector('.cjp-amount').textContent = '$' + Math.floor(_communityJackpot.pool).toLocaleString();
-            el.querySelector('.cjp-fill').style.width = Math.floor(_communityJackpot.pool / _communityJackpot.threshold * 100) + '%';
-        }
-    }, 4000);
-    console.log('[Sprint 523-530] Community Jackpot ready');
+    // Community jackpot REMOVED — the pool and contributor count were both
+    // pure Math.random() fabrications. Hide any pre-existing widget; do not
+    // render a new one or start the ticking interval.
+    var existing = document.getElementById('community-jp');
+    if (existing) existing.style.display = 'none';
+    try { localStorage.removeItem('ms_community_jp'); } catch (e) {}
 }
 
 /* ---- Feature 7: Referral Tiers ---- */
@@ -37568,15 +37408,10 @@ function _showSocialNotif(msg) {
     setTimeout(function() { notif.classList.remove('social-notif-show'); setTimeout(function() { notif.remove(); }, 300); }, 4000);
 }
 function _initSocialNotifications() {
-    var names = ['Alex','Sam','Jordan','Taylor','Casey','Morgan','Riley','Quinn'];
-    var actions = [' just won $', ' hit a jackpot of $', ' won big: $', ' cashed out $'];
-    setInterval(function() {
-        var name = names[Math.floor(Math.random()*names.length)];
-        var action = actions[Math.floor(Math.random()*actions.length)];
-        var amount = (Math.floor(Math.random()*500)+10).toFixed(2);
-        _pushSocialNotif('win', name + action + amount);
-    }, 15000 + Math.random()*15000);
-    console.log('[Sprint 523-530] Social Notifications ready');
+    // Fake "social proof" notifications REMOVED. The previous implementation
+    // generated random player names + random win amounts every ~15s, which
+    // deceived players. Real activity is fed by /api/public/hot-wins into
+    // #hotWinsTicker (see index.html).
 }
 
 
@@ -39855,19 +39690,11 @@ function _claimWelcomeBonus627() {
     var el = document.getElementById('welcome-bonus-627'); if (el) el.remove();
 }
 
-/* ---- Feature 3: Social Proof Ticker ---- */
-function _initSocialProof627() {
-    var names = ['Lucky7','SpinKing','DiamondQ','JackpotJ','ReelMaster','GoldRush','AceHigh','BigWinner'];
-    var actions = ['just won $','deposited $','hit a jackpot of $','cashed out $'];
-    setInterval(function() {
-        if (Math.random() > 0.7) return;
-        var name = names[Math.floor(Math.random() * names.length)];
-        var action = actions[Math.floor(Math.random() * actions.length)];
-        var amount = (Math.random() * 500 + 10).toFixed(2);
-        if (typeof _showNotification571 === 'function') _showNotification571(name + ' ' + action + amount, 'info', 4000);
-    }, 45000);
-    console.log('[Sprint 627-634] Social Proof Ticker ready');
-}
+/* ---- Feature 3: Social Proof Ticker REMOVED ----
+ * Generated random player names + amounts every 45s. Real wins come from
+ * /api/public/hot-wins via the #hotWinsTicker block in index.html.
+ */
+function _initSocialProof627() { /* removed: fake social-proof ticker */ }
 
 /* ---- Feature 4: Countdown Timer Offers ---- */
 function _initCountdownOffers627() {
@@ -41682,12 +41509,11 @@ window._logAudit658 = _logAudit658;
                     if (prog >= ch.target && !state.completed.includes(ch.id)) {
                         state.completed.push(ch.id);
                         awardXP(ch.xp);
-                        // Cash reward
-                        if ((ch.reward || 0) > 0) {
-                            balance += ch.reward;
-                            if (typeof saveBalance === 'function') saveBalance();
-                            if (typeof updateBalance === 'function') updateBalance();
-                        }
+                        // Cash rewards must be granted by the server. The
+                        // client no longer mutates `balance` here — the
+                        // server's challenge-completion endpoint is the
+                        // single source of truth and will sync `balance`
+                        // on the next /api/user/me round-trip.
                         _showChallengeCompleteToast(ch);
                         if (typeof window.refreshLobbyChallengeWidget === 'function') window.refreshLobbyChallengeWidget();
                     }
@@ -43092,15 +42918,17 @@ window._logAudit658 = _logAudit658;
                         const gameLabel = (currentGame && currentGame.name) ? currentGame.name : 'your next slot';
                         showToast(`\uD83C\uDFB0 ${fsCount} Free Spins awarded on ${gameLabel}!`, 'win');
                     } else {
-                        // Cash prize — use server balance if available
+                        // Cash prize — server is the single source of truth.
+                        // Only apply the balance if the server returned one;
+                        // never optimistically credit the client.
                         if (serverBalance != null) {
                             balance = serverBalance;
+                            updateBalance();
+                            awardXP(serverXP != null ? serverXP : seg.xp);
+                            showToast(`\uD83C\uDF89 Bonus Wheel: +$${seg.value.toLocaleString()} and +${(serverXP != null ? serverXP : seg.xp)} XP!`, 'win');
                         } else {
-                            balance += seg.value;
+                            showToast('Bonus reward pending — please refresh.', 'info');
                         }
-                        updateBalance();
-                        awardXP(serverXP != null ? serverXP : seg.xp);
-                        showToast(`\uD83C\uDF89 Bonus Wheel: +$${seg.value.toLocaleString()} and +${(serverXP != null ? serverXP : seg.xp)} XP!`, 'win');
                     }
 
                     wheelState.lastSpin = new Date().toISOString();
@@ -43290,113 +43118,21 @@ window._logAudit658 = _logAudit658;
         }
 
         function openScratchCard() {
+            // Disabled: the scratch card was implemented entirely
+            // client-side with hard-coded prizes and a forced 30%
+            // win rate via Math.random(). It must not be allowed
+            // to credit real balance. Until a server-side bonus
+            // engine is wired up, render a "coming soon" notice.
             var modal = document.getElementById('scratchCardModal');
             if (!modal) return;
-
-            if (!canPlayScratchCard()) {
-                try {
-                    var saved = JSON.parse(localStorage.getItem(SCRATCH_STORAGE_KEY) || '{}');
-                    var msLeft = SCRATCH_COOLDOWN_MS - (Date.now() - saved.lastPlay);
-                    var hoursLeft = Math.ceil(msLeft / 3600000);
-                    showToast('Next scratch card in ' + hoursLeft + ' hour' + (hoursLeft !== 1 ? 's' : '') + '!', 'info');
-                } catch(e) {}
-                return;
-            }
-
-            // Shuffle helper
-            function _shuffleArr(arr) {
-                for (var i = arr.length - 1; i > 0; i--) {
-                    var j = Math.floor(Math.random() * (i + 1));
-                    var t = arr[i]; arr[i] = arr[j]; arr[j] = t;
-                }
-                return arr;
-            }
-
-            // Generate 9-cell grid
-            var cells = [];
-            var prizes = SCRATCH_PRIZES.slice();
-            _shuffleArr(prizes);
-
-            // ~30% chance of a forced win (3 matching cells)
-            var forceWin = Math.random() < 0.30;
-            if (forceWin) {
-                var winPrize = [100, 250, 250, 500][Math.floor(Math.random() * 4)];
-                var positions = _shuffleArr([0, 1, 2, 3, 4, 5, 6, 7, 8]);
-                var winPositions = [positions[0], positions[1], positions[2]];
-                for (var ci = 0; ci < 9; ci++) {
-                    cells[ci] = winPositions.indexOf(ci) >= 0 ? winPrize : prizes[ci % prizes.length];
-                }
-            } else {
-                for (var ni = 0; ni < 9; ni++) { cells[ni] = prizes[ni % prizes.length]; }
-                // Ensure no accidental triple
-                var counts = {};
-                cells.forEach(function(v) { counts[v] = (counts[v] || 0) + 1; });
-                Object.keys(counts).forEach(function(v) {
-                    if (counts[v] >= 3) {
-                        var replacement = SCRATCH_PRIZES.find(function(p) { return p !== Number(v); });
-                        for (var ri = 8; ri >= 0; ri--) {
-                            if (cells[ri] === Number(v)) { cells[ri] = replacement; break; }
-                        }
-                    }
-                });
-            }
-
-            // Build modal content
-            var gridHtml = cells.map(function(prize, idx) {
-                var sym = SCRATCH_SYMBOLS[prize] || '🎰';
-                return '<div class="scratch-cell" data-prize="' + prize + '" data-idx="' + idx + '">'
-                     + '<div class="scratch-cover">🎰</div>'
-                     + '<div class="scratch-reveal">' + sym + '<br><span class="scratch-amount">$' + prize + '</span></div>'
-                     + '</div>';
-            }).join('');
-
             var content = modal.querySelector('.scratch-content');
             if (content) {
-                content.innerHTML = '<p class="scratch-instruction">Click to reveal! Match 3 to win!</p>'
-                    + '<div class="scratch-grid">' + gridHtml + '</div>'
-                    + '<div id="scratchResult" class="scratch-result"></div>';
-
-                var revealed = [];
-                content.querySelectorAll('.scratch-cell').forEach(function(cell) {
-                    cell.addEventListener('click', function() {
-                        if (cell.classList.contains('scratched')) return;
-                        cell.classList.add('scratched');
-                        revealed.push(parseInt(cell.getAttribute('data-prize')));
-
-                        if (revealed.length === 9) {
-                            // All revealed — check for a triple match
-                            var counts2 = {};
-                            revealed.forEach(function(v) { counts2[v] = (counts2[v] || 0) + 1; });
-                            var winValue = null;
-                            Object.keys(counts2).forEach(function(v) {
-                                if (counts2[v] >= 3) winValue = Number(v);
-                            });
-
-                            var prize = winValue || 5; // consolation $5
-                            var resultEl = document.getElementById('scratchResult');
-                            if (winValue) {
-                                if (resultEl) resultEl.innerHTML = '<span class="scratch-win">🎉 You matched 3! Won <strong>$' + winValue + '</strong>!</span>';
-                                showToast('🎰 Scratch card: Won $' + winValue + '!', 'success');
-                            } else {
-                                if (resultEl) resultEl.innerHTML = '<span class="scratch-consolation">No match — consolation prize: <strong>$50</strong></span>';
-                                showToast('Scratch card: Consolation $5', 'info');
-                            }
-
-                            // Credit prize
-                            balance += prize;
-                            updateBalance();
-                            if (typeof saveBalance === 'function') saveBalance();
-                            awardXP(10);
-
-                            // Save cooldown
-                            try {
-                                localStorage.setItem(SCRATCH_STORAGE_KEY, JSON.stringify({ lastPlay: Date.now(), lastPrize: prize }));
-                            } catch(e) {}
-                        }
-                    });
-                });
+                content.innerHTML = '<div class="scratch-disabled" style="padding:32px;text-align:center;color:#fff;">'
+                    + '<div style="font-size:48px;margin-bottom:12px;">🚧</div>'
+                    + '<h3 style="margin:0 0 8px;">Coming Soon</h3>'
+                    + '<p style="opacity:0.8;margin:0;">Pending server-side bonus engine.</p>'
+                    + '</div>';
             }
-
             modal.classList.add('active');
             modal.onclick = function(e) { if (e.target === modal) modal.classList.remove('active'); };
         }
@@ -43516,39 +43252,11 @@ function _buyXpShopItem(item) {
     })
     .catch(function (err) {
         btns.forEach(function (b) { b.disabled = false; });
-
-        // Server is unreachable — only allow non-balance items client-side.
-        // Balance grants MUST go through the server to prevent exploitation.
-        if (item.type === 'balance' || item.id === 'balance5' || item.id === 'balance20') {
-            if (typeof showToast === 'function') {
-                showToast('Server unavailable — balance rewards require a server connection.', 'error', 5000);
-            }
-            return;
-        }
-
-        // Fallback for freespins / xpboost when server is offline
-        if (typeof playerXP !== 'undefined' && playerXP >= item.cost) {
-            playerXP -= item.cost;
-            if (typeof saveXP === 'function') saveXP();
-            if (typeof updateXPDisplay === 'function') updateXPDisplay();
-
-            if (item.id === 'freespins5') {
-                if (typeof currentGame !== 'undefined' && currentGame && typeof triggerFreeSpins === 'function') {
-                    triggerFreeSpins(currentGame, 5);
-                    if (typeof showToast === 'function') showToast('5 Free Spins activated! (offline)', 'win');
-                } else if (typeof showToast === 'function') {
-                    showToast('Open a slot first to use your Free Spins!', 'info');
-                }
-            } else if (item.id === 'xpboost50') {
-                try {
-                    var existingBoost = JSON.parse(localStorage.getItem('matrixXpBoost') || 'null');
-                    var boostRem = (existingBoost && existingBoost.remaining > 0) ? existingBoost.remaining + 50 : 50;
-                    localStorage.setItem('matrixXpBoost', JSON.stringify({ remaining: boostRem }));
-                    if (typeof showToast === 'function') showToast('2× XP Boost active for ' + boostRem + ' spins! (offline)', 'win');
-                } catch (e) {}
-            }
-
-            if (typeof openXpShop === 'function') openXpShop();
+        // No client-side fallback. Bonus grants (balance, free spins,
+        // XP boosts) must originate from the server. If the API call
+        // fails, surface the failure and refuse the purchase.
+        if (typeof showToast === 'function') {
+            showToast('Bonus unavailable, please reconnect.', 'error', 5000);
         }
     });
 }
@@ -43564,15 +43272,7 @@ var MYSTERY_BOX_PRIZES = [
     { label: 'Legendary',  weight: 5,  cash: [100, 100], spins: 5,  emoji: '👑' },
 ];
 
-function _pickMysteryPrize() {
-    var roll = Math.random() * 100;
-    var cumulative = 0;
-    for (var i = 0; i < MYSTERY_BOX_PRIZES.length; i++) {
-        cumulative += MYSTERY_BOX_PRIZES[i].weight;
-        if (roll < cumulative) return MYSTERY_BOX_PRIZES[i];
-    }
-    return MYSTERY_BOX_PRIZES[0];
-}
+// _pickMysteryPrize removed: prize selection must happen server-side.
 
 function _getMysteryBoxState() {
     try { return JSON.parse(localStorage.getItem(MYSTERY_BOX_KEY) || 'null'); } catch(e) { return null; }
@@ -43636,49 +43336,17 @@ function _refreshMysteryBoxModal() {
 }
 
 function doOpenMysteryBox() {
-    var state = _getMysteryBoxState();
-    var elapsed = state ? Date.now() - state.lastOpen : Infinity;
-    if (elapsed < MYSTERY_BOX_COOLDOWN_MS) return;
-
-    var prize = _pickMysteryPrize();
-    var cashMin = prize.cash[0], cashMax = prize.cash[1];
-    var cashAmt = cashMin + Math.floor(Math.random() * (cashMax - cashMin + 1));
-
-    // Save cooldown
-    try { localStorage.setItem(MYSTERY_BOX_KEY, JSON.stringify({ lastOpen: Date.now() })); } catch (e) { /* ignore */ }
-
-    // Award prize
-    if (typeof balance !== 'undefined') {
-        balance += cashAmt;
-        if (typeof saveBalance === 'function') saveBalance();
-        if (typeof updateBalance === 'function') updateBalance();
-    }
-    if (prize.spins > 0 && typeof currentGame !== 'undefined' && currentGame && typeof triggerFreeSpins === 'function') {
-        triggerFreeSpins(currentGame, prize.spins);
-    }
-
-    // Animate
-    var icon   = document.getElementById('mysteryBoxIcon');
-    var status = document.getElementById('mysteryBoxStatus');
+    // Disabled: prize selection and the cash amount were both pure
+    // client-side Math.random() picks. The mystery box must never
+    // grant real balance until a server-side bonus engine returns
+    // the authoritative prize. Render the modal in 'pending' state.
+    var status  = document.getElementById('mysteryBoxStatus');
     var openBtn = document.getElementById('mysteryBoxOpenBtn');
-    if (icon) {
-        icon.className = 'mystery-box-icon mystery-box-icon--opening';
-        icon.textContent = '✨';
-        setTimeout(function() {
-            icon.textContent = prize.emoji;
-            icon.className = 'mystery-box-icon mystery-box-icon--revealed';
-        }, 600);
+    if (status) status.textContent = 'Coming soon — pending server-side bonus engine.';
+    if (openBtn) { openBtn.disabled = true; openBtn.textContent = 'UNAVAILABLE'; }
+    if (typeof showToast === 'function') {
+        showToast('Mystery Box rewards are temporarily disabled.', 'info');
     }
-    if (status) {
-        setTimeout(function() {
-            var msg = prize.label + '! +$' + cashAmt.toLocaleString();
-            if (prize.spins > 0) msg += ' + ' + prize.spins + ' Free Spins!';
-            status.textContent = msg;
-            if (typeof showToast === 'function') showToast(prize.emoji + ' Mystery Box: ' + msg, prize.label === 'Legendary' ? 'bigwin' : 'win');
-        }, 700);
-    }
-    if (openBtn) { openBtn.disabled = true; openBtn.textContent = 'OPENED'; }
-    _updateMysteryBoxNavBtn();
 }
 
 // Refresh nav btn state on load and every minute
@@ -43840,34 +43508,16 @@ function _cjUpdateTicker() {
     ticker.classList.toggle('cjt-large', amount > 10000);
 }
 
-// Called by spin flow to contribute to pool and check for win
-function communityJackpotSpin(bet) {
-    var s = _cjGetPool();
-    s.pool = Math.min(s.pool + CJ_CONTRIBUTION, CJ_MAX);
-    // Random win check
-    var won = Math.random() < (1 / CJ_WIN_ODDS);
-    if (won) {
-        var winAmount = s.pool;
-        s.pool = CJ_SEED;
-        s.lastReset = Date.now();
-        _cjSave(s);
-        // Award
-        if (typeof balance !== 'undefined') {
-            balance += winAmount;
-            if (typeof saveBalance === 'function') saveBalance();
-            if (typeof updateBalance === 'function') updateBalance();
-        }
-        if (typeof showToast === 'function') showToast('🌐 COMMUNITY JACKPOT! +$' + Math.floor(winAmount).toLocaleString() + '!', 'bigwin');
-        // Full-screen celebration
-        var cel = document.createElement('div');
-        cel.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.85);z-index:10400;display:flex;flex-direction:column;align-items:center;justify-content:center;color:#fff;font-family:sans-serif;cursor:pointer;';
-        cel.innerHTML = '<div style="font-size:72px;margin-bottom:16px">🌐</div><div style="font-size:36px;font-weight:900;color:#f0c040">COMMUNITY JACKPOT!</div><div style="font-size:24px;margin-top:12px">You won $' + Math.floor(winAmount).toLocaleString() + '!</div><div style="font-size:13px;margin-top:24px;opacity:0.6">Tap to continue</div>';
-        cel.onclick = function() { document.body.removeChild(cel); };
-        document.body.appendChild(cel);
-    } else {
-        _cjSave(s);
-    }
-    _cjUpdateTicker();
+// Community Jackpot DISABLED — used to call Math.random() on every spin
+// to potentially credit the player's balance with the entire pool. That
+// is a client-side balance grant with no server authority and no real
+// cross-player jackpot pool. Refused: no balance is ever credited from
+// here. The ticker UI is also hidden until a server-backed cross-user
+// jackpot endpoint exists.
+function communityJackpotSpin(_bet) {
+    var ticker = document.getElementById('communityJackpotTicker');
+    if (ticker) ticker.style.display = 'none';
+    return;
 }
 
 // Init ticker on load
@@ -44233,13 +43883,17 @@ function doLuckySpin() {
     }
     setTimeout(function() {
         _lsSpinning = false;
-        if (seg.type === 'cash') {
-            if (typeof balance !== 'undefined') balance += seg.value;
-            if (typeof updateBalance === 'function') updateBalance();
-        } else if (seg.type === 'xp') {
+        // Cash credits removed: the segment was chosen by client-side
+        // Math.random() and would credit real balance from a fake spin.
+        // XP awards remain since XP is purely cosmetic / level progression.
+        if (seg.type === 'xp') {
             if (typeof awardXP === 'function') awardXP(seg.value);
         }
-        if (resultEl) resultEl.textContent = '🎉 You won ' + seg.label + '!';
+        if (resultEl) {
+            resultEl.textContent = seg.type === 'cash'
+                ? 'Bonus pending — server-side bonus engine not yet wired up.'
+                : '🎉 You won ' + seg.label + '!';
+        }
         if (freeAvail) state.lastFreeDay = today;
         state.totalSpins = (state.totalSpins || 0) + 1;
         try { localStorage.setItem(_LS_KEY, JSON.stringify(state)); } catch (e) { /* ignore */ }
@@ -62279,13 +61933,9 @@ setInterval(function() {
                 return;
             }
 
-            // Guest balance: only grant $1,000 if they have zero or no saved balance
-            // (prevents infinite-reload exploit while still giving new guests starter funds)
-            if (currentUser.isGuest && (!balance || balance <= 0)) {
-                balance = 1000;
-                updateBalance();
-                saveBalance();
-            }
+            // No client-side guest balance grant. Real balance is sourced from
+            // the server only — guests start at 0 and must register/log in
+            // (or fund via a real deposit endpoint) to play for credits.
 
             // Successfully authenticated — ensure auth-gate is removed
             document.body.classList.remove('auth-gate');
@@ -71196,7 +70846,10 @@ if (document.readyState === 'loading') {
     }
 
     /**
-     * Get current token (fetch new one if expired)
+     * Get current token (fetch new one if expired).
+     * Fail-closed: if a fresh fetch fails, the cached token is invalidated
+     * and the error is propagated. We never return a stale token — that
+     * would be a security regression (CSRF tokens must be live).
      */
     async function getToken() {
         // If no token or refresh interval exceeded, fetch new one
@@ -71205,20 +70858,16 @@ if (document.readyState === 'loading') {
             !lastTokenFetchTime ||
             Date.now() - lastTokenFetchTime > TOKEN_REFRESH_INTERVAL
         ) {
-            try {
-                const response = await originalFetch('/api/csrf-token', csrfFetchInit());
-                if (!response.ok) {
-                    console.warn('[CSRF] Failed to refresh token:', response.status);
-                    return csrfToken; // Return stale token as fallback
-                }
-
-                const data = await response.json();
-                csrfToken = data.csrfToken;
-                lastTokenFetchTime = Date.now();
-            } catch (err) {
-                console.warn('[CSRF] Failed to refresh token:', err.message);
-                // Return stale token as fallback
+            const response = await originalFetch('/api/csrf-token', csrfFetchInit());
+            if (!response.ok) {
+                csrfToken = null;
+                lastTokenFetchTime = null;
+                throw new Error('[CSRF] Failed to fetch token: HTTP ' + response.status);
             }
+
+            const data = await response.json();
+            csrfToken = data.csrfToken;
+            lastTokenFetchTime = Date.now();
         }
 
         return csrfToken;

@@ -2050,15 +2050,16 @@
                 const jackpotBannerEl = document.getElementById('slotJackpotBanner');
                 const jackpotValueEl  = document.getElementById('slotJackpotValue');
                 if (jackpotBannerEl) {
-                    const isJackpotGame = currentGame && (currentGame.jackpot || currentGame.tag === 'JACKPOT' || currentGame.tag === 'MEGA');
-                    if (isJackpotGame) {
-                        if (jackpotValueEl) jackpotValueEl.textContent = '$' + jackpotValue.toLocaleString();
+                    // Authentic value only — show the static per-game jackpot
+                    // declared in shared/game-definitions.js, never a random
+                    // ticker. If the game has no real jackpot configured, hide
+                    // the banner.
+                    const declaredJackpot = currentGame && Number(currentGame.jackpot) > 0
+                        ? Number(currentGame.jackpot) : 0;
+                    if (_slotJackpotTickInterval) { clearInterval(_slotJackpotTickInterval); _slotJackpotTickInterval = null; }
+                    if (declaredJackpot > 0) {
+                        if (jackpotValueEl) jackpotValueEl.textContent = '$' + declaredJackpot.toLocaleString();
                         jackpotBannerEl.style.display = '';
-                        if (_slotJackpotTickInterval) clearInterval(_slotJackpotTickInterval);
-                        _slotJackpotTickInterval = setInterval(function() {
-                            jackpotValue += Math.floor(Math.random() * (JACKPOT_TICKER_INCREMENT_MAX - JACKPOT_TICKER_INCREMENT_MIN + 1) + JACKPOT_TICKER_INCREMENT_MIN);
-                            if (jackpotValueEl) jackpotValueEl.textContent = '$' + jackpotValue.toLocaleString();
-                        }, JACKPOT_TICKER_INTERVAL);
                     } else {
                         jackpotBannerEl.style.display = 'none';
                     }
@@ -2986,7 +2987,7 @@
             // Sprint 41 — hide quick switch
             var _qss = document.getElementById('quickSwitchStrip'); if (_qss) _qss.style.display = 'none';
             // Sprint 37 — clean up demo mode if active
-            if (typeof _demoMode !== 'undefined' && _demoMode) { exitDemoMode(false); return; }
+            // Demo mode removed.
             // Sprint 36 — rating prompt (after a short delay so modal closes first)
             (function() {
                 if (_closingGame && typeof showRatingPrompt === 'function') {
@@ -3410,7 +3411,7 @@
             if (freeSpinsActive) return false;
             if (forcedSpinQueue.length > 0) return false;
             if (deterministicRng) return false;
-            if (typeof _demoMode !== 'undefined' && _demoMode) return false; // Sprint 37 demo
+            // Demo mode removed.
             const freeSpinCount = Number(game.freeSpinsCount || 0);
             return freeSpinCount <= 0;
         }
@@ -3568,7 +3569,7 @@
                     finalGrid = generateSpinResult(spinGame);
                     balance -= currentBet;
                     updateBalance();
-                    if (!(typeof _demoMode !== 'undefined' && _demoMode)) saveBalance(); // skip save in demo
+                    saveBalance();
                 }
             } catch (error) {
                 stopReelScrollingImmediately();
@@ -4493,8 +4494,7 @@
                     }
                 }
                 if (typeof recordSpinHistory === 'function') recordSpinHistory({ game: (game && game.name) || '', gameId: (game && game.id) || '', bet: currentBet, win: winAmount, mult: currentBet > 0 ? Math.round(winAmount / currentBet) : 0 });
-                if (typeof saveWinReplay === 'function' && !_demoMode && currentBet > 0 && winAmount >= currentBet * 10) { saveWinReplay({ game: (game && game.name) || '', gameId: (game && game.id) || '', bet: currentBet, win: winAmount, mult: Math.round(winAmount / currentBet), ts: Date.now() }); }
-                _demoOnSpinEnd();
+                if (typeof saveWinReplay === 'function' && currentBet > 0 && winAmount >= currentBet * 10) { saveWinReplay({ game: (game && game.name) || '', gameId: (game && game.id) || '', bet: currentBet, win: winAmount, mult: Math.round(winAmount / currentBet), ts: Date.now() }); }
                 if (typeof _updateWinGoal === 'function' && winAmount > 0) _updateWinGoal(winAmount);
                 if (typeof _incrementStreak === 'function') _incrementStreak();
                 if (typeof _updateSparkline === 'function') _updateSparkline(balance);
@@ -5144,7 +5144,6 @@
 
             if (typeof awardXP === "function") { var _godMult2 = (typeof gameOfDayId !== 'undefined' && gameOfDayId && currentGame && currentGame.id === gameOfDayId && typeof GAME_OF_DAY_XP_BONUS !== 'undefined') ? GAME_OF_DAY_XP_BONUS : 1; awardXP(Math.round(XP_AWARD_PER_SPIN * _godMult2)); }
             if (typeof recordSpinHistory === 'function' && winAmount <= 0) recordSpinHistory({ game: (game && game.name) || '', gameId: (game && game.id) || '', bet: currentBet, win: 0, mult: 0 });
-            if (winAmount <= 0) _demoOnSpinEnd();
             if (winAmount <= 0 && typeof _resetStreak === 'function') _resetStreak();
             _updateHotCold(winAmount > 0); // Sprint 53
             _updateWinRate(winAmount > 0); // Sprint 56
@@ -9209,15 +9208,9 @@
         }
 
         // ----------------------------------------------------------
-        // Demo Mode — REMOVED. Previously temporarily swapped the user's
-        // balance with a hardcoded $10,000 and let them spin 3 times.
-        // Replaced with no-ops so any stale call site degrades safely:
-        // the real balance is authoritative and never mutated here.
+        // Demo Mode — REMOVED entirely. All call sites have been pruned;
+        // the user's real balance is the only source of truth.
         // ----------------------------------------------------------
-        var _demoMode = false;
-        var _demoSpinsLeft = 0;
-        function _demoOnSpinEnd() { /* no-op: demo mode removed */ }
-        function exitDemoMode() { /* no-op: demo mode removed */ }
 
         // ----------------------------------------------------------
         // SPRINT 38 — Session Time Tracker
@@ -15256,24 +15249,15 @@ function _updateCurrencyBadge() {
     el.style.display = '';
 }
 
-// Sprint 254 — Live player count
-var _playerCount254 = { base: 1247, variance: 200 };
+// Sprint 254 — Live player count REMOVED
+// Was a Math.random() simulation around a hardcoded base of 1247 with a
+// time-of-day boost, deceiving players into believing the lobby tracked
+// concurrent users. No real backing source is wired up; hide the badge.
 function _initPlayerCount() {
-    _updatePlayerCount();
-    setInterval(_updatePlayerCount, 30000); // Update every 30s
-}
-function _updatePlayerCount() {
     var el = document.getElementById('playerCountBadge');
-    if (!el) return;
-    var count = _playerCount254.base + Math.floor(Math.random() * _playerCount254.variance) - Math.floor(_playerCount254.variance / 2);
-    // Time-based variation (more players in evening)
-    var hour = new Date().getHours();
-    if (hour >= 18 && hour <= 23) count = Math.floor(count * 1.4);
-    else if (hour >= 0 && hour <= 5) count = Math.floor(count * 0.6);
-    el.textContent = count.toLocaleString() + ' playing now';
-    el.className = 'player-count-badge';
-    el.style.display = '';
+    if (el) el.style.display = 'none';
 }
+function _updatePlayerCount() { /* removed: no real player-count source */ }
 
 // Sprint 255 — Recent big wins feed
 var _bigWins255 = [];
@@ -15801,14 +15785,10 @@ var _tournament271 = {
     myScore: 0
 };
 function _initTournament() {
-    // Seed leaderboard with bot entries
-    var names = ['DragonMaster', 'LuckyStar99', 'VegasKing', 'SlotPro420', 'NeonQueen', 'GoldRush7', 'SpinWizard', 'CryptoAce', 'JackpotHunter', 'DiamondHand'];
+    // Real leaderboard data must come from a server endpoint. Until then,
+    // start with an empty entries array so we never display fabricated bot
+    // players ("DragonMaster", "LuckyStar99", etc.) with random scores.
     _tournament271.entries = [];
-    names.forEach(function(n, i) {
-        _tournament271.entries.push({ name: n, score: Math.floor(Math.random() * 50000) + 5000, rank: 0 });
-    });
-    _tournament271.entries.sort(function(a, b) { return b.score - a.score; });
-    _tournament271.entries.forEach(function(e, i) { e.rank = i + 1; });
     _updateTournamentBadge();
 }
 function _updateTournamentScore(winAmount) {
@@ -20515,17 +20495,15 @@ function _sliderBet(val) {
 }
 
 
-// --- Sprint 418 — Mini-Bonus Rounds ---
+// --- Sprint 418 — Mini-Bonus Rounds DISABLED ---
+// The mystery-prize amounts were generated client-side via Math.random()
+// and would credit real balance. Until a server endpoint provides the
+// authoritative prize list, this round is guarded so it cannot run.
 var _bonusRoundActive = false;
 function _initBonusRound() { _bonusRoundActive = false; }
 function _triggerBonusRound(bet) {
-    if (_bonusRoundActive) return;
-    _bonusRoundActive = true;
-    var prizes = [];
-    for (var i = 0; i < 9; i++) {
-        prizes.push(Math.floor(Math.random() * 10 + 1) * (bet || 1));
-    }
-    _showBonusRoundUI(prizes);
+    // No-op: bonus round disabled (no server-backed prize source).
+    return;
 }
 function _showBonusRoundUI(prizes) {
     var el = document.getElementById('bonusRoundOverlay');
@@ -21030,32 +21008,14 @@ function _openABDashboard() {
 }
 
 
-// --- Sprint 430 — Revenue Forecast ---
+// --- Sprint 430 — Revenue Forecast REMOVED ---
+// This is admin-only analytics. The numbers were fabricated client-side
+// via Math.random(); the real admin-analytics page already serves true
+// data. Hide the panel and refuse to open it from this surface.
 function _initRevenueForecast() {}
 function _openRevenueForecast() {
     var el = document.getElementById('revForecastOverlay');
-    if (!el) {
-        el = document.createElement('div');
-        el.id = 'revForecastOverlay';
-        el.className = 'rev-forecast-overlay';
-        document.body.appendChild(el);
-    }
-    var dailyRev = Math.floor(Math.random() * 500 + 200);
-    var weeklyProj = dailyRev * 7;
-    var monthlyProj = dailyRev * 30;
-    var html = '<div class="rev-forecast-card"><h3>Revenue Forecast</h3>';
-    html += '<div class="rev-row"><span>Today (est)</span><span>$' + dailyRev + '</span></div>';
-    html += '<div class="rev-row"><span>This Week</span><span>$' + weeklyProj + '</span></div>';
-    html += '<div class="rev-row"><span>This Month</span><span>$' + monthlyProj + '</span></div>';
-    html += '<div class="rev-chart">';
-    for (var i = 0; i < 7; i++) {
-        var h = Math.floor(Math.random() * 60 + 20);
-        html += '<div class="rev-bar" style="height:' + h + 'px"></div>';
-    }
-    html += '</div>';
-    html += '<button onclick="document.getElementById(&quot;revForecastOverlay&quot;).style.display=&quot;none&quot;" class="rev-close">Close</button></div>';
-    el.innerHTML = html;
-    el.style.display = 'flex';
+    if (el) el.style.display = 'none';
 }
 
 
@@ -21845,40 +21805,26 @@ function _showDepositMatchPreview(amount) {
 }
 
 
-// --- Sprint 457 — ARPU Widget ---
+// --- Sprint 457 — ARPU Widget DISABLED ---
+// Showed Math.random()-derived "Total Players" labelled as a real metric.
+// Real revenue/ARPU live in the server-backed admin dashboard at /admin.
 function _initARPUWidget() {}
 function _openARPUDashboard() {
-    var totalPlayers = Math.floor(Math.random() * 500 + 100);
-    var totalRev = _totalRevenue || 0;
-    var arpu = totalPlayers > 0 ? (totalRev / totalPlayers) : 0;
-    var arppu = arpu * 3.2;
     var el = document.getElementById('arpuDashOverlay');
-    if (!el) { el = document.createElement('div'); el.id = 'arpuDashOverlay'; el.className = 'arpu-dash-overlay'; document.body.appendChild(el); }
-    el.innerHTML = '<div class="arpu-card"><h3>Revenue Metrics (Admin)</h3>' +
-        '<div class="arpu-row"><span>Total Players</span><span>' + totalPlayers + '</span></div>' +
-        '<div class="arpu-row"><span>Total Revenue</span><span>$' + totalRev.toFixed(2) + '</span></div>' +
-        '<div class="arpu-row"><span>ARPU</span><span>$' + arpu.toFixed(2) + '</span></div>' +
-        '<div class="arpu-row"><span>ARPPU</span><span>$' + arppu.toFixed(2) + '</span></div>' +
-        '<button onclick="document.getElementById(&quot;arpuDashOverlay&quot;).style.display=&quot;none&quot;" class="arpu-close">Close</button></div>';
-    el.style.display = 'flex';
+    if (el) el.style.display = 'none';
+    if (typeof window !== 'undefined' && window.location) window.location.href = '/admin';
 }
 
 
-// --- Sprint 458 — Dynamic House Edge ---
-var _houseEdgeConfig = { base: 0.04, minRTP: 0.92, maxRTP: 0.97, currentRTP: 0.95 };
-function _initDynamicHouseEdge() {
-    try { var saved = localStorage.getItem('ms_houseEdgeConfig'); if (saved) _houseEdgeConfig = JSON.parse(saved); } catch(e) {}
-}
-function _adjustHouseEdge(playerSegment, sessionLength) {
-    var rtp = _houseEdgeConfig.currentRTP;
-    if (playerSegment === 'whale') rtp = Math.min(_houseEdgeConfig.maxRTP, rtp + 0.01);
-    if (playerSegment === 'new') rtp = Math.min(_houseEdgeConfig.maxRTP, rtp + 0.005);
-    if (sessionLength > 60) rtp = Math.max(_houseEdgeConfig.minRTP, rtp - 0.005);
-    _houseEdgeConfig.currentRTP = Math.max(_houseEdgeConfig.minRTP, Math.min(_houseEdgeConfig.maxRTP, rtp));
-    try { localStorage.setItem('ms_houseEdgeConfig', JSON.stringify(_houseEdgeConfig)); } catch(e) {}
-    return 1 - _houseEdgeConfig.currentRTP;
-}
-function _getHouseEdge() { return 1 - _houseEdgeConfig.currentRTP; }
+// --- Sprint 458 — Dynamic House Edge REMOVED ---
+// This module would have lowered RTP for "whale" segments and long
+// sessions. Per-player RTP manipulation is unethical and almost
+// certainly illegal under most gaming regulators. RTP is fixed per
+// game in shared/game-definitions.js and enforced by the server slot
+// engine — no client-side adjustment is permitted.
+function _initDynamicHouseEdge() {}
+function _adjustHouseEdge() { /* refused: RTP is per-game, fixed, server-authoritative */ return null; }
+function _getHouseEdge() { /* refused: see _adjustHouseEdge */ return null; }
 
 
 // --- Sprint 459 — Lazy Loading ---
@@ -22759,70 +22705,37 @@ function _sendVIPMsg() {
 }
 
 
-// --- Sprint 491 — Real-Time Revenue Dashboard ---
+// --- Sprint 491 — Real-Time Revenue Dashboard DISABLED ---
+// "Online Now", "Deposits Today", and the hourly chart bars were all
+// Math.random()-derived and labelled as "Live". Real metrics live in
+// the server-backed admin dashboard at /admin.
 function _initRealtimeDashboard() {}
 function _openRealtimeDashboard() {
     var el = document.getElementById('rtDashOverlay');
-    if (!el) { el = document.createElement('div'); el.id = 'rtDashOverlay'; el.className = 'rt-dash-overlay'; document.body.appendChild(el); }
-    var rev = _totalRevenue || 0;
-    var players = Math.floor(Math.random() * 50 + 10);
-    var depositsToday = Math.floor(Math.random() * 20 + 5);
-    var avgBet = rev > 0 ? (rev / Math.max(1, depositsToday)).toFixed(2) : '0.00';
-    var html = '<div class="rtd-card"><h3>Revenue Dashboard (Live)</h3>' +
-        '<div class="rtd-grid">' +
-        '<div class="rtd-metric"><span class="rtd-value">$' + rev.toFixed(2) + '</span><span class="rtd-label">Total Revenue</span></div>' +
-        '<div class="rtd-metric"><span class="rtd-value">' + players + '</span><span class="rtd-label">Online Now</span></div>' +
-        '<div class="rtd-metric"><span class="rtd-value">' + depositsToday + '</span><span class="rtd-label">Deposits Today</span></div>' +
-        '<div class="rtd-metric"><span class="rtd-value">$' + avgBet + '</span><span class="rtd-label">Avg Deposit</span></div>' +
-        '</div>' +
-        '<div class="rtd-chart">';
-    for (var i = 0; i < 12; i++) { html += '<div class="rtd-bar" style="height:' + (Math.random() * 60 + 10) + 'px"></div>'; }
-    html += '</div><span class="rtd-chart-label">Hourly Revenue (last 12h)</span>' +
-        '<button onclick="document.getElementById(&quot;rtDashOverlay&quot;).style.display=&quot;none&quot;" class="rtd-close">Close</button></div>';
-    el.innerHTML = html;
-    el.style.display = 'flex';
+    if (el) el.style.display = 'none';
+    if (typeof window !== 'undefined' && window.location) window.location.href = '/admin';
 }
 
 
-// --- Sprint 492 — Cohort LTV ---
+// --- Sprint 492 — Cohort LTV DISABLED ---
+// The cohort table was hardcoded fake numbers ($2.50/$8.30/...) labeled
+// as real cohort analysis. Real cohort data lives in /admin.
 function _initCohortLTV() {}
 function _openCohortLTV() {
     var el = document.getElementById('cohortLTVOverlay');
-    if (!el) { el = document.createElement('div'); el.id = 'cohortLTVOverlay'; el.className = 'cohort-ltv-overlay'; document.body.appendChild(el); }
-    var cohorts = [
-        { name: 'Week 1', day1: '$2.50', day7: '$8.30', day30: '$22.00', day90: '$45.00' },
-        { name: 'Week 2', day1: '$3.10', day7: '$9.50', day30: '$28.00', day90: '$52.00' },
-        { name: 'Week 3', day1: '$2.80', day7: '$7.90', day30: '$19.00', day90: '$38.00' },
-        { name: 'This Week', day1: '$3.50', day7: 'TBD', day30: 'TBD', day90: 'TBD' }
-    ];
-    var html = '<div class="cltv-card"><h3>Cohort LTV Analysis</h3><table class="cltv-table"><tr><th>Cohort</th><th>Day 1</th><th>Day 7</th><th>Day 30</th><th>Day 90</th></tr>';
-    cohorts.forEach(function(c) { html += '<tr><td>' + c.name + '</td><td>' + c.day1 + '</td><td>' + c.day7 + '</td><td>' + c.day30 + '</td><td>' + c.day90 + '</td></tr>'; });
-    html += '</table><button onclick="document.getElementById(&quot;cohortLTVOverlay&quot;).style.display=&quot;none&quot;" class="cltv-close">Close</button></div>';
-    el.innerHTML = html;
-    el.style.display = 'flex';
+    if (el) el.style.display = 'none';
+    if (typeof window !== 'undefined' && window.location) window.location.href = '/admin';
 }
 
 
-// --- Sprint 493 — Deposit Funnel Metrics ---
+// --- Sprint 493 — Deposit Funnel Metrics DISABLED ---
+// Hardcoded funnel counts (1000/350/120/...) labeled as real conversion
+// data. Real funnel metrics live in /admin.
 function _initDepositFunnel() {}
 function _openDepositFunnelView() {
     var el = document.getElementById('depFunnelOverlay');
-    if (!el) { el = document.createElement('div'); el.id = 'depFunnelOverlay'; el.className = 'dep-funnel-overlay'; document.body.appendChild(el); }
-    var steps = [
-        { name: 'Visited Site', count: 1000, pct: 100 },
-        { name: 'Created Account', count: 350, pct: 35 },
-        { name: 'Opened Cashier', count: 120, pct: 12 },
-        { name: 'Started Deposit', count: 80, pct: 8 },
-        { name: 'Completed Deposit', count: 55, pct: 5.5 },
-        { name: 'Made 2nd Deposit', count: 18, pct: 1.8 }
-    ];
-    var html = '<div class="df-card"><h3>Deposit Funnel</h3>';
-    steps.forEach(function(s) {
-        html += '<div class="df-step"><div class="df-bar-bg"><div class="df-bar-fill" style="width:' + s.pct + '%"></div></div><span class="df-name">' + s.name + '</span><span class="df-count">' + s.count + ' (' + s.pct + '%)</span></div>';
-    });
-    html += '<button onclick="document.getElementById(&quot;depFunnelOverlay&quot;).style.display=&quot;none&quot;" class="df-close">Close</button></div>';
-    el.innerHTML = html;
-    el.style.display = 'flex';
+    if (el) el.style.display = 'none';
+    if (typeof window !== 'undefined' && window.location) window.location.href = '/admin';
 }
 
 
@@ -22858,53 +22771,25 @@ function _openChurnDashboard() {
 }
 
 
-// --- Sprint 495 — Promo ROI Tracker ---
+// --- Sprint 495 — Promo ROI Tracker DISABLED ---
+// Hardcoded promo ROI numbers labeled as real performance data.
+// Real promo metrics live in /admin.
 function _initPromoROI() {}
 function _openPromoROI() {
     var el = document.getElementById('promoROIOverlay');
-    if (!el) { el = document.createElement('div'); el.id = 'promoROIOverlay'; el.className = 'promo-roi-overlay'; document.body.appendChild(el); }
-    var promos = [
-        { name: 'First Deposit 200%', spent: 5000, revenue: 12000, roi: '+140%' },
-        { name: 'Happy Hour 2x', spent: 1200, revenue: 3500, roi: '+192%' },
-        { name: 'Comeback Bonus', spent: 800, revenue: 2100, roi: '+163%' },
-        { name: 'Loss Recovery 25%', spent: 600, revenue: 1400, roi: '+133%' }
-    ];
-    var html = '<div class="proi-card"><h3>Promo ROI Tracker</h3><table class="proi-table"><tr><th>Promo</th><th>Cost</th><th>Revenue</th><th>ROI</th></tr>';
-    promos.forEach(function(p) { html += '<tr><td>' + p.name + '</td><td>$' + p.spent + '</td><td>$' + p.revenue + '</td><td class="proi-positive">' + p.roi + '</td></tr>'; });
-    html += '</table><button onclick="document.getElementById(&quot;promoROIOverlay&quot;).style.display=&quot;none&quot;" class="proi-close">Close</button></div>';
-    el.innerHTML = html;
-    el.style.display = 'flex';
+    if (el) el.style.display = 'none';
+    if (typeof window !== 'undefined' && window.location) window.location.href = '/admin';
 }
 
 
-// --- Sprint 496 — Player Activity Heatmap ---
+// --- Sprint 496 — Player Activity Heatmap DISABLED ---
+// Heatmap intensity was Math.random() per cell, labeled as real activity.
+// Real per-hour activity data lives in /admin.
 function _initPlayerHeatmap() {}
 function _openPlayerHeatmap() {
     var el = document.getElementById('heatmapOverlay');
-    if (!el) { el = document.createElement('div'); el.id = 'heatmapOverlay'; el.className = 'heatmap-overlay'; document.body.appendChild(el); }
-    var hours = [];
-    for (var d = 0; d < 7; d++) {
-        for (var h = 0; h < 24; h++) {
-            hours.push({ day: d, hour: h, intensity: Math.random() });
-        }
-    }
-    var days = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
-    var html = '<div class="hm-card"><h3>Player Activity Heatmap</h3><div class="hm-grid">';
-    html += '<div class="hm-row hm-header"><span></span>';
-    for (var hh = 0; hh < 24; hh += 3) html += '<span>' + hh + '</span>';
-    html += '</div>';
-    for (var dd = 0; dd < 7; dd++) {
-        html += '<div class="hm-row"><span class="hm-day">' + days[dd] + '</span>';
-        for (var hh2 = 0; hh2 < 24; hh2++) {
-            var val = hours[dd * 24 + hh2].intensity;
-            var opacity = (val * 0.8 + 0.1).toFixed(2);
-            html += '<div class="hm-cell" style="opacity:' + opacity + '" title="' + days[dd] + ' ' + hh2 + ':00"></div>';
-        }
-        html += '</div>';
-    }
-    html += '</div><button onclick="document.getElementById(&quot;heatmapOverlay&quot;).style.display=&quot;none&quot;" class="hm-close">Close</button></div>';
-    el.innerHTML = html;
-    el.style.display = 'flex';
+    if (el) el.style.display = 'none';
+    if (typeof window !== 'undefined' && window.location) window.location.href = '/admin';
 }
 
 
@@ -23919,7 +23804,8 @@ function _initFriendSystem() {
         document.getElementById('fr-add-btn').addEventListener('click', function() {
             var code = document.getElementById('fr-add-input').value.trim();
             if (!code) return;
-            friends.push({name: code, online: Math.random()>0.5, added: Date.now()});
+            // Online status defaults to false — no real social-graph backing data.
+            friends.push({name: code, online: false, added: Date.now()});
             localStorage.setItem('ms_friends', JSON.stringify(friends));
             btn.textContent = 'Friends (' + friends.length + ')';
             modal.remove(); 
@@ -24275,14 +24161,13 @@ function _initLeaderboardSeasons() {
     var endOfMonth = new Date(now.getFullYear(), now.getMonth()+1, 0, 23, 59, 59);
     _leaderboardSeason.endsAt = endOfMonth.getTime();
     var daysLeft = Math.ceil((endOfMonth - now) / 86400000);
+    // Seasonal leaderboard: only show real entries (saved from prior real
+    // submissions). No more Player100..Player119 fake seed with random scores.
     var saved = JSON.parse(localStorage.getItem('ms_lb_season') || '[]');
-    if (saved.length === 0) {
-        for (var i = 0; i < 20; i++) {
-            saved.push({ name: 'Player' + (100+i), score: Math.floor(Math.random()*50000), avatar: String.fromCodePoint(0x1F600 + i) });
-        }
-    }
     var myScore = parseInt(localStorage.getItem('ms_total_wagered') || '0');
-    saved.push({ name: 'You', score: myScore, avatar: String.fromCodePoint(0x1F451) });
+    if (myScore > 0) {
+        saved.push({ name: 'You', score: myScore, avatar: String.fromCodePoint(0x1F451) });
+    }
     saved.sort(function(a,b) { return b.score - a.score; });
     localStorage.setItem('ms_lb_season', JSON.stringify(saved.slice(0,50)));
     var widget = document.createElement('div');
@@ -24291,10 +24176,11 @@ function _initLeaderboardSeasons() {
     var top5 = saved.slice(0,5).map(function(p,i) {
         return '<div class="lb-row' + (p.name==='You'?' lb-you':'') + '"><span class="lb-rank">#' + (i+1) + '</span><span class="lb-avatar">' + p.avatar + '</span><span class="lb-name">' + p.name + '</span><span class="lb-score">$' + p.score.toLocaleString() + '</span></div>';
     }).join('');
+    var listHtml = top5 || '<div class="lb-empty">No participants yet</div>';
     widget.innerHTML = '<div class="lb-inner"><h3>Season Leaderboard</h3>' +
         '<div class="lb-season-info"><span>Season: ' + _leaderboardSeason.id + '</span><span>' + daysLeft + ' days left</span></div>' +
         '<div class="lb-prizes"><span>1st: $500</span><span>2nd: $250</span><span>3rd: $100</span></div>' +
-        top5 + '</div>';
+        listHtml + '</div>';
     document.body.appendChild(widget);
     console.log('[Sprint 523-530] Leaderboard Seasons ready');
 }
@@ -24322,7 +24208,8 @@ function _initFriendSystem() {
     document.getElementById('fr-add-btn').addEventListener('click', function() {
         var name = document.getElementById('fr-search-input').value.trim();
         if (!name) return;
-        friends.push({ name: name, online: Math.random() > 0.5, level: Math.floor(Math.random()*20)+1, added: Date.now() });
+        // Online status and level default to known-safe values; no real social graph.
+        friends.push({ name: name, online: false, level: 1, added: Date.now() });
         localStorage.setItem('ms_friends', JSON.stringify(friends));
         document.getElementById('fr-search-input').value = '';
         renderFriends();
@@ -26742,19 +26629,11 @@ function _claimWelcomeBonus627() {
     var el = document.getElementById('welcome-bonus-627'); if (el) el.remove();
 }
 
-/* ---- Feature 3: Social Proof Ticker ---- */
-function _initSocialProof627() {
-    var names = ['Lucky7','SpinKing','DiamondQ','JackpotJ','ReelMaster','GoldRush','AceHigh','BigWinner'];
-    var actions = ['just won $','deposited $','hit a jackpot of $','cashed out $'];
-    setInterval(function() {
-        if (Math.random() > 0.7) return;
-        var name = names[Math.floor(Math.random() * names.length)];
-        var action = actions[Math.floor(Math.random() * actions.length)];
-        var amount = (Math.random() * 500 + 10).toFixed(2);
-        if (typeof _showNotification571 === 'function') _showNotification571(name + ' ' + action + amount, 'info', 4000);
-    }, 45000);
-    console.log('[Sprint 627-634] Social Proof Ticker ready');
-}
+/* ---- Feature 3: Social Proof Ticker REMOVED ----
+ * Generated random player names + amounts every 45s. Real wins come from
+ * /api/public/hot-wins via the #hotWinsTicker block in index.html.
+ */
+function _initSocialProof627() { /* removed: fake social-proof ticker */ }
 
 /* ---- Feature 4: Countdown Timer Offers ---- */
 function _initCountdownOffers627() {

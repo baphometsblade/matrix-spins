@@ -364,12 +364,11 @@
                     if (prog >= ch.target && !state.completed.includes(ch.id)) {
                         state.completed.push(ch.id);
                         awardXP(ch.xp);
-                        // Cash reward
-                        if ((ch.reward || 0) > 0) {
-                            balance += ch.reward;
-                            if (typeof saveBalance === 'function') saveBalance();
-                            if (typeof updateBalance === 'function') updateBalance();
-                        }
+                        // Cash rewards must be granted by the server. The
+                        // client no longer mutates `balance` here — the
+                        // server's challenge-completion endpoint is the
+                        // single source of truth and will sync `balance`
+                        // on the next /api/user/me round-trip.
                         _showChallengeCompleteToast(ch);
                         if (typeof window.refreshLobbyChallengeWidget === 'function') window.refreshLobbyChallengeWidget();
                     }
@@ -1774,15 +1773,17 @@
                         const gameLabel = (currentGame && currentGame.name) ? currentGame.name : 'your next slot';
                         showToast(`\uD83C\uDFB0 ${fsCount} Free Spins awarded on ${gameLabel}!`, 'win');
                     } else {
-                        // Cash prize — use server balance if available
+                        // Cash prize — server is the single source of truth.
+                        // Only apply the balance if the server returned one;
+                        // never optimistically credit the client.
                         if (serverBalance != null) {
                             balance = serverBalance;
+                            updateBalance();
+                            awardXP(serverXP != null ? serverXP : seg.xp);
+                            showToast(`\uD83C\uDF89 Bonus Wheel: +$${seg.value.toLocaleString()} and +${(serverXP != null ? serverXP : seg.xp)} XP!`, 'win');
                         } else {
-                            balance += seg.value;
+                            showToast('Bonus reward pending — please refresh.', 'info');
                         }
-                        updateBalance();
-                        awardXP(serverXP != null ? serverXP : seg.xp);
-                        showToast(`\uD83C\uDF89 Bonus Wheel: +$${seg.value.toLocaleString()} and +${(serverXP != null ? serverXP : seg.xp)} XP!`, 'win');
                     }
 
                     wheelState.lastSpin = new Date().toISOString();
@@ -1972,113 +1973,21 @@
         }
 
         function openScratchCard() {
+            // Disabled: the scratch card was implemented entirely
+            // client-side with hard-coded prizes and a forced 30%
+            // win rate via Math.random(). It must not be allowed
+            // to credit real balance. Until a server-side bonus
+            // engine is wired up, render a "coming soon" notice.
             var modal = document.getElementById('scratchCardModal');
             if (!modal) return;
-
-            if (!canPlayScratchCard()) {
-                try {
-                    var saved = JSON.parse(localStorage.getItem(SCRATCH_STORAGE_KEY) || '{}');
-                    var msLeft = SCRATCH_COOLDOWN_MS - (Date.now() - saved.lastPlay);
-                    var hoursLeft = Math.ceil(msLeft / 3600000);
-                    showToast('Next scratch card in ' + hoursLeft + ' hour' + (hoursLeft !== 1 ? 's' : '') + '!', 'info');
-                } catch(e) {}
-                return;
-            }
-
-            // Shuffle helper
-            function _shuffleArr(arr) {
-                for (var i = arr.length - 1; i > 0; i--) {
-                    var j = Math.floor(Math.random() * (i + 1));
-                    var t = arr[i]; arr[i] = arr[j]; arr[j] = t;
-                }
-                return arr;
-            }
-
-            // Generate 9-cell grid
-            var cells = [];
-            var prizes = SCRATCH_PRIZES.slice();
-            _shuffleArr(prizes);
-
-            // ~30% chance of a forced win (3 matching cells)
-            var forceWin = Math.random() < 0.30;
-            if (forceWin) {
-                var winPrize = [100, 250, 250, 500][Math.floor(Math.random() * 4)];
-                var positions = _shuffleArr([0, 1, 2, 3, 4, 5, 6, 7, 8]);
-                var winPositions = [positions[0], positions[1], positions[2]];
-                for (var ci = 0; ci < 9; ci++) {
-                    cells[ci] = winPositions.indexOf(ci) >= 0 ? winPrize : prizes[ci % prizes.length];
-                }
-            } else {
-                for (var ni = 0; ni < 9; ni++) { cells[ni] = prizes[ni % prizes.length]; }
-                // Ensure no accidental triple
-                var counts = {};
-                cells.forEach(function(v) { counts[v] = (counts[v] || 0) + 1; });
-                Object.keys(counts).forEach(function(v) {
-                    if (counts[v] >= 3) {
-                        var replacement = SCRATCH_PRIZES.find(function(p) { return p !== Number(v); });
-                        for (var ri = 8; ri >= 0; ri--) {
-                            if (cells[ri] === Number(v)) { cells[ri] = replacement; break; }
-                        }
-                    }
-                });
-            }
-
-            // Build modal content
-            var gridHtml = cells.map(function(prize, idx) {
-                var sym = SCRATCH_SYMBOLS[prize] || '🎰';
-                return '<div class="scratch-cell" data-prize="' + prize + '" data-idx="' + idx + '">'
-                     + '<div class="scratch-cover">🎰</div>'
-                     + '<div class="scratch-reveal">' + sym + '<br><span class="scratch-amount">$' + prize + '</span></div>'
-                     + '</div>';
-            }).join('');
-
             var content = modal.querySelector('.scratch-content');
             if (content) {
-                content.innerHTML = '<p class="scratch-instruction">Click to reveal! Match 3 to win!</p>'
-                    + '<div class="scratch-grid">' + gridHtml + '</div>'
-                    + '<div id="scratchResult" class="scratch-result"></div>';
-
-                var revealed = [];
-                content.querySelectorAll('.scratch-cell').forEach(function(cell) {
-                    cell.addEventListener('click', function() {
-                        if (cell.classList.contains('scratched')) return;
-                        cell.classList.add('scratched');
-                        revealed.push(parseInt(cell.getAttribute('data-prize')));
-
-                        if (revealed.length === 9) {
-                            // All revealed — check for a triple match
-                            var counts2 = {};
-                            revealed.forEach(function(v) { counts2[v] = (counts2[v] || 0) + 1; });
-                            var winValue = null;
-                            Object.keys(counts2).forEach(function(v) {
-                                if (counts2[v] >= 3) winValue = Number(v);
-                            });
-
-                            var prize = winValue || 5; // consolation $5
-                            var resultEl = document.getElementById('scratchResult');
-                            if (winValue) {
-                                if (resultEl) resultEl.innerHTML = '<span class="scratch-win">🎉 You matched 3! Won <strong>$' + winValue + '</strong>!</span>';
-                                showToast('🎰 Scratch card: Won $' + winValue + '!', 'success');
-                            } else {
-                                if (resultEl) resultEl.innerHTML = '<span class="scratch-consolation">No match — consolation prize: <strong>$50</strong></span>';
-                                showToast('Scratch card: Consolation $5', 'info');
-                            }
-
-                            // Credit prize
-                            balance += prize;
-                            updateBalance();
-                            if (typeof saveBalance === 'function') saveBalance();
-                            awardXP(10);
-
-                            // Save cooldown
-                            try {
-                                localStorage.setItem(SCRATCH_STORAGE_KEY, JSON.stringify({ lastPlay: Date.now(), lastPrize: prize }));
-                            } catch(e) {}
-                        }
-                    });
-                });
+                content.innerHTML = '<div class="scratch-disabled" style="padding:32px;text-align:center;color:#fff;">'
+                    + '<div style="font-size:48px;margin-bottom:12px;">🚧</div>'
+                    + '<h3 style="margin:0 0 8px;">Coming Soon</h3>'
+                    + '<p style="opacity:0.8;margin:0;">Pending server-side bonus engine.</p>'
+                    + '</div>';
             }
-
             modal.classList.add('active');
             modal.onclick = function(e) { if (e.target === modal) modal.classList.remove('active'); };
         }
@@ -2198,39 +2107,11 @@ function _buyXpShopItem(item) {
     })
     .catch(function (err) {
         btns.forEach(function (b) { b.disabled = false; });
-
-        // Server is unreachable — only allow non-balance items client-side.
-        // Balance grants MUST go through the server to prevent exploitation.
-        if (item.type === 'balance' || item.id === 'balance5' || item.id === 'balance20') {
-            if (typeof showToast === 'function') {
-                showToast('Server unavailable — balance rewards require a server connection.', 'error', 5000);
-            }
-            return;
-        }
-
-        // Fallback for freespins / xpboost when server is offline
-        if (typeof playerXP !== 'undefined' && playerXP >= item.cost) {
-            playerXP -= item.cost;
-            if (typeof saveXP === 'function') saveXP();
-            if (typeof updateXPDisplay === 'function') updateXPDisplay();
-
-            if (item.id === 'freespins5') {
-                if (typeof currentGame !== 'undefined' && currentGame && typeof triggerFreeSpins === 'function') {
-                    triggerFreeSpins(currentGame, 5);
-                    if (typeof showToast === 'function') showToast('5 Free Spins activated! (offline)', 'win');
-                } else if (typeof showToast === 'function') {
-                    showToast('Open a slot first to use your Free Spins!', 'info');
-                }
-            } else if (item.id === 'xpboost50') {
-                try {
-                    var existingBoost = JSON.parse(localStorage.getItem('matrixXpBoost') || 'null');
-                    var boostRem = (existingBoost && existingBoost.remaining > 0) ? existingBoost.remaining + 50 : 50;
-                    localStorage.setItem('matrixXpBoost', JSON.stringify({ remaining: boostRem }));
-                    if (typeof showToast === 'function') showToast('2× XP Boost active for ' + boostRem + ' spins! (offline)', 'win');
-                } catch (e) {}
-            }
-
-            if (typeof openXpShop === 'function') openXpShop();
+        // No client-side fallback. Bonus grants (balance, free spins,
+        // XP boosts) must originate from the server. If the API call
+        // fails, surface the failure and refuse the purchase.
+        if (typeof showToast === 'function') {
+            showToast('Bonus unavailable, please reconnect.', 'error', 5000);
         }
     });
 }
@@ -2246,15 +2127,7 @@ var MYSTERY_BOX_PRIZES = [
     { label: 'Legendary',  weight: 5,  cash: [100, 100], spins: 5,  emoji: '👑' },
 ];
 
-function _pickMysteryPrize() {
-    var roll = Math.random() * 100;
-    var cumulative = 0;
-    for (var i = 0; i < MYSTERY_BOX_PRIZES.length; i++) {
-        cumulative += MYSTERY_BOX_PRIZES[i].weight;
-        if (roll < cumulative) return MYSTERY_BOX_PRIZES[i];
-    }
-    return MYSTERY_BOX_PRIZES[0];
-}
+// _pickMysteryPrize removed: prize selection must happen server-side.
 
 function _getMysteryBoxState() {
     try { return JSON.parse(localStorage.getItem(MYSTERY_BOX_KEY) || 'null'); } catch(e) { return null; }
@@ -2318,49 +2191,17 @@ function _refreshMysteryBoxModal() {
 }
 
 function doOpenMysteryBox() {
-    var state = _getMysteryBoxState();
-    var elapsed = state ? Date.now() - state.lastOpen : Infinity;
-    if (elapsed < MYSTERY_BOX_COOLDOWN_MS) return;
-
-    var prize = _pickMysteryPrize();
-    var cashMin = prize.cash[0], cashMax = prize.cash[1];
-    var cashAmt = cashMin + Math.floor(Math.random() * (cashMax - cashMin + 1));
-
-    // Save cooldown
-    try { localStorage.setItem(MYSTERY_BOX_KEY, JSON.stringify({ lastOpen: Date.now() })); } catch (e) { /* ignore */ }
-
-    // Award prize
-    if (typeof balance !== 'undefined') {
-        balance += cashAmt;
-        if (typeof saveBalance === 'function') saveBalance();
-        if (typeof updateBalance === 'function') updateBalance();
-    }
-    if (prize.spins > 0 && typeof currentGame !== 'undefined' && currentGame && typeof triggerFreeSpins === 'function') {
-        triggerFreeSpins(currentGame, prize.spins);
-    }
-
-    // Animate
-    var icon   = document.getElementById('mysteryBoxIcon');
-    var status = document.getElementById('mysteryBoxStatus');
+    // Disabled: prize selection and the cash amount were both pure
+    // client-side Math.random() picks. The mystery box must never
+    // grant real balance until a server-side bonus engine returns
+    // the authoritative prize. Render the modal in 'pending' state.
+    var status  = document.getElementById('mysteryBoxStatus');
     var openBtn = document.getElementById('mysteryBoxOpenBtn');
-    if (icon) {
-        icon.className = 'mystery-box-icon mystery-box-icon--opening';
-        icon.textContent = '✨';
-        setTimeout(function() {
-            icon.textContent = prize.emoji;
-            icon.className = 'mystery-box-icon mystery-box-icon--revealed';
-        }, 600);
+    if (status) status.textContent = 'Coming soon — pending server-side bonus engine.';
+    if (openBtn) { openBtn.disabled = true; openBtn.textContent = 'UNAVAILABLE'; }
+    if (typeof showToast === 'function') {
+        showToast('Mystery Box rewards are temporarily disabled.', 'info');
     }
-    if (status) {
-        setTimeout(function() {
-            var msg = prize.label + '! +$' + cashAmt.toLocaleString();
-            if (prize.spins > 0) msg += ' + ' + prize.spins + ' Free Spins!';
-            status.textContent = msg;
-            if (typeof showToast === 'function') showToast(prize.emoji + ' Mystery Box: ' + msg, prize.label === 'Legendary' ? 'bigwin' : 'win');
-        }, 700);
-    }
-    if (openBtn) { openBtn.disabled = true; openBtn.textContent = 'OPENED'; }
-    _updateMysteryBoxNavBtn();
 }
 
 // Refresh nav btn state on load and every minute
@@ -2522,34 +2363,16 @@ function _cjUpdateTicker() {
     ticker.classList.toggle('cjt-large', amount > 10000);
 }
 
-// Called by spin flow to contribute to pool and check for win
-function communityJackpotSpin(bet) {
-    var s = _cjGetPool();
-    s.pool = Math.min(s.pool + CJ_CONTRIBUTION, CJ_MAX);
-    // Random win check
-    var won = Math.random() < (1 / CJ_WIN_ODDS);
-    if (won) {
-        var winAmount = s.pool;
-        s.pool = CJ_SEED;
-        s.lastReset = Date.now();
-        _cjSave(s);
-        // Award
-        if (typeof balance !== 'undefined') {
-            balance += winAmount;
-            if (typeof saveBalance === 'function') saveBalance();
-            if (typeof updateBalance === 'function') updateBalance();
-        }
-        if (typeof showToast === 'function') showToast('🌐 COMMUNITY JACKPOT! +$' + Math.floor(winAmount).toLocaleString() + '!', 'bigwin');
-        // Full-screen celebration
-        var cel = document.createElement('div');
-        cel.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.85);z-index:10400;display:flex;flex-direction:column;align-items:center;justify-content:center;color:#fff;font-family:sans-serif;cursor:pointer;';
-        cel.innerHTML = '<div style="font-size:72px;margin-bottom:16px">🌐</div><div style="font-size:36px;font-weight:900;color:#f0c040">COMMUNITY JACKPOT!</div><div style="font-size:24px;margin-top:12px">You won $' + Math.floor(winAmount).toLocaleString() + '!</div><div style="font-size:13px;margin-top:24px;opacity:0.6">Tap to continue</div>';
-        cel.onclick = function() { document.body.removeChild(cel); };
-        document.body.appendChild(cel);
-    } else {
-        _cjSave(s);
-    }
-    _cjUpdateTicker();
+// Community Jackpot DISABLED — used to call Math.random() on every spin
+// to potentially credit the player's balance with the entire pool. That
+// is a client-side balance grant with no server authority and no real
+// cross-player jackpot pool. Refused: no balance is ever credited from
+// here. The ticker UI is also hidden until a server-backed cross-user
+// jackpot endpoint exists.
+function communityJackpotSpin(_bet) {
+    var ticker = document.getElementById('communityJackpotTicker');
+    if (ticker) ticker.style.display = 'none';
+    return;
 }
 
 // Init ticker on load
@@ -2915,13 +2738,17 @@ function doLuckySpin() {
     }
     setTimeout(function() {
         _lsSpinning = false;
-        if (seg.type === 'cash') {
-            if (typeof balance !== 'undefined') balance += seg.value;
-            if (typeof updateBalance === 'function') updateBalance();
-        } else if (seg.type === 'xp') {
+        // Cash credits removed: the segment was chosen by client-side
+        // Math.random() and would credit real balance from a fake spin.
+        // XP awards remain since XP is purely cosmetic / level progression.
+        if (seg.type === 'xp') {
             if (typeof awardXP === 'function') awardXP(seg.value);
         }
-        if (resultEl) resultEl.textContent = '🎉 You won ' + seg.label + '!';
+        if (resultEl) {
+            resultEl.textContent = seg.type === 'cash'
+                ? 'Bonus pending — server-side bonus engine not yet wired up.'
+                : '🎉 You won ' + seg.label + '!';
+        }
         if (freeAvail) state.lastFreeDay = today;
         state.totalSpins = (state.totalSpins || 0) + 1;
         try { localStorage.setItem(_LS_KEY, JSON.stringify(state)); } catch (e) { /* ignore */ }
