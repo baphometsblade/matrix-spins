@@ -50,7 +50,7 @@
       "@type": "WebSite",
       "name": "Matrix Spins Casino",
       "url": "https://msaart.online",
-      "description": "Play 150+ premium online slot games with massive jackpots up to $25,000. Welcome bonus up to $2,500 + 150 Free Spins.",
+      "description": "Play 60+ premium online slot games with provably-fair RNG. Server-authoritative spins, instant withdrawals.",
       "potentialAction": {
         "@type": "SearchAction",
         "target": "https://msaart.online/?search={search_term_string}",
@@ -63,7 +63,7 @@
     
     <!-- Maintenance Mode Check -->
     <script src="js/maintenance-check.js"></script>
-    <link rel="stylesheet" href="styles.061bd909.css">
+    <link rel="stylesheet" href="styles.6f5083c4.css">
 </head>
 <body>
     <script src="js/error-handler.js"></script>
@@ -88,11 +88,11 @@
     <div class="promo-bar">
         <div class="promo-marquee">
             <div class="promo-marquee-inner">
-                <span class="promo-item">WELCOME BONUS: 100% UP TO $2,500 + 150 FREE SPINS</span>
+                <span class="promo-item">WELCOME BONUS</span>
                 <span class="promo-sep">|</span>
-                <span class="promo-item">DAILY CASHBACK UP TO 15%</span>
+                <span class="promo-item">DAILY CASHBACK</span>
                 <span class="promo-sep">|</span>
-                <span class="promo-item">165+ PREMIUM SLOT GAMES</span>
+                <span class="promo-item">PROVABLY FAIR</span>
                 <span class="promo-sep">|</span>
                 <span class="promo-item">VIP REWARDS PROGRAM</span>
                 <span class="promo-sep">|</span>
@@ -104,11 +104,11 @@
                 <span class="promo-sep">|</span>
                 <span class="promo-item">24/7 LIVE SUPPORT</span>
                 <span class="promo-sep">|</span>
-                <span class="promo-item">WELCOME BONUS: 100% UP TO $2,500 + 150 FREE SPINS</span>
+                <span class="promo-item">WELCOME BONUS</span>
                 <span class="promo-sep">|</span>
-                <span class="promo-item">DAILY CASHBACK UP TO 15%</span>
+                <span class="promo-item">DAILY CASHBACK</span>
                 <span class="promo-sep">|</span>
-                <span class="promo-item">165+ PREMIUM SLOT GAMES</span>
+                <span class="promo-item">PROVABLY FAIR</span>
                 <span class="promo-sep">|</span>
                 <span class="promo-item">VIP REWARDS PROGRAM</span>
                 <span class="promo-sep">|</span>
@@ -147,7 +147,7 @@
                 </button>
                 <div class="balance-display">
                     <div class="balance-label">BALANCE</div>
-                    <div class="balance-amount">$<span id="balance">5000.00</span></div>
+                    <div class="balance-amount">$<span id="balance">—</span></div>
                     <div class="wagering-bar-wrap" id="wageringBarWrap" style="display:none">
                         <div class="wagering-bar-track"><div class="wagering-bar-fill" id="wageringBarFill" style="width:0%"></div></div>
                         <div class="wagering-bar-label" id="wageringBarLabel">Bonus: $0 (0%)</div>
@@ -312,13 +312,13 @@
                 <div class="hero-left">
                     <div class="hero-tags">
                         <span class="hero-tag tag-hot">LIMITED OFFER</span>
-                        <span class="hero-tag tag-games">165+ GAMES</span>
+                        <span class="hero-tag tag-games"><span id="heroGameCount">…</span> GAMES</span>
                     </div>
                     <h2 class="hero-title">
                         SPIN TO <span class="hero-highlight">WIN BIG</span>
                     </h2>
                     <p class="hero-subtitle">
-                        165+ Premium Slot Games · Jackpots Up To $25,000 · Instant Withdrawals
+                        <span id="heroSubtitleCount">67</span>+ Premium Slot Games · Provably Fair · Instant Withdrawals
                     </p>
                     <div class="hero-buttons">
                         <button class="btn btn-play" onclick="playRandomHotGame()">PLAY NOW</button>
@@ -328,8 +328,8 @@
                 </div>
                 <div class="hero-stats">
                     <div class="stats-label">BIGGEST WIN TODAY</div>
-                    <div class="stats-value">$<span id="biggestWin">0</span></div>
-                    <div class="stats-info"><span id="recentWinsCount">12</span> wins in last hour</div>
+                    <div class="stats-value">$<span id="biggestWin"></span></div>
+                    <div class="stats-info"><span id="recentWinsCount"></span> wins in last hour</div>
                     <div class="balance-sparkline-wrap" id="balanceSparklineWrap" style="display:none">
                         <div class="sparkline-label">Balance Trend</div>
                         <svg id="balanceSparkline" class="balance-sparkline" viewBox="0 0 120 36" preserveAspectRatio="none"></svg>
@@ -337,10 +337,29 @@
                 </div>
                 <div class="hero-jackpot" id="heroJackpotDisplay" style="display:none">
                     <div class="hero-jackpot-label">?? GRAND JACKPOT</div>
-                    <div class="hero-jackpot-amount" id="heroJackpotAmount">$25,000.00</div>
+                    <div class="hero-jackpot-amount" id="heroJackpotAmount"></div>
                 </div>
             </div>
         </div>
+        <script>
+            (function(){
+                function updateHeroCounts(){
+                    try {
+                        var n = (typeof games !== 'undefined' && games && games.length) ? games.length : 0;
+                        var tag = document.getElementById('heroGameCount');
+                        var sub = document.getElementById('heroSubtitleCount');
+                        var allCount = document.getElementById('allGamesCount');
+                        if (tag) tag.textContent = n ? (n + '+') : '';
+                        if (sub) sub.textContent = n ? n : '';
+                        if (allCount) allCount.textContent = n ? (n + ' games') : '';
+                    } catch (e) {}
+                }
+                updateHeroCounts();
+                // Re-run shortly in case the games catalog loads after this inline script
+                setTimeout(updateHeroCounts, 500);
+                setTimeout(updateHeroCounts, 2000);
+            })();
+        </script>
 
         <!-- Live Big Wins Feed -->
 
@@ -348,7 +367,6 @@
         <div class="win-ticker-bar" id="winTicker">
             <span class="ticker-live-dot"></span>
             <div class="ticker-content" id="tickerContent">
-                <span class="ticker-item">Welcome to Matrix Spins!</span>
             </div>
         </div>
 
@@ -380,7 +398,7 @@
         <!-- Search Bar -->
         <div class="game-search-bar" id="gameSearchBar">
             <svg class="search-icon" viewBox="0 0 20 20" fill="currentColor" width="18" height="18"><path fill-rule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clip-rule="evenodd"/></svg>
-            <input type="text" class="game-search-input" id="gameSearchInput" placeholder="Search 150+ games..." oninput="filterGamesBySearch(this.value)" aria-label="Search all games">
+            <input type="text" class="game-search-input" id="gameSearchInput" placeholder="Search games..." oninput="filterGamesBySearch(this.value)" aria-label="Search all games">
             <button class="search-clear-btn" id="searchClearBtn" onclick="clearGameSearch()" style="display:none;">&times;</button>
             <select class="game-sort-select" id="gameSortSelect" onchange="if(typeof setSortOrder==='function')setSortOrder(this.value)" title="Sort games">
                 <option value="popular">Popular</option>
@@ -439,7 +457,7 @@
                 <svg viewBox="0 0 20 20" fill="currentColor" width="16" height="16" style="vertical-align:middle;margin-right:6px;color:var(--rg-primary-100)"><rect x="2" y="2" width="7" height="7" rx="1.5"/><rect x="11" y="2" width="7" height="7" rx="1.5"/><rect x="2" y="11" width="7" height="7" rx="1.5"/><rect x="11" y="11" width="7" height="7" rx="1.5"/></svg>
                 All Slots
             </h3>
-            <span class="section-game-count" id="allGamesCount">165 games</span>
+            <span class="section-game-count" id="allGamesCount"></span>
             <span class="games-explored-badge" id="gamesExploredBadge" style="display:none" title="Unique games you've tried"></span>
             <div class="layout-toggle" role="group" aria-label="Lobby layout">
                 <button class="layout-btn layout-btn-active" id="layoutGridBtn" onclick="setLobbyLayout('grid')" title="Grid view" aria-label="Grid view"><span aria-hidden="true">&#x25A6;</span></button>
@@ -994,7 +1012,7 @@
                 <!-- Left: Balance -->
                 <div class="slot-bar-section slot-bar-balance">
                     <div class="slot-bar-label">BALANCE</div>
-                    <div class="slot-bar-value">$<span id="slotBalance">5000.00</span></div>
+                    <div class="slot-bar-value">$<span id="slotBalance">—</span></div>
                     <span class="slot-net-display" id="slotNetDisplay" style="display:none"></span>
                     <span class="spin-counter" id="spinCounter" style="display:none"></span>
                     <div class="recent-outcomes" id="recentOutcomes" style="display:none"></div>
@@ -2149,7 +2167,7 @@ if ('serviceWorker' in navigator) {
     
     
     
-    <script src="bundle.a97538ff.js"></script>
+    <script src="bundle.2a73ed3e.js"></script>
 </body>
 </html>
 

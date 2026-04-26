@@ -1646,9 +1646,23 @@
 
         async function spinBonusWheel() {
             if (wheelSpinning || !canSpinWheel()) return;
-            wheelSpinning = true;
 
             const spinBtn = document.getElementById('wheelSpinBtn');
+
+            // Require login. No guest spin — the bonus wheel result MUST come
+            // from a server endpoint (no client-side RNG, no fake credits).
+            // TODO: bonus-wheel result must come from /api/user/spin-wheel only;
+            // never derive winIndex client-side.
+            if (typeof isServerAuthToken !== 'function' || !isServerAuthToken()) {
+                if (spinBtn) {
+                    spinBtn.disabled = true;
+                    spinBtn.textContent = 'LOG IN TO SPIN';
+                }
+                showToast('Please log in to spin the bonus wheel.', 'info');
+                return;
+            }
+
+            wheelSpinning = true;
             spinBtn.disabled = true;
             spinBtn.textContent = 'SPINNING...';
 
@@ -1658,34 +1672,28 @@
             let serverBalance = null;
             let serverXP = null;
 
-            // Server-validated spin for authenticated users
-            if (typeof isServerAuthToken === 'function' && isServerAuthToken()) {
-                try {
-                    const res = await apiRequest('/api/user/spin-wheel', {
-                        method: 'POST',
-                        requireAuth: true,
-                    });
-                    winIndex = res.winIndex;
-                    serverBalance = res.newBalance;
-                    serverXP = res.xp;
-                } catch (err) {
-                    wheelSpinning = false;
-                    if (err.status === 400) {
-                        // Cooldown enforced server-side — sync local state
-                        wheelState.lastSpin = new Date().toISOString();
-                        saveWheelState();
-                        spinBtn.textContent = _wheelCooldownLabel() || 'NEXT SPIN IN A FEW HOURS';
-                        showToast('Wheel cooldown still active!', 'info');
-                    } else {
-                        spinBtn.disabled = false;
-                        spinBtn.textContent = 'SPIN THE WHEEL';
-                        showToast('Wheel spin failed — try again.', 'info');
-                    }
-                    return;
+            try {
+                const res = await apiRequest('/api/user/spin-wheel', {
+                    method: 'POST',
+                    requireAuth: true,
+                });
+                winIndex = res.winIndex;
+                serverBalance = res.newBalance;
+                serverXP = res.xp;
+            } catch (err) {
+                wheelSpinning = false;
+                if (err.status === 400) {
+                    // Cooldown enforced server-side — sync local state
+                    wheelState.lastSpin = new Date().toISOString();
+                    saveWheelState();
+                    spinBtn.textContent = _wheelCooldownLabel() || 'NEXT SPIN IN A FEW HOURS';
+                    showToast('Wheel cooldown still active!', 'info');
+                } else {
+                    spinBtn.disabled = false;
+                    spinBtn.textContent = 'SPIN THE WHEEL';
+                    showToast('Wheel spin failed — try again.', 'info');
                 }
-            } else {
-                // Guest / offline — client-side RNG
-                winIndex = Math.floor(Math.random() * WHEEL_SEGMENTS.length);
+                return;
             }
 
             const segAngle = (2 * Math.PI) / WHEEL_SEGMENTS.length;

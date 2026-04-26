@@ -190,12 +190,11 @@
                 multiplier *= bombMult;
                 bonusText = ` (${bombMult}x Bomb!)`;
                 showBonusEffect(`${bombMult}x MULTIPLIER!`, game.accentColor);
-            } else if (!freeSpinsActive && game.bonusType === 'random_multiplier') {
-                // Base game: apply a small random multiplier on wins (1x-3x)
-                const baseMultChoices = [1, 1, 1, 2, 2, 3];
-                multiplier = baseMultChoices[Math.floor(Math.random() * baseMultChoices.length)];
-                if (multiplier > 1) bonusText = '×' + multiplier + ' Random!';
             }
+            // Removed: client-side base-game random_multiplier branch.
+            // Live spins: the server's spin response (outcome.lines) already
+            // factors any bonus multiplier — applying one here would double-count
+            // and is non-fair (Math.random()).
 
             if (freeSpinsActive && game.bonusType === 'zeus_multiplier') {
                 // Gates of Olympus: Zeus drops a multiplier on wins
@@ -204,13 +203,11 @@
                 multiplier *= zeusMult;
                 bonusText = ` (Zeus ${zeusMult}x!)`;
                 showBonusEffect(`ZEUS ${zeusMult}x!`, '#f5c842');
-            } else if (!freeSpinsActive && game.bonusType === 'zeus_multiplier') {
-                // Base game: 20% chance of 2x-4x divine multiplier
-                if (Math.random() < 0.20) {
-                    multiplier = 2 + Math.floor(Math.random() * 3); // 2, 3, or 4
-                    bonusText = '⚡ ×' + multiplier + ' Zeus!';
-                }
             }
+            // Removed: client-side base-game zeus_multiplier branch.
+            // Live spins: the server's spin response (outcome.lines) already
+            // includes any Zeus multiplier — applying one here would double-count
+            // and is non-fair (Math.random()).
 
             if (freeSpinsActive && (game.bonusType === 'tumble' || game.bonusType === 'avalanche')) {
                 const mults = game.tumbleMultipliers || game.avalancheMultipliers || [1, 2, 3, 5];

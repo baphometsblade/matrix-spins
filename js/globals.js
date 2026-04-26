@@ -133,7 +133,9 @@
         // MAX_RECENTLY_PLAYED — from constants.js
 
         // ===== Jackpot Ticker =====
-        let jackpotValue = JACKPOT_TICKER_BASE_VALUE + Math.floor(Math.random() * JACKPOT_TICKER_RANDOM_RANGE);
+        // Authentic value only — populated from /api/public/jackpot at boot.
+        // No client-side random seed (was: BASE + Math.random()*RANGE).
+        let jackpotValue = 0;
 
         // ═══════════════════════════════════════════════════════
         // SETTINGS PANEL
@@ -323,7 +325,13 @@
         }
 
         function getRandomNumber() {
-            return deterministicRng ? deterministicRng() : Math.random();
+            // Fair RNG only. If a deterministic (seeded/server-provided) RNG
+            // is not configured, refuse — never silently fall back to
+            // Math.random(), which is non-fair and outside server authority.
+            if (!deterministicRng) {
+                throw new Error('getRandomNumber: deterministicRng is not configured. Server-provided RNG is required.');
+            }
+            return deterministicRng();
         }
 
         function normalizeSymbol(symbol) {

@@ -1,5 +1,5 @@
 /* Royal Slots Casino - Bundled JavaScript */
-/* Generated: 2026-04-26T05:20:02.014Z */
+/* Generated: 2026-04-26T05:40:03.197Z */
 
 
 /* â”€â”€â”€ shared/game-definitions.js (2/56) â”€â”€â”€ */
@@ -745,7 +745,9 @@ if (typeof module !== 'undefined') module.exports = games;
         // MAX_RECENTLY_PLAYED — from constants.js
 
         // ===== Jackpot Ticker =====
-        let jackpotValue = JACKPOT_TICKER_BASE_VALUE + Math.floor(Math.random() * JACKPOT_TICKER_RANDOM_RANGE);
+        // Authentic value only — populated from /api/public/jackpot at boot.
+        // No client-side random seed (was: BASE + Math.random()*RANGE).
+        let jackpotValue = 0;
 
         // ═══════════════════════════════════════════════════════
         // SETTINGS PANEL
@@ -935,7 +937,13 @@ if (typeof module !== 'undefined') module.exports = games;
         }
 
         function getRandomNumber() {
-            return deterministicRng ? deterministicRng() : Math.random();
+            // Fair RNG only. If a deterministic (seeded/server-provided) RNG
+            // is not configured, refuse — never silently fall back to
+            // Math.random(), which is non-fair and outside server authority.
+            if (!deterministicRng) {
+                throw new Error('getRandomNumber: deterministicRng is not configured. Server-provided RNG is required.');
+            }
+            return deterministicRng();
         }
 
         function normalizeSymbol(symbol) {
@@ -3166,12 +3174,11 @@ function destroyParticleEngine() {
                 multiplier *= bombMult;
                 bonusText = ` (${bombMult}x Bomb!)`;
                 showBonusEffect(`${bombMult}x MULTIPLIER!`, game.accentColor);
-            } else if (!freeSpinsActive && game.bonusType === 'random_multiplier') {
-                // Base game: apply a small random multiplier on wins (1x-3x)
-                const baseMultChoices = [1, 1, 1, 2, 2, 3];
-                multiplier = baseMultChoices[Math.floor(Math.random() * baseMultChoices.length)];
-                if (multiplier > 1) bonusText = '×' + multiplier + ' Random!';
             }
+            // Removed: client-side base-game random_multiplier branch.
+            // Live spins: the server's spin response (outcome.lines) already
+            // factors any bonus multiplier — applying one here would double-count
+            // and is non-fair (Math.random()).
 
             if (freeSpinsActive && game.bonusType === 'zeus_multiplier') {
                 // Gates of Olympus: Zeus drops a multiplier on wins
@@ -3180,13 +3187,11 @@ function destroyParticleEngine() {
                 multiplier *= zeusMult;
                 bonusText = ` (Zeus ${zeusMult}x!)`;
                 showBonusEffect(`ZEUS ${zeusMult}x!`, '#f5c842');
-            } else if (!freeSpinsActive && game.bonusType === 'zeus_multiplier') {
-                // Base game: 20% chance of 2x-4x divine multiplier
-                if (Math.random() < 0.20) {
-                    multiplier = 2 + Math.floor(Math.random() * 3); // 2, 3, or 4
-                    bonusText = '⚡ ×' + multiplier + ' Zeus!';
-                }
             }
+            // Removed: client-side base-game zeus_multiplier branch.
+            // Live spins: the server's spin response (outcome.lines) already
+            // includes any Zeus multiplier — applying one here would double-count
+            // and is non-fair (Math.random()).
 
             if (freeSpinsActive && (game.bonusType === 'tumble' || game.bonusType === 'avalanche')) {
                 const mults = game.tumbleMultipliers || game.avalancheMultipliers || [1, 2, 3, 5];
@@ -14115,14 +14120,10 @@ function renderGameStatsWidget() {
 
 
         function openGamble() {
-            if (!gambleState.amount) return;
-            gambleState.active = true;
-            gambleState.round = 1;
-            updateGambleUI();
-            document.getElementById('gambleOverlay').style.display = 'flex';
-            document.getElementById('gambleHistory').innerHTML = '';
-            resetGambleCard();
+            // Gamble feature DISABLED: client-side Math.random() outcome cannot
+            // safely credit balance. Hide the button and refuse to open.
             hideGambleButton();
+            return;
         }
 
 
@@ -14145,7 +14146,16 @@ function renderGameStatsWidget() {
 
 
         function makeGambleChoice(playerChoice) {
+            // Gamble (red/black) feature DISABLED: outcome was decided client-side
+            // by Math.random(), which would credit/deduct real balance based on a
+            // fake RNG. Without a server endpoint to provide an authoritative card
+            // result, this feature must not run. Close the overlay and abort.
             if (!gambleState.active) return;
+            gambleState.active = false;
+            const overlay = document.getElementById('gambleOverlay');
+            if (overlay) overlay.style.display = 'none';
+            return;
+            // eslint-disable-next-line no-unreachable
             const choices = document.getElementById('gambleChoices');
             if (choices) choices.style.display = 'none';
 
@@ -14264,7 +14274,8 @@ function renderGameStatsWidget() {
             if (!body) return;
 
             const isMulti = game.gridRows && game.gridRows > 1;
-            const rtp = (94 + Math.random() * 2.5).toFixed(2); // Simulated RTP
+            // Use the real per-game RTP from the game definition; fall back to '—' if unknown.
+            const rtp = (game && typeof game.rtp === 'number') ? game.rtp.toFixed(2) : '—';
 
             // Grid info section
             let html = `<div class="paytable-section">
@@ -29644,31 +29655,28 @@ function _initAdminLink() {
 }
 
 
-// Sprint 299 — Live Player Count
-var _livePlayerCount = Math.floor(Math.random() * 200) + 80;
-var _livePlayerInterval = null;
+// Sprint 299 — Live Player Count REMOVED
+// Was a Math.random() simulation deceiving players into thinking the game
+// had a live concurrent-user count. No real backing data exists, so the
+// badge is now hidden and the ticking interval has been deleted.
 function _initLivePlayerCount() {
     var el = document.getElementById('livePlayerBadge');
-    if (!el) return;
-    el.style.display = 'flex';
-    _updateLivePlayerCount();
-    if (_livePlayerInterval) clearInterval(_livePlayerInterval);
-    _livePlayerInterval = setInterval(_updateLivePlayerCount, 8000);
+    if (el) el.style.display = 'none';
 }
-function _updateLivePlayerCount() {
-    _livePlayerCount = Math.max(30, _livePlayerCount + Math.floor(Math.random() * 21) - 10);
-    var el = document.getElementById('livePlayerNum');
-    if (el) el.textContent = _livePlayerCount.toLocaleString();
-}
+function _updateLivePlayerCount() { /* removed: no real player-count source */ }
 
 
 // Sprint 300 — Dynamic RTP Display
+// Previously rendered a Math.random() jitter around 96.5%. Now renders the
+// real per-game RTP from the game definition (currentGame.rtp), or hides
+// the badge if no real value is available.
 function _showGameRTP() {
     if (!currentGame) return;
     var el = document.getElementById('gameRtpBadge');
     if (!el) return;
-    var rtp = (96.5 + (Math.random() * 2 - 1)).toFixed(1);
-    el.textContent = 'RTP: ' + rtp + '%';
+    var realRtp = (currentGame && typeof currentGame.rtp === 'number') ? currentGame.rtp : null;
+    if (realRtp == null) { el.style.display = 'none'; return; }
+    el.textContent = 'RTP: ' + realRtp.toFixed(2) + '%';
     el.style.display = 'inline-block';
 }
 function _hideGameRTP() {
@@ -29997,23 +30005,13 @@ function _completeWelcome() {
 }
 
 
-// Sprint 316 — Progressive Jackpot Display
-var _jackpotAmount316 = 125000 + Math.random() * 50000;
-var _jackpotInterval316 = null;
+// Sprint 316 — Progressive Jackpot Display REMOVED (faked)
+// The amount was seeded with Math.random() and ticked every 3s with more
+// Math.random(). Per-game jackpots come from game-definitions.js and are
+// rendered separately. Hide the widget; do not show fake numbers.
 function _initJackpotWidget() {
     var el = document.getElementById('jackpotWidget316');
-    if (!el) return;
-    el.style.display = 'block';
-    _updateJackpotDisplay();
-    if (_jackpotInterval316) clearInterval(_jackpotInterval316);
-    _jackpotInterval316 = setInterval(function() {
-        _jackpotAmount316 += Math.random() * 5 + 0.5;
-        _updateJackpotDisplay();
-    }, 3000);
-}
-function _updateJackpotDisplay() {
-    var el = document.getElementById('jackpotAmount316');
-    if (el) el.textContent = '$' + _jackpotAmount316.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+    if (el) el.style.display = 'none';
 }
 
 
@@ -32818,21 +32816,18 @@ function _showSettings() {
 }
 
 
-/* ── 395-402 — progressive jackpot pool ───────────────────────── */
-var _jackpotPool = { mini: 250, minor: 2500, major: 25000, grand: 100000 };
+/* ── 395-402 — progressive jackpot pool ─────────────────────────
+ * The fake "ticking" of the four jackpot tiers (mini/minor/major/grand)
+ * was driven entirely by Math.random() and was deceiving players. The
+ * widget itself is now hidden until backed by a real server feed.
+ */
+var _jackpotPool = { mini: 0, minor: 0, major: 0, grand: 0 };
 var _jackpotContribution = 0.02;
 function _initJackpot() {
-    var stored = localStorage.getItem('ms_jackpot_pool');
-    if (stored) { try { _jackpotPool = JSON.parse(stored); } catch(e) {} }
-    _updateJackpotDisplay();
-    setInterval(function() {
-        _jackpotPool.mini += Math.random() * 0.5;
-        _jackpotPool.minor += Math.random() * 2;
-        _jackpotPool.major += Math.random() * 10;
-        _jackpotPool.grand += Math.random() * 50;
-        _updateJackpotDisplay();
-        localStorage.setItem('ms_jackpot_pool', JSON.stringify(_jackpotPool));
-    }, 3000);
+    // No real jackpot-pool source is wired up. Hide the widget instead of
+    // showing fake numbers that drift on Math.random().
+    var el = document.getElementById('jackpotTicker395');
+    if (el) el.style.display = 'none';
 }
 function _contributeToJackpot(betAmount) {
     var contribution = betAmount * _jackpotContribution;
@@ -42969,9 +42964,23 @@ window._logAudit658 = _logAudit658;
 
         async function spinBonusWheel() {
             if (wheelSpinning || !canSpinWheel()) return;
-            wheelSpinning = true;
 
             const spinBtn = document.getElementById('wheelSpinBtn');
+
+            // Require login. No guest spin — the bonus wheel result MUST come
+            // from a server endpoint (no client-side RNG, no fake credits).
+            // TODO: bonus-wheel result must come from /api/user/spin-wheel only;
+            // never derive winIndex client-side.
+            if (typeof isServerAuthToken !== 'function' || !isServerAuthToken()) {
+                if (spinBtn) {
+                    spinBtn.disabled = true;
+                    spinBtn.textContent = 'LOG IN TO SPIN';
+                }
+                showToast('Please log in to spin the bonus wheel.', 'info');
+                return;
+            }
+
+            wheelSpinning = true;
             spinBtn.disabled = true;
             spinBtn.textContent = 'SPINNING...';
 
@@ -42981,34 +42990,28 @@ window._logAudit658 = _logAudit658;
             let serverBalance = null;
             let serverXP = null;
 
-            // Server-validated spin for authenticated users
-            if (typeof isServerAuthToken === 'function' && isServerAuthToken()) {
-                try {
-                    const res = await apiRequest('/api/user/spin-wheel', {
-                        method: 'POST',
-                        requireAuth: true,
-                    });
-                    winIndex = res.winIndex;
-                    serverBalance = res.newBalance;
-                    serverXP = res.xp;
-                } catch (err) {
-                    wheelSpinning = false;
-                    if (err.status === 400) {
-                        // Cooldown enforced server-side — sync local state
-                        wheelState.lastSpin = new Date().toISOString();
-                        saveWheelState();
-                        spinBtn.textContent = _wheelCooldownLabel() || 'NEXT SPIN IN A FEW HOURS';
-                        showToast('Wheel cooldown still active!', 'info');
-                    } else {
-                        spinBtn.disabled = false;
-                        spinBtn.textContent = 'SPIN THE WHEEL';
-                        showToast('Wheel spin failed — try again.', 'info');
-                    }
-                    return;
+            try {
+                const res = await apiRequest('/api/user/spin-wheel', {
+                    method: 'POST',
+                    requireAuth: true,
+                });
+                winIndex = res.winIndex;
+                serverBalance = res.newBalance;
+                serverXP = res.xp;
+            } catch (err) {
+                wheelSpinning = false;
+                if (err.status === 400) {
+                    // Cooldown enforced server-side — sync local state
+                    wheelState.lastSpin = new Date().toISOString();
+                    saveWheelState();
+                    spinBtn.textContent = _wheelCooldownLabel() || 'NEXT SPIN IN A FEW HOURS';
+                    showToast('Wheel cooldown still active!', 'info');
+                } else {
+                    spinBtn.disabled = false;
+                    spinBtn.textContent = 'SPIN THE WHEEL';
+                    showToast('Wheel spin failed — try again.', 'info');
                 }
-            } else {
-                // Guest / offline — client-side RNG
-                winIndex = Math.floor(Math.random() * WHEEL_SEGMENTS.length);
+                return;
             }
 
             const segAngle = (2 * Math.PI) / WHEEL_SEGMENTS.length;

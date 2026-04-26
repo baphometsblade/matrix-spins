@@ -29,6 +29,7 @@
 const crypto = require('crypto');
 const db = require('../database');
 const featureFlags = require('./feature-flags.service');
+const universal = require('./slot-engine-universal.service');
 
 /* ────────────────────────────── games ────────────────────────────── */
 
@@ -118,7 +119,11 @@ const GAMES = {
 };
 
 function listGames() {
-    return Object.entries(GAMES).map(([id, g]) => ({
+    // Hand-tuned games (classic_777, neon_burst) keep their precise
+    // reel strip and paytable. Every other game in the catalog goes
+    // through the universal resolver so the public list is the full
+    // 67-game catalog, all server-authoritative.
+    const tuned = Object.entries(GAMES).map(([id, g]) => ({
         id,
         name: g.name,
         min_bet_cents: g.min_bet_cents,
@@ -134,10 +139,19 @@ function listGames() {
         symbols: Array.from(new Set(g.reels.flat())).sort(),
         paytable: g.paytable,
         reels: g.reels,
+        engine: 'tuned',
     }));
+    const tunedIds = new Set(Object.keys(GAMES));
+    const universalGames = universal.listGames()
+        .filter(g => !tunedIds.has(g.id))
+        .map(g => Object.assign({}, g, { engine: 'universal' }));
+    return tuned.concat(universalGames);
 }
 
-function hasGame(id) { return !!GAMES[id]; }
+function hasGame(id) {
+    if (GAMES[id]) return true;
+    return universal.hasGame(id);
+}
 
 /* ─────────────────────────── RNG / reveal ─────────────────────────── */
 
@@ -391,11 +405,14 @@ async function spinImpl({ userId, gameId, betCents, clientSeed }) {
         throw e;
     }
 
-    const game = GAMES[gameId];
-    if (!game) { const e = new Error('Unknown game.'); e.status = 404; throw e; }
+    const tunedGame = GAMES[gameId];
+    const universalGame = tunedGame ? null : universal.getGame(gameId);
+    if (!tunedGame && !universalGame) { const e = new Error('Unknown game.'); e.status = 404; throw e; }
+    const minBet = tunedGame ? tunedGame.min_bet_cents : universalGame.min_bet_cents;
+    const maxBet = tunedGame ? tunedGame.max_bet_cents : universalGame.max_bet_cents;
     const bet = Math.round(Number(betCents));
-    if (!Number.isFinite(bet) || bet < game.min_bet_cents || bet > game.max_bet_cents) {
-        const e = new Error(`Bet must be between ${game.min_bet_cents} and ${game.max_bet_cents} cents.`);
+    if (!Number.isFinite(bet) || bet < minBet || bet > maxBet) {
+        const e = new Error(`Bet must be between ${minBet} and ${maxBet} cents.`);
         e.status = 400;
         throw e;
     }
@@ -462,8 +479,24 @@ async function spinImpl({ userId, gameId, betCents, clientSeed }) {
     // the user's rotatable seed; normalize handles NULL → 'default'.
     const effectiveSeed = (clientSeed != null && clientSeed !== '') ? clientSeed : persistedClientSeed;
     const normalizedClientSeed = normalizeClientSeed(effectiveSeed);
-    const stops = spinReels(game, commit.server_seed, normalizedClientSeed, nonce);
-    const { win_cents, line } = evaluate(game, stops, bet);
+    let stops, win_cents, line, universalGrid = null, universalLines = null;
+    if (tunedGame) {
+        stops = spinReels(tunedGame, commit.server_seed, normalizedClientSeed, nonce);
+        const ev = evaluate(tunedGame, stops, bet);
+        win_cents = ev.win_cents;
+        line = ev.line;
+    } else {
+        // Universal path: derive cols floats (one per reel; rows follow
+        // the strip layout deterministically), spin, evaluate.
+        const floats = deriveFloats(commit.server_seed, normalizedClientSeed, nonce, universalGame.cols);
+        universalGrid = universal.spinReelsUniversal(universalGame, floats);
+        const ev = universal.evaluateUniversal(universalGame, universalGrid, bet);
+        win_cents = ev.win_cents;
+        universalLines = ev.lines;
+        // Synthesize a `stops` array for the round log (one entry per reel)
+        // so existing analytics/verifier code stays uniform.
+        stops = universalGrid.map((col, i) => ({ index: i, symbol: col[0], column: col }));
+    }
 
     // 3) Credit any win.
     if (win_cents > 0) {
@@ -478,7 +511,12 @@ async function spinImpl({ userId, gameId, betCents, clientSeed }) {
     const balanceAfter = Number((balRow && balRow.balance_cents) || 0);
 
     // 5) Persist the round with the revealed seed.
-    const outcome = { stops, line, reels_meta: { length: game.reels[0].length, count: game.reels.length } };
+    const reelsMeta = tunedGame
+        ? { length: tunedGame.reels[0].length, count: tunedGame.reels.length, engine: 'tuned' }
+        : { length: universalGame.reels[0].length, count: universalGame.cols, rows: universalGame.rows, engine: 'universal', win_type: universalGame.winType };
+    const outcome = tunedGame
+        ? { stops, line, reels_meta: reelsMeta }
+        : { stops, grid: universalGrid, lines: universalLines, reels_meta: reelsMeta };
     await db.run(
         `INSERT INTO slot_rounds
             (user_id, game_id, bet_cents, win_cents, balance_after_cents,

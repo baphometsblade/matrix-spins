@@ -1047,14 +1047,10 @@
 
 
         function openGamble() {
-            if (!gambleState.amount) return;
-            gambleState.active = true;
-            gambleState.round = 1;
-            updateGambleUI();
-            document.getElementById('gambleOverlay').style.display = 'flex';
-            document.getElementById('gambleHistory').innerHTML = '';
-            resetGambleCard();
+            // Gamble feature DISABLED: client-side Math.random() outcome cannot
+            // safely credit balance. Hide the button and refuse to open.
             hideGambleButton();
+            return;
         }
 
 
@@ -1077,7 +1073,16 @@
 
 
         function makeGambleChoice(playerChoice) {
+            // Gamble (red/black) feature DISABLED: outcome was decided client-side
+            // by Math.random(), which would credit/deduct real balance based on a
+            // fake RNG. Without a server endpoint to provide an authoritative card
+            // result, this feature must not run. Close the overlay and abort.
             if (!gambleState.active) return;
+            gambleState.active = false;
+            const overlay = document.getElementById('gambleOverlay');
+            if (overlay) overlay.style.display = 'none';
+            return;
+            // eslint-disable-next-line no-unreachable
             const choices = document.getElementById('gambleChoices');
             if (choices) choices.style.display = 'none';
 
@@ -1196,7 +1201,8 @@
             if (!body) return;
 
             const isMulti = game.gridRows && game.gridRows > 1;
-            const rtp = (94 + Math.random() * 2.5).toFixed(2); // Simulated RTP
+            // Use the real per-game RTP from the game definition; fall back to '—' if unknown.
+            const rtp = (game && typeof game.rtp === 'number') ? game.rtp.toFixed(2) : '—';
 
             // Grid info section
             let html = `<div class="paytable-section">
@@ -16576,31 +16582,28 @@ function _initAdminLink() {
 }
 
 
-// Sprint 299 — Live Player Count
-var _livePlayerCount = Math.floor(Math.random() * 200) + 80;
-var _livePlayerInterval = null;
+// Sprint 299 — Live Player Count REMOVED
+// Was a Math.random() simulation deceiving players into thinking the game
+// had a live concurrent-user count. No real backing data exists, so the
+// badge is now hidden and the ticking interval has been deleted.
 function _initLivePlayerCount() {
     var el = document.getElementById('livePlayerBadge');
-    if (!el) return;
-    el.style.display = 'flex';
-    _updateLivePlayerCount();
-    if (_livePlayerInterval) clearInterval(_livePlayerInterval);
-    _livePlayerInterval = setInterval(_updateLivePlayerCount, 8000);
+    if (el) el.style.display = 'none';
 }
-function _updateLivePlayerCount() {
-    _livePlayerCount = Math.max(30, _livePlayerCount + Math.floor(Math.random() * 21) - 10);
-    var el = document.getElementById('livePlayerNum');
-    if (el) el.textContent = _livePlayerCount.toLocaleString();
-}
+function _updateLivePlayerCount() { /* removed: no real player-count source */ }
 
 
 // Sprint 300 — Dynamic RTP Display
+// Previously rendered a Math.random() jitter around 96.5%. Now renders the
+// real per-game RTP from the game definition (currentGame.rtp), or hides
+// the badge if no real value is available.
 function _showGameRTP() {
     if (!currentGame) return;
     var el = document.getElementById('gameRtpBadge');
     if (!el) return;
-    var rtp = (96.5 + (Math.random() * 2 - 1)).toFixed(1);
-    el.textContent = 'RTP: ' + rtp + '%';
+    var realRtp = (currentGame && typeof currentGame.rtp === 'number') ? currentGame.rtp : null;
+    if (realRtp == null) { el.style.display = 'none'; return; }
+    el.textContent = 'RTP: ' + realRtp.toFixed(2) + '%';
     el.style.display = 'inline-block';
 }
 function _hideGameRTP() {
@@ -16929,23 +16932,13 @@ function _completeWelcome() {
 }
 
 
-// Sprint 316 — Progressive Jackpot Display
-var _jackpotAmount316 = 125000 + Math.random() * 50000;
-var _jackpotInterval316 = null;
+// Sprint 316 — Progressive Jackpot Display REMOVED (faked)
+// The amount was seeded with Math.random() and ticked every 3s with more
+// Math.random(). Per-game jackpots come from game-definitions.js and are
+// rendered separately. Hide the widget; do not show fake numbers.
 function _initJackpotWidget() {
     var el = document.getElementById('jackpotWidget316');
-    if (!el) return;
-    el.style.display = 'block';
-    _updateJackpotDisplay();
-    if (_jackpotInterval316) clearInterval(_jackpotInterval316);
-    _jackpotInterval316 = setInterval(function() {
-        _jackpotAmount316 += Math.random() * 5 + 0.5;
-        _updateJackpotDisplay();
-    }, 3000);
-}
-function _updateJackpotDisplay() {
-    var el = document.getElementById('jackpotAmount316');
-    if (el) el.textContent = '$' + _jackpotAmount316.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+    if (el) el.style.display = 'none';
 }
 
 
@@ -19750,21 +19743,18 @@ function _showSettings() {
 }
 
 
-/* ── 395-402 — progressive jackpot pool ───────────────────────── */
-var _jackpotPool = { mini: 250, minor: 2500, major: 25000, grand: 100000 };
+/* ── 395-402 — progressive jackpot pool ─────────────────────────
+ * The fake "ticking" of the four jackpot tiers (mini/minor/major/grand)
+ * was driven entirely by Math.random() and was deceiving players. The
+ * widget itself is now hidden until backed by a real server feed.
+ */
+var _jackpotPool = { mini: 0, minor: 0, major: 0, grand: 0 };
 var _jackpotContribution = 0.02;
 function _initJackpot() {
-    var stored = localStorage.getItem('ms_jackpot_pool');
-    if (stored) { try { _jackpotPool = JSON.parse(stored); } catch(e) {} }
-    _updateJackpotDisplay();
-    setInterval(function() {
-        _jackpotPool.mini += Math.random() * 0.5;
-        _jackpotPool.minor += Math.random() * 2;
-        _jackpotPool.major += Math.random() * 10;
-        _jackpotPool.grand += Math.random() * 50;
-        _updateJackpotDisplay();
-        localStorage.setItem('ms_jackpot_pool', JSON.stringify(_jackpotPool));
-    }, 3000);
+    // No real jackpot-pool source is wired up. Hide the widget instead of
+    // showing fake numbers that drift on Math.random().
+    var el = document.getElementById('jackpotTicker395');
+    if (el) el.style.display = 'none';
 }
 function _contributeToJackpot(betAmount) {
     var contribution = betAmount * _jackpotContribution;
@@ -19774,25 +19764,13 @@ function _contributeToJackpot(betAmount) {
     _jackpotPool.grand += contribution * 0.4;
 }
 function _updateJackpotDisplay() {
+    // Widget removed — the pool values were fake. Ensure no element is created.
     var el = document.getElementById('jackpotTicker395');
-    if (!el) {
-        el = document.createElement('div');
-        el.id = 'jackpotTicker395';
-        el.className = 'jackpot-ticker';
-        document.body.appendChild(el);
-    }
-    el.innerHTML = '<div class="jt-inner">' +
-        '<div class="jt-item jt-grand"><span class="jt-label">GRAND</span><span class="jt-amount">$' + _jackpotPool.grand.toLocaleString(undefined, {minimumFractionDigits:2, maximumFractionDigits:2}) + '</span></div>' +
-        '<div class="jt-item jt-major"><span class="jt-label">MAJOR</span><span class="jt-amount">$' + _jackpotPool.major.toLocaleString(undefined, {minimumFractionDigits:2, maximumFractionDigits:2}) + '</span></div>' +
-        '<div class="jt-item jt-minor"><span class="jt-label">MINOR</span><span class="jt-amount">$' + _jackpotPool.minor.toLocaleString(undefined, {minimumFractionDigits:2, maximumFractionDigits:2}) + '</span></div>' +
-        '<div class="jt-item jt-mini"><span class="jt-label">MINI</span><span class="jt-amount">$' + _jackpotPool.mini.toLocaleString(undefined, {minimumFractionDigits:2, maximumFractionDigits:2}) + '</span></div></div>';
+    if (el) el.style.display = 'none';
 }
 function _checkJackpotWin(betAmount) {
-    var rand = Math.random();
-    if (rand < 0.00001 && betAmount >= 5) { _triggerJackpot('grand'); return true; }
-    if (rand < 0.0001 && betAmount >= 2) { _triggerJackpot('major'); return true; }
-    if (rand < 0.001) { _triggerJackpot('minor'); return true; }
-    if (rand < 0.005) { _triggerJackpot('mini'); return true; }
+    // Disabled: jackpot wins must come from the server, not from a client-side
+    // Math.random() coin-flip that could otherwise credit real balance.
     return false;
 }
 function _triggerJackpot(tier) {
@@ -24432,35 +24410,12 @@ function _initDailyChallenges() {
 /* ---- Feature 6: Community Jackpot ---- */
 var _communityJackpot = { pool: 0, contributors: 0, threshold: 10000 };
 function _initCommunityJackpot() {
-    var saved = JSON.parse(localStorage.getItem('ms_community_jp') || 'null');
-    if (saved) _communityJackpot = saved;
-    else {
-        _communityJackpot = { pool: Math.floor(Math.random()*5000) + 2000, contributors: Math.floor(Math.random()*50)+10, threshold: 10000 };
-        localStorage.setItem('ms_community_jp', JSON.stringify(_communityJackpot));
-    }
-    if (document.getElementById('community-jp')) return;
-    var widget = document.createElement('div');
-    widget.id = 'community-jp';
-    widget.className = 'community-jp';
-    var pct = Math.floor(_communityJackpot.pool / _communityJackpot.threshold * 100);
-    widget.innerHTML = '<div class="cjp-inner">' +
-        '<span class="cjp-label">COMMUNITY JACKPOT</span>' +
-        '<span class="cjp-amount">$' + _communityJackpot.pool.toLocaleString() + '</span>' +
-        '<div class="cjp-bar"><div class="cjp-fill" style="width:' + pct + '%"></div></div>' +
-        '<span class="cjp-info">' + _communityJackpot.contributors + ' players contributing</span>' +
-        '</div>';
-    document.body.appendChild(widget);
-    setInterval(function() {
-        _communityJackpot.pool += Math.random() * 5;
-        _communityJackpot.contributors += Math.random() < 0.1 ? 1 : 0;
-        localStorage.setItem('ms_community_jp', JSON.stringify(_communityJackpot));
-        var el = document.getElementById('community-jp');
-        if (el) {
-            el.querySelector('.cjp-amount').textContent = '$' + Math.floor(_communityJackpot.pool).toLocaleString();
-            el.querySelector('.cjp-fill').style.width = Math.floor(_communityJackpot.pool / _communityJackpot.threshold * 100) + '%';
-        }
-    }, 4000);
-    console.log('[Sprint 523-530] Community Jackpot ready');
+    // Community jackpot REMOVED — the pool and contributor count were both
+    // pure Math.random() fabrications. Hide any pre-existing widget; do not
+    // render a new one or start the ticking interval.
+    var existing = document.getElementById('community-jp');
+    if (existing) existing.style.display = 'none';
+    try { localStorage.removeItem('ms_community_jp'); } catch (e) {}
 }
 
 /* ---- Feature 7: Referral Tiers ---- */
@@ -24505,15 +24460,10 @@ function _showSocialNotif(msg) {
     setTimeout(function() { notif.classList.remove('social-notif-show'); setTimeout(function() { notif.remove(); }, 300); }, 4000);
 }
 function _initSocialNotifications() {
-    var names = ['Alex','Sam','Jordan','Taylor','Casey','Morgan','Riley','Quinn'];
-    var actions = [' just won $', ' hit a jackpot of $', ' won big: $', ' cashed out $'];
-    setInterval(function() {
-        var name = names[Math.floor(Math.random()*names.length)];
-        var action = actions[Math.floor(Math.random()*actions.length)];
-        var amount = (Math.floor(Math.random()*500)+10).toFixed(2);
-        _pushSocialNotif('win', name + action + amount);
-    }, 15000 + Math.random()*15000);
-    console.log('[Sprint 523-530] Social Notifications ready');
+    // Fake "social proof" notifications REMOVED. The previous implementation
+    // generated random player names + random win amounts every ~15s, which
+    // deceived players. Real activity is fed by /api/public/hot-wins into
+    // #hotWinsTicker (see index.html).
 }
 
 
