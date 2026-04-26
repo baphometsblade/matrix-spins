@@ -72,7 +72,13 @@
         lastResult: null,
         spinning: false,
         autoCancel: false,      // user-driven stop flag for the auto-spin loop
+        cellNodes: null,        // {col,row} -> reel cell element, populated at modal open
     };
+
+    // Per-game paytable HTML — game definitions don't change at
+    // runtime, so the rendered HTML is stable. Cache to skip the
+    // string build on repeated openings of the same game.
+    var paytableHtmlCache = Object.create(null);
 
     function fmt(cents) { return '$' + (Number(cents || 0) / 100).toFixed(2); }
     function authToken() {
@@ -117,6 +123,13 @@
     }
 
     function buildPaytableHtml(def) {
+        if (paytableHtmlCache[def.id]) return paytableHtmlCache[def.id];
+        var html = renderPaytableHtml(def);
+        paytableHtmlCache[def.id] = html;
+        return html;
+    }
+
+    function renderPaytableHtml(def) {
         var pt = def.paytable || {};
         // Catalog payouts use category keys (cluster5/cluster8/...,
         // payline3/4/5, triple/double/wildTriple, scatterPay) rather
@@ -269,6 +282,22 @@
      * `outcome.grid[col][row]`; tuned games keep the legacy
      * `outcome.stops[i].symbol` (single row). We accept both.
      */
+    // Cache reel cell DOM nodes once at modal open so paintReels()
+    // and highlightWinningCells() don't pay a querySelector on every
+    // cell on every spin. A 7×7 grid was running 49 selectors per
+    // spin; this drops to one map lookup per cell.
+    function cacheCellNodes() {
+        state.cellNodes = Object.create(null);
+        var nodes = document.querySelectorAll('#liveSlotReels .ls-reel');
+        for (var i = 0; i < nodes.length; i++) {
+            var key = nodes[i].getAttribute('data-cell');
+            if (key) state.cellNodes[key] = nodes[i];
+        }
+    }
+    function cellAt(c, r) {
+        return state.cellNodes ? state.cellNodes[c + ',' + r] : null;
+    }
+
     function paintReels(outcome) {
         var def = state.gameDef;
         var cols = colsOf(def);
@@ -288,14 +317,13 @@
         }
         for (var c = 0; c < cols; c++) {
             for (var r = 0; r < rows; r++) {
-                var sel = '#liveSlotReels [data-cell="' + c + ',' + r + '"]';
-                var cell = document.querySelector(sel);
+                var cell = cellAt(c, r);
                 if (!cell) continue;
                 var sym = symAt(c, r);
-                cell.textContent = glyphFor(sym);
+                var glyph = glyphFor(sym);
+                cell.textContent = glyph;
                 cell.style.color = colorFor(sym);
                 cell.style.background = '#1a0705';
-                var glyph = glyphFor(sym);
                 cell.style.fontSize = (glyph.length > 2 ? Math.max(11, baseFont - 6) : baseFont) + 'px';
             }
         }
@@ -310,8 +338,7 @@
         var def = state.gameDef;
         var rows = rowsOf(def);
         function highlight(c, r) {
-            var sel = '#liveSlotReels [data-cell="' + c + ',' + r + '"]';
-            var cell = document.querySelector(sel);
+            var cell = cellAt(c, r);
             if (cell) cell.style.background = 'linear-gradient(180deg,#3d2a08,#1a1004)';
         }
         lines.forEach(function (l) {
@@ -536,8 +563,13 @@
 
         state.spinning = true;
         setResult('Spinning…', '#94a3b8');
-        var reels = document.querySelectorAll('#liveSlotReels .ls-reel');
-        reels.forEach(function (r) { r.textContent = '☄'; r.style.color = '#f1c40f'; });
+        if (state.cellNodes) {
+            for (var key in state.cellNodes) {
+                var cell = state.cellNodes[key];
+                cell.textContent = '☄';
+                cell.style.color = '#f1c40f';
+            }
+        }
 
         // Don't echo the client seed back — let the server use the
         // persistent value the user set via the "Your client seed"
@@ -618,6 +650,10 @@
         if (overlay && overlay.parentNode) overlay.parentNode.removeChild(overlay);
         state.gameId = null;
         state.gameDef = null;
+        // Cell nodes belong to the removed modal — drop the references
+        // so a stale cache can't accidentally bind a re-opened modal's
+        // queries to detached DOM.
+        state.cellNodes = null;
     }
 
     async function openLiveSlot(gameId) {
@@ -640,6 +676,7 @@
         state.committedHash = null;
         state.lastResult = null;
         ensureModal();
+        cacheCellNodes();
         wireEvents();
         await Promise.all([refreshBalance(), refreshCommit(), refreshClientSeed()]);
     }

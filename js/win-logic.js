@@ -7,75 +7,20 @@
         var _comebackCheckInFlight = false;
 
         // ═══ Payline Definitions ═══
-        // Standard paylines for different grid configs
-        // Each payline is an array of row indices, one per column
+        // Geometry tables live in shared/game-definitions.js so the
+        // server's universal slot engine and this client share one
+        // source of truth — what gets rendered as a winning line on
+        // the screen is exactly what the server scored.
         function getPaylines(game) {
             const cols = getGridCols(game);
             const rows = getGridRows(game);
-
-            if (rows === 1) {
-                // Classic 1-row: just the single row
-                return [[0, 0, 0]];
+            if (typeof window !== 'undefined' && typeof window.getPaylineGeometry === 'function') {
+                return window.getPaylineGeometry(rows, cols);
             }
-
-            if (rows === 3 && cols === 3) {
-                // Classic 3×3 (Fire Joker style): horizontal + diagonal + V shapes
-                return [
-                    [0, 0, 0], // top
-                    [1, 1, 1], // middle
-                    [2, 2, 2], // bottom
-                    [0, 1, 2], // diagonal down
-                    [2, 1, 0], // diagonal up
-                ];
-            }
-
-            if (rows === 3 && cols === 5) {
-                // Standard 5×3 (20 paylines — Book of Dead / Wolf Gold / Starburst / Big Bass / Gonzo's)
-                return [
-                    [1, 1, 1, 1, 1], // middle
-                    [0, 0, 0, 0, 0], // top
-                    [2, 2, 2, 2, 2], // bottom
-                    [0, 1, 2, 1, 0], // V shape
-                    [2, 1, 0, 1, 2], // inverted V
-                    [0, 0, 1, 0, 0], // slight dip
-                    [2, 2, 1, 2, 2], // slight rise
-                    [1, 0, 0, 0, 1], // U shape
-                    [1, 2, 2, 2, 1], // inverted U
-                    [0, 1, 1, 1, 0], // flat top dip
-                    [2, 1, 1, 1, 2], // flat bottom rise
-                    [1, 0, 1, 0, 1], // zigzag high
-                    [1, 2, 1, 2, 1], // zigzag low
-                    [0, 1, 0, 1, 0], // wave high
-                    [2, 1, 2, 1, 2], // wave low
-                    [1, 1, 0, 1, 1], // center dip
-                    [1, 1, 2, 1, 1], // center bump
-                    [0, 0, 1, 2, 2], // descending stair
-                    [2, 2, 1, 0, 0], // ascending stair
-                    [0, 2, 0, 2, 0], // zigzag extreme
-                ];
-            }
-
-            if (rows === 4 && cols === 5) {
-                // 5×4 (Black Bull style — 40 paylines)
-                return [
-                    [1, 1, 1, 1, 1], [2, 2, 2, 2, 2], [0, 0, 0, 0, 0], [3, 3, 3, 3, 3],
-                    [0, 1, 2, 1, 0], [3, 2, 1, 2, 3], [1, 0, 0, 0, 1], [2, 3, 3, 3, 2],
-                    [0, 0, 1, 2, 2], [3, 3, 2, 1, 1], [1, 2, 3, 2, 1], [2, 1, 0, 1, 2],
-                    [0, 1, 1, 1, 0], [3, 2, 2, 2, 3], [1, 0, 1, 0, 1], [2, 3, 2, 3, 2],
-                    [0, 2, 0, 2, 0], [3, 1, 3, 1, 3], [1, 1, 0, 1, 1], [2, 2, 3, 2, 2],
-                    [0, 0, 2, 0, 0], [3, 3, 1, 3, 3], [1, 2, 1, 2, 1], [2, 1, 2, 1, 2],
-                    [0, 1, 0, 1, 0], [3, 2, 3, 2, 3], [0, 0, 0, 1, 2], [3, 3, 3, 2, 1],
-                    [1, 1, 2, 3, 3], [2, 2, 1, 0, 0], [0, 1, 2, 3, 3], [3, 2, 1, 0, 0],
-                    [1, 0, 0, 1, 2], [2, 3, 3, 2, 1], [0, 2, 1, 2, 0], [3, 1, 2, 1, 3],
-                    [1, 0, 2, 0, 1], [2, 3, 1, 3, 2], [0, 3, 0, 3, 0], [1, 2, 0, 2, 1],
-                ];
-            }
-
-            // Fallback: generate basic paylines
+            // game-definitions.js hasn't loaded yet (pre-bundle order
+            // race). Fall back to one horizontal line per row.
             const lines = [];
-            for (let r = 0; r < rows; r++) {
-                lines.push(Array(cols).fill(r));
-            }
+            for (let r = 0; r < rows; r++) lines.push(Array(cols).fill(r));
             return lines;
         }
 

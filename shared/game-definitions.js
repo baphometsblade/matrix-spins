@@ -601,5 +601,85 @@ const games = [
       payouts: { triple: 190, double: 19, wildTriple: 285, scatterPay: 5, payline3: 19, payline4: 80, payline5: 190 }, minBet: 0.20, maxBet: 5000, hot: true, jackpot: 200000 },
 ];
 
+/**
+ * Payline geometries shared by server (slot-engine-universal) and
+ * browser (win-logic.getPaylines). Keys are `<rows>x<cols>`. Each
+ * entry is an array of paylines; each payline is an array of row
+ * indices, one per column. A 1-row game synthesizes its line at
+ * lookup time. Add a grid shape here once and both runtimes pick it
+ * up — no duplicate arrays elsewhere.
+ */
+const PAYLINE_GEOMETRIES = {
+    '3x3': [
+        [0, 0, 0],
+        [1, 1, 1],
+        [2, 2, 2],
+        [0, 1, 2],
+        [2, 1, 0],
+    ],
+    '3x5': [
+        [1, 1, 1, 1, 1],
+        [0, 0, 0, 0, 0],
+        [2, 2, 2, 2, 2],
+        [0, 1, 2, 1, 0],
+        [2, 1, 0, 1, 2],
+        [0, 0, 1, 0, 0],
+        [2, 2, 1, 2, 2],
+        [1, 0, 0, 0, 1],
+        [1, 2, 2, 2, 1],
+        [0, 1, 1, 1, 0],
+        [2, 1, 1, 1, 2],
+        [1, 0, 1, 0, 1],
+        [1, 2, 1, 2, 1],
+        [0, 1, 0, 1, 0],
+        [2, 1, 2, 1, 2],
+        [1, 1, 0, 1, 1],
+        [1, 1, 2, 1, 1],
+        [0, 0, 1, 2, 2],
+        [2, 2, 1, 0, 0],
+        [0, 2, 0, 2, 0],
+    ],
+    '4x5': [
+        [1, 1, 1, 1, 1], [2, 2, 2, 2, 2], [0, 0, 0, 0, 0], [3, 3, 3, 3, 3],
+        [0, 1, 2, 1, 0], [3, 2, 1, 2, 3], [1, 0, 0, 0, 1], [2, 3, 3, 3, 2],
+        [0, 0, 1, 2, 2], [3, 3, 2, 1, 1], [1, 2, 3, 2, 1], [2, 1, 0, 1, 2],
+        [0, 1, 1, 1, 0], [3, 2, 2, 2, 3], [1, 0, 1, 0, 1], [2, 3, 2, 3, 2],
+        [0, 2, 0, 2, 0], [3, 1, 3, 1, 3], [1, 1, 0, 1, 1], [2, 2, 3, 2, 2],
+        [0, 0, 2, 0, 0], [3, 3, 1, 3, 3], [1, 2, 1, 2, 1], [2, 1, 2, 1, 2],
+        [0, 1, 0, 1, 0], [3, 2, 3, 2, 3], [0, 0, 0, 1, 2], [3, 3, 3, 2, 1],
+        [1, 1, 2, 3, 3], [2, 2, 1, 0, 0], [0, 1, 2, 3, 3], [3, 2, 1, 0, 0],
+        [1, 0, 0, 1, 2], [2, 3, 3, 2, 1], [0, 2, 1, 2, 0], [3, 1, 2, 1, 3],
+        [1, 0, 2, 0, 1], [2, 3, 1, 3, 2], [0, 3, 0, 3, 0], [1, 2, 0, 2, 1],
+    ],
+};
+
+function getPaylineGeometry(rows, cols) {
+    if (rows === 1) {
+        var line = []; for (var i = 0; i < cols; i++) line.push(0);
+        return [line];
+    }
+    var g = PAYLINE_GEOMETRIES[rows + 'x' + cols];
+    if (g) return g;
+    // Honest baseline fallback: one horizontal line per row. Better
+    // to pay too few lines than to invent geometry that doesn't
+    // match the rendered grid.
+    var fallback = [];
+    for (var r = 0; r < rows; r++) {
+        var row = []; for (var c = 0; c < cols; c++) row.push(r);
+        fallback.push(row);
+    }
+    return fallback;
+}
+
+// Browser exposure — win-logic.js calls window.getPaylineGeometry().
+if (typeof window !== 'undefined') {
+    window.PAYLINE_GEOMETRIES = PAYLINE_GEOMETRIES;
+    window.getPaylineGeometry = getPaylineGeometry;
+}
+
 // Node.js CommonJS export — browser clients ignore this
-if (typeof module !== 'undefined') module.exports = games;
+if (typeof module !== 'undefined') {
+    module.exports = games;
+    module.exports.PAYLINE_GEOMETRIES = PAYLINE_GEOMETRIES;
+    module.exports.getPaylineGeometry = getPaylineGeometry;
+}

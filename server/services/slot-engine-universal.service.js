@@ -29,13 +29,13 @@
 
 const path = require('path');
 
+const catalog = require(path.join(__dirname, '..', '..', 'shared', 'game-definitions.js'));
 let _gamesCache = null;
 function loadDefinitions() {
     if (_gamesCache) return _gamesCache;
-    const games = require(path.join(__dirname, '..', '..', 'shared', 'game-definitions.js'));
-    if (!Array.isArray(games)) throw new Error('shared/game-definitions.js must export an array');
-    _gamesCache = games;
-    return games;
+    if (!Array.isArray(catalog)) throw new Error('shared/game-definitions.js must export an array');
+    _gamesCache = catalog;
+    return catalog;
 }
 
 /* ─────────────────────────── reel construction ─────────────────────────── */
@@ -52,24 +52,27 @@ function loadDefinitions() {
  *
  * Returns an array of integer weights, same length as game.symbols.
  */
+// Higher = more common. Index 0 = cheapest paying symbol; later
+// entries are higher-pay and rarer. Tuned so a 5×3 game with the
+// catalog's "standard" payouts (triple/double/payline3-5) lands near
+// 95-96% RTP before per-game calibration nudges the rest of the way.
+const SYMBOL_WEIGHT_LADDER = [22, 18, 14, 10, 6, 3];
+const WILD_WEIGHT = 2;
+
 function symbolWeights(game) {
     const n = (game.symbols || []).length || 6;
-    // Frequency ladder. Higher = more common. Index 0 = cheapest symbol.
-    // Values chosen so that on a 5×3 grid the expected per-spin payout
-    // (sum of pay × landing-probability across all match types) lands
-    // close to 0.95 for the standard payout shape used in the catalog.
-    const ladder = [22, 18, 14, 10, 6, 3];
     const out = [];
     for (let i = 0; i < n; i++) {
-        // Use ladder if we have an entry for this index; otherwise repeat
-        // the rarest weight so extra symbols (rare) don't tip the curve.
-        out.push(ladder[i] != null ? ladder[i] : ladder[ladder.length - 1]);
+        // Repeat the rarest ladder weight for any extra symbols past
+        // the standard 6, so a 7-symbol game doesn't tip the curve.
+        out.push(SYMBOL_WEIGHT_LADDER[i] != null
+            ? SYMBOL_WEIGHT_LADDER[i]
+            : SYMBOL_WEIGHT_LADDER[SYMBOL_WEIGHT_LADDER.length - 1]);
     }
-    // Wild override: if the last symbol is named like a wild and the game
-    // declared one, force it to be the rarest. Mirrors how real slots tune
-    // wild density independently of pay rank.
+    // Wild density is tuned independently of pay rank — real slots do
+    // the same. Force the wild to the rarest weight.
     if (game.wildSymbol && game.symbols && game.symbols[n - 1] === game.wildSymbol) {
-        out[n - 1] = 2;
+        out[n - 1] = WILD_WEIGHT;
     }
     return out;
 }
@@ -148,20 +151,23 @@ function getGame(id) {
  * shared/game-definitions.js were authored for a fun-mode UI and
  * over-pay relative to the declared RTP when read by a strict server
  * evaluator. To honor the per-game RTP without rewriting every payout
- * by hand, we simulate N spins with cheap PRNG, measure the raw RTP
- * the rules produce, and store a scalar = target_rtp / raw_rtp that is
- * applied to every real spin's win_cents.
+ * by hand, we simulate `CALIBRATION_TRIALS` spins with a deterministic
+ * seeded PRNG, measure the raw RTP the rules produce, and store a
+ * scalar = target_rtp / raw_rtp that is applied to every real spin's
+ * win_cents.
  *
- * Determinism is not required here: the calibration is purely a
- * normalization constant, not part of the provably-fair payout
- * derivation. The HMAC RNG still produces the symbol grid; only the
- * multiplier on the win is scaled. The verifier page can show the
- * calibration factor next to the round so the math is transparent.
+ * Determinism: calibration uses a per-game-id seeded PRNG (mulberry32)
+ * so the factor is reproducible across deploys. It is intentionally
+ * separate from the live HMAC RNG — the live RNG still produces the
+ * symbol grid for every real spin; only the multiplier on the win is
+ * scaled. The verifier page can show the calibration factor next to
+ * the round so the math is transparent.
  *
- * Cost: ~5k spins per game on first access. With 65 universal games
- * and a typical spin costing tens of microseconds, total warm-up is
- * well under a second per process boot.
+ * Cost: ~250–400ms per game on first call to getGame(). Lazy: a game
+ * is calibrated the first time anyone plays it. With 65 universal
+ * games this is amortized across the first few minutes of traffic.
  */
+const CALIBRATION_TRIALS = 60000;
 function calibrate(game) {
     // Deterministic seeded PRNG (mulberry32). Using a fixed seed makes
     // the calibration reproducible across deploys: the same game id
@@ -176,9 +182,8 @@ function calibrate(game) {
         t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
         return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
     }
-    const TRIALS = 60000;
     let totalBet = 0, totalRawWin = 0;
-    for (let i = 0; i < TRIALS; i++) {
+    for (let i = 0; i < CALIBRATION_TRIALS; i++) {
         const floats = [];
         for (let c = 0; c < game.cols; c++) floats.push(next());
         const grid = spinReelsUniversal(game, floats);
@@ -262,37 +267,21 @@ function spinReelsUniversal(game, floats) {
 /* ──────────────────────────── evaluators ───────────────────────────────── */
 
 /**
- * Standard left-to-right paylines for a `cols × rows` grid.
- * Mirrors the layout the front-end's win-logic.js renders, so the user
- * sees the same lines the server scored.
+ * Standard left-to-right paylines for a `cols × rows` grid. Both the
+ * browser and server pull from the same `PAYLINE_GEOMETRIES` table in
+ * shared/game-definitions.js so the user sees the same lines the
+ * server scored.
+ *
+ * Memoized: every spin asks for the same `(cols, rows)` for a given
+ * game, and game definitions never change at runtime.
  */
+const PAYLINE_CACHE = Object.create(null);
 function paylinesFor(cols, rows) {
-    if (rows === 1) return [Array(cols).fill(0)];
-    if (rows === 3 && cols === 3) {
-        return [
-            [0, 0, 0], [1, 1, 1], [2, 2, 2],
-            [0, 1, 2], [2, 1, 0],
-        ];
-    }
-    if (rows === 3 && cols === 5) {
-        return [
-            [1, 1, 1, 1, 1], [0, 0, 0, 0, 0], [2, 2, 2, 2, 2],
-            [0, 1, 2, 1, 0], [2, 1, 0, 1, 2],
-            [0, 0, 1, 0, 0], [2, 2, 1, 2, 2],
-            [1, 0, 0, 0, 1], [1, 2, 2, 2, 1],
-            [0, 1, 1, 1, 0], [2, 1, 1, 1, 2],
-            [1, 0, 1, 0, 1], [1, 2, 1, 2, 1],
-            [0, 1, 0, 1, 0], [2, 1, 2, 1, 2],
-            [1, 1, 0, 1, 1], [1, 1, 2, 1, 1],
-            [0, 1, 0, 1, 0], [2, 1, 2, 1, 2],
-            [0, 2, 0, 2, 0],
-        ];
-    }
-    // Default: just the horizontal rows. Honest baseline — better to
-    // pay fewer lines than to invent geometry that doesn't match the
-    // client-rendered grid.
-    const lines = [];
-    for (let r = 0; r < rows; r++) lines.push(Array(cols).fill(r));
+    const key = cols + 'x' + rows;
+    const cached = PAYLINE_CACHE[key];
+    if (cached) return cached;
+    const lines = catalog.getPaylineGeometry(rows, cols);
+    PAYLINE_CACHE[key] = lines;
     return lines;
 }
 
@@ -300,6 +289,21 @@ function isWildOrMatch(symbol, target, wild) {
     if (symbol === target) return true;
     if (wild && symbol === wild && target !== wild) return true;
     return false;
+}
+
+// Industry-standard rule for line/run targeting: if the leftmost
+// symbol is a wild, the target is the first non-wild symbol; if the
+// whole stretch is wild, the wild itself anchors the run. `nextAt(c)`
+// returns the symbol at column index c on the relevant line/row.
+function anchorTarget(firstSym, wild, length, nextAt) {
+    let target = firstSym;
+    if (wild && target === wild) {
+        for (let c = 1; c < length; c++) {
+            const s = nextAt(c);
+            if (s !== wild) { target = s; break; }
+        }
+    }
+    return target;
 }
 
 /**
@@ -316,15 +320,7 @@ function scorePayline(game, line, grid, betCents) {
     const wild = game.wildSymbol;
     const sym0 = grid[0][line[0]];
     if (!sym0) return { win: 0, length: 0, symbol: null };
-    // First non-wild symbol anchors the run; if leftmost is wild, the
-    // first non-wild after it sets the target. Industry-standard rule.
-    let target = sym0;
-    if (wild && target === wild) {
-        for (let c = 1; c < line.length; c++) {
-            const s = grid[c][line[c]];
-            if (s !== wild) { target = s; break; }
-        }
-    }
+    const target = anchorTarget(sym0, wild, line.length, c => grid[c][line[c]]);
     let runLen = 0;
     for (let c = 0; c < line.length; c++) {
         const s = grid[c][line[c]];
@@ -388,12 +384,7 @@ function evaluateClassic(game, grid, betCents) {
     const sym = grid[0][row];
     if (!sym) return { win_cents: 0, lines: [] };
     const wild = game.wildSymbol;
-    let target = sym;
-    if (wild && target === wild) {
-        for (let c = 1; c < game.cols; c++) {
-            if (grid[c][row] !== wild) { target = grid[c][row]; break; }
-        }
-    }
+    const target = anchorTarget(sym, wild, game.cols, c => grid[c][row]);
     for (let c = 0; c < game.cols; c++) {
         if (!isWildOrMatch(grid[c][row], target, wild)) return { win_cents: 0, lines: [] };
     }
@@ -499,11 +490,10 @@ module.exports = {
     listGames,
     spinReelsUniversal,
     evaluateUniversal,
-    // exposed for tests
+    // exposed for tests / verifier — pure helpers with no side effects
     _internals: {
         symbolWeights,
         buildReelStrip,
-        normalizeGame,
         paylinesFor,
         evaluateClassic,
         evaluatePaylines,

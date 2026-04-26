@@ -1,5 +1,5 @@
 /* Royal Slots Casino - Bundled JavaScript */
-/* Generated: 2026-04-26T07:59:29.490Z */
+/* Generated: 2026-04-26T08:07:14.101Z */
 
 
 /* â”€â”€â”€ shared/game-definitions.js (2/56) â”€â”€â”€ */
@@ -606,8 +606,88 @@ const games = [
       payouts: { triple: 190, double: 19, wildTriple: 285, scatterPay: 5, payline3: 19, payline4: 80, payline5: 190 }, minBet: 0.20, maxBet: 5000, hot: true, jackpot: 200000 },
 ];
 
+/**
+ * Payline geometries shared by server (slot-engine-universal) and
+ * browser (win-logic.getPaylines). Keys are `<rows>x<cols>`. Each
+ * entry is an array of paylines; each payline is an array of row
+ * indices, one per column. A 1-row game synthesizes its line at
+ * lookup time. Add a grid shape here once and both runtimes pick it
+ * up — no duplicate arrays elsewhere.
+ */
+const PAYLINE_GEOMETRIES = {
+    '3x3': [
+        [0, 0, 0],
+        [1, 1, 1],
+        [2, 2, 2],
+        [0, 1, 2],
+        [2, 1, 0],
+    ],
+    '3x5': [
+        [1, 1, 1, 1, 1],
+        [0, 0, 0, 0, 0],
+        [2, 2, 2, 2, 2],
+        [0, 1, 2, 1, 0],
+        [2, 1, 0, 1, 2],
+        [0, 0, 1, 0, 0],
+        [2, 2, 1, 2, 2],
+        [1, 0, 0, 0, 1],
+        [1, 2, 2, 2, 1],
+        [0, 1, 1, 1, 0],
+        [2, 1, 1, 1, 2],
+        [1, 0, 1, 0, 1],
+        [1, 2, 1, 2, 1],
+        [0, 1, 0, 1, 0],
+        [2, 1, 2, 1, 2],
+        [1, 1, 0, 1, 1],
+        [1, 1, 2, 1, 1],
+        [0, 0, 1, 2, 2],
+        [2, 2, 1, 0, 0],
+        [0, 2, 0, 2, 0],
+    ],
+    '4x5': [
+        [1, 1, 1, 1, 1], [2, 2, 2, 2, 2], [0, 0, 0, 0, 0], [3, 3, 3, 3, 3],
+        [0, 1, 2, 1, 0], [3, 2, 1, 2, 3], [1, 0, 0, 0, 1], [2, 3, 3, 3, 2],
+        [0, 0, 1, 2, 2], [3, 3, 2, 1, 1], [1, 2, 3, 2, 1], [2, 1, 0, 1, 2],
+        [0, 1, 1, 1, 0], [3, 2, 2, 2, 3], [1, 0, 1, 0, 1], [2, 3, 2, 3, 2],
+        [0, 2, 0, 2, 0], [3, 1, 3, 1, 3], [1, 1, 0, 1, 1], [2, 2, 3, 2, 2],
+        [0, 0, 2, 0, 0], [3, 3, 1, 3, 3], [1, 2, 1, 2, 1], [2, 1, 2, 1, 2],
+        [0, 1, 0, 1, 0], [3, 2, 3, 2, 3], [0, 0, 0, 1, 2], [3, 3, 3, 2, 1],
+        [1, 1, 2, 3, 3], [2, 2, 1, 0, 0], [0, 1, 2, 3, 3], [3, 2, 1, 0, 0],
+        [1, 0, 0, 1, 2], [2, 3, 3, 2, 1], [0, 2, 1, 2, 0], [3, 1, 2, 1, 3],
+        [1, 0, 2, 0, 1], [2, 3, 1, 3, 2], [0, 3, 0, 3, 0], [1, 2, 0, 2, 1],
+    ],
+};
+
+function getPaylineGeometry(rows, cols) {
+    if (rows === 1) {
+        var line = []; for (var i = 0; i < cols; i++) line.push(0);
+        return [line];
+    }
+    var g = PAYLINE_GEOMETRIES[rows + 'x' + cols];
+    if (g) return g;
+    // Honest baseline fallback: one horizontal line per row. Better
+    // to pay too few lines than to invent geometry that doesn't
+    // match the rendered grid.
+    var fallback = [];
+    for (var r = 0; r < rows; r++) {
+        var row = []; for (var c = 0; c < cols; c++) row.push(r);
+        fallback.push(row);
+    }
+    return fallback;
+}
+
+// Browser exposure — win-logic.js calls window.getPaylineGeometry().
+if (typeof window !== 'undefined') {
+    window.PAYLINE_GEOMETRIES = PAYLINE_GEOMETRIES;
+    window.getPaylineGeometry = getPaylineGeometry;
+}
+
 // Node.js CommonJS export — browser clients ignore this
-if (typeof module !== 'undefined') module.exports = games;
+if (typeof module !== 'undefined') {
+    module.exports = games;
+    module.exports.PAYLINE_GEOMETRIES = PAYLINE_GEOMETRIES;
+    module.exports.getPaylineGeometry = getPaylineGeometry;
+}
 
 /* â”€â”€â”€ js/globals.js (8/56) â”€â”€â”€ */
         // Game data loaded from shared/game-definitions.js
@@ -2991,75 +3071,20 @@ function destroyParticleEngine() {
         var _comebackCheckInFlight = false;
 
         // ═══ Payline Definitions ═══
-        // Standard paylines for different grid configs
-        // Each payline is an array of row indices, one per column
+        // Geometry tables live in shared/game-definitions.js so the
+        // server's universal slot engine and this client share one
+        // source of truth — what gets rendered as a winning line on
+        // the screen is exactly what the server scored.
         function getPaylines(game) {
             const cols = getGridCols(game);
             const rows = getGridRows(game);
-
-            if (rows === 1) {
-                // Classic 1-row: just the single row
-                return [[0, 0, 0]];
+            if (typeof window !== 'undefined' && typeof window.getPaylineGeometry === 'function') {
+                return window.getPaylineGeometry(rows, cols);
             }
-
-            if (rows === 3 && cols === 3) {
-                // Classic 3×3 (Fire Joker style): horizontal + diagonal + V shapes
-                return [
-                    [0, 0, 0], // top
-                    [1, 1, 1], // middle
-                    [2, 2, 2], // bottom
-                    [0, 1, 2], // diagonal down
-                    [2, 1, 0], // diagonal up
-                ];
-            }
-
-            if (rows === 3 && cols === 5) {
-                // Standard 5×3 (20 paylines — Book of Dead / Wolf Gold / Starburst / Big Bass / Gonzo's)
-                return [
-                    [1, 1, 1, 1, 1], // middle
-                    [0, 0, 0, 0, 0], // top
-                    [2, 2, 2, 2, 2], // bottom
-                    [0, 1, 2, 1, 0], // V shape
-                    [2, 1, 0, 1, 2], // inverted V
-                    [0, 0, 1, 0, 0], // slight dip
-                    [2, 2, 1, 2, 2], // slight rise
-                    [1, 0, 0, 0, 1], // U shape
-                    [1, 2, 2, 2, 1], // inverted U
-                    [0, 1, 1, 1, 0], // flat top dip
-                    [2, 1, 1, 1, 2], // flat bottom rise
-                    [1, 0, 1, 0, 1], // zigzag high
-                    [1, 2, 1, 2, 1], // zigzag low
-                    [0, 1, 0, 1, 0], // wave high
-                    [2, 1, 2, 1, 2], // wave low
-                    [1, 1, 0, 1, 1], // center dip
-                    [1, 1, 2, 1, 1], // center bump
-                    [0, 0, 1, 2, 2], // descending stair
-                    [2, 2, 1, 0, 0], // ascending stair
-                    [0, 2, 0, 2, 0], // zigzag extreme
-                ];
-            }
-
-            if (rows === 4 && cols === 5) {
-                // 5×4 (Black Bull style — 40 paylines)
-                return [
-                    [1, 1, 1, 1, 1], [2, 2, 2, 2, 2], [0, 0, 0, 0, 0], [3, 3, 3, 3, 3],
-                    [0, 1, 2, 1, 0], [3, 2, 1, 2, 3], [1, 0, 0, 0, 1], [2, 3, 3, 3, 2],
-                    [0, 0, 1, 2, 2], [3, 3, 2, 1, 1], [1, 2, 3, 2, 1], [2, 1, 0, 1, 2],
-                    [0, 1, 1, 1, 0], [3, 2, 2, 2, 3], [1, 0, 1, 0, 1], [2, 3, 2, 3, 2],
-                    [0, 2, 0, 2, 0], [3, 1, 3, 1, 3], [1, 1, 0, 1, 1], [2, 2, 3, 2, 2],
-                    [0, 0, 2, 0, 0], [3, 3, 1, 3, 3], [1, 2, 1, 2, 1], [2, 1, 2, 1, 2],
-                    [0, 1, 0, 1, 0], [3, 2, 3, 2, 3], [0, 0, 0, 1, 2], [3, 3, 3, 2, 1],
-                    [1, 1, 2, 3, 3], [2, 2, 1, 0, 0], [0, 1, 2, 3, 3], [3, 2, 1, 0, 0],
-                    [1, 0, 0, 1, 2], [2, 3, 3, 2, 1], [0, 2, 1, 2, 0], [3, 1, 2, 1, 3],
-                    [1, 0, 2, 0, 1], [2, 3, 1, 3, 2], [0, 3, 0, 3, 0], [1, 2, 0, 2, 1],
-                ];
-            }
-
-            // Fallback: generate basic paylines
+            // game-definitions.js hasn't loaded yet (pre-bundle order
+            // race). Fall back to one horizontal line per row.
             const lines = [];
-            for (let r = 0; r < rows; r++) {
-                lines.push(Array(cols).fill(r));
-            }
+            for (let r = 0; r < rows; r++) lines.push(Array(cols).fill(r));
             return lines;
         }
 
@@ -40731,7 +40756,13 @@ window._logAudit658 = _logAudit658;
         lastResult: null,
         spinning: false,
         autoCancel: false,      // user-driven stop flag for the auto-spin loop
+        cellNodes: null,        // {col,row} -> reel cell element, populated at modal open
     };
+
+    // Per-game paytable HTML — game definitions don't change at
+    // runtime, so the rendered HTML is stable. Cache to skip the
+    // string build on repeated openings of the same game.
+    var paytableHtmlCache = Object.create(null);
 
     function fmt(cents) { return '$' + (Number(cents || 0) / 100).toFixed(2); }
     function authToken() {
@@ -40776,6 +40807,13 @@ window._logAudit658 = _logAudit658;
     }
 
     function buildPaytableHtml(def) {
+        if (paytableHtmlCache[def.id]) return paytableHtmlCache[def.id];
+        var html = renderPaytableHtml(def);
+        paytableHtmlCache[def.id] = html;
+        return html;
+    }
+
+    function renderPaytableHtml(def) {
         var pt = def.paytable || {};
         // Catalog payouts use category keys (cluster5/cluster8/...,
         // payline3/4/5, triple/double/wildTriple, scatterPay) rather
@@ -40928,6 +40966,22 @@ window._logAudit658 = _logAudit658;
      * `outcome.grid[col][row]`; tuned games keep the legacy
      * `outcome.stops[i].symbol` (single row). We accept both.
      */
+    // Cache reel cell DOM nodes once at modal open so paintReels()
+    // and highlightWinningCells() don't pay a querySelector on every
+    // cell on every spin. A 7×7 grid was running 49 selectors per
+    // spin; this drops to one map lookup per cell.
+    function cacheCellNodes() {
+        state.cellNodes = Object.create(null);
+        var nodes = document.querySelectorAll('#liveSlotReels .ls-reel');
+        for (var i = 0; i < nodes.length; i++) {
+            var key = nodes[i].getAttribute('data-cell');
+            if (key) state.cellNodes[key] = nodes[i];
+        }
+    }
+    function cellAt(c, r) {
+        return state.cellNodes ? state.cellNodes[c + ',' + r] : null;
+    }
+
     function paintReels(outcome) {
         var def = state.gameDef;
         var cols = colsOf(def);
@@ -40947,14 +41001,13 @@ window._logAudit658 = _logAudit658;
         }
         for (var c = 0; c < cols; c++) {
             for (var r = 0; r < rows; r++) {
-                var sel = '#liveSlotReels [data-cell="' + c + ',' + r + '"]';
-                var cell = document.querySelector(sel);
+                var cell = cellAt(c, r);
                 if (!cell) continue;
                 var sym = symAt(c, r);
-                cell.textContent = glyphFor(sym);
+                var glyph = glyphFor(sym);
+                cell.textContent = glyph;
                 cell.style.color = colorFor(sym);
                 cell.style.background = '#1a0705';
-                var glyph = glyphFor(sym);
                 cell.style.fontSize = (glyph.length > 2 ? Math.max(11, baseFont - 6) : baseFont) + 'px';
             }
         }
@@ -40969,8 +41022,7 @@ window._logAudit658 = _logAudit658;
         var def = state.gameDef;
         var rows = rowsOf(def);
         function highlight(c, r) {
-            var sel = '#liveSlotReels [data-cell="' + c + ',' + r + '"]';
-            var cell = document.querySelector(sel);
+            var cell = cellAt(c, r);
             if (cell) cell.style.background = 'linear-gradient(180deg,#3d2a08,#1a1004)';
         }
         lines.forEach(function (l) {
@@ -41195,8 +41247,13 @@ window._logAudit658 = _logAudit658;
 
         state.spinning = true;
         setResult('Spinning…', '#94a3b8');
-        var reels = document.querySelectorAll('#liveSlotReels .ls-reel');
-        reels.forEach(function (r) { r.textContent = '☄'; r.style.color = '#f1c40f'; });
+        if (state.cellNodes) {
+            for (var key in state.cellNodes) {
+                var cell = state.cellNodes[key];
+                cell.textContent = '☄';
+                cell.style.color = '#f1c40f';
+            }
+        }
 
         // Don't echo the client seed back — let the server use the
         // persistent value the user set via the "Your client seed"
@@ -41277,6 +41334,10 @@ window._logAudit658 = _logAudit658;
         if (overlay && overlay.parentNode) overlay.parentNode.removeChild(overlay);
         state.gameId = null;
         state.gameDef = null;
+        // Cell nodes belong to the removed modal — drop the references
+        // so a stale cache can't accidentally bind a re-opened modal's
+        // queries to detached DOM.
+        state.cellNodes = null;
     }
 
     async function openLiveSlot(gameId) {
@@ -41299,6 +41360,7 @@ window._logAudit658 = _logAudit658;
         state.committedHash = null;
         state.lastResult = null;
         ensureModal();
+        cacheCellNodes();
         wireEvents();
         await Promise.all([refreshBalance(), refreshCommit(), refreshClientSeed()]);
     }
