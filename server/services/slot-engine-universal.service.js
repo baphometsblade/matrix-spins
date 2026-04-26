@@ -475,17 +475,43 @@ function evaluateRaw(game, grid, betCents) {
 function evaluateUniversal(game, grid, betCents) {
     const raw = evaluateRaw(game, grid, betCents);
     const factor = game._calibration != null ? game._calibration : 1;
-    if (raw.win_cents <= 0 || factor === 1) return raw;
-    const scaled = Math.round(raw.win_cents * factor);
-    const lines = (raw.lines || []).map(l => Object.assign({}, l, {
-        win_cents: Math.round((l.win_cents || 0) * factor),
-    }));
-    return { win_cents: scaled, lines, rtp_factor: factor };
+    const scatters = countScatters(game, grid);
+    let result;
+    if (raw.win_cents <= 0 || factor === 1) {
+        result = raw;
+    } else {
+        const scaled = Math.round(raw.win_cents * factor);
+        const lines = (raw.lines || []).map(l => Object.assign({}, l, {
+            win_cents: Math.round((l.win_cents || 0) * factor),
+        }));
+        result = { win_cents: scaled, lines, rtp_factor: factor };
+    }
+    if (scatters > 0) result.scatter_count = scatters;
+    return result;
+}
+
+/**
+ * Count scatter symbols on the grid. Used by the bonus-session
+ * trigger: a base spin landing 3+ scatters on a game with a positive
+ * `freeSpinsCount` opens a free-spin bonus. Returns 0 for games
+ * without a scatter symbol declared.
+ */
+function countScatters(game, grid) {
+    if (!game.scatterSymbol) return 0;
+    let count = 0;
+    for (let c = 0; c < game.cols; c++) {
+        const col = grid[c];
+        for (let r = 0; r < game.rows; r++) {
+            if (col[r] === game.scatterSymbol) count++;
+        }
+    }
+    return count;
 }
 
 module.exports = {
     loadDefinitions,
     getGame,
+    countScatters,
     hasGame,
     listGames,
     spinReelsUniversal,

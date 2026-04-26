@@ -3422,6 +3422,21 @@
 
         async function spin() {
             if (spinning || !currentGame) return;
+            // Defense-in-depth: every game in shared/game-definitions.js
+            // is server-authoritative now, with the lobby gate in
+            // openSlot() routing them to openLiveSlot(). This client-
+            // side fun-mode spin handler exists only as legacy scaffolding
+            // for callers that didn't go through the lobby. Refuse to
+            // settle a spin here unless the game has explicitly opted
+            // out of liveMode (no game does today). This neutralizes
+            // every downstream `balance += …` write that previously
+            // credited real money without server confirmation.
+            if (currentGame.liveMode !== false) {
+                if (typeof window.openLiveSlot === 'function') {
+                    window.openLiveSlot(currentGame.id);
+                }
+                return;
+            }
             if (freeSpinsActive) { freeSpinSpin(currentGame); return; }
             if (currentBet > balance) {
                 if (currentUser && !currentUser.isGuest) {
@@ -5479,6 +5494,11 @@
 
         function freeSpinSpin(game) {
             if (!freeSpinsActive || spinning || !currentGame) return;
+            // Defense-in-depth: free-spin sessions are now server-tracked
+            // (server/services/bonus-session.service.js). The legacy
+            // client-side free-spin loop only runs for fun-mode games,
+            // which currently doesn't include any catalog game.
+            if (currentGame.liveMode !== false) return;
 
             spinning = true;
             resetIdleTimer(); // reset idle pulse at free spin start

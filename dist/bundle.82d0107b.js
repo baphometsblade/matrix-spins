@@ -1,5 +1,5 @@
 /* Royal Slots Casino - Bundled JavaScript */
-/* Generated: 2026-04-26T08:07:14.101Z */
+/* Generated: 2026-04-26T08:24:37.460Z */
 
 
 /* â”€â”€â”€ shared/game-definitions.js (2/56) â”€â”€â”€ */
@@ -16508,6 +16508,21 @@ function renderGameStatsWidget() {
 
         async function spin() {
             if (spinning || !currentGame) return;
+            // Defense-in-depth: every game in shared/game-definitions.js
+            // is server-authoritative now, with the lobby gate in
+            // openSlot() routing them to openLiveSlot(). This client-
+            // side fun-mode spin handler exists only as legacy scaffolding
+            // for callers that didn't go through the lobby. Refuse to
+            // settle a spin here unless the game has explicitly opted
+            // out of liveMode (no game does today). This neutralizes
+            // every downstream `balance += …` write that previously
+            // credited real money without server confirmation.
+            if (currentGame.liveMode !== false) {
+                if (typeof window.openLiveSlot === 'function') {
+                    window.openLiveSlot(currentGame.id);
+                }
+                return;
+            }
             if (freeSpinsActive) { freeSpinSpin(currentGame); return; }
             if (currentBet > balance) {
                 if (currentUser && !currentUser.isGuest) {
@@ -18565,6 +18580,11 @@ function renderGameStatsWidget() {
 
         function freeSpinSpin(game) {
             if (!freeSpinsActive || spinning || !currentGame) return;
+            // Defense-in-depth: free-spin sessions are now server-tracked
+            // (server/services/bonus-session.service.js). The legacy
+            // client-side free-spin loop only runs for fun-mode games,
+            // which currently doesn't include any catalog game.
+            if (currentGame.liveMode !== false) return;
 
             spinning = true;
             resetIdleTimer(); // reset idle pulse at free spin start
@@ -40757,6 +40777,7 @@ window._logAudit658 = _logAudit658;
         spinning: false,
         autoCancel: false,      // user-driven stop flag for the auto-spin loop
         cellNodes: null,        // {col,row} -> reel cell element, populated at modal open
+        bonusSession: null,     // active free-spin session, mirrored from server
     };
 
     // Per-game paytable HTML — game definitions don't change at
@@ -40891,6 +40912,8 @@ window._logAudit658 = _logAudit658;
                 '</div>' +
 
                 '<div id="liveSlotBalance" style="font-size:13px;color:#94a3b8;margin-bottom:8px;">Balance: —</div>' +
+                '<div id="liveSlotBonus" style="display:none;font-size:13px;background:rgba(241,196,15,0.08);' +
+                    'border:1px solid rgba(241,196,15,0.3);border-radius:6px;padding:6px 10px;margin-bottom:8px;text-align:center;"></div>' +
 
                 buildReelsGrid(def) +
 
@@ -41259,9 +41282,14 @@ window._logAudit658 = _logAudit658;
         // persistent value the user set via the "Your client seed"
         // panel. The post-spin response's `revealed.client_seed`
         // remains the source of truth for "what was actually used".
+        // If we're inside a free-spin session, send the session id and
+        // skip the bet — the server won't debit.
+        var spinBody = state.bonusSession
+            ? { bonus_session_id: state.bonusSession.id }
+            : { game_id: state.gameId, bet_cents: state.betCents };
         var res = await fetchJSON('/api/slot/spin', {
             method: 'POST',
-            body: { game_id: state.gameId, bet_cents: state.betCents },
+            body: spinBody,
         });
 
         state.spinning = false;
@@ -41307,6 +41335,44 @@ window._logAudit658 = _logAudit658;
 
         var balEl = document.getElementById('liveSlotBalance');
         if (balEl) balEl.textContent = 'Balance: ' + fmt(res.body.balance_cents);
+
+        // Bonus-session lifecycle. The server sends `bonus_session` on
+        // every response: null when not in a bonus, an active session
+        // when one was just opened or is still running, or a completed
+        // session on the final spin. The UI mirrors that state.
+        var bs = res.body.bonus_session || null;
+        var prevBs = state.bonusSession;
+        state.bonusSession = bs && bs.status === 'active' ? bs : null;
+        updateBonusUI(bs, prevBs);
+    }
+
+    function updateBonusUI(bs, prevBs) {
+        var bonusEl = document.getElementById('liveSlotBonus');
+        if (!bonusEl) return;
+        if (state.bonusSession) {
+            bonusEl.style.display = '';
+            bonusEl.innerHTML =
+                '<span style="color:#fde047;font-weight:800">FREE SPINS</span> &middot; ' +
+                state.bonusSession.spins_remaining + ' left &middot; ' +
+                'won ' + fmt(state.bonusSession.total_win_cents);
+            // Disable bet input while a bonus is running.
+            var betInput = document.getElementById('liveSlotBet');
+            if (betInput) betInput.disabled = true;
+        } else if (bs && bs.status === 'completed') {
+            bonusEl.style.display = '';
+            bonusEl.innerHTML =
+                '<span style="color:#22c55e;font-weight:800">BONUS COMPLETE</span> &middot; total ' +
+                fmt(bs.total_win_cents) + ' over ' + bs.spins_consumed + ' spins';
+            var betInput2 = document.getElementById('liveSlotBet');
+            if (betInput2) betInput2.disabled = false;
+        } else if (prevBs && !state.bonusSession) {
+            // Bonus just ended without a final-status payload — clear UI.
+            bonusEl.style.display = 'none';
+            var betInput3 = document.getElementById('liveSlotBet');
+            if (betInput3) betInput3.disabled = false;
+        } else {
+            bonusEl.style.display = 'none';
+        }
     }
 
     function wireEvents() {
@@ -41359,10 +41425,30 @@ window._logAudit658 = _logAudit658;
         state.betCents = def.min_bet_cents;
         state.committedHash = null;
         state.lastResult = null;
+        state.bonusSession = null;
         ensureModal();
         cacheCellNodes();
         wireEvents();
-        await Promise.all([refreshBalance(), refreshCommit(), refreshClientSeed()]);
+        await Promise.all([
+            refreshBalance(),
+            refreshCommit(),
+            refreshClientSeed(),
+            refreshBonusSession(),
+        ]);
+    }
+
+    async function refreshBonusSession() {
+        var r = await fetchJSON('/api/slot/bonus-session');
+        if (r.status === 200 && r.body && r.body.bonus_session) {
+            // Only restore if the server's active session is for the
+            // game we just opened — different game means it's stale to
+            // this modal even though it's still live for the user.
+            var bs = r.body.bonus_session;
+            if (bs.game_id === state.gameId && bs.status === 'active') {
+                state.bonusSession = bs;
+                updateBonusUI(bs, null);
+            }
+        }
     }
 
     window.openLiveSlot = openLiveSlot;

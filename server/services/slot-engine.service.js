@@ -30,6 +30,7 @@ const crypto = require('crypto');
 const db = require('../database');
 const featureFlags = require('./feature-flags.service');
 const universal = require('./slot-engine-universal.service');
+const bonusSessions = require('./bonus-session.service');
 
 /* ────────────────────────────── games ────────────────────────────── */
 
@@ -371,7 +372,127 @@ async function spin(args) {
     // outside the lock, but keeping everything inside makes the
     // failure modes easier to reason about (errors surface from one
     // place) and the lock is only contended on hot per-user spam.
+    if (args.bonusSessionId != null) {
+        return withSpinLock(args.userId, () => consumeBonusSpinImpl(args));
+    }
     return withSpinLock(args.userId, () => spinImpl(args));
+}
+
+/**
+ * Free-spin consume path. Caller passes `bonus_session_id` instead of
+ * `bet_cents`; we look up the active session, refuse if it's stale or
+ * not owned by this user, spin with the original bet, credit the win
+ * (no debit), decrement spins_remaining, and check for retrigger.
+ */
+async function consumeBonusSpinImpl({ userId, bonusSessionId, clientSeed }) {
+    const session = await bonusSessions.getActiveForUser(userId);
+    if (!session || Number(session.id) !== Number(bonusSessionId)) {
+        const e = new Error('Bonus session not found or already complete.');
+        e.status = 404;
+        e.code = 'bonus_session_invalid';
+        throw e;
+    }
+    if (Number(session.spins_remaining) <= 0) {
+        const e = new Error('Bonus session has no spins remaining.');
+        e.status = 409;
+        e.code = 'bonus_session_complete';
+        throw e;
+    }
+    const gameId = session.game_id;
+    const tunedGame = GAMES[gameId];
+    const universalGame = tunedGame ? null : universal.getGame(gameId);
+    if (!tunedGame && !universalGame) { const e = new Error('Unknown game.'); e.status = 404; throw e; }
+    const bet = Number(session.original_bet_cents);
+
+    // Same RNG plumbing as a normal spin — the only differences are no
+    // debit and the post-spin session bookkeeping.
+    const userRow = await db.get(
+        'SELECT slot_client_seed FROM users WHERE id = ?',
+        [userId]
+    );
+    const persistedClientSeed = userRow && userRow.slot_client_seed;
+    const commit = await getOrCreateCommit(userId);
+    const nonce = Number(commit.nonce) + 1;
+    const effectiveSeed = (clientSeed != null && clientSeed !== '') ? clientSeed : persistedClientSeed;
+    const normalizedClientSeed = normalizeClientSeed(effectiveSeed);
+
+    let stops, win_cents, line, universalGrid = null, universalLines = null, scatterCount = 0;
+    if (tunedGame) {
+        stops = spinReels(tunedGame, commit.server_seed, normalizedClientSeed, nonce);
+        const ev = evaluate(tunedGame, stops, bet);
+        win_cents = ev.win_cents;
+        line = ev.line;
+    } else {
+        const floats = deriveFloats(commit.server_seed, normalizedClientSeed, nonce, universalGame.cols);
+        universalGrid = universal.spinReelsUniversal(universalGame, floats);
+        const ev = universal.evaluateUniversal(universalGame, universalGrid, bet);
+        win_cents = ev.win_cents;
+        universalLines = ev.lines;
+        scatterCount = ev.scatter_count || 0;
+        stops = universalGrid.map((col, i) => ({ index: i, symbol: col[0], column: col }));
+    }
+
+    if (win_cents > 0) {
+        await db.run(
+            'UPDATE users SET balance_cents = balance_cents + ? WHERE id = ?',
+            [win_cents, userId]
+        );
+    }
+    const balRow = await db.get('SELECT balance_cents FROM users WHERE id = ?', [userId]);
+    const balanceAfter = Number((balRow && balRow.balance_cents) || 0);
+
+    const reelsMeta = tunedGame
+        ? { length: tunedGame.reels[0].length, count: tunedGame.reels.length, engine: 'tuned', bonus: true }
+        : { length: universalGame.reels[0].length, count: universalGame.cols, rows: universalGame.rows, engine: 'universal', win_type: universalGame.winType, bonus: true };
+    const outcome = tunedGame
+        ? { stops, line, reels_meta: reelsMeta, bonus_session_id: Number(session.id) }
+        : { stops, grid: universalGrid, lines: universalLines, reels_meta: reelsMeta, scatter_count: scatterCount, bonus_session_id: Number(session.id) };
+    // Persist as a slot_round with bet_cents=0 so analytics still see the
+    // event but don't double-count house turnover. The win still lands
+    // in win_cents which keeps the lifetime-RTP and balance-after fields
+    // honest.
+    await db.run(
+        `INSERT INTO slot_rounds
+            (user_id, game_id, bet_cents, win_cents, balance_after_cents,
+             server_seed, server_seed_hash, client_seed, nonce, outcome_json)
+         VALUES (?, ?, 0, ?, ?, ?, ?, ?, ?, ?)`,
+        [userId, gameId, win_cents, balanceAfter,
+         commit.server_seed, commit.server_seed_hash, normalizedClientSeed, nonce, JSON.stringify(outcome)]
+    );
+    const roundRow = await db.get(
+        'SELECT id FROM slot_rounds WHERE user_id = ? ORDER BY id DESC LIMIT 1',
+        [userId]
+    );
+    const roundId = roundRow && roundRow.id;
+    const next = await rollNewCommit(userId);
+
+    // Decrement / mark complete. Retrigger if scatters >= 3 again
+    // and the catalog allows retriggers for this game.
+    let updated = await bonusSessions.consumeSpin(session.id, win_cents);
+    if (universalGame && scatterCount >= 3) {
+        const def = require('../../shared/game-definitions.js').find(g => g.id === gameId);
+        if (def && def.freeSpinsRetrigger && def.freeSpinsCount > 0) {
+            await bonusSessions.addRetriggerSpins(session.id, def.freeSpinsCount);
+            updated = await bonusSessions.getById(session.id);
+        }
+    }
+
+    return {
+        round_id: roundId,
+        game_id: gameId,
+        bet_cents: 0,
+        win_cents,
+        balance_cents: balanceAfter,
+        outcome,
+        bonus_session: bonusSessions.publicShape(updated || (await bonusSessions.getById(session.id))),
+        revealed: {
+            server_seed: commit.server_seed,
+            server_seed_hash: commit.server_seed_hash,
+            client_seed: normalizedClientSeed,
+            nonce,
+        },
+        next_commit: { server_seed_hash: next.server_seed_hash },
+    };
 }
 
 async function spinImpl({ userId, gameId, betCents, clientSeed }) {
@@ -470,89 +591,138 @@ async function spinImpl({ userId, gameId, betCents, clientSeed }) {
         throw e;
     }
 
-    // 2) Pull (or lazy-create) the commit, bump nonce, derive stops.
-    const commit = await getOrCreateCommit(userId);
-    const nonce = Number(commit.nonce) + 1;
-    // Per-spin override beats the persistent seed (back-compat for the
-    // existing API tests that pass client_seed in the body, and for
-    // power users hitting the API directly). Otherwise fall back to
-    // the user's rotatable seed; normalize handles NULL → 'default'.
-    const effectiveSeed = (clientSeed != null && clientSeed !== '') ? clientSeed : persistedClientSeed;
-    const normalizedClientSeed = normalizeClientSeed(effectiveSeed);
-    let stops, win_cents, line, universalGrid = null, universalLines = null;
-    if (tunedGame) {
-        stops = spinReels(tunedGame, commit.server_seed, normalizedClientSeed, nonce);
-        const ev = evaluate(tunedGame, stops, bet);
-        win_cents = ev.win_cents;
-        line = ev.line;
-    } else {
-        // Universal path: derive cols floats (one per reel; rows follow
-        // the strip layout deterministically), spin, evaluate.
-        const floats = deriveFloats(commit.server_seed, normalizedClientSeed, nonce, universalGame.cols);
-        universalGrid = universal.spinReelsUniversal(universalGame, floats);
-        const ev = universal.evaluateUniversal(universalGame, universalGrid, bet);
-        win_cents = ev.win_cents;
-        universalLines = ev.lines;
-        // Synthesize a `stops` array for the round log (one entry per reel)
-        // so existing analytics/verifier code stays uniform.
-        stops = universalGrid.map((col, i) => ({ index: i, symbol: col[0], column: col }));
-    }
+    // 2) Everything from commit-fetch through round-log runs under a
+    //    try/catch with a refund path. If the engine throws (malformed
+    //    game def, transient DB failure on the credit/log step, etc.)
+    //    after the debit succeeded, we MUST restore the bet — otherwise
+    //    the user pays for a spin that left no audit trail. The refund
+    //    UPDATE is best-effort; if it itself fails we log a CRITICAL
+    //    incident so ops can reconcile manually.
+    try {
+        const commit = await getOrCreateCommit(userId);
+        const nonce = Number(commit.nonce) + 1;
+        // Per-spin override beats the persistent seed (back-compat for the
+        // existing API tests that pass client_seed in the body, and for
+        // power users hitting the API directly). Otherwise fall back to
+        // the user's rotatable seed; normalize handles NULL → 'default'.
+        const effectiveSeed = (clientSeed != null && clientSeed !== '') ? clientSeed : persistedClientSeed;
+        const normalizedClientSeed = normalizeClientSeed(effectiveSeed);
+        let stops, win_cents, line, universalGrid = null, universalLines = null, scatterCount = 0;
+        if (tunedGame) {
+            stops = spinReels(tunedGame, commit.server_seed, normalizedClientSeed, nonce);
+            const ev = evaluate(tunedGame, stops, bet);
+            win_cents = ev.win_cents;
+            line = ev.line;
+        } else {
+            // Universal path: derive cols floats (one per reel; rows follow
+            // the strip layout deterministically), spin, evaluate.
+            const floats = deriveFloats(commit.server_seed, normalizedClientSeed, nonce, universalGame.cols);
+            universalGrid = universal.spinReelsUniversal(universalGame, floats);
+            const ev = universal.evaluateUniversal(universalGame, universalGrid, bet);
+            win_cents = ev.win_cents;
+            universalLines = ev.lines;
+            scatterCount = ev.scatter_count || 0;
+            // Synthesize a `stops` array for the round log (one entry per reel)
+            // so existing analytics/verifier code stays uniform.
+            stops = universalGrid.map((col, i) => ({ index: i, symbol: col[0], column: col }));
+        }
 
-    // 3) Credit any win.
-    if (win_cents > 0) {
+        // 3) Credit any win.
+        if (win_cents > 0) {
+            await db.run(
+                'UPDATE users SET balance_cents = balance_cents + ? WHERE id = ?',
+                [win_cents, userId]
+            );
+        }
+
+        // 4) Read the new balance for the response + round log.
+        const balRow = await db.get('SELECT balance_cents FROM users WHERE id = ?', [userId]);
+        const balanceAfter = Number((balRow && balRow.balance_cents) || 0);
+
+        // 5) Persist the round with the revealed seed.
+        const reelsMeta = tunedGame
+            ? { length: tunedGame.reels[0].length, count: tunedGame.reels.length, engine: 'tuned' }
+            : { length: universalGame.reels[0].length, count: universalGame.cols, rows: universalGame.rows, engine: 'universal', win_type: universalGame.winType };
+        const outcome = tunedGame
+            ? { stops, line, reels_meta: reelsMeta }
+            : { stops, grid: universalGrid, lines: universalLines, reels_meta: reelsMeta, scatter_count: scatterCount };
         await db.run(
-            'UPDATE users SET balance_cents = balance_cents + ? WHERE id = ?',
-            [win_cents, userId]
+            `INSERT INTO slot_rounds
+                (user_id, game_id, bet_cents, win_cents, balance_after_cents,
+                 server_seed, server_seed_hash, client_seed, nonce, outcome_json)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+            [userId, gameId, bet, win_cents, balanceAfter,
+             commit.server_seed, commit.server_seed_hash, normalizedClientSeed, nonce, JSON.stringify(outcome)]
         );
+        const roundRow = await db.get(
+            'SELECT id FROM slot_rounds WHERE user_id = ? ORDER BY id DESC LIMIT 1',
+            [userId]
+        );
+        const roundId = roundRow && roundRow.id;
+
+        // 6) Roll a fresh commit for the next spin so the just-revealed seed
+        //    can never be reused. The client immediately sees the next hash
+        //    in `next_commit` and can verify the one it just consumed.
+        const next = await rollNewCommit(userId);
+
+        // 7) Bonus-session trigger (universal path only, today). 3+ scatters
+        //    on a game with a positive freeSpinsCount opens a free-spin
+        //    session — the client switches into bonus mode for the next
+        //    `spins_remaining` spins.
+        let bonusSession = null;
+        if (universalGame && scatterCount >= 3) {
+            const spinsCount = Number(universalGame.bonusType ? (require('../../shared/game-definitions.js').find(g => g.id === gameId) || {}).freeSpinsCount : 0) || 0;
+            if (spinsCount > 0) {
+                const sessionId = await bonusSessions.open({
+                    userId, gameId,
+                    gameDef: { freeSpinsCount: spinsCount, bonusType: universalGame.bonusType },
+                    betCents: bet,
+                    triggerRoundId: roundId,
+                });
+                if (sessionId) {
+                    const row = await bonusSessions.getById(sessionId);
+                    bonusSession = bonusSessions.publicShape(row);
+                }
+            }
+        }
+
+        return {
+            round_id: roundId,
+            game_id: gameId,
+            bet_cents: bet,
+            win_cents,
+            balance_cents: balanceAfter,
+            outcome,
+            bonus_session: bonusSession,
+            revealed: {
+                server_seed: commit.server_seed,
+                server_seed_hash: commit.server_seed_hash,
+                client_seed: normalizedClientSeed,
+                nonce,
+            },
+            next_commit: {
+                server_seed_hash: next.server_seed_hash,
+            },
+        };
+    } catch (err) {
+        // Refund the bet. Engine threw or DB step failed AFTER debit
+        // succeeded — without this the user loses their bet with no
+        // round logged.
+        try {
+            await db.run(
+                'UPDATE users SET balance_cents = balance_cents + ? WHERE id = ?',
+                [bet, userId]
+            );
+            console.warn('[spin/refunded]', 'user=' + userId, 'bet=' + bet, 'reason=' + (err && err.message));
+        } catch (refundErr) {
+            // The refund itself failed. This is the worst case — the
+            // user paid for a spin that produced no result. Log loudly
+            // so ops can reconcile from the slot_rounds gap.
+            console.error('[spin/CRITICAL refund failed]', 'user=' + userId, 'bet=' + bet,
+                'origErr=' + (err && err.message), 'refundErr=' + (refundErr && refundErr.message));
+        }
+        throw err;
     }
-
-    // 4) Read the new balance for the response + round log.
-    const balRow = await db.get('SELECT balance_cents FROM users WHERE id = ?', [userId]);
-    const balanceAfter = Number((balRow && balRow.balance_cents) || 0);
-
-    // 5) Persist the round with the revealed seed.
-    const reelsMeta = tunedGame
-        ? { length: tunedGame.reels[0].length, count: tunedGame.reels.length, engine: 'tuned' }
-        : { length: universalGame.reels[0].length, count: universalGame.cols, rows: universalGame.rows, engine: 'universal', win_type: universalGame.winType };
-    const outcome = tunedGame
-        ? { stops, line, reels_meta: reelsMeta }
-        : { stops, grid: universalGrid, lines: universalLines, reels_meta: reelsMeta };
-    await db.run(
-        `INSERT INTO slot_rounds
-            (user_id, game_id, bet_cents, win_cents, balance_after_cents,
-             server_seed, server_seed_hash, client_seed, nonce, outcome_json)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-        [userId, gameId, bet, win_cents, balanceAfter,
-         commit.server_seed, commit.server_seed_hash, normalizedClientSeed, nonce, JSON.stringify(outcome)]
-    );
-    const roundRow = await db.get(
-        'SELECT id FROM slot_rounds WHERE user_id = ? ORDER BY id DESC LIMIT 1',
-        [userId]
-    );
-    const roundId = roundRow && roundRow.id;
-
-    // 6) Roll a fresh commit for the next spin so the just-revealed seed
-    //    can never be reused. The client immediately sees the next hash
-    //    in `next_commit` and can verify the one it just consumed.
-    const next = await rollNewCommit(userId);
-
-    return {
-        round_id: roundId,
-        game_id: gameId,
-        bet_cents: bet,
-        win_cents,
-        balance_cents: balanceAfter,
-        outcome,
-        revealed: {
-            server_seed: commit.server_seed,
-            server_seed_hash: commit.server_seed_hash,
-            client_seed: normalizedClientSeed,
-            nonce,
-        },
-        next_commit: {
-            server_seed_hash: next.server_seed_hash,
-        },
-    };
 }
 
 const ROUND_COLUMNS = `id, game_id, bet_cents, win_cents, balance_after_cents,

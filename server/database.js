@@ -567,6 +567,32 @@ async function migrate() {
         );
     `);
     await driver.exec(`CREATE INDEX IF NOT EXISTS idx_auth_sessions_user ON auth_sessions (user_id, last_seen_at DESC);`);
+
+    // Free-spin / bonus sessions. A spin that lands the trigger
+    // condition (3+ scatters today; other bonus types as the engine
+    // grows) creates a row here; subsequent free spins consume it
+    // without debiting balance. Row stays after completion as the
+    // audit trail — total_win_cents is the customer-facing summary.
+    await driver.exec(`
+        CREATE TABLE IF NOT EXISTS bonus_sessions (
+            id ${T.pk},
+            user_id ${driver.kind === 'pg' ? 'INTEGER' : 'INTEGER'} NOT NULL,
+            game_id TEXT NOT NULL,
+            bonus_type TEXT NOT NULL,
+            trigger_round_id ${driver.kind === 'pg' ? 'INTEGER' : 'INTEGER'},
+            original_bet_cents ${driver.kind === 'pg' ? 'BIGINT' : 'INTEGER'} NOT NULL,
+            spins_remaining ${driver.kind === 'pg' ? 'INTEGER' : 'INTEGER'} NOT NULL,
+            spins_consumed ${driver.kind === 'pg' ? 'INTEGER' : 'INTEGER'} NOT NULL DEFAULT 0,
+            total_win_cents ${driver.kind === 'pg' ? 'BIGINT' : 'INTEGER'} NOT NULL DEFAULT 0,
+            state_json TEXT,
+            status TEXT NOT NULL DEFAULT 'active',
+            created_at ${T.ts},
+            completed_at ${driver.kind === 'pg' ? 'TIMESTAMPTZ' : 'TEXT'}
+        );
+    `);
+    // The active-session lookup happens on every spin from a user who
+    // has a bonus open; an index on (user_id, status) keeps it cheap.
+    await driver.exec(`CREATE INDEX IF NOT EXISTS idx_bonus_sessions_active ON bonus_sessions (user_id, status);`);
 }
 
 async function initDatabase() {

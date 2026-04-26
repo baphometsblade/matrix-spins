@@ -20,6 +20,7 @@ const express = require('express');
 const { authenticate } = require('../middleware/auth');
 const userRateLimit = require('../middleware/user-ratelimit');
 const engine = require('../services/slot-engine.service');
+const bonusSessions = require('../services/bonus-session.service');
 
 const router = express.Router();
 
@@ -44,7 +45,33 @@ router.get('/commit', authenticate, async (req, res) => {
 });
 
 router.post('/spin', authenticate, spinLimiter, async (req, res) => {
-    const { game_id, bet_cents, client_seed } = req.body || {};
+    const { game_id, bet_cents, client_seed, bonus_session_id } = req.body || {};
+
+    // Free-spin (bonus session) consume path: no game_id / bet needed,
+    // engine looks up the active session by user. We still validate
+    // the session id is a finite positive integer here for shape safety.
+    if (bonus_session_id != null) {
+        const sid = Number(bonus_session_id);
+        if (!Number.isFinite(sid) || sid <= 0) {
+            return res.status(400).json({ error: 'Invalid bonus_session_id.' });
+        }
+        try {
+            const result = await engine.spin({
+                userId: req.user.id,
+                bonusSessionId: sid,
+                clientSeed: client_seed,
+            });
+            return res.json(result);
+        } catch (err) {
+            if (err && err.status) {
+                const body = { error: err.message };
+                if (err.code) body.code = err.code;
+                return res.status(err.status).json(body);
+            }
+            console.error('[slot/spin/bonus]', err);
+            return res.status(500).json({ error: 'Bonus spin failed.' });
+        }
+    }
 
     if (!engine.hasGame(game_id)) return res.status(404).json({ error: 'Unknown game.' });
 
@@ -113,6 +140,21 @@ router.post('/rotate-commit', authenticate, async (req, res) => {
     } catch (err) {
         console.error('[slot/rotate-commit]', err);
         res.status(500).json({ error: 'Failed to rotate commit.' });
+    }
+});
+
+/**
+ * GET /api/slot/bonus-session
+ * Return the user's active bonus session, if any. Lets a returning
+ * client (or one that reloaded mid-bonus) pick up where it left off.
+ */
+router.get('/bonus-session', authenticate, async (req, res) => {
+    try {
+        const row = await bonusSessions.getActiveForUser(req.user.id);
+        res.json({ bonus_session: bonusSessions.publicShape(row) });
+    } catch (err) {
+        console.error('[slot/bonus-session]', err);
+        res.status(500).json({ error: 'Failed to fetch bonus session.' });
     }
 });
 
