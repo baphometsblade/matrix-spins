@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Demon Inferno Gateway — Matrix Spins Casino</title>
+  <meta name="theme-color" content="#D4A853">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html, body { height: 100%; }
+    body { background: #0D0F14; color: #F0F0F5; font-family: 'Inter', sans-serif; overflow-x: hidden; }
+  </style>
+  <link rel="stylesheet" href="../css/chat-widget.css">
+  <link rel="stylesheet" href="../css/notifications.css">
+  <link rel="stylesheet" href="../css/age-gate.css">
+  <link rel="stylesheet" href="../css/search.css">
+  <link rel="stylesheet" href="../css/favorites.css">
+  <link rel="stylesheet" href="../css/session-monitor.css">
+  <link rel="stylesheet" href="../css/conversion.css">
+</head>
+<body>
+  <div id="game-container" style="width:100%;min-height:100vh;"></div>
+
+  <script src="../js/api-client.js"></script>
+  <script src="../js/casino-engine.js"></script>
+  <script>
+    const gameConfig = {
+      name: 'Demon Inferno Gateway',
+      id: 'demon-inferno-gateway',
+      studioTheme: {
+        id: 'shadow-works',
+        name: 'Shadow Works',
+        primaryColor: '#8B0000',
+        secondaryColor: '#39FF14',
+        accentColor: '#1F1F1F',
+        bgGradient: 'linear-gradient(135deg, #0B0B0B 0%, #1a0a0a 50%, #0B0B0B 100%)',
+        fontFamily: "'Black Ops One', sans-serif",
+        fontFamilyBody: "'Caveat', cursive",
+        chromeStyle: 'custom',
+        logoUrl: 'assets/studios/shadow-works-logo.png',
+        reelBg: '#050505',
+        reelBorder: '#8B0000',
+        winHighlight: '#39FF14',
+        borderStyle: '3px solid #8B0000',
+        borderRadius: '2px',
+        boxShadow: '0 0 40px rgba(139,0,0,0.6), inset 0 0 20px rgba(57,255,20,0.05)',
+        buttonStyle: 'background: linear-gradient(180deg, #8B0000, #600000); border-radius: 3px; border: 1px solid #39FF14; text-transform: uppercase; letter-spacing: 3px; font-weight: bold;',
+        spinButtonGlow: '0 0 30px rgba(139,0,0,0.7)'
+      },
+      rtp: 0.89,
+      volatility: 'low',
+      mechanic: 'Symbol Chain',
+      mechanicDesc: 'Connected symbols form chains that extend across reels, creating massive win clusters.',
+      minBet: 0.2,
+      maxBet: 100,
+      betStep: 0.20,
+      reels: 5,
+      rows: 3,
+      paylines: 10,
+      symbols: ["demon","inferno","fire","portal","curse","gold","darkness","evil","wild","scatter"],
+      wilds: ["demon"],
+      scatters: ["scatter"],
+      symbolWeights: {"demon":[9.982055511792561,9.89176511857231,9.820071644552613,9.858798585076645,10.076452833470078],"inferno":[9.171916978569616,8.763775972690185,8.858557934083976,9.099262089071205,8.996412633786425],"fire":[8.177024786907312,7.851571533954742,7.751466508579659,7.830159969114648,8.031619234471679],"portal":[6.933231109035618,6.788382701174278,6.752423245295332,6.83581067469283,7.220135620423627],"curse":[6.157919469173302,6.200039671272656,6.066532884871584,5.989744737457786,6.024373765736316],"gold":[5.20550002201548,4.971865956865841,5.12399298879919,5.09286531093678,5.083365304947491],"darkness":[4.079786937213634,4.206601376573108,3.8879072087634805,3.9553216561360993,3.84110713031408],"evil":[2.8640788490473406,3.0950228358668066,2.792659081308968,2.8446717013222336,2.9373325394169294],"wild":[1.9041570503025875,1.862720141349074,2.220060499370585,2.0076936657839948,2.1002847999362455],"scatter":[0.8261744435082123,0.7539291731915037,0.9297102375437569,0.916090848630151,1.1206871095942614]},
+      paytable: {"demon":{"3":2,"4":5,"5":15},"inferno":{"3":4,"4":11,"5":34},"fire":{"3":6,"4":16,"5":52},"portal":{"3":7,"4":22,"5":71},"curse":{"3":9,"4":27,"5":89},"gold":{"3":11,"4":33,"5":108},"darkness":{"3":13,"4":38,"5":126},"evil":{"3":15,"4":44,"5":145},"wild":{"3":16,"4":49,"5":163},"scatter":{"3":18,"4":55,"5":182},"SCATTER":{"3":5,"4":20,"5":100}},
+      freeSpinCount: 10,
+      freeSpinMultiplier: 2,
+      onSound: function(label) { /* sound hooks ready */ }
+    };
+
+    CasinoEngine.init('game-container', gameConfig);
+  </script>
+  <script src="../js/chat-widget.js" defer></script>
+  <script src="../js/notifications.js" defer></script>
+  <script src="../js/age-gate.js" defer></script>
+  <script src="../js/cookie-consent.js" defer></script>
+  <script src="../js/search.js" defer></script>
+  <script src="../js/favorites.js" defer></script>
+  <script src="../js/session-monitor.js" defer></script>
+  <script src="../js/sound-manager.js" defer></script>
+  <script src="../js/analytics.js" defer></script>
+  <script src="../js/email-capture.js" defer></script>
+  <script src="../js/conversion.js" defer></script>
+</body>
+</html>

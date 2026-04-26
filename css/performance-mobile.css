@@ -1,0 +1,345 @@
+/* ═══════════════════════════════════════════════════════════════
+   MATRIX SPINS — Performance & Mobile Polish
+   v1.0 — 2026-04-25
+
+   Targets:
+   • Core Web Vitals (CLS, LCP, FID/INP)
+   • Touch target compliance (WCAG 2.1 AA — 44px minimum)
+   • Safe area insets (iPhone notch/Dynamic Island)
+   • Skeleton loading states
+   • Touch-device hover fix
+   • 360px ultra-narrow support
+   ═══════════════════════════════════════════════════════════════ */
+
+/* ── FONT DISPLAY OPTIMIZATION ────────────────────────────────
+   Prevent FOUT (Flash of Unstyled Text) from shifting layout  */
+@font-face {
+    font-family: 'Inter';
+    font-display: swap;
+}
+@font-face {
+    font-family: 'Plus Jakarta Sans';
+    font-display: swap;
+}
+
+/* ── CLS PREVENTION ──────────────────────────────────────────
+   Reserve space for JS-rendered content to prevent layout shift */
+#gameGrid {
+    min-height: 60vh;
+    contain: layout style;
+}
+
+.game-card {
+    contain: layout style paint;
+    content-visibility: auto;
+    contain-intrinsic-size: auto 280px;
+}
+
+.game-visual {
+    aspect-ratio: 4 / 3;
+    overflow: hidden;
+}
+
+/* ── SKELETON LOADING STATES ─────────────────────────────────
+   Shown while game cards render via JS                        */
+@keyframes shimmer {
+    0% { background-position: -200% 0; }
+    100% { background-position: 200% 0; }
+}
+
+.skeleton-card {
+    background: var(--bg-card, rgba(26, 29, 39, 0.7));
+    border-radius: 12px;
+    overflow: hidden;
+    border: 1px solid var(--border-subtle, rgba(255, 255, 255, 0.06));
+}
+
+.skeleton-visual {
+    aspect-ratio: 4 / 3;
+    background: linear-gradient(
+        90deg,
+        var(--bg-elevated, #1A1D27) 25%,
+        rgba(212, 168, 83, 0.08) 50%,
+        var(--bg-elevated, #1A1D27) 75%
+    );
+    background-size: 200% 100%;
+    animation: shimmer 1.8s ease-in-out infinite;
+}
+
+.skeleton-text {
+    margin: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.skeleton-line {
+    height: 14px;
+    border-radius: 4px;
+    background: linear-gradient(
+        90deg,
+        var(--bg-elevated, #1A1D27) 25%,
+        rgba(255, 255, 255, 0.04) 50%,
+        var(--bg-elevated, #1A1D27) 75%
+    );
+    background-size: 200% 100%;
+    animation: shimmer 1.8s ease-in-out infinite;
+}
+
+.skeleton-line:nth-child(1) { width: 70%; }
+.skeleton-line:nth-child(2) { width: 50%; animation-delay: 0.1s; }
+.skeleton-line:nth-child(3) { width: 40%; animation-delay: 0.2s; }
+
+/* ── TOUCH TARGET COMPLIANCE (44px minimum) ──────────────────
+   WCAG 2.1 Level AA requires 44x44px touch targets            */
+
+.filter-chip {
+    min-height: 44px;
+    display: inline-flex;
+    align-items: center;
+    padding: 10px 16px;
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+}
+
+.mobile-nav-item {
+    min-height: 48px;
+    min-width: 48px;
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+}
+
+.play-btn {
+    min-height: 44px;
+    min-width: 100px;
+    padding: 12px 28px;
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+}
+
+.fav-btn,
+.ms-sound-toggle {
+    min-width: 44px;
+    min-height: 44px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+}
+
+.deposit-btn,
+#depositBtn {
+    min-height: 44px;
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+}
+
+/* ── TOUCH DEVICE: GAME OVERLAY FIX ──────────────────────────
+   Hover doesn't exist on touch — show play affordance always  */
+@media (hover: none) and (pointer: coarse) {
+    .game-card .game-overlay {
+        opacity: 1;
+        background: linear-gradient(
+            to top,
+            rgba(0, 0, 0, 0.7) 0%,
+            rgba(0, 0, 0, 0.3) 40%,
+            transparent 100%
+        );
+    }
+
+    .game-card .game-overlay .play-btn {
+        transform: translateY(0);
+        opacity: 1;
+    }
+
+    /* Entire card is tappable — visual feedback */
+    .game-card {
+        cursor: pointer;
+        -webkit-tap-highlight-color: rgba(212, 168, 83, 0.15);
+    }
+
+    .game-card:active {
+        transform: scale(0.97);
+        transition: transform 100ms ease;
+    }
+}
+
+/* ── SAFE AREA INSETS (iPhone notch / Dynamic Island) ────────
+   Prevent content from being obscured by device chrome         */
+.mobile-nav {
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+    height: calc(56px + env(safe-area-inset-bottom, 0px));
+}
+
+.main {
+    padding-bottom: calc(56px + env(safe-area-inset-bottom, 0px));
+}
+
+@media (max-width: 768px) {
+    body {
+        padding-bottom: calc(70px + env(safe-area-inset-bottom, 0px));
+    }
+
+    .modal-content {
+        padding-bottom: env(safe-area-inset-bottom, 0px);
+        max-height: calc(90vh - env(safe-area-inset-top, 0px));
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+}
+
+/* ── ULTRA-NARROW DEVICES (≤360px — Galaxy Fold, SE 1st gen) ─ */
+@media (max-width: 360px) {
+    .games-grid {
+        grid-template-columns: repeat(2, 1fr) !important;
+        gap: 8px;
+    }
+
+    .header {
+        padding: 0 12px;
+    }
+
+    .header-logo {
+        font-size: 14px;
+    }
+
+    .filter-chip {
+        padding: 8px 10px;
+        font-size: 11px;
+        min-height: 40px;
+    }
+
+    .search-container {
+        padding: 12px;
+    }
+
+    .games-section {
+        padding: 0 12px 80px;
+    }
+
+    .hero-content h1 {
+        font-size: 24px;
+    }
+}
+
+/* ── MOBILE NAV FUNCTIONALITY ────────────────────────────────
+   Smooth scroll targets for mobile nav items                   */
+.mobile-nav-item[data-nav="home"]:active,
+.mobile-nav-item[data-nav="games"]:active,
+.mobile-nav-item[data-nav="bonuses"]:active,
+.mobile-nav-item[data-nav="account"]:active {
+    color: var(--accent-gold-bright, #F0C66E);
+}
+
+/* ── SMOOTH SCROLL & REDUCED MOTION ──────────────────────────
+   Respect user motion preferences for accessibility            */
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+        scroll-behavior: auto !important;
+    }
+
+    .skeleton-visual,
+    .skeleton-line {
+        animation: none;
+        opacity: 0.6;
+    }
+}
+
+/* ── GPU ACCELERATION FOR ANIMATIONS ─────────────────────────
+   Promote animated elements to compositor layer                */
+.game-card,
+.modal,
+.mobile-nav,
+.header,
+.filters {
+    will-change: auto;
+}
+
+.game-card:hover {
+    will-change: transform;
+}
+
+/* ── SCROLL PERFORMANCE ──────────────────────────────────────
+   Optimize scrolling in filter bar and game grid               */
+.filter-container {
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none; /* Firefox */
+}
+
+.filter-container::-webkit-scrollbar {
+    display: none; /* Chrome/Safari */
+}
+
+.games-grid {
+    scroll-behavior: smooth;
+}
+
+/* ── PRINT STYLES ────────────────────────────────────────────
+   Clean output when someone prints the page                    */
+@media print {
+    .header,
+    .mobile-nav,
+    .filters,
+    .hero,
+    .footer {
+        display: none !important;
+    }
+
+    .games-grid {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+    }
+
+    .game-card {
+        break-inside: avoid;
+        border: 1px solid #ccc;
+    }
+
+    body {
+        background: white;
+        color: black;
+    }
+}
+
+/* ── IMAGE LAZY LOADING OPTIMIZATION ─────────────────────────
+   Prevent reflows when images load late                        */
+img[loading="lazy"] {
+    background: var(--bg-elevated, #1A1D27);
+}
+
+img:not([src]),
+img[src=""],
+img[src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7"] {
+    opacity: 0;
+}
+
+/* ── FOCUS VISIBLE STYLES ────────────────────────────────────
+   Keyboard navigation accessibility (WCAG 2.1 AA)             */
+:focus-visible {
+    outline: 2px solid var(--accent-gold, #D4A853);
+    outline-offset: 2px;
+}
+
+.game-card:focus-visible {
+    outline: 2px solid var(--accent-gold, #D4A853);
+    outline-offset: 2px;
+    border-radius: 12px;
+}
+
+.filter-chip:focus-visible,
+.play-btn:focus-visible,
+.mobile-nav-item:focus-visible {
+    outline: 2px solid var(--accent-gold, #D4A853);
+    outline-offset: 2px;
+}
+
+/* Remove outline for mouse users */
+:focus:not(:focus-visible) {
+    outline: none;
+}

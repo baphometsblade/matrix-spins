@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Enchanted Grove Spirits — Matrix Spins Casino</title>
+  <meta name="theme-color" content="#D4A853">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html, body { height: 100%; }
+    body { background: #0D0F14; color: #F0F0F5; font-family: 'Inter', sans-serif; overflow-x: hidden; }
+  </style>
+  <link rel="stylesheet" href="../css/chat-widget.css">
+  <link rel="stylesheet" href="../css/notifications.css">
+  <link rel="stylesheet" href="../css/age-gate.css">
+  <link rel="stylesheet" href="../css/search.css">
+  <link rel="stylesheet" href="../css/favorites.css">
+  <link rel="stylesheet" href="../css/session-monitor.css">
+  <link rel="stylesheet" href="../css/conversion.css">
+</head>
+<body>
+  <div id="game-container" style="width:100%;min-height:100vh;"></div>
+
+  <script src="../js/api-client.js"></script>
+  <script src="../js/casino-engine.js"></script>
+  <script>
+    const gameConfig = {
+      name: 'Enchanted Grove Spirits',
+      id: 'enchanted-grove-spirits',
+      studioTheme: {
+        id: 'mythic-forge',
+        name: 'Mythic Forge',
+        primaryColor: '#50C878',
+        secondaryColor: '#DC143C',
+        accentColor: '#4169E1',
+        bgGradient: 'linear-gradient(135deg, #2C1810 0%, #3D2817 50%, #2C1810 100%)',
+        fontFamily: "'Cinzel', serif",
+        fontFamilyBody: "'Crimson Text', serif",
+        chromeStyle: 'custom',
+        logoUrl: 'assets/studios/mythic-forge-logo.png',
+        reelBg: '#1A0F08',
+        reelBorder: '#50C878',
+        winHighlight: '#FFD700',
+        borderStyle: '4px solid #50C878',
+        borderRadius: '8px',
+        boxShadow: '0 0 35px rgba(80,200,120,0.25), inset 0 0 25px rgba(80,200,120,0.1)',
+        buttonStyle: 'background: linear-gradient(180deg, #50C878, #3A9B5C); border-radius: 6px; border: 2px solid #DC143C; text-transform: uppercase; letter-spacing: 2px; font-weight: 600;',
+        spinButtonGlow: '0 0 25px rgba(80,200,120,0.5)'
+      },
+      rtp: 0.9,
+      volatility: 'low',
+      mechanic: 'Symbol Rain',
+      mechanicDesc: 'Bonus symbols rain from above adding extra wilds and multipliers.',
+      minBet: 0.2,
+      maxBet: 100,
+      betStep: 0.20,
+      reels: 5,
+      rows: 3,
+      paylines: 25,
+      symbols: ["dryad","mushroom","fairy","acorn","owl","moss","crystal","moonstone"],
+      wilds: ["dryad"],
+      scatters: ["moonstone"],
+      symbolWeights: {"dryad":[8.047995521094427,8.048151820955487,7.89711417451191,8.008668248229476,7.86905121520115],"mushroom":[6.984183240539025,7.070892032084239,7.109813417210004,7.01932219173439,7.01070247326355],"fairy":[5.798371736973856,6.02739567023709,6.089101745597948,6.028182368250366,6.21058164726321],"acorn":[5.21354648678376,5.10481469034759,4.955749523279899,5.155418579322192,5.106142107531096],"owl":[4.2436940979805575,4.180532013753405,4.203500317550527,3.7697339202905296,3.879824616090956],"moss":[2.870471087703244,3.113825665220566,2.8317980575448796,2.872416476962038,2.8014701635315467],"crystal":[1.8411279344866895,2.193235089563763,1.8836516458927572,2.123627251434335,2.1133003982568543],"moonstone":[1.1634070181503644,1.2338906895385227,1.1199423430985846,1.074128981531937,0.7713651103963338]},
+      paytable: {"dryad":{"3":2,"4":5,"5":15},"mushroom":{"3":4,"4":12,"5":38},"fairy":{"3":7,"4":19,"5":61},"acorn":{"3":9,"4":26,"5":84},"owl":{"3":11,"4":33,"5":108},"moss":{"3":13,"4":39,"5":131},"crystal":{"3":16,"4":46,"5":154},"moonstone":{"3":18,"4":53,"5":177},"SCATTER":{"3":5,"4":20,"5":100}},
+      freeSpinCount: 10,
+      freeSpinMultiplier: 2,
+      onSound: function(label) { /* sound hooks ready */ }
+    };
+
+    CasinoEngine.init('game-container', gameConfig);
+  </script>
+  <script src="../js/chat-widget.js" defer></script>
+  <script src="../js/notifications.js" defer></script>
+  <script src="../js/age-gate.js" defer></script>
+  <script src="../js/cookie-consent.js" defer></script>
+  <script src="../js/search.js" defer></script>
+  <script src="../js/favorites.js" defer></script>
+  <script src="../js/session-monitor.js" defer></script>
+  <script src="../js/sound-manager.js" defer></script>
+  <script src="../js/analytics.js" defer></script>
+  <script src="../js/email-capture.js" defer></script>
+  <script src="../js/conversion.js" defer></script>
+</body>
+</html>

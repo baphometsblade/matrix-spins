@@ -1,0 +1,439 @@
+/* ═══════════════════════════════════════════════════════════════
+   MATRIX SPINS — Referral Program v1.0
+   Dark casino theme, gold accents, premium card layouts
+   ═══════════════════════════════════════════════════════════════ */
+
+/* ── Design Tokens ─────────────────────────────────────────── */
+:root {
+  --gold:       #d4af37;
+  --gold-light: #e8c84a;
+  --gold-dark:  #b8962e;
+  --bg:         #0d0f14;
+  --bg-card:    rgba(26, 29, 39, 0.7);
+  --bg-elev:    rgba(30, 34, 48, 0.85);
+  --border:     rgba(255, 255, 255, 0.06);
+  --muted:      #6b7280;
+  --text:       #f0f0f5;
+  --green:      #22c55e;
+  --amber:      #f59e0b;
+  --red:        #ef4444;
+}
+
+/* ── Referral Hero ─────────────────────────────────────────── */
+.ref-hero {
+  background: linear-gradient(135deg, #1a1842 0%, #0d1229 50%, #1a2040 100%);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 3rem 2rem;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+  margin-bottom: 2rem;
+}
+
+.ref-hero::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 500px;
+  height: 500px;
+  background: radial-gradient(circle, rgba(212, 175, 55, 0.1) 0%, transparent 65%);
+  pointer-events: none;
+}
+
+.ref-hero-icon {
+  display: block;
+  font-size: 3rem;
+  margin-bottom: 0.75rem;
+}
+
+.ref-hero-title {
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: 1.8rem;
+  font-weight: 800;
+  color: var(--gold);
+  margin: 0 0 0.6rem;
+}
+
+.ref-hero-subtitle {
+  color: var(--muted);
+  font-size: 0.95rem;
+  line-height: 1.6;
+  max-width: 520px;
+  margin: 0 auto;
+}
+
+.ref-hero-subtitle em {
+  color: var(--gold-light);
+  font-style: normal;
+  font-weight: 600;
+}
+
+/* ── Referral Link Section ─────────────────────────────────── */
+.ref-link-section { margin-bottom: 2rem; }
+
+.section-title {
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: var(--text);
+  margin: 0 0 1rem;
+}
+
+.ref-link-row {
+  display: flex;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.ref-link-input {
+  flex: 1;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 0.75rem 1rem;
+  color: var(--text);
+  font-family: 'Inter', sans-serif;
+  font-size: 0.88rem;
+  outline: none;
+  cursor: text;
+  transition: border-color 0.2s;
+}
+
+.ref-link-input:focus { border-color: var(--gold); }
+
+.ref-copy-btn {
+  white-space: nowrap;
+  padding: 0.75rem 1.5rem;
+  border-radius: 10px;
+  font-weight: 600;
+  font-size: 0.88rem;
+  background: linear-gradient(135deg, var(--gold), var(--gold-dark));
+  color: #0d0f14;
+  border: none;
+  cursor: pointer;
+  transition: transform 0.15s, box-shadow 0.2s, background 0.2s;
+}
+
+.ref-copy-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 16px rgba(212, 175, 55, 0.3);
+}
+
+.ref-copy-btn.copied {
+  background: linear-gradient(135deg, var(--green), #16a34a);
+  color: #fff;
+}
+
+.share-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.share-label {
+  font-size: 0.82rem;
+  color: var(--muted);
+  font-weight: 500;
+}
+
+.share-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: var(--bg-elev);
+  color: var(--text);
+  text-decoration: none;
+  transition: border-color 0.2s, background 0.2s, transform 0.15s;
+}
+
+.share-btn:hover {
+  border-color: var(--gold);
+  background: rgba(212, 175, 55, 0.1);
+  transform: translateY(-1px);
+}
+
+.share-twitter:hover { color: #1d9bf0; }
+.share-facebook:hover { color: #1877f2; }
+.share-email:hover { color: var(--gold-light); }
+
+/* ── Stats Dashboard ───────────────────────────────────────── */
+.ref-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1rem;
+  margin-bottom: 2rem;
+}
+
+.ref-stat-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 1.5rem 1rem;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.3rem;
+  transition: border-color 0.2s, transform 0.15s;
+}
+
+.ref-stat-card:hover {
+  border-color: rgba(212, 175, 55, 0.25);
+  transform: translateY(-2px);
+}
+
+.ref-stat-icon { font-size: 1.6rem; }
+
+.ref-stat-value {
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: 1.6rem;
+  font-weight: 800;
+  color: var(--gold);
+}
+
+.ref-stat-label {
+  font-size: 0.78rem;
+  color: var(--muted);
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* ── How It Works Steps ────────────────────────────────────── */
+.ref-steps-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1rem;
+  margin-bottom: 2rem;
+}
+
+.ref-step-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 1.75rem 1.25rem;
+  text-align: center;
+  position: relative;
+  transition: border-color 0.2s, transform 0.15s;
+}
+
+.ref-step-card:hover {
+  border-color: rgba(212, 175, 55, 0.25);
+  transform: translateY(-2px);
+}
+
+.ref-step-number {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--gold), var(--gold-dark));
+  color: #0d0f14;
+  font-weight: 800;
+  font-size: 0.85rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 0.75rem;
+}
+
+.ref-step-icon {
+  display: block;
+  font-size: 2rem;
+  margin-bottom: 0.6rem;
+}
+
+.ref-step-title {
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--text);
+  margin: 0 0 0.4rem;
+}
+
+.ref-step-desc {
+  font-size: 0.85rem;
+  color: var(--muted);
+  line-height: 1.55;
+  margin: 0;
+}
+
+/* ── Referral Table ────────────────────────────────────────── */
+.ref-table-wrap { overflow-x: auto; }
+
+.ref-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.88rem;
+}
+
+.ref-table th {
+  text-align: left;
+  font-weight: 600;
+  color: var(--muted);
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.ref-table td {
+  padding: 0.85rem 1rem;
+  color: var(--text);
+  border-bottom: 1px solid var(--border);
+}
+
+.ref-table tbody tr {
+  transition: background 0.15s;
+}
+
+.ref-table tbody tr:hover {
+  background: rgba(212, 175, 55, 0.04);
+}
+
+.ref-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+/* Status Badges */
+.ref-badge {
+  display: inline-block;
+  padding: 0.25rem 0.65rem;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+}
+
+.ref-badge.completed {
+  background: rgba(34, 197, 94, 0.12);
+  color: var(--green);
+}
+
+.ref-badge.pending {
+  background: rgba(245, 158, 11, 0.12);
+  color: var(--amber);
+}
+
+.ref-badge.expired {
+  background: rgba(239, 68, 68, 0.1);
+  color: var(--red);
+}
+
+/* ── Terms Collapsible ─────────────────────────────────────── */
+.ref-terms-section { margin-bottom: 2rem; }
+
+.ref-terms-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  background: none;
+  border: none;
+  color: var(--text);
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: 1rem;
+  font-weight: 700;
+  padding: 0;
+  cursor: pointer;
+  text-align: left;
+}
+
+.ref-terms-chevron {
+  color: var(--muted);
+  transition: transform 0.25s;
+}
+
+.ref-terms-toggle[aria-expanded="true"] .ref-terms-chevron {
+  transform: rotate(180deg);
+}
+
+.ref-terms-body {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.35s ease, margin 0.35s ease;
+  margin-top: 0;
+}
+
+.ref-terms-body.open {
+  max-height: 500px;
+  margin-top: 1rem;
+}
+
+.ref-terms-body ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.ref-terms-body li {
+  position: relative;
+  padding: 0.45rem 0 0.45rem 1.2rem;
+  font-size: 0.82rem;
+  color: var(--muted);
+  line-height: 1.55;
+}
+
+.ref-terms-body li::before {
+  content: '•';
+  position: absolute;
+  left: 0;
+  color: var(--gold);
+  font-weight: 700;
+}
+
+.ref-terms-body a {
+  color: var(--gold);
+  text-decoration: none;
+}
+
+.ref-terms-body a:hover { text-decoration: underline; }
+
+/* ── Responsive: Tablet ────────────────────────────────────── */
+@media (max-width: 768px) {
+  .ref-hero { padding: 2rem 1.25rem; }
+  .ref-hero-title { font-size: 1.4rem; }
+
+  .ref-stats-grid { grid-template-columns: repeat(2, 1fr); }
+  .ref-steps-grid { grid-template-columns: 1fr; }
+
+  .ref-link-row { flex-direction: column; }
+  .ref-copy-btn { width: 100%; text-align: center; }
+}
+
+/* ── Responsive: Mobile ────────────────────────────────────── */
+@media (max-width: 480px) {
+  .ref-hero { padding: 1.5rem 1rem; border-radius: 14px; }
+  .ref-hero-icon { font-size: 2.4rem; }
+  .ref-hero-title { font-size: 1.2rem; }
+  .ref-hero-subtitle { font-size: 0.85rem; }
+
+  .ref-stat-card { padding: 1rem 0.75rem; border-radius: 12px; }
+  .ref-stat-value { font-size: 1.3rem; }
+
+  .ref-step-card { padding: 1.25rem 1rem; border-radius: 12px; }
+
+  .ref-table { font-size: 0.8rem; }
+  .ref-table th,
+  .ref-table td { padding: 0.65rem 0.6rem; }
+}
+
+/* ── Reduced Motion ────────────────────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  .ref-stat-card,
+  .ref-step-card,
+  .ref-copy-btn,
+  .share-btn,
+  .ref-terms-chevron,
+  .ref-terms-body,
+  .ref-table tbody tr {
+    transition: none;
+  }
+}

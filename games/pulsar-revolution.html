@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pulsar Revolution — Matrix Spins Casino</title>
+  <meta name="theme-color" content="#D4A853">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html, body { height: 100%; }
+    body { background: #0D0F14; color: #F0F0F5; font-family: 'Inter', sans-serif; overflow-x: hidden; }
+  </style>
+  <link rel="stylesheet" href="../css/chat-widget.css">
+  <link rel="stylesheet" href="../css/notifications.css">
+  <link rel="stylesheet" href="../css/age-gate.css">
+  <link rel="stylesheet" href="../css/search.css">
+  <link rel="stylesheet" href="../css/favorites.css">
+  <link rel="stylesheet" href="../css/session-monitor.css">
+  <link rel="stylesheet" href="../css/conversion.css">
+</head>
+<body>
+  <div id="game-container" style="width:100%;min-height:100vh;"></div>
+
+  <script src="../js/api-client.js"></script>
+  <script src="../js/casino-engine.js"></script>
+  <script>
+    const gameConfig = {
+      name: 'Pulsar Revolution',
+      id: 'pulsar-revolution',
+      studioTheme: {
+        id: 'nebula-gaming',
+        name: 'Nebula Gaming',
+        primaryColor: '#00F0FF',
+        secondaryColor: '#9D4EDD',
+        accentColor: '#3A86FF',
+        bgGradient: 'linear-gradient(135deg, #0A0E27 0%, #1a0033 50%, #0A0E27 100%)',
+        fontFamily: "'Orbitron', sans-serif",
+        fontFamilyBody: "'Space Mono', monospace",
+        chromeStyle: 'custom',
+        logoUrl: 'assets/studios/nebula-gaming-logo.png',
+        reelBg: '#030810',
+        reelBorder: '#00F0FF',
+        winHighlight: '#39FF14',
+        borderStyle: '2px solid #00F0FF',
+        borderRadius: '4px',
+        boxShadow: '0 0 40px rgba(0,240,255,0.5), inset 0 0 30px rgba(157,78,221,0.2)',
+        buttonStyle: 'background: linear-gradient(180deg, #9D4EDD, #3A86FF); border-radius: 4px; border: 1px solid #00F0FF; text-transform: uppercase; letter-spacing: 3px; font-weight: bold;',
+        spinButtonGlow: '0 0 30px rgba(0,240,255,0.8)'
+      },
+      rtp: 0.91,
+      volatility: 'medium',
+      mechanic: 'Shifting Reels',
+      mechanicDesc: 'Reels shift and rotate during winning spins, creating new symbol alignments and additional wins.',
+      minBet: 0.2,
+      maxBet: 100,
+      betStep: 0.20,
+      reels: 5,
+      rows: 5,
+      paylines: 50,
+      symbols: ["pulsar","star","planet","spacecraft","comet","alien","nebula","light-beam","wild","scatter"],
+      wilds: ["pulsar"],
+      scatters: ["scatter"],
+      symbolWeights: {"pulsar":[10.117463278141397,10.142504029693253,9.865984458403569,10.164715776163352,10.094434104727206],"star":[8.8780905691903,8.87869564820051,8.926229021115217,9.142184485465576,9.06775451830449],"planet":[7.910913957311758,7.845430299653962,7.86442484524261,8.225461600616143,8.096829978845113],"spacecraft":[6.79154338494941,7.00472379632801,6.902464619169766,7.147050143960491,7.020127121136878],"comet":[6.163609836891487,5.7975036059151295,6.106113343909636,6.2316168156832745,6.0490326792577545],"alien":[5.043350218269087,4.894043938936276,4.835567352419089,5.230327701169618,4.979801158314248],"nebula":[3.890349494204542,3.8969875260249545,4.014850887237679,3.788000576125178,3.8809332754241392],"light-beam":[3.176057907368016,3.216751305349728,3.0371463689612272,2.835815568933774,3.1308061764698585],"wild":[1.828947529519359,2.1245572169639595,1.9879325587500922,2.23853863687544,2.012867034737796],"scatter":[0.9715348514382784,0.9038799260614024,1.1745874804446734,1.1128637898690297,1.2037440857346642]},
+      paytable: {"pulsar":{"3":2,"4":5,"5":15},"star":{"3":4,"4":11,"5":34},"planet":{"3":6,"4":16,"5":52},"spacecraft":{"3":7,"4":22,"5":71},"comet":{"3":9,"4":27,"5":89},"alien":{"3":11,"4":33,"5":108},"nebula":{"3":13,"4":38,"5":126},"light-beam":{"3":15,"4":44,"5":145},"wild":{"3":16,"4":49,"5":163},"scatter":{"3":18,"4":55,"5":182},"SCATTER":{"3":5,"4":20,"5":100}},
+      freeSpinCount: 10,
+      freeSpinMultiplier: 2,
+      onSound: function(label) { /* sound hooks ready */ }
+    };
+
+    CasinoEngine.init('game-container', gameConfig);
+  </script>
+  <script src="../js/chat-widget.js" defer></script>
+  <script src="../js/notifications.js" defer></script>
+  <script src="../js/age-gate.js" defer></script>
+  <script src="../js/cookie-consent.js" defer></script>
+  <script src="../js/search.js" defer></script>
+  <script src="../js/favorites.js" defer></script>
+  <script src="../js/session-monitor.js" defer></script>
+  <script src="../js/sound-manager.js" defer></script>
+  <script src="../js/analytics.js" defer></script>
+  <script src="../js/email-capture.js" defer></script>
+  <script src="../js/conversion.js" defer></script>
+</body>
+</html>

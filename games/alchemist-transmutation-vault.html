@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Alchemist Transmutation Vault — Matrix Spins Casino</title>
+  <meta name="theme-color" content="#D4A853">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html, body { height: 100%; }
+    body { background: #0D0F14; color: #F0F0F5; font-family: 'Inter', sans-serif; overflow-x: hidden; }
+  </style>
+  <link rel="stylesheet" href="../css/chat-widget.css">
+  <link rel="stylesheet" href="../css/notifications.css">
+  <link rel="stylesheet" href="../css/age-gate.css">
+  <link rel="stylesheet" href="../css/search.css">
+  <link rel="stylesheet" href="../css/favorites.css">
+  <link rel="stylesheet" href="../css/session-monitor.css">
+  <link rel="stylesheet" href="../css/conversion.css">
+</head>
+<body>
+  <div id="game-container" style="width:100%;min-height:100vh;"></div>
+
+  <script src="../js/api-client.js"></script>
+  <script src="../js/casino-engine.js"></script>
+  <script>
+    const gameConfig = {
+      name: 'Alchemist Transmutation Vault',
+      id: 'alchemist-transmutation-vault',
+      studioTheme: {
+        id: 'ironclad-entertainment',
+        name: 'Ironclad Entertainment',
+        primaryColor: '#B5A642',
+        secondaryColor: '#8B4513',
+        accentColor: '#CD853F',
+        bgGradient: 'linear-gradient(135deg, #2D2416 0%, #3D3023 50%, #2D2416 100%)',
+        fontFamily: "'Righteous', sans-serif",
+        fontFamilyBody: "'Fredoka One', sans-serif",
+        chromeStyle: 'custom',
+        logoUrl: 'assets/studios/ironclad-entertainment-logo.png',
+        reelBg: '#15110D',
+        reelBorder: '#B5A642',
+        winHighlight: '#FFD700',
+        borderStyle: '4px solid #B5A642',
+        borderRadius: '6px',
+        boxShadow: '0 0 30px rgba(181,166,66,0.35), inset 0 0 20px rgba(181,166,66,0.1)',
+        buttonStyle: 'background: linear-gradient(180deg, #B5A642, #8B6F47); border-radius: 6px; border: 2px solid #CD853F; text-transform: uppercase; letter-spacing: 2px; font-weight: bold;',
+        spinButtonGlow: '0 0 20px rgba(181,166,66,0.5)'
+      },
+      rtp: 0.88,
+      volatility: 'low',
+      mechanic: 'Wild Expansion',
+      mechanicDesc: 'Wild symbols expand to fill entire reels, magnifying their substitution power.',
+      minBet: 0.2,
+      maxBet: 100,
+      betStep: 0.20,
+      reels: 5,
+      rows: 3,
+      paylines: 25,
+      symbols: ["alchemist","transmutation","vault","potion","gold","ancient","magic","secret","wild","scatter"],
+      wilds: ["alchemist"],
+      scatters: ["scatter"],
+      symbolWeights: {"alchemist":[9.76885038944574,10.048072160783859,10.20408484183252,10.07884447852786,10.030321467585882],"transmutation":[9.071089656032004,8.886949803212515,9.109072287948687,9.084787211074712,8.827176703884852],"vault":[7.959469670391014,7.803281923752185,8.158751227252367,7.897484034652229,8.081956398486616],"potion":[6.843317079752552,6.986755728497176,7.009924878347869,6.8477224591515835,6.866315218752343],"gold":[5.790778166939967,5.75558866134256,5.916844204840309,6.247431258001122,6.173043397104852],"ancient":[4.878636503572907,5.1160890539666,4.879342718186232,4.962956701465283,4.751370560263409],"magic":[3.839639082636577,3.9932431173190355,3.9152899994075927,3.8002692576467636,3.8887726687981434],"secret":[2.9868987891779337,2.8859750320783686,2.7561542540669874,3.1529612859966987,3.1347624681745003],"wild":[1.8911542452208212,2.0939257286204573,1.7819218579771996,1.7554290077030172,1.85813094064668],"scatter":[1.0752253874893998,1.055673125518729,1.1296218019843631,0.8316588082998079,0.7648691488561745]},
+      paytable: {"alchemist":{"3":2,"4":5,"5":15},"transmutation":{"3":4,"4":11,"5":34},"vault":{"3":6,"4":16,"5":52},"potion":{"3":7,"4":22,"5":71},"gold":{"3":9,"4":27,"5":89},"ancient":{"3":11,"4":33,"5":108},"magic":{"3":13,"4":38,"5":126},"secret":{"3":15,"4":44,"5":145},"wild":{"3":16,"4":49,"5":163},"scatter":{"3":18,"4":55,"5":182},"SCATTER":{"3":5,"4":20,"5":100}},
+      freeSpinCount: 10,
+      freeSpinMultiplier: 2,
+      onSound: function(label) { /* sound hooks ready */ }
+    };
+
+    CasinoEngine.init('game-container', gameConfig);
+  </script>
+  <script src="../js/chat-widget.js" defer></script>
+  <script src="../js/notifications.js" defer></script>
+  <script src="../js/age-gate.js" defer></script>
+  <script src="../js/cookie-consent.js" defer></script>
+  <script src="../js/search.js" defer></script>
+  <script src="../js/favorites.js" defer></script>
+  <script src="../js/session-monitor.js" defer></script>
+  <script src="../js/sound-manager.js" defer></script>
+  <script src="../js/analytics.js" defer></script>
+  <script src="../js/email-capture.js" defer></script>
+  <script src="../js/conversion.js" defer></script>
+</body>
+</html>

@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Moonlit Koi Garden — Matrix Spins Casino</title>
+  <meta name="theme-color" content="#D4A853">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html, body { height: 100%; }
+    body { background: #0D0F14; color: #F0F0F5; font-family: 'Inter', sans-serif; overflow-x: hidden; }
+  </style>
+  <link rel="stylesheet" href="../css/chat-widget.css">
+  <link rel="stylesheet" href="../css/notifications.css">
+  <link rel="stylesheet" href="../css/age-gate.css">
+  <link rel="stylesheet" href="../css/search.css">
+  <link rel="stylesheet" href="../css/favorites.css">
+  <link rel="stylesheet" href="../css/session-monitor.css">
+  <link rel="stylesheet" href="../css/conversion.css">
+</head>
+<body>
+  <div id="game-container" style="width:100%;min-height:100vh;"></div>
+
+  <script src="../js/api-client.js"></script>
+  <script src="../js/casino-engine.js"></script>
+  <script>
+    const gameConfig = {
+      name: 'Moonlit Koi Garden',
+      id: 'moonlit-koi-garden',
+      studioTheme: {
+        id: 'dragon-pearl',
+        name: 'Dragon Pearl Studios',
+        primaryColor: '#CC0000',
+        secondaryColor: '#FFD700',
+        accentColor: '#00A86B',
+        bgGradient: 'linear-gradient(135deg, #0D0B0A 0%, #1A0F0E 50%, #0D0B0A 100%)',
+        fontFamily: "'Playfair Display', serif",
+        fontFamilyBody: "'Caveat', cursive",
+        chromeStyle: 'custom',
+        logoUrl: 'assets/studios/dragon-pearl-logo.png',
+        reelBg: '#050403',
+        reelBorder: '#CC0000',
+        winHighlight: '#FFD700',
+        borderStyle: '4px solid #CC0000',
+        borderRadius: '12px',
+        boxShadow: '0 0 35px rgba(204,0,0,0.4), inset 0 0 25px rgba(255,215,0,0.15)',
+        buttonStyle: 'background: linear-gradient(180deg, #CC0000, #990000); border-radius: 8px; border: 2px solid #FFD700; text-transform: uppercase; letter-spacing: 2px; font-weight: bold;',
+        spinButtonGlow: '0 0 25px rgba(204,0,0,0.6)'
+      },
+      rtp: 0.88,
+      volatility: 'high',
+      mechanic: 'Jackpot Wheel',
+      mechanicDesc: 'Land three jackpot symbols to spin the golden wheel for progressive jackpot tiers.',
+      minBet: 0.2,
+      maxBet: 100,
+      betStep: 0.20,
+      reels: 5,
+      rows: 3,
+      paylines: 30,
+      symbols: ["koi","moon","bridge","lily","heron","stone","bonsai","lantern"],
+      wilds: ["koi"],
+      scatters: ["lantern"],
+      symbolWeights: {"koi":[7.852134732369276,8.218503820352534,7.917340132925622,7.775983733881506,7.772098083908057],"moon":[7.244583486382699,7.129212630041509,7.1280431148160295,7.139446125543657,6.816716441130714],"bridge":[5.9345945557129625,5.8307285509063,5.82638760301967,6.108439786778413,6.22265335205064],"lily":[4.954767953296649,5.200291186487544,5.042391902752497,4.89071333269459,5.230478399327719],"heron":[4.122663080873497,3.898475469272112,3.928044418311011,4.148453167449018,3.844444075468445],"stone":[3.0817499359870144,3.1260587184327226,3.122429480775065,2.7727952277184356,2.819684302122542],"bonsai":[2.2484713697793324,2.191681459253653,2.1044415627646993,1.8803782513401348,1.7569643231481868],"lantern":[0.919523781074365,0.8398064059730982,1.1127158856298278,0.996444458697861,0.7595977046162687]},
+      paytable: {"koi":{"3":2,"4":5,"5":15},"moon":{"3":4,"4":12,"5":38},"bridge":{"3":7,"4":19,"5":61},"lily":{"3":9,"4":26,"5":84},"heron":{"3":11,"4":33,"5":108},"stone":{"3":13,"4":39,"5":131},"bonsai":{"3":16,"4":46,"5":154},"lantern":{"3":18,"4":53,"5":177},"SCATTER":{"3":5,"4":20,"5":100}},
+      freeSpinCount: 10,
+      freeSpinMultiplier: 2,
+      onSound: function(label) { /* sound hooks ready */ }
+    };
+
+    CasinoEngine.init('game-container', gameConfig);
+  </script>
+  <script src="../js/chat-widget.js" defer></script>
+  <script src="../js/notifications.js" defer></script>
+  <script src="../js/age-gate.js" defer></script>
+  <script src="../js/cookie-consent.js" defer></script>
+  <script src="../js/search.js" defer></script>
+  <script src="../js/favorites.js" defer></script>
+  <script src="../js/session-monitor.js" defer></script>
+  <script src="../js/sound-manager.js" defer></script>
+  <script src="../js/analytics.js" defer></script>
+  <script src="../js/email-capture.js" defer></script>
+  <script src="../js/conversion.js" defer></script>
+</body>
+</html>

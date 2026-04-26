@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Kangaroo Outback Bound — Matrix Spins Casino</title>
+  <meta name="theme-color" content="#D4A853">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html, body { height: 100%; }
+    body { background: #0D0F14; color: #F0F0F5; font-family: 'Inter', sans-serif; overflow-x: hidden; }
+  </style>
+  <link rel="stylesheet" href="../css/chat-widget.css">
+  <link rel="stylesheet" href="../css/notifications.css">
+  <link rel="stylesheet" href="../css/age-gate.css">
+  <link rel="stylesheet" href="../css/search.css">
+  <link rel="stylesheet" href="../css/favorites.css">
+  <link rel="stylesheet" href="../css/session-monitor.css">
+  <link rel="stylesheet" href="../css/conversion.css">
+</head>
+<body>
+  <div id="game-container" style="width:100%;min-height:100vh;"></div>
+
+  <script src="../js/api-client.js"></script>
+  <script src="../js/casino-engine.js"></script>
+  <script>
+    const gameConfig = {
+      name: 'Kangaroo Outback Bound',
+      id: 'kangaroo-outback-bound',
+      studioTheme: {
+        id: 'wild-frontier',
+        name: 'Wild Frontier Games',
+        primaryColor: '#D2691E',
+        secondaryColor: '#228B22',
+        accentColor: '#FF8C00',
+        bgGradient: 'linear-gradient(135deg, #3E2723 0%, #4A3728 50%, #3E2723 100%)',
+        fontFamily: "'Righteous', sans-serif",
+        fontFamilyBody: "'Fredoka One', sans-serif",
+        chromeStyle: 'custom',
+        logoUrl: 'assets/studios/wild-frontier-logo.png',
+        reelBg: '#1B0F08',
+        reelBorder: '#D2691E',
+        winHighlight: '#FF8C00',
+        borderStyle: '5px solid #D2691E',
+        borderRadius: '16px',
+        boxShadow: '0 0 25px rgba(210,105,30,0.4), inset 0 0 20px rgba(34,139,34,0.15)',
+        buttonStyle: 'background: linear-gradient(180deg, #D2691E, #8B4513); border-radius: 10px; border: 2px solid #FF8C00; text-transform: uppercase; letter-spacing: 2px; font-weight: 900;',
+        spinButtonGlow: '0 0 20px rgba(210,105,30,0.6)'
+      },
+      rtp: 0.92,
+      volatility: 'medium',
+      mechanic: 'Reaction Pays',
+      mechanicDesc: 'Winning symbols explode and new symbols fall to fill gaps, creating chain-reaction wins.',
+      minBet: 0.2,
+      maxBet: 100,
+      betStep: 0.20,
+      reels: 5,
+      rows: 4,
+      paylines: 25,
+      symbols: ["kangaroo","outback","desert","boomerang","didgeridoo","gold","aboriginal-art","bush","wild","scatter"],
+      wilds: ["kangaroo"],
+      scatters: ["scatter"],
+      symbolWeights: {"kangaroo":[10.190177561777157,9.841969596682741,9.994044047485119,9.923447492339395,9.90064915481774],"outback":[8.94031700226952,8.907439201323601,9.010316056347483,9.037674264656388,9.152592411296338],"desert":[8.181737154815055,7.852249571928238,7.751423055753862,8.014589947554457,8.11851383639377],"boomerang":[7.037838498255956,6.87969663310448,7.185761097386109,7.154957790434661,6.952339796309077],"didgeridoo":[5.792308970680456,6.2110421429944145,5.911065380048427,6.203482051922087,6.1054949789202375],"gold":[5.248871662015094,4.877824546796062,4.8228232626201315,5.054532527880563,5.042033324752552],"aboriginal-art":[4.236835477681507,4.008727425870142,4.087532151931246,4.129853780114721,4.023135298271337],"bush":[2.973470046140266,3.166492591739545,3.172818571139776,3.0420205352771497,2.888399305553758],"wild":[2.141394263885831,1.97815644610841,1.9995207645600246,2.2349542945977845,2.2296350267936074],"scatter":[1.119645279042255,0.9223156610764671,1.2465122405677103,0.941276060389685,0.9312600947654551]},
+      paytable: {"kangaroo":{"3":2,"4":5,"5":15},"outback":{"3":4,"4":11,"5":34},"desert":{"3":6,"4":16,"5":52},"boomerang":{"3":7,"4":22,"5":71},"didgeridoo":{"3":9,"4":27,"5":89},"gold":{"3":11,"4":33,"5":108},"aboriginal-art":{"3":13,"4":38,"5":126},"bush":{"3":15,"4":44,"5":145},"wild":{"3":16,"4":49,"5":163},"scatter":{"3":18,"4":55,"5":182},"SCATTER":{"3":5,"4":20,"5":100}},
+      freeSpinCount: 10,
+      freeSpinMultiplier: 2,
+      onSound: function(label) { /* sound hooks ready */ }
+    };
+
+    CasinoEngine.init('game-container', gameConfig);
+  </script>
+  <script src="../js/chat-widget.js" defer></script>
+  <script src="../js/notifications.js" defer></script>
+  <script src="../js/age-gate.js" defer></script>
+  <script src="../js/cookie-consent.js" defer></script>
+  <script src="../js/search.js" defer></script>
+  <script src="../js/favorites.js" defer></script>
+  <script src="../js/session-monitor.js" defer></script>
+  <script src="../js/sound-manager.js" defer></script>
+  <script src="../js/analytics.js" defer></script>
+  <script src="../js/email-capture.js" defer></script>
+  <script src="../js/conversion.js" defer></script>
+</body>
+</html>

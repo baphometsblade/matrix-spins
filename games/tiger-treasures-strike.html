@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tiger Treasures Strike — Matrix Spins Casino</title>
+  <meta name="theme-color" content="#D4A853">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html, body { height: 100%; }
+    body { background: #0D0F14; color: #F0F0F5; font-family: 'Inter', sans-serif; overflow-x: hidden; }
+  </style>
+  <link rel="stylesheet" href="../css/chat-widget.css">
+  <link rel="stylesheet" href="../css/notifications.css">
+  <link rel="stylesheet" href="../css/age-gate.css">
+  <link rel="stylesheet" href="../css/search.css">
+  <link rel="stylesheet" href="../css/favorites.css">
+  <link rel="stylesheet" href="../css/session-monitor.css">
+  <link rel="stylesheet" href="../css/conversion.css">
+</head>
+<body>
+  <div id="game-container" style="width:100%;min-height:100vh;"></div>
+
+  <script src="../js/api-client.js"></script>
+  <script src="../js/casino-engine.js"></script>
+  <script>
+    const gameConfig = {
+      name: 'Tiger Treasures Strike',
+      id: 'tiger-treasures-strike',
+      studioTheme: {
+        id: 'wild-frontier',
+        name: 'Wild Frontier Games',
+        primaryColor: '#D2691E',
+        secondaryColor: '#228B22',
+        accentColor: '#FF8C00',
+        bgGradient: 'linear-gradient(135deg, #3E2723 0%, #4A3728 50%, #3E2723 100%)',
+        fontFamily: "'Righteous', sans-serif",
+        fontFamilyBody: "'Fredoka One', sans-serif",
+        chromeStyle: 'custom',
+        logoUrl: 'assets/studios/wild-frontier-logo.png',
+        reelBg: '#1B0F08',
+        reelBorder: '#D2691E',
+        winHighlight: '#FF8C00',
+        borderStyle: '5px solid #D2691E',
+        borderRadius: '16px',
+        boxShadow: '0 0 25px rgba(210,105,30,0.4), inset 0 0 20px rgba(34,139,34,0.15)',
+        buttonStyle: 'background: linear-gradient(180deg, #D2691E, #8B4513); border-radius: 10px; border: 2px solid #FF8C00; text-transform: uppercase; letter-spacing: 2px; font-weight: 900;',
+        spinButtonGlow: '0 0 20px rgba(210,105,30,0.6)'
+      },
+      rtp: 0.89,
+      volatility: 'medium',
+      mechanic: 'Jackpot Trail',
+      mechanicDesc: 'Progress along a jackpot trail with each winning spin, potentially reaching massive prize tiers.',
+      minBet: 0.2,
+      maxBet: 100,
+      betStep: 0.20,
+      reels: 5,
+      rows: 4,
+      paylines: 50,
+      symbols: ["tiger","treasure","jungle","gold","stripes","prey","jewel","crown","wild","scatter"],
+      wilds: ["tiger"],
+      scatters: ["scatter"],
+      symbolWeights: {"tiger":[10.181317067325756,9.79342857014749,10.132510127777925,10.025646170780474,10.134612592420094],"treasure":[8.80579330524266,8.767797459244157,8.977849267689567,8.877087905222211,8.86092466429002],"jungle":[7.802299939821318,8.110314107142667,8.051274134076106,7.997999808927747,8.053245514627415],"gold":[7.087025719045394,7.220234023187701,6.842440631961324,6.978651086457198,7.03153769913499],"stripes":[5.76937377007504,5.823894723343208,6.1413893635280115,5.822414802534992,5.969216621781917],"prey":[5.14176980352978,5.223833995450288,5.185869389481053,4.881403114405918,4.957347211955631],"jewel":[3.874022369754946,3.789480164967365,4.010617475526318,4.234430337643124,4.017533836321409],"crown":[3.1475424606977853,3.0925970627216612,3.2076369856195934,2.852968898048802,2.928194911636643],"wild":[2.0784857737994207,1.780786334726446,2.109214561647377,1.9790138782627198,2.035059948299675],"scatter":[0.7896358931843523,1.184488615906329,1.1338217888790125,1.012908495128602,0.971037638188372]},
+      paytable: {"tiger":{"3":2,"4":5,"5":15},"treasure":{"3":4,"4":11,"5":34},"jungle":{"3":6,"4":16,"5":52},"gold":{"3":7,"4":22,"5":71},"stripes":{"3":9,"4":27,"5":89},"prey":{"3":11,"4":33,"5":108},"jewel":{"3":13,"4":38,"5":126},"crown":{"3":15,"4":44,"5":145},"wild":{"3":16,"4":49,"5":163},"scatter":{"3":18,"4":55,"5":182},"SCATTER":{"3":5,"4":20,"5":100}},
+      freeSpinCount: 10,
+      freeSpinMultiplier: 2,
+      onSound: function(label) { /* sound hooks ready */ }
+    };
+
+    CasinoEngine.init('game-container', gameConfig);
+  </script>
+  <script src="../js/chat-widget.js" defer></script>
+  <script src="../js/notifications.js" defer></script>
+  <script src="../js/age-gate.js" defer></script>
+  <script src="../js/cookie-consent.js" defer></script>
+  <script src="../js/search.js" defer></script>
+  <script src="../js/favorites.js" defer></script>
+  <script src="../js/session-monitor.js" defer></script>
+  <script src="../js/sound-manager.js" defer></script>
+  <script src="../js/analytics.js" defer></script>
+  <script src="../js/email-capture.js" defer></script>
+  <script src="../js/conversion.js" defer></script>
+</body>
+</html>

@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Artdeco Cherry Royale — Matrix Spins Casino</title>
+  <meta name="theme-color" content="#D4A853">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html, body { height: 100%; }
+    body { background: #0D0F14; color: #F0F0F5; font-family: 'Inter', sans-serif; overflow-x: hidden; }
+  </style>
+  <link rel="stylesheet" href="../css/chat-widget.css">
+  <link rel="stylesheet" href="../css/notifications.css">
+  <link rel="stylesheet" href="../css/age-gate.css">
+  <link rel="stylesheet" href="../css/search.css">
+  <link rel="stylesheet" href="../css/favorites.css">
+  <link rel="stylesheet" href="../css/session-monitor.css">
+  <link rel="stylesheet" href="../css/conversion.css">
+</head>
+<body>
+  <div id="game-container" style="width:100%;min-height:100vh;"></div>
+
+  <script src="../js/api-client.js"></script>
+  <script src="../js/casino-engine.js"></script>
+  <script>
+    const gameConfig = {
+      name: 'Artdeco Cherry Royale',
+      id: 'artdeco-cherry-royale',
+      studioTheme: {
+        id: 'golden-reels',
+        name: 'Golden Reels Studio',
+        primaryColor: '#D4AF37',
+        secondaryColor: '#8B6914',
+        accentColor: '#FFF8DC',
+        bgGradient: 'linear-gradient(135deg, #1A1205 0%, #2D1F0E 50%, #1A1205 100%)',
+        fontFamily: "'Playfair Display', serif",
+        fontFamilyBody: "'Lora', serif",
+        chromeStyle: 'custom',
+        logoUrl: 'assets/studios/golden-reels-logo.png',
+        reelBg: '#0D0A03',
+        reelBorder: '#D4AF37',
+        winHighlight: '#FFD700',
+        borderStyle: '3px solid #D4AF37',
+        borderRadius: '12px',
+        boxShadow: '0 0 30px rgba(212,175,55,0.3), inset 0 0 20px rgba(212,175,55,0.1)',
+        buttonStyle: 'background: linear-gradient(180deg, #D4AF37, #8B6914); border-radius: 8px; border: 1px solid #FFD700; text-transform: uppercase; letter-spacing: 2px; font-weight: bold;',
+        spinButtonGlow: '0 0 20px rgba(212,175,55,0.6)'
+      },
+      rtp: 0.91,
+      volatility: 'high',
+      mechanic: 'Cascading Reels',
+      mechanicDesc: 'Winning symbols explode and fall away, allowing new symbols to drop down and create chain reactions.',
+      minBet: 0.2,
+      maxBet: 100,
+      betStep: 0.20,
+      reels: 5,
+      rows: 4,
+      paylines: 30,
+      symbols: ["cherry","diamond","bar","crown","sevens","gold-bell","ruby","sapphire","wild","scatter"],
+      wilds: ["cherry"],
+      scatters: ["scatter"],
+      symbolWeights: {"cherry":[9.926740677589377,10.014337366856266,10.159635069912062,10.247822264222286,9.813068512612222],"diamond":[9.084798423052089,8.894092592391702,8.851066852288817,8.945463128018712,8.962956859413863],"bar":[8.073391418096987,8.194616745051047,7.99970723547336,8.064883127173276,8.053557948568034],"crown":[7.211535920881816,7.162753739497773,7.091209981977125,7.117193803634604,7.081289156148566],"sevens":[5.98997714725571,6.075298753986392,6.054692581371465,5.9531247833390415,6.0506698121446725],"gold-bell":[5.107544498779084,5.004225592311493,4.775718642416155,5.247383144140607,4.905631645623956],"ruby":[3.897860585409756,3.977647986398404,4.163811023555529,3.9468875982851697,4.103990614922977],"sapphire":[3.215870156759426,3.154696558729955,3.0845302666907295,2.9162756319435923,3.243256033145287],"wild":[2.212757484347783,1.7961430567689636,2.1803165169226992,1.836268538574033,1.886683446706424],"scatter":[0.8878929129077093,1.2162645416906388,1.089454890678566,1.0083743201673334,0.8957339159907094]},
+      paytable: {"cherry":{"3":2,"4":5,"5":15},"diamond":{"3":4,"4":11,"5":34},"bar":{"3":6,"4":16,"5":52},"crown":{"3":7,"4":22,"5":71},"sevens":{"3":9,"4":27,"5":89},"gold-bell":{"3":11,"4":33,"5":108},"ruby":{"3":13,"4":38,"5":126},"sapphire":{"3":15,"4":44,"5":145},"wild":{"3":16,"4":49,"5":163},"scatter":{"3":18,"4":55,"5":182},"SCATTER":{"3":5,"4":20,"5":100}},
+      freeSpinCount: 10,
+      freeSpinMultiplier: 2,
+      onSound: function(label) { /* sound hooks ready */ }
+    };
+
+    CasinoEngine.init('game-container', gameConfig);
+  </script>
+  <script src="../js/chat-widget.js" defer></script>
+  <script src="../js/notifications.js" defer></script>
+  <script src="../js/age-gate.js" defer></script>
+  <script src="../js/cookie-consent.js" defer></script>
+  <script src="../js/search.js" defer></script>
+  <script src="../js/favorites.js" defer></script>
+  <script src="../js/session-monitor.js" defer></script>
+  <script src="../js/sound-manager.js" defer></script>
+  <script src="../js/analytics.js" defer></script>
+  <script src="../js/email-capture.js" defer></script>
+  <script src="../js/conversion.js" defer></script>
+</body>
+</html>

@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Thoth Wisdom Keeper — Matrix Spins Casino</title>
+  <meta name="theme-color" content="#D4A853">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html, body { height: 100%; }
+    body { background: #0D0F14; color: #F0F0F5; font-family: 'Inter', sans-serif; overflow-x: hidden; }
+  </style>
+  <link rel="stylesheet" href="../css/chat-widget.css">
+  <link rel="stylesheet" href="../css/notifications.css">
+  <link rel="stylesheet" href="../css/age-gate.css">
+  <link rel="stylesheet" href="../css/search.css">
+  <link rel="stylesheet" href="../css/favorites.css">
+  <link rel="stylesheet" href="../css/session-monitor.css">
+  <link rel="stylesheet" href="../css/conversion.css">
+</head>
+<body>
+  <div id="game-container" style="width:100%;min-height:100vh;"></div>
+
+  <script src="../js/api-client.js"></script>
+  <script src="../js/casino-engine.js"></script>
+  <script>
+    const gameConfig = {
+      name: 'Thoth Wisdom Keeper',
+      id: 'thoth-wisdom-keeper',
+      studioTheme: {
+        id: 'mythic-forge',
+        name: 'Mythic Forge',
+        primaryColor: '#50C878',
+        secondaryColor: '#DC143C',
+        accentColor: '#4169E1',
+        bgGradient: 'linear-gradient(135deg, #2C1810 0%, #3D2817 50%, #2C1810 100%)',
+        fontFamily: "'Cinzel', serif",
+        fontFamilyBody: "'Crimson Text', serif",
+        chromeStyle: 'custom',
+        logoUrl: 'assets/studios/mythic-forge-logo.png',
+        reelBg: '#1A0F08',
+        reelBorder: '#50C878',
+        winHighlight: '#FFD700',
+        borderStyle: '4px solid #50C878',
+        borderRadius: '8px',
+        boxShadow: '0 0 35px rgba(80,200,120,0.25), inset 0 0 25px rgba(80,200,120,0.1)',
+        buttonStyle: 'background: linear-gradient(180deg, #50C878, #3A9B5C); border-radius: 6px; border: 2px solid #DC143C; text-transform: uppercase; letter-spacing: 2px; font-weight: 600;',
+        spinButtonGlow: '0 0 25px rgba(80,200,120,0.5)'
+      },
+      rtp: 0.9,
+      volatility: 'medium',
+      mechanic: 'Mystery Symbols',
+      mechanicDesc: 'Hidden mystery symbols reveal their true value only after spinning, creating suspense and surprise.',
+      minBet: 0.2,
+      maxBet: 100,
+      betStep: 0.20,
+      reels: 5,
+      rows: 4,
+      paylines: 50,
+      symbols: ["thoth","wisdom","scroll","pyramid","gold","library","sacred-bird","knowledge","wild","scatter"],
+      wilds: ["thoth"],
+      scatters: ["scatter"],
+      symbolWeights: {"thoth":[9.871885521605128,10.093138321172287,9.75846872237014,10.163355020888735,9.977635362063394],"wisdom":[9.173758715356083,9.06204421532896,9.107250389143712,9.038213832941496,9.005320468859313],"scroll":[8.165121303321317,8.248861650319194,7.777802893393724,7.765470323790525,7.84326852254841],"pyramid":[7.244803716775664,7.183052364547104,7.097384486627173,7.059340652548346,6.753498386234332],"gold":[5.997570388348932,5.823581597454232,5.98589939709389,6.106045896915225,5.872619029203545],"library":[5.092796036754394,4.773340976496954,5.078166666546662,5.029019604711573,4.796248626301503],"sacred-bird":[4.03852564348165,3.88412235694674,3.788752363242791,3.9801887354474914,3.7592569819402755],"knowledge":[3.0402347384947674,2.7823546632514304,3.0969250253366813,2.9079939690019754,2.935299321917455],"wild":[1.9148134203509923,1.8076227361428843,2.0024839510800874,1.8908964891224482,1.8685638284823918],"scatter":[0.9653449717065719,0.9422347658777669,1.0073048806665215,0.87614540040499,1.1908712467582903]},
+      paytable: {"thoth":{"3":2,"4":5,"5":15},"wisdom":{"3":4,"4":11,"5":34},"scroll":{"3":6,"4":16,"5":52},"pyramid":{"3":7,"4":22,"5":71},"gold":{"3":9,"4":27,"5":89},"library":{"3":11,"4":33,"5":108},"sacred-bird":{"3":13,"4":38,"5":126},"knowledge":{"3":15,"4":44,"5":145},"wild":{"3":16,"4":49,"5":163},"scatter":{"3":18,"4":55,"5":182},"SCATTER":{"3":5,"4":20,"5":100}},
+      freeSpinCount: 10,
+      freeSpinMultiplier: 2,
+      onSound: function(label) { /* sound hooks ready */ }
+    };
+
+    CasinoEngine.init('game-container', gameConfig);
+  </script>
+  <script src="../js/chat-widget.js" defer></script>
+  <script src="../js/notifications.js" defer></script>
+  <script src="../js/age-gate.js" defer></script>
+  <script src="../js/cookie-consent.js" defer></script>
+  <script src="../js/search.js" defer></script>
+  <script src="../js/favorites.js" defer></script>
+  <script src="../js/session-monitor.js" defer></script>
+  <script src="../js/sound-manager.js" defer></script>
+  <script src="../js/analytics.js" defer></script>
+  <script src="../js/email-capture.js" defer></script>
+  <script src="../js/conversion.js" defer></script>
+</body>
+</html>

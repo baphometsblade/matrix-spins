@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Koi Fish Abundance — Matrix Spins Casino</title>
+  <meta name="theme-color" content="#D4A853">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html, body { height: 100%; }
+    body { background: #0D0F14; color: #F0F0F5; font-family: 'Inter', sans-serif; overflow-x: hidden; }
+  </style>
+  <link rel="stylesheet" href="../css/chat-widget.css">
+  <link rel="stylesheet" href="../css/notifications.css">
+  <link rel="stylesheet" href="../css/age-gate.css">
+  <link rel="stylesheet" href="../css/search.css">
+  <link rel="stylesheet" href="../css/favorites.css">
+  <link rel="stylesheet" href="../css/session-monitor.css">
+  <link rel="stylesheet" href="../css/conversion.css">
+</head>
+<body>
+  <div id="game-container" style="width:100%;min-height:100vh;"></div>
+
+  <script src="../js/api-client.js"></script>
+  <script src="../js/casino-engine.js"></script>
+  <script>
+    const gameConfig = {
+      name: 'Koi Fish Abundance',
+      id: 'koi-fish-abundance',
+      studioTheme: {
+        id: 'dragon-pearl',
+        name: 'Dragon Pearl Studios',
+        primaryColor: '#CC0000',
+        secondaryColor: '#FFD700',
+        accentColor: '#00A86B',
+        bgGradient: 'linear-gradient(135deg, #0D0B0A 0%, #1A0F0E 50%, #0D0B0A 100%)',
+        fontFamily: "'Playfair Display', serif",
+        fontFamilyBody: "'Caveat', cursive",
+        chromeStyle: 'custom',
+        logoUrl: 'assets/studios/dragon-pearl-logo.png',
+        reelBg: '#050403',
+        reelBorder: '#CC0000',
+        winHighlight: '#FFD700',
+        borderStyle: '4px solid #CC0000',
+        borderRadius: '12px',
+        boxShadow: '0 0 35px rgba(204,0,0,0.4), inset 0 0 25px rgba(255,215,0,0.15)',
+        buttonStyle: 'background: linear-gradient(180deg, #CC0000, #990000); border-radius: 8px; border: 2px solid #FFD700; text-transform: uppercase; letter-spacing: 2px; font-weight: bold;',
+        spinButtonGlow: '0 0 25px rgba(204,0,0,0.6)'
+      },
+      rtp: 0.88,
+      volatility: 'high',
+      mechanic: 'Cascading Wilds',
+      mechanicDesc: 'Wild symbols cascade down the reels, creating multiple consecutive winning opportunities.',
+      minBet: 0.2,
+      maxBet: 100,
+      betStep: 0.20,
+      reels: 5,
+      rows: 3,
+      paylines: 25,
+      symbols: ["koi","fish","pond","water","gold","silk","abundance","luck","wild","scatter"],
+      wilds: ["koi"],
+      scatters: ["scatter"],
+      symbolWeights: {"koi":[9.867192342640713,10.083950460154725,9.883524824550685,10.23373628245729,9.980694042035609],"fish":[8.907057036143929,9.045441907176135,9.213025281726157,8.931954333439238,9.149438887073874],"pond":[8.129973609729806,8.075739601816132,8.027529294214055,7.994631250766689,8.137432647175915],"water":[7.024665964705964,6.991405140933947,7.018480449520494,6.769040941101545,7.123294308761448],"gold":[6.057263205713826,5.857525770898501,6.202505904703272,5.917174847146149,6.217817209134232],"silk":[5.1082159312154705,4.960265707990823,5.1584874423959235,4.851514669480196,4.791957853281877],"abundance":[4.238460294107085,3.9423444003537353,3.9424999344360767,4.103202682951938,3.9572310886032684],"luck":[2.9949175500455003,2.7578981564045852,2.756953387260833,3.0958983727303266,3.20638545491778],"wild":[1.8712281823713945,1.8985174064735824,2.2491951318346537,1.8860936142033828,1.7838009995089643],"scatter":[0.9777116851099398,0.9597545896506147,1.232738787508262,1.1638574189639046,0.927948921875767]},
+      paytable: {"koi":{"3":2,"4":5,"5":15},"fish":{"3":4,"4":11,"5":34},"pond":{"3":6,"4":16,"5":52},"water":{"3":7,"4":22,"5":71},"gold":{"3":9,"4":27,"5":89},"silk":{"3":11,"4":33,"5":108},"abundance":{"3":13,"4":38,"5":126},"luck":{"3":15,"4":44,"5":145},"wild":{"3":16,"4":49,"5":163},"scatter":{"3":18,"4":55,"5":182},"SCATTER":{"3":5,"4":20,"5":100}},
+      freeSpinCount: 10,
+      freeSpinMultiplier: 2,
+      onSound: function(label) { /* sound hooks ready */ }
+    };
+
+    CasinoEngine.init('game-container', gameConfig);
+  </script>
+  <script src="../js/chat-widget.js" defer></script>
+  <script src="../js/notifications.js" defer></script>
+  <script src="../js/age-gate.js" defer></script>
+  <script src="../js/cookie-consent.js" defer></script>
+  <script src="../js/search.js" defer></script>
+  <script src="../js/favorites.js" defer></script>
+  <script src="../js/session-monitor.js" defer></script>
+  <script src="../js/sound-manager.js" defer></script>
+  <script src="../js/analytics.js" defer></script>
+  <script src="../js/email-capture.js" defer></script>
+  <script src="../js/conversion.js" defer></script>
+</body>
+</html>

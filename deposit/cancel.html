@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Deposit Cancelled | Matrix Spins Casino</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Plus+Jakarta+Sans:wght@700;800&display=swap" rel="stylesheet">
+    <style>
+        *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+        :root {
+            --bg: #0d0f14;
+            --text: #f0f0f5;
+            --text-muted: #8a8a9a;
+            --gold: #d4af37;
+            --gold-light: #f0d060;
+            --amber: #f39c12;
+            --amber-light: #f1c40f;
+            --card-bg: rgba(255, 255, 255, 0.04);
+        }
+
+        body {
+            background: var(--bg);
+            color: var(--text);
+            font-family: 'Inter', sans-serif;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+        }
+
+        .container {
+            text-align: center;
+            padding: 2rem;
+            max-width: 480px;
+            width: 100%;
+        }
+
+        /* Warning icon */
+        .warning-wrap {
+            width: 100px;
+            height: 100px;
+            margin: 0 auto 2rem;
+            position: relative;
+        }
+
+        .warning-circle {
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            border: 4px solid var(--amber);
+            position: relative;
+            animation: warningPop 0.5s ease-out forwards;
+            transform: scale(0);
+        }
+
+        @keyframes warningPop {
+            0%   { transform: scale(0); }
+            60%  { transform: scale(1.1); }
+            100% { transform: scale(1); }
+        }
+
+        /* Exclamation mark built with CSS */
+        .warning-circle::before {
+            content: '';
+            position: absolute;
+            top: 22px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 5px;
+            height: 32px;
+            background: var(--amber);
+            border-radius: 3px;
+            animation: exclamationDraw 0.3s ease-out 0.45s both;
+        }
+
+        .warning-circle::after {
+            content: '';
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 6px;
+            height: 6px;
+            background: var(--amber);
+            border-radius: 50%;
+            animation: dotPop 0.25s ease-out 0.7s both;
+        }
+
+        @keyframes exclamationDraw {
+            from { transform: translateX(-50%) scaleY(0); opacity: 0; }
+            to   { transform: translateX(-50%) scaleY(1); opacity: 1; }
+        }
+
+        @keyframes dotPop {
+            from { transform: translateX(-50%) scale(0); }
+            to   { transform: translateX(-50%) scale(1); }
+        }
+
+        .warning-glow {
+            position: absolute;
+            inset: -10px;
+            border-radius: 50%;
+            border: 2px solid rgba(243, 156, 18, 0.25);
+            animation: amberPulse 2.5s ease-in-out infinite;
+        }
+
+        @keyframes amberPulse {
+            0%, 100% { transform: scale(1); opacity: 0.35; }
+            50%      { transform: scale(1.12); opacity: 0; }
+        }
+
+        h1 {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            font-weight: 800;
+            font-size: clamp(1.5rem, 5vw, 2rem);
+            color: var(--amber);
+            margin-bottom: 0.75rem;
+        }
+
+        .subtext {
+            color: var(--text-muted);
+            font-size: 1rem;
+            line-height: 1.6;
+            margin-bottom: 2.5rem;
+        }
+
+        .buttons {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0.85rem 2rem;
+            border-radius: 10px;
+            font-family: 'Inter', sans-serif;
+            font-weight: 600;
+            font-size: 0.95rem;
+            text-decoration: none;
+            transition: all 0.25s ease;
+            cursor: pointer;
+            border: none;
+            min-width: 170px;
+        }
+
+        .btn-gold {
+            background: linear-gradient(135deg, var(--gold), var(--gold-light));
+            color: #0d0f14;
+            box-shadow: 0 4px 20px rgba(212, 175, 55, 0.3);
+        }
+
+        .btn-gold:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 28px rgba(212, 175, 55, 0.45);
+        }
+
+        .btn-outline {
+            background: transparent;
+            color: var(--gold);
+            border: 2px solid var(--gold);
+        }
+
+        .btn-outline:hover {
+            background: rgba(212, 175, 55, 0.1);
+            transform: translateY(-2px);
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            .warning-circle { animation: none; transform: scale(1); }
+            .warning-circle::before { animation: none; transform: translateX(-50%) scaleY(1); opacity: 1; }
+            .warning-circle::after { animation: none; transform: translateX(-50%) scale(1); }
+            .warning-glow { animation: none; }
+            .btn:hover { transform: none; }
+        }
+
+        @media (max-width: 480px) {
+            .buttons { flex-direction: column; align-items: center; }
+            .btn { width: 100%; max-width: 280px; }
+        }
+    </style>
+</head>
+<body>
+    <main class="container">
+        <div class="warning-wrap">
+            <div class="warning-glow"></div>
+            <div class="warning-circle"></div>
+        </div>
+
+        <h1>Deposit Cancelled</h1>
+        <p class="subtext">Your payment was not processed. No funds were deducted.</p>
+
+        <div class="buttons">
+            <a href="/wallet.html" class="btn btn-gold">Try Again</a>
+            <a href="/index.html" class="btn btn-outline">Return to Casino</a>
+        </div>
+    </main>
+</body>
+</html>

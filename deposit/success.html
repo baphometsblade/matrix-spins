@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Deposit Successful | Matrix Spins Casino</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Plus+Jakarta+Sans:wght@700;800&display=swap" rel="stylesheet">
+    <style>
+        *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+        :root {
+            --bg: #0d0f14;
+            --text: #f0f0f5;
+            --text-muted: #8a8a9a;
+            --gold: #d4af37;
+            --gold-light: #f0d060;
+            --green: #2ecc71;
+            --green-dark: #27ae60;
+            --card-bg: rgba(255, 255, 255, 0.04);
+        }
+
+        body {
+            background: var(--bg);
+            color: var(--text);
+            font-family: 'Inter', sans-serif;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* Sparkle / confetti particles */
+        .sparkle-container {
+            position: fixed;
+            inset: 0;
+            pointer-events: none;
+            overflow: hidden;
+        }
+
+        .sparkle {
+            position: absolute;
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            animation: sparklefall linear forwards;
+            opacity: 0;
+        }
+
+        @keyframes sparklefall {
+            0%   { transform: translateY(-10px) rotate(0deg) scale(0); opacity: 0; }
+            10%  { opacity: 1; transform: translateY(0) rotate(45deg) scale(1); }
+            80%  { opacity: 0.8; }
+            100% { transform: translateY(100vh) rotate(720deg) scale(0.3); opacity: 0; }
+        }
+
+        .container {
+            text-align: center;
+            padding: 2rem;
+            max-width: 480px;
+            width: 100%;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* Checkmark animation */
+        .checkmark-wrap {
+            width: 100px;
+            height: 100px;
+            margin: 0 auto 2rem;
+            position: relative;
+        }
+
+        .checkmark-circle {
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            border: 4px solid var(--green);
+            position: relative;
+            animation: circleGrow 0.5s ease-out forwards;
+            transform: scale(0);
+        }
+
+        @keyframes circleGrow {
+            0%   { transform: scale(0); }
+            60%  { transform: scale(1.1); }
+            100% { transform: scale(1); }
+        }
+
+        .checkmark-stem {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 28px;
+            height: 14px;
+            border-left: 4px solid var(--green);
+            border-bottom: 4px solid var(--green);
+            transform: translate(-55%, -65%) rotate(-45deg) scale(0);
+            animation: checkDraw 0.35s ease-out 0.45s forwards;
+        }
+
+        @keyframes checkDraw {
+            0%   { transform: translate(-55%, -65%) rotate(-45deg) scale(0); }
+            60%  { transform: translate(-55%, -65%) rotate(-45deg) scale(1.15); }
+            100% { transform: translate(-55%, -65%) rotate(-45deg) scale(1); }
+        }
+
+        .glow-ring {
+            position: absolute;
+            inset: -10px;
+            border-radius: 50%;
+            border: 2px solid rgba(46, 204, 113, 0.3);
+            animation: glowPulse 2s ease-in-out infinite;
+        }
+
+        @keyframes glowPulse {
+            0%, 100% { transform: scale(1); opacity: 0.4; }
+            50%      { transform: scale(1.15); opacity: 0; }
+        }
+
+        h1 {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            font-weight: 800;
+            font-size: clamp(1.5rem, 5vw, 2rem);
+            color: var(--green);
+            margin-bottom: 0.5rem;
+        }
+
+        .subtext {
+            color: var(--text-muted);
+            font-size: 1rem;
+            line-height: 1.6;
+            margin-bottom: 0.75rem;
+        }
+
+        .amount-display {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            font-weight: 700;
+            font-size: 2rem;
+            color: var(--gold);
+            margin-bottom: 0.5rem;
+            display: none;
+        }
+
+        .amount-display.visible {
+            display: block;
+            animation: fadeUp 0.5s ease-out;
+        }
+
+        @keyframes fadeUp {
+            from { opacity: 0; transform: translateY(10px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+
+        .countdown {
+            color: var(--text-muted);
+            font-size: 0.85rem;
+            margin-bottom: 2rem;
+        }
+
+        .countdown span {
+            color: var(--gold);
+            font-weight: 600;
+        }
+
+        .buttons {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0.85rem 2rem;
+            border-radius: 10px;
+            font-family: 'Inter', sans-serif;
+            font-weight: 600;
+            font-size: 0.95rem;
+            text-decoration: none;
+            transition: all 0.25s ease;
+            cursor: pointer;
+            border: none;
+            min-width: 170px;
+        }
+
+        .btn-gold {
+            background: linear-gradient(135deg, var(--gold), var(--gold-light));
+            color: #0d0f14;
+            box-shadow: 0 4px 20px rgba(212, 175, 55, 0.3);
+        }
+
+        .btn-gold:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 28px rgba(212, 175, 55, 0.45);
+        }
+
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.06);
+            color: var(--text);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.1);
+            transform: translateY(-2px);
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            .checkmark-circle { animation: none; transform: scale(1); }
+            .checkmark-stem { animation: none; transform: translate(-55%, -65%) rotate(-45deg) scale(1); }
+            .glow-ring, .sparkle { animation: none; }
+            .btn:hover { transform: none; }
+        }
+
+        @media (max-width: 480px) {
+            .buttons { flex-direction: column; align-items: center; }
+            .btn { width: 100%; max-width: 280px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="sparkle-container" id="sparkles"></div>
+
+    <main class="container">
+        <div class="checkmark-wrap">
+            <div class="glow-ring"></div>
+            <div class="checkmark-circle">
+                <div class="checkmark-stem"></div>
+            </div>
+        </div>
+
+        <h1>Deposit Successful!</h1>
+        <div class="amount-display" id="amount"></div>
+        <p class="subtext">Your funds have been added to your balance.</p>
+        <p class="countdown">Redirecting in <span id="timer">5</span> seconds...</p>
+
+        <div class="buttons">
+            <a href="/index.html" class="btn btn-gold">Return to Casino</a>
+            <a href="/wallet.html" class="btn btn-secondary">View Wallet</a>
+        </div>
+    </main>
+
+    <script>
+        // Read amount from URL params
+        (function() {
+            var params = new URLSearchParams(window.location.search);
+            var amount = params.get('amount');
+            if (amount) {
+                var el = document.getElementById('amount');
+                var num = parseFloat(amount);
+                if (!isNaN(num)) {
+                    el.textContent = '$' + num.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+                } else {
+                    el.textContent = '$' + amount;
+                }
+                el.classList.add('visible');
+            }
+        })();
+
+        // Countdown & redirect
+        (function() {
+            var seconds = 5;
+            var timerEl = document.getElementById('timer');
+            var interval = setInterval(function() {
+                seconds--;
+                timerEl.textContent = seconds;
+                if (seconds <= 0) {
+                    clearInterval(interval);
+                    window.location.href = '/index.html';
+                }
+            }, 1000);
+        })();
+
+        // Sparkle / confetti generator
+        (function() {
+            var prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+            if (prefersReduced) return;
+
+            var container = document.getElementById('sparkles');
+            var colors = ['#d4af37', '#f0d060', '#2ecc71', '#9b59b6', '#e74c3c', '#3498db', '#ffffff'];
+            var shapes = ['50%', '2px', '0'];
+
+            function createSparkle() {
+                var el = document.createElement('div');
+                el.className = 'sparkle';
+                el.style.left = Math.random() * 100 + '%';
+                el.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+                el.style.borderRadius = shapes[Math.floor(Math.random() * shapes.length)];
+                var size = 4 + Math.random() * 6;
+                el.style.width = size + 'px';
+                el.style.height = size + 'px';
+                el.style.animationDuration = (2 + Math.random() * 3) + 's';
+                container.appendChild(el);
+                el.addEventListener('animationend', function() { el.remove(); });
+            }
+
+            // Initial burst
+            for (var i = 0; i < 30; i++) {
+                setTimeout(createSparkle, i * 60);
+            }
+
+            // Ongoing gentle sparkles
+            setInterval(createSparkle, 300);
+        })();
+    </script>
+</body>
+</html>

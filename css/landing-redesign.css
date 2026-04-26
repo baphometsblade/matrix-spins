@@ -1,0 +1,867 @@
+/* ═══════════════════════════════════════════════════════════════
+   MATRIX SPINS — Landing Page Redesign v1.0
+   2026-04-26
+
+   Conversion-optimized hero, social proof, live win feed,
+   signup modal, scroll animations, and premium polish.
+   ═══════════════════════════════════════════════════════════════ */
+
+/* ── HERO REDESIGN ───────────────────────────────────────────── */
+.hero {
+    padding: 80px 24px 60px;
+    position: relative;
+    overflow: hidden;
+    min-height: 520px;
+    display: flex;
+    align-items: center;
+}
+
+.hero::before {
+    content: '';
+    position: absolute;
+    top: -20%;
+    left: -10%;
+    width: 60%;
+    height: 140%;
+    background: radial-gradient(ellipse at center, rgba(212,168,83,0.12) 0%, transparent 70%);
+    pointer-events: none;
+    animation: hero-glow 6s ease-in-out infinite alternate;
+}
+
+@keyframes hero-glow {
+    0% { opacity: 0.6; transform: translate(0, 0) scale(1); }
+    100% { opacity: 1; transform: translate(20px, -10px) scale(1.05); }
+}
+
+.hero::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background:
+        radial-gradient(circle at 80% 20%, rgba(56,189,248,0.04), transparent 40%),
+        radial-gradient(circle at 20% 80%, rgba(167,139,250,0.04), transparent 40%);
+    pointer-events: none;
+}
+
+.hero-container {
+    max-width: 1400px;
+    margin: 0 auto;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 48px;
+    align-items: center;
+    position: relative;
+    z-index: 2;
+}
+
+/* ── Hero Text Content ─────────────────────────────────────── */
+.hero-eyebrow {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(212,168,83,0.1);
+    border: 1px solid rgba(212,168,83,0.2);
+    border-radius: 20px;
+    padding: 6px 14px;
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--accent-gold-bright, #F0C66E);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    margin-bottom: 20px;
+    animation: fadeInUp 0.6s ease-out both;
+}
+
+.hero-eyebrow .pulse-dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--accent-green, #4ADE80);
+    animation: pulse-live 2s ease-in-out infinite;
+}
+
+@keyframes pulse-live {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.4; transform: scale(0.8); }
+}
+
+.hero-content h1 {
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-size: 52px;
+    font-weight: 800;
+    line-height: 1.05;
+    margin-bottom: 16px;
+    letter-spacing: -0.02em;
+    animation: fadeInUp 0.6s 0.1s ease-out both;
+}
+
+.hero-content h1 .gold-text {
+    background: linear-gradient(135deg, var(--accent-gold-bright, #F0C66E), var(--accent-gold, #D4A853));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.hero-content > p {
+    font-size: 17px;
+    color: var(--text-secondary, #9CA3AF);
+    margin-bottom: 28px;
+    line-height: 1.6;
+    max-width: 480px;
+    animation: fadeInUp 0.6s 0.2s ease-out both;
+}
+
+/* ── Dual CTA Buttons ──────────────────────────────────────── */
+.hero-ctas {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin-bottom: 28px;
+    animation: fadeInUp 0.6s 0.3s ease-out both;
+}
+
+.btn-primary-cta {
+    background: linear-gradient(135deg, var(--accent-gold-bright, #F0C66E), var(--accent-gold, #D4A853));
+    border: none;
+    border-radius: 12px;
+    padding: 16px 36px;
+    font-size: 15px;
+    font-weight: 700;
+    color: #0D0F14;
+    cursor: pointer;
+    transition: all 300ms ease;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    position: relative;
+    overflow: hidden;
+    min-height: 52px;
+}
+
+.btn-primary-cta::after {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -100%;
+    width: 50%;
+    height: 200%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+    transform: skewX(-25deg);
+    animation: btn-shine 3s ease-in-out infinite;
+}
+
+@keyframes btn-shine {
+    0%, 100% { left: -100%; }
+    50% { left: 150%; }
+}
+
+.btn-primary-cta:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 16px 40px rgba(212,168,83,0.4);
+}
+
+.btn-secondary-cta {
+    background: transparent;
+    border: 1px solid rgba(255,255,255,0.15);
+    border-radius: 12px;
+    padding: 16px 32px;
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--text-primary, #F0F0F5);
+    cursor: pointer;
+    transition: all 300ms ease;
+    min-height: 52px;
+}
+
+.btn-secondary-cta:hover {
+    border-color: rgba(255,255,255,0.3);
+    background: rgba(255,255,255,0.04);
+    transform: translateY(-2px);
+}
+
+/* ── Welcome Bonus Badge ───────────────────────────────────── */
+.welcome-bonus {
+    background: rgba(74,222,128,0.08);
+    border: 1px solid rgba(74,222,128,0.2);
+    border-radius: 12px;
+    padding: 14px 18px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    animation: fadeInUp 0.6s 0.4s ease-out both;
+    max-width: 420px;
+}
+
+.welcome-bonus-icon {
+    width: 40px; height: 40px;
+    background: rgba(74,222,128,0.15);
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    font-size: 20px;
+}
+
+.welcome-bonus-text {
+    font-size: 13px;
+    color: var(--text-secondary, #9CA3AF);
+    line-height: 1.4;
+}
+
+.welcome-bonus-text strong {
+    color: var(--accent-green, #4ADE80);
+    font-weight: 700;
+    font-size: 15px;
+    display: block;
+}
+
+/* ── Hero Right: Game Preview Showcase ─────────────────────── */
+.hero-showcase {
+    position: relative;
+    perspective: 1000px;
+}
+
+.showcase-stack {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    transform: rotateY(-5deg) rotateX(2deg);
+    transition: transform 600ms ease;
+}
+
+.showcase-stack:hover {
+    transform: rotateY(0) rotateX(0);
+}
+
+.showcase-card {
+    background: var(--bg-card, rgba(26,29,39,0.7));
+    border: 1px solid rgba(255,255,255,0.06);
+    border-radius: 12px;
+    overflow: hidden;
+    transition: all 400ms ease;
+    animation: fadeInScale 0.5s ease-out both;
+}
+
+.showcase-card:nth-child(1) { animation-delay: 0.3s; }
+.showcase-card:nth-child(2) { animation-delay: 0.4s; }
+.showcase-card:nth-child(3) { animation-delay: 0.5s; }
+.showcase-card:nth-child(4) { animation-delay: 0.6s; }
+
+.showcase-card:hover {
+    transform: translateY(-6px);
+    border-color: rgba(212,168,83,0.3);
+    box-shadow: 0 12px 32px rgba(0,0,0,0.4);
+}
+
+.showcase-card-visual {
+    aspect-ratio: 4/3;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 40px;
+    position: relative;
+}
+
+.showcase-card-info {
+    padding: 10px 12px;
+    border-top: 1px solid rgba(255,255,255,0.04);
+}
+
+.showcase-card-name {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-primary, #F0F0F5);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.showcase-card-rtp {
+    font-size: 11px;
+    color: var(--text-muted, #6B7280);
+    font-feature-settings: 'tnum';
+}
+
+@keyframes fadeInScale {
+    0% { opacity: 0; transform: scale(0.9) translateY(20px); }
+    100% { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+/* ── Jackpot in Hero ───────────────────────────────────────── */
+.hero-jackpot {
+    grid-column: 1 / -1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 24px;
+    padding: 20px;
+    background: rgba(212,168,83,0.04);
+    border: 1px solid rgba(212,168,83,0.12);
+    border-radius: 16px;
+    animation: fadeInUp 0.6s 0.5s ease-out both;
+}
+
+.hero-jackpot-label {
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--text-muted, #6B7280);
+}
+
+.hero-jackpot-amount {
+    font-family: 'Inter', sans-serif;
+    font-feature-settings: 'tnum';
+    font-size: 36px;
+    font-weight: 800;
+    background: linear-gradient(135deg, var(--accent-gold-bright, #F0C66E), var(--accent-gold, #D4A853));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+/* ── LIVE WIN FEED ───────────────────────────────────────────── */
+.win-feed {
+    overflow: hidden;
+    background: var(--bg-surface, #13151C);
+    border-top: 1px solid rgba(255,255,255,0.04);
+    border-bottom: 1px solid rgba(255,255,255,0.04);
+    padding: 10px 0;
+    position: relative;
+}
+
+.win-feed::before,
+.win-feed::after {
+    content: '';
+    position: absolute;
+    top: 0; bottom: 0;
+    width: 80px;
+    z-index: 2;
+    pointer-events: none;
+}
+
+.win-feed::before {
+    left: 0;
+    background: linear-gradient(to right, var(--bg-surface, #13151C), transparent);
+}
+
+.win-feed::after {
+    right: 0;
+    background: linear-gradient(to left, var(--bg-surface, #13151C), transparent);
+}
+
+.win-feed-track {
+    display: flex;
+    gap: 24px;
+    animation: scroll-feed 30s linear infinite;
+    width: max-content;
+}
+
+.win-feed-track:hover {
+    animation-play-state: paused;
+}
+
+@keyframes scroll-feed {
+    0% { transform: translateX(0); }
+    100% { transform: translateX(-50%); }
+}
+
+.win-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 6px 14px;
+    background: rgba(255,255,255,0.03);
+    border-radius: 8px;
+    flex-shrink: 0;
+    white-space: nowrap;
+}
+
+.win-avatar {
+    width: 28px; height: 28px;
+    border-radius: 50%;
+    background: var(--bg-elevated, #1A1D27);
+    border: 1px solid rgba(212,168,83,0.3);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 10px;
+    font-weight: 700;
+    color: var(--accent-gold, #D4A853);
+}
+
+.win-details {
+    font-size: 12px;
+    color: var(--text-secondary, #9CA3AF);
+}
+
+.win-details .win-amount {
+    color: var(--accent-green, #4ADE80);
+    font-weight: 700;
+}
+
+.win-details .win-game {
+    color: var(--text-muted, #6B7280);
+}
+
+/* ── STATS BAR ───────────────────────────────────────────────── */
+.stats-bar {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 32px 24px;
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+}
+
+.stat-item {
+    text-align: center;
+    padding: 20px 16px;
+    background: var(--bg-card, rgba(26,29,39,0.7));
+    border: 1px solid rgba(255,255,255,0.04);
+    border-radius: 12px;
+    transition: border-color 300ms;
+}
+
+.stat-item:hover {
+    border-color: rgba(212,168,83,0.2);
+}
+
+.stat-number {
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-size: 32px;
+    font-weight: 800;
+    font-feature-settings: 'tnum';
+    background: linear-gradient(135deg, var(--accent-gold-bright, #F0C66E), var(--accent-gold, #D4A853));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin-bottom: 4px;
+}
+
+.stat-label {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-muted, #6B7280);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+}
+
+/* ── STUDIO SHOWCASE ─────────────────────────────────────────── */
+.studios-section {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 48px 24px 32px;
+}
+
+.studios-section h2 {
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-size: 20px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    margin-bottom: 20px;
+    text-align: center;
+}
+
+.studios-grid {
+    display: flex;
+    gap: 16px;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    padding: 4px 0;
+}
+
+.studios-grid::-webkit-scrollbar { display: none; }
+
+.studio-card {
+    flex: 0 0 160px;
+    background: var(--bg-card, rgba(26,29,39,0.7));
+    border: 1px solid rgba(255,255,255,0.04);
+    border-radius: 12px;
+    padding: 20px 16px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 300ms ease;
+}
+
+.studio-card:hover {
+    border-color: rgba(212,168,83,0.3);
+    transform: translateY(-4px);
+    box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+}
+
+.studio-card-logo {
+    width: 48px; height: 48px;
+    border-radius: 12px;
+    margin: 0 auto 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+    font-weight: 800;
+    color: #fff;
+}
+
+.studio-card-name {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-primary, #F0F0F5);
+    margin-bottom: 4px;
+}
+
+.studio-card-count {
+    font-size: 11px;
+    color: var(--text-muted, #6B7280);
+}
+
+/* ── HOW IT WORKS ────────────────────────────────────────────── */
+.how-it-works {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 48px 24px;
+}
+
+.how-it-works h2 {
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-size: 20px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    margin-bottom: 32px;
+    text-align: center;
+}
+
+.steps-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 20px;
+}
+
+.step-card {
+    background: var(--bg-card, rgba(26,29,39,0.7));
+    border: 1px solid rgba(255,255,255,0.04);
+    border-radius: 16px;
+    padding: 28px 24px;
+    text-align: center;
+    position: relative;
+    transition: border-color 300ms;
+}
+
+.step-card:hover {
+    border-color: rgba(212,168,83,0.2);
+}
+
+.step-number {
+    width: 40px; height: 40px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, rgba(212,168,83,0.15), rgba(212,168,83,0.05));
+    border: 1px solid rgba(212,168,83,0.2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 800;
+    font-size: 16px;
+    color: var(--accent-gold, #D4A853);
+    margin: 0 auto 16px;
+}
+
+.step-card h3 {
+    font-size: 15px;
+    font-weight: 700;
+    margin-bottom: 8px;
+}
+
+.step-card p {
+    font-size: 13px;
+    color: var(--text-secondary, #9CA3AF);
+    line-height: 1.6;
+}
+
+/* ── SIGNUP MODAL ────────────────────────────────────────────── */
+.signup-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.7);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    z-index: 2000;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+    animation: fadeIn 0.2s ease-out;
+}
+
+.signup-overlay.active {
+    display: flex;
+}
+
+@keyframes fadeIn {
+    0% { opacity: 0; }
+    100% { opacity: 1; }
+}
+
+.signup-modal {
+    background: var(--bg-surface, #13151C);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 20px;
+    width: 100%;
+    max-width: 440px;
+    padding: 36px;
+    position: relative;
+    animation: modalSlideUp 0.3s ease-out;
+    max-height: 90vh;
+    overflow-y: auto;
+}
+
+@keyframes modalSlideUp {
+    0% { opacity: 0; transform: translateY(30px) scale(0.97); }
+    100% { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.signup-modal-close {
+    position: absolute;
+    top: 16px; right: 16px;
+    width: 32px; height: 32px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.06);
+    border: none;
+    color: var(--text-muted, #6B7280);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    transition: all 200ms;
+}
+
+.signup-modal-close:hover {
+    background: rgba(255,255,255,0.12);
+    color: var(--text-primary, #F0F0F5);
+}
+
+.signup-modal h2 {
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-size: 24px;
+    font-weight: 800;
+    margin-bottom: 8px;
+}
+
+.signup-modal .modal-subtitle {
+    color: var(--text-secondary, #9CA3AF);
+    font-size: 14px;
+    margin-bottom: 24px;
+}
+
+.signup-field {
+    margin-bottom: 16px;
+}
+
+.signup-field label {
+    display: block;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-muted, #6B7280);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    margin-bottom: 6px;
+}
+
+.signup-field input {
+    width: 100%;
+    background: var(--bg-elevated, #1A1D27);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 10px;
+    padding: 14px 16px;
+    color: var(--text-primary, #F0F0F5);
+    font-size: 14px;
+    font-family: inherit;
+    outline: none;
+    transition: border-color 200ms;
+}
+
+.signup-field input:focus {
+    border-color: var(--accent-gold, #D4A853);
+}
+
+.signup-field input::placeholder {
+    color: var(--text-muted, #6B7280);
+}
+
+.signup-submit {
+    width: 100%;
+    background: linear-gradient(135deg, var(--accent-gold-bright, #F0C66E), var(--accent-gold, #D4A853));
+    border: none;
+    border-radius: 12px;
+    padding: 16px;
+    font-size: 15px;
+    font-weight: 700;
+    color: #0D0F14;
+    cursor: pointer;
+    transition: all 200ms;
+    margin-top: 8px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+.signup-submit:hover {
+    opacity: 0.9;
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(212,168,83,0.3);
+}
+
+.signup-submit:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none;
+}
+
+.signup-footer {
+    text-align: center;
+    margin-top: 16px;
+    font-size: 13px;
+    color: var(--text-muted, #6B7280);
+}
+
+.signup-footer a {
+    color: var(--accent-gold, #D4A853);
+    text-decoration: none;
+    font-weight: 600;
+}
+
+.signup-footer a:hover {
+    text-decoration: underline;
+}
+
+.signup-legal {
+    font-size: 11px;
+    color: var(--text-muted, #6B7280);
+    text-align: center;
+    margin-top: 16px;
+    line-height: 1.5;
+}
+
+/* ── SCROLL REVEAL ANIMATIONS ────────────────────────────────── */
+@keyframes fadeInUp {
+    0% { opacity: 0; transform: translateY(24px); }
+    100% { opacity: 1; transform: translateY(0); }
+}
+
+.reveal {
+    opacity: 0;
+    transform: translateY(30px);
+    transition: opacity 0.6s ease-out, transform 0.6s ease-out;
+}
+
+.reveal.visible {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+/* ── SECTION DIVIDER ─────────────────────────────────────────── */
+.section-divider {
+    height: 1px;
+    background: linear-gradient(
+        to right,
+        transparent,
+        rgba(212,168,83,0.2) 30%,
+        rgba(212,168,83,0.2) 70%,
+        transparent
+    );
+    max-width: 1400px;
+    margin: 0 auto;
+}
+
+/* ── RESPONSIVE — Landing Page ───────────────────────────────── */
+@media (max-width: 1024px) {
+    .hero-container {
+        grid-template-columns: 1fr;
+        gap: 32px;
+    }
+
+    .hero-content h1 { font-size: 40px; }
+
+    .showcase-stack {
+        transform: none;
+        max-width: 400px;
+        margin: 0 auto;
+    }
+
+    .stats-bar {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .steps-grid {
+        grid-template-columns: 1fr;
+        max-width: 400px;
+        margin: 0 auto;
+    }
+}
+
+@media (max-width: 768px) {
+    .hero {
+        padding: 40px 16px 32px;
+        min-height: auto;
+    }
+
+    .hero-content h1 { font-size: 32px; }
+    .hero-content > p { font-size: 15px; }
+
+    .btn-primary-cta, .btn-secondary-cta {
+        padding: 14px 24px;
+        font-size: 14px;
+        width: 100%;
+        text-align: center;
+    }
+
+    .hero-ctas {
+        flex-direction: column;
+    }
+
+    .hero-jackpot {
+        flex-direction: column;
+        gap: 8px;
+        text-align: center;
+    }
+
+    .hero-jackpot-amount { font-size: 28px; }
+
+    .stats-bar {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 10px;
+        padding: 24px 16px;
+    }
+
+    .stat-number { font-size: 24px; }
+
+    .studios-section { padding: 32px 16px 24px; }
+    .how-it-works { padding: 32px 16px; }
+
+    .signup-modal {
+        padding: 28px 20px;
+        border-radius: 16px;
+    }
+}
+
+@media (max-width: 480px) {
+    .hero-content h1 { font-size: 28px; }
+    .showcase-stack { grid-template-columns: 1fr 1fr; gap: 8px; }
+    .showcase-card-visual { font-size: 32px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .hero::before,
+    .btn-primary-cta::after,
+    .win-feed-track,
+    .showcase-card,
+    .hero-eyebrow,
+    .hero-content h1,
+    .hero-content > p,
+    .hero-ctas,
+    .welcome-bonus,
+    .hero-jackpot {
+        animation: none !important;
+    }
+    .reveal { opacity: 1; transform: none; transition: none; }
+}

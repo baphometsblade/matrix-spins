@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pharaoh Eternal Dynasty — Matrix Spins Casino</title>
+  <meta name="theme-color" content="#D4A853">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html, body { height: 100%; }
+    body { background: #0D0F14; color: #F0F0F5; font-family: 'Inter', sans-serif; overflow-x: hidden; }
+  </style>
+  <link rel="stylesheet" href="../css/chat-widget.css">
+  <link rel="stylesheet" href="../css/notifications.css">
+  <link rel="stylesheet" href="../css/age-gate.css">
+  <link rel="stylesheet" href="../css/search.css">
+  <link rel="stylesheet" href="../css/favorites.css">
+  <link rel="stylesheet" href="../css/session-monitor.css">
+  <link rel="stylesheet" href="../css/conversion.css">
+</head>
+<body>
+  <div id="game-container" style="width:100%;min-height:100vh;"></div>
+
+  <script src="../js/api-client.js"></script>
+  <script src="../js/casino-engine.js"></script>
+  <script>
+    const gameConfig = {
+      name: 'Pharaoh Eternal Dynasty',
+      id: 'pharaoh-eternal-dynasty',
+      studioTheme: {
+        id: 'mythic-forge',
+        name: 'Mythic Forge',
+        primaryColor: '#50C878',
+        secondaryColor: '#DC143C',
+        accentColor: '#4169E1',
+        bgGradient: 'linear-gradient(135deg, #2C1810 0%, #3D2817 50%, #2C1810 100%)',
+        fontFamily: "'Cinzel', serif",
+        fontFamilyBody: "'Crimson Text', serif",
+        chromeStyle: 'custom',
+        logoUrl: 'assets/studios/mythic-forge-logo.png',
+        reelBg: '#1A0F08',
+        reelBorder: '#50C878',
+        winHighlight: '#FFD700',
+        borderStyle: '4px solid #50C878',
+        borderRadius: '8px',
+        boxShadow: '0 0 35px rgba(80,200,120,0.25), inset 0 0 25px rgba(80,200,120,0.1)',
+        buttonStyle: 'background: linear-gradient(180deg, #50C878, #3A9B5C); border-radius: 6px; border: 2px solid #DC143C; text-transform: uppercase; letter-spacing: 2px; font-weight: 600;',
+        spinButtonGlow: '0 0 25px rgba(80,200,120,0.5)'
+      },
+      rtp: 0.91,
+      volatility: 'high',
+      mechanic: 'Split Symbols',
+      mechanicDesc: 'Symbols split into multiple smaller symbols, dramatically increasing the ways to win.',
+      minBet: 0.2,
+      maxBet: 100,
+      betStep: 0.20,
+      reels: 5,
+      rows: 3,
+      paylines: 30,
+      symbols: ["pharaoh","pyramid","scarab","ankh","gold","eye-of-horus","sphinx","treasure","wild","scatter"],
+      wilds: ["pharaoh"],
+      scatters: ["scatter"],
+      symbolWeights: {"pharaoh":[10.057480783852721,9.86658837193532,10.138954245014439,9.906271021018958,10.01674760126177],"pyramid":[8.821501015694874,8.808236044331041,9.209427286507703,8.984256118793384,8.780621324527324],"scarab":[7.9552921692973095,8.04112261248486,8.069287739559384,8.168706350049538,8.178990225945777],"ankh":[6.81308979856248,6.974162193288791,7.080979167482035,6.763614884879249,7.130256380243961],"gold":[5.946344353447032,6.0262682538637575,5.866771210506316,5.963554612343824,6.14632335967749],"eye-of-horus":[5.053237213982673,5.233862259912652,4.889289091266573,4.795485833577566,5.15500596893783],"sphinx":[4.227044592649939,3.7885404324263687,4.056332378491139,4.051877622932782,3.889901057345196],"treasure":[3.221472869694603,2.8074211877864625,3.225252874041435,3.098063506869547,2.821395877215956],"wild":[2.1196160417798438,2.0517345675733933,1.794359636017339,1.985989746660699,2.092398688469292],"scatter":[1.0173164827871062,1.1987963771352004,1.0510018447037353,0.9591554451636509,0.9652974380165147]},
+      paytable: {"pharaoh":{"3":2,"4":5,"5":15},"pyramid":{"3":4,"4":11,"5":34},"scarab":{"3":6,"4":16,"5":52},"ankh":{"3":7,"4":22,"5":71},"gold":{"3":9,"4":27,"5":89},"eye-of-horus":{"3":11,"4":33,"5":108},"sphinx":{"3":13,"4":38,"5":126},"treasure":{"3":15,"4":44,"5":145},"wild":{"3":16,"4":49,"5":163},"scatter":{"3":18,"4":55,"5":182},"SCATTER":{"3":5,"4":20,"5":100}},
+      freeSpinCount: 10,
+      freeSpinMultiplier: 2,
+      onSound: function(label) { /* sound hooks ready */ }
+    };
+
+    CasinoEngine.init('game-container', gameConfig);
+  </script>
+  <script src="../js/chat-widget.js" defer></script>
+  <script src="../js/notifications.js" defer></script>
+  <script src="../js/age-gate.js" defer></script>
+  <script src="../js/cookie-consent.js" defer></script>
+  <script src="../js/search.js" defer></script>
+  <script src="../js/favorites.js" defer></script>
+  <script src="../js/session-monitor.js" defer></script>
+  <script src="../js/sound-manager.js" defer></script>
+  <script src="../js/analytics.js" defer></script>
+  <script src="../js/email-capture.js" defer></script>
+  <script src="../js/conversion.js" defer></script>
+</body>
+</html>

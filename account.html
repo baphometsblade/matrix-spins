@@ -1,0 +1,574 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>My Account — Matrix Spins Casino</title>
+<meta name="description" content="Manage your Matrix Spins Casino account — view stats, game history, settings, and responsible gambling tools.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/auth.css">
+<link rel="stylesheet" href="css/account.css">
+<link rel="stylesheet" href="css/age-gate.css">
+<link rel="stylesheet" href="css/search.css">
+<link rel="stylesheet" href="css/favorites.css">
+<link rel="stylesheet" href="css/session-monitor.css">
+<link rel="stylesheet" href="css/chat-widget.css">
+<link rel="stylesheet" href="css/notifications.css">
+<link rel="stylesheet" href="css/conversion.css">
+</head>
+<body>
+
+<!-- ── Top bar ──────────────────────────────────────────────── -->
+<div class="topbar">
+  <a class="brand" href="index.html">Matrix Spins</a>
+  <div class="actions">
+    <span id="balanceChip" class="balance-chip">—</span>
+    <a href="wallet.html" class="btn btn-inline secondary">Wallet</a>
+    <button id="logout" class="btn btn-inline secondary">Sign out</button>
+  </div>
+</div>
+
+<div class="rs-shell-wide">
+
+  <!-- ── Account Header ────────────────────────────────────── -->
+  <div class="account-header">
+    <div class="avatar" id="avatar">
+      <span id="avatarInitial">?</span>
+      <div class="kyc-dot" id="kycDot"></div>
+    </div>
+    <div class="account-info">
+      <h1 id="displayName">Player</h1>
+      <div class="account-meta">
+        <span id="metaEmail">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+          —
+        </span>
+        <span id="metaCountry">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z"/></svg>
+          —
+        </span>
+        <span id="metaJoined">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+          —
+        </span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Layout: Sidebar + Content ─────────────────────────── -->
+  <div class="account-layout">
+    <nav class="account-nav">
+      <button class="nav-item active" data-panel="overview">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+        Overview
+      </button>
+      <button class="nav-item" data-panel="history">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+        Game History
+      </button>
+      <button class="nav-item" data-panel="security">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+        Security
+      </button>
+      <button class="nav-item" data-panel="limits">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+        Responsible Play
+      </button>
+      <button class="nav-item" data-panel="kyc">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="8.5" cy="7" r="4"/><polyline points="17 11 19 13 23 9"/></svg>
+        Verification
+      </button>
+    </nav>
+
+    <div class="account-content">
+
+      <!-- ── Overview Panel ──────────────────────────────────── -->
+      <div class="account-panel active" id="panel-overview">
+        <div class="stats-row" id="statsRow">
+          <!-- Populated by JS -->
+        </div>
+
+        <div class="section-card">
+          <h2>
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+            Recent Activity
+          </h2>
+          <ul class="spin-list" id="recentSpins"></ul>
+        </div>
+      </div>
+
+      <!-- ── Game History Panel ──────────────────────────────── -->
+      <div class="account-panel" id="panel-history">
+        <div class="section-card">
+          <h2>
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+            Spin History
+          </h2>
+          <div style="display:flex;gap:0.6rem;margin-bottom:1rem;flex-wrap:wrap;">
+            <select id="historyFilter" style="background:var(--bg-elev);color:var(--text);border:1px solid var(--border);border-radius:8px;padding:0.5rem 0.8rem;font:inherit;">
+              <option value="">All games</option>
+            </select>
+            <select id="historySort" style="background:var(--bg-elev);color:var(--text);border:1px solid var(--border);border-radius:8px;padding:0.5rem 0.8rem;font:inherit;">
+              <option value="newest">Newest first</option>
+              <option value="biggest_win">Biggest wins</option>
+              <option value="biggest_bet">Biggest bets</option>
+            </select>
+          </div>
+          <ul class="spin-list" id="fullHistory"></ul>
+          <div style="text-align:center;margin-top:1rem;">
+            <button class="btn secondary btn-inline" id="loadMoreHistory" style="display:none;">Load more</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── Security Panel ──────────────────────────────────── -->
+      <div class="account-panel" id="panel-security">
+        <div class="section-card">
+          <h2>
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
+            Change Password
+          </h2>
+          <div id="pwAlert" class="alert"></div>
+          <form id="pwForm">
+            <div class="field"><label>Current password</label><input id="currentPassword" type="password" required autocomplete="current-password"></div>
+            <div class="field"><label>New password</label><input id="newPassword" type="password" required minlength="10" autocomplete="new-password"></div>
+            <div class="field"><label>Confirm new password</label><input id="confirmPassword" type="password" required minlength="10" autocomplete="new-password"></div>
+            <button class="btn" style="width:auto;">Update password</button>
+          </form>
+        </div>
+
+        <div class="section-card">
+          <h2>
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+            Provably Fair Seeds
+          </h2>
+          <p class="muted" style="margin-bottom:1rem;">Verify that every spin result was predetermined and fair.</p>
+          <div class="stat-grid" id="seedInfo" style="margin-bottom:1rem;"></div>
+          <div style="display:flex;gap:0.6rem;flex-wrap:wrap;">
+            <button class="btn secondary btn-inline" id="rotateSeedBtn">Rotate server seed</button>
+          </div>
+          <div id="seedAlert" class="alert" style="margin-top:0.8rem;"></div>
+        </div>
+      </div>
+
+      <!-- ── Responsible Play Panel ──────────────────────────── -->
+      <div class="account-panel" id="panel-limits">
+        <div class="section-card">
+          <h2>
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+            Deposit &amp; Loss Limits
+          </h2>
+          <p class="muted" style="margin-bottom:1rem;">Decreases apply immediately. Increases are delayed 24 hours (cool-off).</p>
+          <div id="limAlert" class="alert"></div>
+          <form id="limitsForm">
+            <div class="row">
+              <div class="field"><label>Daily deposit cap ($)</label><input id="daily_deposit" type="number" min="1" step="1"></div>
+              <div class="field"><label>Weekly deposit cap ($)</label><input id="weekly_deposit" type="number" min="1" step="1"></div>
+            </div>
+            <div class="row">
+              <div class="field"><label>Monthly deposit cap ($)</label><input id="monthly_deposit" type="number" min="1" step="1"></div>
+              <div class="field"><label>Daily loss cap ($)</label><input id="daily_loss" type="number" min="1" step="1"></div>
+            </div>
+            <div class="row">
+              <div class="field"><label>Session time limit (min)</label><input id="session_time" type="number" min="5" step="5"></div>
+              <div class="field"><label>Reality check (min)</label><input id="reality_check" type="number" min="5" step="5"></div>
+            </div>
+            <button class="btn" id="saveLimits" style="width:auto;">Save limits</button>
+          </form>
+        </div>
+
+        <div class="section-card">
+          <h2>
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg>
+            Self-Exclusion
+          </h2>
+          <p class="muted" style="margin-bottom:0.8rem;">Blocks access to your account for a chosen period. This cannot be reversed early.</p>
+          <div id="seAlert" class="alert"></div>
+          <div class="row">
+            <div class="field"><label>Exclude until</label><input id="seUntil" type="datetime-local"></div>
+            <div class="field" style="display:flex;align-items:flex-end;">
+              <button id="seBtn" class="btn danger" style="width:auto;">Self-exclude</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── KYC / Verification Panel ────────────────────────── -->
+      <div class="account-panel" id="panel-kyc">
+        <div class="section-card">
+          <h2>
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="8.5" cy="7" r="4"/><polyline points="17 11 19 13 23 9"/></svg>
+            Identity Verification
+          </h2>
+          <div id="kycStatusBar" class="kyc-status-bar unverified">
+            <div class="icon" id="kycIcon">?</div>
+            <div class="text">
+              <strong id="kycTitle">Checking status...</strong>
+              <span id="kycDesc">Loading verification status.</span>
+            </div>
+          </div>
+          <p class="muted" style="margin-bottom:1rem;">Upload government-issued photo ID and proof of address to verify your identity. This unlocks higher deposit/withdrawal limits.</p>
+
+          <div id="kycDocs" style="margin-bottom:1rem;"></div>
+
+          <div id="kycUploadForm" style="display:none;">
+            <div class="field"><label>Document type</label>
+              <select id="kycDocType" style="background:var(--bg-elev);color:var(--text);border:1px solid var(--border);border-radius:8px;padding:0.5rem 0.8rem;font:inherit;width:100%;">
+                <option value="passport">Passport</option>
+                <option value="drivers_license">Driver's license</option>
+                <option value="national_id">National ID</option>
+                <option value="proof_of_address">Proof of address</option>
+              </select>
+            </div>
+            <div class="field"><label>Document number</label><input id="kycDocNumber" type="text" placeholder="Document number"></div>
+            <div id="kycUploadAlert" class="alert"></div>
+            <button class="btn" id="submitKycBtn" style="width:auto;">Submit for verification</button>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<script src="js/api-client.js"></script>
+<script src="js/age-gate.js" defer></script>
+<script src="js/cookie-consent.js" defer></script>
+<script src="js/search.js" defer></script>
+<script src="js/favorites.js" defer></script>
+<script src="js/session-monitor.js" defer></script>
+<script src="js/sound-manager.js" defer></script>
+<script src="js/analytics.js" defer></script>
+<script src="js/email-capture.js" defer></script>
+<script src="js/chat-widget.js" defer></script>
+<script src="js/notifications.js" defer></script>
+<script src="js/conversion.js" defer></script>
+<script>
+(async () => {
+  'use strict';
+
+  const api = window.MatrixSpinsAPI;
+  const user = await api.loadSession();
+  if (!user) { window.location.href = 'login.html?next=account.html'; return; }
+
+  function fmt(c) { return api.formatCents(c); }
+  function timeAgo(iso) {
+    const d = (Date.now() - new Date(iso).getTime()) / 1000;
+    if (d < 60) return 'just now';
+    if (d < 3600) return Math.floor(d / 60) + 'm ago';
+    if (d < 86400) return Math.floor(d / 3600) + 'h ago';
+    if (d < 604800) return Math.floor(d / 86400) + 'd ago';
+    return new Date(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+  }
+  const $ = id => document.getElementById(id);
+
+  // ── Logout & Balance ─────────────────────────────────────
+  $('logout').addEventListener('click', async () => { await api.logout(); window.location.href = 'index.html'; });
+
+  async function refreshBalance() {
+    try {
+      const b = await api.getBalance();
+      $('balanceChip').textContent = fmt(b.availableCents);
+    } catch {}
+  }
+  refreshBalance();
+
+  // ── Populate Header ──────────────────────────────────────
+  const name = `${user.firstName || ''} ${user.lastName || ''}`.trim() || user.email.split('@')[0];
+  $('displayName').textContent = name;
+  $('avatarInitial').textContent = name.charAt(0).toUpperCase();
+  $('metaEmail').lastChild.textContent = ' ' + user.email;
+  $('metaCountry').lastChild.textContent = ' ' + (user.countryCode || 'Not set');
+  if (user.createdAt) {
+    $('metaJoined').lastChild.textContent = ' Joined ' + new Date(user.createdAt).toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
+  }
+
+  const kycDot = $('kycDot');
+  kycDot.classList.add(user.kycStatus || 'unverified');
+
+  // ── Sidebar Navigation ───────────────────────────────────
+  document.querySelectorAll('.nav-item').forEach(item => {
+    item.addEventListener('click', () => {
+      document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+      document.querySelectorAll('.account-panel').forEach(p => p.classList.remove('active'));
+      item.classList.add('active');
+      $('panel-' + item.dataset.panel).classList.add('active');
+    });
+  });
+
+  // ── Overview: Stats ──────────────────────────────────────
+  async function loadOverview() {
+    try {
+      const [bal, txData, histData] = await Promise.all([
+        api.getBalance(),
+        api.getTransactions({ limit: 200 }),
+        api.spinHistory({ limit: 10 }),
+      ]);
+
+      const tx = txData.transactions || [];
+      const spins = histData.spins || histData.history || [];
+      const totalWagered = tx.filter(t => /bet|wager/i.test(t.entry_type)).reduce((s, t) => s + Math.abs(t.amount_cents || 0), 0);
+      const totalWon = tx.filter(t => /win|payout/i.test(t.entry_type)).reduce((s, t) => s + (t.amount_cents || 0), 0);
+      const totalSpins = spins.length || tx.filter(t => /bet|wager/i.test(t.entry_type)).length;
+      const biggestWin = tx.filter(t => /win|payout/i.test(t.entry_type)).reduce((m, t) => Math.max(m, t.amount_cents || 0), 0);
+
+      $('statsRow').innerHTML = `
+        <div class="stat-card">
+          <div class="icon gold"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg></div>
+          <div class="number">${fmt(bal.availableCents || 0)}</div>
+          <div class="label">Balance</div>
+        </div>
+        <div class="stat-card">
+          <div class="icon blue"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg></div>
+          <div class="number">${fmt(totalWagered)}</div>
+          <div class="label">Total Wagered</div>
+        </div>
+        <div class="stat-card">
+          <div class="icon green"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg></div>
+          <div class="number">${fmt(totalWon)}</div>
+          <div class="label">Total Won</div>
+        </div>
+        <div class="stat-card">
+          <div class="icon purple"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M16 8l-8 8"/><circle cx="9" cy="9" r="1.5" fill="currentColor"/><circle cx="15" cy="15" r="1.5" fill="currentColor"/></svg></div>
+          <div class="number">${totalSpins.toLocaleString()}</div>
+          <div class="label">Total Spins</div>
+        </div>
+        <div class="stat-card">
+          <div class="icon red"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5"/><path d="M5 12l7-7 7 7"/></svg></div>
+          <div class="number">${fmt(biggestWin)}</div>
+          <div class="label">Biggest Win</div>
+        </div>
+      `;
+
+      // Recent spins
+      const recent = spins.slice(0, 8);
+      $('recentSpins').innerHTML = recent.length
+        ? recent.map(renderSpinItem).join('')
+        : '<div style="text-align:center;padding:2rem;color:var(--muted);">No game history yet. Start playing to see your stats!</div>';
+
+    } catch (err) {
+      console.error('[Account] overview error:', err);
+    }
+  }
+
+  const gameEmojis = ['🎰','💎','🐉','🔥','⚡','🌟','🎲','🃏','👑','🏛️','🌊','🐯','🦅','💰','🎯'];
+  function gameEmoji(name) {
+    let hash = 0;
+    for (let i = 0; i < (name || '').length; i++) hash = ((hash << 5) - hash + name.charCodeAt(i)) | 0;
+    return gameEmojis[Math.abs(hash) % gameEmojis.length];
+  }
+
+  function renderSpinItem(spin) {
+    const gameName = spin.game_name || spin.gameName || spin.gameId || 'Unknown';
+    const bet = spin.bet_cents || spin.betCents || 0;
+    const payout = spin.payout_cents || spin.payoutCents || 0;
+    const net = payout - bet;
+    const mult = bet > 0 ? (payout / bet).toFixed(1) : '0.0';
+    const created = spin.created_at || spin.createdAt || '';
+
+    return `<li class="spin-item">
+      <div class="spin-game-icon">${gameEmoji(gameName)}</div>
+      <div class="spin-info">
+        <div class="game-name">${gameName.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase())}</div>
+        <div class="spin-meta">
+          <span>Bet: ${fmt(bet)}</span>
+          <span>${timeAgo(created)}</span>
+        </div>
+      </div>
+      <div class="spin-result">
+        <div class="amount ${net >= 0 ? 'win' : 'loss'}">${net >= 0 ? '+' : ''}${fmt(Math.abs(net))}</div>
+        <div class="multiplier">${mult}x</div>
+      </div>
+    </li>`;
+  }
+
+  loadOverview();
+
+  // ── Game History Panel ───────────────────────────────────
+  let historyOffset = 0;
+  const HISTORY_PAGE = 30;
+
+  async function loadHistory(append) {
+    if (!append) { historyOffset = 0; $('fullHistory').innerHTML = ''; }
+    try {
+      const data = await api.spinHistory({ limit: HISTORY_PAGE, offset: historyOffset });
+      const spins = data.spins || data.history || [];
+      if (spins.length > 0) {
+        $('fullHistory').innerHTML += spins.map(renderSpinItem).join('');
+        historyOffset += spins.length;
+      }
+      $('loadMoreHistory').style.display = spins.length >= HISTORY_PAGE ? 'inline-block' : 'none';
+      if (!append && spins.length === 0) {
+        $('fullHistory').innerHTML = '<div style="text-align:center;padding:2rem;color:var(--muted);">No game history yet.</div>';
+      }
+    } catch (err) {
+      console.error('[Account] history error:', err);
+    }
+  }
+
+  $('loadMoreHistory').addEventListener('click', () => loadHistory(true));
+
+  // Load history when tab is first visited
+  let historyLoaded = false;
+  document.querySelector('[data-panel="history"]').addEventListener('click', () => {
+    if (!historyLoaded) { loadHistory(false); historyLoaded = true; }
+  });
+
+  // ── Security: Password ───────────────────────────────────
+  $('pwForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const alert = $('pwAlert');
+    alert.classList.remove('visible');
+
+    const newPw = $('newPassword').value;
+    const confirmPw = $('confirmPassword').value;
+    if (newPw !== confirmPw) {
+      alert.className = 'alert visible'; alert.textContent = 'Passwords do not match.'; return;
+    }
+
+    try {
+      await api.changePassword($('currentPassword').value, newPw);
+      alert.className = 'alert success visible';
+      alert.textContent = 'Password updated. You will be signed out.';
+      setTimeout(() => { window.location.href = 'login.html'; }, 1500);
+    } catch (err) {
+      alert.className = 'alert visible'; alert.textContent = err.message;
+    }
+  });
+
+  // ── Security: Provably Fair Seeds ────────────────────────
+  async function loadSeeds() {
+    try {
+      const seeds = await api.getSeeds();
+      $('seedInfo').innerHTML = `
+        <div class="stat"><div class="label">Server Seed Hash</div><div class="value" style="font-size:.85rem;word-break:break-all;">${seeds.serverSeedHash || '—'}</div></div>
+        <div class="stat"><div class="label">Client Seed</div><div class="value" style="font-size:.85rem;">${seeds.clientSeed || '—'}</div></div>
+        <div class="stat"><div class="label">Nonce</div><div class="value">${seeds.nonce ?? '—'}</div></div>
+      `;
+    } catch {
+      $('seedInfo').innerHTML = '<p class="muted">Seed info unavailable.</p>';
+    }
+  }
+  loadSeeds();
+
+  $('rotateSeedBtn').addEventListener('click', async () => {
+    const alert = $('seedAlert');
+    try {
+      const out = await api.rotateSeed();
+      alert.className = 'alert success visible';
+      alert.textContent = 'Server seed rotated. Previous seed revealed: ' + (out.previousServerSeed || 'N/A').slice(0, 16) + '...';
+      loadSeeds();
+    } catch (err) {
+      alert.className = 'alert visible'; alert.textContent = err.message;
+    }
+  });
+
+  // ── Responsible Play: Limits ─────────────────────────────
+  try {
+    const limData = await api.getLimits();
+    const L = limData.limits || {};
+    const cToD = c => c ? (Number(c) / 100) : '';
+    $('daily_deposit').value = cToD(L.daily_deposit_limit_cents);
+    $('weekly_deposit').value = cToD(L.weekly_deposit_limit_cents);
+    $('monthly_deposit').value = cToD(L.monthly_deposit_limit_cents);
+    $('daily_loss').value = cToD(L.daily_loss_limit_cents);
+    $('session_time').value = L.session_time_limit_minutes || '';
+    $('reality_check').value = L.reality_check_minutes || '';
+  } catch {}
+
+  $('limitsForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const alert = $('limAlert');
+    alert.classList.remove('visible');
+    const dToC = v => v ? Math.round(Number(v) * 100) : undefined;
+    try {
+      const out = await api.setLimits({
+        daily_deposit_limit_cents: dToC($('daily_deposit').value),
+        weekly_deposit_limit_cents: dToC($('weekly_deposit').value),
+        monthly_deposit_limit_cents: dToC($('monthly_deposit').value),
+        daily_loss_limit_cents: dToC($('daily_loss').value),
+        session_time_limit_minutes: $('session_time').value ? Number($('session_time').value) : undefined,
+        reality_check_minutes: $('reality_check').value ? Number($('reality_check').value) : undefined,
+      });
+      alert.className = 'alert success visible';
+      alert.textContent = out.coolOffHours ? `Saved. Increases apply after ${out.coolOffHours}h cool-off.` : 'Limits saved.';
+    } catch (err) {
+      alert.className = 'alert visible'; alert.textContent = err.message;
+    }
+  });
+
+  // ── Self-Exclusion ───────────────────────────────────────
+  $('seBtn').addEventListener('click', async () => {
+    const v = $('seUntil').value;
+    const alert = $('seAlert');
+    if (!v) { alert.className = 'alert visible'; alert.textContent = 'Select an end date.'; return; }
+    if (!confirm('Self-exclusion cannot be reversed before the end date. Continue?')) return;
+    try {
+      await api.selfExclude({ untilIso: new Date(v).toISOString() });
+      alert.className = 'alert success visible';
+      alert.textContent = 'Self-exclusion applied. Signing you out...';
+      setTimeout(async () => { await api.logout(); window.location.href = 'index.html'; }, 1500);
+    } catch (err) {
+      alert.className = 'alert visible'; alert.textContent = err.message;
+    }
+  });
+
+  // ── KYC / Verification ───────────────────────────────────
+  function renderKycStatus(status) {
+    const bar = $('kycStatusBar');
+    bar.className = 'kyc-status-bar ' + (status || 'unverified');
+    if (status === 'verified') {
+      $('kycIcon').textContent = '✓';
+      $('kycTitle').textContent = 'Identity Verified';
+      $('kycDesc').textContent = 'Your account is fully verified. You have access to all features.';
+      $('kycUploadForm').style.display = 'none';
+    } else if (status === 'pending') {
+      $('kycIcon').textContent = '⏳';
+      $('kycTitle').textContent = 'Verification Pending';
+      $('kycDesc').textContent = 'Your documents are being reviewed. This usually takes 1–2 business days.';
+      $('kycUploadForm').style.display = 'none';
+    } else {
+      $('kycIcon').textContent = '!';
+      $('kycTitle').textContent = 'Not Verified';
+      $('kycDesc').textContent = 'Submit documents to verify your identity and unlock higher limits.';
+      $('kycUploadForm').style.display = 'block';
+    }
+  }
+
+  renderKycStatus(user.kycStatus || user.kyc_status);
+
+  // Load existing KYC docs
+  try {
+    const kycData = await api.listKyc();
+    const docs = kycData.documents || [];
+    if (docs.length > 0) {
+      $('kycDocs').innerHTML = '<h3 style="font-size:0.9rem;margin-bottom:0.5rem;">Submitted Documents</h3>' +
+        docs.map(d => `<div style="display:flex;justify-content:space-between;padding:0.5rem 0;border-bottom:1px solid rgba(255,255,255,0.04);font-size:0.88rem;">
+          <span>${(d.document_type || d.type || '').replace(/_/g, ' ')}</span>
+          <span class="badge ${d.status === 'approved' ? 'success' : d.status === 'rejected' ? 'danger' : 'warn'}">${d.status}</span>
+        </div>`).join('');
+    }
+  } catch {}
+
+  $('submitKycBtn').addEventListener('click', async () => {
+    const alert = $('kycUploadAlert');
+    alert.classList.remove('visible');
+    const docType = $('kycDocType').value;
+    const docNumber = $('kycDocNumber').value.trim();
+    if (!docNumber) {
+      alert.className = 'alert visible'; alert.textContent = 'Document number is required.'; return;
+    }
+    try {
+      await api.submitKyc({ documentType: docType, documentNumber: docNumber });
+      alert.className = 'alert success visible';
+      alert.textContent = 'Document submitted for review.';
+      renderKycStatus('pending');
+    } catch (err) {
+      alert.className = 'alert visible'; alert.textContent = err.message;
+    }
+  });
+})();
+</script>
+</body>
+</html>

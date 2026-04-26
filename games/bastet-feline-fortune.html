@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Bastet Feline Fortune — Matrix Spins Casino</title>
+  <meta name="theme-color" content="#D4A853">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html, body { height: 100%; }
+    body { background: #0D0F14; color: #F0F0F5; font-family: 'Inter', sans-serif; overflow-x: hidden; }
+  </style>
+  <link rel="stylesheet" href="../css/chat-widget.css">
+  <link rel="stylesheet" href="../css/notifications.css">
+  <link rel="stylesheet" href="../css/age-gate.css">
+  <link rel="stylesheet" href="../css/search.css">
+  <link rel="stylesheet" href="../css/favorites.css">
+  <link rel="stylesheet" href="../css/session-monitor.css">
+  <link rel="stylesheet" href="../css/conversion.css">
+</head>
+<body>
+  <div id="game-container" style="width:100%;min-height:100vh;"></div>
+
+  <script src="../js/api-client.js"></script>
+  <script src="../js/casino-engine.js"></script>
+  <script>
+    const gameConfig = {
+      name: 'Bastet Feline Fortune',
+      id: 'bastet-feline-fortune',
+      studioTheme: {
+        id: 'mythic-forge',
+        name: 'Mythic Forge',
+        primaryColor: '#50C878',
+        secondaryColor: '#DC143C',
+        accentColor: '#4169E1',
+        bgGradient: 'linear-gradient(135deg, #2C1810 0%, #3D2817 50%, #2C1810 100%)',
+        fontFamily: "'Cinzel', serif",
+        fontFamilyBody: "'Crimson Text', serif",
+        chromeStyle: 'custom',
+        logoUrl: 'assets/studios/mythic-forge-logo.png',
+        reelBg: '#1A0F08',
+        reelBorder: '#50C878',
+        winHighlight: '#FFD700',
+        borderStyle: '4px solid #50C878',
+        borderRadius: '8px',
+        boxShadow: '0 0 35px rgba(80,200,120,0.25), inset 0 0 25px rgba(80,200,120,0.1)',
+        buttonStyle: 'background: linear-gradient(180deg, #50C878, #3A9B5C); border-radius: 6px; border: 2px solid #DC143C; text-transform: uppercase; letter-spacing: 2px; font-weight: 600;',
+        spinButtonGlow: '0 0 25px rgba(80,200,120,0.5)'
+      },
+      rtp: 0.88,
+      volatility: 'low',
+      mechanic: 'Super Wilds',
+      mechanicDesc: 'Enhanced wild symbols that multiply wins, sometimes expanding or stacking for massive payouts.',
+      minBet: 0.2,
+      maxBet: 100,
+      betStep: 0.20,
+      reels: 5,
+      rows: 3,
+      paylines: 10,
+      symbols: ["bastet","cat","pyramid","gold","scarab","ankh","jewel","temple","wild","scatter"],
+      wilds: ["bastet"],
+      scatters: ["scatter"],
+      symbolWeights: {"bastet":[10.158218562972342,10.17702092521028,9.90429617589652,9.827811282953233,10.001080209771915],"cat":[9.091122033537129,9.044977290829868,8.794580232224618,9.071106263840369,9.066071753258495],"pyramid":[8.167031813464806,8.231103450527437,7.761428126614168,7.949692403363505,8.048623143465127],"gold":[7.052507960289494,6.935982070221572,7.183951145960132,6.842642765136864,6.785343044284687],"scarab":[6.041684785887865,5.964099581078673,5.934698576050908,6.238140758957921,5.799040540680717],"ankh":[4.775246079104588,5.012195800380452,5.2349193958985625,5.093372214985356,5.0152979978267105],"jewel":[4.125078791768033,3.8446599523668654,4.180778871510836,4.211960435028384,3.876667585416337],"temple":[2.8442844515910717,3.0722241300155995,2.7569624537539914,3.2419176913598857,3.143005680631411],"wild":[1.7986754276928911,1.892851686323659,1.903536565445704,2.0680363563389275,2.171553208402049],"scatter":[1.160420575909387,1.0145696705465956,1.1847237077920234,1.089794573396003,0.8334381789516379]},
+      paytable: {"bastet":{"3":2,"4":5,"5":15},"cat":{"3":4,"4":11,"5":34},"pyramid":{"3":6,"4":16,"5":52},"gold":{"3":7,"4":22,"5":71},"scarab":{"3":9,"4":27,"5":89},"ankh":{"3":11,"4":33,"5":108},"jewel":{"3":13,"4":38,"5":126},"temple":{"3":15,"4":44,"5":145},"wild":{"3":16,"4":49,"5":163},"scatter":{"3":18,"4":55,"5":182},"SCATTER":{"3":5,"4":20,"5":100}},
+      freeSpinCount: 10,
+      freeSpinMultiplier: 2,
+      onSound: function(label) { /* sound hooks ready */ }
+    };
+
+    CasinoEngine.init('game-container', gameConfig);
+  </script>
+  <script src="../js/chat-widget.js" defer></script>
+  <script src="../js/notifications.js" defer></script>
+  <script src="../js/age-gate.js" defer></script>
+  <script src="../js/cookie-consent.js" defer></script>
+  <script src="../js/search.js" defer></script>
+  <script src="../js/favorites.js" defer></script>
+  <script src="../js/session-monitor.js" defer></script>
+  <script src="../js/sound-manager.js" defer></script>
+  <script src="../js/analytics.js" defer></script>
+  <script src="../js/email-capture.js" defer></script>
+  <script src="../js/conversion.js" defer></script>
+</body>
+</html>

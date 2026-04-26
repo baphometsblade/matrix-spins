@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Boomerang Tribal Magic — Matrix Spins Casino</title>
+  <meta name="theme-color" content="#D4A853">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html, body { height: 100%; }
+    body { background: #0D0F14; color: #F0F0F5; font-family: 'Inter', sans-serif; overflow-x: hidden; }
+  </style>
+  <link rel="stylesheet" href="../css/chat-widget.css">
+  <link rel="stylesheet" href="../css/notifications.css">
+  <link rel="stylesheet" href="../css/age-gate.css">
+  <link rel="stylesheet" href="../css/search.css">
+  <link rel="stylesheet" href="../css/favorites.css">
+  <link rel="stylesheet" href="../css/session-monitor.css">
+  <link rel="stylesheet" href="../css/conversion.css">
+</head>
+<body>
+  <div id="game-container" style="width:100%;min-height:100vh;"></div>
+
+  <script src="../js/api-client.js"></script>
+  <script src="../js/casino-engine.js"></script>
+  <script>
+    const gameConfig = {
+      name: 'Boomerang Tribal Magic',
+      id: 'boomerang-tribal-magic',
+      studioTheme: {
+        id: 'wild-frontier',
+        name: 'Wild Frontier Games',
+        primaryColor: '#D2691E',
+        secondaryColor: '#228B22',
+        accentColor: '#FF8C00',
+        bgGradient: 'linear-gradient(135deg, #3E2723 0%, #4A3728 50%, #3E2723 100%)',
+        fontFamily: "'Righteous', sans-serif",
+        fontFamilyBody: "'Fredoka One', sans-serif",
+        chromeStyle: 'custom',
+        logoUrl: 'assets/studios/wild-frontier-logo.png',
+        reelBg: '#1B0F08',
+        reelBorder: '#D2691E',
+        winHighlight: '#FF8C00',
+        borderStyle: '5px solid #D2691E',
+        borderRadius: '16px',
+        boxShadow: '0 0 25px rgba(210,105,30,0.4), inset 0 0 20px rgba(34,139,34,0.15)',
+        buttonStyle: 'background: linear-gradient(180deg, #D2691E, #8B4513); border-radius: 10px; border: 2px solid #FF8C00; text-transform: uppercase; letter-spacing: 2px; font-weight: 900;',
+        spinButtonGlow: '0 0 20px rgba(210,105,30,0.6)'
+      },
+      rtp: 0.89,
+      volatility: 'low',
+      mechanic: 'Dropping Wilds',
+      mechanicDesc: 'Wild symbols drop onto the reels creating wins and potentially triggering respins.',
+      minBet: 0.2,
+      maxBet: 100,
+      betStep: 0.20,
+      reels: 5,
+      rows: 3,
+      paylines: 10,
+      symbols: ["boomerang","tribal","magic","aboriginal-art","didgeridoo","gold","ceremony","spirit","wild","scatter"],
+      wilds: ["boomerang"],
+      scatters: ["scatter"],
+      symbolWeights: {"boomerang":[10.227205466076239,10.093262124262925,10.069250760804337,9.829533466149096,9.79780182701276],"tribal":[9.072959159874785,9.063704378377333,8.756131710226825,9.232926567314369,9.070276817214776],"magic":[8.108980589419913,7.895478389759951,7.9233140137626314,7.792966605919931,7.790899714851368],"aboriginal-art":[7.204337293647384,7.190302259522558,6.857351436984946,7.239743541262476,7.249456954175778],"didgeridoo":[6.061142540137928,6.174652202428613,5.861480265668218,5.9271002846829814,6.002996855000616],"gold":[4.90625635048908,4.772604575870573,4.852162327585311,5.00130240606714,4.910646730717617],"ceremony":[3.774932615030943,4.20505122619207,4.119753023943958,3.965919687209923,4.035848096369157],"spirit":[2.9964025325604657,3.093497649690381,3.111450875388,2.913014010926771,3.1655403521501917],"wild":[2.229803579404167,2.213408897973225,1.7647184802645937,2.1778402444391154,1.8039235936298597],"scatter":[1.009930805656016,1.2132233650533326,0.9176024342759284,0.816357767469163,0.8236268352521064]},
+      paytable: {"boomerang":{"3":2,"4":5,"5":15},"tribal":{"3":4,"4":11,"5":34},"magic":{"3":6,"4":16,"5":52},"aboriginal-art":{"3":7,"4":22,"5":71},"didgeridoo":{"3":9,"4":27,"5":89},"gold":{"3":11,"4":33,"5":108},"ceremony":{"3":13,"4":38,"5":126},"spirit":{"3":15,"4":44,"5":145},"wild":{"3":16,"4":49,"5":163},"scatter":{"3":18,"4":55,"5":182},"SCATTER":{"3":5,"4":20,"5":100}},
+      freeSpinCount: 10,
+      freeSpinMultiplier: 2,
+      onSound: function(label) { /* sound hooks ready */ }
+    };
+
+    CasinoEngine.init('game-container', gameConfig);
+  </script>
+  <script src="../js/chat-widget.js" defer></script>
+  <script src="../js/notifications.js" defer></script>
+  <script src="../js/age-gate.js" defer></script>
+  <script src="../js/cookie-consent.js" defer></script>
+  <script src="../js/search.js" defer></script>
+  <script src="../js/favorites.js" defer></script>
+  <script src="../js/session-monitor.js" defer></script>
+  <script src="../js/sound-manager.js" defer></script>
+  <script src="../js/analytics.js" defer></script>
+  <script src="../js/email-capture.js" defer></script>
+  <script src="../js/conversion.js" defer></script>
+</body>
+</html>

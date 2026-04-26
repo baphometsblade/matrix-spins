@@ -1,0 +1,340 @@
+/* ═══════════════════════════════════════════════════════════════
+   MATRIX SPINS — Promotions & Bonus Engine v1.0
+   Offer cards, countdown timers, claim flow, terms modals
+   ═══════════════════════════════════════════════════════════════ */
+
+/* ── Promo Hero Banner ──────────────────────────────────────── */
+.promo-hero {
+  background: linear-gradient(135deg, #1a1842 0%, #0d1229 50%, #1a2040 100%);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 2.5rem;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+  margin-bottom: 2rem;
+}
+
+.promo-hero::before {
+  content: '';
+  position: absolute;
+  top: -30%;
+  right: -10%;
+  width: 300px;
+  height: 300px;
+  background: radial-gradient(circle, rgba(212,175,55,0.1) 0%, transparent 60%);
+  pointer-events: none;
+}
+
+.promo-hero h1 {
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: 2rem;
+  margin-bottom: 0.4rem;
+}
+
+.promo-hero h1 .gold { color: var(--gold); }
+
+.promo-hero p {
+  color: var(--muted);
+  font-size: 0.95rem;
+  max-width: 500px;
+  margin: 0 auto;
+}
+
+/* ── Promo Category Tabs ────────────────────────────────────── */
+.promo-tabs {
+  display: flex;
+  gap: 0.4rem;
+  margin-bottom: 1.5rem;
+  overflow-x: auto;
+  padding-bottom: 0.3rem;
+  -webkit-overflow-scrolling: touch;
+}
+
+.promo-tab {
+  padding: 0.6rem 1.2rem;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--muted);
+  font-weight: 600;
+  font-size: 0.85rem;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.2s ease;
+}
+
+.promo-tab:hover { border-color: var(--gold); color: var(--text); }
+.promo-tab.active {
+  background: rgba(212,175,55,0.1);
+  border-color: var(--gold);
+  color: var(--gold);
+}
+
+/* ── Promo Card Grid ────────────────────────────────────────── */
+.promo-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 1.2rem;
+  margin-bottom: 2rem;
+}
+
+.promo-card {
+  background: linear-gradient(180deg, var(--bg-card), var(--bg-elev));
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  overflow: hidden;
+  transition: border-color 0.2s ease, transform 0.2s ease;
+  display: flex;
+  flex-direction: column;
+}
+
+.promo-card:hover {
+  border-color: var(--gold);
+  transform: translateY(-3px);
+}
+
+.promo-card-banner {
+  height: 140px;
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 3.5rem;
+}
+
+.promo-card-banner.welcome  { background: linear-gradient(135deg, #2d1f4e, #1a1842); }
+.promo-card-banner.daily    { background: linear-gradient(135deg, #1a3a2e, #0d2920); }
+.promo-card-banner.cashback { background: linear-gradient(135deg, #3d2a0f, #2a1d0a); }
+.promo-card-banner.referral { background: linear-gradient(135deg, #1a2d4e, #0d1f3a); }
+.promo-card-banner.tourney  { background: linear-gradient(135deg, #4e1a2d, #3a0d1f); }
+.promo-card-banner.reload   { background: linear-gradient(135deg, #2d4e1a, #1f3a0d); }
+
+.promo-card-banner .shine {
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 60%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.04), transparent);
+  animation: cardShine 4s ease infinite;
+}
+
+@keyframes cardShine {
+  0% { left: -100%; }
+  50% { left: 150%; }
+  100% { left: 150%; }
+}
+
+.promo-card-body {
+  padding: 1.2rem 1.5rem;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.promo-tag {
+  display: inline-block;
+  font-size: 0.65rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  padding: 0.15rem 0.5rem;
+  border-radius: 4px;
+  margin-bottom: 0.5rem;
+  width: fit-content;
+}
+
+.promo-tag.hot     { background: rgba(239,68,68,0.15); color: #f87171; }
+.promo-tag.new     { background: rgba(16,185,129,0.15); color: #10b981; }
+.promo-tag.limited { background: rgba(234,179,8,0.15); color: #fbbf24; }
+.promo-tag.vip     { background: rgba(168,85,247,0.15); color: #c084fc; }
+.promo-tag.daily   { background: rgba(99,102,241,0.15); color: #818cf8; }
+
+.promo-card-body h3 {
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: 1.05rem;
+  font-weight: 700;
+  margin-bottom: 0.3rem;
+}
+
+.promo-card-body .desc {
+  font-size: 0.85rem;
+  color: var(--muted);
+  line-height: 1.5;
+  margin-bottom: 0.8rem;
+  flex: 1;
+}
+
+.promo-card-body .value {
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: var(--gold);
+  margin-bottom: 0.8rem;
+}
+
+/* ── Countdown Timer ────────────────────────────────────────── */
+.countdown {
+  display: flex;
+  gap: 0.4rem;
+  margin-bottom: 0.8rem;
+}
+
+.countdown-unit {
+  background: rgba(255,255,255,0.04);
+  border-radius: 6px;
+  padding: 0.3rem 0.5rem;
+  text-align: center;
+  min-width: 42px;
+}
+
+.countdown-unit .num {
+  font-weight: 700;
+  font-size: 1rem;
+  font-variant-numeric: tabular-nums;
+  color: var(--text);
+  line-height: 1;
+}
+
+.countdown-unit .label {
+  font-size: 0.6rem;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* ── Claim Button ───────────────────────────────────────────── */
+.promo-actions {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.claim-btn {
+  flex: 1;
+  padding: 0.75rem 1rem;
+  border-radius: 10px;
+  border: none;
+  background: linear-gradient(180deg, var(--gold), var(--gold-2));
+  color: #1a1205;
+  font-weight: 700;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.claim-btn:hover { filter: brightness(1.08); }
+.claim-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.claim-btn.claimed {
+  background: rgba(16,185,129,0.15);
+  color: var(--success);
+  cursor: default;
+}
+
+.terms-link {
+  font-size: 0.78rem;
+  color: var(--muted);
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.terms-link:hover { color: var(--gold); text-decoration: underline; }
+
+/* ── Terms Modal ────────────────────────────────────────────── */
+.terms-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.7);
+  backdrop-filter: blur(4px);
+  z-index: 100;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+}
+
+.terms-modal-backdrop.active { display: flex; }
+
+.terms-modal {
+  background: linear-gradient(180deg, var(--bg-card), var(--bg-elev));
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 2rem;
+  max-width: 520px;
+  width: 100%;
+  max-height: 80vh;
+  overflow-y: auto;
+  position: relative;
+  animation: termsFadeIn 0.2s ease;
+}
+
+@keyframes termsFadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.terms-modal h3 {
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: 1.1rem;
+  margin-bottom: 1rem;
+}
+
+.terms-modal .close {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  background: none;
+  border: none;
+  color: var(--muted);
+  cursor: pointer;
+  font-size: 1.3rem;
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
+}
+
+.terms-modal .close:hover { background: rgba(255,255,255,0.08); }
+
+.terms-list {
+  list-style: none;
+  padding: 0;
+}
+
+.terms-list li {
+  padding: 0.4rem 0;
+  font-size: 0.85rem;
+  color: var(--muted);
+  border-bottom: 1px solid rgba(255,255,255,0.04);
+  display: flex;
+  gap: 0.5rem;
+}
+
+.terms-list li::before {
+  content: '•';
+  color: var(--gold);
+  flex-shrink: 0;
+}
+
+/* ── Responsive ─────────────────────────────────────────────── */
+@media (max-width: 768px) {
+  .promo-hero { padding: 1.5rem; }
+  .promo-hero h1 { font-size: 1.5rem; }
+  .promo-grid { grid-template-columns: 1fr; }
+  .promo-card-banner { height: 100px; font-size: 2.5rem; }
+}
+
+@media (max-width: 480px) {
+  .promo-hero h1 { font-size: 1.3rem; }
+  .promo-card-body .value { font-size: 1.2rem; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .promo-card-banner .shine { animation: none; }
+  .terms-modal { animation: none; }
+}

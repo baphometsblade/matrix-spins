@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Panther Midnight Prowler — Matrix Spins Casino</title>
+  <meta name="theme-color" content="#D4A853">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html, body { height: 100%; }
+    body { background: #0D0F14; color: #F0F0F5; font-family: 'Inter', sans-serif; overflow-x: hidden; }
+  </style>
+  <link rel="stylesheet" href="../css/chat-widget.css">
+  <link rel="stylesheet" href="../css/notifications.css">
+  <link rel="stylesheet" href="../css/age-gate.css">
+  <link rel="stylesheet" href="../css/search.css">
+  <link rel="stylesheet" href="../css/favorites.css">
+  <link rel="stylesheet" href="../css/session-monitor.css">
+  <link rel="stylesheet" href="../css/conversion.css">
+</head>
+<body>
+  <div id="game-container" style="width:100%;min-height:100vh;"></div>
+
+  <script src="../js/api-client.js"></script>
+  <script src="../js/casino-engine.js"></script>
+  <script>
+    const gameConfig = {
+      name: 'Panther Midnight Prowler',
+      id: 'panther-midnight-prowler',
+      studioTheme: {
+        id: 'wild-frontier',
+        name: 'Wild Frontier Games',
+        primaryColor: '#D2691E',
+        secondaryColor: '#228B22',
+        accentColor: '#FF8C00',
+        bgGradient: 'linear-gradient(135deg, #3E2723 0%, #4A3728 50%, #3E2723 100%)',
+        fontFamily: "'Righteous', sans-serif",
+        fontFamilyBody: "'Fredoka One', sans-serif",
+        chromeStyle: 'custom',
+        logoUrl: 'assets/studios/wild-frontier-logo.png',
+        reelBg: '#1B0F08',
+        reelBorder: '#D2691E',
+        winHighlight: '#FF8C00',
+        borderStyle: '5px solid #D2691E',
+        borderRadius: '16px',
+        boxShadow: '0 0 25px rgba(210,105,30,0.4), inset 0 0 20px rgba(34,139,34,0.15)',
+        buttonStyle: 'background: linear-gradient(180deg, #D2691E, #8B4513); border-radius: 10px; border: 2px solid #FF8C00; text-transform: uppercase; letter-spacing: 2px; font-weight: 900;',
+        spinButtonGlow: '0 0 20px rgba(210,105,30,0.6)'
+      },
+      rtp: 0.91,
+      volatility: 'high',
+      mechanic: 'Respins Locked Positions',
+      mechanicDesc: 'Winning symbols lock in place while you respin the other reels to build bigger combinations.',
+      minBet: 0.2,
+      maxBet: 100,
+      betStep: 0.20,
+      reels: 5,
+      rows: 3,
+      paylines: 25,
+      symbols: ["panther","midnight","jungle","prowl","shadow","eye","claw","mystery","wild","scatter"],
+      wilds: ["panther"],
+      scatters: ["scatter"],
+      symbolWeights: {"panther":[9.856955068928336,9.798501834455726,10.04812709770693,9.959434087224135,10.122086721731378],"midnight":[9.191253257059827,8.789345937618116,8.751954076068337,9.078688844438902,9.158811179926598],"jungle":[7.88237841305222,7.84075818885979,7.85708578568576,7.7667884864464645,8.089736496035231],"prowl":[7.226623613708516,7.024652113533126,6.777177778419356,6.805110312359967,7.065762858946038],"shadow":[6.033396373624594,5.787123688426643,5.821418800982387,6.03020749820974,6.052210163642732],"eye":[4.865214418432037,5.077979447242413,5.206518558011382,5.2289370138671405,5.221096749818053],"claw":[3.8041699602549834,4.224462932065785,3.851546696079357,3.99814812795014,3.862153736318505],"mystery":[2.9345513042324662,2.7572387691227913,3.094525571371178,2.9121017384311934,3.160802256504685],"wild":[2.2317657149432546,1.9860354876481254,2.0592650212710213,1.9267115436885138,1.9819965183035544],"scatter":[1.0122307937007058,0.7927969036119421,0.7658875350682751,1.2161272990863576,0.7650350985496669]},
+      paytable: {"panther":{"3":2,"4":5,"5":15},"midnight":{"3":4,"4":11,"5":34},"jungle":{"3":6,"4":16,"5":52},"prowl":{"3":7,"4":22,"5":71},"shadow":{"3":9,"4":27,"5":89},"eye":{"3":11,"4":33,"5":108},"claw":{"3":13,"4":38,"5":126},"mystery":{"3":15,"4":44,"5":145},"wild":{"3":16,"4":49,"5":163},"scatter":{"3":18,"4":55,"5":182},"SCATTER":{"3":5,"4":20,"5":100}},
+      freeSpinCount: 10,
+      freeSpinMultiplier: 2,
+      onSound: function(label) { /* sound hooks ready */ }
+    };
+
+    CasinoEngine.init('game-container', gameConfig);
+  </script>
+  <script src="../js/chat-widget.js" defer></script>
+  <script src="../js/notifications.js" defer></script>
+  <script src="../js/age-gate.js" defer></script>
+  <script src="../js/cookie-consent.js" defer></script>
+  <script src="../js/search.js" defer></script>
+  <script src="../js/favorites.js" defer></script>
+  <script src="../js/session-monitor.js" defer></script>
+  <script src="../js/sound-manager.js" defer></script>
+  <script src="../js/analytics.js" defer></script>
+  <script src="../js/email-capture.js" defer></script>
+  <script src="../js/conversion.js" defer></script>
+</body>
+</html>

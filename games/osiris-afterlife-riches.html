@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Osiris Afterlife Riches — Matrix Spins Casino</title>
+  <meta name="theme-color" content="#D4A853">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html, body { height: 100%; }
+    body { background: #0D0F14; color: #F0F0F5; font-family: 'Inter', sans-serif; overflow-x: hidden; }
+  </style>
+  <link rel="stylesheet" href="../css/chat-widget.css">
+  <link rel="stylesheet" href="../css/notifications.css">
+  <link rel="stylesheet" href="../css/age-gate.css">
+  <link rel="stylesheet" href="../css/search.css">
+  <link rel="stylesheet" href="../css/favorites.css">
+  <link rel="stylesheet" href="../css/session-monitor.css">
+  <link rel="stylesheet" href="../css/conversion.css">
+</head>
+<body>
+  <div id="game-container" style="width:100%;min-height:100vh;"></div>
+
+  <script src="../js/api-client.js"></script>
+  <script src="../js/casino-engine.js"></script>
+  <script>
+    const gameConfig = {
+      name: 'Osiris Afterlife Riches',
+      id: 'osiris-afterlife-riches',
+      studioTheme: {
+        id: 'mythic-forge',
+        name: 'Mythic Forge',
+        primaryColor: '#50C878',
+        secondaryColor: '#DC143C',
+        accentColor: '#4169E1',
+        bgGradient: 'linear-gradient(135deg, #2C1810 0%, #3D2817 50%, #2C1810 100%)',
+        fontFamily: "'Cinzel', serif",
+        fontFamilyBody: "'Crimson Text', serif",
+        chromeStyle: 'custom',
+        logoUrl: 'assets/studios/mythic-forge-logo.png',
+        reelBg: '#1A0F08',
+        reelBorder: '#50C878',
+        winHighlight: '#FFD700',
+        borderStyle: '4px solid #50C878',
+        borderRadius: '8px',
+        boxShadow: '0 0 35px rgba(80,200,120,0.25), inset 0 0 25px rgba(80,200,120,0.1)',
+        buttonStyle: 'background: linear-gradient(180deg, #50C878, #3A9B5C); border-radius: 6px; border: 2px solid #DC143C; text-transform: uppercase; letter-spacing: 2px; font-weight: 600;',
+        spinButtonGlow: '0 0 25px rgba(80,200,120,0.5)'
+      },
+      rtp: 0.91,
+      volatility: 'high',
+      mechanic: 'Reel Expansion',
+      mechanicDesc: 'Reels expand to accommodate additional rows and paylines during bonus rounds.',
+      minBet: 0.2,
+      maxBet: 100,
+      betStep: 0.20,
+      reels: 5,
+      rows: 3,
+      paylines: 20,
+      symbols: ["osiris","afterlife","tomb","scarab","gold","pyramid","throne","amulet","wild","scatter"],
+      wilds: ["osiris"],
+      scatters: ["scatter"],
+      symbolWeights: {"osiris":[9.869300364549376,10.203551095443247,9.867227429791825,9.942493600476205,10.076048491613854],"afterlife":[9.138772011600013,8.94719493507409,8.901037569782623,8.859865371576365,8.972019256260145],"tomb":[7.872036484906347,7.822794044989194,8.05194172301596,7.979016828027595,7.8401966546585875],"scarab":[6.983908306033335,6.836330262449123,6.946080878279834,7.128611596663666,6.937516854551802],"gold":[6.089425089785566,6.215855249043582,5.835220003715566,5.966573516787077,6.1881384041778436],"pyramid":[5.159196875803061,4.967620096804309,5.153834309467724,4.879938893762022,4.975402653016975],"throne":[4.0561655566862225,3.886552254272914,4.140194125222922,3.9214700958464443,4.030741818176721],"amulet":[3.1961987754364714,2.9970765163395034,3.149343629951956,3.2489261211644136,2.8049575796235535],"wild":[1.8594754252962988,2.2348042046852337,2.140059174854166,1.893679646336667,1.877845395197264],"scatter":[1.1254341473945164,1.2129143728664369,1.0102066192795318,1.0248764093325793,1.1752415188203211]},
+      paytable: {"osiris":{"3":2,"4":5,"5":15},"afterlife":{"3":4,"4":11,"5":34},"tomb":{"3":6,"4":16,"5":52},"scarab":{"3":7,"4":22,"5":71},"gold":{"3":9,"4":27,"5":89},"pyramid":{"3":11,"4":33,"5":108},"throne":{"3":13,"4":38,"5":126},"amulet":{"3":15,"4":44,"5":145},"wild":{"3":16,"4":49,"5":163},"scatter":{"3":18,"4":55,"5":182},"SCATTER":{"3":5,"4":20,"5":100}},
+      freeSpinCount: 10,
+      freeSpinMultiplier: 2,
+      onSound: function(label) { /* sound hooks ready */ }
+    };
+
+    CasinoEngine.init('game-container', gameConfig);
+  </script>
+  <script src="../js/chat-widget.js" defer></script>
+  <script src="../js/notifications.js" defer></script>
+  <script src="../js/age-gate.js" defer></script>
+  <script src="../js/cookie-consent.js" defer></script>
+  <script src="../js/search.js" defer></script>
+  <script src="../js/favorites.js" defer></script>
+  <script src="../js/session-monitor.js" defer></script>
+  <script src="../js/sound-manager.js" defer></script>
+  <script src="../js/analytics.js" defer></script>
+  <script src="../js/email-capture.js" defer></script>
+  <script src="../js/conversion.js" defer></script>
+</body>
+</html>

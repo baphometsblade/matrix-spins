@@ -1,0 +1,312 @@
+/* ═══════════════════════════════════════════════════════════════
+   MATRIX SPINS — Progressive Jackpot System v1.0
+   Real-time ticker, tiered pools, winner announcements
+   ═════════════���═════════════════════════════════════════════════ */
+
+/* ── Jackpot Bar (site-wide, below header) ──────────────────── */
+.jackpot-bar {
+  background: linear-gradient(90deg, #0d1229 0%, #1a1842 50%, #0d1229 100%);
+  border-bottom: 1px solid var(--border);
+  padding: 0.6rem 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 2rem;
+  overflow: hidden;
+  position: relative;
+}
+
+.jackpot-bar::before,
+.jackpot-bar::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  width: 80px;
+  height: 100%;
+  z-index: 2;
+  pointer-events: none;
+}
+
+.jackpot-bar::before {
+  left: 0;
+  background: linear-gradient(90deg, #0d1229, transparent);
+}
+
+.jackpot-bar::after {
+  right: 0;
+  background: linear-gradient(-90deg, #0d1229, transparent);
+}
+
+/* ── Individual Jackpot Pool ────────────────────────────────── */
+.jackpot-pool {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  flex-shrink: 0;
+}
+
+.jackpot-tier {
+  font-size: 0.65rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  padding: 0.15rem 0.5rem;
+  border-radius: 4px;
+  line-height: 1;
+}
+
+.jackpot-tier.mega {
+  background: linear-gradient(135deg, #ff6b35, #ff2e63);
+  color: white;
+}
+
+.jackpot-tier.major {
+  background: linear-gradient(135deg, var(--gold), var(--gold-2));
+  color: #1a1205;
+}
+
+.jackpot-tier.minor {
+  background: rgba(99,102,241,0.2);
+  color: #818cf8;
+}
+
+.jackpot-tier.mini {
+  background: rgba(16,185,129,0.15);
+  color: var(--success);
+}
+
+.jackpot-value {
+  font-family: 'Plus Jakarta Sans', 'Inter', sans-serif;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  font-size: 1.1rem;
+  transition: color 0.3s ease;
+}
+
+.jackpot-value.mega { color: #ff6b35; }
+.jackpot-value.major { color: var(--gold); }
+.jackpot-value.minor { color: #818cf8; }
+.jackpot-value.mini { color: var(--success); }
+
+.jackpot-value.ticking {
+  animation: jackpotTick 0.15s ease;
+}
+
+@keyframes jackpotTick {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.02); }
+  100% { transform: scale(1); }
+}
+
+/* ── Jackpot Hero Widget (landing page) ─────────────────────── */
+.jackpot-hero {
+  background: linear-gradient(180deg, rgba(26,24,66,0.8) 0%, rgba(13,18,41,0.9) 100%);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 2rem;
+  text-align: center;
+  margin: 2rem auto;
+  max-width: 700px;
+  position: relative;
+  overflow: hidden;
+}
+
+.jackpot-hero::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 300px;
+  height: 300px;
+  background: radial-gradient(circle, rgba(255,107,53,0.12) 0%, transparent 60%);
+  pointer-events: none;
+  animation: jackpotGlow 4s ease-in-out infinite alternate;
+}
+
+@keyframes jackpotGlow {
+  0% { opacity: 0.5; transform: translateX(-50%) scale(0.9); }
+  100% { opacity: 1; transform: translateX(-50%) scale(1.1); }
+}
+
+.jackpot-hero .label {
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  color: var(--muted);
+  margin-bottom: 0.3rem;
+}
+
+.jackpot-hero .mega-amount {
+  font-family: 'Plus Jakarta Sans', 'Inter', sans-serif;
+  font-size: 3.2rem;
+  font-weight: 800;
+  background: linear-gradient(135deg, #ff6b35, #ffd700, #ff2e63);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  line-height: 1.1;
+  margin-bottom: 0.3rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.jackpot-hero .sub-text {
+  font-size: 0.82rem;
+  color: var(--muted);
+  margin-bottom: 1.2rem;
+}
+
+.jackpot-tiers-row {
+  display: flex;
+  justify-content: center;
+  gap: 1.5rem;
+  flex-wrap: wrap;
+}
+
+.tier-mini {
+  text-align: center;
+}
+
+.tier-mini .name {
+  font-size: 0.68rem;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--muted);
+  margin-bottom: 0.15rem;
+}
+
+.tier-mini .amount {
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  font-size: 1rem;
+}
+
+.tier-mini .amount.major { color: var(--gold); }
+.tier-mini .amount.minor { color: #818cf8; }
+.tier-mini .amount.mini { color: var(--success); }
+
+/* ── Winner Toast ───────────��───────────────────────────────── */
+.winner-toast {
+  position: fixed;
+  top: 80px;
+  left: 50%;
+  transform: translateX(-50%) translateY(-120%);
+  background: linear-gradient(135deg, #1a2040, #0d1229);
+  border: 1px solid var(--gold);
+  border-radius: 14px;
+  padding: 1rem 1.5rem;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  z-index: 200;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.5), 0 0 30px rgba(212,175,55,0.15);
+  transition: transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+  max-width: 420px;
+  width: 90vw;
+}
+
+.winner-toast.visible {
+  transform: translateX(-50%) translateY(0);
+}
+
+.winner-toast .trophy {
+  font-size: 2rem;
+  animation: trophyBounce 0.6s ease 0.3s both;
+}
+
+@keyframes trophyBounce {
+  0% { transform: scale(0); }
+  50% { transform: scale(1.3); }
+  100% { transform: scale(1); }
+}
+
+.winner-toast .info {
+  flex: 1;
+}
+
+.winner-toast .info .title {
+  font-weight: 700;
+  font-size: 0.95rem;
+  color: var(--gold);
+}
+
+.winner-toast .info .detail {
+  font-size: 0.82rem;
+  color: var(--muted);
+}
+
+.winner-toast .amount {
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-weight: 800;
+  font-size: 1.3rem;
+  color: var(--gold);
+}
+
+/* ── Responsive ─────────────────────────────────────────────── */
+@media (max-width: 768px) {
+  .jackpot-bar {
+    gap: 1rem;
+    padding: 0.5rem 0.6rem;
+  }
+
+  .jackpot-value {
+    font-size: 0.95rem;
+  }
+
+  .jackpot-tier {
+    font-size: 0.58rem;
+    padding: 0.12rem 0.35rem;
+  }
+
+  .jackpot-hero .mega-amount {
+    font-size: 2.4rem;
+  }
+
+  .jackpot-tiers-row {
+    gap: 1rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .jackpot-bar {
+    gap: 0.6rem;
+    overflow-x: auto;
+    justify-content: flex-start;
+    padding: 0.5rem;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+
+  .jackpot-bar::-webkit-scrollbar { display: none; }
+
+  .jackpot-hero .mega-amount {
+    font-size: 1.8rem;
+  }
+
+  .jackpot-tiers-row {
+    gap: 0.8rem;
+  }
+
+  .tier-mini .amount {
+    font-size: 0.85rem;
+  }
+
+  .winner-toast {
+    padding: 0.8rem 1rem;
+  }
+
+  .winner-toast .trophy {
+    font-size: 1.5rem;
+  }
+
+  .winner-toast .amount {
+    font-size: 1rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .jackpot-value.ticking { animation: none; }
+  .jackpot-hero::before { animation: none; }
+  .winner-toast .trophy { animation: none; }
+  .winner-toast { transition-duration: 0.2s; }
+}

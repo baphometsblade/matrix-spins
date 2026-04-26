@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Luck Prosperity Wheel — Matrix Spins Casino</title>
+  <meta name="theme-color" content="#D4A853">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html, body { height: 100%; }
+    body { background: #0D0F14; color: #F0F0F5; font-family: 'Inter', sans-serif; overflow-x: hidden; }
+  </style>
+  <link rel="stylesheet" href="../css/chat-widget.css">
+  <link rel="stylesheet" href="../css/notifications.css">
+  <link rel="stylesheet" href="../css/age-gate.css">
+  <link rel="stylesheet" href="../css/search.css">
+  <link rel="stylesheet" href="../css/favorites.css">
+  <link rel="stylesheet" href="../css/session-monitor.css">
+  <link rel="stylesheet" href="../css/conversion.css">
+</head>
+<body>
+  <div id="game-container" style="width:100%;min-height:100vh;"></div>
+
+  <script src="../js/api-client.js"></script>
+  <script src="../js/casino-engine.js"></script>
+  <script>
+    const gameConfig = {
+      name: 'Luck Prosperity Wheel',
+      id: 'luck-prosperity-wheel',
+      studioTheme: {
+        id: 'dragon-pearl',
+        name: 'Dragon Pearl Studios',
+        primaryColor: '#CC0000',
+        secondaryColor: '#FFD700',
+        accentColor: '#00A86B',
+        bgGradient: 'linear-gradient(135deg, #0D0B0A 0%, #1A0F0E 50%, #0D0B0A 100%)',
+        fontFamily: "'Playfair Display', serif",
+        fontFamilyBody: "'Caveat', cursive",
+        chromeStyle: 'custom',
+        logoUrl: 'assets/studios/dragon-pearl-logo.png',
+        reelBg: '#050403',
+        reelBorder: '#CC0000',
+        winHighlight: '#FFD700',
+        borderStyle: '4px solid #CC0000',
+        borderRadius: '12px',
+        boxShadow: '0 0 35px rgba(204,0,0,0.4), inset 0 0 25px rgba(255,215,0,0.15)',
+        buttonStyle: 'background: linear-gradient(180deg, #CC0000, #990000); border-radius: 8px; border: 2px solid #FFD700; text-transform: uppercase; letter-spacing: 2px; font-weight: bold;',
+        spinButtonGlow: '0 0 25px rgba(204,0,0,0.6)'
+      },
+      rtp: 0.92,
+      volatility: 'low',
+      mechanic: 'Free Bet',
+      mechanicDesc: 'Special free bet mode activates giving players additional chances to hit winning combinations.',
+      minBet: 0.2,
+      maxBet: 100,
+      betStep: 0.20,
+      reels: 5,
+      rows: 3,
+      paylines: 20,
+      symbols: ["wheel","luck","prosperity","coin","gold","fortune","lantern","silk","wild","scatter"],
+      wilds: ["wheel"],
+      scatters: ["scatter"],
+      symbolWeights: {"wheel":[10.176454807371485,9.993070164021953,10.191567317639702,9.893539776815407,10.176706221204308],"luck":[9.010133271621552,9.159874174411145,9.146004057993276,9.098699251556088,9.117616162738777],"prosperity":[7.815753292084054,7.894959261562756,7.798257198919077,8.229164222219058,7.872299780019875],"coin":[7.1718798325854,6.896375279043644,6.8847355148876295,6.901147023642457,6.792228586042092],"gold":[5.758396825914483,6.124258797219892,6.237902418270361,6.0943235135887655,5.812502408753997],"fortune":[4.99070512770277,4.917313519537688,4.759817491184971,4.781520918142151,4.813660932178601],"lantern":[3.9403041791704116,4.2125048444676505,3.845352932214824,4.100721564041006,4.083219955173549],"silk":[3.1545523307681815,3.000763052578367,3.000422406812513,2.8594561946465338,3.241159156725713],"wild":[2.050921460935185,2.022770042243698,2.0693143426394762,1.9403190784253055,2.2400506097663584],"scatter":[0.7582938310633869,1.2083218145286605,1.0382204346896393,1.0407208162086465,1.0432299714109572]},
+      paytable: {"wheel":{"3":2,"4":5,"5":15},"luck":{"3":4,"4":11,"5":34},"prosperity":{"3":6,"4":16,"5":52},"coin":{"3":7,"4":22,"5":71},"gold":{"3":9,"4":27,"5":89},"fortune":{"3":11,"4":33,"5":108},"lantern":{"3":13,"4":38,"5":126},"silk":{"3":15,"4":44,"5":145},"wild":{"3":16,"4":49,"5":163},"scatter":{"3":18,"4":55,"5":182},"SCATTER":{"3":5,"4":20,"5":100}},
+      freeSpinCount: 10,
+      freeSpinMultiplier: 2,
+      onSound: function(label) { /* sound hooks ready */ }
+    };
+
+    CasinoEngine.init('game-container', gameConfig);
+  </script>
+  <script src="../js/chat-widget.js" defer></script>
+  <script src="../js/notifications.js" defer></script>
+  <script src="../js/age-gate.js" defer></script>
+  <script src="../js/cookie-consent.js" defer></script>
+  <script src="../js/search.js" defer></script>
+  <script src="../js/favorites.js" defer></script>
+  <script src="../js/session-monitor.js" defer></script>
+  <script src="../js/sound-manager.js" defer></script>
+  <script src="../js/analytics.js" defer></script>
+  <script src="../js/email-capture.js" defer></script>
+  <script src="../js/conversion.js" defer></script>
+</body>
+</html>

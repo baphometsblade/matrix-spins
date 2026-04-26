@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Create Account — Matrix Spins</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/auth.css">
+</head>
+<body>
+<div class="rs-shell">
+  <div class="rs-brand">Matrix Spins</div>
+  <div class="rs-card">
+    <h1>Create your account</h1>
+    <p class="muted" style="margin-bottom:1.2rem;">Must be of legal gambling age in your jurisdiction.</p>
+    <div id="alert" class="alert"></div>
+    <form id="f">
+      <div class="row">
+        <div class="field"><label>First name</label><input id="firstName" required maxlength="100"></div>
+        <div class="field"><label>Last name</label><input id="lastName" required maxlength="100"></div>
+      </div>
+      <div class="field"><label>Email</label><input id="email" type="email" required autocomplete="email"></div>
+      <div class="row">
+        <div class="field"><label>Date of birth</label><input id="dob" type="date" required></div>
+        <div class="field">
+          <label>Country</label>
+          <select id="country" required>
+            <option value="">Select…</option>
+          </select>
+        </div>
+      </div>
+      <div class="field">
+        <label>Password</label>
+        <input id="password" type="password" required autocomplete="new-password" minlength="10">
+        <p class="muted" style="font-size:.78rem;margin-top:.3rem;">10+ chars, mixed case, at least one digit.</p>
+      </div>
+      <div class="field checkbox">
+        <input id="acceptAge" type="checkbox" required>
+        <label for="acceptAge">I confirm I am of legal gambling age in my country of residence.</label>
+      </div>
+      <div class="field checkbox">
+        <input id="acceptTerms" type="checkbox" required>
+        <label for="acceptTerms">I accept the <a href="terms.html" target="_blank">terms</a> and <a href="responsible-gambling.html" target="_blank">responsible gambling</a> policies.</label>
+      </div>
+      <button id="submit" class="btn">Create account</button>
+    </form>
+    <div class="links">
+      <a href="login.html">Already have an account?</a>
+      <a href="index.html">Back to home</a>
+    </div>
+  </div>
+</div>
+
+<script src="js/countries.js"></script>
+<script src="js/api-client.js"></script>
+<script>
+(async () => {
+  const api = window.MatrixSpinsAPI;
+  const alertEl = document.getElementById('alert');
+
+  // If already signed in, redirect to lobby
+  try { const u = await api.loadSession(); if (u) { window.location.href = 'index.html'; return; } } catch {}
+
+  const cfg = await api.publicConfig().catch(() => ({ blockedCountries: [] }));
+  const blocked = new Set(cfg.blockedCountries || []);
+  const countrySelect = document.getElementById('country');
+  (window.RS_COUNTRIES || []).forEach((c) => {
+    if (blocked.has(c.code)) return;
+    const opt = document.createElement('option');
+    opt.value = c.code;
+    opt.textContent = c.name;
+    countrySelect.appendChild(opt);
+  });
+
+  function showError(msg) {
+    alertEl.classList.remove('success');
+    alertEl.textContent = msg;
+    alertEl.classList.add('visible');
+  }
+
+  document.getElementById('f').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    alertEl.classList.remove('visible');
+    const submit = document.getElementById('submit');
+    submit.disabled = true;
+    try {
+      await api.register({
+        firstName: document.getElementById('firstName').value.trim(),
+        lastName:  document.getElementById('lastName').value.trim(),
+        email:     document.getElementById('email').value.trim(),
+        password:  document.getElementById('password').value,
+        dateOfBirth: document.getElementById('dob').value,
+        countryCode: document.getElementById('country').value,
+        acceptAge: document.getElementById('acceptAge').checked,
+        acceptTerms: document.getElementById('acceptTerms').checked,
+      });
+      window.location.href = 'index.html';
+    } catch (err) {
+      if (err.details?.issues) {
+        showError(err.details.issues.map((i) => i.message).join(' '));
+      } else {
+        showError(err.message || 'Registration failed.');
+      }
+      submit.disabled = false;
+    }
+  });
+})();
+</script>
+</body>
+</html>

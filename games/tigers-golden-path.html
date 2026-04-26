@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tiger's Golden Path — Matrix Spins Casino</title>
+  <meta name="theme-color" content="#D4A853">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html, body { height: 100%; }
+    body { background: #0D0F14; color: #F0F0F5; font-family: 'Inter', sans-serif; overflow-x: hidden; }
+  </style>
+  <link rel="stylesheet" href="../css/chat-widget.css">
+  <link rel="stylesheet" href="../css/notifications.css">
+  <link rel="stylesheet" href="../css/age-gate.css">
+  <link rel="stylesheet" href="../css/search.css">
+  <link rel="stylesheet" href="../css/favorites.css">
+  <link rel="stylesheet" href="../css/session-monitor.css">
+  <link rel="stylesheet" href="../css/conversion.css">
+</head>
+<body>
+  <div id="game-container" style="width:100%;min-height:100vh;"></div>
+
+  <script src="../js/api-client.js"></script>
+  <script src="../js/casino-engine.js"></script>
+  <script>
+    const gameConfig = {
+      name: 'Tiger\'s Golden Path',
+      id: 'tigers-golden-path',
+      studioTheme: {
+        id: 'dragon-pearl',
+        name: 'Dragon Pearl Studios',
+        primaryColor: '#CC0000',
+        secondaryColor: '#FFD700',
+        accentColor: '#00A86B',
+        bgGradient: 'linear-gradient(135deg, #0D0B0A 0%, #1A0F0E 50%, #0D0B0A 100%)',
+        fontFamily: "'Playfair Display', serif",
+        fontFamilyBody: "'Caveat', cursive",
+        chromeStyle: 'custom',
+        logoUrl: 'assets/studios/dragon-pearl-logo.png',
+        reelBg: '#050403',
+        reelBorder: '#CC0000',
+        winHighlight: '#FFD700',
+        borderStyle: '4px solid #CC0000',
+        borderRadius: '12px',
+        boxShadow: '0 0 35px rgba(204,0,0,0.4), inset 0 0 25px rgba(255,215,0,0.15)',
+        buttonStyle: 'background: linear-gradient(180deg, #CC0000, #990000); border-radius: 8px; border: 2px solid #FFD700; text-transform: uppercase; letter-spacing: 2px; font-weight: bold;',
+        spinButtonGlow: '0 0 25px rgba(204,0,0,0.6)'
+      },
+      rtp: 0.91,
+      volatility: 'medium',
+      mechanic: 'Wild Transfer',
+      mechanicDesc: 'Wild symbols transfer their wild property to adjacent symbols.',
+      minBet: 0.2,
+      maxBet: 100,
+      betStep: 0.20,
+      reels: 5,
+      rows: 3,
+      paylines: 25,
+      symbols: ["tiger","bamboo","pagoda","lantern","fan","coin","jade","lotus"],
+      wilds: ["tiger"],
+      scatters: ["lotus"],
+      symbolWeights: {"tiger":[8.203121768293313,8.219466331414731,7.878493329142304,8.027841165623094,8.014258759274844],"bamboo":[6.802533213959096,7.195785908398692,7.027475502526235,7.055000481667295,6.9156763718745],"pagoda":[6.155261101088893,5.836143298008544,6.1181647404782655,5.905637137407254,6.0203008934141895],"lantern":[4.900257082922815,5.14164293139726,5.193973326876551,5.043023809283307,4.867534714164292],"fan":[3.9814543045757107,4.17244950377042,3.965825304456815,4.129583505116405,3.940868544713967],"coin":[2.799348934238267,2.87563098796755,3.1094338821871346,3.2387868766884145,3.232225281335487],"jade":[1.950412238533395,2.09546113773316,1.9952670736092017,2.151288449769843,2.061978768409962],"lotus":[1.025547139312645,0.8377840068107038,0.790876967143981,0.911921049228659,0.7849406804681323]},
+      paytable: {"tiger":{"3":2,"4":5,"5":15},"bamboo":{"3":4,"4":12,"5":38},"pagoda":{"3":7,"4":19,"5":61},"lantern":{"3":9,"4":26,"5":84},"fan":{"3":11,"4":33,"5":108},"coin":{"3":13,"4":39,"5":131},"jade":{"3":16,"4":46,"5":154},"lotus":{"3":18,"4":53,"5":177},"SCATTER":{"3":5,"4":20,"5":100}},
+      freeSpinCount: 10,
+      freeSpinMultiplier: 2,
+      onSound: function(label) { /* sound hooks ready */ }
+    };
+
+    CasinoEngine.init('game-container', gameConfig);
+  </script>
+  <script src="../js/chat-widget.js" defer></script>
+  <script src="../js/notifications.js" defer></script>
+  <script src="../js/age-gate.js" defer></script>
+  <script src="../js/cookie-consent.js" defer></script>
+  <script src="../js/search.js" defer></script>
+  <script src="../js/favorites.js" defer></script>
+  <script src="../js/session-monitor.js" defer></script>
+  <script src="../js/sound-manager.js" defer></script>
+  <script src="../js/analytics.js" defer></script>
+  <script src="../js/email-capture.js" defer></script>
+  <script src="../js/conversion.js" defer></script>
+</body>
+</html>

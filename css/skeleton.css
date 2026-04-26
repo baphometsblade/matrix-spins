@@ -1,0 +1,313 @@
+/* ==========================================================================
+   Matrix Spins Casino — Skeleton / Shimmer Loading System
+   Dark theme: bg #0d0f14, card bg rgba(26,29,39,0.7)
+   ========================================================================== */
+
+/* --------------------------------------------------------------------------
+   1. Shimmer Animation
+   -------------------------------------------------------------------------- */
+@keyframes shimmer {
+  0% {
+    background-position: -400px 0;
+  }
+  100% {
+    background-position: 400px 0;
+  }
+}
+
+/* --------------------------------------------------------------------------
+   2. Skeleton Primitives
+   -------------------------------------------------------------------------- */
+
+/* Base skeleton class */
+.skeleton {
+  background: #1a1d27;
+  background-image: linear-gradient(
+    90deg,
+    #1a1d27 0%,
+    rgba(255, 255, 255, 0.04) 40%,
+    rgba(255, 255, 255, 0.04) 60%,
+    #1a1d27 100%
+  );
+  background-size: 800px 100%;
+  background-repeat: no-repeat;
+  animation: shimmer 1.6s ease-in-out infinite;
+  border-radius: 4px;
+  display: block;
+}
+
+/* Text line placeholder */
+.skeleton-text {
+  height: 14px;
+  width: 80%;
+  border-radius: 6px;
+  margin-bottom: 10px;
+}
+
+.skeleton-text.short {
+  width: 40%;
+}
+
+.skeleton-text.medium {
+  width: 60%;
+}
+
+/* Heading placeholder */
+.skeleton-heading {
+  height: 24px;
+  width: 50%;
+  border-radius: 6px;
+  margin-bottom: 14px;
+}
+
+/* Circular avatar placeholder */
+.skeleton-circle {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+/* Rectangular block — height via --skeleton-rect-h, default 120px */
+.skeleton-rect {
+  width: 100%;
+  height: var(--skeleton-rect-h, 120px);
+  border-radius: 8px;
+}
+
+/* Game card placeholder */
+.skeleton-card {
+  aspect-ratio: 3 / 4;
+  width: 100%;
+  border-radius: 12px;
+  background-color: rgba(26, 29, 39, 0.7);
+  background-image: linear-gradient(
+    90deg,
+    rgba(26, 29, 39, 0.7) 0%,
+    rgba(255, 255, 255, 0.04) 40%,
+    rgba(255, 255, 255, 0.04) 60%,
+    rgba(26, 29, 39, 0.7) 100%
+  );
+  background-size: 800px 100%;
+  background-repeat: no-repeat;
+  animation: shimmer 1.6s ease-in-out infinite;
+}
+
+/* Small pill / badge */
+.skeleton-badge {
+  display: inline-block;
+  height: 22px;
+  width: 64px;
+  border-radius: 11px;
+}
+
+/* --------------------------------------------------------------------------
+   3. Composite Skeletons
+   -------------------------------------------------------------------------- */
+
+/* Game grid — 8 card placeholders */
+.skeleton-game-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+  padding: 16px 0;
+}
+
+.skeleton-game-grid .skeleton-card {
+  min-height: 0;
+}
+
+/* Table row — rank circle + name line + 2 number blocks */
+.skeleton-table-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  background: rgba(26, 29, 39, 0.7);
+  border-radius: 8px;
+  margin-bottom: 8px;
+}
+
+.skeleton-table-row .skeleton-rank {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.skeleton-table-row .skeleton-name {
+  height: 14px;
+  flex: 1;
+  border-radius: 6px;
+}
+
+.skeleton-table-row .skeleton-value {
+  height: 14px;
+  width: 60px;
+  border-radius: 6px;
+  flex-shrink: 0;
+}
+
+/* Stat card — icon circle + heading + value line */
+.skeleton-stat-card {
+  background: rgba(26, 29, 39, 0.7);
+  border-radius: 12px;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.skeleton-stat-card .skeleton-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+}
+
+.skeleton-stat-card .skeleton-label {
+  height: 14px;
+  width: 60%;
+  border-radius: 6px;
+}
+
+.skeleton-stat-card .skeleton-number {
+  height: 28px;
+  width: 45%;
+  border-radius: 6px;
+}
+
+/* Leaderboard — 5 stacked table rows */
+.skeleton-leaderboard {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.skeleton-leaderboard .skeleton-table-row:last-child {
+  margin-bottom: 0;
+}
+
+/* Hero banner placeholder */
+.skeleton-hero {
+  width: 100%;
+  height: 280px;
+  border-radius: 16px;
+  background-color: rgba(26, 29, 39, 0.7);
+  background-image: linear-gradient(
+    90deg,
+    rgba(26, 29, 39, 0.7) 0%,
+    rgba(255, 255, 255, 0.04) 40%,
+    rgba(255, 255, 255, 0.04) 60%,
+    rgba(26, 29, 39, 0.7) 100%
+  );
+  background-size: 800px 100%;
+  background-repeat: no-repeat;
+  animation: shimmer 1.6s ease-in-out infinite;
+}
+
+/* --------------------------------------------------------------------------
+   4. Visibility Helpers
+   -------------------------------------------------------------------------- */
+
+/* Wrapper: hides real content, shows skeletons */
+.skeleton-container .skeleton-content {
+  display: none;
+}
+
+.skeleton-container .skeleton-placeholder {
+  display: block;
+}
+
+/* Loaded state: hide skeletons, reveal content with fade */
+.skeleton-container.loaded .skeleton-content {
+  display: block;
+  animation: skeletonFadeIn 0.3s ease-out forwards;
+}
+
+.skeleton-container.loaded .skeleton-placeholder {
+  display: none;
+}
+
+.skeleton-container.loaded .skeleton-hide-when-loaded {
+  display: none;
+}
+
+@keyframes skeletonFadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* Standalone hide helper (outside .skeleton-container) */
+.skeleton-hide-when-loaded {
+  transition: opacity 0.3s ease-out;
+}
+
+/* --------------------------------------------------------------------------
+   5. Responsive Adjustments
+   -------------------------------------------------------------------------- */
+@media (max-width: 768px) {
+  .skeleton-game-grid {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+  }
+
+  .skeleton-hero {
+    height: 200px;
+    border-radius: 12px;
+  }
+
+  .skeleton-stat-card {
+    padding: 16px;
+  }
+}
+
+@media (max-width: 480px) {
+  .skeleton-game-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+  }
+
+  .skeleton-hero {
+    height: 150px;
+    border-radius: 10px;
+  }
+
+  .skeleton-table-row {
+    padding: 10px 12px;
+    gap: 8px;
+  }
+
+  .skeleton-table-row .skeleton-value {
+    width: 48px;
+  }
+
+  .skeleton-stat-card .skeleton-number {
+    height: 22px;
+  }
+}
+
+/* --------------------------------------------------------------------------
+   6. Reduced Motion
+   -------------------------------------------------------------------------- */
+@media (prefers-reduced-motion: reduce) {
+  .skeleton,
+  .skeleton-card,
+  .skeleton-hero {
+    animation: none;
+    background-image: none;
+    background-color: #1a1d27;
+  }
+
+  .skeleton-container.loaded .skeleton-content {
+    animation: none;
+    opacity: 1;
+  }
+
+  .skeleton-hide-when-loaded {
+    transition: none;
+  }
+}

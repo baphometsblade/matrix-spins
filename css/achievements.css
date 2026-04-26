@@ -1,0 +1,491 @@
+/* ═══════════════════════════════════════════════════════════════
+   MATRIX SPINS — Achievements & Badges System v1.0
+   Achievement cards, rarity tiers, progress bars, unlock anims
+   ═══════════════════════════════════════════════════════════════ */
+
+/* ── Hero Section ──────────────────────────────────────────── */
+.achieve-hero {
+  background: linear-gradient(135deg, #1a1842 0%, #0d1229 50%, #1a2040 100%);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 2.5rem;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+  margin-bottom: 2rem;
+}
+
+.achieve-hero::before {
+  content: '';
+  position: absolute;
+  top: -30%;
+  right: -10%;
+  width: 300px;
+  height: 300px;
+  background: radial-gradient(circle, rgba(212,175,55,0.1) 0%, transparent 60%);
+  pointer-events: none;
+}
+
+.achieve-hero .trophy-icon {
+  font-size: 3rem;
+  margin-bottom: 0.6rem;
+  display: block;
+}
+
+.achieve-hero h1 {
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: 2rem;
+  margin-bottom: 0.4rem;
+}
+
+.achieve-hero h1 .gold { color: var(--gold); }
+
+.achieve-hero .hero-sub {
+  color: var(--muted);
+  font-size: 0.95rem;
+  max-width: 500px;
+  margin: 0 auto 1.2rem;
+}
+
+/* ── Overall Progress Bar ──────────────────────────────────── */
+.hero-progress-wrap {
+  max-width: 400px;
+  margin: 0 auto;
+}
+
+.hero-progress-label {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.85rem;
+  color: var(--muted);
+  margin-bottom: 0.35rem;
+}
+
+.hero-progress-label .pts {
+  color: var(--gold);
+  font-weight: 600;
+}
+
+.hero-progress-bar {
+  height: 10px;
+  background: rgba(255,255,255,0.08);
+  border-radius: 99px;
+  overflow: hidden;
+}
+
+.hero-progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--gold), #ffd700);
+  border-radius: 99px;
+  width: 0%;
+  transition: width 1s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+/* ── Stats Bar ─────────────────────────────────────────────── */
+.achieve-stats {
+  display: flex;
+  justify-content: center;
+  gap: 2rem;
+  margin-bottom: 1.5rem;
+  flex-wrap: wrap;
+}
+
+.achieve-stat {
+  text-align: center;
+}
+
+.achieve-stat .num {
+  display: block;
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: 1.6rem;
+  font-weight: 700;
+  color: var(--gold);
+}
+
+.achieve-stat .label {
+  font-size: 0.78rem;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* ── Filter Tabs (matches promotions.html) ─────────────────── */
+.achieve-tabs {
+  display: flex;
+  gap: 0.4rem;
+  margin-bottom: 1.5rem;
+  overflow-x: auto;
+  padding-bottom: 0.3rem;
+  -webkit-overflow-scrolling: touch;
+}
+
+.achieve-tab {
+  padding: 0.6rem 1.2rem;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--muted);
+  font-weight: 600;
+  font-size: 0.85rem;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.2s ease;
+}
+
+.achieve-tab:hover { border-color: var(--gold); color: var(--text); }
+.achieve-tab.active {
+  background: rgba(212,175,55,0.1);
+  border-color: var(--gold);
+  color: var(--gold);
+}
+
+/* ── Achievement Grid ──────────────────────────────────────── */
+.achieve-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1rem;
+  margin-bottom: 2.5rem;
+}
+
+/* ── Achievement Card ──────────────────────────────────────── */
+.achieve-card {
+  background: linear-gradient(180deg, var(--bg-card), var(--bg-elev));
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 1.3rem;
+  position: relative;
+  overflow: hidden;
+  transition: border-color 0.25s ease, transform 0.2s ease, box-shadow 0.25s ease;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.achieve-card:hover {
+  transform: translateY(-2px);
+}
+
+/* ── Rarity Border Glow ────────────────────────────────────── */
+.achieve-card[data-rarity="common"] {
+  border-color: rgba(107, 114, 128, 0.35);
+}
+.achieve-card[data-rarity="common"]:hover {
+  border-color: #6b7280;
+  box-shadow: 0 0 16px rgba(107, 114, 128, 0.2);
+}
+
+.achieve-card[data-rarity="uncommon"] {
+  border-color: rgba(74, 222, 128, 0.3);
+}
+.achieve-card[data-rarity="uncommon"]:hover {
+  border-color: #4ade80;
+  box-shadow: 0 0 16px rgba(74, 222, 128, 0.2);
+}
+
+.achieve-card[data-rarity="rare"] {
+  border-color: rgba(96, 165, 250, 0.3);
+}
+.achieve-card[data-rarity="rare"]:hover {
+  border-color: #60a5fa;
+  box-shadow: 0 0 16px rgba(96, 165, 250, 0.2);
+}
+
+.achieve-card[data-rarity="epic"] {
+  border-color: rgba(167, 139, 250, 0.3);
+}
+.achieve-card[data-rarity="epic"]:hover {
+  border-color: #a78bfa;
+  box-shadow: 0 0 16px rgba(167, 139, 250, 0.2);
+}
+
+.achieve-card[data-rarity="legendary"] {
+  border-color: rgba(255, 215, 0, 0.35);
+  background: linear-gradient(180deg, var(--bg-card), var(--bg-elev)),
+              linear-gradient(135deg, rgba(255,215,0,0.04), rgba(255,107,53,0.04));
+}
+.achieve-card[data-rarity="legendary"]:hover {
+  border-color: #ffd700;
+  box-shadow: 0 0 20px rgba(255, 215, 0, 0.25), 0 0 40px rgba(255, 107, 53, 0.1);
+}
+
+/* ── Card Inner Elements ───────────────────────────────────── */
+.achieve-card .badge-icon {
+  font-size: 2rem;
+  line-height: 1;
+}
+
+.achieve-card .card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+
+.achieve-card .card-title {
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--text);
+  line-height: 1.25;
+}
+
+.achieve-card .card-desc {
+  font-size: 0.8rem;
+  color: var(--muted);
+  line-height: 1.4;
+  flex: 1;
+}
+
+.achieve-card .card-points {
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 0.15rem 0.5rem;
+  border-radius: 99px;
+  background: rgba(212, 175, 55, 0.12);
+  color: var(--gold);
+  white-space: nowrap;
+}
+
+/* ── Rarity Badge ──────────────────────────────────────────── */
+.rarity-badge {
+  display: inline-block;
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  padding: 0.15rem 0.55rem;
+  border-radius: 99px;
+  line-height: 1.4;
+}
+
+.rarity-badge.common   { background: rgba(107,114,128,0.18); color: #9ca3af; }
+.rarity-badge.uncommon { background: rgba(74,222,128,0.15);  color: #4ade80; }
+.rarity-badge.rare     { background: rgba(96,165,250,0.15);  color: #60a5fa; }
+.rarity-badge.epic     { background: rgba(167,139,250,0.15); color: #a78bfa; }
+.rarity-badge.legendary {
+  background: linear-gradient(135deg, rgba(255,215,0,0.2), rgba(255,107,53,0.15));
+  color: #ffd700;
+}
+
+/* ── Card Progress Bar ─────────────────────────────────────── */
+.card-progress {
+  margin-top: auto;
+}
+
+.card-progress-info {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.72rem;
+  color: var(--muted);
+  margin-bottom: 0.25rem;
+}
+
+.card-progress-bar {
+  height: 5px;
+  background: rgba(255,255,255,0.08);
+  border-radius: 99px;
+  overflow: hidden;
+}
+
+.card-progress-fill {
+  height: 100%;
+  border-radius: 99px;
+  width: 0%;
+  transition: width 0.8s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.card-progress-fill.common   { background: #6b7280; }
+.card-progress-fill.uncommon { background: #4ade80; }
+.card-progress-fill.rare     { background: #60a5fa; }
+.card-progress-fill.epic     { background: #a78bfa; }
+.card-progress-fill.legendary { background: linear-gradient(90deg, #ffd700, #ff6b35); }
+
+/* ── Unlocked Date ─────────────────────────────────────────── */
+.unlock-date {
+  font-size: 0.72rem;
+  color: var(--muted);
+  margin-top: auto;
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+}
+
+.unlock-date .check {
+  color: var(--success);
+}
+
+/* ── Locked Overlay ────────────────────────────────────────── */
+.achieve-card.locked {
+  opacity: 0.55;
+  filter: grayscale(0.6);
+}
+
+.achieve-card.locked:hover {
+  opacity: 0.75;
+  filter: grayscale(0.3);
+}
+
+.lock-overlay {
+  position: absolute;
+  top: 0.8rem;
+  right: 0.8rem;
+  font-size: 1.1rem;
+  opacity: 0.7;
+}
+
+/* ── Unlock Animation ──────────────────────────────────────── */
+@keyframes achievementUnlock {
+  0%   { box-shadow: 0 0 0 0 rgba(212,175,55,0.5); }
+  40%  { box-shadow: 0 0 20px 6px rgba(212,175,55,0.35); }
+  70%  { box-shadow: 0 0 30px 10px rgba(255,215,0,0.2); }
+  100% { box-shadow: 0 0 0 0 rgba(212,175,55,0); }
+}
+
+.achieve-card.newly-unlocked {
+  animation: achievementUnlock 1.8s ease-out;
+  border-color: var(--gold) !important;
+}
+
+/* ── Recent Activity ───────────────────────────────────────── */
+.recent-activity {
+  margin-bottom: 2rem;
+}
+
+.recent-activity h2 {
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: 1.15rem;
+  margin-bottom: 0.8rem;
+}
+
+.activity-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.activity-item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.7rem 1rem;
+  background: linear-gradient(180deg, var(--bg-card), var(--bg-elev));
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  transition: border-color 0.2s ease;
+}
+
+.activity-item:hover {
+  border-color: var(--gold);
+}
+
+.activity-item .act-icon {
+  font-size: 1.4rem;
+  flex-shrink: 0;
+}
+
+.activity-item .act-info {
+  flex: 1;
+}
+
+.activity-item .act-title {
+  font-weight: 600;
+  font-size: 0.88rem;
+}
+
+.activity-item .act-desc {
+  font-size: 0.78rem;
+  color: var(--muted);
+}
+
+.activity-item .act-time {
+  font-size: 0.72rem;
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+/* ── Rarity Legend ─────────────────────────────────────────── */
+.rarity-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  padding: 1rem 1.2rem;
+  background: linear-gradient(180deg, var(--bg-card), var(--bg-elev));
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  margin-bottom: 2rem;
+  justify-content: center;
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.78rem;
+}
+
+.legend-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.legend-dot.common   { background: #6b7280; }
+.legend-dot.uncommon { background: #4ade80; }
+.legend-dot.rare     { background: #60a5fa; }
+.legend-dot.epic     { background: #a78bfa; }
+.legend-dot.legendary { background: linear-gradient(135deg, #ffd700, #ff6b35); }
+
+.legend-label { color: var(--muted); }
+.legend-pts   { color: var(--text); font-weight: 600; }
+
+/* ── Responsive Grid ───────────────────────────────────────── */
+@media (max-width: 1100px) {
+  .achieve-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@media (max-width: 820px) {
+  .achieve-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .achieve-stats {
+    gap: 1.2rem;
+  }
+}
+
+@media (max-width: 520px) {
+  .achieve-grid {
+    grid-template-columns: 1fr;
+  }
+  .achieve-hero {
+    padding: 1.5rem 1rem;
+  }
+  .achieve-hero h1 {
+    font-size: 1.5rem;
+  }
+  .achieve-tabs {
+    gap: 0.3rem;
+  }
+  .achieve-tab {
+    padding: 0.5rem 0.9rem;
+    font-size: 0.8rem;
+  }
+  .rarity-legend {
+    gap: 0.6rem 1rem;
+  }
+}
+
+/* ── Reduced Motion ────────────────────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  .achieve-card.newly-unlocked {
+    animation: none;
+  }
+  .hero-progress-fill,
+  .card-progress-fill {
+    transition: none;
+  }
+  .achieve-card {
+    transition: none;
+  }
+}

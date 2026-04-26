@@ -1,1697 +1,427 @@
-// ═══════════════════════════════════════════════════════════════════════════
-// CASINO-ENGINE.JS v3.0.0 — Complete Shared Engine for Matrix Spins Casino
-// ═══════════════════════════════════════════════════════════════════════════
-// Single authoritative engine: accepts a game config object and runs any of
-// the 100 games with zero logic duplication.
-//
-// Systems: Reel spin with momentum easing, weighted RNG, payline evaluation,
-// RTP enforcement, near-miss logic, wild/scatter/free-spin handling, bonus
-// hooks, autoplay engine, bet management, win celebration tiers, coin
-// particle system, anticipation animations, screen shake, idle attract loop,
-// mobile responsive layout engine, sound hook system, session tracker, and
-// studio theme injection.
-// ═══════════════════════════════════════════════════════════════════════════
+/**
+ * Matrix Spins — Casino Engine (server-authoritative).
+ *
+ * All spin outcomes come from the backend. The client's responsibility is:
+ *   • Auth gate — redirect to login if no session
+ *   • Render the reels the server returned
+ *   • Animate, celebrate wins, update balance
+ *   • Expose fairness data (server seed hash, client seed, nonce)
+ *
+ * The previous version had client-side Math.random() reel logic. That was
+ * fundamentally unshippable for real money. This rewrite removes it.
+ *
+ * Public surface (backward-compatible with existing game HTML files):
+ *
+ *   CasinoEngine.init('game-container', gameConfig)
+ *
+ * gameConfig needs an `id` property that matches the server game id.
+ * Every other field (name, themes, rtp, min/max bet) is used only for display
+ * and is OVERRIDDEN by authoritative values fetched from the backend.
+ */
+(function () {
+  'use strict';
 
-(function(window) {
-    'use strict';
+  const HAS_API = typeof window !== 'undefined' && window.MatrixSpinsAPI;
 
-    // ═══════════════════════════════════════════════════════════════════════
-    // SECTION 1: WEIGHTED RNG SYSTEM
-    // ═══════════════════════════════════════════════════════════════════════
-    // Crypto-grade randomness on the client with weighted symbol distribution.
-    // Server-authoritative spins override this for real-money play.
+  function $el(tag, props = {}, ...children) {
+    const el = document.createElement(tag);
+    for (const [k, v] of Object.entries(props)) {
+      if (k === 'style') Object.assign(el.style, v);
+      else if (k === 'class') el.className = v;
+      else if (k.startsWith('on')) el.addEventListener(k.slice(2).toLowerCase(), v);
+      else el.setAttribute(k, v);
+    }
+    for (const c of children) {
+      if (c == null) continue;
+      el.appendChild(typeof c === 'string' ? document.createTextNode(c) : c);
+    }
+    return el;
+  }
 
-    var _rngBuffer = null;
-    var _rngIndex = 0;
-    var RNG_BUFFER_SIZE = 256;
+  function fmt(cents) {
+    return window.MatrixSpinsAPI ? window.MatrixSpinsAPI.formatCents(cents) : `$${(cents/100).toFixed(2)}`;
+  }
 
-    function _fillRngBuffer() {
-        // Require a cryptographic RNG — server spins are authoritative for
-        // real-money, but we will not silently fall back to Math.random()
-        // because it is predictable in V8 and would violate project Rule #7.
-        if (!window.crypto || !window.crypto.getRandomValues) {
-            throw new Error('crypto.getRandomValues unavailable — browser unsupported for real-money play');
-        }
-        _rngBuffer = new Uint32Array(RNG_BUFFER_SIZE);
-        window.crypto.getRandomValues(_rngBuffer);
-        _rngIndex = 0;
+  const SYMBOL_PALETTE = [
+    ['#E74C3C','#F39C12'],['#3498DB','#1ABC9C'],['#2ECC71','#16A085'],
+    ['#F39C12','#E67E22'],['#9B59B6','#8E44AD'],['#1ABC9C','#2ECC71'],
+    ['#E67E22','#D35400'],['#E91E63','#C2185B'],['#F1C40F','#D4AC0D'],
+    ['#FFD700','#B8860B'],
+  ];
+
+  function symbolColors(symbol, index) {
+    const i = Math.abs(hashStr(symbol)) % SYMBOL_PALETTE.length;
+    return SYMBOL_PALETTE[i] || SYMBOL_PALETTE[index % SYMBOL_PALETTE.length];
+  }
+  function hashStr(s) {
+    let h = 0; for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) | 0;
+    return h;
+  }
+
+  class SlotGame {
+    constructor(containerId, gameConfig) {
+      this.container = document.getElementById(containerId);
+      if (!this.container) throw new Error(`CasinoEngine: #${containerId} not found`);
+      this.gameId = gameConfig.id || gameConfig.gameId;
+      if (!this.gameId) throw new Error('CasinoEngine: gameConfig.id is required');
+      this.theme = gameConfig.studioTheme || {};
+      this.displayName = gameConfig.name || 'Slot Game';
+
+      this.state = {
+        balanceCents: 0,
+        currency: 'USD',
+        betCents: 100,
+        spinning: false,
+        game: null,
+        lastSpin: null,
+        freeSpinsAvailable: 0,
+        seeds: null,
+      };
+
+      this._buildShell();
+      this._boot();
     }
 
-    function secureRandom() {
-        if (!_rngBuffer || _rngIndex >= RNG_BUFFER_SIZE) {
-            _fillRngBuffer();
-        }
-        return _rngBuffer[_rngIndex++] / 0x100000000;
+    async _boot() {
+      if (!HAS_API) {
+        this._fatal('Matrix Spins API client not loaded. Include js/api-client.js before casino-engine.js.');
+        return;
+      }
+      const user = await window.MatrixSpinsAPI.loadSession();
+      if (!user) {
+        const next = encodeURIComponent(location.pathname + location.search);
+        window.location.href = `../login.html?next=${next}`;
+        return;
+      }
+      try {
+        const [game, balance, seeds, freeSpins] = await Promise.all([
+          window.MatrixSpinsAPI.getGame(this.gameId).then(r => r.game),
+          window.MatrixSpinsAPI.getBalance(),
+          window.MatrixSpinsAPI.getSeeds(),
+          window.MatrixSpinsAPI.getFreeSpins(this.gameId).catch(() => ({ grants: [] })),
+        ]);
+        this.state.game = game;
+        this.state.balanceCents = balance.availableCents;
+        this.state.currency = balance.currency;
+        this.state.seeds = seeds;
+        this.state.freeSpinsAvailable = (freeSpins.grants || []).reduce((a, g) => a + g.remaining, 0);
+        this.state.betCents = Math.max(game.minBetCents, Math.min(game.betStepCents * 5, game.maxBetCents));
+        this._render();
+      } catch (err) {
+        this._fatal(err.message || 'Failed to load game.');
+      }
     }
 
-    var SYMBOL_WEIGHTS = {
-        '5x3':  [4, 6, 8, 12, 16, 22],
-        '5x4':  [3, 5, 7, 11, 15, 24],
-        '6x5':  [2, 4, 6, 10, 14, 26],
-        '7x7':  [2, 3, 5, 9, 13, 28],
-        '3x3':  [6, 8, 10, 14, 18, 20],
-        '3x1':  [5, 8, 10, 14, 18, 22],
-        '5x5':  [3, 5, 7, 10, 14, 24]
-    };
+    _buildShell() {
+      const theme = this.theme;
+      const bg = theme.bgGradient || 'linear-gradient(135deg, #0D0F14 0%, #13151C 100%)';
+      const primary = theme.primaryColor || '#D4A853';
+      const container = this.container;
+      container.style.background = bg;
+      container.style.minHeight = '100vh';
+      container.style.color = '#F0F0F5';
+      container.style.fontFamily = "'Inter', system-ui, sans-serif";
+      container.style.position = 'relative';
+      container.style.paddingBottom = '2rem';
+      this._primary = primary;
+      container.innerHTML = '';
 
-    function weightedSymbolPick(game) {
-        var symbols = game.symbols;
-        if (!symbols || symbols.length === 0) return null;
-        var key = (game.gridCols || 3) + 'x' + (game.gridRows || 1);
-        var weights = SYMBOL_WEIGHTS[key] || SYMBOL_WEIGHTS['5x3'];
+      this.topbar = $el('div', { style: {
+        display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+        padding: '.8rem 1.4rem', background: 'rgba(0,0,0,.35)',
+        borderBottom: `1px solid ${primary}33`, backdropFilter: 'blur(8px)',
+      }});
+      this.topbar.append(
+        $el('a', { href: '../index.html', style: { color: primary, fontWeight: 700, textDecoration: 'none', letterSpacing: '2px', textTransform: 'uppercase' } }, '← Lobby'),
+        $el('div', { style: { display: 'flex', gap: '.8rem', alignItems: 'center' } },
+          (this.balanceChip = $el('div', { style: { padding: '.4rem .8rem', border: `1px solid ${primary}55`, borderRadius: '999px', color: primary, fontWeight: 600 } }, '—')),
+          $el('a', { href: '../wallet.html', style: { color: '#fff', textDecoration: 'none', fontSize: '.9rem', opacity: .8 } }, 'Wallet'),
+          $el('a', { href: '../account.html', style: { color: '#fff', textDecoration: 'none', fontSize: '.9rem', opacity: .8 } }, 'Account'),
+        )
+      );
+      container.appendChild(this.topbar);
 
-        var totalWeight = 0;
-        var cumulative = [];
-        for (var i = 0; i < symbols.length; i++) {
-            var w = (i < weights.length) ? weights[i] : weights[weights.length - 1];
-            totalWeight += w;
-            cumulative.push(totalWeight);
-        }
+      this.main = $el('div', { style: { maxWidth: '1100px', margin: '1.5rem auto 0', padding: '0 1rem' } });
+      container.appendChild(this.main);
 
-        var roll = secureRandom() * totalWeight;
-        for (var j = 0; j < cumulative.length; j++) {
-            if (roll < cumulative[j]) return symbols[j];
-        }
-        return symbols[symbols.length - 1];
+      this.loading = $el('div', { style: { textAlign: 'center', padding: '3rem 0', opacity: .7 } }, 'Loading game…');
+      this.main.appendChild(this.loading);
     }
 
-    function generateWeightedGrid(game) {
-        var cols = game.gridCols || 3;
-        var rows = game.gridRows || 1;
-        var grid = [];
-        for (var c = 0; c < cols; c++) {
-            grid[c] = [];
-            for (var r = 0; r < rows; r++) {
-                grid[c][r] = weightedSymbolPick(game);
-            }
-        }
-        return grid;
+    _fatal(msg) {
+      this.main.innerHTML = '';
+      this.main.appendChild(
+        $el('div', { style: { background: '#3a1212', border: '1px solid #ef4444', color: '#ffb3b3', padding: '1.2rem', borderRadius: '10px', textAlign: 'center', margin: '2rem auto', maxWidth: 520 } },
+          $el('strong', {}, 'Unable to load this game. '),
+          document.createTextNode(msg),
+        ),
+      );
     }
 
-    function generateSpinGrid(game, isFreeSpins) {
-        if (window.HouseEdge && window.HouseEdge.generateGrid) {
-            return window.HouseEdge.generateGrid(game, isFreeSpins || false);
+    _render() {
+      const game = this.state.game;
+      const primary = this._primary;
+      this.main.innerHTML = '';
+      this._updateBalanceChip();
+
+      this.main.appendChild(
+        $el('div', { style: { textAlign: 'center', padding: '.6rem 0 1.2rem' } },
+          $el('h1', { style: { fontSize: '1.8rem', letterSpacing: '2px', textTransform: 'uppercase', color: primary, fontFamily: this.theme.fontFamily || 'Plus Jakarta Sans, Inter, sans-serif' } }, game.name || this.displayName),
+          $el('p', { style: { opacity: .7, fontSize: '.85rem', marginTop: '.3rem' } },
+            `${(game.rtp * 100).toFixed(2)}% RTP  •  ${game.volatility || ''} volatility  •  ${game.paylines} lines`
+          ),
+        )
+      );
+
+      this.reelBox = $el('div', { style: {
+        margin: '0 auto', maxWidth: '860px',
+        background: 'rgba(0,0,0,.35)', borderRadius: '14px', padding: '1rem',
+        border: `2px solid ${primary}66`,
+        boxShadow: `0 10px 40px ${primary}20, inset 0 0 30px ${primary}10`,
+      }});
+      this.reelGrid = $el('div', { style: {
+        display: 'grid', gridTemplateColumns: `repeat(${game.reels}, 1fr)`, gap: '.4rem',
+      }});
+      for (let r = 0; r < game.reels; r++) {
+        const col = $el('div', { style: {
+          background: this.theme.reelBg || '#0a0a15', borderRadius: '10px',
+          border: `1px solid ${primary}33`, padding: '.3rem', display: 'flex', flexDirection: 'column', gap: '.3rem',
+        }});
+        for (let y = 0; y < game.rows; y++) {
+          col.appendChild(this._makeCell('?', r, y));
         }
-        return generateWeightedGrid(game);
+        this.reelGrid.appendChild(col);
+      }
+      this.reelBox.appendChild(this.reelGrid);
+      this.main.appendChild(this.reelBox);
+
+      this.winStrip = $el('div', { style: {
+        textAlign: 'center', minHeight: '2.4rem', marginTop: '.8rem',
+        fontSize: '1.2rem', fontWeight: 700, color: primary,
+        transition: 'opacity .3s',
+      }}, '\u00A0');
+      this.main.appendChild(this.winStrip);
+
+      const controlBar = $el('div', { style: {
+        display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '.8rem',
+        marginTop: '1rem', flexWrap: 'wrap',
+      }});
+
+      const betMinus = $el('button', { class: 'ce-btn', onclick: () => this._changeBet(-1) }, '−');
+      const betPlus  = $el('button', { class: 'ce-btn', onclick: () => this._changeBet(+1) }, '+');
+      this.betLabel  = $el('div', { style: {
+        padding: '.5rem 1rem', minWidth: '140px', textAlign: 'center',
+        border: `1px solid ${primary}55`, borderRadius: '8px', color: primary, fontWeight: 700,
+      }}, fmt(this.state.betCents));
+      this.spinBtn = $el('button', { class: 'ce-btn primary', onclick: () => this._spin(false) }, 'SPIN');
+
+      [betMinus, this.betLabel, betPlus, this.spinBtn].forEach(b => controlBar.appendChild(b));
+      this.main.appendChild(controlBar);
+
+      this.freeSpinsRow = $el('div', { style: { textAlign: 'center', marginTop: '.8rem', fontSize: '.9rem', opacity: .85 } });
+      this.main.appendChild(this.freeSpinsRow);
+      this._renderFreeSpins();
+
+      this.main.appendChild(this._renderFairnessPanel());
+
+      if (!document.getElementById('ce-style')) {
+        const s = document.createElement('style');
+        s.id = 'ce-style';
+        s.textContent = `
+          .ce-btn { padding: .6rem 1rem; background: transparent; color: #fff; border: 1px solid ${primary}66; border-radius: 8px; font: inherit; cursor: pointer; font-weight: 600; }
+          .ce-btn:hover { border-color: ${primary}; }
+          .ce-btn:disabled { opacity: .4; cursor: not-allowed; }
+          .ce-btn.primary { background: linear-gradient(180deg, ${primary}, ${shade(primary,-20)}); color: #1a1205; border: none; font-weight: 800; letter-spacing: 2px; padding: .7rem 2rem; text-transform: uppercase; }
+          .ce-cell { aspect-ratio: 1; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 1.4rem; color: white; text-shadow: 0 2px 4px rgba(0,0,0,.5); transition: transform .25s; user-select: none; }
+          .ce-cell.highlight { animation: ceFlash 0.9s ease-in-out infinite alternate; }
+          @keyframes ceFlash { from { transform: scale(1); filter: brightness(1); } to { transform: scale(1.08); filter: brightness(1.35); } }
+        `;
+        document.head.appendChild(s);
+      }
     }
 
-
-    // ═══════════════════════════════════════════════════════════════════════
-    // SECTION 2: PAYLINE EVALUATION ENGINE
-    // ═══════════════════════════════════════════════════════════════════════
-
-    var PAYLINE_MIN_MATCH = 3;
-
-    function getPaylines(game) {
-        var cols = game.gridCols || 3;
-        var rows = game.gridRows || 1;
-
-        if (rows === 1) return [[0, 0, 0]];
-
-        if (rows === 3 && cols === 3) {
-            return [
-                [0, 0, 0], [1, 1, 1], [2, 2, 2],
-                [0, 1, 2], [2, 1, 0]
-            ];
-        }
-
-        if (rows === 3 && cols === 5) {
-            return [
-                [1,1,1,1,1],[0,0,0,0,0],[2,2,2,2,2],
-                [0,1,2,1,0],[2,1,0,1,2],[0,0,1,0,0],
-                [2,2,1,2,2],[1,0,0,0,1],[1,2,2,2,1],
-                [0,1,1,1,0],[2,1,1,1,2],[1,0,1,0,1],
-                [1,2,1,2,1],[0,1,0,1,0],[2,1,2,1,2],
-                [1,1,0,1,1],[1,1,2,1,1],[0,0,1,2,2],
-                [2,2,1,0,0],[0,2,0,2,0]
-            ];
-        }
-
-        if (rows === 4 && cols === 5) {
-            return [
-                [1,1,1,1,1],[2,2,2,2,2],[0,0,0,0,0],[3,3,3,3,3],
-                [0,1,2,1,0],[3,2,1,2,3],[1,0,0,0,1],[2,3,3,3,2],
-                [0,0,1,2,2],[3,3,2,1,1],[1,2,3,2,1],[2,1,0,1,2],
-                [0,1,1,1,0],[3,2,2,2,3],[1,0,1,0,1],[2,3,2,3,2],
-                [0,2,0,2,0],[3,1,3,1,3],[1,1,0,1,1],[2,2,3,2,2],
-                [0,0,2,0,0],[3,3,1,3,3],[1,2,1,2,1],[2,1,2,1,2],
-                [0,1,0,1,0],[3,2,3,2,3],[0,0,0,1,2],[3,3,3,2,1],
-                [1,1,2,3,3],[2,2,1,0,0],[0,1,2,3,3],[3,2,1,0,0],
-                [1,0,0,1,2],[2,3,3,2,1],[0,2,1,2,0],[3,1,2,1,3],
-                [1,0,2,0,1],[2,3,1,3,2],[0,3,0,3,0],[1,2,0,2,1]
-            ];
-        }
-
-        var lines = [];
-        for (var r = 0; r < rows; r++) {
-            var line = [];
-            for (var ci = 0; ci < cols; ci++) line.push(r);
-            lines.push(line);
-        }
-        return lines;
+    _makeCell(sym, r, y) {
+      const [a, b] = symbolColors(sym, r * 3 + y);
+      return $el('div', { class: 'ce-cell', style: { background: `linear-gradient(135deg, ${a}, ${b})` } }, this._symbolGlyph(sym));
     }
 
-    function isWild(symbol, game) {
-        return game && game.wildSymbol && symbol === game.wildSymbol;
+    _symbolGlyph(sym) {
+      const s = String(sym || '').toLowerCase();
+      const map = {
+        cherry:'🍒', lemon:'🍋', bar:'📊', sevens:'7️⃣', wild:'🃏', scatter:'⭐',
+        crown:'👑', diamond:'💎', star:'⭐', 'gold-bell':'🔔', bell:'🔔',
+        gold:'💰', dragon:'🐉', phoenix:'🦅', koi:'🐟',
+      };
+      return map[s] || s.slice(0, 2).toUpperCase();
     }
 
-    function isScatter(symbol, game) {
-        return game && game.scatterSymbol && symbol === game.scatterSymbol;
+    _renderCell(cell, sym, r, y) {
+      cell.innerHTML = '';
+      const [a, b] = symbolColors(sym, r * 3 + y);
+      cell.style.background = `linear-gradient(135deg, ${a}, ${b})`;
+      cell.textContent = this._symbolGlyph(sym);
     }
 
-    function countScattersInGrid(grid, game) {
-        if (!game || !game.scatterSymbol) return 0;
-        var count = 0;
-        for (var c = 0; c < grid.length; c++) {
-            for (var r = 0; r < grid[c].length; r++) {
-                if (grid[c][r] === game.scatterSymbol) count++;
-            }
-        }
-        return count;
+    _updateBalanceChip() {
+      this.balanceChip.textContent = fmt(this.state.balanceCents);
     }
 
-    function countWildsInGrid(grid, game) {
-        if (!game || !game.wildSymbol) return 0;
-        var count = 0;
-        for (var c = 0; c < grid.length; c++) {
-            for (var r = 0; r < grid[c].length; r++) {
-                if (grid[c][r] === game.wildSymbol) count++;
-            }
-        }
-        return count;
+    _changeBet(dir) {
+      const g = this.state.game;
+      if (!g) return;
+      const step = g.betStepCents;
+      let next = this.state.betCents + dir * step;
+      if (next < g.minBetCents) next = g.minBetCents;
+      if (next > g.maxBetCents) next = g.maxBetCents;
+      this.state.betCents = next;
+      this.betLabel.textContent = fmt(next);
     }
 
-    function evaluatePaylines(grid, game) {
-        var paylines = getPaylines(game);
-        var cols = game.gridCols || 3;
-        var wins = [];
-
-        for (var lineIdx = 0; lineIdx < paylines.length; lineIdx++) {
-            var line = paylines[lineIdx];
-            var lineSymbols = [];
-            for (var c = 0; c < Math.min(cols, line.length); c++) {
-                var rowIdx = line[c];
-                if (grid[c] && rowIdx >= 0 && rowIdx < grid[c].length) {
-                    lineSymbols.push(grid[c][rowIdx]);
-                }
-            }
-            if (lineSymbols.length === 0) continue;
-
-            var firstSym = lineSymbols[0];
-            var matchCount = 1;
-            var effectiveSym = isWild(firstSym, game) ? null : firstSym;
-
-            for (var i = 1; i < lineSymbols.length; i++) {
-                var s = lineSymbols[i];
-                if (isWild(s, game)) {
-                    matchCount++;
-                } else if (effectiveSym === null) {
-                    effectiveSym = s;
-                    matchCount++;
-                } else if (s === effectiveSym) {
-                    matchCount++;
-                } else {
-                    break;
-                }
-            }
-
-            if (matchCount >= PAYLINE_MIN_MATCH) {
-                wins.push({
-                    lineIndex: lineIdx,
-                    line: line,
-                    matchCount: matchCount,
-                    symbol: effectiveSym || firstSym,
-                    cells: line.slice(0, matchCount).map(function(row, col) { return [col, row]; })
-                });
-            }
-        }
-
-        return wins;
+    _renderFreeSpins() {
+      const n = this.state.freeSpinsAvailable;
+      this.freeSpinsRow.innerHTML = '';
+      if (n > 0) {
+        const btn = $el('button', { class: 'ce-btn', onclick: () => this._spin(true) }, `Use free spin (${n} left)`);
+        this.freeSpinsRow.appendChild(btn);
+      }
     }
 
-    function findClusters(grid, game) {
-        var cols = grid.length;
-        var rows = grid[0].length;
-        var visited = [];
-        for (var vc = 0; vc < cols; vc++) {
-            visited[vc] = [];
-            for (var vr = 0; vr < rows; vr++) visited[vc][vr] = false;
-        }
-        var clusters = [];
-        var clusterMin = game.clusterMin || 5;
-
-        for (var c = 0; c < cols; c++) {
-            for (var r = 0; r < rows; r++) {
-                if (visited[c][r]) continue;
-                var symbol = grid[c][r];
-                if (!symbol || isWild(symbol, game)) continue;
-
-                var cluster = [];
-                var queue = [[c, r]];
-                var qi = 0;
-                visited[c][r] = true;
-
-                while (qi < queue.length) {
-                    var pos = queue[qi++];
-                    var cc = pos[0], cr = pos[1];
-                    cluster.push([cc, cr]);
-
-                    var neighbors = [[cc-1,cr],[cc+1,cr],[cc,cr-1],[cc,cr+1]];
-                    for (var n = 0; n < neighbors.length; n++) {
-                        var nc = neighbors[n][0], nr = neighbors[n][1];
-                        if (nc < 0 || nc >= cols || nr < 0 || nr >= rows) continue;
-                        if (visited[nc][nr]) continue;
-                        var nSym = grid[nc][nr];
-                        if (nSym === symbol || isWild(nSym, game)) {
-                            visited[nc][nr] = true;
-                            queue.push([nc, nr]);
-                        }
-                    }
-                }
-
-                if (cluster.length >= clusterMin) {
-                    clusters.push({ symbol: symbol, cells: cluster, size: cluster.length });
-                }
-            }
-        }
-        return clusters;
-    }
-
-    function getPayMultiplier(symbol, matchCount, game, winType) {
-        var symIdx = game.symbols ? game.symbols.indexOf(symbol) : 0;
-        if (symIdx < 0) symIdx = 0;
-
-        if (window.HouseEdge) {
-            if (winType === 'cluster') {
-                return window.HouseEdge.getClusterPayMultiplier(symIdx, matchCount, game);
-            } else if (winType === 'classic') {
-                return window.HouseEdge.getClassicPayMultiplier(symIdx, matchCount, game);
-            } else {
-                return window.HouseEdge.getPaylinePayMultiplier(symIdx, matchCount, game);
-            }
-        }
-
-        var tierMultipliers = {
-            3: [0.08, 0.06, 0.05, 0.04, 0.03, 0.02],
-            4: [0.20, 0.15, 0.12, 0.08, 0.06, 0.04],
-            5: [0.60, 0.40, 0.30, 0.20, 0.15, 0.08]
-        };
-        var mc = Math.min(matchCount, 5);
-        var tiers = tierMultipliers[mc] || tierMultipliers[3];
-        return tiers[Math.min(symIdx, tiers.length - 1)];
-    }
-
-    function capWin(winAmount, bet, game) {
-        if (window.HouseEdge && window.HouseEdge.capWin) {
-            return window.HouseEdge.capWin(winAmount, bet, game);
-        }
-        return Math.min(winAmount, bet * 200);
-    }
-
-
-    // ═══════════════════════════════════════════════════════════════════════
-    // SECTION 3: RTP ENFORCEMENT
-    // ═══════════════════════════════════════════════════════════════════════
-
-    var TARGET_RTP = 0.88;
-
-    function shouldAllowWin(game) {
-        if (window.HouseEdge && window.HouseEdge.shouldAllowWin) {
-            return window.HouseEdge.shouldAllowWin(game);
-        }
-        return true;
-    }
-
-    function recordSpinForRTP(bet, win, game) {
-        if (window.HouseEdge && window.HouseEdge.recordSpin) {
-            window.HouseEdge.recordSpin(bet, win, game ? game.id : 'unknown');
-        }
-    }
-
-    function getProfitStatus() {
-        if (window.HouseEdge && window.HouseEdge.getProfitStatus) {
-            return window.HouseEdge.getProfitStatus();
-        }
-        return { rtp: 0, profit: 0, spins: 0 };
-    }
-
-
-    // ═══════════════════════════════════════════════════════════════════════
-    // SECTION 4: REEL SPIN PHYSICS & MOMENTUM EASING
-    // ═══════════════════════════════════════════════════════════════════════
-
-    function smoothstep(t) {
-        t = Math.max(0, Math.min(1, t));
-        return t * t * (3 - 2 * t);
-    }
-
-    function easeOutCubic(t) {
-        t = Math.max(0, Math.min(1, t));
-        return 1 - Math.pow(1 - t, 3);
-    }
-
-    function easeOutBack(t) {
-        var c1 = 1.70158;
-        var c3 = c1 + 1;
-        return 1 + c3 * Math.pow(t - 1, 3) + c1 * Math.pow(t - 1, 2);
-    }
-
-    var ReelPhysics = {
-        SPINUP_DURATION: 300,
-        SPEED_VARIANCE: 0.08,
-        CASCADE_STAGGER: 25,
-        STOP_DURATION_BASE: 650,
-        STOP_DURATION_NEARMISS: 1100,
-        BOUNCE_SCALE_PER_REEL: 1.4,
-        BOUNCE_MAX_PX: 28,
-        BOUNCE_DURATION: 260,
-
-        getReelSpeed: function(baseSpeed, reelIndex) {
-            var variance = (secureRandom() - 0.5) * 2 * this.SPEED_VARIANCE;
-            return baseSpeed * (1 + variance);
-        },
-
-        getLaunchDelay: function(reelIndex) {
-            return reelIndex * this.CASCADE_STAGGER;
-        },
-
-        getBounceAmount: function(reelIndex) {
-            var amount = 8 * Math.pow(this.BOUNCE_SCALE_PER_REEL, reelIndex);
-            return Math.min(amount, this.BOUNCE_MAX_PX);
-        },
-
-        getStopDuration: function(isNearMiss) {
-            return isNearMiss ? this.STOP_DURATION_NEARMISS : this.STOP_DURATION_BASE;
-        },
-
-        spinUpPosition: function(elapsed, totalDistance) {
-            var t = Math.min(elapsed / this.SPINUP_DURATION, 1);
-            return smoothstep(t) * totalDistance;
-        },
-
-        deceleratePosition: function(elapsed, stopDuration, totalDistance) {
-            var t = Math.min(elapsed / stopDuration, 1);
-            return easeOutCubic(t) * totalDistance;
-        },
-
-        bounceOffset: function(elapsed, reelIndex) {
-            var t = Math.min(elapsed / this.BOUNCE_DURATION, 1);
-            var maxBounce = this.getBounceAmount(reelIndex);
-            var decay = 1 - t;
-            return maxBounce * Math.sin(t * Math.PI) * decay;
-        },
-
-        getReelTimeline: function(reelIndex, totalReels, isNearMiss) {
-            var launchDelay = this.getLaunchDelay(reelIndex);
-            var stopDelay = reelIndex * 120;
-            var stopDuration = this.getStopDuration(isNearMiss && reelIndex >= totalReels - 1);
-
-            return {
-                launchDelay: launchDelay,
-                spinUpEnd: launchDelay + this.SPINUP_DURATION,
-                stopBegin: launchDelay + this.SPINUP_DURATION + 400 + stopDelay,
-                stopDuration: stopDuration,
-                bounceBegin: launchDelay + this.SPINUP_DURATION + 400 + stopDelay + stopDuration,
-                bounceDuration: this.BOUNCE_DURATION,
-                bounceAmount: this.getBounceAmount(reelIndex),
-                speed: this.getReelSpeed(1.0, reelIndex)
-            };
-        }
-    };
-
-
-    // ═══════════════════════════════════════════════════════════════════════
-    // SECTION 5: NEAR-MISS DETECTION
-    // ═══════════════════════════════════════════════════════════════════════
-
-    var NearMiss = {
-        check: function(grid, game) {
-            if (!grid || grid.length < 3) return false;
-            var rows = grid[0].length;
-            for (var r = 0; r < rows; r++) {
-                var matches = {};
-                for (var c = 0; c < Math.min(grid.length, 3); c++) {
-                    var sym = grid[c][r];
-                    matches[sym] = (matches[sym] || 0) + 1;
-                }
-                for (var sym in matches) {
-                    if (matches.hasOwnProperty(sym) && matches[sym] === 2) {
-                        return { symbol: sym, row: r, startReel: 2 };
-                    }
-                }
-            }
-            return false;
-        },
-
-        applyTension: function(reelElements, nearMissData) {
-            if (!nearMissData || !reelElements) return;
-            var startReel = nearMissData.startReel || 2;
-            for (var i = startReel; i < reelElements.length; i++) {
-                if (reelElements[i]) {
-                    reelElements[i].classList.add('near-miss-decel');
-                    reelElements[i].classList.add('reel-near-miss-tension');
-                }
-            }
-        },
-
-        clearTension: function(reelElements) {
-            if (!reelElements) return;
-            for (var i = 0; i < reelElements.length; i++) {
-                if (reelElements[i]) {
-                    reelElements[i].classList.remove('near-miss-decel');
-                    reelElements[i].classList.remove('reel-near-miss-tension');
-                }
-            }
-        }
-    };
-
-
-    // ═══════════════════════════════════════════════════════════════════════
-    // SECTION 6: FREE SPIN / SCATTER / WILD STATE MANAGEMENT
-    // ═══════════════════════════════════════════════════════════════════════
-
-    var FreeSpinState = {
-        _active: false,
-        _remaining: 0,
-        _totalAwarded: 0,
-        _totalWon: 0,
-        _multiplier: 1,
-        _cascadeLevel: 0,
-        _triggerCallback: null,
-        _completeCallback: null,
-
-        isActive: function() { return this._active; },
-        remaining: function() { return this._remaining; },
-        multiplier: function() { return this._multiplier; },
-        cascadeLevel: function() { return this._cascadeLevel; },
-
-        checkTrigger: function(grid, game) {
-            var scatterCount = countScattersInGrid(grid, game);
-            var threshold = game.freeSpinsTrigger || 3;
-            if (scatterCount >= threshold) {
-                var count = game.freeSpinsCount || 10;
-                if (scatterCount > threshold) {
-                    count += (scatterCount - threshold) * (game.extraSpinsPerScatter || 2);
-                }
-                return count;
-            }
-            return 0;
-        },
-
-        trigger: function(count, game) {
-            if (this._active) {
-                this._remaining += count;
-                this._totalAwarded += count;
-            } else {
-                this._active = true;
-                this._remaining = count;
-                this._totalAwarded = count;
-                this._totalWon = 0;
-                this._multiplier = game.freeSpinsMultiplier || 1;
-                this._cascadeLevel = 0;
-            }
-            SoundHooks.trigger('free_spins_trigger');
-            if (this._triggerCallback) {
-                this._triggerCallback(count, this._remaining, this._totalAwarded);
-            }
-        },
-
-        consume: function() {
-            if (!this._active || this._remaining <= 0) return false;
-            this._remaining--;
-            return true;
-        },
-
-        recordWin: function(amount) {
-            this._totalWon += amount;
-        },
-
-        advanceCascade: function() {
-            this._cascadeLevel++;
-        },
-
-        resetCascade: function() {
-            this._cascadeLevel = 0;
-        },
-
-        complete: function() {
-            var summary = {
-                totalAwarded: this._totalAwarded,
-                totalWon: this._totalWon,
-                active: false
-            };
-            this._active = false;
-            this._remaining = 0;
-            this._totalAwarded = 0;
-            this._cascadeLevel = 0;
-            SoundHooks.trigger('free_spins_complete');
-            if (this._completeCallback) {
-                this._completeCallback(summary);
-            }
-            return summary;
-        },
-
-        onTrigger: function(fn) { this._triggerCallback = fn; },
-        onComplete: function(fn) { this._completeCallback = fn; },
-
-        reset: function() {
-            this._active = false;
-            this._remaining = 0;
-            this._totalAwarded = 0;
-            this._totalWon = 0;
-            this._multiplier = 1;
-            this._cascadeLevel = 0;
-        }
-    };
-
-
-    // ═══════════════════════════════════════════════════════════════════════
-    // SECTION 7: BONUS ROUND HOOKS
-    // ═══════════════════════════════════════════════════════════════════════
-
-    var BonusHooks = {
-        _hooks: {},
-
-        register: function(gameId, config) {
-            this._hooks[gameId] = config;
-        },
-
-        check: function(grid, game) {
-            if (!game || !game.id) return null;
-            var hook = this._hooks[game.id];
-            if (hook && hook.trigger && hook.trigger(grid, game)) {
-                return hook;
-            }
-            return null;
-        },
-
-        activate: function(grid, game) {
-            var hook = this.check(grid, game);
-            if (hook && hook.activate) {
-                SoundHooks.trigger('bonus_trigger');
-                hook.activate(grid, game);
-                return true;
-            }
-            return false;
-        },
-
-        getLabel: function(gameId) {
-            var hook = this._hooks[gameId];
-            return hook ? (hook.label || 'BONUS') : null;
-        },
-
-        unregister: function(gameId) {
-            delete this._hooks[gameId];
-        }
-    };
-
-
-    // ═══════════════════════════════════════════════════════════════════════
-    // SECTION 8: WIN CELEBRATION SYSTEM (5 TIERS)
-    // ═══════════════════════════════════════════════════════════════════════
-
-    var WIN_TIERS = {
-        small:   { minMultiplier: 1,   label: 'WIN',         duration: 1200, shake: 0,  particles: 8,   color: '#FFD700', bloom: 0 },
-        medium:  { minMultiplier: 5,   label: 'BIG WIN!',    duration: 2000, shake: 2,  particles: 25,  color: '#FF6B35', bloom: 0 },
-        big:     { minMultiplier: 15,  label: 'HUGE WIN!',   duration: 3000, shake: 4,  particles: 50,  color: '#E91E63', bloom: 1.25 },
-        mega:    { minMultiplier: 50,  label: 'MEGA WIN!!',  duration: 4500, shake: 6,  particles: 80,  color: '#9C27B0', bloom: 1.4 },
-        jackpot: { minMultiplier: 200, label: 'JACKPOT!!!',  duration: 6000, shake: 10, particles: 150, color: '#FF0000', bloom: 1.5 }
-    };
-
-    function getWinTier(winAmount, betAmount) {
-        if (!betAmount || betAmount <= 0) return null;
-        var mult = winAmount / betAmount;
-        if (mult >= WIN_TIERS.jackpot.minMultiplier) return 'jackpot';
-        if (mult >= WIN_TIERS.mega.minMultiplier) return 'mega';
-        if (mult >= WIN_TIERS.big.minMultiplier) return 'big';
-        if (mult >= WIN_TIERS.medium.minMultiplier) return 'medium';
-        if (mult >= WIN_TIERS.small.minMultiplier) return 'small';
-        return null;
-    }
-
-    var _celebrationTimer = null;
-
-    /** Helper: safely build DOM elements without innerHTML */
-    function _buildElement(tag, className, textContent) {
-        var el = document.createElement(tag);
-        if (className) el.className = className;
-        if (textContent) el.textContent = textContent;
-        return el;
-    }
-
-    function showWinCelebration(winAmount, betAmount, containerEl) {
-        var tier = getWinTier(winAmount, betAmount);
-        if (!tier) return;
-        var config = WIN_TIERS[tier];
-        var container = containerEl || document.querySelector('.reels-frame') || document.querySelector('.reels-container') || document.getElementById('reels');
-        if (!container) return;
-
-        if (_celebrationTimer) { clearTimeout(_celebrationTimer); hideCelebration(); }
-
-        // Build overlay using safe DOM methods
-        var overlay = _buildElement('div', 'ce-win-overlay ce-win-' + tier);
-        overlay.id = 'ce-win-overlay';
-        var label = _buildElement('div', 'ce-win-label', config.label);
-        var amount = _buildElement('div', 'ce-win-amount', '$' + winAmount.toFixed(2));
-        overlay.appendChild(label);
-        overlay.appendChild(amount);
-        container.style.position = 'relative';
-        container.appendChild(overlay);
-
-        // Bloom effect for big+ wins
-        if (config.bloom > 0) {
-            container.style.filter = 'brightness(' + config.bloom + ') saturate(' + (config.bloom * 0.95) + ')';
-            container.style.transition = 'filter 0.4s ease';
-        }
-
-        // Screen shake
-        if (config.shake > 0) {
-            ScreenShake.start(container, config.shake, config.duration);
-        }
-
-        // Coin particles — studio theme overrides color
-        var particleColor = config.color;
-        if (_activeStudioTheme && _activeStudioTheme.particleColor) {
-            particleColor = _activeStudioTheme.particleColor;
-        }
-        if (config.particles > 0) {
-            CoinParticleSystem.burst(container, config.particles, particleColor);
-        }
-
-        // Studio theme celebration background
-        if (_activeStudioTheme && _activeStudioTheme.celebBg) {
-            overlay.style.background = _activeStudioTheme.celebBg;
-        }
-
-        SoundHooks.trigger('win_' + tier);
-
-        _celebrationTimer = setTimeout(function() {
-            hideCelebration();
-            if (config.bloom > 0 && container) {
-                container.style.filter = '';
-            }
-        }, config.duration);
-
-        return tier;
-    }
-
-    function hideCelebration() {
-        var overlay = document.getElementById('ce-win-overlay');
-        if (overlay) overlay.remove();
-        ScreenShake.stop();
-        _celebrationTimer = null;
-    }
-
-
-    // ═══════════════════════════════════════════════════════════════════════
-    // SECTION 9: COIN PARTICLE SYSTEM
-    // ═══════════════════════════════════════════════════════════════════════
-
-    var CoinParticleSystem = {
-        _pool: [],
-        _animFrame: null,
-
-        burst: function(container, count, color) {
-            if (!container) return;
-            var rect = container.getBoundingClientRect();
-            var canvas = document.getElementById('ce-particle-canvas');
-            if (!canvas) {
-                canvas = document.createElement('canvas');
-                canvas.id = 'ce-particle-canvas';
-                canvas.style.cssText = 'position:fixed;top:0;left:0;width:100vw;height:100vh;pointer-events:none;z-index:99999;';
-                document.body.appendChild(canvas);
-            }
-            canvas.width = window.innerWidth;
-            canvas.height = window.innerHeight;
-
-            var cx = rect.left + rect.width / 2;
-            var cy = rect.top + rect.height / 2;
-
-            for (var i = 0; i < count; i++) {
-                var angle = secureRandom() * Math.PI * 2;
-                var speed = 4 + secureRandom() * 10;
-                this._pool.push({
-                    x: cx + (secureRandom() - 0.5) * rect.width * 0.6,
-                    y: cy + (secureRandom() - 0.5) * rect.height * 0.3,
-                    vx: Math.cos(angle) * speed,
-                    vy: -Math.abs(Math.sin(angle)) * speed - 3,
-                    size: 4 + secureRandom() * 8,
-                    alpha: 1,
-                    color: color || '#FFD700',
-                    rotation: secureRandom() * 360,
-                    rotSpeed: (secureRandom() - 0.5) * 12,
-                    gravity: 0.25 + secureRandom() * 0.15,
-                    life: 1,
-                    shimmer: secureRandom() > 0.5
-                });
-            }
-
-            if (!this._animFrame) this._animate();
-        },
-
-        _animate: function() {
-            var canvas = document.getElementById('ce-particle-canvas');
-            if (!canvas || this._pool.length === 0) {
-                if (canvas) {
-                    var ctx = canvas.getContext('2d');
-                    ctx.clearRect(0, 0, canvas.width, canvas.height);
-                }
-                this._animFrame = null;
-                return;
-            }
-            var ctx = canvas.getContext('2d');
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-            var alive = [];
-            for (var i = 0; i < this._pool.length; i++) {
-                var p = this._pool[i];
-                p.vy += p.gravity;
-                p.x += p.vx;
-                p.y += p.vy;
-                p.vx *= 0.995;
-                p.rotation += p.rotSpeed;
-                p.life -= 0.012;
-                p.alpha = Math.max(0, p.life);
-
-                if (p.life > 0 && p.y < canvas.height + 20) {
-                    alive.push(p);
-                    ctx.save();
-                    ctx.globalAlpha = p.alpha;
-                    ctx.translate(p.x, p.y);
-                    ctx.rotate(p.rotation * Math.PI / 180);
-
-                    ctx.fillStyle = p.color;
-                    ctx.beginPath();
-                    ctx.ellipse(0, 0, p.size, p.size * 0.7, 0, 0, Math.PI * 2);
-                    ctx.fill();
-
-                    ctx.strokeStyle = 'rgba(0,0,0,0.2)';
-                    ctx.lineWidth = 0.5;
-                    ctx.stroke();
-
-                    ctx.fillStyle = 'rgba(255,255,255,' + (p.shimmer ? '0.5' : '0.3') + ')';
-                    ctx.beginPath();
-                    ctx.ellipse(-p.size * 0.2, -p.size * 0.15, p.size * 0.35, p.size * 0.2, -0.3, 0, Math.PI * 2);
-                    ctx.fill();
-
-                    ctx.restore();
-                }
-            }
-            this._pool = alive;
-            var self = this;
-            this._animFrame = requestAnimationFrame(function() { self._animate(); });
-        },
-
-        clear: function() {
-            this._pool = [];
-            var canvas = document.getElementById('ce-particle-canvas');
-            if (canvas) {
-                var ctx = canvas.getContext('2d');
-                ctx.clearRect(0, 0, canvas.width, canvas.height);
-            }
-            if (this._animFrame) {
-                cancelAnimationFrame(this._animFrame);
-                this._animFrame = null;
-            }
-        }
-    };
-
-
-    // ═══════════════════════════════════════════════════════════════════════
-    // SECTION 10: SCREEN SHAKE SYSTEM
-    // ═══════════════════════════════════════════════════════════════════════
-
-    var ScreenShake = {
-        _animFrame: null,
-        _container: null,
-        _intensity: 0,
-        _startTime: 0,
-        _duration: 0,
-
-        start: function(container, intensity, duration) {
-            this.stop();
-            this._container = container;
-            this._intensity = intensity;
-            this._startTime = performance.now();
-            this._duration = duration || 300;
-            this._animate();
-        },
-
-        _animate: function() {
-            var now = performance.now();
-            var elapsed = now - this._startTime;
-            if (elapsed > this._duration || !this._container) {
-                this.stop();
-                return;
-            }
-
-            var progress = elapsed / this._duration;
-            var decay = 1 - progress;
-            var currentIntensity = this._intensity * decay;
-
-            var x = (secureRandom() - 0.5) * 2 * currentIntensity;
-            var y = (secureRandom() - 0.5) * 2 * currentIntensity;
-            this._container.style.transform = 'translate(' + x.toFixed(1) + 'px, ' + y.toFixed(1) + 'px)';
-
-            var self = this;
-            this._animFrame = requestAnimationFrame(function() { self._animate(); });
-        },
-
-        stop: function() {
-            if (this._animFrame) {
-                cancelAnimationFrame(this._animFrame);
-                this._animFrame = null;
-            }
-            if (this._container) {
-                this._container.style.transform = '';
-                this._container = null;
-            }
-        }
-    };
-
-
-    // ═══════════════════════════════════════════════════════════════════════
-    // SECTION 11: ANTICIPATION ANIMATION
-    // ═══════════════════════════════════════════════════════════════════════
-
-    var Anticipation = {
-        _active: false,
-
-        check: function(grid, game) {
-            if (!grid || !grid[0] || !grid[1]) return false;
-            if (grid.length < 3) return false;
-
-            var rows = grid[0].length;
-            for (var r = 0; r < rows; r++) {
-                var sym0 = grid[0][r];
-                var sym1 = grid[1][r];
-                if (sym0 === sym1 || isWild(sym0, game) || isWild(sym1, game)) {
-                    var effectiveSym = isWild(sym0, game) ? sym1 : sym0;
-                    return { symbol: effectiveSym, row: r, startReel: 2 };
-                }
-            }
-            return false;
-        },
-
-        apply: function(reelElements, anticipationData) {
-            if (!anticipationData || !reelElements) return;
-            this._active = true;
-            var startReel = anticipationData.startReel || 2;
-
-            for (var i = startReel; i < reelElements.length; i++) {
-                var reel = reelElements[i];
-                if (reel) {
-                    reel.classList.add('ce-anticipation');
-                    reel.style.setProperty('--ce-antic-delay', ((i - startReel) * 0.4) + 's');
-                }
-            }
-
-            SoundHooks.trigger('anticipation');
-        },
-
-        clear: function(reelElements) {
-            this._active = false;
-            if (!reelElements) return;
-            for (var i = 0; i < reelElements.length; i++) {
-                if (reelElements[i]) {
-                    reelElements[i].classList.remove('ce-anticipation');
-                }
-            }
-        },
-
-        isActive: function() { return this._active; }
-    };
-
-
-    // ═══════════════════════════════════════════════════════════════════════
-    // SECTION 12: AUTOPLAY ENGINE
-    // ═══════════════════════════════════════════════════════════════════════
-
-    var AutoplayEngine = {
-        _running: false,
-        _remaining: 0,
-        _config: {
-            totalSpins: 10,
-            stopOnFeature: true,
-            stopOnWinAbove: 0,
-            stopOnBalanceBelow: 0,
-            stopOnLossLimit: 0,
-            delayMs: 1500
-        },
-        _spinFn: null,
-        _timer: null,
-        _sessionLoss: 0,
-
-        configure: function(opts) {
-            if (opts.totalSpins) this._config.totalSpins = Math.min(Math.max(opts.totalSpins, 1), 1000);
-            if (opts.stopOnFeature !== undefined) this._config.stopOnFeature = !!opts.stopOnFeature;
-            if (opts.stopOnWinAbove !== undefined) this._config.stopOnWinAbove = parseFloat(opts.stopOnWinAbove) || 0;
-            if (opts.stopOnBalanceBelow !== undefined) this._config.stopOnBalanceBelow = parseFloat(opts.stopOnBalanceBelow) || 0;
-            if (opts.stopOnLossLimit !== undefined) this._config.stopOnLossLimit = parseFloat(opts.stopOnLossLimit) || 0;
-            if (opts.delayMs) this._config.delayMs = Math.min(Math.max(opts.delayMs, 500), 5000);
-        },
-
-        start: function(spinFunction) {
-            if (this._running) return;
-            this._spinFn = spinFunction;
-            this._remaining = this._config.totalSpins;
-            this._running = true;
-            this._sessionLoss = 0;
-            this._updateUI();
-            this._next();
-            SoundHooks.trigger('autoplay_start');
-        },
-
-        stop: function() {
-            this._running = false;
-            this._remaining = 0;
-            clearTimeout(this._timer);
-            this._updateUI();
-            SoundHooks.trigger('autoplay_stop');
-        },
-
-        isRunning: function() { return this._running; },
-
-        onSpinComplete: function(result) {
-            if (!this._running) return;
-
-            this._remaining--;
-
-            if (result && result.netResult !== undefined) {
-                if (result.netResult < 0) this._sessionLoss += Math.abs(result.netResult);
-            }
-
-            if (this._remaining <= 0) { this.stop(); return; }
-            if (this._config.stopOnFeature && result && result.isFeature) { this.stop(); return; }
-            if (this._config.stopOnWinAbove > 0 && result && result.winAmount >= this._config.stopOnWinAbove) { this.stop(); return; }
-            if (this._config.stopOnBalanceBelow > 0) {
-                var bal = (typeof window.currentBalance !== 'undefined') ? window.currentBalance : 0;
-                if (bal <= this._config.stopOnBalanceBelow) { this.stop(); return; }
-            }
-            if (this._config.stopOnLossLimit > 0 && this._sessionLoss >= this._config.stopOnLossLimit) { this.stop(); return; }
-
-            this._updateUI();
-            var self = this;
-            this._timer = setTimeout(function() { self._next(); }, this._config.delayMs);
-        },
-
-        _next: function() {
-            if (!this._running || !this._spinFn) { this.stop(); return; }
-            try { this._spinFn(); } catch(e) { console.warn('[Autoplay] Spin error:', e); this.stop(); }
-        },
-
-        _updateUI: function() {
-            var badge = document.getElementById('ce-autoplay-badge');
-            if (this._running) {
-                if (!badge) {
-                    badge = _buildElement('div', 'ce-autoplay-badge');
-                    badge.id = 'ce-autoplay-badge';
-                    var spinBtn = document.querySelector('.spin-btn') || document.querySelector('#spinBtn');
-                    if (spinBtn && spinBtn.parentNode) spinBtn.parentNode.appendChild(badge);
-                }
-                if (badge) badge.textContent = this._remaining + ' spins';
-            } else {
-                if (badge) badge.remove();
-            }
-        }
-    };
-
-
-    // ═══════════════════════════════════════════════════════════════════════
-    // SECTION 13: BET LEVEL MANAGEMENT
-    // ═══════════════════════════════════════════════════════════════════════
-
-    var BetManager = {
-        _levels: [0.20, 0.50, 1.00, 2.00, 5.00, 10.00, 20.00, 50.00, 100.00],
-        _currentIndex: 2,
-        _minBet: 0.20,
-        _maxBet: 100.00,
-        _onChange: null,
-
-        init: function(gameConfig) {
-            if (gameConfig) {
-                this._minBet = gameConfig.minBet || 0.20;
-                this._maxBet = gameConfig.maxBet || 100.00;
-                var self = this;
-                this._levels = [0.20, 0.50, 1.00, 2.00, 5.00, 10.00, 20.00, 50.00, 100.00].filter(function(b) {
-                    return b >= self._minBet && b <= self._maxBet;
-                });
-                if (this._levels.length === 0) this._levels = [this._minBet];
-                this._currentIndex = Math.min(2, this._levels.length - 1);
-            }
-        },
-
-        current: function() { return this._levels[this._currentIndex]; },
-
-        increase: function() {
-            if (this._currentIndex < this._levels.length - 1) {
-                this._currentIndex++;
-                if (this._onChange) this._onChange(this.current());
-            }
-            return this.current();
-        },
-
-        decrease: function() {
-            if (this._currentIndex > 0) {
-                this._currentIndex--;
-                if (this._onChange) this._onChange(this.current());
-            }
-            return this.current();
-        },
-
-        setMax: function() {
-            this._currentIndex = this._levels.length - 1;
-            if (this._onChange) this._onChange(this.current());
-            return this.current();
-        },
-
-        setMin: function() {
-            this._currentIndex = 0;
-            if (this._onChange) this._onChange(this.current());
-            return this.current();
-        },
-
-        getLevels: function() { return this._levels.slice(); },
-
-        onChange: function(fn) { this._onChange = fn; }
-    };
-
-
-    // ═══════════════════════════════════════════════════════════════════════
-    // SECTION 14: SESSION TRACKER
-    // ═══════════════════════════════════════════════════════════════════════
-
-    var SessionTracker = {
-        _data: {
-            spinsPlayed: 0,
-            totalWagered: 0,
-            totalWon: 0,
-            biggestWin: 0,
-            biggestMultiplier: 0,
-            startTime: Date.now(),
-            currentStreak: 0,
-            longestWinStreak: 0,
-            longestLossStreak: 0,
-            currentLossStreak: 0,
-            featuresTriggered: 0,
-            gamesPlayed: {}
-        },
-
-        reset: function() {
-            this._data = {
-                spinsPlayed: 0, totalWagered: 0, totalWon: 0, biggestWin: 0,
-                biggestMultiplier: 0, startTime: Date.now(), currentStreak: 0,
-                longestWinStreak: 0, longestLossStreak: 0, currentLossStreak: 0,
-                featuresTriggered: 0, gamesPlayed: {}
-            };
-        },
-
-        recordSpin: function(bet, win, isFeature, gameId) {
-            this._data.spinsPlayed++;
-            this._data.totalWagered += bet;
-            this._data.totalWon += win;
-            if (win > this._data.biggestWin) this._data.biggestWin = win;
-            if (bet > 0 && (win / bet) > this._data.biggestMultiplier) {
-                this._data.biggestMultiplier = win / bet;
-            }
-            if (isFeature) this._data.featuresTriggered++;
-
-            if (gameId) {
-                if (!this._data.gamesPlayed[gameId]) {
-                    this._data.gamesPlayed[gameId] = { spins: 0, wagered: 0, won: 0 };
-                }
-                this._data.gamesPlayed[gameId].spins++;
-                this._data.gamesPlayed[gameId].wagered += bet;
-                this._data.gamesPlayed[gameId].won += win;
-            }
-
-            if (win > 0) {
-                this._data.currentStreak++;
-                this._data.currentLossStreak = 0;
-                if (this._data.currentStreak > this._data.longestWinStreak) {
-                    this._data.longestWinStreak = this._data.currentStreak;
-                }
-            } else {
-                this._data.currentLossStreak++;
-                this._data.currentStreak = 0;
-                if (this._data.currentLossStreak > this._data.longestLossStreak) {
-                    this._data.longestLossStreak = this._data.currentLossStreak;
-                }
-            }
-        },
-
-        getStats: function() {
-            var elapsed = Date.now() - this._data.startTime;
-            return {
-                spinsPlayed: this._data.spinsPlayed,
-                totalWagered: this._data.totalWagered,
-                totalWon: this._data.totalWon,
-                netResult: this._data.totalWon - this._data.totalWagered,
-                biggestWin: this._data.biggestWin,
-                biggestMultiplier: this._data.biggestMultiplier,
-                sessionRTP: this._data.totalWagered > 0 ? (this._data.totalWon / this._data.totalWagered * 100) : 0,
-                playTime: Math.floor(elapsed / 60000),
-                avgBet: this._data.spinsPlayed > 0 ? (this._data.totalWagered / this._data.spinsPlayed) : 0,
-                winRate: this._data.spinsPlayed > 0 ? (this._data.currentStreak / this._data.spinsPlayed * 100) : 0,
-                longestWinStreak: this._data.longestWinStreak,
-                longestLossStreak: this._data.longestLossStreak,
-                featuresTriggered: this._data.featuresTriggered,
-                gamesPlayed: this._data.gamesPlayed
-            };
-        },
-
-        getTimePlayed: function() {
-            var mins = Math.floor((Date.now() - this._data.startTime) / 60000);
-            if (mins < 60) return mins + 'm';
-            return Math.floor(mins / 60) + 'h ' + (mins % 60) + 'm';
-        },
-
-        getCurrentLossStreak: function() {
-            return this._data.currentLossStreak;
-        }
-    };
-
-
-    // ═══════════════════════════════════════════════════════════════════════
-    // SECTION 15: WIN LINE FLASH
-    // ═══════════════════════════════════════════════════════════════════════
-
-    var WinLineFlash = {
-        _elements: [],
-        _canvas: null,
-
-        highlight: function(positions, container) {
-            this.clear();
-            if (!positions || !container) return;
-
-            for (var i = 0; i < positions.length; i++) {
-                var pos = positions[i];
-                var cell = container.querySelector('[data-col="' + pos.col + '"][data-row="' + pos.row + '"]') ||
-                           document.getElementById('cell_' + pos.col + '_' + pos.row);
-                if (cell) {
-                    cell.classList.add('ce-win-cell');
-                    this._elements.push(cell);
-                }
-            }
-        },
-
-        drawLines: function(winLines, container) {
-            if (!winLines || winLines.length === 0 || !container) return;
-
-            var canvas = document.getElementById('ce-winline-canvas');
-            if (!canvas) {
-                canvas = document.createElement('canvas');
-                canvas.id = 'ce-winline-canvas';
-                canvas.style.cssText = 'position:absolute;top:0;left:0;pointer-events:none;z-index:20;border-radius:inherit;';
-                if (getComputedStyle(container).position === 'static') container.style.position = 'relative';
-                container.appendChild(canvas);
-            }
-
-            var rect = container.getBoundingClientRect();
-            canvas.width = rect.width;
-            canvas.height = rect.height;
-            this._canvas = canvas;
-
-            var LINE_COLORS = ['#fbbf24','#a78bfa','#34d399','#60a5fa','#f472b6','#fb923c','#e879f9'];
-
-            function getCellCenter(col, row) {
-                var cell = document.getElementById('cell_' + col + '_' + row);
-                if (!cell) return null;
-                var cr = cell.getBoundingClientRect();
-                return { x: cr.left - rect.left + cr.width / 2, y: cr.top - rect.top + cr.height / 2 };
-            }
-
-            var ctx = canvas.getContext('2d');
-            var seq = [1, 0, 1, 0, 1, 0.8, 0.5, 0.2, 0];
-            var step = 0;
-
-            function drawFrame(alpha) {
-                ctx.clearRect(0, 0, canvas.width, canvas.height);
-                ctx.globalAlpha = alpha;
-                for (var idx = 0; idx < winLines.length; idx++) {
-                    var win = winLines[idx];
-                    var color = LINE_COLORS[idx % LINE_COLORS.length];
-                    var points = win.cells.map(function(pair) { return getCellCenter(pair[0], pair[1]); }).filter(Boolean);
-                    if (points.length < 2) continue;
-                    ctx.beginPath();
-                    ctx.moveTo(points[0].x, points[0].y);
-                    for (var p = 1; p < points.length; p++) ctx.lineTo(points[p].x, points[p].y);
-                    ctx.strokeStyle = color;
-                    ctx.lineWidth = 3;
-                    ctx.shadowColor = color;
-                    ctx.shadowBlur = 14;
-                    ctx.lineCap = 'round';
-                    ctx.lineJoin = 'round';
-                    ctx.stroke();
-                    for (var d = 0; d < points.length; d++) {
-                        if (d === 0 || d === points.length - 1) {
-                            ctx.beginPath();
-                            ctx.arc(points[d].x, points[d].y, 5, 0, Math.PI * 2);
-                            ctx.fillStyle = color;
-                            ctx.fill();
-                        }
-                    }
-                }
-                ctx.globalAlpha = 1;
-                ctx.shadowBlur = 0;
-            }
-
-            function tick() {
-                if (step >= seq.length) { ctx.clearRect(0, 0, canvas.width, canvas.height); return; }
-                drawFrame(seq[step]);
-                step++;
-                setTimeout(tick, step <= 4 ? 160 : 220);
-            }
-            setTimeout(tick, 80);
-        },
-
-        clear: function() {
-            for (var i = 0; i < this._elements.length; i++) {
-                this._elements[i].classList.remove('ce-win-cell');
-            }
-            this._elements = [];
-            if (this._canvas) {
-                var ctx = this._canvas.getContext('2d');
-                ctx.clearRect(0, 0, this._canvas.width, this._canvas.height);
-            }
-        }
-    };
-
-
-    // ═══════════════════════════════════════════════════════════════════════
-    // SECTION 16: IDLE ATTRACT LOOP
-    // ═══════════════════════════════════════════════════════════════════════
-
-    var IdleAttract = {
-        _timer: null,
-        _active: false,
-        _timeout: 30000,
-        _demoReelTimer: null,
-
-        start: function() {
-            this.reset();
-        },
-
-        reset: function() {
-            if (this._active) this.stop();
-            clearTimeout(this._timer);
-            var self = this;
-            this._timer = setTimeout(function() { self._activate(); }, this._timeout);
-        },
-
-        stop: function() {
-            this._active = false;
-            clearTimeout(this._timer);
-            clearInterval(this._demoReelTimer);
-            var overlay = document.getElementById('ce-attract-overlay');
-            if (overlay) overlay.remove();
-        },
-
-        _activate: function() {
-            this._active = true;
-            var container = document.querySelector('.reels-frame') || document.querySelector('.reels-container') || document.getElementById('reels');
-            if (!container) return;
-
-            // Build attract overlay using safe DOM methods
-            var overlay = _buildElement('div', 'ce-attract-overlay');
-            overlay.id = 'ce-attract-overlay';
-            var content = _buildElement('div', 'ce-attract-content');
-            var logo = _buildElement('div', 'ce-attract-logo', 'Matrix Spins');
-            var text = _buildElement('div', 'ce-attract-text', 'Tap to Play');
-            var shimmer = _buildElement('div', 'ce-attract-shimmer');
-            content.appendChild(logo);
-            content.appendChild(text);
-            content.appendChild(shimmer);
-            overlay.appendChild(content);
-            container.style.position = 'relative';
-            container.appendChild(overlay);
-
-            var self = this;
-            this._demoReelTimer = setInterval(function() {
-                if (!self._active) return;
-                CoinParticleSystem.burst(container, 5, '#FFD700');
-            }, 3000);
-
-            overlay.addEventListener('click', function() {
-                IdleAttract.reset();
-            });
-
-            SoundHooks.trigger('attract_mode');
-        },
-
-        isActive: function() { return this._active; },
-
-        setTimeout: function(ms) {
-            this._timeout = Math.max(5000, ms);
-        }
-    };
-
-    if (!window._ceIdleListenersAttached) {
-        window._ceIdleListenersAttached = true;
-        ['click', 'touchstart', 'keydown', 'mousemove'].forEach(function(evt) {
-            document.addEventListener(evt, function() {
-                if (IdleAttract._timer) IdleAttract.reset();
-            }, { passive: true });
+    async _spin(useFreeSpin) {
+      if (this.state.spinning) return;
+      this.state.spinning = true;
+      this.spinBtn.disabled = true;
+      this.winStrip.textContent = '\u00A0';
+
+      const api = window.MatrixSpinsAPI;
+      const g = this.state.game;
+      const symbols = g.symbols;
+      const cells = Array.from(this.reelGrid.querySelectorAll('.ce-cell'));
+      cells.forEach(c => c.classList.remove('highlight'));
+
+      const rollInterval = setInterval(() => {
+        cells.forEach((c, i) => {
+          const s = symbols[(Math.random() * symbols.length) | 0];
+          this._renderCell(c, s, (i / g.rows) | 0, i % g.rows);
         });
-    }
+      }, 80);
 
+      let result;
+      try {
+        result = await api.spin(this.gameId, useFreeSpin ? 0 : this.state.betCents, { useFreeSpin });
+      } catch (err) {
+        clearInterval(rollInterval);
+        this.state.spinning = false;
+        this.spinBtn.disabled = false;
+        this.winStrip.style.color = '#ffb3b3';
+        this.winStrip.textContent = err.message || 'Spin failed.';
+        setTimeout(() => { this.winStrip.style.color = this._primary; }, 2000);
+        return;
+      }
 
-    // ═══════════════════════════════════════════════════════════════════════
-    // SECTION 17: MOBILE RESPONSIVE LAYOUT ENGINE
-    // ═══════════════════════════════════════════════════════════════════════
-
-    var MobileLayout = {
-        _isPortrait: false,
-        _isMobile: false,
-        _isTablet: false,
-        _breakpoints: { mobile: 768, tablet: 1024 },
-        _onChangeCallbacks: [],
-
-        init: function() {
-            this._check();
-            var self = this;
-            window.addEventListener('resize', function() { self._check(); });
-            window.addEventListener('orientationchange', function() {
-                setTimeout(function() { self._check(); }, 100);
-            });
-        },
-
-        _check: function() {
-            var prevMobile = this._isMobile;
-            var prevPortrait = this._isPortrait;
-
-            this._isMobile = window.innerWidth <= this._breakpoints.mobile;
-            this._isTablet = window.innerWidth > this._breakpoints.mobile && window.innerWidth <= this._breakpoints.tablet;
-            this._isPortrait = window.innerHeight > window.innerWidth;
-
-            document.body.classList.toggle('ce-mobile', this._isMobile);
-            document.body.classList.toggle('ce-tablet', this._isTablet);
-            document.body.classList.toggle('ce-desktop', !this._isMobile && !this._isTablet);
-            document.body.classList.toggle('ce-portrait', this._isPortrait);
-            document.body.classList.toggle('ce-landscape', !this._isPortrait);
-
-            if (prevMobile !== this._isMobile || prevPortrait !== this._isPortrait) {
-                for (var i = 0; i < this._onChangeCallbacks.length; i++) {
-                    this._onChangeCallbacks[i]({
-                        isMobile: this._isMobile,
-                        isTablet: this._isTablet,
-                        isPortrait: this._isPortrait
-                    });
-                }
-            }
-        },
-
-        isMobile: function() { return this._isMobile; },
-        isTablet: function() { return this._isTablet; },
-        isPortrait: function() { return this._isPortrait; },
-
-        getOptimalCellSize: function(cols, rows) {
-            var vw = window.innerWidth;
-            var vh = window.innerHeight;
-            var available = this._isMobile ?
-                { width: vw * 0.95, height: vh * 0.55 } :
-                { width: Math.min(vw * 0.7, 800), height: Math.min(vh * 0.6, 600) };
-
-            var cellW = Math.floor(available.width / cols);
-            var cellH = Math.floor(available.height / rows);
-            var size = Math.min(cellW, cellH);
-
-            return {
-                width: size,
-                height: size,
-                fontSize: Math.max(12, Math.floor(size * 0.45)),
-                gap: Math.max(2, Math.floor(size * 0.05))
-            };
-        },
-
-        onChange: function(fn) {
-            this._onChangeCallbacks.push(fn);
+      for (let r = 0; r < g.reels; r++) {
+        await new Promise((resolve) => setTimeout(resolve, 240));
+        const column = result.reels[r];
+        for (let y = 0; y < g.rows; y++) {
+          const cellIdx = r * g.rows + y;
+          this._renderCell(cells[cellIdx], column[y], r, y);
         }
-    };
+      }
+      clearInterval(rollInterval);
 
+      const winPositions = new Set();
+      (result.lineWins || []).forEach(w => w.positions.forEach(([r, y]) => winPositions.add(`${r}-${y}`)));
+      if (result.scatterWin) result.scatterWin.positions.forEach(([r, y]) => winPositions.add(`${r}-${y}`));
+      winPositions.forEach((k) => {
+        const [r, y] = k.split('-').map(Number);
+        const cell = cells[r * g.rows + y];
+        if (cell) cell.classList.add('highlight');
+      });
 
-    // ═══════════════════════════════════════════════════════════════════════
-    // SECTION 18: SOUND HOOK SYSTEM
-    // ═══════════════════════════════════════════════════════════════════════
+      if (result.payoutCents > 0) {
+        this.winStrip.textContent = `Win ${fmt(result.payoutCents)}${result.multiplier !== 1 ? `  ×${result.multiplier}` : ''}`;
+      } else {
+        this.winStrip.textContent = 'No win — try again';
+        this.winStrip.style.opacity = .6;
+        setTimeout(() => { this.winStrip.style.opacity = 1; }, 400);
+      }
 
-    var SoundHooks = {
-        _hooks: {},
-        _muted: false,
+      if (result.freeSpinsAwarded > 0) {
+        this.winStrip.textContent += `  •  +${result.freeSpinsAwarded} free spins!`;
+      }
 
-        register: function(label, callback) {
-            this._hooks[label] = callback;
-        },
+      if (typeof result.balanceAfterCents === 'number') {
+        this.state.balanceCents = result.balanceAfterCents;
+      } else {
+        const b = await api.getBalance();
+        this.state.balanceCents = b.availableCents;
+      }
+      this._updateBalanceChip();
 
-        trigger: function(label, data) {
-            if (this._muted) return;
-            if (this._hooks[label]) {
-                try { this._hooks[label](data); } catch(e) {}
-            }
-            if (typeof window.SoundManager !== 'undefined' && window.SoundManager.play) {
-                try { window.SoundManager.play(label); } catch(e) {}
-            }
-        },
+      try {
+        const fs = await api.getFreeSpins(this.gameId);
+        this.state.freeSpinsAvailable = (fs.grants || []).reduce((a, gr) => a + gr.remaining, 0);
+        this._renderFreeSpins();
+      } catch {}
 
-        mute: function() { this._muted = true; },
-        unmute: function() { this._muted = false; },
-        isMuted: function() { return this._muted; },
+      if (result.fairness) {
+        this.state.lastSpin = result;
+        this._updateFairnessPanel(result.fairness, result.spinId);
+      }
 
-        registerBatch: function(hookMap) {
-            for (var key in hookMap) {
-                if (hookMap.hasOwnProperty(key)) {
-                    this._hooks[key] = hookMap[key];
-                }
-            }
-        }
-    };
-
-
-    // ═══════════════════════════════════════════════════════════════════════
-    // SECTION 19: STUDIO THEME INJECTION
-    // ═══════════════════════════════════════════════════════════════════════
-
-    var _studioThemes = {
-        'nebula-gaming':  { particleColor: '#00e5ff', accentGlow: 'rgba(0,229,255,0.4)',   celebBg: 'radial-gradient(circle,rgba(0,229,255,.12),transparent 70%)',  reelBorder: '#00e5ff', fontFamily: "'Orbitron', sans-serif" },
-        'golden-reels':   { particleColor: '#ffd700', accentGlow: 'rgba(255,215,0,0.4)',    celebBg: 'radial-gradient(circle,rgba(255,215,0,.12),transparent 70%)',   reelBorder: '#ffd700', fontFamily: "'Playfair Display', serif" },
-        'mythic-forge':   { particleColor: '#b388ff', accentGlow: 'rgba(179,136,255,0.4)',  celebBg: 'radial-gradient(circle,rgba(179,136,255,.12),transparent 70%)', reelBorder: '#b388ff', fontFamily: "'Cinzel', serif" },
-        'ironclad':       { particleColor: '#ff6d00', accentGlow: 'rgba(255,109,0,0.4)',    celebBg: 'radial-gradient(circle,rgba(255,109,0,.12),transparent 70%)',   reelBorder: '#ff6d00', fontFamily: "'Rajdhani', sans-serif" },
-        'shadow-works':   { particleColor: '#69f0ae', accentGlow: 'rgba(105,240,174,0.4)',  celebBg: 'radial-gradient(circle,rgba(105,240,174,.12),transparent 70%)', reelBorder: '#69f0ae', fontFamily: "'Share Tech Mono', monospace" },
-        'wild-frontier':  { particleColor: '#ff4081', accentGlow: 'rgba(255,64,129,0.4)',   celebBg: 'radial-gradient(circle,rgba(255,64,129,.12),transparent 70%)',  reelBorder: '#ff4081', fontFamily: "'Bungee', cursive" },
-        'cascade-labs':   { particleColor: '#ffd740', accentGlow: 'rgba(255,215,64,0.4)',   celebBg: 'radial-gradient(circle,rgba(255,215,64,.12),transparent 70%)',  reelBorder: '#ffd740', fontFamily: "'Chakra Petch', sans-serif" },
-        'dragon-pearl':   { particleColor: '#40c4ff', accentGlow: 'rgba(64,196,255,0.4)',   celebBg: 'radial-gradient(circle,rgba(64,196,255,.12),transparent 70%)',  reelBorder: '#40c4ff', fontFamily: "'Ma Shan Zheng', cursive" }
-    };
-
-    var _activeStudioTheme = null;
-    var _activeStudioId = null;
-
-    function setStudioTheme(studioId) {
-        _activeStudioTheme = _studioThemes[studioId] || null;
-        _activeStudioId = studioId || null;
-
-        if (_activeStudioTheme) {
-            var root = document.documentElement;
-            root.style.setProperty('--ce-studio-particle', _activeStudioTheme.particleColor);
-            root.style.setProperty('--ce-studio-glow', _activeStudioTheme.accentGlow);
-            root.style.setProperty('--ce-studio-border', _activeStudioTheme.reelBorder);
-        }
+      this.state.spinning = false;
+      this.spinBtn.disabled = false;
     }
 
-    function getStudioTheme() {
-        return _activeStudioTheme;
+    _renderFairnessPanel() {
+      const primary = this._primary;
+      const box = $el('details', { style: {
+        marginTop: '1.6rem', maxWidth: 860, marginLeft: 'auto', marginRight: 'auto',
+        background: 'rgba(0,0,0,.25)', border: `1px solid ${primary}33`,
+        borderRadius: '10px', padding: '.7rem 1rem', fontSize: '.85rem',
+      }});
+      box.appendChild($el('summary', { style: { cursor: 'pointer', color: primary, fontWeight: 600 } }, 'Provably fair — verify this spin'));
+      this.fairnessBody = $el('div', { style: { marginTop: '.6rem', display: 'grid', gridTemplateColumns: 'auto 1fr', gap: '.3rem .8rem', fontFamily: 'monospace', opacity: .9 } });
+      box.appendChild(this.fairnessBody);
+      this._updateFairnessPanel({
+        serverSeedHash: this.state.seeds?.serverSeedHash || '',
+        clientSeed: this.state.seeds?.clientSeed || '',
+        nonce: this.state.seeds?.nonce || 0,
+      }, null);
+      box.appendChild($el('p', { style: { marginTop: '.6rem', fontSize: '.78rem', opacity: .7 } },
+        'When you rotate the server seed, the old seed is revealed. Combine (revealed seed, client seed, nonce) with HMAC-SHA256 to reproduce any past spin and verify fairness.'));
+      return box;
     }
 
-    function getStudioId() {
-        return _activeStudioId;
+    _updateFairnessPanel(fairness, spinId) {
+      if (!this.fairnessBody) return;
+      this.fairnessBody.innerHTML = '';
+      const rows = [
+        ['Server seed hash', fairness.serverSeedHash || '—'],
+        ['Client seed', fairness.clientSeed || '—'],
+        ['Nonce', String(fairness.nonce ?? '—')],
+      ];
+      if (spinId) rows.push(['Spin id', spinId]);
+      for (const [k, v] of rows) {
+        this.fairnessBody.appendChild($el('div', { style: { opacity: .6 } }, k));
+        this.fairnessBody.appendChild($el('div', { style: { wordBreak: 'break-all' } }, v));
+      }
     }
+  }
 
+  function shade(hex, pct) {
+    const c = (hex || '#D4A853').replace('#','');
+    const expanded = c.length === 3 ? c.split('').map(ch => ch + ch).join('') : c;
+    const n = parseInt(expanded, 16) || 0;
+    let r = (n >> 16) & 0xff, g = (n >> 8) & 0xff, b = n & 0xff;
+    const t = pct > 0 ? 255 : 0;
+    const f = Math.abs(pct) / 100;
+    r = Math.round((t - r) * f) + r;
+    g = Math.round((t - g) * f) + g;
+    b = Math.round((t - b) * f) + b;
+    return `#${((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1)}`;
+  }
 
-    // ═══════════════════════════════════════════════════════════════════════
-    // SECTION 20: CSS INJECTION
-    // ═══════════════════════════════════════════════════════════════════════
-
-    function injectStyles() {
-        if (document.getElementById('ce-engine-styles-v3')) return;
-        var style = document.createElement('style');
-        style.id = 'ce-engine-styles-v3';
-        style.textContent = [
-            '.ce-win-overlay{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:1000;pointer-events:none;animation:ce-fade-in .3s ease;}',
-            '.ce-win-label{font-size:2.5rem;font-weight:900;text-transform:uppercase;text-shadow:0 0 20px currentColor,0 4px 8px rgba(0,0,0,.5);animation:ce-pulse 0.6s ease infinite alternate;}',
-            '.ce-win-amount{font-size:1.8rem;font-weight:700;color:#fff;text-shadow:0 2px 8px rgba(0,0,0,.6);margin-top:.5rem;}',
-            '.ce-win-small .ce-win-label{color:#FFD700;font-size:1.8rem;}',
-            '.ce-win-medium .ce-win-label{color:#FF6B35;font-size:2.2rem;}',
-            '.ce-win-big .ce-win-label{color:#E91E63;font-size:2.8rem;}',
-            '.ce-win-mega .ce-win-label{color:#9C27B0;font-size:3.2rem;animation:ce-mega-pulse 0.4s ease infinite alternate;}',
-            '.ce-win-jackpot .ce-win-label{color:#FF0000;font-size:3.8rem;animation:ce-jackpot-pulse 0.3s ease infinite alternate;}',
-            '.ce-win-jackpot{background:radial-gradient(circle,rgba(255,0,0,.15),transparent 70%);}',
-            '.ce-win-mega{background:radial-gradient(circle,rgba(156,39,176,.12),transparent 70%);}',
-            '.ce-win-big{background:radial-gradient(circle,rgba(233,30,99,.08),transparent 70%);}',
-            '.ce-shake{animation:ce-screen-shake 0.15s linear infinite;}',
-            '.ce-win-cell{animation:ce-cell-flash 0.5s ease infinite alternate !important;box-shadow:0 0 15px 3px rgba(255,215,0,.6) !important;z-index:10;position:relative;}',
-            '.ce-anticipation{animation:ce-anticipation-glow 0.8s ease infinite alternate;}',
-            '.ce-attract-overlay{position:absolute;inset:0;background:rgba(0,0,0,.7);display:flex;align-items:center;justify-content:center;z-index:900;cursor:pointer;animation:ce-fade-in .5s ease;backdrop-filter:blur(4px);}',
-            '.ce-attract-content{text-align:center;}',
-            '.ce-attract-logo{font-size:2.5rem;font-weight:900;background:linear-gradient(135deg,#FFD700,#FF6B35,#E91E63);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;animation:ce-pulse 2s ease infinite alternate;letter-spacing:0.1em;}',
-            '.ce-attract-text{color:rgba(255,255,255,.7);font-size:1.1rem;margin-top:1rem;animation:ce-blink 1.5s ease infinite;}',
-            '.ce-attract-shimmer{position:absolute;inset:0;background:linear-gradient(45deg,transparent 40%,rgba(255,215,0,.05) 50%,transparent 60%);animation:ce-shimmer 3s ease infinite;}',
-            '.ce-autoplay-badge{position:absolute;top:-8px;right:-8px;background:#FF6B35;color:#fff;font-size:.7rem;font-weight:700;padding:2px 8px;border-radius:10px;z-index:10;animation:ce-pulse 1s ease infinite alternate;}',
-            '.reel-near-miss-tension{animation:ce-reel-tension-pulse 0.4s ease infinite alternate;}',
-            '.near-miss-decel{transition:transform 1100ms cubic-bezier(0.16,1,0.3,1) !important;}',
-            '@keyframes ce-fade-in{from{opacity:0}to{opacity:1}}',
-            '@keyframes ce-pulse{from{transform:scale(1)}to{transform:scale(1.08)}}',
-            '@keyframes ce-mega-pulse{from{transform:scale(1);filter:brightness(1)}to{transform:scale(1.15);filter:brightness(1.3)}}',
-            '@keyframes ce-jackpot-pulse{from{transform:scale(1);filter:brightness(1) hue-rotate(0)}to{transform:scale(1.2);filter:brightness(1.5) hue-rotate(15deg)}}',
-            '@keyframes ce-screen-shake{0%{transform:translate(0)}25%{transform:translate(var(--ce-shake-intensity),calc(var(--ce-shake-intensity)*-0.5))}50%{transform:translate(calc(var(--ce-shake-intensity)*-0.5),var(--ce-shake-intensity))}75%{transform:translate(var(--ce-shake-intensity),0)}100%{transform:translate(0)}}',
-            '@keyframes ce-cell-flash{from{background:rgba(255,215,0,.15)}to{background:rgba(255,215,0,.4)}}',
-            '@keyframes ce-anticipation-glow{from{box-shadow:inset 0 0 20px rgba(255,165,0,.2)}to{box-shadow:inset 0 0 40px rgba(255,165,0,.5)}}',
-            '@keyframes ce-blink{0%,100%{opacity:.4}50%{opacity:1}}',
-            '@keyframes ce-shimmer{0%{background-position:-200% 0}100%{background-position:200% 0}}',
-            '@keyframes ce-reel-tension-pulse{from{box-shadow:0 0 10px rgba(255,165,0,.3)}to{box-shadow:0 0 25px rgba(255,165,0,.6)}}',
-            '@media(max-width:768px){.ce-win-label{font-size:1.6rem !important;}.ce-win-amount{font-size:1.2rem !important;}.ce-attract-logo{font-size:1.8rem;}.ce-win-mega .ce-win-label{font-size:2.2rem !important;}.ce-win-jackpot .ce-win-label{font-size:2.6rem !important;}}',
-            '@media(max-width:480px){.ce-win-label{font-size:1.3rem !important;}.ce-win-amount{font-size:1rem !important;}.ce-attract-logo{font-size:1.4rem;}}',
-            '.ce-studio-border{border-color:var(--ce-studio-border,#333) !important;}',
-            '.ce-studio-glow{box-shadow:0 0 15px var(--ce-studio-glow,transparent);}',
-        ].join('\n');
-        document.head.appendChild(style);
-
-        var oldStyle = document.getElementById('ce-engine-styles');
-        if (oldStyle) oldStyle.remove();
-    }
-
-
-    // ═══════════════════════════════════════════════════════════════════════
-    // SECTION 21: ENGINE INITIALIZATION & GAME RUNNER
-    // ═══════════════════════════════════════════════════════════════════════
-
-    var _currentGame = null;
-    var _initialized = false;
-
-    function initEngine(gameConfig) {
-        _currentGame = gameConfig;
-        injectStyles();
-        MobileLayout.init();
-        BetManager.init(gameConfig);
-        SessionTracker.reset();
-        FreeSpinState.reset();
-        IdleAttract.start();
-
-        if (gameConfig && gameConfig.provider) {
-            setStudioTheme(gameConfig.provider);
-        } else if (gameConfig && gameConfig.studioId) {
-            setStudioTheme(gameConfig.studioId);
-        }
-
-        _initialized = true;
-    }
-
-    function switchGame(gameConfig) {
-        _currentGame = gameConfig;
-        BetManager.init(gameConfig);
-        FreeSpinState.reset();
-        hideCelebration();
-        CoinParticleSystem.clear();
-
-        if (gameConfig && gameConfig.provider) {
-            setStudioTheme(gameConfig.provider);
-        }
-    }
-
-    function getCurrentGame() {
-        return _currentGame;
-    }
-
-
-    // ═══════════════════════════════════════════════════════════════════════
-    // SECTION 22: PUBLIC API
-    // ═══════════════════════════════════════════════════════════════════════
-
-    window.CasinoEngine = {
-        init: initEngine,
-        switchGame: switchGame,
-        getCurrentGame: getCurrentGame,
-        version: '3.1.0',
-
-        // Weighted RNG
-        secureRandom: secureRandom,
-        weightedSymbolPick: weightedSymbolPick,
-        generateWeightedGrid: generateWeightedGrid,
-        generateSpinGrid: generateSpinGrid,
-        SYMBOL_WEIGHTS: SYMBOL_WEIGHTS,
-
-        // Payline Evaluation
-        getPaylines: getPaylines,
-        evaluatePaylines: evaluatePaylines,
-        findClusters: findClusters,
-        getPayMultiplier: getPayMultiplier,
-        capWin: capWin,
-
-        // RTP Enforcement
-        shouldAllowWin: shouldAllowWin,
-        recordSpinForRTP: recordSpinForRTP,
-        getProfitStatus: getProfitStatus,
-        TARGET_RTP: TARGET_RTP,
-
-        // Symbol Helpers
-        isWild: isWild,
-        isScatter: isScatter,
-        countScattersInGrid: countScattersInGrid,
-        countWildsInGrid: countWildsInGrid,
-
-        // Reel Physics
-        ReelPhysics: ReelPhysics,
-        smoothstep: smoothstep,
-        easeOutCubic: easeOutCubic,
-        easeOutBack: easeOutBack,
-
-        // Near Miss
-        NearMiss: NearMiss,
-
-        // Free Spins
-        FreeSpins: FreeSpinState,
-
-        // Bonus Hooks
-        BonusHooks: BonusHooks,
-
-        // Win Celebrations
-        showWinCelebration: showWinCelebration,
-        hideCelebration: hideCelebration,
-        getWinTier: getWinTier,
-        WIN_TIERS: WIN_TIERS,
-
-        // Particles
-        CoinParticles: CoinParticleSystem,
-
-        // Screen Shake
-        ScreenShake: ScreenShake,
-
-        // Anticipation
-        Anticipation: Anticipation,
-
-        // Autoplay
-        Autoplay: AutoplayEngine,
-
-        // Bet Management
-        BetManager: BetManager,
-
-        // Session Tracking
-        Session: SessionTracker,
-
-        // Win Line Flash
-        WinLineFlash: WinLineFlash,
-
-        // Idle Attract
-        IdleAttract: IdleAttract,
-
-        // Mobile Layout
-        Mobile: MobileLayout,
-
-        // Sound Hooks
-        Sound: SoundHooks,
-
-        // Studio Themes
-        setStudioTheme: setStudioTheme,
-        getStudioTheme: getStudioTheme,
-        getStudioId: getStudioId,
-        studioThemes: _studioThemes
-    };
-
-})(window);
+  window.CasinoEngine = {
+    init(containerId, gameConfig) { return new SlotGame(containerId, gameConfig); },
+  };
+})();

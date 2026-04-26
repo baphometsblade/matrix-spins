@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Eagle Sky Sovereign — Matrix Spins Casino</title>
+  <meta name="theme-color" content="#D4A853">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html, body { height: 100%; }
+    body { background: #0D0F14; color: #F0F0F5; font-family: 'Inter', sans-serif; overflow-x: hidden; }
+  </style>
+  <link rel="stylesheet" href="../css/chat-widget.css">
+  <link rel="stylesheet" href="../css/notifications.css">
+  <link rel="stylesheet" href="../css/age-gate.css">
+  <link rel="stylesheet" href="../css/search.css">
+  <link rel="stylesheet" href="../css/favorites.css">
+  <link rel="stylesheet" href="../css/session-monitor.css">
+  <link rel="stylesheet" href="../css/conversion.css">
+</head>
+<body>
+  <div id="game-container" style="width:100%;min-height:100vh;"></div>
+
+  <script src="../js/api-client.js"></script>
+  <script src="../js/casino-engine.js"></script>
+  <script>
+    const gameConfig = {
+      name: 'Eagle Sky Sovereign',
+      id: 'eagle-sky-sovereign',
+      studioTheme: {
+        id: 'wild-frontier',
+        name: 'Wild Frontier Games',
+        primaryColor: '#D2691E',
+        secondaryColor: '#228B22',
+        accentColor: '#FF8C00',
+        bgGradient: 'linear-gradient(135deg, #3E2723 0%, #4A3728 50%, #3E2723 100%)',
+        fontFamily: "'Righteous', sans-serif",
+        fontFamilyBody: "'Fredoka One', sans-serif",
+        chromeStyle: 'custom',
+        logoUrl: 'assets/studios/wild-frontier-logo.png',
+        reelBg: '#1B0F08',
+        reelBorder: '#D2691E',
+        winHighlight: '#FF8C00',
+        borderStyle: '5px solid #D2691E',
+        borderRadius: '16px',
+        boxShadow: '0 0 25px rgba(210,105,30,0.4), inset 0 0 20px rgba(34,139,34,0.15)',
+        buttonStyle: 'background: linear-gradient(180deg, #D2691E, #8B4513); border-radius: 10px; border: 2px solid #FF8C00; text-transform: uppercase; letter-spacing: 2px; font-weight: 900;',
+        spinButtonGlow: '0 0 20px rgba(210,105,30,0.6)'
+      },
+      rtp: 0.92,
+      volatility: 'low',
+      mechanic: 'Symbol Merge',
+      mechanicDesc: 'Lower-value symbols merge together to form higher-value symbols during bonus rounds.',
+      minBet: 0.2,
+      maxBet: 100,
+      betStep: 0.20,
+      reels: 5,
+      rows: 3,
+      paylines: 25,
+      symbols: ["eagle","sky","wing","cloud","mountain","nest","gold","freedom","wild","scatter"],
+      wilds: ["eagle"],
+      scatters: ["scatter"],
+      symbolWeights: {"eagle":[9.868152189023146,10.148109109724354,9.7836964071997,10.138242072501802,9.802527415889676],"sky":[8.875913656393871,8.878052419752883,9.031485114705927,8.964827879436841,8.773356196956298],"wing":[7.980770770503205,8.1972449182501,7.843952216848347,7.877319847662601,7.939008359316278],"cloud":[6.844685260569476,7.2205482498581866,7.234109295368773,7.065765717673087,7.15060422462825],"mountain":[6.059651312008441,6.186239096521547,5.905824366513287,6.103924402420777,5.848839210439857],"nest":[5.046226266775314,4.88376461744831,4.750309337860762,5.019713330609874,4.828811862132242],"gold":[3.9828519126075093,3.9695180764018443,4.032069956701475,4.040028003147348,3.9899749454998847],"freedom":[3.1004890421902824,3.0443864090111887,2.7837947133293874,3.1518945866712107,2.921186419943736],"wild":[2.186172918695647,1.9111473472931464,1.898826048215832,2.1839225144577306,1.8060555194197012],"scatter":[0.9343970783388148,1.2432123865841622,1.0904542237397374,0.8577330945979146,1.0474088790919907]},
+      paytable: {"eagle":{"3":2,"4":5,"5":15},"sky":{"3":4,"4":11,"5":34},"wing":{"3":6,"4":16,"5":52},"cloud":{"3":7,"4":22,"5":71},"mountain":{"3":9,"4":27,"5":89},"nest":{"3":11,"4":33,"5":108},"gold":{"3":13,"4":38,"5":126},"freedom":{"3":15,"4":44,"5":145},"wild":{"3":16,"4":49,"5":163},"scatter":{"3":18,"4":55,"5":182},"SCATTER":{"3":5,"4":20,"5":100}},
+      freeSpinCount: 10,
+      freeSpinMultiplier: 2,
+      onSound: function(label) { /* sound hooks ready */ }
+    };
+
+    CasinoEngine.init('game-container', gameConfig);
+  </script>
+  <script src="../js/chat-widget.js" defer></script>
+  <script src="../js/notifications.js" defer></script>
+  <script src="../js/age-gate.js" defer></script>
+  <script src="../js/cookie-consent.js" defer></script>
+  <script src="../js/search.js" defer></script>
+  <script src="../js/favorites.js" defer></script>
+  <script src="../js/session-monitor.js" defer></script>
+  <script src="../js/sound-manager.js" defer></script>
+  <script src="../js/analytics.js" defer></script>
+  <script src="../js/email-capture.js" defer></script>
+  <script src="../js/conversion.js" defer></script>
+</body>
+</html>

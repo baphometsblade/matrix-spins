@@ -1,0 +1,967 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Matrix Spins — Admin Dashboard</title>
+    <meta name="robots" content="noindex, nofollow">
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><text y='28' font-size='28'>⚙</text></svg>">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-base: #0B0D11;
+            --bg-surface: #12141A;
+            --bg-elevated: #1A1D27;
+            --bg-card: #161922;
+            --border: rgba(255,255,255,0.07);
+            --border-hover: rgba(255,255,255,0.14);
+            --text: #F0F0F5;
+            --text-secondary: #9CA3AF;
+            --text-muted: #6B7280;
+            --gold: #D4A853;
+            --gold-bright: #F0C66E;
+            --green: #4ADE80;
+            --red: #F87171;
+            --cyan: #38BDF8;
+            --violet: #A78BFA;
+            --orange: #FB923C;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Inter', -apple-system, sans-serif;
+            background: var(--bg-base);
+            color: var(--text);
+            min-height: 100vh;
+        }
+
+        /* ── LOGIN GATE ──────────────────────────────────── */
+        #loginGate {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            padding: 24px;
+        }
+
+        .login-box {
+            background: var(--bg-surface);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 40px;
+            width: 100%;
+            max-width: 400px;
+            text-align: center;
+        }
+
+        .login-box h1 {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            font-size: 22px;
+            font-weight: 800;
+            background: linear-gradient(135deg, var(--gold-bright), var(--gold));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 8px;
+        }
+
+        .login-box p { color: var(--text-muted); font-size: 14px; margin-bottom: 24px; }
+
+        .login-box input {
+            width: 100%;
+            background: var(--bg-elevated);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 12px 16px;
+            color: var(--text);
+            font-size: 14px;
+            font-family: inherit;
+            margin-bottom: 12px;
+            outline: none;
+            transition: border-color 200ms;
+        }
+
+        .login-box input:focus { border-color: var(--gold); }
+
+        .login-box button {
+            width: 100%;
+            background: linear-gradient(135deg, var(--gold-bright), var(--gold));
+            border: none;
+            border-radius: 8px;
+            padding: 12px;
+            font-size: 14px;
+            font-weight: 700;
+            color: var(--bg-base);
+            cursor: pointer;
+            transition: opacity 200ms;
+        }
+
+        .login-box button:hover { opacity: 0.9; }
+        .login-box button:disabled { opacity: 0.5; cursor: not-allowed; }
+
+        .login-error {
+            background: rgba(248,113,113,0.1);
+            border: 1px solid rgba(248,113,113,0.3);
+            border-radius: 8px;
+            padding: 10px;
+            color: var(--red);
+            font-size: 13px;
+            margin-bottom: 12px;
+            display: none;
+        }
+
+        /* ── DASHBOARD ───────────────────────────────────── */
+        #dashboard { display: none; }
+
+        .topbar {
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            background: rgba(11,13,17,0.92);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border-bottom: 1px solid var(--border);
+            padding: 0 24px;
+            height: 56px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .topbar-brand {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            font-size: 16px;
+            font-weight: 800;
+            background: linear-gradient(135deg, var(--gold-bright), var(--gold));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .topbar-right {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .topbar-right select {
+            background: var(--bg-elevated);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 6px 10px;
+            color: var(--text);
+            font-size: 12px;
+            font-family: inherit;
+            cursor: pointer;
+        }
+
+        .btn-logout {
+            background: transparent;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 6px 14px;
+            color: var(--text-secondary);
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 200ms;
+        }
+
+        .btn-logout:hover { border-color: var(--red); color: var(--red); }
+
+        .refresh-indicator {
+            width: 8px; height: 8px;
+            border-radius: 50%;
+            background: var(--green);
+            animation: pulse-dot 2s infinite;
+        }
+
+        @keyframes pulse-dot {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.4; }
+        }
+
+        /* ── CONTENT ─────────────────────────────────────── */
+        .content {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 24px;
+        }
+
+        .section-title {
+            font-size: 13px;
+            font-weight: 700;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            margin-bottom: 16px;
+            margin-top: 32px;
+        }
+
+        .section-title:first-child { margin-top: 0; }
+
+        /* ── METRIC CARDS ────────────────────────────────── */
+        .metrics {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 12px;
+        }
+
+        .metric-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 20px;
+            transition: border-color 200ms;
+        }
+
+        .metric-card:hover { border-color: var(--border-hover); }
+
+        .metric-label {
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            margin-bottom: 8px;
+        }
+
+        .metric-value {
+            font-size: 28px;
+            font-weight: 700;
+            font-feature-settings: 'tnum';
+            line-height: 1.1;
+        }
+
+        .metric-sub {
+            font-size: 12px;
+            color: var(--text-secondary);
+            margin-top: 6px;
+            font-feature-settings: 'tnum';
+        }
+
+        .metric-up { color: var(--green); }
+        .metric-down { color: var(--red); }
+
+        /* ── CHART CONTAINERS ────────────────────────────── */
+        .chart-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+            margin-top: 16px;
+        }
+
+        .chart-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 20px;
+        }
+
+        .chart-card h3 {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text);
+            margin-bottom: 16px;
+        }
+
+        .chart-wrap {
+            position: relative;
+            width: 100%;
+            height: 260px;
+        }
+
+        /* ── DATA TABLES ─────────────────────────────────── */
+        .table-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            overflow: hidden;
+            margin-top: 16px;
+        }
+
+        .table-card h3 {
+            font-size: 14px;
+            font-weight: 600;
+            padding: 16px 20px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .table-scroll {
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+        }
+
+        th {
+            background: var(--bg-elevated);
+            text-align: left;
+            padding: 10px 16px;
+            font-weight: 600;
+            color: var(--text-muted);
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            white-space: nowrap;
+            position: sticky;
+            top: 0;
+        }
+
+        th.right, td.right { text-align: right; }
+
+        td {
+            padding: 10px 16px;
+            border-top: 1px solid var(--border);
+            white-space: nowrap;
+            color: var(--text-secondary);
+            font-feature-settings: 'tnum';
+        }
+
+        tr:hover td { background: rgba(255,255,255,0.02); }
+
+        .badge {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+        }
+
+        .badge-deposit { background: rgba(74,222,128,0.15); color: var(--green); }
+        .badge-withdrawal { background: rgba(248,113,113,0.15); color: var(--red); }
+        .badge-bet { background: rgba(167,139,250,0.15); color: var(--violet); }
+        .badge-win { background: rgba(56,189,248,0.15); color: var(--cyan); }
+        .badge-bonus { background: rgba(212,168,83,0.15); color: var(--gold); }
+        .badge-adjustment { background: rgba(251,146,60,0.15); color: var(--orange); }
+
+        .player-avatar {
+            width: 28px; height: 28px;
+            border-radius: 50%;
+            background: var(--bg-elevated);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 11px;
+            font-weight: 700;
+            color: var(--gold);
+            margin-right: 8px;
+            vertical-align: middle;
+            border: 1px solid var(--border);
+        }
+
+        /* ── LOADING SKELETON ────────────────────────────── */
+        @keyframes shimmer {
+            0% { background-position: -200% 0; }
+            100% { background-position: 200% 0; }
+        }
+
+        .skel {
+            background: linear-gradient(90deg, var(--bg-elevated) 25%, rgba(212,168,83,0.06) 50%, var(--bg-elevated) 75%);
+            background-size: 200% 100%;
+            animation: shimmer 1.8s ease-in-out infinite;
+            border-radius: 6px;
+        }
+
+        .skel-value { width: 80px; height: 28px; margin-bottom: 6px; }
+        .skel-sub { width: 120px; height: 14px; }
+
+        /* ── RESPONSIVE ──────────────────────────────────── */
+        @media (max-width: 768px) {
+            .chart-row { grid-template-columns: 1fr; }
+            .metrics { grid-template-columns: repeat(2, 1fr); }
+            .content { padding: 16px; }
+            .topbar { padding: 0 16px; }
+        }
+
+        @media (max-width: 480px) {
+            .metrics { grid-template-columns: 1fr; }
+            .metric-value { font-size: 24px; }
+        }
+    </style>
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════════════════════════
+     LOGIN GATE
+     ═══════════════════════════════════════════════════════════ -->
+<div id="loginGate">
+    <div class="login-box">
+        <h1>Matrix Spins</h1>
+        <p>Admin Dashboard</p>
+        <div class="login-error" id="loginError"></div>
+        <form id="loginForm">
+            <input type="email" id="loginEmail" placeholder="Admin email" autocomplete="email" required>
+            <input type="password" id="loginPassword" placeholder="Password" autocomplete="current-password" required>
+            <button type="submit" id="loginBtn">Sign In</button>
+        </form>
+    </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════
+     DASHBOARD
+     ═══════════════════════════════════════════════════════════ -->
+<div id="dashboard">
+    <div class="topbar">
+        <div class="topbar-brand">Matrix Spins Admin</div>
+        <div class="topbar-right">
+            <div class="refresh-indicator" title="Live"></div>
+            <select id="periodSelect">
+                <option value="7">Last 7 days</option>
+                <option value="14">Last 14 days</option>
+                <option value="30" selected>Last 30 days</option>
+                <option value="60">Last 60 days</option>
+                <option value="90">Last 90 days</option>
+            </select>
+            <button class="btn-logout" id="logoutBtn">Sign Out</button>
+        </div>
+    </div>
+
+    <div class="content">
+        <!-- ── Revenue Metrics ──────────────────────────── -->
+        <div class="section-title">Revenue</div>
+        <div class="metrics" id="revenueMetrics">
+            <div class="metric-card"><div class="metric-label">Net Revenue</div><div class="skel skel-value"></div><div class="skel skel-sub"></div></div>
+            <div class="metric-card"><div class="metric-label">GGR</div><div class="skel skel-value"></div><div class="skel skel-sub"></div></div>
+            <div class="metric-card"><div class="metric-label">Deposits (24h)</div><div class="skel skel-value"></div><div class="skel skel-sub"></div></div>
+            <div class="metric-card"><div class="metric-label">Withdrawals</div><div class="skel skel-value"></div><div class="skel skel-sub"></div></div>
+        </div>
+
+        <!-- ── Revenue + Player Charts ──────────────────── -->
+        <div class="chart-row">
+            <div class="chart-card">
+                <h3>Revenue trend</h3>
+                <div class="chart-wrap"><canvas id="revenueChart" role="img" aria-label="Revenue trend chart">Revenue data loading...</canvas></div>
+            </div>
+            <div class="chart-card">
+                <h3>Player activity</h3>
+                <div class="chart-wrap"><canvas id="playerChart" role="img" aria-label="Player activity chart">Player data loading...</canvas></div>
+            </div>
+        </div>
+
+        <!-- ── Player Metrics ───────────────────────────── -->
+        <div class="section-title">Players</div>
+        <div class="metrics" id="playerMetrics">
+            <div class="metric-card"><div class="metric-label">Total Players</div><div class="skel skel-value"></div><div class="skel skel-sub"></div></div>
+            <div class="metric-card"><div class="metric-label">Active (24h)</div><div class="skel skel-value"></div><div class="skel skel-sub"></div></div>
+            <div class="metric-card"><div class="metric-label">New (7d)</div><div class="skel skel-value"></div><div class="skel skel-sub"></div></div>
+            <div class="metric-card"><div class="metric-label">KYC Verified</div><div class="skel skel-value"></div><div class="skel skel-sub"></div></div>
+        </div>
+
+        <!-- ── Game Performance Charts ──────────────────── -->
+        <div class="chart-row">
+            <div class="chart-card">
+                <h3>Top games by spins</h3>
+                <div class="chart-wrap"><canvas id="gamesChart" role="img" aria-label="Top games chart">Games data loading...</canvas></div>
+            </div>
+            <div class="chart-card">
+                <h3>GGR by game</h3>
+                <div class="chart-wrap"><canvas id="ggrChart" role="img" aria-label="GGR by game chart">GGR data loading...</canvas></div>
+            </div>
+        </div>
+
+        <!-- ── Activity Metrics ─────────────────────────── -->
+        <div class="section-title">Activity</div>
+        <div class="metrics" id="activityMetrics">
+            <div class="metric-card"><div class="metric-label">Total Spins</div><div class="skel skel-value"></div><div class="skel skel-sub"></div></div>
+            <div class="metric-card"><div class="metric-label">Spins (24h)</div><div class="skel skel-value"></div><div class="skel skel-sub"></div></div>
+            <div class="metric-card"><div class="metric-label">Wagered (24h)</div><div class="skel skel-value"></div><div class="skel skel-sub"></div></div>
+            <div class="metric-card"><div class="metric-label">Active Games</div><div class="skel skel-value"></div><div class="skel skel-sub"></div></div>
+        </div>
+
+        <!-- ── Top Players Table ────────────────────────── -->
+        <div class="table-card">
+            <h3>Top players</h3>
+            <div class="table-scroll">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Player</th>
+                            <th>Country</th>
+                            <th>KYC</th>
+                            <th class="right">Balance</th>
+                            <th class="right">Deposits</th>
+                            <th class="right">Wagered</th>
+                            <th class="right">GGR</th>
+                            <th class="right">Spins</th>
+                        </tr>
+                    </thead>
+                    <tbody id="playersTable">
+                        <tr><td colspan="8" style="text-align:center;padding:24px;color:var(--text-muted)">Loading...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- ── Top Games Table ──────────────────────────── -->
+        <div class="table-card">
+            <h3>Game performance</h3>
+            <div class="table-scroll">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Game</th>
+                            <th>Studio</th>
+                            <th class="right">Spins</th>
+                            <th class="right">Players</th>
+                            <th class="right">Wagered</th>
+                            <th class="right">Payouts</th>
+                            <th class="right">GGR</th>
+                            <th class="right">Cfg RTP</th>
+                            <th class="right">Act RTP</th>
+                        </tr>
+                    </thead>
+                    <tbody id="gamesTable">
+                        <tr><td colspan="9" style="text-align:center;padding:24px;color:var(--text-muted)">Loading...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- ── Recent Activity Feed ─────────────────────── -->
+        <div class="table-card" style="margin-bottom: 48px;">
+            <h3>Recent activity</h3>
+            <div class="table-scroll">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Time</th>
+                            <th>Type</th>
+                            <th>Player</th>
+                            <th class="right">Amount</th>
+                            <th class="right">Balance After</th>
+                        </tr>
+                    </thead>
+                    <tbody id="activityTable">
+                        <tr><td colspan="5" style="text-align:center;padding:24px;color:var(--text-muted)">Loading...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<script>
+(function() {
+    'use strict';
+
+    // ── CONFIG ──────────────────────────────────────────────
+    const API_BASE = window.location.origin + '/api';
+    let accessToken = sessionStorage.getItem('ms_admin_token') || '';
+    let refreshInterval = null;
+    let revenueChartInstance = null;
+    let playerChartInstance = null;
+    let gamesChartInstance = null;
+    let ggrChartInstance = null;
+
+    // ── HELPERS ─────────────────────────────────────────────
+    function cents(v) {
+        const n = Number(v) / 100;
+        if (Math.abs(n) >= 1_000_000) return '$' + (n / 1_000_000).toFixed(2) + 'M';
+        if (Math.abs(n) >= 1_000) return '$' + (n / 1_000).toFixed(1) + 'K';
+        return '$' + n.toFixed(2);
+    }
+
+    function num(v) {
+        return Number(v).toLocaleString('en-US');
+    }
+
+    function timeAgo(iso) {
+        const d = new Date(iso);
+        const now = new Date();
+        const s = Math.floor((now - d) / 1000);
+        if (s < 60) return s + 's ago';
+        if (s < 3600) return Math.floor(s / 60) + 'm ago';
+        if (s < 86400) return Math.floor(s / 3600) + 'h ago';
+        return Math.floor(s / 86400) + 'd ago';
+    }
+
+    function initials(name) {
+        if (!name) return '?';
+        return name.split(' ').map(w => w[0]).join('').substring(0, 2).toUpperCase();
+    }
+
+    function kycBadge(status) {
+        const colors = {
+            verified: 'badge-deposit',
+            pending: 'badge-bonus',
+            unverified: 'badge-adjustment',
+            rejected: 'badge-withdrawal',
+        };
+        return '<span class="badge ' + (colors[status] || '') + '">' + (status || 'unknown') + '</span>';
+    }
+
+    function typeBadge(type) {
+        const cls = 'badge-' + type;
+        return '<span class="badge ' + cls + '">' + type + '</span>';
+    }
+
+    // ── API CALLS ───────────────────────────────────────────
+    async function api(path) {
+        const res = await fetch(API_BASE + path, {
+            headers: { 'Authorization': 'Bearer ' + accessToken },
+        });
+        if (res.status === 401 || res.status === 403) {
+            logout();
+            throw new Error('Unauthorized');
+        }
+        if (!res.ok) throw new Error('API error: ' + res.status);
+        return res.json();
+    }
+
+    // ── AUTH ─────────────────────────────────────────────────
+    document.getElementById('loginForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const email = document.getElementById('loginEmail').value.trim();
+        const password = document.getElementById('loginPassword').value;
+        const btn = document.getElementById('loginBtn');
+        const errEl = document.getElementById('loginError');
+
+        btn.disabled = true;
+        btn.textContent = 'Signing in...';
+        errEl.style.display = 'none';
+
+        try {
+            const res = await fetch(API_BASE + '/auth/login', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                credentials: 'include',
+                body: JSON.stringify({ email, password }),
+            });
+
+            const data = await res.json();
+
+            if (!res.ok) {
+                throw new Error(data.message || data.error || 'Login failed');
+            }
+
+            if (data.user && data.user.role !== 'admin' && data.user.role !== 'support') {
+                throw new Error('Admin access required');
+            }
+
+            accessToken = data.accessToken || data.token || '';
+            if (!accessToken) throw new Error('No token received');
+
+            sessionStorage.setItem('ms_admin_token', accessToken);
+            showDashboard();
+        } catch (err) {
+            errEl.textContent = err.message;
+            errEl.style.display = 'block';
+        } finally {
+            btn.disabled = false;
+            btn.textContent = 'Sign In';
+        }
+    });
+
+    function logout() {
+        accessToken = '';
+        sessionStorage.removeItem('ms_admin_token');
+        if (refreshInterval) clearInterval(refreshInterval);
+        document.getElementById('loginGate').style.display = 'flex';
+        document.getElementById('dashboard').style.display = 'none';
+    }
+
+    document.getElementById('logoutBtn').addEventListener('click', logout);
+
+    // ── SHOW DASHBOARD ──────────────────────────────────────
+    function showDashboard() {
+        document.getElementById('loginGate').style.display = 'none';
+        document.getElementById('dashboard').style.display = 'block';
+        loadAll();
+
+        // Auto-refresh every 60 seconds
+        if (refreshInterval) clearInterval(refreshInterval);
+        refreshInterval = setInterval(loadAll, 60_000);
+    }
+
+    // ── PERIOD SELECTOR ─────────────────────────────────────
+    document.getElementById('periodSelect').addEventListener('change', () => {
+        loadAll();
+    });
+
+    function getPeriod() {
+        return document.getElementById('periodSelect').value;
+    }
+
+    // ── LOAD ALL DATA ───────────────────────────────────────
+    async function loadAll() {
+        const days = getPeriod();
+        await Promise.allSettled([
+            loadOverview(),
+            loadRevenueChart(days),
+            loadPlayerChart(days),
+            loadTopGames(days),
+            loadTopPlayers(days),
+            loadRecentActivity(),
+        ]);
+    }
+
+    // ── OVERVIEW METRICS ────────────────────────────────────
+    async function loadOverview() {
+        try {
+            const data = await api('/admin/dashboard/overview');
+            const r = data.revenue;
+            const p = data.players;
+            const a = data.activity;
+            const g = data.games;
+
+            document.getElementById('revenueMetrics').innerHTML = [
+                metricCard('Net Revenue', cents(r.netRevenueCents), 'Deposits − Withdrawals'),
+                metricCard('GGR', cents(r.ggr), 'Wagered − Payouts'),
+                metricCard('Deposits (24h)', cents(r.deposits24hCents), '7d: ' + cents(r.deposits7dCents)),
+                metricCard('Total Withdrawals', cents(r.totalWithdrawalsCents), 'All time'),
+            ].join('');
+
+            document.getElementById('playerMetrics').innerHTML = [
+                metricCard('Total Players', num(p.totalUsers), 'All registered'),
+                metricCard('Active (24h)', num(p.active24h), '7d: ' + num(p.active7d)),
+                metricCard('New (7d)', num(p.new7d), '24h: ' + num(p.new24h)),
+                metricCard('KYC Verified', num(p.verifiedUsers), Math.round(p.verifiedUsers / Math.max(p.totalUsers, 1) * 100) + '% of total'),
+            ].join('');
+
+            document.getElementById('activityMetrics').innerHTML = [
+                metricCard('Total Spins', num(a.totalSpins), 'All time'),
+                metricCard('Spins (24h)', num(a.spins24h), 'Last 24 hours'),
+                metricCard('Wagered (24h)', cents(a.wagered24hCents), 'Last 24 hours'),
+                metricCard('Active Games', num(g.activeGames), num(g.totalGames) + ' total'),
+            ].join('');
+        } catch (err) {
+            console.error('Overview load failed:', err);
+        }
+    }
+
+    function metricCard(label, value, sub) {
+        return '<div class="metric-card"><div class="metric-label">' + label +
+            '</div><div class="metric-value">' + value +
+            '</div><div class="metric-sub">' + sub + '</div></div>';
+    }
+
+    // ── REVENUE CHART ───────────────────────────────────────
+    async function loadRevenueChart(days) {
+        try {
+            const data = await api('/admin/dashboard/revenue-chart?days=' + days);
+            const labels = data.days.map(d => {
+                const dt = new Date(d.date);
+                return dt.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+            });
+            const deposits = data.days.map(d => d.depositsCents / 100);
+            const withdrawals = data.days.map(d => d.withdrawalsCents / 100);
+            const ggr = data.days.map(d => d.ggrCents / 100);
+
+            if (revenueChartInstance) revenueChartInstance.destroy();
+            revenueChartInstance = new Chart(document.getElementById('revenueChart'), {
+                type: 'line',
+                data: {
+                    labels,
+                    datasets: [
+                        { label: 'Deposits', data: deposits, borderColor: '#4ADE80', backgroundColor: 'rgba(74,222,128,0.08)', fill: true, tension: 0.3, borderWidth: 2, pointRadius: 0 },
+                        { label: 'Withdrawals', data: withdrawals, borderColor: '#F87171', backgroundColor: 'rgba(248,113,113,0.05)', fill: true, tension: 0.3, borderWidth: 2, pointRadius: 0 },
+                        { label: 'GGR', data: ggr, borderColor: '#D4A853', backgroundColor: 'rgba(212,168,83,0.08)', fill: true, tension: 0.3, borderWidth: 2, pointRadius: 0 },
+                    ],
+                },
+                options: chartOptions('$'),
+            });
+        } catch (err) { console.error('Revenue chart error:', err); }
+    }
+
+    // ── PLAYER CHART ────────────────────────────────────────
+    async function loadPlayerChart(days) {
+        try {
+            const data = await api('/admin/dashboard/player-chart?days=' + days);
+            const labels = data.days.map(d => {
+                const dt = new Date(d.date);
+                return dt.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+            });
+            const regs = data.days.map(d => d.registrations);
+            const active = data.days.map(d => d.activePlayers);
+
+            if (playerChartInstance) playerChartInstance.destroy();
+            playerChartInstance = new Chart(document.getElementById('playerChart'), {
+                type: 'line',
+                data: {
+                    labels,
+                    datasets: [
+                        { label: 'Registrations', data: regs, borderColor: '#38BDF8', backgroundColor: 'rgba(56,189,248,0.08)', fill: true, tension: 0.3, borderWidth: 2, pointRadius: 0 },
+                        { label: 'Active players', data: active, borderColor: '#A78BFA', backgroundColor: 'rgba(167,139,250,0.05)', fill: true, tension: 0.3, borderWidth: 2, pointRadius: 0 },
+                    ],
+                },
+                options: chartOptions(''),
+            });
+        } catch (err) { console.error('Player chart error:', err); }
+    }
+
+    // ── GAMES CHARTS ────────────────────────────────────────
+    async function loadTopGames(days) {
+        try {
+            const data = await api('/admin/dashboard/top-games?days=' + days + '&limit=10');
+            const games = data.games;
+
+            // Spins bar chart
+            if (gamesChartInstance) gamesChartInstance.destroy();
+            gamesChartInstance = new Chart(document.getElementById('gamesChart'), {
+                type: 'bar',
+                data: {
+                    labels: games.map(g => g.name.length > 16 ? g.name.substring(0, 14) + '...' : g.name),
+                    datasets: [{
+                        label: 'Spins',
+                        data: games.map(g => g.spinCount),
+                        backgroundColor: 'rgba(212,168,83,0.6)',
+                        borderColor: '#D4A853',
+                        borderWidth: 1,
+                        borderRadius: 4,
+                    }],
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    indexAxis: 'y',
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        x: { grid: { color: 'rgba(255,255,255,0.04)' }, ticks: { color: '#6B7280', font: { size: 11 } } },
+                        y: { grid: { display: false }, ticks: { color: '#9CA3AF', font: { size: 11 } } },
+                    },
+                },
+            });
+
+            // GGR bar chart
+            if (ggrChartInstance) ggrChartInstance.destroy();
+            ggrChartInstance = new Chart(document.getElementById('ggrChart'), {
+                type: 'bar',
+                data: {
+                    labels: games.map(g => g.name.length > 16 ? g.name.substring(0, 14) + '...' : g.name),
+                    datasets: [{
+                        label: 'GGR',
+                        data: games.map(g => g.ggrCents / 100),
+                        backgroundColor: games.map(g => g.ggrCents >= 0 ? 'rgba(74,222,128,0.6)' : 'rgba(248,113,113,0.6)'),
+                        borderColor: games.map(g => g.ggrCents >= 0 ? '#4ADE80' : '#F87171'),
+                        borderWidth: 1,
+                        borderRadius: 4,
+                    }],
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    indexAxis: 'y',
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        x: {
+                            grid: { color: 'rgba(255,255,255,0.04)' },
+                            ticks: { color: '#6B7280', font: { size: 11 }, callback: v => '$' + Math.round(v) },
+                        },
+                        y: { grid: { display: false }, ticks: { color: '#9CA3AF', font: { size: 11 } } },
+                    },
+                },
+            });
+
+            // Games table
+            document.getElementById('gamesTable').innerHTML = games.map(g =>
+                '<tr>' +
+                '<td style="color:var(--text)">' + g.name + '</td>' +
+                '<td>' + (g.studioId || '-') + '</td>' +
+                '<td class="right">' + num(g.spinCount) + '</td>' +
+                '<td class="right">' + num(g.uniquePlayers) + '</td>' +
+                '<td class="right">' + cents(g.totalWageredCents) + '</td>' +
+                '<td class="right">' + cents(g.totalPayoutsCents) + '</td>' +
+                '<td class="right" style="color:' + (g.ggrCents >= 0 ? 'var(--green)' : 'var(--red)') + '">' + cents(g.ggrCents) + '</td>' +
+                '<td class="right">' + g.configuredRtp + '%</td>' +
+                '<td class="right" style="color:' + (Math.abs(g.actualRtp - g.configuredRtp) > 3 ? 'var(--red)' : 'var(--text-secondary)') + '">' + g.actualRtp + '%</td>' +
+                '</tr>'
+            ).join('') || '<tr><td colspan="9" style="text-align:center;padding:24px;color:var(--text-muted)">No data</td></tr>';
+        } catch (err) { console.error('Games error:', err); }
+    }
+
+    // ── TOP PLAYERS TABLE ───────────────────────────────────
+    async function loadTopPlayers(days) {
+        try {
+            const data = await api('/admin/dashboard/top-players?days=' + days + '&limit=15');
+            document.getElementById('playersTable').innerHTML = data.players.map(p =>
+                '<tr>' +
+                '<td style="color:var(--text)"><span class="player-avatar">' + initials(p.displayName) + '</span>' + (p.displayName || p.email) + '</td>' +
+                '<td>' + (p.countryCode || '-') + '</td>' +
+                '<td>' + kycBadge(p.kycStatus) + '</td>' +
+                '<td class="right">' + cents(p.balanceCents) + '</td>' +
+                '<td class="right" style="color:var(--green)">' + cents(p.totalDepositsCents) + '</td>' +
+                '<td class="right">' + cents(p.totalWageredCents) + '</td>' +
+                '<td class="right" style="color:' + (p.ggrCents >= 0 ? 'var(--green)' : 'var(--red)') + '">' + cents(p.ggrCents) + '</td>' +
+                '<td class="right">' + num(p.spinCount) + '</td>' +
+                '</tr>'
+            ).join('') || '<tr><td colspan="8" style="text-align:center;padding:24px;color:var(--text-muted)">No data</td></tr>';
+        } catch (err) { console.error('Players error:', err); }
+    }
+
+    // ── RECENT ACTIVITY TABLE ───────────────────────────────
+    async function loadRecentActivity() {
+        try {
+            const data = await api('/admin/dashboard/recent-activity?limit=30');
+            document.getElementById('activityTable').innerHTML = data.entries.map(e =>
+                '<tr>' +
+                '<td title="' + new Date(e.createdAt).toLocaleString() + '">' + timeAgo(e.createdAt) + '</td>' +
+                '<td>' + typeBadge(e.type) + '</td>' +
+                '<td style="color:var(--text)">' + (e.playerName || e.playerEmail) + '</td>' +
+                '<td class="right" style="color:' + (e.amountCents >= 0 ? 'var(--green)' : 'var(--red)') + '">' +
+                    (e.amountCents >= 0 ? '+' : '') + cents(e.amountCents) + '</td>' +
+                '<td class="right">' + cents(e.balanceAfterCents) + '</td>' +
+                '</tr>'
+            ).join('') || '<tr><td colspan="5" style="text-align:center;padding:24px;color:var(--text-muted)">No activity</td></tr>';
+        } catch (err) { console.error('Activity error:', err); }
+    }
+
+    // ── CHART OPTIONS ───────────────────────────────────────
+    function chartOptions(prefix) {
+        return {
+            responsive: true,
+            maintainAspectRatio: false,
+            interaction: { mode: 'index', intersect: false },
+            plugins: {
+                legend: {
+                    position: 'top',
+                    align: 'end',
+                    labels: { color: '#9CA3AF', font: { size: 11 }, boxWidth: 10, boxHeight: 10, borderRadius: 2, useBorderRadius: true, padding: 16 },
+                },
+                tooltip: {
+                    backgroundColor: '#1A1D27',
+                    borderColor: 'rgba(255,255,255,0.1)',
+                    borderWidth: 1,
+                    titleFont: { size: 12 },
+                    bodyFont: { size: 12 },
+                    padding: 10,
+                    callbacks: {
+                        label: function(ctx) {
+                            return ctx.dataset.label + ': ' + prefix + Math.round(ctx.parsed.y).toLocaleString();
+                        },
+                    },
+                },
+            },
+            scales: {
+                x: {
+                    grid: { color: 'rgba(255,255,255,0.04)' },
+                    ticks: { color: '#6B7280', font: { size: 10 }, maxRotation: 45 },
+                },
+                y: {
+                    grid: { color: 'rgba(255,255,255,0.04)' },
+                    ticks: {
+                        color: '#6B7280',
+                        font: { size: 10 },
+                        callback: function(value) { return prefix + Math.round(value).toLocaleString(); },
+                    },
+                },
+            },
+        };
+    }
+
+    // ── INIT ────────────────────────────────────────────────
+    if (accessToken) {
+        showDashboard();
+    }
+
+})();
+</script>
+</body>
+</html>

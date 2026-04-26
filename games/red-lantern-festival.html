@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Red Lantern Festival — Matrix Spins Casino</title>
+  <meta name="theme-color" content="#D4A853">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html, body { height: 100%; }
+    body { background: #0D0F14; color: #F0F0F5; font-family: 'Inter', sans-serif; overflow-x: hidden; }
+  </style>
+  <link rel="stylesheet" href="../css/chat-widget.css">
+  <link rel="stylesheet" href="../css/notifications.css">
+  <link rel="stylesheet" href="../css/age-gate.css">
+  <link rel="stylesheet" href="../css/search.css">
+  <link rel="stylesheet" href="../css/favorites.css">
+  <link rel="stylesheet" href="../css/session-monitor.css">
+  <link rel="stylesheet" href="../css/conversion.css">
+</head>
+<body>
+  <div id="game-container" style="width:100%;min-height:100vh;"></div>
+
+  <script src="../js/api-client.js"></script>
+  <script src="../js/casino-engine.js"></script>
+  <script>
+    const gameConfig = {
+      name: 'Red Lantern Festival',
+      id: 'red-lantern-festival',
+      studioTheme: {
+        id: 'dragon-pearl',
+        name: 'Dragon Pearl Studios',
+        primaryColor: '#CC0000',
+        secondaryColor: '#FFD700',
+        accentColor: '#00A86B',
+        bgGradient: 'linear-gradient(135deg, #0D0B0A 0%, #1A0F0E 50%, #0D0B0A 100%)',
+        fontFamily: "'Playfair Display', serif",
+        fontFamilyBody: "'Caveat', cursive",
+        chromeStyle: 'custom',
+        logoUrl: 'assets/studios/dragon-pearl-logo.png',
+        reelBg: '#050403',
+        reelBorder: '#CC0000',
+        winHighlight: '#FFD700',
+        borderStyle: '4px solid #CC0000',
+        borderRadius: '12px',
+        boxShadow: '0 0 35px rgba(204,0,0,0.4), inset 0 0 25px rgba(255,215,0,0.15)',
+        buttonStyle: 'background: linear-gradient(180deg, #CC0000, #990000); border-radius: 8px; border: 2px solid #FFD700; text-transform: uppercase; letter-spacing: 2px; font-weight: bold;',
+        spinButtonGlow: '0 0 25px rgba(204,0,0,0.6)'
+      },
+      rtp: 0.88,
+      volatility: 'low',
+      mechanic: 'Prize Disc',
+      mechanicDesc: 'Spin a prize disc to reveal bonus multipliers, free spins, or instant cash rewards.',
+      minBet: 0.2,
+      maxBet: 100,
+      betStep: 0.20,
+      reels: 5,
+      rows: 3,
+      paylines: 25,
+      symbols: ["lantern","red","festival","celebration","gold","fireworks","joy","luck","wild","scatter"],
+      wilds: ["lantern"],
+      scatters: ["scatter"],
+      symbolWeights: {"lantern":[10.229074357952491,9.770489732032376,10.034741069886373,9.970834607874407,10.157271038825495],"red":[8.960970866858478,8.998648569874632,9.07557539408604,9.206995200369557,9.101528226559088],"festival":[7.8607778779033115,8.13648434325058,8.02633979547926,8.12849477150949,7.854578523253677],"celebration":[7.023954121398266,6.8622588814917185,7.153327851493428,6.839717975372862,6.936224623634059],"gold":[6.195558225408017,6.043444107583992,6.022020040393243,5.78399831337475,5.864473439914952],"fireworks":[5.110467945104736,4.835261086398603,5.102702805711635,4.977345223383031,5.029350180169322],"joy":[3.751510499894654,3.979961811214528,4.024671255110637,4.0894769627663266,3.9569498469601188],"luck":[3.141649547204509,3.1268905032234384,3.2186040225472863,2.7684033006582105,3.153692314445168],"wild":[1.806990078404185,2.193653714082708,2.2066094930665896,1.8724447014676406,1.9136217545601362],"scatter":[0.8248551662877238,0.8179406727108114,0.8336070287814299,0.91527529726718,1.1794829754412126]},
+      paytable: {"lantern":{"3":2,"4":5,"5":15},"red":{"3":4,"4":11,"5":34},"festival":{"3":6,"4":16,"5":52},"celebration":{"3":7,"4":22,"5":71},"gold":{"3":9,"4":27,"5":89},"fireworks":{"3":11,"4":33,"5":108},"joy":{"3":13,"4":38,"5":126},"luck":{"3":15,"4":44,"5":145},"wild":{"3":16,"4":49,"5":163},"scatter":{"3":18,"4":55,"5":182},"SCATTER":{"3":5,"4":20,"5":100}},
+      freeSpinCount: 10,
+      freeSpinMultiplier: 2,
+      onSound: function(label) { /* sound hooks ready */ }
+    };
+
+    CasinoEngine.init('game-container', gameConfig);
+  </script>
+  <script src="../js/chat-widget.js" defer></script>
+  <script src="../js/notifications.js" defer></script>
+  <script src="../js/age-gate.js" defer></script>
+  <script src="../js/cookie-consent.js" defer></script>
+  <script src="../js/search.js" defer></script>
+  <script src="../js/favorites.js" defer></script>
+  <script src="../js/session-monitor.js" defer></script>
+  <script src="../js/sound-manager.js" defer></script>
+  <script src="../js/analytics.js" defer></script>
+  <script src="../js/email-capture.js" defer></script>
+  <script src="../js/conversion.js" defer></script>
+</body>
+</html>

@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Vintage Vault Riches — Matrix Spins Casino</title>
+  <meta name="theme-color" content="#D4A853">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html, body { height: 100%; }
+    body { background: #0D0F14; color: #F0F0F5; font-family: 'Inter', sans-serif; overflow-x: hidden; }
+  </style>
+  <link rel="stylesheet" href="../css/chat-widget.css">
+  <link rel="stylesheet" href="../css/notifications.css">
+  <link rel="stylesheet" href="../css/age-gate.css">
+  <link rel="stylesheet" href="../css/search.css">
+  <link rel="stylesheet" href="../css/favorites.css">
+  <link rel="stylesheet" href="../css/session-monitor.css">
+  <link rel="stylesheet" href="../css/conversion.css">
+</head>
+<body>
+  <div id="game-container" style="width:100%;min-height:100vh;"></div>
+
+  <script src="../js/api-client.js"></script>
+  <script src="../js/casino-engine.js"></script>
+  <script>
+    const gameConfig = {
+      name: 'Vintage Vault Riches',
+      id: 'vintage-vault-riches',
+      studioTheme: {
+        id: 'golden-reels',
+        name: 'Golden Reels Studio',
+        primaryColor: '#D4AF37',
+        secondaryColor: '#8B6914',
+        accentColor: '#FFF8DC',
+        bgGradient: 'linear-gradient(135deg, #1A1205 0%, #2D1F0E 50%, #1A1205 100%)',
+        fontFamily: "'Playfair Display', serif",
+        fontFamilyBody: "'Lora', serif",
+        chromeStyle: 'custom',
+        logoUrl: 'assets/studios/golden-reels-logo.png',
+        reelBg: '#0D0A03',
+        reelBorder: '#D4AF37',
+        winHighlight: '#FFD700',
+        borderStyle: '3px solid #D4AF37',
+        borderRadius: '12px',
+        boxShadow: '0 0 30px rgba(212,175,55,0.3), inset 0 0 20px rgba(212,175,55,0.1)',
+        buttonStyle: 'background: linear-gradient(180deg, #D4AF37, #8B6914); border-radius: 8px; border: 1px solid #FFD700; text-transform: uppercase; letter-spacing: 2px; font-weight: bold;',
+        spinButtonGlow: '0 0 20px rgba(212,175,55,0.6)'
+      },
+      rtp: 0.91,
+      volatility: 'low',
+      mechanic: 'Megaways Variable Rows',
+      mechanicDesc: 'Reel rows change with each spin, creating up to 117,649 ways to win on every single spin.',
+      minBet: 0.2,
+      maxBet: 100,
+      betStep: 0.20,
+      reels: 5,
+      rows: 3,
+      paylines: 243,
+      symbols: ["bar","cherry","lemon","orange","plum","gold-bell","diamond","vault","wild","scatter"],
+      wilds: ["bar"],
+      scatters: ["scatter"],
+      symbolWeights: {"bar":[10.103183285871985,9.817439848046227,9.76846752296098,9.808580232331016,9.828609123060088],"cherry":[9.223999725524903,8.993028500787851,9.176711757819806,9.231367070317107,8.831190825816087],"lemon":[8.073051481161235,8.060667817474739,7.859135363356505,7.7561842836731945,8.058942715382408],"orange":[7.13206972894273,6.766952653674891,7.024845735992418,6.849797291461483,6.860846133757808],"plum":[6.017004222475125,5.785015859082553,5.850425700238637,5.76629657551479,5.81032843278238],"gold-bell":[4.874646256076577,4.934703379785434,5.047511337575564,4.799736611477243,5.237733928629006],"diamond":[3.9357203691848652,4.2291003064911425,4.19710155173398,4.03274789484795,4.067270448052412],"vault":[3.1936341416012883,3.107390401810994,3.0889958721374295,2.8259841943039774,3.0202645661992173],"wild":[2.076790871991804,2.180290576418092,2.2157557954575373,2.047772804811035,2.14608447178901],"scatter":[1.2476792140968134,0.9059860994686094,0.949464132822721,1.020891227598515,1.194753292748525]},
+      paytable: {"bar":{"3":2,"4":5,"5":15},"cherry":{"3":4,"4":11,"5":34},"lemon":{"3":6,"4":16,"5":52},"orange":{"3":7,"4":22,"5":71},"plum":{"3":9,"4":27,"5":89},"gold-bell":{"3":11,"4":33,"5":108},"diamond":{"3":13,"4":38,"5":126},"vault":{"3":15,"4":44,"5":145},"wild":{"3":16,"4":49,"5":163},"scatter":{"3":18,"4":55,"5":182},"SCATTER":{"3":5,"4":20,"5":100}},
+      freeSpinCount: 10,
+      freeSpinMultiplier: 2,
+      onSound: function(label) { /* sound hooks ready */ }
+    };
+
+    CasinoEngine.init('game-container', gameConfig);
+  </script>
+  <script src="../js/chat-widget.js" defer></script>
+  <script src="../js/notifications.js" defer></script>
+  <script src="../js/age-gate.js" defer></script>
+  <script src="../js/cookie-consent.js" defer></script>
+  <script src="../js/search.js" defer></script>
+  <script src="../js/favorites.js" defer></script>
+  <script src="../js/session-monitor.js" defer></script>
+  <script src="../js/sound-manager.js" defer></script>
+  <script src="../js/analytics.js" defer></script>
+  <script src="../js/email-capture.js" defer></script>
+  <script src="../js/conversion.js" defer></script>
+</body>
+</html>

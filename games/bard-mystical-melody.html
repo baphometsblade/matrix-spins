@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Bard Mystical Melody — Matrix Spins Casino</title>
+  <meta name="theme-color" content="#D4A853">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html, body { height: 100%; }
+    body { background: #0D0F14; color: #F0F0F5; font-family: 'Inter', sans-serif; overflow-x: hidden; }
+  </style>
+  <link rel="stylesheet" href="../css/chat-widget.css">
+  <link rel="stylesheet" href="../css/notifications.css">
+  <link rel="stylesheet" href="../css/age-gate.css">
+  <link rel="stylesheet" href="../css/search.css">
+  <link rel="stylesheet" href="../css/favorites.css">
+  <link rel="stylesheet" href="../css/session-monitor.css">
+  <link rel="stylesheet" href="../css/conversion.css">
+</head>
+<body>
+  <div id="game-container" style="width:100%;min-height:100vh;"></div>
+
+  <script src="../js/api-client.js"></script>
+  <script src="../js/casino-engine.js"></script>
+  <script>
+    const gameConfig = {
+      name: 'Bard Mystical Melody',
+      id: 'bard-mystical-melody',
+      studioTheme: {
+        id: 'cascade-labs',
+        name: 'Cascade Labs',
+        primaryColor: '#9D4EDD',
+        secondaryColor: '#00F0FF',
+        accentColor: '#FF006E',
+        bgGradient: 'linear-gradient(135deg, #F8F9FA 0%, #E9ECEF 50%, #F8F9FA 100%)',
+        fontFamily: "'Poppins', sans-serif",
+        fontFamilyBody: "'Poppins', sans-serif",
+        chromeStyle: 'custom',
+        logoUrl: 'assets/studios/cascade-labs-logo.png',
+        reelBg: '#FFFFFF',
+        reelBorder: '#9D4EDD',
+        winHighlight: '#FF006E',
+        borderStyle: '2px solid #9D4EDD',
+        borderRadius: '8px',
+        boxShadow: '0 4px 20px rgba(157,78,221,0.15), inset 0 0 10px rgba(0,240,255,0.05)',
+        buttonStyle: 'background: linear-gradient(135deg, #9D4EDD, #00F0FF); border-radius: 6px; border: none; text-transform: uppercase; letter-spacing: 1px; font-weight: 600; color: #FFF;',
+        spinButtonGlow: '0 0 15px rgba(157,78,221,0.4)'
+      },
+      rtp: 0.88,
+      volatility: 'low',
+      mechanic: 'Charged Reels',
+      mechanicDesc: 'Reels charge with each spin, unlocking powerful features when fully charged.',
+      minBet: 0.2,
+      maxBet: 100,
+      betStep: 0.20,
+      reels: 5,
+      rows: 3,
+      paylines: 25,
+      symbols: ["bard","music","lyre","melody","song","gold","magic","enchanted","wild","scatter"],
+      wilds: ["bard"],
+      scatters: ["scatter"],
+      symbolWeights: {"bard":[10.010585033975227,9.789763641667241,9.887783339184585,9.947473538991314,10.108802412669473],"music":[9.097634517430368,8.858040701853307,8.967180842910388,9.03710697838396,9.173430928267816],"lyre":[7.844310967831902,8.199983600270809,8.029603323205746,7.93361343241012,8.21723838105666],"melody":[7.063232604729892,7.165489829118922,6.7608348991116705,6.900462425370458,7.043850712237096],"song":[5.888551033460956,6.228913733204502,6.121438566109123,6.223937793109828,5.951282332539077],"gold":[4.776116704792808,5.032321213479931,4.954675135457535,5.180135437401534,4.8842984401153515],"magic":[4.132338127872499,4.017764810031775,3.9485566726513914,4.08725966515747,3.924266133513332],"enchanted":[3.10877366413974,3.030011617074358,2.9570217917374704,2.89321557803539,2.962841409335692],"wild":[2.2138014307397023,1.8080777293534451,1.7780075070020132,2.241288775665996,2.2280019524915637],"scatter":[0.9824758451882563,0.9289360549651011,1.1415064271796027,1.0270818542229687,1.0449475540493318]},
+      paytable: {"bard":{"3":2,"4":5,"5":15},"music":{"3":4,"4":11,"5":34},"lyre":{"3":6,"4":16,"5":52},"melody":{"3":7,"4":22,"5":71},"song":{"3":9,"4":27,"5":89},"gold":{"3":11,"4":33,"5":108},"magic":{"3":13,"4":38,"5":126},"enchanted":{"3":15,"4":44,"5":145},"wild":{"3":16,"4":49,"5":163},"scatter":{"3":18,"4":55,"5":182},"SCATTER":{"3":5,"4":20,"5":100}},
+      freeSpinCount: 10,
+      freeSpinMultiplier: 2,
+      onSound: function(label) { /* sound hooks ready */ }
+    };
+
+    CasinoEngine.init('game-container', gameConfig);
+  </script>
+  <script src="../js/chat-widget.js" defer></script>
+  <script src="../js/notifications.js" defer></script>
+  <script src="../js/age-gate.js" defer></script>
+  <script src="../js/cookie-consent.js" defer></script>
+  <script src="../js/search.js" defer></script>
+  <script src="../js/favorites.js" defer></script>
+  <script src="../js/session-monitor.js" defer></script>
+  <script src="../js/sound-manager.js" defer></script>
+  <script src="../js/analytics.js" defer></script>
+  <script src="../js/email-capture.js" defer></script>
+  <script src="../js/conversion.js" defer></script>
+</body>
+</html>

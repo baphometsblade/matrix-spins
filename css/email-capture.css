@@ -1,0 +1,319 @@
+/* ============================================================
+   Matrix Spins Casino — Email Capture Popup
+   Dark theme: bg #0d0f14 · text #f0f0f5 · gold #d4af37
+   ============================================================ */
+
+/* ── Overlay ─────────────────────────────────────────────── */
+
+.ms-ec-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 99999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.75);
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.3s ease, visibility 0.3s ease;
+  padding: 16px;
+}
+
+.ms-ec-overlay.ms-ec-visible {
+  opacity: 1;
+  visibility: visible;
+}
+
+/* ── Card ────────────────────────────────────────────────── */
+
+.ms-ec-card {
+  position: relative;
+  width: 100%;
+  max-width: 420px;
+  border-radius: 16px;
+  padding: 3px; /* gradient border trick */
+  background: linear-gradient(135deg, #d4af37, #9b59b6, #d4af37);
+  transform: scale(0.9);
+  opacity: 0;
+  transition: transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1),
+              opacity 0.3s ease;
+}
+
+.ms-ec-visible .ms-ec-card {
+  transform: scale(1);
+  opacity: 1;
+}
+
+.ms-ec-body,
+.ms-ec-success {
+  background: #0d0f14;
+  border-radius: 14px;
+  padding: 36px 28px 28px;
+  text-align: center;
+}
+
+.ms-ec-success {
+  border-radius: 14px;
+}
+
+/* ── Close button ────────────────────────────────────────── */
+
+.ms-ec-close {
+  position: absolute;
+  top: 12px;
+  right: 14px;
+  z-index: 2;
+  background: none;
+  border: none;
+  color: #f0f0f5;
+  font-size: 24px;
+  line-height: 1;
+  cursor: pointer;
+  opacity: 0.6;
+  transition: opacity 0.2s;
+}
+
+.ms-ec-close:hover,
+.ms-ec-close:focus-visible {
+  opacity: 1;
+}
+
+/* ── Emoji bounce ────────────────────────────────────────── */
+
+.ms-ec-emoji {
+  font-size: 48px;
+  margin-bottom: 12px;
+  animation: ms-ec-bounce 1.2s ease infinite;
+}
+
+@keyframes ms-ec-bounce {
+  0%, 100% { transform: translateY(0); }
+  40%      { transform: translateY(-10px); }
+  60%      { transform: translateY(-4px); }
+}
+
+/* ── Typography ──────────────────────────────────────────── */
+
+.ms-ec-title {
+  color: #d4af37;
+  font-family: 'Cinzel', 'Playfair Display', serif;
+  font-size: 26px;
+  font-weight: 700;
+  margin: 0 0 10px;
+  letter-spacing: 0.5px;
+}
+
+.ms-ec-sub {
+  color: #c0c0c8;
+  font-size: 14px;
+  line-height: 1.55;
+  margin: 0 0 22px;
+}
+
+/* ── Form ────────────────────────────────────────────────── */
+
+.ms-ec-form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.ms-ec-field {
+  position: relative;
+}
+
+.ms-ec-input {
+  width: 100%;
+  padding: 14px 16px;
+  border: 2px solid #2a2d35;
+  border-radius: 10px;
+  background: #141720;
+  color: #f0f0f5;
+  font-size: 15px;
+  outline: none;
+  transition: border-color 0.25s, box-shadow 0.25s;
+  box-sizing: border-box;
+}
+
+.ms-ec-input::placeholder {
+  color: #6b6e7a;
+}
+
+.ms-ec-input:focus {
+  border-color: #d4af37;
+  box-shadow: 0 0 0 3px rgba(212, 175, 55, 0.25);
+}
+
+.ms-ec-input--invalid {
+  border-color: #e74c3c;
+}
+
+/* ── Error message ───────────────────────────────────────── */
+
+.ms-ec-error {
+  display: block;
+  color: #e74c3c;
+  font-size: 12px;
+  margin-top: 6px;
+  text-align: left;
+  max-height: 0;
+  overflow: hidden;
+  opacity: 0;
+  transition: max-height 0.25s ease, opacity 0.25s ease;
+}
+
+.ms-ec-error--show {
+  max-height: 30px;
+  opacity: 1;
+}
+
+/* ── Submit button + shimmer ─────────────────────────────── */
+
+.ms-ec-submit {
+  position: relative;
+  width: 100%;
+  padding: 14px;
+  border: none;
+  border-radius: 10px;
+  background: linear-gradient(135deg, #d4af37, #b8962e);
+  color: #0d0f14;
+  font-size: 16px;
+  font-weight: 700;
+  letter-spacing: 0.3px;
+  cursor: pointer;
+  overflow: hidden;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.ms-ec-submit:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 20px rgba(212, 175, 55, 0.35);
+}
+
+.ms-ec-submit:active {
+  transform: translateY(0);
+}
+
+.ms-ec-submit::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 60%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.25),
+    transparent
+  );
+  animation: ms-ec-shimmer 2.5s ease-in-out infinite;
+}
+
+@keyframes ms-ec-shimmer {
+  0%   { left: -100%; }
+  100% { left: 200%; }
+}
+
+/* ── Dismiss link ────────────────────────────────────────── */
+
+.ms-ec-dismiss-link {
+  display: inline-block;
+  margin-top: 14px;
+  background: none;
+  border: none;
+  color: #6b6e7a;
+  font-size: 12px;
+  cursor: pointer;
+  text-decoration: underline;
+  transition: color 0.2s;
+}
+
+.ms-ec-dismiss-link:hover {
+  color: #f0f0f5;
+}
+
+/* ── Privacy note ────────────────────────────────────────── */
+
+.ms-ec-privacy {
+  color: #4a4d56;
+  font-size: 11px;
+  margin: 14px 0 0;
+}
+
+/* ── Success state ───────────────────────────────────────── */
+
+.ms-ec-check {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #d4af37, #b8962e);
+  color: #0d0f14;
+  font-size: 30px;
+  font-weight: 700;
+  margin-bottom: 16px;
+  animation: ms-ec-scale-in 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+  transform: scale(0);
+}
+
+@keyframes ms-ec-scale-in {
+  to { transform: scale(1); }
+}
+
+/* ── Mobile responsive ───────────────────────────────────── */
+
+@media (max-width: 480px) {
+  .ms-ec-overlay {
+    align-items: flex-end;
+    padding: 0;
+  }
+
+  .ms-ec-card {
+    max-width: 100%;
+    border-radius: 16px 16px 0 0;
+  }
+
+  .ms-ec-body,
+  .ms-ec-success {
+    border-radius: 14px 14px 0 0;
+    padding: 28px 20px 24px;
+  }
+
+  .ms-ec-title {
+    font-size: 22px;
+  }
+}
+
+/* ── Reduced motion ──────────────────────────────────────── */
+
+@media (prefers-reduced-motion: reduce) {
+  .ms-ec-card {
+    transition: opacity 0.2s ease;
+    transform: scale(1);
+  }
+
+  .ms-ec-visible .ms-ec-card {
+    transform: scale(1);
+  }
+
+  .ms-ec-emoji {
+    animation: none;
+  }
+
+  .ms-ec-submit::after {
+    animation: none;
+    display: none;
+  }
+
+  .ms-ec-check {
+    animation: none;
+    transform: scale(1);
+  }
+
+  .ms-ec-overlay {
+    transition: opacity 0.15s ease, visibility 0.15s ease;
+  }
+}

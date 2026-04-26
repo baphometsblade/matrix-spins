@@ -1,0 +1,294 @@
+/* ================================================================
+   Matrix Spins Casino — Session Monitor Styles
+   Responsible Gambling Compliance
+   ================================================================ */
+
+/* ── Timer Display ───────────────────────────────────────────────── */
+
+#sessionTimer,
+.session-timer-injected {
+  font-family: 'Courier New', Courier, monospace;
+  font-size: 0.78rem;
+  color: #a0a0aa;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+  padding: 4px 10px;
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.04);
+  user-select: none;
+}
+
+/* ── Overlay (shared) ────────────────────────────────────────────── */
+
+.sm-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 100000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.82);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  animation: smFadeIn 0.25s ease-out;
+}
+
+@keyframes smFadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+/* ── Card (shared) ───────────────────────────────────────────────── */
+
+.sm-card {
+  background: #161922;
+  border: 1px solid rgba(255, 193, 50, 0.18);
+  border-radius: 14px;
+  padding: 36px 32px 28px;
+  max-width: 440px;
+  width: 92vw;
+  text-align: center;
+  box-shadow: 0 12px 48px rgba(0, 0, 0, 0.55);
+  animation: smSlideUp 0.3s ease-out;
+}
+
+@keyframes smSlideUp {
+  from { transform: translateY(24px); opacity: 0; }
+  to   { transform: translateY(0);    opacity: 1; }
+}
+
+/* ── Reality Check ───────────────────────────────────────────────── */
+
+.sm-clock-icon {
+  font-size: 2.6rem;
+  margin-bottom: 8px;
+  animation: smPulse 2.4s ease-in-out infinite;
+}
+
+@keyframes smPulse {
+  0%, 100% { transform: scale(1);    opacity: 1; }
+  50%      { transform: scale(1.08); opacity: 0.85; }
+}
+
+.sm-heading {
+  font-family: 'Poppins', 'Segoe UI', sans-serif;
+  font-size: 1.35rem;
+  font-weight: 600;
+  color: #ffc947;
+  margin: 0 0 10px;
+}
+
+.sm-time {
+  font-size: 0.98rem;
+  color: #d0d0d8;
+  margin: 0 0 18px;
+  line-height: 1.5;
+}
+
+.sm-time strong {
+  color: #f0f0f5;
+}
+
+.sm-question {
+  font-size: 0.92rem;
+  color: #b0b0ba;
+  margin: 18px 0 20px;
+}
+
+/* ── Stats ───────────────────────────────────────────────────────── */
+
+.sm-stats {
+  display: flex;
+  justify-content: center;
+  gap: 28px;
+  margin: 0 0 6px;
+  padding: 14px 0;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.sm-stat {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.sm-stat-label {
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #808090;
+}
+
+.sm-stat-value {
+  font-size: 1.15rem;
+  font-weight: 600;
+  color: #f0f0f5;
+  font-family: 'Courier New', Courier, monospace;
+}
+
+/* ── Buttons ─────────────────────────────────────────────────────── */
+
+.sm-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.sm-btn {
+  font-family: 'Poppins', 'Segoe UI', sans-serif;
+  font-size: 0.92rem;
+  font-weight: 600;
+  border: none;
+  border-radius: 8px;
+  padding: 11px 26px;
+  cursor: pointer;
+  transition: background 0.2s, transform 0.15s, box-shadow 0.2s;
+  outline-offset: 2px;
+}
+
+.sm-btn:focus-visible {
+  outline: 2px solid #ffc947;
+}
+
+.sm-btn:active {
+  transform: scale(0.97);
+}
+
+/* Continue — subdued, not flashy */
+.sm-btn-continue {
+  background: #2a2d38;
+  color: #c0c0ca;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.sm-btn-continue:hover {
+  background: #33363f;
+}
+
+/* Take a Break — prominent green */
+.sm-btn-break {
+  background: #2ea65f;
+  color: #fff;
+  box-shadow: 0 2px 12px rgba(46, 166, 95, 0.3);
+}
+
+.sm-btn-break:hover {
+  background: #34b86a;
+  box-shadow: 0 4px 18px rgba(46, 166, 95, 0.4);
+}
+
+/* OK (break reminder) */
+.sm-btn-ok {
+  background: #2a2d38;
+  color: #e0e0e5;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  padding: 8px 28px;
+}
+
+.sm-btn-ok:hover {
+  background: #33363f;
+}
+
+/* Set Limits link */
+.sm-limits-link {
+  display: inline-block;
+  margin-top: 14px;
+  font-size: 0.82rem;
+  color: #8090b0;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  transition: color 0.2s;
+}
+
+.sm-limits-link:hover {
+  color: #a0b0d0;
+}
+
+/* ── Spend Alert ─────────────────────────────────────────────────── */
+
+.sm-spend-card .sm-heading {
+  color: #f5a623;
+}
+
+.sm-spend-card.sm-hard-stop {
+  border-color: rgba(230, 70, 70, 0.4);
+}
+
+.sm-spend-card.sm-hard-stop .sm-heading {
+  color: #e64646;
+}
+
+/* ── Break Reminder Banner ───────────────────────────────────────── */
+
+.sm-break-banner {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 99999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  padding: 14px 20px;
+  background: #1c2030;
+  border-bottom: 1px solid rgba(255, 193, 50, 0.2);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+  transform: translateY(-100%);
+  transition: transform 0.35s ease-out;
+}
+
+.sm-break-banner.sm-break-visible {
+  transform: translateY(0);
+}
+
+.sm-break-banner p {
+  margin: 0;
+  font-size: 0.9rem;
+  color: #d0d0d8;
+}
+
+/* ── Responsive ──────────────────────────────────────────────────── */
+
+@media (max-width: 520px) {
+  .sm-card {
+    padding: 28px 18px 22px;
+    border-radius: 10px;
+  }
+  .sm-heading {
+    font-size: 1.15rem;
+  }
+  .sm-stats {
+    gap: 16px;
+  }
+  .sm-actions {
+    flex-direction: column;
+  }
+  .sm-btn {
+    width: 100%;
+  }
+  .sm-break-banner {
+    flex-direction: column;
+    gap: 10px;
+    text-align: center;
+  }
+}
+
+/* ── Reduced Motion ──────────────────────────────────────────────── */
+
+@media (prefers-reduced-motion: reduce) {
+  .sm-clock-icon {
+    animation: none;
+  }
+  .sm-overlay,
+  .sm-card,
+  .sm-break-banner {
+    animation: none;
+    transition: none;
+  }
+  .sm-btn {
+    transition: none;
+  }
+}

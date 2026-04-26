@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Bear Grizzly Gold — Matrix Spins Casino</title>
+  <meta name="theme-color" content="#D4A853">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html, body { height: 100%; }
+    body { background: #0D0F14; color: #F0F0F5; font-family: 'Inter', sans-serif; overflow-x: hidden; }
+  </style>
+  <link rel="stylesheet" href="../css/chat-widget.css">
+  <link rel="stylesheet" href="../css/notifications.css">
+  <link rel="stylesheet" href="../css/age-gate.css">
+  <link rel="stylesheet" href="../css/search.css">
+  <link rel="stylesheet" href="../css/favorites.css">
+  <link rel="stylesheet" href="../css/session-monitor.css">
+  <link rel="stylesheet" href="../css/conversion.css">
+</head>
+<body>
+  <div id="game-container" style="width:100%;min-height:100vh;"></div>
+
+  <script src="../js/api-client.js"></script>
+  <script src="../js/casino-engine.js"></script>
+  <script>
+    const gameConfig = {
+      name: 'Bear Grizzly Gold',
+      id: 'bear-grizzly-gold',
+      studioTheme: {
+        id: 'wild-frontier',
+        name: 'Wild Frontier Games',
+        primaryColor: '#D2691E',
+        secondaryColor: '#228B22',
+        accentColor: '#FF8C00',
+        bgGradient: 'linear-gradient(135deg, #3E2723 0%, #4A3728 50%, #3E2723 100%)',
+        fontFamily: "'Righteous', sans-serif",
+        fontFamilyBody: "'Fredoka One', sans-serif",
+        chromeStyle: 'custom',
+        logoUrl: 'assets/studios/wild-frontier-logo.png',
+        reelBg: '#1B0F08',
+        reelBorder: '#D2691E',
+        winHighlight: '#FF8C00',
+        borderStyle: '5px solid #D2691E',
+        borderRadius: '16px',
+        boxShadow: '0 0 25px rgba(210,105,30,0.4), inset 0 0 20px rgba(34,139,34,0.15)',
+        buttonStyle: 'background: linear-gradient(180deg, #D2691E, #8B4513); border-radius: 10px; border: 2px solid #FF8C00; text-transform: uppercase; letter-spacing: 2px; font-weight: 900;',
+        spinButtonGlow: '0 0 20px rgba(210,105,30,0.6)'
+      },
+      rtp: 0.9,
+      volatility: 'medium',
+      mechanic: 'Tumble Multiplier Reset',
+      mechanicDesc: 'Cascading wins reset the multiplier based on cascades achieved in previous rounds.',
+      minBet: 0.2,
+      maxBet: 100,
+      betStep: 0.20,
+      reels: 5,
+      rows: 3,
+      paylines: 30,
+      symbols: ["bear","grizzly","gold","forest","salmon","claw","honey","strength","wild","scatter"],
+      wilds: ["bear"],
+      scatters: ["scatter"],
+      symbolWeights: {"bear":[9.903676061364338,10.034254171815771,10.084591713829095,9.813464111350282,9.99428242215352],"grizzly":[9.005246333722656,9.243032575544516,8.775739339162932,8.807159896015063,8.838536157561235],"gold":[7.995825547212303,8.231436887514555,8.246192482691672,7.880410390607008,7.957193901497567],"forest":[7.0352398592172785,6.981767330018492,7.208269301338945,6.974024887832794,7.030978029547626],"salmon":[5.86473233426402,5.848042547861838,6.098265095325905,6.054227537416044,6.150090747822896],"claw":[5.046876359522691,5.000283588885956,4.869222232416832,5.110741914625512,5.046261016765458],"honey":[4.204562054860503,4.038868542052518,4.080083896022375,4.205004562172762,4.172078168467223],"strength":[2.751890551323579,3.0096131777400132,3.1129101658778726,3.1305304169578942,3.172848799124166],"wild":[2.2155612085382694,1.8779274503158567,2.221460304749443,2.129022505618133,2.015822931067229],"scatter":[0.9396246771799103,0.8653404605594165,0.7500285119968249,0.9805469692255643,0.8344635584426553]},
+      paytable: {"bear":{"3":2,"4":5,"5":15},"grizzly":{"3":4,"4":11,"5":34},"gold":{"3":6,"4":16,"5":52},"forest":{"3":7,"4":22,"5":71},"salmon":{"3":9,"4":27,"5":89},"claw":{"3":11,"4":33,"5":108},"honey":{"3":13,"4":38,"5":126},"strength":{"3":15,"4":44,"5":145},"wild":{"3":16,"4":49,"5":163},"scatter":{"3":18,"4":55,"5":182},"SCATTER":{"3":5,"4":20,"5":100}},
+      freeSpinCount: 10,
+      freeSpinMultiplier: 2,
+      onSound: function(label) { /* sound hooks ready */ }
+    };
+
+    CasinoEngine.init('game-container', gameConfig);
+  </script>
+  <script src="../js/chat-widget.js" defer></script>
+  <script src="../js/notifications.js" defer></script>
+  <script src="../js/age-gate.js" defer></script>
+  <script src="../js/cookie-consent.js" defer></script>
+  <script src="../js/search.js" defer></script>
+  <script src="../js/favorites.js" defer></script>
+  <script src="../js/session-monitor.js" defer></script>
+  <script src="../js/sound-manager.js" defer></script>
+  <script src="../js/analytics.js" defer></script>
+  <script src="../js/email-capture.js" defer></script>
+  <script src="../js/conversion.js" defer></script>
+</body>
+</html>

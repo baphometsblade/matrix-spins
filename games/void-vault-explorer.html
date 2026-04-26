@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Void Vault Explorer — Matrix Spins Casino</title>
+  <meta name="theme-color" content="#D4A853">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html, body { height: 100%; }
+    body { background: #0D0F14; color: #F0F0F5; font-family: 'Inter', sans-serif; overflow-x: hidden; }
+  </style>
+  <link rel="stylesheet" href="../css/chat-widget.css">
+  <link rel="stylesheet" href="../css/notifications.css">
+  <link rel="stylesheet" href="../css/age-gate.css">
+  <link rel="stylesheet" href="../css/search.css">
+  <link rel="stylesheet" href="../css/favorites.css">
+  <link rel="stylesheet" href="../css/session-monitor.css">
+  <link rel="stylesheet" href="../css/conversion.css">
+</head>
+<body>
+  <div id="game-container" style="width:100%;min-height:100vh;"></div>
+
+  <script src="../js/api-client.js"></script>
+  <script src="../js/casino-engine.js"></script>
+  <script>
+    const gameConfig = {
+      name: 'Void Vault Explorer',
+      id: 'void-vault-explorer',
+      studioTheme: {
+        id: 'nebula-gaming',
+        name: 'Nebula Gaming',
+        primaryColor: '#00F0FF',
+        secondaryColor: '#9D4EDD',
+        accentColor: '#3A86FF',
+        bgGradient: 'linear-gradient(135deg, #0A0E27 0%, #1a0033 50%, #0A0E27 100%)',
+        fontFamily: "'Orbitron', sans-serif",
+        fontFamilyBody: "'Space Mono', monospace",
+        chromeStyle: 'custom',
+        logoUrl: 'assets/studios/nebula-gaming-logo.png',
+        reelBg: '#030810',
+        reelBorder: '#00F0FF',
+        winHighlight: '#39FF14',
+        borderStyle: '2px solid #00F0FF',
+        borderRadius: '4px',
+        boxShadow: '0 0 40px rgba(0,240,255,0.5), inset 0 0 30px rgba(157,78,221,0.2)',
+        buttonStyle: 'background: linear-gradient(180deg, #9D4EDD, #3A86FF); border-radius: 4px; border: 1px solid #00F0FF; text-transform: uppercase; letter-spacing: 3px; font-weight: bold;',
+        spinButtonGlow: '0 0 30px rgba(0,240,255,0.8)'
+      },
+      rtp: 0.88,
+      volatility: 'low',
+      mechanic: 'Win Both Ways',
+      mechanicDesc: 'Winning combinations pay from left to right and right to left, doubling the winning possibilities.',
+      minBet: 0.2,
+      maxBet: 100,
+      betStep: 0.20,
+      reels: 5,
+      rows: 3,
+      paylines: 10,
+      symbols: ["void","vault","planet","alien","star","spacecraft","crystal","mystery","wild","scatter"],
+      wilds: ["void"],
+      scatters: ["scatter"],
+      symbolWeights: {"void":[10.018199240437674,9.836767363922155,9.802588686304352,9.851117731368097,9.896147691639815],"vault":[8.940923100532908,8.779896029356618,8.95378947417434,8.984800822842274,9.132463623699115],"planet":[7.8609872364624565,7.892317921704067,8.19414255474855,8.245934029648224,7.968389835526473],"alien":[6.813611429805172,6.995990347745825,6.892784838674663,6.829801625618252,7.09264920993825],"star":[6.221174088897487,6.029829908417013,5.834772249013543,6.0234814975765945,6.01947123897384],"spacecraft":[4.9008916189744065,5.2099742999345535,5.050481810955695,4.841073773095564,5.093667036050204],"crystal":[4.1419524126628335,3.8971898658242856,3.9068751827873758,3.9791222471413006,4.162367639655457],"mystery":[2.807994886271932,2.760551798149394,2.8400342592053636,2.797005665356459,3.2024487745207986],"wild":[2.0510919330688284,1.855696040105674,2.1103068637448827,2.212904595630325,2.0957701142061667],"scatter":[0.7800487474120867,0.9141864726499717,0.7540909260084533,1.021091452978339,0.977202593472536]},
+      paytable: {"void":{"3":2,"4":5,"5":15},"vault":{"3":4,"4":11,"5":34},"planet":{"3":6,"4":16,"5":52},"alien":{"3":7,"4":22,"5":71},"star":{"3":9,"4":27,"5":89},"spacecraft":{"3":11,"4":33,"5":108},"crystal":{"3":13,"4":38,"5":126},"mystery":{"3":15,"4":44,"5":145},"wild":{"3":16,"4":49,"5":163},"scatter":{"3":18,"4":55,"5":182},"SCATTER":{"3":5,"4":20,"5":100}},
+      freeSpinCount: 10,
+      freeSpinMultiplier: 2,
+      onSound: function(label) { /* sound hooks ready */ }
+    };
+
+    CasinoEngine.init('game-container', gameConfig);
+  </script>
+  <script src="../js/chat-widget.js" defer></script>
+  <script src="../js/notifications.js" defer></script>
+  <script src="../js/age-gate.js" defer></script>
+  <script src="../js/cookie-consent.js" defer></script>
+  <script src="../js/search.js" defer></script>
+  <script src="../js/favorites.js" defer></script>
+  <script src="../js/session-monitor.js" defer></script>
+  <script src="../js/sound-manager.js" defer></script>
+  <script src="../js/analytics.js" defer></script>
+  <script src="../js/email-capture.js" defer></script>
+  <script src="../js/conversion.js" defer></script>
+</body>
+</html>

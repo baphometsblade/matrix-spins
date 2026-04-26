@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cosmic Raider Mission — Matrix Spins Casino</title>
+  <meta name="theme-color" content="#D4A853">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html, body { height: 100%; }
+    body { background: #0D0F14; color: #F0F0F5; font-family: 'Inter', sans-serif; overflow-x: hidden; }
+  </style>
+  <link rel="stylesheet" href="../css/chat-widget.css">
+  <link rel="stylesheet" href="../css/notifications.css">
+  <link rel="stylesheet" href="../css/age-gate.css">
+  <link rel="stylesheet" href="../css/search.css">
+  <link rel="stylesheet" href="../css/favorites.css">
+  <link rel="stylesheet" href="../css/session-monitor.css">
+  <link rel="stylesheet" href="../css/conversion.css">
+</head>
+<body>
+  <div id="game-container" style="width:100%;min-height:100vh;"></div>
+
+  <script src="../js/api-client.js"></script>
+  <script src="../js/casino-engine.js"></script>
+  <script>
+    const gameConfig = {
+      name: 'Cosmic Raider Mission',
+      id: 'cosmic-raider-mission',
+      studioTheme: {
+        id: 'nebula-gaming',
+        name: 'Nebula Gaming',
+        primaryColor: '#00F0FF',
+        secondaryColor: '#9D4EDD',
+        accentColor: '#3A86FF',
+        bgGradient: 'linear-gradient(135deg, #0A0E27 0%, #1a0033 50%, #0A0E27 100%)',
+        fontFamily: "'Orbitron', sans-serif",
+        fontFamilyBody: "'Space Mono', monospace",
+        chromeStyle: 'custom',
+        logoUrl: 'assets/studios/nebula-gaming-logo.png',
+        reelBg: '#030810',
+        reelBorder: '#00F0FF',
+        winHighlight: '#39FF14',
+        borderStyle: '2px solid #00F0FF',
+        borderRadius: '4px',
+        boxShadow: '0 0 40px rgba(0,240,255,0.5), inset 0 0 30px rgba(157,78,221,0.2)',
+        buttonStyle: 'background: linear-gradient(180deg, #9D4EDD, #3A86FF); border-radius: 4px; border: 1px solid #00F0FF; text-transform: uppercase; letter-spacing: 3px; font-weight: bold;',
+        spinButtonGlow: '0 0 30px rgba(0,240,255,0.8)'
+      },
+      rtp: 0.89,
+      volatility: 'high',
+      mechanic: 'Progressive Jackpot Meter',
+      mechanicDesc: 'A meter fills with each spin, triggering random jackpot prizes when it reaches specific thresholds.',
+      minBet: 0.2,
+      maxBet: 100,
+      betStep: 0.20,
+      reels: 5,
+      rows: 3,
+      paylines: 30,
+      symbols: ["raider","spaceship","planet","alien","comet","star","shield","blaster","wild","scatter"],
+      wilds: ["raider"],
+      scatters: ["scatter"],
+      symbolWeights: {"raider":[10.015405789984522,9.914498523820969,9.911205143045155,9.865708007839467,9.876009235437849],"spaceship":[8.812578461060331,9.085408496485432,8.863341968906132,8.849284508127765,9.245815572569951],"planet":[7.81596844987516,8.002315006497229,8.05875821387979,7.768262629953225,7.895447186474883],"alien":[7.005811438393847,6.8778738104678725,7.141259613405357,7.1310171061772225,6.9406197319908065],"comet":[5.837469432099958,6.207553604403479,6.2446209927312895,6.242060716400301,5.978660729657861],"star":[5.218396626687126,4.942104874318341,5.104261709591539,5.227464684121914,5.128444701626149],"shield":[4.120610090079256,4.110260591950662,3.7608290911302276,3.9522076161746638,3.8110256486564404],"blaster":[2.7746476205426305,3.1543522990897035,3.0899527924120367,3.006827407159875,2.8220990918585525],"wild":[1.833054975270007,1.8769771272046079,2.182768744903013,1.794824513231601,1.8752763595591548],"scatter":[1.0620651713253966,0.8318477249746604,1.0953065173059122,1.0499050022686993,0.9252395892910613]},
+      paytable: {"raider":{"3":2,"4":5,"5":15},"spaceship":{"3":4,"4":11,"5":34},"planet":{"3":6,"4":16,"5":52},"alien":{"3":7,"4":22,"5":71},"comet":{"3":9,"4":27,"5":89},"star":{"3":11,"4":33,"5":108},"shield":{"3":13,"4":38,"5":126},"blaster":{"3":15,"4":44,"5":145},"wild":{"3":16,"4":49,"5":163},"scatter":{"3":18,"4":55,"5":182},"SCATTER":{"3":5,"4":20,"5":100}},
+      freeSpinCount: 10,
+      freeSpinMultiplier: 2,
+      onSound: function(label) { /* sound hooks ready */ }
+    };
+
+    CasinoEngine.init('game-container', gameConfig);
+  </script>
+  <script src="../js/chat-widget.js" defer></script>
+  <script src="../js/notifications.js" defer></script>
+  <script src="../js/age-gate.js" defer></script>
+  <script src="../js/cookie-consent.js" defer></script>
+  <script src="../js/search.js" defer></script>
+  <script src="../js/favorites.js" defer></script>
+  <script src="../js/session-monitor.js" defer></script>
+  <script src="../js/sound-manager.js" defer></script>
+  <script src="../js/analytics.js" defer></script>
+  <script src="../js/email-capture.js" defer></script>
+  <script src="../js/conversion.js" defer></script>
+</body>
+</html>

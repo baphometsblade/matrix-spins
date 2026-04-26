@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Horus Divine Judgment — Matrix Spins Casino</title>
+  <meta name="theme-color" content="#D4A853">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html, body { height: 100%; }
+    body { background: #0D0F14; color: #F0F0F5; font-family: 'Inter', sans-serif; overflow-x: hidden; }
+  </style>
+  <link rel="stylesheet" href="../css/chat-widget.css">
+  <link rel="stylesheet" href="../css/notifications.css">
+  <link rel="stylesheet" href="../css/age-gate.css">
+  <link rel="stylesheet" href="../css/search.css">
+  <link rel="stylesheet" href="../css/favorites.css">
+  <link rel="stylesheet" href="../css/session-monitor.css">
+  <link rel="stylesheet" href="../css/conversion.css">
+</head>
+<body>
+  <div id="game-container" style="width:100%;min-height:100vh;"></div>
+
+  <script src="../js/api-client.js"></script>
+  <script src="../js/casino-engine.js"></script>
+  <script>
+    const gameConfig = {
+      name: 'Horus Divine Judgment',
+      id: 'horus-divine-judgment',
+      studioTheme: {
+        id: 'mythic-forge',
+        name: 'Mythic Forge',
+        primaryColor: '#50C878',
+        secondaryColor: '#DC143C',
+        accentColor: '#4169E1',
+        bgGradient: 'linear-gradient(135deg, #2C1810 0%, #3D2817 50%, #2C1810 100%)',
+        fontFamily: "'Cinzel', serif",
+        fontFamilyBody: "'Crimson Text', serif",
+        chromeStyle: 'custom',
+        logoUrl: 'assets/studios/mythic-forge-logo.png',
+        reelBg: '#1A0F08',
+        reelBorder: '#50C878',
+        winHighlight: '#FFD700',
+        borderStyle: '4px solid #50C878',
+        borderRadius: '8px',
+        boxShadow: '0 0 35px rgba(80,200,120,0.25), inset 0 0 25px rgba(80,200,120,0.1)',
+        buttonStyle: 'background: linear-gradient(180deg, #50C878, #3A9B5C); border-radius: 6px; border: 2px solid #DC143C; text-transform: uppercase; letter-spacing: 2px; font-weight: 600;',
+        spinButtonGlow: '0 0 25px rgba(80,200,120,0.5)'
+      },
+      rtp: 0.88,
+      volatility: 'high',
+      mechanic: 'Nudge',
+      mechanicDesc: 'Reels nudge slightly up or down to align winning combinations, triggered by specific symbols.',
+      minBet: 0.2,
+      maxBet: 100,
+      betStep: 0.20,
+      reels: 5,
+      rows: 3,
+      paylines: 25,
+      symbols: ["horus","eye","pharaoh","pyramid","sacred-bird","gold","amulet","temple","wild","scatter"],
+      wilds: ["horus"],
+      scatters: ["scatter"],
+      symbolWeights: {"horus":[10.184193728841452,10.19797396473747,9.783626685419158,10.00730761695648,10.181993622249461],"eye":[8.882183618201605,9.249772273325785,9.107540192839597,8.824871208220445,8.90915517512488],"pharaoh":[8.196209763028428,7.963532200167832,7.943279261661444,8.231521724064281,8.023129589776154],"pyramid":[7.052835577706768,7.099175793207131,7.217000116654924,7.146118378046258,7.158943829282761],"sacred-bird":[6.191688238080967,5.8068031776499245,6.010492234126079,5.772836600425775,5.978326438469101],"gold":[4.825910350667562,5.153562463038837,5.097257336959754,5.103354263060217,4.852882217977452],"amulet":[4.101745140812979,4.243585078988319,4.119751689476221,4.233296436859492,3.7991121008596274],"temple":[2.7872649424858094,2.7529326704545634,2.9173058437273274,3.2284259574639047,3.0227345328300395],"wild":[1.85329635713844,1.9249898136699906,2.175066930439615,2.1344480078951236,1.9460312410176202],"scatter":[1.1952766337085117,1.1370027217781282,0.9785290548749276,0.8938910948424604,1.1852349570206926]},
+      paytable: {"horus":{"3":2,"4":5,"5":15},"eye":{"3":4,"4":11,"5":34},"pharaoh":{"3":6,"4":16,"5":52},"pyramid":{"3":7,"4":22,"5":71},"sacred-bird":{"3":9,"4":27,"5":89},"gold":{"3":11,"4":33,"5":108},"amulet":{"3":13,"4":38,"5":126},"temple":{"3":15,"4":44,"5":145},"wild":{"3":16,"4":49,"5":163},"scatter":{"3":18,"4":55,"5":182},"SCATTER":{"3":5,"4":20,"5":100}},
+      freeSpinCount: 10,
+      freeSpinMultiplier: 2,
+      onSound: function(label) { /* sound hooks ready */ }
+    };
+
+    CasinoEngine.init('game-container', gameConfig);
+  </script>
+  <script src="../js/chat-widget.js" defer></script>
+  <script src="../js/notifications.js" defer></script>
+  <script src="../js/age-gate.js" defer></script>
+  <script src="../js/cookie-consent.js" defer></script>
+  <script src="../js/search.js" defer></script>
+  <script src="../js/favorites.js" defer></script>
+  <script src="../js/session-monitor.js" defer></script>
+  <script src="../js/sound-manager.js" defer></script>
+  <script src="../js/analytics.js" defer></script>
+  <script src="../js/email-capture.js" defer></script>
+  <script src="../js/conversion.js" defer></script>
+</body>
+</html>

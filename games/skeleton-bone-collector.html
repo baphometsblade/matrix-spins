@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Skeleton Bone Collector — Matrix Spins Casino</title>
+  <meta name="theme-color" content="#D4A853">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html, body { height: 100%; }
+    body { background: #0D0F14; color: #F0F0F5; font-family: 'Inter', sans-serif; overflow-x: hidden; }
+  </style>
+  <link rel="stylesheet" href="../css/chat-widget.css">
+  <link rel="stylesheet" href="../css/notifications.css">
+  <link rel="stylesheet" href="../css/age-gate.css">
+  <link rel="stylesheet" href="../css/search.css">
+  <link rel="stylesheet" href="../css/favorites.css">
+  <link rel="stylesheet" href="../css/session-monitor.css">
+  <link rel="stylesheet" href="../css/conversion.css">
+</head>
+<body>
+  <div id="game-container" style="width:100%;min-height:100vh;"></div>
+
+  <script src="../js/api-client.js"></script>
+  <script src="../js/casino-engine.js"></script>
+  <script>
+    const gameConfig = {
+      name: 'Skeleton Bone Collector',
+      id: 'skeleton-bone-collector',
+      studioTheme: {
+        id: 'shadow-works',
+        name: 'Shadow Works',
+        primaryColor: '#8B0000',
+        secondaryColor: '#39FF14',
+        accentColor: '#1F1F1F',
+        bgGradient: 'linear-gradient(135deg, #0B0B0B 0%, #1a0a0a 50%, #0B0B0B 100%)',
+        fontFamily: "'Black Ops One', sans-serif",
+        fontFamilyBody: "'Caveat', cursive",
+        chromeStyle: 'custom',
+        logoUrl: 'assets/studios/shadow-works-logo.png',
+        reelBg: '#050505',
+        reelBorder: '#8B0000',
+        winHighlight: '#39FF14',
+        borderStyle: '3px solid #8B0000',
+        borderRadius: '2px',
+        boxShadow: '0 0 40px rgba(139,0,0,0.6), inset 0 0 20px rgba(57,255,20,0.05)',
+        buttonStyle: 'background: linear-gradient(180deg, #8B0000, #600000); border-radius: 3px; border: 1px solid #39FF14; text-transform: uppercase; letter-spacing: 3px; font-weight: bold;',
+        spinButtonGlow: '0 0 30px rgba(139,0,0,0.7)'
+      },
+      rtp: 0.91,
+      volatility: 'high',
+      mechanic: 'Scatter Pays',
+      mechanicDesc: 'Scatter symbols pay regardless of position on the reels, creating flexible win opportunities.',
+      minBet: 0.2,
+      maxBet: 100,
+      betStep: 0.20,
+      reels: 5,
+      rows: 3,
+      paylines: 25,
+      symbols: ["skeleton","bones","grave","skull","coffin","gold","reaper","death","wild","scatter"],
+      wilds: ["skeleton"],
+      scatters: ["scatter"],
+      symbolWeights: {"skeleton":[10.020348333440793,9.848101319188482,9.845901700037835,9.936782918057652,10.178533954037446],"bones":[8.965559775613047,8.843178308219986,8.759494976421076,9.177680071808382,9.200920416270499],"grave":[8.122212261592205,8.083579000674378,7.9802732695226695,7.98305300820941,8.0442465888515],"skull":[7.0417574915523184,7.237076162044374,7.210739465405859,7.132033635190851,7.110702786785621],"coffin":[5.953384821090207,6.063044216668671,5.803980220988214,5.943058302914135,6.032289440266835],"gold":[4.787463002254827,5.130228296165503,4.8968068721380735,4.899738596095407,5.04288652969077],"reaper":[4.029371400907708,4.197998642831306,3.9613803639839995,4.189012730868958,3.988432464873645],"death":[3.0038791362109425,3.174437709764079,3.117094629269942,3.0708091766059358,2.983531403339545],"wild":[1.8609090398759207,1.9791536466327513,1.9934637661189039,2.1638631136312982,1.7626421249549546],"scatter":[1.0885500593093371,0.8951334285973823,0.9231131523217535,1.1669577228820682,1.1682281112230535]},
+      paytable: {"skeleton":{"3":2,"4":5,"5":15},"bones":{"3":4,"4":11,"5":34},"grave":{"3":6,"4":16,"5":52},"skull":{"3":7,"4":22,"5":71},"coffin":{"3":9,"4":27,"5":89},"gold":{"3":11,"4":33,"5":108},"reaper":{"3":13,"4":38,"5":126},"death":{"3":15,"4":44,"5":145},"wild":{"3":16,"4":49,"5":163},"scatter":{"3":18,"4":55,"5":182},"SCATTER":{"3":5,"4":20,"5":100}},
+      freeSpinCount: 10,
+      freeSpinMultiplier: 2,
+      onSound: function(label) { /* sound hooks ready */ }
+    };
+
+    CasinoEngine.init('game-container', gameConfig);
+  </script>
+  <script src="../js/chat-widget.js" defer></script>
+  <script src="../js/notifications.js" defer></script>
+  <script src="../js/age-gate.js" defer></script>
+  <script src="../js/cookie-consent.js" defer></script>
+  <script src="../js/search.js" defer></script>
+  <script src="../js/favorites.js" defer></script>
+  <script src="../js/session-monitor.js" defer></script>
+  <script src="../js/sound-manager.js" defer></script>
+  <script src="../js/analytics.js" defer></script>
+  <script src="../js/email-capture.js" defer></script>
+  <script src="../js/conversion.js" defer></script>
+</body>
+</html>

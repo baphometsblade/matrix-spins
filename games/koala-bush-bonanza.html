@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Koala Bush Bonanza — Matrix Spins Casino</title>
+  <meta name="theme-color" content="#D4A853">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html, body { height: 100%; }
+    body { background: #0D0F14; color: #F0F0F5; font-family: 'Inter', sans-serif; overflow-x: hidden; }
+  </style>
+  <link rel="stylesheet" href="../css/chat-widget.css">
+  <link rel="stylesheet" href="../css/notifications.css">
+  <link rel="stylesheet" href="../css/age-gate.css">
+  <link rel="stylesheet" href="../css/search.css">
+  <link rel="stylesheet" href="../css/favorites.css">
+  <link rel="stylesheet" href="../css/session-monitor.css">
+  <link rel="stylesheet" href="../css/conversion.css">
+</head>
+<body>
+  <div id="game-container" style="width:100%;min-height:100vh;"></div>
+
+  <script src="../js/api-client.js"></script>
+  <script src="../js/casino-engine.js"></script>
+  <script>
+    const gameConfig = {
+      name: 'Koala Bush Bonanza',
+      id: 'koala-bush-bonanza',
+      studioTheme: {
+        id: 'wild-frontier',
+        name: 'Wild Frontier Games',
+        primaryColor: '#D2691E',
+        secondaryColor: '#228B22',
+        accentColor: '#FF8C00',
+        bgGradient: 'linear-gradient(135deg, #3E2723 0%, #4A3728 50%, #3E2723 100%)',
+        fontFamily: "'Righteous', sans-serif",
+        fontFamilyBody: "'Fredoka One', sans-serif",
+        chromeStyle: 'custom',
+        logoUrl: 'assets/studios/wild-frontier-logo.png',
+        reelBg: '#1B0F08',
+        reelBorder: '#D2691E',
+        winHighlight: '#FF8C00',
+        borderStyle: '5px solid #D2691E',
+        borderRadius: '16px',
+        boxShadow: '0 0 25px rgba(210,105,30,0.4), inset 0 0 20px rgba(34,139,34,0.15)',
+        buttonStyle: 'background: linear-gradient(180deg, #D2691E, #8B4513); border-radius: 10px; border: 2px solid #FF8C00; text-transform: uppercase; letter-spacing: 2px; font-weight: 900;',
+        spinButtonGlow: '0 0 20px rgba(210,105,30,0.6)'
+      },
+      rtp: 0.92,
+      volatility: 'medium',
+      mechanic: 'Symbol Morph',
+      mechanicDesc: 'Symbols morph into different higher-value symbols based on winning outcomes.',
+      minBet: 0.2,
+      maxBet: 100,
+      betStep: 0.20,
+      reels: 5,
+      rows: 3,
+      paylines: 40,
+      symbols: ["koala","bush","eucalyptus","bonanza","gold","joey","outback","nature","wild","scatter"],
+      wilds: ["koala"],
+      scatters: ["scatter"],
+      symbolWeights: {"koala":[10.210803834784372,9.909524345016589,9.7756961415098,10.036423909975548,9.775210960149167],"bush":[9.143335823470714,9.15615660195955,8.821343370269059,9.169685318502472,9.212622172835186],"eucalyptus":[8.078179810715582,7.948388882280508,8.081054770406302,8.082182967570349,8.115704817855915],"bonanza":[7.210395930938152,7.112940484970605,7.202381534026196,6.836316433382639,7.096662907587012],"gold":[6.029448632703679,5.833350901669121,6.195328846978932,5.834063881459599,6.199557731193886],"joey":[5.021558420310469,4.881302367459271,4.903296442308714,5.2285464387994125,5.178898178244714],"outback":[3.9009139174231766,4.123432884442818,3.982651026316029,3.981676622922024,3.9185191001238096],"nature":[2.882734858230554,2.826382708421394,2.8857662755594142,2.813142374809594,2.9838143629910263],"wild":[2.2263372922324365,2.1319324541474174,1.8879212417990385,1.8512818642869304,1.844611482045805],"scatter":[0.9628713986227484,0.9751610271104607,1.2184769474925425,1.0230216438333595,0.7870171942982546]},
+      paytable: {"koala":{"3":2,"4":5,"5":15},"bush":{"3":4,"4":11,"5":34},"eucalyptus":{"3":6,"4":16,"5":52},"bonanza":{"3":7,"4":22,"5":71},"gold":{"3":9,"4":27,"5":89},"joey":{"3":11,"4":33,"5":108},"outback":{"3":13,"4":38,"5":126},"nature":{"3":15,"4":44,"5":145},"wild":{"3":16,"4":49,"5":163},"scatter":{"3":18,"4":55,"5":182},"SCATTER":{"3":5,"4":20,"5":100}},
+      freeSpinCount: 10,
+      freeSpinMultiplier: 2,
+      onSound: function(label) { /* sound hooks ready */ }
+    };
+
+    CasinoEngine.init('game-container', gameConfig);
+  </script>
+  <script src="../js/chat-widget.js" defer></script>
+  <script src="../js/notifications.js" defer></script>
+  <script src="../js/age-gate.js" defer></script>
+  <script src="../js/cookie-consent.js" defer></script>
+  <script src="../js/search.js" defer></script>
+  <script src="../js/favorites.js" defer></script>
+  <script src="../js/session-monitor.js" defer></script>
+  <script src="../js/sound-manager.js" defer></script>
+  <script src="../js/analytics.js" defer></script>
+  <script src="../js/email-capture.js" defer></script>
+  <script src="../js/conversion.js" defer></script>
+</body>
+</html>

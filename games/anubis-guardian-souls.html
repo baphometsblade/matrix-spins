@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Anubis Guardian Souls — Matrix Spins Casino</title>
+  <meta name="theme-color" content="#D4A853">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html, body { height: 100%; }
+    body { background: #0D0F14; color: #F0F0F5; font-family: 'Inter', sans-serif; overflow-x: hidden; }
+  </style>
+  <link rel="stylesheet" href="../css/chat-widget.css">
+  <link rel="stylesheet" href="../css/notifications.css">
+  <link rel="stylesheet" href="../css/age-gate.css">
+  <link rel="stylesheet" href="../css/search.css">
+  <link rel="stylesheet" href="../css/favorites.css">
+  <link rel="stylesheet" href="../css/session-monitor.css">
+  <link rel="stylesheet" href="../css/conversion.css">
+</head>
+<body>
+  <div id="game-container" style="width:100%;min-height:100vh;"></div>
+
+  <script src="../js/api-client.js"></script>
+  <script src="../js/casino-engine.js"></script>
+  <script>
+    const gameConfig = {
+      name: 'Anubis Guardian Souls',
+      id: 'anubis-guardian-souls',
+      studioTheme: {
+        id: 'mythic-forge',
+        name: 'Mythic Forge',
+        primaryColor: '#50C878',
+        secondaryColor: '#DC143C',
+        accentColor: '#4169E1',
+        bgGradient: 'linear-gradient(135deg, #2C1810 0%, #3D2817 50%, #2C1810 100%)',
+        fontFamily: "'Cinzel', serif",
+        fontFamilyBody: "'Crimson Text', serif",
+        chromeStyle: 'custom',
+        logoUrl: 'assets/studios/mythic-forge-logo.png',
+        reelBg: '#1A0F08',
+        reelBorder: '#50C878',
+        winHighlight: '#FFD700',
+        borderStyle: '4px solid #50C878',
+        borderRadius: '8px',
+        boxShadow: '0 0 35px rgba(80,200,120,0.25), inset 0 0 25px rgba(80,200,120,0.1)',
+        buttonStyle: 'background: linear-gradient(180deg, #50C878, #3A9B5C); border-radius: 6px; border: 2px solid #DC143C; text-transform: uppercase; letter-spacing: 2px; font-weight: 600;',
+        spinButtonGlow: '0 0 25px rgba(80,200,120,0.5)'
+      },
+      rtp: 0.89,
+      volatility: 'medium',
+      mechanic: 'Symbol Stacking',
+      mechanicDesc: 'Stacks of identical symbols land on reels, creating large winning clusters and cascades.',
+      minBet: 0.2,
+      maxBet: 100,
+      betStep: 0.20,
+      reels: 5,
+      rows: 4,
+      paylines: 40,
+      symbols: ["anubis","tomb","scarab","pyramid","amulet","gold-coin","emerald","curse","wild","scatter"],
+      wilds: ["anubis"],
+      scatters: ["scatter"],
+      symbolWeights: {"anubis":[9.788988178329744,9.99017280508533,9.885020862363422,10.075281417315454,10.14427662884275],"tomb":[9.19169488862103,9.145600311799624,8.791092112110935,9.11652990528066,8.802423161560606],"scarab":[7.922320185524722,7.934075362240427,7.8695847530028,7.781266716082509,8.215507970059774],"pyramid":[6.92017141949869,7.137348323861611,6.808753702649988,7.041600126084188,6.886460888787147],"amulet":[6.125269178462586,6.04394811845614,5.962455822711714,5.788189048364653,5.8791242384669875],"gold-coin":[5.016353419470991,4.85839652950762,5.182275139366265,5.091331497984244,5.1230567573960295],"emerald":[4.164338277163915,3.9713176550484075,3.8151558945327437,4.0147840882686925,3.943419025696444],"curse":[2.920132798038825,2.8980273902037084,3.187114582190526,2.751148616096097,3.1620265277294846],"wild":[2.161286056267124,1.8307045794091943,2.004548160725183,2.178951885691276,1.761640152950493],"scatter":[0.8376480309620807,0.7868706723576354,0.8803115181441769,1.0794910772052733,0.9164956061191608]},
+      paytable: {"anubis":{"3":2,"4":5,"5":15},"tomb":{"3":4,"4":11,"5":34},"scarab":{"3":6,"4":16,"5":52},"pyramid":{"3":7,"4":22,"5":71},"amulet":{"3":9,"4":27,"5":89},"gold-coin":{"3":11,"4":33,"5":108},"emerald":{"3":13,"4":38,"5":126},"curse":{"3":15,"4":44,"5":145},"wild":{"3":16,"4":49,"5":163},"scatter":{"3":18,"4":55,"5":182},"SCATTER":{"3":5,"4":20,"5":100}},
+      freeSpinCount: 10,
+      freeSpinMultiplier: 2,
+      onSound: function(label) { /* sound hooks ready */ }
+    };
+
+    CasinoEngine.init('game-container', gameConfig);
+  </script>
+  <script src="../js/chat-widget.js" defer></script>
+  <script src="../js/notifications.js" defer></script>
+  <script src="../js/age-gate.js" defer></script>
+  <script src="../js/cookie-consent.js" defer></script>
+  <script src="../js/search.js" defer></script>
+  <script src="../js/favorites.js" defer></script>
+  <script src="../js/session-monitor.js" defer></script>
+  <script src="../js/sound-manager.js" defer></script>
+  <script src="../js/analytics.js" defer></script>
+  <script src="../js/email-capture.js" defer></script>
+  <script src="../js/conversion.js" defer></script>
+</body>
+</html>

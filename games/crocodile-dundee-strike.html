@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Crocodile Dundee Strike — Matrix Spins Casino</title>
+  <meta name="theme-color" content="#D4A853">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html, body { height: 100%; }
+    body { background: #0D0F14; color: #F0F0F5; font-family: 'Inter', sans-serif; overflow-x: hidden; }
+  </style>
+  <link rel="stylesheet" href="../css/chat-widget.css">
+  <link rel="stylesheet" href="../css/notifications.css">
+  <link rel="stylesheet" href="../css/age-gate.css">
+  <link rel="stylesheet" href="../css/search.css">
+  <link rel="stylesheet" href="../css/favorites.css">
+  <link rel="stylesheet" href="../css/session-monitor.css">
+  <link rel="stylesheet" href="../css/conversion.css">
+</head>
+<body>
+  <div id="game-container" style="width:100%;min-height:100vh;"></div>
+
+  <script src="../js/api-client.js"></script>
+  <script src="../js/casino-engine.js"></script>
+  <script>
+    const gameConfig = {
+      name: 'Crocodile Dundee Strike',
+      id: 'crocodile-dundee-strike',
+      studioTheme: {
+        id: 'wild-frontier',
+        name: 'Wild Frontier Games',
+        primaryColor: '#D2691E',
+        secondaryColor: '#228B22',
+        accentColor: '#FF8C00',
+        bgGradient: 'linear-gradient(135deg, #3E2723 0%, #4A3728 50%, #3E2723 100%)',
+        fontFamily: "'Righteous', sans-serif",
+        fontFamilyBody: "'Fredoka One', sans-serif",
+        chromeStyle: 'custom',
+        logoUrl: 'assets/studios/wild-frontier-logo.png',
+        reelBg: '#1B0F08',
+        reelBorder: '#D2691E',
+        winHighlight: '#FF8C00',
+        borderStyle: '5px solid #D2691E',
+        borderRadius: '16px',
+        boxShadow: '0 0 25px rgba(210,105,30,0.4), inset 0 0 20px rgba(34,139,34,0.15)',
+        buttonStyle: 'background: linear-gradient(180deg, #D2691E, #8B4513); border-radius: 10px; border: 2px solid #FF8C00; text-transform: uppercase; letter-spacing: 2px; font-weight: 900;',
+        spinButtonGlow: '0 0 20px rgba(210,105,30,0.6)'
+      },
+      rtp: 0.88,
+      volatility: 'high',
+      mechanic: 'Symbol Drop',
+      mechanicDesc: 'Symbols drop down the reels, stacking vertically and creating large winning formations.',
+      minBet: 0.2,
+      maxBet: 100,
+      betStep: 0.20,
+      reels: 5,
+      rows: 3,
+      paylines: 20,
+      symbols: ["crocodile","hunter","swamp","boomerang","aboriginal","gold","danger","survival","wild","scatter"],
+      wilds: ["crocodile"],
+      scatters: ["scatter"],
+      symbolWeights: {"crocodile":[10.19280671318791,9.78023306676503,9.80212449829311,10.237026806121447,10.060781507975822],"hunter":[9.041379925659271,9.186338176331267,8.899069727888628,9.20715758044906,9.132056915636856],"swamp":[7.874644105873099,7.805055908973014,7.785031890111747,8.176444537814483,7.923040543480865],"boomerang":[7.125986114682025,6.761475122993803,7.071276627742399,7.026009748878299,7.230849019978207],"aboriginal":[5.7950548782115545,5.771799142015453,6.015366769372143,6.041099673599222,5.93698485507895],"gold":[4.791064076054007,4.789863608503789,5.03504231959076,5.055766171096541,4.8776951609445085],"danger":[3.980218509258965,4.000935715802196,3.924840728782632,4.019689877498175,3.8254349802295593],"survival":[2.8752084329177197,2.9995912968428415,3.0253785669768103,3.0612079157461674,2.9897809870129373],"wild":[1.8804563673560664,2.1526668644855618,2.0736680723119916,1.8174002340819824,2.1263261604108687],"scatter":[1.013341033128462,1.0843492702902058,1.1544849208764916,1.004784578053986,1.0022850512178714]},
+      paytable: {"crocodile":{"3":2,"4":5,"5":15},"hunter":{"3":4,"4":11,"5":34},"swamp":{"3":6,"4":16,"5":52},"boomerang":{"3":7,"4":22,"5":71},"aboriginal":{"3":9,"4":27,"5":89},"gold":{"3":11,"4":33,"5":108},"danger":{"3":13,"4":38,"5":126},"survival":{"3":15,"4":44,"5":145},"wild":{"3":16,"4":49,"5":163},"scatter":{"3":18,"4":55,"5":182},"SCATTER":{"3":5,"4":20,"5":100}},
+      freeSpinCount: 10,
+      freeSpinMultiplier: 2,
+      onSound: function(label) { /* sound hooks ready */ }
+    };
+
+    CasinoEngine.init('game-container', gameConfig);
+  </script>
+  <script src="../js/chat-widget.js" defer></script>
+  <script src="../js/notifications.js" defer></script>
+  <script src="../js/age-gate.js" defer></script>
+  <script src="../js/cookie-consent.js" defer></script>
+  <script src="../js/search.js" defer></script>
+  <script src="../js/favorites.js" defer></script>
+  <script src="../js/session-monitor.js" defer></script>
+  <script src="../js/sound-manager.js" defer></script>
+  <script src="../js/analytics.js" defer></script>
+  <script src="../js/email-capture.js" defer></script>
+  <script src="../js/conversion.js" defer></script>
+</body>
+</html>

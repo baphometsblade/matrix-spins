@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Refer &amp; Earn — Matrix Spins Casino</title>
+<meta name="description" content="Refer friends to Matrix Spins Casino and earn $50 each when they deposit $25 or more. Share your unique referral link today.">
+<meta property="og:title" content="Refer &amp; Earn $50 — Matrix Spins Casino">
+<meta property="og:description" content="Share your referral link and earn $50 for every friend who joins and deposits. Unlimited referrals.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://msaart.online/referral.html">
+<meta name="twitter:card" content="summary">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/auth.css">
+<link rel="stylesheet" href="css/referral.css">
+<link rel="stylesheet" href="css/chat-widget.css">
+<link rel="stylesheet" href="css/notifications.css">
+<link rel="stylesheet" href="css/age-gate.css">
+<link rel="stylesheet" href="css/search.css">
+<link rel="stylesheet" href="css/favorites.css">
+<link rel="stylesheet" href="css/session-monitor.css">
+<link rel="stylesheet" href="css/conversion.css">
+</head>
+<body>
+
+<div class="topbar">
+  <a class="brand" href="index.html">Matrix Spins</a>
+  <div class="actions">
+    <span id="balanceChip" class="balance-chip">—</span>
+    <a href="wallet.html" class="btn btn-inline secondary">Wallet</a>
+    <a href="account.html" class="btn btn-inline secondary">Account</a>
+    <button id="logout" class="btn btn-inline secondary">Sign out</button>
+  </div>
+</div>
+
+<div class="rs-shell-wide">
+
+  <!-- ── Referral Hero ─────────────────────────────────────── -->
+  <div class="ref-hero">
+    <span class="ref-hero-icon">🎁</span>
+    <h1 class="ref-hero-title">Refer Friends, Earn $50 Each</h1>
+    <p class="ref-hero-subtitle">Share your personal referral link with friends. When they sign up and make their first deposit of $25 or more, you <em>both</em> receive a $50 bonus credited instantly to your wallet.</p>
+  </div>
+
+  <!-- ── Your Referral Link ────────────────────────────────── -->
+  <div class="rs-card ref-link-section">
+    <h2 class="section-title">Your Referral Link</h2>
+    <div class="ref-link-row">
+      <input type="text" id="refLinkInput" class="ref-link-input" value="https://msaart.online/?ref=MATRIX_USER123" readonly>
+      <button id="copyBtn" class="btn btn-gold ref-copy-btn">Copy Link</button>
+    </div>
+    <div class="share-row">
+      <span class="share-label">Share via</span>
+      <a id="shareTwitter" href="#" class="share-btn share-twitter" aria-label="Share on Twitter">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+      </a>
+      <a id="shareFacebook" href="#" class="share-btn share-facebook" aria-label="Share on Facebook">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>
+      </a>
+      <a id="shareEmail" href="#" class="share-btn share-email" aria-label="Share via Email">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M20 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"/></svg>
+      </a>
+    </div>
+  </div>
+
+  <!-- ── Stats Dashboard ───────────────────────────────────── -->
+  <div class="ref-stats-grid">
+    <div class="ref-stat-card">
+      <span class="ref-stat-icon">👥</span>
+      <span class="ref-stat-value">7</span>
+      <span class="ref-stat-label">Total Referred</span>
+    </div>
+    <div class="ref-stat-card">
+      <span class="ref-stat-icon">✅</span>
+      <span class="ref-stat-value">4</span>
+      <span class="ref-stat-label">Successful</span>
+    </div>
+    <div class="ref-stat-card">
+      <span class="ref-stat-icon">⏳</span>
+      <span class="ref-stat-value">3</span>
+      <span class="ref-stat-label">Pending</span>
+    </div>
+    <div class="ref-stat-card">
+      <span class="ref-stat-icon">💰</span>
+      <span class="ref-stat-value">$200</span>
+      <span class="ref-stat-label">Total Earned</span>
+    </div>
+  </div>
+
+  <!-- ── How It Works ──────────────────────────────────────── -->
+  <h2 class="section-title" style="margin-bottom:1rem;">How It Works</h2>
+  <div class="ref-steps-grid">
+    <div class="ref-step-card">
+      <div class="ref-step-number">1</div>
+      <span class="ref-step-icon">🔗</span>
+      <h3 class="ref-step-title">Share Your Link</h3>
+      <p class="ref-step-desc">Copy your unique referral link and share it with friends via social media, text, or email.</p>
+    </div>
+    <div class="ref-step-card">
+      <div class="ref-step-number">2</div>
+      <span class="ref-step-icon">💳</span>
+      <h3 class="ref-step-title">Friend Signs Up &amp; Deposits</h3>
+      <p class="ref-step-desc">Your friend creates an account using your link and makes their first deposit of $25 or more.</p>
+    </div>
+    <div class="ref-step-card">
+      <div class="ref-step-number">3</div>
+      <span class="ref-step-icon">🎉</span>
+      <h3 class="ref-step-title">You Both Get $50</h3>
+      <p class="ref-step-desc">Once the deposit clears, a $50 bonus is credited instantly to both your wallets. No limits on referrals!</p>
+    </div>
+  </div>
+
+  <!-- ── Referral History ──────────────────────────────────── -->
+  <div class="rs-card" style="margin-top:2rem;">
+    <h2 class="section-title" style="margin-top:0;">Referral History</h2>
+    <div class="ref-table-wrap">
+      <table class="ref-table">
+        <thead>
+          <tr>
+            <th>Friend</th>
+            <th>Date Joined</th>
+            <th>Status</th>
+            <th style="text-align:right;">Earned</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>J***n W.</td>
+            <td>Apr 22, 2026</td>
+            <td><span class="ref-badge completed">Completed</span></td>
+            <td style="text-align:right;">$50.00</td>
+          </tr>
+          <tr>
+            <td>S***a M.</td>
+            <td>Apr 18, 2026</td>
+            <td><span class="ref-badge completed">Completed</span></td>
+            <td style="text-align:right;">$50.00</td>
+          </tr>
+          <tr>
+            <td>R***t K.</td>
+            <td>Apr 15, 2026</td>
+            <td><span class="ref-badge pending">Pending</span></td>
+            <td style="text-align:right;">—</td>
+          </tr>
+          <tr>
+            <td>M***a L.</td>
+            <td>Apr 12, 2026</td>
+            <td><span class="ref-badge completed">Completed</span></td>
+            <td style="text-align:right;">$50.00</td>
+          </tr>
+          <tr>
+            <td>D***d P.</td>
+            <td>Apr 8, 2026</td>
+            <td><span class="ref-badge expired">Expired</span></td>
+            <td style="text-align:right;">—</td>
+          </tr>
+          <tr>
+            <td>A***e R.</td>
+            <td>Apr 3, 2026</td>
+            <td><span class="ref-badge completed">Completed</span></td>
+            <td style="text-align:right;">$50.00</td>
+          </tr>
+          <tr>
+            <td>T***s B.</td>
+            <td>Mar 28, 2026</td>
+            <td><span class="ref-badge pending">Pending</span></td>
+            <td style="text-align:right;">—</td>
+          </tr>
+          <tr>
+            <td>L***y G.</td>
+            <td>Mar 22, 2026</td>
+            <td><span class="ref-badge pending">Pending</span></td>
+            <td style="text-align:right;">—</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ── Terms & Conditions ────────────────────────────────── -->
+  <div class="rs-card ref-terms-section">
+    <button class="ref-terms-toggle" id="termsToggle" aria-expanded="false">
+      <span>Referral Program Terms &amp; Conditions</span>
+      <svg class="ref-terms-chevron" width="20" height="20" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z"/></svg>
+    </button>
+    <div class="ref-terms-body" id="termsBody">
+      <ul>
+        <li>Both the referrer and the referred friend must have verified accounts at Matrix Spins Casino.</li>
+        <li>The referred friend must be a new player who has never held an account at Matrix Spins.</li>
+        <li>The $50 bonus is credited after the referred friend completes a minimum first deposit of $25.</li>
+        <li>Bonus funds carry a 10x wagering requirement before withdrawal is permitted.</li>
+        <li>Self-referrals, duplicate accounts, and fraudulent activity will result in forfeiture of all bonuses and possible account suspension.</li>
+        <li>There is no limit to the number of friends you can refer.</li>
+        <li>Referral bonuses are processed within 24 hours of the qualifying deposit.</li>
+        <li>Matrix Spins Casino reserves the right to modify or discontinue the referral program at any time.</li>
+        <li>Standard promotional terms and site-wide terms of service apply. See <a href="terms.html">Terms of Service</a> for full details.</li>
+      </ul>
+    </div>
+  </div>
+
+</div>
+
+<script src="js/api-client.js"></script>
+<script src="js/chat-widget.js"></script>
+<script src="js/notifications.js"></script>
+<script src="js/age-gate.js" defer></script>
+<script src="js/cookie-consent.js" defer></script>
+<script src="js/search.js" defer></script>
+<script src="js/favorites.js" defer></script>
+<script src="js/session-monitor.js" defer></script>
+<script src="js/sound-manager.js" defer></script>
+<script src="js/analytics.js" defer></script>
+<script src="js/email-capture.js" defer></script>
+<script src="js/conversion.js" defer></script>
+<script>
+(async () => {
+  'use strict';
+
+  const api = window.MatrixSpinsAPI;
+  const user = await api.loadSession();
+  if (!user) { window.location.href = 'login.html?next=referral.html'; return; }
+
+  function fmt(c) { return api.formatCents(c); }
+  const $ = id => document.getElementById(id);
+
+  // Balance + Logout
+  $('logout').addEventListener('click', async () => { await api.logout(); window.location.href = 'index.html'; });
+  try { const b = await api.getBalance(); $('balanceChip').textContent = fmt(b.availableCents); } catch {}
+
+  // ── Copy Link ──────────────────────────────────────────────
+  const copyBtn = $('copyBtn');
+  const refInput = $('refLinkInput');
+
+  copyBtn.addEventListener('click', async () => {
+    try {
+      await navigator.clipboard.writeText(refInput.value);
+    } catch {
+      refInput.select();
+      document.execCommand('copy');
+    }
+    copyBtn.textContent = 'Copied!';
+    copyBtn.classList.add('copied');
+    setTimeout(() => {
+      copyBtn.textContent = 'Copy Link';
+      copyBtn.classList.remove('copied');
+    }, 2000);
+  });
+
+  // ── Share Buttons ──────────────────────────────────────────
+  const refURL = encodeURIComponent(refInput.value);
+  const shareText = encodeURIComponent('Join me on Matrix Spins Casino! Sign up with my link and we both get a $50 bonus. Play 100+ provably fair games.');
+
+  $('shareTwitter').href = `https://twitter.com/intent/tweet?text=${shareText}&url=${refURL}`;
+  $('shareTwitter').target = '_blank';
+  $('shareTwitter').rel = 'noopener noreferrer';
+
+  $('shareFacebook').href = `https://www.facebook.com/sharer/sharer.php?u=${refURL}&quote=${shareText}`;
+  $('shareFacebook').target = '_blank';
+  $('shareFacebook').rel = 'noopener noreferrer';
+
+  $('shareEmail').href = `mailto:?subject=${encodeURIComponent('Join Matrix Spins Casino — We Both Get $50!')}&body=${shareText}%0A%0A${refURL}`;
+
+  // ── Terms Toggle ───────────────────────────────────────────
+  const termsToggle = $('termsToggle');
+  const termsBody = $('termsBody');
+
+  termsToggle.addEventListener('click', () => {
+    const expanded = termsToggle.getAttribute('aria-expanded') === 'true';
+    termsToggle.setAttribute('aria-expanded', !expanded);
+    termsBody.classList.toggle('open');
+  });
+})();
+</script>
+</body>
+</html>

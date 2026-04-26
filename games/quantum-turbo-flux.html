@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Quantum Turbo Flux — Matrix Spins Casino</title>
+  <meta name="theme-color" content="#D4A853">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html, body { height: 100%; }
+    body { background: #0D0F14; color: #F0F0F5; font-family: 'Inter', sans-serif; overflow-x: hidden; }
+  </style>
+  <link rel="stylesheet" href="../css/chat-widget.css">
+  <link rel="stylesheet" href="../css/notifications.css">
+  <link rel="stylesheet" href="../css/age-gate.css">
+  <link rel="stylesheet" href="../css/search.css">
+  <link rel="stylesheet" href="../css/favorites.css">
+  <link rel="stylesheet" href="../css/session-monitor.css">
+  <link rel="stylesheet" href="../css/conversion.css">
+</head>
+<body>
+  <div id="game-container" style="width:100%;min-height:100vh;"></div>
+
+  <script src="../js/api-client.js"></script>
+  <script src="../js/casino-engine.js"></script>
+  <script>
+    const gameConfig = {
+      name: 'Quantum Turbo Flux',
+      id: 'quantum-turbo-flux',
+      studioTheme: {
+        id: 'cascade-labs',
+        name: 'Cascade Labs',
+        primaryColor: '#9D4EDD',
+        secondaryColor: '#00F0FF',
+        accentColor: '#FF006E',
+        bgGradient: 'linear-gradient(135deg, #F8F9FA 0%, #E9ECEF 50%, #F8F9FA 100%)',
+        fontFamily: "'Poppins', sans-serif",
+        fontFamilyBody: "'Poppins', sans-serif",
+        chromeStyle: 'custom',
+        logoUrl: 'assets/studios/cascade-labs-logo.png',
+        reelBg: '#FFFFFF',
+        reelBorder: '#9D4EDD',
+        winHighlight: '#FF006E',
+        borderStyle: '2px solid #9D4EDD',
+        borderRadius: '8px',
+        boxShadow: '0 4px 20px rgba(157,78,221,0.15), inset 0 0 10px rgba(0,240,255,0.05)',
+        buttonStyle: 'background: linear-gradient(135deg, #9D4EDD, #00F0FF); border-radius: 6px; border: none; text-transform: uppercase; letter-spacing: 1px; font-weight: 600; color: #FFF;',
+        spinButtonGlow: '0 0 15px rgba(157,78,221,0.4)'
+      },
+      rtp: 0.9,
+      volatility: 'medium',
+      mechanic: 'Turbo Respins',
+      mechanicDesc: 'Rapid-fire respins where speed increases and each adds a multiplier.',
+      minBet: 0.2,
+      maxBet: 100,
+      betStep: 0.20,
+      reels: 5,
+      rows: 3,
+      paylines: 30,
+      symbols: ["flux","quantum","proton","neutron","wave","particle","reactor","crystal"],
+      wilds: ["flux"],
+      scatters: ["crystal"],
+      symbolWeights: {"flux":[7.99935645660762,8.07325972515324,7.906101142469176,8.159370615139103,8.042993309083656],"quantum":[7.167977068947077,6.838387812781682,7.061028444324046,6.829021191700215,7.129318622286742],"proton":[5.759004861538019,6.0988371928506275,5.915742390522568,6.172391369477947,5.8476127827066575],"neutron":[5.218525709201507,5.16635883115329,5.0239600964214475,5.202998026863456,5.228656448126816],"wave":[4.05797937869135,4.247049187950337,3.8258986633866363,4.219462344652334,3.965755386502198],"particle":[2.8544657629307917,2.8447742116531156,2.892991441488085,2.815656324890008,2.9864960950195902],"reactor":[1.926485896772422,2.1411480854865426,2.1942917968578257,1.876099730767721,1.8456370577014984],"crystal":[0.9449409888257133,1.148925103021475,0.8614646547658465,1.0445376867172138,0.8077387032862875]},
+      paytable: {"flux":{"3":2,"4":5,"5":15},"quantum":{"3":4,"4":12,"5":38},"proton":{"3":7,"4":19,"5":61},"neutron":{"3":9,"4":26,"5":84},"wave":{"3":11,"4":33,"5":108},"particle":{"3":13,"4":39,"5":131},"reactor":{"3":16,"4":46,"5":154},"crystal":{"3":18,"4":53,"5":177},"SCATTER":{"3":5,"4":20,"5":100}},
+      freeSpinCount: 10,
+      freeSpinMultiplier: 2,
+      onSound: function(label) { /* sound hooks ready */ }
+    };
+
+    CasinoEngine.init('game-container', gameConfig);
+  </script>
+  <script src="../js/chat-widget.js" defer></script>
+  <script src="../js/notifications.js" defer></script>
+  <script src="../js/age-gate.js" defer></script>
+  <script src="../js/cookie-consent.js" defer></script>
+  <script src="../js/search.js" defer></script>
+  <script src="../js/favorites.js" defer></script>
+  <script src="../js/session-monitor.js" defer></script>
+  <script src="../js/sound-manager.js" defer></script>
+  <script src="../js/analytics.js" defer></script>
+  <script src="../js/email-capture.js" defer></script>
+  <script src="../js/conversion.js" defer></script>
+</body>
+</html>

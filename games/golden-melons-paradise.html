@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Golden Melons Paradise — Matrix Spins Casino</title>
+  <meta name="theme-color" content="#D4A853">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html, body { height: 100%; }
+    body { background: #0D0F14; color: #F0F0F5; font-family: 'Inter', sans-serif; overflow-x: hidden; }
+  </style>
+  <link rel="stylesheet" href="../css/chat-widget.css">
+  <link rel="stylesheet" href="../css/notifications.css">
+  <link rel="stylesheet" href="../css/age-gate.css">
+  <link rel="stylesheet" href="../css/search.css">
+  <link rel="stylesheet" href="../css/favorites.css">
+  <link rel="stylesheet" href="../css/session-monitor.css">
+  <link rel="stylesheet" href="../css/conversion.css">
+</head>
+<body>
+  <div id="game-container" style="width:100%;min-height:100vh;"></div>
+
+  <script src="../js/api-client.js"></script>
+  <script src="../js/casino-engine.js"></script>
+  <script>
+    const gameConfig = {
+      name: 'Golden Melons Paradise',
+      id: 'golden-melons-paradise',
+      studioTheme: {
+        id: 'golden-reels',
+        name: 'Golden Reels Studio',
+        primaryColor: '#D4AF37',
+        secondaryColor: '#8B6914',
+        accentColor: '#FFF8DC',
+        bgGradient: 'linear-gradient(135deg, #1A1205 0%, #2D1F0E 50%, #1A1205 100%)',
+        fontFamily: "'Playfair Display', serif",
+        fontFamilyBody: "'Lora', serif",
+        chromeStyle: 'custom',
+        logoUrl: 'assets/studios/golden-reels-logo.png',
+        reelBg: '#0D0A03',
+        reelBorder: '#D4AF37',
+        winHighlight: '#FFD700',
+        borderStyle: '3px solid #D4AF37',
+        borderRadius: '12px',
+        boxShadow: '0 0 30px rgba(212,175,55,0.3), inset 0 0 20px rgba(212,175,55,0.1)',
+        buttonStyle: 'background: linear-gradient(180deg, #D4AF37, #8B6914); border-radius: 8px; border: 1px solid #FFD700; text-transform: uppercase; letter-spacing: 2px; font-weight: bold;',
+        spinButtonGlow: '0 0 20px rgba(212,175,55,0.6)'
+      },
+      rtp: 0.9,
+      volatility: 'medium',
+      mechanic: 'Lock & Spin',
+      mechanicDesc: 'Players lock desired reels in place and spin the remaining reels to achieve winning combinations.',
+      minBet: 0.2,
+      maxBet: 100,
+      betStep: 0.20,
+      reels: 5,
+      rows: 3,
+      paylines: 25,
+      symbols: ["watermelon","peach","orange","grape","cherry","gold-bar","lucky-fruit","treasure-chest","wild","scatter"],
+      wilds: ["watermelon"],
+      scatters: ["scatter"],
+      symbolWeights: {"watermelon":[10.060865424688561,9.828122797775059,9.852416846138857,9.79348212616156,9.794844341662122],"peach":[9.106543106545635,8.861528015087416,9.122849833555428,9.173216484330197,9.235942937088371],"orange":[7.820818544394639,8.208785725388505,8.184958580900574,7.925153221464507,7.903821098122233],"grape":[7.176984954146759,6.804033074518959,6.886143059588985,6.992744811424534,7.0224215803967125],"cherry":[5.928373376926522,6.084555773853576,6.22216105499526,6.132762944569835,6.203681400524536],"gold-bar":[4.929769543868792,5.07980442713446,4.853939697583936,4.776128802575139,5.03421233078103],"lucky-fruit":[4.094257245923204,3.9558081199879966,3.7894567728927333,3.8719477809534526,4.24253772721721],"treasure-chest":[2.9683543847771268,3.09079517368559,2.7888030899749143,2.863077909747787,3.034787817849998],"wild":[1.976803532849942,1.8938733740884195,1.7740174648299964,1.840326691943741,1.8981511242829445],"scatter":[1.1486167707357413,1.0225861101327007,0.832876409849584,0.7979410722521338,1.1345869279593586]},
+      paytable: {"watermelon":{"3":2,"4":5,"5":15},"peach":{"3":4,"4":11,"5":34},"orange":{"3":6,"4":16,"5":52},"grape":{"3":7,"4":22,"5":71},"cherry":{"3":9,"4":27,"5":89},"gold-bar":{"3":11,"4":33,"5":108},"lucky-fruit":{"3":13,"4":38,"5":126},"treasure-chest":{"3":15,"4":44,"5":145},"wild":{"3":16,"4":49,"5":163},"scatter":{"3":18,"4":55,"5":182},"SCATTER":{"3":5,"4":20,"5":100}},
+      freeSpinCount: 10,
+      freeSpinMultiplier: 2,
+      onSound: function(label) { /* sound hooks ready */ }
+    };
+
+    CasinoEngine.init('game-container', gameConfig);
+  </script>
+  <script src="../js/chat-widget.js" defer></script>
+  <script src="../js/notifications.js" defer></script>
+  <script src="../js/age-gate.js" defer></script>
+  <script src="../js/cookie-consent.js" defer></script>
+  <script src="../js/search.js" defer></script>
+  <script src="../js/favorites.js" defer></script>
+  <script src="../js/session-monitor.js" defer></script>
+  <script src="../js/sound-manager.js" defer></script>
+  <script src="../js/analytics.js" defer></script>
+  <script src="../js/email-capture.js" defer></script>
+  <script src="../js/conversion.js" defer></script>
+</body>
+</html>

@@ -1,0 +1,636 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Wallet — Matrix Spins Casino</title>
+<meta name="description" content="Manage your Matrix Spins Casino wallet — deposit, withdraw, and view transaction history.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/auth.css">
+<link rel="stylesheet" href="css/wallet.css">
+<link rel="stylesheet" href="css/age-gate.css">
+<link rel="stylesheet" href="css/search.css">
+<link rel="stylesheet" href="css/favorites.css">
+<link rel="stylesheet" href="css/session-monitor.css">
+<link rel="stylesheet" href="css/chat-widget.css">
+<link rel="stylesheet" href="css/notifications.css">
+<link rel="stylesheet" href="css/conversion.css">
+</head>
+<body>
+
+<!-- ── Top bar ──────────────────────────────────────────────── -->
+<div class="topbar">
+  <a class="brand" href="index.html">Matrix Spins</a>
+  <div class="actions">
+    <span id="balanceChip" class="balance-chip">—</span>
+    <a href="account.html" class="btn btn-inline secondary">Account</a>
+    <button id="logout" class="btn btn-inline secondary">Sign out</button>
+  </div>
+</div>
+
+<div class="rs-shell-wide">
+
+  <!-- ── Balance Hero Card ─────────────────────────────────── -->
+  <div class="wallet-hero">
+    <div class="balance-label">Available Balance</div>
+    <div class="balance-amount" id="mainBalance">$0.00</div>
+    <div class="balance-row">
+      <div class="balance-detail">
+        <div class="label">Total balance</div>
+        <div class="value" id="totalBal">$0.00</div>
+      </div>
+      <div class="balance-detail">
+        <div class="label">Pending</div>
+        <div class="value" id="lockedBal">$0.00</div>
+      </div>
+      <div class="balance-detail">
+        <div class="label">Today's P/L</div>
+        <div class="value" id="todayPL">—</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Quick Actions ─────────────────────────────────────── -->
+  <div class="quick-actions">
+    <button class="quick-action-btn primary" id="openDeposit">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14"/><path d="M5 12h14"/></svg>
+      Deposit
+    </button>
+    <button class="quick-action-btn" id="openWithdraw">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17l9.2-9.2M17 17V7H7"/></svg>
+      Withdraw
+    </button>
+  </div>
+
+  <!-- ── Withdraw Panel (collapsible) ──────────────────────── -->
+  <div class="withdraw-panel" id="withdrawPanel" style="display:none;">
+    <h2 style="margin-top:0;">Request Withdrawal</h2>
+    <div id="wdAlert" class="alert"></div>
+
+    <div class="field" style="margin-bottom:0.8rem;">
+      <label>Amount ($)</label>
+      <input id="wdAmount" type="number" min="20" step="1" required placeholder="Minimum $20">
+    </div>
+
+    <label style="display:block;font-size:.78rem;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:0.5rem;">Method</label>
+    <div class="method-grid">
+      <div class="method-card active" data-method="bank_transfer">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="6" width="20" height="12" rx="2"/><path d="M2 10h20"/></svg>
+        <div class="name">Bank</div>
+      </div>
+      <div class="method-card" data-method="crypto">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 015.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+        <div class="name">Crypto</div>
+      </div>
+      <div class="method-card" data-method="card">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
+        <div class="name">Card</div>
+      </div>
+    </div>
+
+    <div class="field">
+      <label>Destination details</label>
+      <textarea id="wdDest" rows="3" required placeholder="e.g. Bank: Example Bank&#10;Account: 123456789&#10;Routing: 021000021"></textarea>
+    </div>
+
+    <div style="display:flex;gap:0.6rem;">
+      <button class="btn" id="submitWithdraw" style="width:auto;flex:1;">Request withdrawal</button>
+      <button class="btn secondary" id="cancelWithdraw" style="width:auto;">Cancel</button>
+    </div>
+    <p class="muted" style="margin-top:0.6rem;font-size:.78rem;">Withdrawals are reviewed manually and typically pay within 1–3 business days.</p>
+  </div>
+
+  <!-- ── Transaction History (Tabbed) ──────────────────────── -->
+  <div class="rs-card">
+    <div class="wallet-tabs">
+      <button class="wallet-tab active" data-tab="all">All <span class="count" id="countAll">0</span></button>
+      <button class="wallet-tab" data-tab="deposits">Deposits <span class="count" id="countDep">0</span></button>
+      <button class="wallet-tab" data-tab="withdrawals">Withdrawals <span class="count" id="countWd">0</span></button>
+      <button class="wallet-tab" data-tab="gameplay">Gameplay <span class="count" id="countPlay">0</span></button>
+    </div>
+
+    <div class="tab-panel active" id="panel-all">
+      <ul class="tx-list" id="txAll"></ul>
+    </div>
+    <div class="tab-panel" id="panel-deposits">
+      <ul class="tx-list" id="txDeposits"></ul>
+    </div>
+    <div class="tab-panel" id="panel-withdrawals">
+      <ul class="tx-list" id="txWithdrawals"></ul>
+    </div>
+    <div class="tab-panel" id="panel-gameplay">
+      <ul class="tx-list" id="txGameplay"></ul>
+    </div>
+  </div>
+
+</div>
+
+<!-- ── Deposit Modal ───────────────────────────────────────── -->
+<div class="modal-backdrop" id="depositModal">
+  <div class="deposit-modal">
+    <button class="modal-close" id="closeDeposit" aria-label="Close">&times;</button>
+    <div class="modal-title">Add Funds</div>
+
+    <div id="depAlert" class="alert"></div>
+
+    <label style="display:block;font-size:.78rem;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:0.5rem;">Quick amount</label>
+    <div class="amount-presets">
+      <button class="preset-btn" data-amount="10">$10</button>
+      <button class="preset-btn" data-amount="25">$25</button>
+      <button class="preset-btn active" data-amount="50">$50</button>
+      <button class="preset-btn" data-amount="100">$100</button>
+      <button class="preset-btn" data-amount="250">$250</button>
+      <button class="preset-btn" data-amount="500">$500</button>
+      <button class="preset-btn" data-amount="1000">$1,000</button>
+      <button class="preset-btn" data-amount="custom">Custom</button>
+    </div>
+
+    <div class="field" id="customAmountField" style="display:none;">
+      <label>Custom amount ($)</label>
+      <input id="depAmount" type="number" min="10" max="10000" step="1" placeholder="Enter amount">
+    </div>
+
+    <label style="display:block;font-size:.78rem;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:0.5rem;">Payment method</label>
+    <div class="stripe-element-wrap" id="cardElementWrap">
+      <div id="cardElement">
+        <!-- Stripe Elements injected here -->
+        <span style="color:var(--muted);font-size:0.88rem;">Loading payment form...</span>
+      </div>
+    </div>
+    <div class="card-errors" id="cardErrors"></div>
+
+    <div class="deposit-total">
+      <span>Total</span>
+      <span class="amount" id="depTotal">$50.00</span>
+    </div>
+
+    <button class="submit-deposit" id="submitDeposit">
+      <span class="spinner"></span>
+      <span class="label">Deposit securely</span>
+    </button>
+
+    <div class="secure-badge">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+      256-bit SSL encrypted &middot; Powered by Stripe
+    </div>
+  </div>
+</div>
+
+<script src="js/api-client.js"></script>
+<script src="js/age-gate.js" defer></script>
+<script src="js/cookie-consent.js" defer></script>
+<script src="js/search.js" defer></script>
+<script src="js/favorites.js" defer></script>
+<script src="js/session-monitor.js" defer></script>
+<script src="js/sound-manager.js" defer></script>
+<script src="js/analytics.js" defer></script>
+<script src="js/email-capture.js" defer></script>
+<script src="js/chat-widget.js" defer></script>
+<script src="js/notifications.js" defer></script>
+<script src="js/conversion.js" defer></script>
+<script>
+(async () => {
+  'use strict';
+
+  const api = window.MatrixSpinsAPI;
+  const user = await api.loadSession();
+  if (!user) { window.location.href = 'login.html?next=wallet.html'; return; }
+
+  // ── Logout ───────────────────────────────────────────────
+  document.getElementById('logout').addEventListener('click', async () => {
+    await api.logout();
+    window.location.href = 'index.html';
+  });
+
+  // ── Helpers ──────────────────────────────────────────────
+  function fmt(c) { return api.formatCents(c); }
+  function timeAgo(iso) {
+    const diff = (Date.now() - new Date(iso).getTime()) / 1000;
+    if (diff < 60) return 'just now';
+    if (diff < 3600) return Math.floor(diff / 60) + 'm ago';
+    if (diff < 86400) return Math.floor(diff / 3600) + 'h ago';
+    return new Date(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+  }
+
+  // ── SVG icons for transaction types ──────────────────────
+  const txIcons = {
+    deposit: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5"/><path d="M5 12l7 7 7-7"/></svg>',
+    withdrawal: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14"/><path d="M19 12l-7-7-7 7"/></svg>',
+    bet: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M16 8l-8 8"/><circle cx="9" cy="9" r="1.5" fill="currentColor"/><circle cx="15" cy="15" r="1.5" fill="currentColor"/></svg>',
+    win: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>',
+    bonus: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 12v10H4V12"/><path d="M2 7h20v5H2z"/><path d="M12 22V7"/><path d="M12 7H7.5a2.5 2.5 0 010-5C11 2 12 7 12 7z"/><path d="M12 7h4.5a2.5 2.5 0 000-5C13 2 12 7 12 7z"/></svg>',
+  };
+
+  function getTxType(entryType) {
+    if (/deposit/i.test(entryType)) return 'deposit';
+    if (/withdraw/i.test(entryType)) return 'withdrawal';
+    if (/bet|wager|stake/i.test(entryType)) return 'bet';
+    if (/win|payout/i.test(entryType)) return 'win';
+    if (/bonus|free/i.test(entryType)) return 'bonus';
+    return 'bet';
+  }
+
+  function renderTxItem(t) {
+    const type = getTxType(t.entry_type || t.type || '');
+    const isNeg = (t.amount_cents || t.amountCents || 0) < 0;
+    const amount = Math.abs(t.amount_cents || t.amountCents || 0);
+    const desc = t.description || t.entry_type || t.type || '';
+    const statusBadge = t.status ? ` <span class="badge ${t.status === 'completed' ? 'success' : t.status === 'failed' || t.status === 'rejected' ? 'danger' : 'warn'}">${t.status.replace('_',' ')}</span>` : '';
+
+    return `<li class="tx-item">
+      <div class="tx-icon ${type}">${txIcons[type] || txIcons.bet}</div>
+      <div class="tx-info">
+        <div class="tx-title">${capitalize(desc.replace(/_/g,' '))}${statusBadge}</div>
+        <div class="tx-meta">
+          <span>${timeAgo(t.created_at || t.createdAt || new Date().toISOString())}</span>
+          ${t.provider ? '<span>' + t.provider + '</span>' : ''}
+          ${t.method ? '<span>' + t.method.replace('_',' ') + '</span>' : ''}
+        </div>
+      </div>
+      <div class="tx-amount">
+        <div class="value ${isNeg ? 'negative' : 'positive'}">${isNeg ? '-' : '+'}${fmt(amount)}</div>
+        ${t.balance_after_cents != null ? '<div class="after">Bal: ' + fmt(t.balance_after_cents) + '</div>' : ''}
+      </div>
+    </li>`;
+  }
+
+  function capitalize(s) {
+    return s.charAt(0).toUpperCase() + s.slice(1);
+  }
+
+  function renderEmptyState(msg) {
+    return `<div class="empty-state">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>
+      <p>${msg}</p>
+    </div>`;
+  }
+
+  // ── Refresh All Data ────────────────────────────────────
+  let allTx = [], allDep = [], allWd = [];
+
+  async function refreshData() {
+    try {
+      // Fetch everything in parallel
+      const [bal, depData, wdData, txData] = await Promise.all([
+        api.getBalance(),
+        api.listDeposits({ limit: 50 }),
+        api.listWithdrawals({ limit: 50 }),
+        api.getTransactions({ limit: 100 }),
+      ]);
+
+      // Balance
+      const avail = bal.availableCents || 0;
+      const total = bal.balanceCents || 0;
+      const locked = bal.lockedCents || 0;
+
+      const mainEl = document.getElementById('mainBalance');
+      mainEl.textContent = fmt(avail);
+      mainEl.classList.add('updated');
+      setTimeout(() => mainEl.classList.remove('updated'), 600);
+
+      document.getElementById('totalBal').textContent = fmt(total);
+      document.getElementById('lockedBal').textContent = fmt(locked);
+      document.getElementById('balanceChip').textContent = fmt(avail);
+
+      // Today's P/L calculation from transactions
+      const today = new Date().toISOString().split('T')[0];
+      const todayTx = (txData.transactions || []).filter(t =>
+        (t.created_at || '').startsWith(today)
+      );
+      let pl = 0;
+      todayTx.forEach(t => {
+        const type = getTxType(t.entry_type);
+        if (type === 'win' || type === 'bet') pl += (t.amount_cents || 0);
+      });
+      const plEl = document.getElementById('todayPL');
+      plEl.textContent = (pl >= 0 ? '+' : '') + fmt(Math.abs(pl));
+      plEl.style.color = pl >= 0 ? 'var(--success)' : '#ffb3b3';
+
+      // Store data
+      allDep = (depData.deposits || []).map(d => ({
+        ...d, entry_type: 'deposit', type: 'deposit',
+        amount_cents: d.amount_cents, amountCents: d.amount_cents,
+      }));
+      allWd = (wdData.withdrawals || []).map(w => ({
+        ...w, entry_type: 'withdrawal', type: 'withdrawal',
+        amount_cents: -(w.amount_cents || 0), amountCents: -(w.amount_cents || 0),
+      }));
+      allTx = txData.transactions || [];
+
+      // Render tabs
+      const gameplay = allTx.filter(t => {
+        const type = getTxType(t.entry_type);
+        return type === 'bet' || type === 'win' || type === 'bonus';
+      });
+
+      document.getElementById('countAll').textContent = allTx.length;
+      document.getElementById('countDep').textContent = allDep.length;
+      document.getElementById('countWd').textContent = allWd.length;
+      document.getElementById('countPlay').textContent = gameplay.length;
+
+      document.getElementById('txAll').innerHTML =
+        allTx.length ? allTx.map(renderTxItem).join('') : renderEmptyState('No transactions yet. Make a deposit to get started.');
+      document.getElementById('txDeposits').innerHTML =
+        allDep.length ? allDep.map(renderTxItem).join('') : renderEmptyState('No deposits yet.');
+      document.getElementById('txWithdrawals').innerHTML =
+        allWd.length ? allWd.map(renderTxItem).join('') : renderEmptyState('No withdrawals yet.');
+      document.getElementById('txGameplay').innerHTML =
+        gameplay.length ? gameplay.map(renderTxItem).join('') : renderEmptyState('No gameplay activity yet. Spin to win!');
+
+    } catch (err) {
+      console.error('[Wallet] refresh error:', err);
+    }
+  }
+
+  await refreshData();
+
+  // ── Tabs ─────────────────────────────────────────────────
+  document.querySelectorAll('.wallet-tab').forEach(tab => {
+    tab.addEventListener('click', () => {
+      document.querySelectorAll('.wallet-tab').forEach(t => t.classList.remove('active'));
+      document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+      tab.classList.add('active');
+      document.getElementById('panel-' + tab.dataset.tab).classList.add('active');
+    });
+  });
+
+  // ── Deposit Modal ────────────────────────────────────────
+  const depositModal = document.getElementById('depositModal');
+  let selectedAmount = 5000; // cents
+
+  document.getElementById('openDeposit').addEventListener('click', () => {
+    depositModal.classList.add('active');
+    document.body.style.overflow = 'hidden';
+  });
+
+  function closeDepositModal() {
+    depositModal.classList.remove('active');
+    document.body.style.overflow = '';
+    document.getElementById('depAlert').classList.remove('visible');
+    document.getElementById('cardErrors').textContent = '';
+  }
+
+  document.getElementById('closeDeposit').addEventListener('click', closeDepositModal);
+  depositModal.addEventListener('click', (e) => {
+    if (e.target === depositModal) closeDepositModal();
+  });
+
+  // Amount presets
+  document.querySelectorAll('.preset-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.preset-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+
+      const customField = document.getElementById('customAmountField');
+      if (btn.dataset.amount === 'custom') {
+        customField.style.display = 'block';
+        document.getElementById('depAmount').focus();
+        return;
+      }
+
+      customField.style.display = 'none';
+      selectedAmount = parseInt(btn.dataset.amount) * 100;
+      document.getElementById('depTotal').textContent = '$' + (selectedAmount / 100).toFixed(2);
+    });
+  });
+
+  const depAmountInput = document.getElementById('depAmount');
+  if (depAmountInput) {
+    depAmountInput.addEventListener('input', () => {
+      const v = parseFloat(depAmountInput.value) || 0;
+      selectedAmount = Math.round(v * 100);
+      document.getElementById('depTotal').textContent = '$' + v.toFixed(2);
+    });
+  }
+
+  // ── Stripe Payment Links (instant checkout, no backend needed) ──
+  const STRIPE_PAYMENT_LINKS = {
+    1000:  'https://buy.stripe.com/3cI4gzaUZ4Nbeercm26kg0y',   // $10
+    2500:  'https://buy.stripe.com/5kQfZhaUZ1AZc6j2Ls6kg0z',   // $25
+    5000:  'https://buy.stripe.com/eVqfZh2otgvTb2f4TA6kg0A',   // $50
+    10000: 'https://buy.stripe.com/eVq7sL9QVbbz5HV4TA6kg0B',   // $100
+    25000: 'https://buy.stripe.com/fZudR96EJ6Vj8U7dq66kg0C',   // $250
+  };
+
+  // ── Stripe Elements Setup ────────────────────────────────
+  // Try to load Stripe — falls back to redirect checkout if unavailable
+  let stripe = null;
+  let cardElement = null;
+  let stripeReady = false;
+
+  async function initStripe() {
+    try {
+      // Get publishable key from server config
+      const config = await api.publicConfig();
+      if (!config.stripePublishableKey) {
+        document.getElementById('cardElement').innerHTML =
+          '<span style="color:var(--muted);font-size:0.85rem;">Card payments will open a secure checkout page.</span>';
+        return;
+      }
+
+      // Load Stripe.js dynamically
+      if (!window.Stripe) {
+        await new Promise((resolve, reject) => {
+          const script = document.createElement('script');
+          script.src = 'https://js.stripe.com/v3/';
+          script.onload = resolve;
+          script.onerror = reject;
+          document.head.appendChild(script);
+        });
+      }
+
+      stripe = window.Stripe(config.stripePublishableKey);
+      const elements = stripe.elements({
+        fonts: [{ cssSrc: 'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap' }],
+      });
+
+      cardElement = elements.create('card', {
+        style: {
+          base: {
+            color: '#f0f0f5',
+            fontFamily: 'Inter, system-ui, sans-serif',
+            fontSize: '15px',
+            fontWeight: '400',
+            '::placeholder': { color: '#9aa3c3' },
+            iconColor: '#d4af37',
+          },
+          invalid: { color: '#ef4444', iconColor: '#ef4444' },
+        },
+        hidePostalCode: false,
+      });
+
+      cardElement.mount('#cardElement');
+      stripeReady = true;
+
+      cardElement.on('focus', () => document.getElementById('cardElementWrap').classList.add('focused'));
+      cardElement.on('blur', () => document.getElementById('cardElementWrap').classList.remove('focused'));
+      cardElement.on('change', (e) => {
+        const errEl = document.getElementById('cardErrors');
+        const wrap = document.getElementById('cardElementWrap');
+        if (e.error) {
+          errEl.textContent = e.error.message;
+          wrap.classList.add('error');
+        } else {
+          errEl.textContent = '';
+          wrap.classList.remove('error');
+        }
+      });
+    } catch (err) {
+      console.warn('[Wallet] Stripe init failed, using redirect checkout:', err.message);
+      document.getElementById('cardElement').innerHTML =
+        '<span style="color:var(--muted);font-size:0.85rem;">Card payments will open a secure checkout page.</span>';
+    }
+  }
+
+  initStripe();
+
+  // ── Submit Deposit ───────────────────────────────────────
+  document.getElementById('submitDeposit').addEventListener('click', async () => {
+    const btn = document.getElementById('submitDeposit');
+    const alertEl = document.getElementById('depAlert');
+    alertEl.classList.remove('visible');
+
+    if (selectedAmount < 1000) {
+      alertEl.className = 'alert visible';
+      alertEl.textContent = 'Minimum deposit is $10.00';
+      return;
+    }
+    if (selectedAmount > 1000000) {
+      alertEl.className = 'alert visible';
+      alertEl.textContent = 'Maximum deposit is $10,000.00';
+      return;
+    }
+
+    btn.classList.add('loading');
+    btn.disabled = true;
+
+    try {
+      // Strategy 1: Try backend Stripe Checkout session
+      let redirected = false;
+      try {
+        const out = await api.depositCheckout(selectedAmount);
+        if (out.checkoutUrl) {
+          window.location.href = out.checkoutUrl;
+          redirected = true;
+        } else if (out.clientSecret && stripe) {
+          const { error } = await stripe.confirmCardPayment(out.clientSecret, {
+            payment_method: { card: cardElement },
+          });
+          if (error) {
+            alertEl.className = 'alert visible';
+            alertEl.textContent = error.message;
+          } else {
+            alertEl.className = 'alert success visible';
+            alertEl.textContent = 'Deposit successful! Funds are being credited.';
+            setTimeout(() => { closeDepositModal(); refreshData(); }, 2000);
+          }
+          redirected = true;
+        }
+      } catch (_) {}
+
+      // Strategy 2: Direct Stripe Payment Link (works without backend)
+      if (!redirected) {
+        const paymentLink = STRIPE_PAYMENT_LINKS[selectedAmount];
+        if (paymentLink) {
+          window.location.href = paymentLink;
+        } else {
+          // For custom amounts, find nearest payment link
+          const amounts = Object.keys(STRIPE_PAYMENT_LINKS).map(Number).sort((a, b) => a - b);
+          const nearest = amounts.reduce((prev, curr) =>
+            Math.abs(curr - selectedAmount) < Math.abs(prev - selectedAmount) ? curr : prev
+          );
+          alertEl.className = 'alert visible';
+          alertEl.textContent = 'Please select a preset amount ($10, $25, $50, $100, or $250) for instant checkout.';
+          btn.classList.remove('loading');
+          btn.disabled = false;
+          return;
+        }
+      }
+    } catch (err) {
+      alertEl.className = 'alert visible';
+      alertEl.textContent = err.message || 'Something went wrong. Please try again.';
+    } finally {
+      btn.classList.remove('loading');
+      btn.disabled = false;
+    }
+  });
+
+  // ── Withdraw Panel ───────────────────────────────────────
+  const withdrawPanel = document.getElementById('withdrawPanel');
+  let selectedMethod = 'bank_transfer';
+
+  document.getElementById('openWithdraw').addEventListener('click', () => {
+    withdrawPanel.style.display = 'block';
+    withdrawPanel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  });
+
+  document.getElementById('cancelWithdraw').addEventListener('click', () => {
+    withdrawPanel.style.display = 'none';
+  });
+
+  // Method selection
+  document.querySelectorAll('.method-card').forEach(card => {
+    card.addEventListener('click', () => {
+      document.querySelectorAll('.method-card').forEach(c => c.classList.remove('active'));
+      card.classList.add('active');
+      selectedMethod = card.dataset.method;
+    });
+  });
+
+  // Submit withdrawal
+  document.getElementById('submitWithdraw').addEventListener('click', async () => {
+    const alertEl = document.getElementById('wdAlert');
+    alertEl.classList.remove('visible');
+
+    const amtRaw = parseFloat(document.getElementById('wdAmount').value);
+    const dest = document.getElementById('wdDest').value.trim();
+
+    if (!amtRaw || amtRaw < 20) {
+      alertEl.className = 'alert visible';
+      alertEl.textContent = 'Minimum withdrawal is $20.00';
+      return;
+    }
+    if (!dest) {
+      alertEl.className = 'alert visible';
+      alertEl.textContent = 'Please provide destination details.';
+      return;
+    }
+
+    const btn = document.getElementById('submitWithdraw');
+    btn.disabled = true;
+    btn.textContent = 'Processing...';
+
+    try {
+      await api.requestWithdrawal({
+        amountCents: Math.round(amtRaw * 100),
+        method: selectedMethod,
+        destination: { notes: dest },
+      });
+      alertEl.className = 'alert success visible';
+      alertEl.textContent = 'Withdrawal requested successfully. Pending review.';
+      document.getElementById('wdAmount').value = '';
+      document.getElementById('wdDest').value = '';
+      refreshData();
+    } catch (err) {
+      alertEl.className = 'alert visible';
+      alertEl.textContent = err.message || 'Withdrawal failed. Please try again.';
+    } finally {
+      btn.disabled = false;
+      btn.textContent = 'Request withdrawal';
+    }
+  });
+
+  // ── Auto-refresh every 30s ───────────────────────────────
+  setInterval(refreshData, 30000);
+
+  // ── Keyboard shortcuts ───────────────────────────────────
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && depositModal.classList.contains('active')) {
+      closeDepositModal();
+    }
+  });
+})();
+</script>
+</body>
+</html>

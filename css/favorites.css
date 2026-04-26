@@ -1,0 +1,268 @@
+/* ============================================================
+   Matrix Spins — Favorites & Recently Played
+   Dark theme: bg #0d0f14, gold #d4af37
+   ============================================================ */
+
+/* ---------- Heart Button on Game Cards ---------- */
+
+.game-card {
+  position: relative;
+}
+
+.fav-heart {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  z-index: 10;
+  width: 34px;
+  height: 34px;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  background: rgba(13, 15, 20, 0.7);
+  backdrop-filter: blur(4px);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.2s ease, background 0.2s ease;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.fav-heart:hover {
+  background: rgba(13, 15, 20, 0.9);
+  transform: scale(1.15);
+}
+
+.fav-heart:active {
+  transform: scale(0.9);
+}
+
+.fav-heart svg {
+  width: 18px;
+  height: 18px;
+  transition: fill 0.2s ease, stroke 0.2s ease;
+  fill: none;
+  stroke: rgba(255, 255, 255, 0.6);
+  stroke-width: 2;
+}
+
+.fav-heart.active svg {
+  fill: #d4af37;
+  stroke: #d4af37;
+}
+
+/* Pulse animation on toggle */
+.fav-heart.pulse {
+  animation: favPulse 0.4s ease;
+}
+
+@keyframes favPulse {
+  0%   { transform: scale(1); }
+  30%  { transform: scale(1.35); }
+  60%  { transform: scale(0.95); }
+  100% { transform: scale(1); }
+}
+
+/* ---------- Section Layout ---------- */
+
+.fav-section {
+  margin-bottom: 28px;
+  padding: 0 16px;
+}
+
+.fav-section-title {
+  font-size: 18px;
+  font-weight: 700;
+  color: #d4af37;
+  margin: 0 0 12px 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  letter-spacing: 0.02em;
+}
+
+.fav-section-title svg {
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+}
+
+/* ---------- Horizontal Scroll Container ---------- */
+
+.fav-scroll {
+  display: flex;
+  gap: 12px;
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding-bottom: 8px;
+  scroll-behavior: smooth;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Scrollbar styling */
+.fav-scroll::-webkit-scrollbar {
+  height: 6px;
+}
+
+.fav-scroll::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.04);
+  border-radius: 3px;
+}
+
+.fav-scroll::-webkit-scrollbar-thumb {
+  background: rgba(212, 175, 55, 0.35);
+  border-radius: 3px;
+}
+
+.fav-scroll::-webkit-scrollbar-thumb:hover {
+  background: rgba(212, 175, 55, 0.55);
+}
+
+/* Firefox */
+.fav-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(212, 175, 55, 0.35) rgba(255, 255, 255, 0.04);
+}
+
+/* ---------- Mini Game Card ---------- */
+
+.fav-mini-card {
+  flex: 0 0 140px;
+  width: 140px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 10px;
+  overflow: hidden;
+  cursor: pointer;
+  transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
+  text-decoration: none;
+  color: inherit;
+  display: flex;
+  flex-direction: column;
+}
+
+.fav-mini-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.45), 0 0 0 1px rgba(212, 175, 55, 0.15);
+  border-color: rgba(212, 175, 55, 0.2);
+}
+
+.fav-mini-icon {
+  height: 64px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 28px;
+  background: linear-gradient(135deg, rgba(212, 175, 55, 0.08), rgba(13, 15, 20, 0.6));
+}
+
+.fav-mini-body {
+  padding: 8px 10px 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1;
+}
+
+.fav-mini-name {
+  font-size: 12px;
+  font-weight: 600;
+  color: #fff;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  line-height: 1.3;
+}
+
+.fav-mini-studio {
+  font-size: 10px;
+  color: rgba(255, 255, 255, 0.45);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.fav-mini-play {
+  margin-top: 6px;
+  display: inline-block;
+  padding: 4px 0;
+  font-size: 11px;
+  font-weight: 700;
+  color: #d4af37;
+  text-align: center;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+/* ---------- Empty State ---------- */
+
+.fav-empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px 16px;
+  color: rgba(255, 255, 255, 0.3);
+  font-size: 13px;
+  text-align: center;
+  width: 100%;
+}
+
+/* ---------- Responsive ---------- */
+
+@media (max-width: 600px) {
+  .fav-section {
+    padding: 0 10px;
+    margin-bottom: 20px;
+  }
+
+  .fav-section-title {
+    font-size: 15px;
+  }
+
+  .fav-mini-card {
+    flex: 0 0 118px;
+    width: 118px;
+  }
+
+  .fav-mini-icon {
+    height: 52px;
+    font-size: 24px;
+  }
+
+  .fav-mini-body {
+    padding: 6px 8px 8px;
+  }
+
+  .fav-mini-name {
+    font-size: 11px;
+  }
+
+  .fav-heart {
+    width: 30px;
+    height: 30px;
+  }
+
+  .fav-heart svg {
+    width: 15px;
+    height: 15px;
+  }
+}
+
+/* ---------- Reduced Motion ---------- */
+
+@media (prefers-reduced-motion: reduce) {
+  .fav-heart,
+  .fav-heart svg,
+  .fav-mini-card {
+    transition: none;
+  }
+
+  .fav-heart.pulse {
+    animation: none;
+  }
+
+  .fav-scroll {
+    scroll-behavior: auto;
+  }
+}

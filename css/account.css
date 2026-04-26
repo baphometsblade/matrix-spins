@@ -1,0 +1,352 @@
+/* ═══════════════════════════════════════════════════════════════
+   MATRIX SPINS — Premium Account Dashboard v1.0
+   Player stats, game history, KYC, responsible gambling
+   ═══════════════════════════════════════════════════════════════ */
+
+/* ── Account Header ─────────────────────────────────────────── */
+.account-header {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.avatar {
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--gold), var(--gold-2));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: 1.6rem;
+  font-weight: 800;
+  color: #1a1205;
+  flex-shrink: 0;
+  position: relative;
+}
+
+.avatar .kyc-dot {
+  position: absolute;
+  bottom: 2px;
+  right: 2px;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  border: 2px solid var(--bg-card);
+}
+
+.kyc-dot.verified { background: var(--success); }
+.kyc-dot.pending { background: #fbbf24; }
+.kyc-dot.unverified { background: var(--muted); }
+
+.account-info h1 {
+  font-size: 1.3rem;
+  margin-bottom: 0.15rem;
+}
+
+.account-meta {
+  display: flex;
+  gap: 1rem;
+  font-size: 0.82rem;
+  color: var(--muted);
+  flex-wrap: wrap;
+}
+
+.account-meta span {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+}
+
+.account-meta svg {
+  width: 14px;
+  height: 14px;
+}
+
+/* ── Sidebar Navigation (desktop) ───────────────────────────── */
+.account-layout {
+  display: grid;
+  grid-template-columns: 220px 1fr;
+  gap: 1.5rem;
+  align-items: start;
+}
+
+.account-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  position: sticky;
+  top: 70px;
+}
+
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.7rem 1rem;
+  border-radius: 10px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: var(--muted);
+  cursor: pointer;
+  border: none;
+  background: none;
+  text-align: left;
+  width: 100%;
+  transition: all 0.15s ease;
+}
+
+.nav-item:hover {
+  background: rgba(255,255,255,0.04);
+  color: var(--text);
+}
+
+.nav-item.active {
+  background: rgba(212,175,55,0.08);
+  color: var(--gold);
+}
+
+.nav-item svg {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+}
+
+/* ── Stats Cards ────────────────────────────────────────────── */
+.stats-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 0.8rem;
+  margin-bottom: 1.5rem;
+}
+
+.stat-card {
+  background: var(--bg-elev);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 1rem;
+  text-align: center;
+}
+
+.stat-card .icon {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 0.5rem;
+}
+
+.stat-card .icon svg {
+  width: 16px;
+  height: 16px;
+}
+
+.stat-card .icon.gold { background: rgba(212,175,55,0.12); color: var(--gold); }
+.stat-card .icon.green { background: rgba(16,185,129,0.12); color: var(--success); }
+.stat-card .icon.red { background: rgba(239,68,68,0.12); color: var(--danger); }
+.stat-card .icon.blue { background: rgba(99,102,241,0.12); color: #818cf8; }
+.stat-card .icon.purple { background: rgba(168,85,247,0.12); color: #c084fc; }
+
+.stat-card .number {
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
+  line-height: 1.2;
+}
+
+.stat-card .label {
+  font-size: 0.72rem;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin-top: 0.2rem;
+}
+
+/* ── Section Card ───────────────────────────────────────────── */
+.section-card {
+  background: linear-gradient(180deg, var(--bg-card), var(--bg-elev));
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 1.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.section-card h2 {
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: 1.1rem;
+  margin: 0 0 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.section-card h2 svg {
+  width: 18px;
+  height: 18px;
+  color: var(--gold);
+}
+
+/* ── Game History List ──────────────────────────────────────── */
+.spin-list {
+  list-style: none;
+}
+
+.spin-item {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: 0.8rem;
+  align-items: center;
+  padding: 0.75rem 0;
+  border-bottom: 1px solid rgba(255,255,255,0.04);
+}
+
+.spin-item:last-child {
+  border-bottom: none;
+}
+
+.spin-game-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 8px;
+  background: linear-gradient(135deg, rgba(212,175,55,0.15), rgba(212,175,55,0.05));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.1rem;
+}
+
+.spin-info .game-name {
+  font-weight: 600;
+  font-size: 0.88rem;
+}
+
+.spin-info .spin-meta {
+  font-size: 0.75rem;
+  color: var(--muted);
+  display: flex;
+  gap: 0.5rem;
+}
+
+.spin-result {
+  text-align: right;
+}
+
+.spin-result .amount {
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.spin-result .amount.win { color: var(--success); }
+.spin-result .amount.loss { color: #ffb3b3; }
+
+.spin-result .multiplier {
+  font-size: 0.72rem;
+  color: var(--muted);
+}
+
+/* ── KYC Status ─────────────────────────────────────────────── */
+.kyc-status-bar {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem;
+  border-radius: 10px;
+  margin-bottom: 1rem;
+}
+
+.kyc-status-bar.verified { background: rgba(16,185,129,0.08); border: 1px solid rgba(16,185,129,0.2); }
+.kyc-status-bar.pending { background: rgba(234,179,8,0.08); border: 1px solid rgba(234,179,8,0.2); }
+.kyc-status-bar.unverified { background: rgba(239,68,68,0.08); border: 1px solid rgba(239,68,68,0.2); }
+
+.kyc-status-bar .icon { font-size: 1.4rem; }
+.kyc-status-bar .text { flex: 1; }
+.kyc-status-bar .text strong { display: block; font-size: 0.9rem; }
+.kyc-status-bar .text span { font-size: 0.8rem; color: var(--muted); }
+
+/* ── Account Panels ─────────────────────────────────────────── */
+.account-panel {
+  display: none;
+}
+
+.account-panel.active {
+  display: block;
+  animation: fadeIn 0.2s ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* ── Responsive ─────────────────────────────────────────────── */
+@media (max-width: 768px) {
+  .account-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .account-nav {
+    flex-direction: row;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    padding-bottom: 0.5rem;
+    position: static;
+    gap: 0.2rem;
+  }
+
+  .nav-item {
+    white-space: nowrap;
+    padding: 0.6rem 0.8rem;
+    font-size: 0.82rem;
+  }
+
+  .account-header {
+    flex-direction: column;
+    text-align: center;
+    gap: 1rem;
+  }
+
+  .account-meta {
+    justify-content: center;
+  }
+
+  .stats-row {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .stat-card .number {
+    font-size: 1.15rem;
+  }
+
+  .spin-item {
+    grid-template-columns: auto 1fr auto;
+    gap: 0.6rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .stats-row {
+    grid-template-columns: 1fr 1fr;
+    gap: 0.5rem;
+  }
+
+  .stat-card {
+    padding: 0.8rem 0.5rem;
+  }
+
+  .stat-card .number {
+    font-size: 1rem;
+  }
+
+  .section-card {
+    padding: 1rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .account-panel.active { animation: none; }
+}

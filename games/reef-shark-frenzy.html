@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Reef Shark Frenzy — Matrix Spins Casino</title>
+  <meta name="theme-color" content="#D4A853">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html, body { height: 100%; }
+    body { background: #0D0F14; color: #F0F0F5; font-family: 'Inter', sans-serif; overflow-x: hidden; }
+  </style>
+  <link rel="stylesheet" href="../css/chat-widget.css">
+  <link rel="stylesheet" href="../css/notifications.css">
+  <link rel="stylesheet" href="../css/age-gate.css">
+  <link rel="stylesheet" href="../css/search.css">
+  <link rel="stylesheet" href="../css/favorites.css">
+  <link rel="stylesheet" href="../css/session-monitor.css">
+  <link rel="stylesheet" href="../css/conversion.css">
+</head>
+<body>
+  <div id="game-container" style="width:100%;min-height:100vh;"></div>
+
+  <script src="../js/api-client.js"></script>
+  <script src="../js/casino-engine.js"></script>
+  <script>
+    const gameConfig = {
+      name: 'Reef Shark Frenzy',
+      id: 'reef-shark-frenzy',
+      studioTheme: {
+        id: 'wild-frontier',
+        name: 'Wild Frontier Games',
+        primaryColor: '#D2691E',
+        secondaryColor: '#228B22',
+        accentColor: '#FF8C00',
+        bgGradient: 'linear-gradient(135deg, #3E2723 0%, #4A3728 50%, #3E2723 100%)',
+        fontFamily: "'Righteous', sans-serif",
+        fontFamilyBody: "'Fredoka One', sans-serif",
+        chromeStyle: 'custom',
+        logoUrl: 'assets/studios/wild-frontier-logo.png',
+        reelBg: '#1B0F08',
+        reelBorder: '#D2691E',
+        winHighlight: '#FF8C00',
+        borderStyle: '5px solid #D2691E',
+        borderRadius: '16px',
+        boxShadow: '0 0 25px rgba(210,105,30,0.4), inset 0 0 20px rgba(34,139,34,0.15)',
+        buttonStyle: 'background: linear-gradient(180deg, #D2691E, #8B4513); border-radius: 10px; border: 2px solid #FF8C00; text-transform: uppercase; letter-spacing: 2px; font-weight: 900;',
+        spinButtonGlow: '0 0 20px rgba(210,105,30,0.6)'
+      },
+      rtp: 0.89,
+      volatility: 'high',
+      mechanic: 'Symbol Stack Boost',
+      mechanicDesc: 'Stacked symbols get a boost multiplier increasing with stack height.',
+      minBet: 0.2,
+      maxBet: 100,
+      betStep: 0.20,
+      reels: 5,
+      rows: 4,
+      paylines: 40,
+      symbols: ["shark","coral","clownfish","turtle","jellyfish","seahorse","pearl","trident"],
+      wilds: ["shark"],
+      scatters: ["trident"],
+      symbolWeights: {"shark":[8.241762339730734,7.805388479638133,8.24010015220642,7.784394023745265,8.13446427501416],"coral":[6.859369390349226,6.8236439131607005,7.2278636635468505,7.142857378402251,6.843804541401514],"clownfish":[6.210262243291021,6.028730173847682,6.10412387930892,6.204724241786158,6.237179079312695],"turtle":[4.869618783821978,5.0261472634032724,4.862227173791381,5.047768543565097,4.84089807037768],"jellyfish":[3.907553964838023,3.975889030268596,3.7502910576689743,4.021324156182667,3.84615902508755],"seahorse":[3.15773024667888,2.821282075141997,3.163236984792687,2.811016971435719,2.9259829276018965],"pearl":[1.823578976222012,2.1328245242401893,2.104634841030439,2.1906171776459264,2.2124923301760218],"trident":[1.1667241361133287,1.154629645574999,1.0624522877760199,0.8159347439797965,0.9698725227871825]},
+      paytable: {"shark":{"3":2,"4":5,"5":15},"coral":{"3":4,"4":12,"5":38},"clownfish":{"3":7,"4":19,"5":61},"turtle":{"3":9,"4":26,"5":84},"jellyfish":{"3":11,"4":33,"5":108},"seahorse":{"3":13,"4":39,"5":131},"pearl":{"3":16,"4":46,"5":154},"trident":{"3":18,"4":53,"5":177},"SCATTER":{"3":5,"4":20,"5":100}},
+      freeSpinCount: 10,
+      freeSpinMultiplier: 2,
+      onSound: function(label) { /* sound hooks ready */ }
+    };
+
+    CasinoEngine.init('game-container', gameConfig);
+  </script>
+  <script src="../js/chat-widget.js" defer></script>
+  <script src="../js/notifications.js" defer></script>
+  <script src="../js/age-gate.js" defer></script>
+  <script src="../js/cookie-consent.js" defer></script>
+  <script src="../js/search.js" defer></script>
+  <script src="../js/favorites.js" defer></script>
+  <script src="../js/session-monitor.js" defer></script>
+  <script src="../js/sound-manager.js" defer></script>
+  <script src="../js/analytics.js" defer></script>
+  <script src="../js/email-capture.js" defer></script>
+  <script src="../js/conversion.js" defer></script>
+</body>
+</html>

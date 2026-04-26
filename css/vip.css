@@ -1,0 +1,321 @@
+/* ═══════════════════════════════════════════════════════════════
+   MATRIX SPINS — VIP Loyalty Program v1.0
+   Tier progression, XP bar, rewards showcase, benefits grid
+   ═══════════════════════════════════════════════════════════════ */
+
+/* ── Tier Color Tokens ──────────────────────────────────────── */
+:root {
+  --tier-bronze:   #cd7f32;
+  --tier-silver:   #c0c0c0;
+  --tier-gold:     #d4af37;
+  --tier-platinum: #e5e4e2;
+  --tier-diamond:  #b9f2ff;
+}
+
+/* ── VIP Hero ───────────────────────────────────────────────── */
+.vip-hero {
+  background: linear-gradient(135deg, #1a1842 0%, #0d1229 50%, #1a2040 100%);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 2.5rem;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+  margin-bottom: 2rem;
+}
+
+.vip-hero::before {
+  content: '';
+  position: absolute;
+  top: -40%;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 400px;
+  height: 400px;
+  background: radial-gradient(circle, rgba(212,175,55,0.08) 0%, transparent 70%);
+  pointer-events: none;
+}
+
+.vip-tier-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.4rem 1rem;
+  border-radius: 999px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  margin-bottom: 0.8rem;
+}
+
+.vip-tier-badge.bronze   { background: rgba(205,127,50,0.15); color: var(--tier-bronze); border: 1px solid rgba(205,127,50,0.3); }
+.vip-tier-badge.silver   { background: rgba(192,192,192,0.12); color: var(--tier-silver); border: 1px solid rgba(192,192,192,0.25); }
+.vip-tier-badge.gold     { background: rgba(212,175,55,0.12); color: var(--tier-gold); border: 1px solid rgba(212,175,55,0.25); }
+.vip-tier-badge.platinum { background: rgba(229,228,226,0.1); color: var(--tier-platinum); border: 1px solid rgba(229,228,226,0.2); }
+.vip-tier-badge.diamond  { background: rgba(185,242,255,0.1); color: var(--tier-diamond); border: 1px solid rgba(185,242,255,0.25); }
+
+.vip-tier-badge .icon { font-size: 1.1rem; }
+
+.vip-xp-label {
+  font-size: 0.82rem;
+  color: var(--muted);
+  margin-bottom: 0.5rem;
+}
+
+.vip-xp-label strong {
+  color: var(--text);
+}
+
+/* ── XP Progress Bar ────────────────────────────────────────── */
+.xp-bar-container {
+  max-width: 500px;
+  margin: 0 auto 0.6rem;
+}
+
+.xp-bar {
+  width: 100%;
+  height: 12px;
+  background: rgba(255,255,255,0.06);
+  border-radius: 6px;
+  overflow: hidden;
+  position: relative;
+}
+
+.xp-bar-fill {
+  height: 100%;
+  border-radius: 6px;
+  transition: width 1s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.xp-bar-fill::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+  animation: xpShine 2s ease infinite;
+}
+
+@keyframes xpShine {
+  0% { left: -100%; }
+  100% { left: 200%; }
+}
+
+.xp-bar-fill.bronze   { background: linear-gradient(90deg, var(--tier-bronze), #e8a849); }
+.xp-bar-fill.silver   { background: linear-gradient(90deg, #a8a8a8, var(--tier-silver)); }
+.xp-bar-fill.gold     { background: linear-gradient(90deg, var(--tier-gold), #f0c66e); }
+.xp-bar-fill.platinum { background: linear-gradient(90deg, #bbb, var(--tier-platinum)); }
+.xp-bar-fill.diamond  { background: linear-gradient(90deg, #7ed4e6, var(--tier-diamond)); }
+
+.xp-endpoints {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.72rem;
+  color: var(--muted);
+  max-width: 500px;
+  margin: 0 auto;
+}
+
+/* ── Tier Roadmap ───────────────────────────────────────────── */
+.tier-roadmap {
+  display: flex;
+  justify-content: center;
+  gap: 0;
+  margin: 2rem 0;
+  position: relative;
+}
+
+.tier-roadmap::before {
+  content: '';
+  position: absolute;
+  top: 24px;
+  left: 15%;
+  right: 15%;
+  height: 2px;
+  background: rgba(255,255,255,0.08);
+}
+
+.roadmap-tier {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0 1.2rem;
+  position: relative;
+  z-index: 1;
+}
+
+.roadmap-dot {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.3rem;
+  border: 2px solid rgba(255,255,255,0.1);
+  background: var(--bg-elev);
+  transition: all 0.3s ease;
+}
+
+.roadmap-tier.achieved .roadmap-dot {
+  border-color: var(--gold);
+  box-shadow: 0 0 15px rgba(212,175,55,0.2);
+}
+
+.roadmap-tier.current .roadmap-dot {
+  border-color: var(--gold);
+  box-shadow: 0 0 20px rgba(212,175,55,0.3);
+  animation: currentTierPulse 2s ease infinite;
+}
+
+@keyframes currentTierPulse {
+  0%, 100% { box-shadow: 0 0 15px rgba(212,175,55,0.2); }
+  50% { box-shadow: 0 0 25px rgba(212,175,55,0.4); }
+}
+
+.roadmap-tier.locked .roadmap-dot {
+  opacity: 0.4;
+}
+
+.roadmap-label {
+  font-size: 0.72rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.roadmap-tier.achieved .roadmap-label,
+.roadmap-tier.current .roadmap-label { color: var(--gold); }
+.roadmap-tier.locked .roadmap-label { color: var(--muted); opacity: 0.5; }
+
+.roadmap-xp {
+  font-size: 0.65rem;
+  color: var(--muted);
+}
+
+/* ── Benefits Grid ──────────────────────────────────────────── */
+.benefits-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 1rem;
+  margin-bottom: 2rem;
+}
+
+.benefit-card {
+  background: linear-gradient(180deg, var(--bg-card), var(--bg-elev));
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 1.5rem;
+  position: relative;
+  transition: border-color 0.2s ease, transform 0.2s ease;
+}
+
+.benefit-card:hover {
+  border-color: var(--gold);
+  transform: translateY(-2px);
+}
+
+.benefit-card .icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.4rem;
+  margin-bottom: 0.8rem;
+  background: rgba(212,175,55,0.08);
+}
+
+.benefit-card h3 {
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: 0.95rem;
+  font-weight: 700;
+  margin-bottom: 0.3rem;
+}
+
+.benefit-card p {
+  font-size: 0.82rem;
+  color: var(--muted);
+  line-height: 1.5;
+}
+
+.benefit-card .tier-req {
+  display: inline-block;
+  margin-top: 0.5rem;
+  font-size: 0.68rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  padding: 0.15rem 0.5rem;
+  border-radius: 4px;
+  background: rgba(255,255,255,0.04);
+  color: var(--muted);
+}
+
+.benefit-card.locked {
+  opacity: 0.5;
+}
+
+.benefit-card.locked::after {
+  content: '🔒';
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  font-size: 1rem;
+}
+
+/* ── Rewards History ────────────────────────────────────────── */
+.reward-item {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  padding: 0.75rem 0;
+  border-bottom: 1px solid rgba(255,255,255,0.04);
+}
+
+.reward-item:last-child { border-bottom: none; }
+
+.reward-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.1rem;
+  background: rgba(212,175,55,0.08);
+  flex-shrink: 0;
+}
+
+.reward-info { flex: 1; }
+.reward-info .title { font-weight: 600; font-size: 0.88rem; }
+.reward-info .meta { font-size: 0.75rem; color: var(--muted); }
+.reward-value { font-weight: 700; color: var(--gold); font-variant-numeric: tabular-nums; }
+
+/* ── Responsive ─────────────────────────────────────────────── */
+@media (max-width: 768px) {
+  .vip-hero { padding: 1.5rem; }
+  .tier-roadmap { gap: 0; overflow-x: auto; justify-content: flex-start; padding-bottom: 0.5rem; }
+  .roadmap-tier { padding: 0 0.8rem; }
+  .roadmap-dot { width: 40px; height: 40px; font-size: 1.1rem; }
+  .benefits-grid { grid-template-columns: 1fr 1fr; }
+}
+
+@media (max-width: 480px) {
+  .benefits-grid { grid-template-columns: 1fr; }
+  .roadmap-tier { padding: 0 0.5rem; }
+  .roadmap-dot { width: 36px; height: 36px; font-size: 0.95rem; }
+  .roadmap-label { font-size: 0.65rem; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .xp-bar-fill::after { animation: none; }
+  .roadmap-tier.current .roadmap-dot { animation: none; }
+}

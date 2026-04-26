@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Aboriginal Dreamtime Quest — Matrix Spins Casino</title>
+  <meta name="theme-color" content="#D4A853">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html, body { height: 100%; }
+    body { background: #0D0F14; color: #F0F0F5; font-family: 'Inter', sans-serif; overflow-x: hidden; }
+  </style>
+  <link rel="stylesheet" href="../css/chat-widget.css">
+  <link rel="stylesheet" href="../css/notifications.css">
+  <link rel="stylesheet" href="../css/age-gate.css">
+  <link rel="stylesheet" href="../css/search.css">
+  <link rel="stylesheet" href="../css/favorites.css">
+  <link rel="stylesheet" href="../css/session-monitor.css">
+  <link rel="stylesheet" href="../css/conversion.css">
+</head>
+<body>
+  <div id="game-container" style="width:100%;min-height:100vh;"></div>
+
+  <script src="../js/api-client.js"></script>
+  <script src="../js/casino-engine.js"></script>
+  <script>
+    const gameConfig = {
+      name: 'Aboriginal Dreamtime Quest',
+      id: 'aboriginal-dreamtime-quest',
+      studioTheme: {
+        id: 'wild-frontier',
+        name: 'Wild Frontier Games',
+        primaryColor: '#D2691E',
+        secondaryColor: '#228B22',
+        accentColor: '#FF8C00',
+        bgGradient: 'linear-gradient(135deg, #3E2723 0%, #4A3728 50%, #3E2723 100%)',
+        fontFamily: "'Righteous', sans-serif",
+        fontFamilyBody: "'Fredoka One', sans-serif",
+        chromeStyle: 'custom',
+        logoUrl: 'assets/studios/wild-frontier-logo.png',
+        reelBg: '#1B0F08',
+        reelBorder: '#D2691E',
+        winHighlight: '#FF8C00',
+        borderStyle: '5px solid #D2691E',
+        borderRadius: '16px',
+        boxShadow: '0 0 25px rgba(210,105,30,0.4), inset 0 0 20px rgba(34,139,34,0.15)',
+        buttonStyle: 'background: linear-gradient(180deg, #D2691E, #8B4513); border-radius: 10px; border: 2px solid #FF8C00; text-transform: uppercase; letter-spacing: 2px; font-weight: 900;',
+        spinButtonGlow: '0 0 20px rgba(210,105,30,0.6)'
+      },
+      rtp: 0.91,
+      volatility: 'high',
+      mechanic: 'Persistent Meter',
+      mechanicDesc: 'A meter fills across multiple spins, rewarding accumulated progress with bonus features.',
+      minBet: 0.2,
+      maxBet: 100,
+      betStep: 0.20,
+      reels: 5,
+      rows: 3,
+      paylines: 25,
+      symbols: ["aboriginal","dreamtime","quest","spirit","dot-painting","gold","ancient","ceremony","wild","scatter"],
+      wilds: ["aboriginal"],
+      scatters: ["scatter"],
+      symbolWeights: {"aboriginal":[10.186981192775598,9.791495498087038,9.856356381658006,10.196103559615082,9.779554895403866],"dreamtime":[9.177662622576989,9.159258903089043,9.059181963371795,9.033257536299507,9.000021133405404],"quest":[8.166602716847704,7.821490493097809,8.12751884400204,7.972935235117474,7.860165986008056],"spirit":[7.060108472714606,6.992986908831599,7.127808161980443,6.90621590309006,7.178123434475467],"dot-painting":[5.793632835759325,6.219870581749502,5.897836904380595,6.158896172995059,6.191467492117092],"gold":[4.85938698317055,4.968932668240117,5.152343721574398,4.949130823861343,4.851910746691344],"ancient":[3.933550003017162,4.067588257440748,4.224537077729394,3.8525493976022505,4.1097270544502],"ceremony":[2.909999302883385,3.012876119306893,3.0961696743630194,2.9525207467616044,2.8906842839299003],"wild":[1.9397083703865219,2.2240099822154584,2.245427395734602,2.1158243241557804,2.1282320337508973],"scatter":[1.103346634193339,0.9361958601760502,1.0637119587358035,0.9007213532176351,1.184573006632204]},
+      paytable: {"aboriginal":{"3":2,"4":5,"5":15},"dreamtime":{"3":4,"4":11,"5":34},"quest":{"3":6,"4":16,"5":52},"spirit":{"3":7,"4":22,"5":71},"dot-painting":{"3":9,"4":27,"5":89},"gold":{"3":11,"4":33,"5":108},"ancient":{"3":13,"4":38,"5":126},"ceremony":{"3":15,"4":44,"5":145},"wild":{"3":16,"4":49,"5":163},"scatter":{"3":18,"4":55,"5":182},"SCATTER":{"3":5,"4":20,"5":100}},
+      freeSpinCount: 10,
+      freeSpinMultiplier: 2,
+      onSound: function(label) { /* sound hooks ready */ }
+    };
+
+    CasinoEngine.init('game-container', gameConfig);
+  </script>
+  <script src="../js/chat-widget.js" defer></script>
+  <script src="../js/notifications.js" defer></script>
+  <script src="../js/age-gate.js" defer></script>
+  <script src="../js/cookie-consent.js" defer></script>
+  <script src="../js/search.js" defer></script>
+  <script src="../js/favorites.js" defer></script>
+  <script src="../js/session-monitor.js" defer></script>
+  <script src="../js/sound-manager.js" defer></script>
+  <script src="../js/analytics.js" defer></script>
+  <script src="../js/email-capture.js" defer></script>
+  <script src="../js/conversion.js" defer></script>
+</body>
+</html>

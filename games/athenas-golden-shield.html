@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Athena's Golden Shield — Matrix Spins Casino</title>
+  <meta name="theme-color" content="#D4A853">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html, body { height: 100%; }
+    body { background: #0D0F14; color: #F0F0F5; font-family: 'Inter', sans-serif; overflow-x: hidden; }
+  </style>
+  <link rel="stylesheet" href="../css/chat-widget.css">
+  <link rel="stylesheet" href="../css/notifications.css">
+  <link rel="stylesheet" href="../css/age-gate.css">
+  <link rel="stylesheet" href="../css/search.css">
+  <link rel="stylesheet" href="../css/favorites.css">
+  <link rel="stylesheet" href="../css/session-monitor.css">
+  <link rel="stylesheet" href="../css/conversion.css">
+</head>
+<body>
+  <div id="game-container" style="width:100%;min-height:100vh;"></div>
+
+  <script src="../js/api-client.js"></script>
+  <script src="../js/casino-engine.js"></script>
+  <script>
+    const gameConfig = {
+      name: 'Athena\'s Golden Shield',
+      id: 'athenas-golden-shield',
+      studioTheme: {
+        id: 'mythic-forge',
+        name: 'Mythic Forge',
+        primaryColor: '#50C878',
+        secondaryColor: '#DC143C',
+        accentColor: '#4169E1',
+        bgGradient: 'linear-gradient(135deg, #2C1810 0%, #3D2817 50%, #2C1810 100%)',
+        fontFamily: "'Cinzel', serif",
+        fontFamilyBody: "'Crimson Text', serif",
+        chromeStyle: 'custom',
+        logoUrl: 'assets/studios/mythic-forge-logo.png',
+        reelBg: '#1A0F08',
+        reelBorder: '#50C878',
+        winHighlight: '#FFD700',
+        borderStyle: '4px solid #50C878',
+        borderRadius: '8px',
+        boxShadow: '0 0 35px rgba(80,200,120,0.25), inset 0 0 25px rgba(80,200,120,0.1)',
+        buttonStyle: 'background: linear-gradient(180deg, #50C878, #3A9B5C); border-radius: 6px; border: 2px solid #DC143C; text-transform: uppercase; letter-spacing: 2px; font-weight: 600;',
+        spinButtonGlow: '0 0 25px rgba(80,200,120,0.5)'
+      },
+      rtp: 0.91,
+      volatility: 'medium',
+      mechanic: 'Treasure Hunt',
+      mechanicDesc: 'Collect map fragments to unlock a multi-stage treasure hunt bonus.',
+      minBet: 0.2,
+      maxBet: 100,
+      betStep: 0.20,
+      reels: 5,
+      rows: 3,
+      paylines: 20,
+      symbols: ["athena","shield","owl","olive","spear","helmet","temple","gold-coin"],
+      wilds: ["athena"],
+      scatters: ["gold-coin"],
+      symbolWeights: {"athena":[7.774061562277259,8.017619274047597,8.086380312552935,7.840068938940903,8.188132785832975],"shield":[6.959100523323437,7.126811521987281,6.8188467940472,7.183242931497169,7.071268400774736],"owl":[5.986033499581084,6.0865962172265995,5.80610250127771,6.2045912351889845,5.767735063430972],"olive":[5.150963316816956,4.948238469922561,5.052954149236063,4.764909995346503,4.874683770640755],"spear":[4.144569393815027,3.9774670306692568,3.8031630304849404,4.1003909027576535,3.9473675967485966],"helmet":[3.168027877906386,3.1395980986886896,2.9923525111326468,2.8345920183085083,3.0054911872335452],"temple":[2.0615123638406203,2.025970075507573,2.081681056857118,1.8454729366277864,2.209312763553083],"gold-coin":[0.7758365177876482,0.9192323500070327,0.8437643301714521,0.9390048399522573,0.8845512913895793]},
+      paytable: {"athena":{"3":2,"4":5,"5":15},"shield":{"3":4,"4":12,"5":38},"owl":{"3":7,"4":19,"5":61},"olive":{"3":9,"4":26,"5":84},"spear":{"3":11,"4":33,"5":108},"helmet":{"3":13,"4":39,"5":131},"temple":{"3":16,"4":46,"5":154},"gold-coin":{"3":18,"4":53,"5":177},"SCATTER":{"3":5,"4":20,"5":100}},
+      freeSpinCount: 10,
+      freeSpinMultiplier: 2,
+      onSound: function(label) { /* sound hooks ready */ }
+    };
+
+    CasinoEngine.init('game-container', gameConfig);
+  </script>
+  <script src="../js/chat-widget.js" defer></script>
+  <script src="../js/notifications.js" defer></script>
+  <script src="../js/age-gate.js" defer></script>
+  <script src="../js/cookie-consent.js" defer></script>
+  <script src="../js/search.js" defer></script>
+  <script src="../js/favorites.js" defer></script>
+  <script src="../js/session-monitor.js" defer></script>
+  <script src="../js/sound-manager.js" defer></script>
+  <script src="../js/analytics.js" defer></script>
+  <script src="../js/email-capture.js" defer></script>
+  <script src="../js/conversion.js" defer></script>
+</body>
+</html>

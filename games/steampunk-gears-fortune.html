@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Steampunk Gears Fortune — Matrix Spins Casino</title>
+  <meta name="theme-color" content="#D4A853">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html, body { height: 100%; }
+    body { background: #0D0F14; color: #F0F0F5; font-family: 'Inter', sans-serif; overflow-x: hidden; }
+  </style>
+  <link rel="stylesheet" href="../css/chat-widget.css">
+  <link rel="stylesheet" href="../css/notifications.css">
+  <link rel="stylesheet" href="../css/age-gate.css">
+  <link rel="stylesheet" href="../css/search.css">
+  <link rel="stylesheet" href="../css/favorites.css">
+  <link rel="stylesheet" href="../css/session-monitor.css">
+  <link rel="stylesheet" href="../css/conversion.css">
+</head>
+<body>
+  <div id="game-container" style="width:100%;min-height:100vh;"></div>
+
+  <script src="../js/api-client.js"></script>
+  <script src="../js/casino-engine.js"></script>
+  <script>
+    const gameConfig = {
+      name: 'Steampunk Gears Fortune',
+      id: 'steampunk-gears-fortune',
+      studioTheme: {
+        id: 'ironclad-entertainment',
+        name: 'Ironclad Entertainment',
+        primaryColor: '#B5A642',
+        secondaryColor: '#8B4513',
+        accentColor: '#CD853F',
+        bgGradient: 'linear-gradient(135deg, #2D2416 0%, #3D3023 50%, #2D2416 100%)',
+        fontFamily: "'Righteous', sans-serif",
+        fontFamilyBody: "'Fredoka One', sans-serif",
+        chromeStyle: 'custom',
+        logoUrl: 'assets/studios/ironclad-entertainment-logo.png',
+        reelBg: '#15110D',
+        reelBorder: '#B5A642',
+        winHighlight: '#FFD700',
+        borderStyle: '4px solid #B5A642',
+        borderRadius: '6px',
+        boxShadow: '0 0 30px rgba(181,166,66,0.35), inset 0 0 20px rgba(181,166,66,0.1)',
+        buttonStyle: 'background: linear-gradient(180deg, #B5A642, #8B6F47); border-radius: 6px; border: 2px solid #CD853F; text-transform: uppercase; letter-spacing: 2px; font-weight: bold;',
+        spinButtonGlow: '0 0 20px rgba(181,166,66,0.5)'
+      },
+      rtp: 0.92,
+      volatility: 'low',
+      mechanic: 'Trail Bonus',
+      mechanicDesc: 'Progress along a trail during spins, collecting bonuses and reaching milestone rewards.',
+      minBet: 0.2,
+      maxBet: 100,
+      betStep: 0.20,
+      reels: 5,
+      rows: 3,
+      paylines: 20,
+      symbols: ["gear","steam","engine","brass","copper","gold","gadget","innovation","wild","scatter"],
+      wilds: ["gear"],
+      scatters: ["scatter"],
+      symbolWeights: {"gear":[9.898378593796515,10.025246100697876,10.175974793045002,9.913597465776064,10.18063183632495],"steam":[9.143171326946053,8.982908569750885,9.127069383740865,8.881154117427332,8.873578354116452],"engine":[8.066809229167031,7.932986602363022,8.166069279079059,8.092353591695314,8.015640434414113],"brass":[6.9658389859329075,6.957058581643257,6.947202168512643,7.227153717243032,6.974189155373496],"copper":[6.054186887394931,6.236899796927969,6.197208972193203,6.154357422774057,6.18436240907962],"gold":[5.2290170127843645,5.131614262303558,4.840750163498864,4.828046547920163,5.057727728982173],"gadget":[3.776880724290865,3.8861967227339056,4.108358442552547,3.8012935464521957,4.212192908305263],"innovation":[2.788148575797009,2.9091810990766245,3.0631452133790527,2.9066925425857133,3.0470727925339975],"wild":[2.248394919339346,2.0945923233759016,2.184183619510855,2.062918533376684,1.9209891655339688],"scatter":[0.8583708258239743,1.1717578598828053,1.1400695534498724,1.2089263188536163,0.8925874466790443]},
+      paytable: {"gear":{"3":2,"4":5,"5":15},"steam":{"3":4,"4":11,"5":34},"engine":{"3":6,"4":16,"5":52},"brass":{"3":7,"4":22,"5":71},"copper":{"3":9,"4":27,"5":89},"gold":{"3":11,"4":33,"5":108},"gadget":{"3":13,"4":38,"5":126},"innovation":{"3":15,"4":44,"5":145},"wild":{"3":16,"4":49,"5":163},"scatter":{"3":18,"4":55,"5":182},"SCATTER":{"3":5,"4":20,"5":100}},
+      freeSpinCount: 10,
+      freeSpinMultiplier: 2,
+      onSound: function(label) { /* sound hooks ready */ }
+    };
+
+    CasinoEngine.init('game-container', gameConfig);
+  </script>
+  <script src="../js/chat-widget.js" defer></script>
+  <script src="../js/notifications.js" defer></script>
+  <script src="../js/age-gate.js" defer></script>
+  <script src="../js/cookie-consent.js" defer></script>
+  <script src="../js/search.js" defer></script>
+  <script src="../js/favorites.js" defer></script>
+  <script src="../js/session-monitor.js" defer></script>
+  <script src="../js/sound-manager.js" defer></script>
+  <script src="../js/analytics.js" defer></script>
+  <script src="../js/email-capture.js" defer></script>
+  <script src="../js/conversion.js" defer></script>
+</body>
+</html>

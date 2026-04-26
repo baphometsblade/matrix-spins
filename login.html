@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sign In — Matrix Spins</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/auth.css">
+</head>
+<body>
+<div class="rs-shell">
+  <div class="rs-brand">Matrix Spins</div>
+  <div class="rs-card">
+    <h1>Welcome back</h1>
+    <p class="muted" style="margin-bottom:1.4rem;">Sign in to continue playing.</p>
+    <div id="alert" class="alert"></div>
+    <form id="f">
+      <div class="field">
+        <label for="email">Email</label>
+        <input id="email" name="email" type="email" autocomplete="email" required>
+      </div>
+      <div class="field">
+        <label for="password">Password</label>
+        <input id="password" name="password" type="password" autocomplete="current-password" required>
+      </div>
+      <button id="submit" class="btn" type="submit">Sign in</button>
+    </form>
+    <div class="links">
+      <a href="signup.html">Create an account</a>
+      <a href="index.html">Back to home</a>
+    </div>
+  </div>
+</div>
+<script src="js/api-client.js"></script>
+<script>
+(async () => {
+  const api = window.MatrixSpinsAPI;
+  const alertEl = document.getElementById('alert');
+  const form = document.getElementById('f');
+  const submit = document.getElementById('submit');
+
+  // If already signed in, redirect to lobby
+  const u = await api.loadSession();
+  if (u) { window.location.href = 'index.html'; return; }
+
+  function showError(msg) {
+    alertEl.textContent = msg;
+    alertEl.classList.add('visible');
+  }
+
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    alertEl.classList.remove('visible');
+    submit.disabled = true;
+    const email = document.getElementById('email').value.trim();
+    const password = document.getElementById('password').value;
+    try {
+      await api.login(email, password);
+      const params = new URLSearchParams(location.search);
+      window.location.href = params.get('next') || 'index.html';
+    } catch (err) {
+      showError(err.message || 'Sign-in failed.');
+      submit.disabled = false;
+    }
+  });
+})();
+</script>
+</body>
+</html>

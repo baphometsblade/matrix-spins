@@ -1,0 +1,203 @@
+/* Matrix Spins - Age Verification Gate */
+
+body.age-gate-active {
+  overflow: hidden;
+}
+
+.age-gate-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 10000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  background: radial-gradient(
+    ellipse at 50% 40%,
+    rgba(212, 175, 55, 0.08) 0%,
+    rgba(30, 20, 60, 0.97) 45%,
+    rgba(13, 15, 20, 0.99) 100%
+  );
+  animation: ageGateFadeIn 0.4s ease-out both;
+}
+
+.age-gate-overlay.age-gate--exiting {
+  animation: ageGateFadeOut 0.35s ease-in both;
+}
+
+.age-gate-card {
+  width: 100%;
+  max-width: 440px;
+  padding: 2.5rem 2rem 2rem;
+  text-align: center;
+  background: rgba(20, 22, 30, 0.85);
+  border: 1px solid rgba(212, 175, 55, 0.2);
+  border-radius: 16px;
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  box-shadow:
+    0 0 60px rgba(212, 175, 55, 0.06),
+    0 24px 48px rgba(0, 0, 0, 0.5);
+  animation: ageGateCardIn 0.5s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+/* Logo */
+.age-gate-logo {
+  margin-bottom: 1.25rem;
+  line-height: 1;
+}
+
+.age-gate-crown {
+  display: block;
+  font-size: 2.5rem;
+  color: #d4af37;
+  filter: drop-shadow(0 0 10px rgba(212, 175, 55, 0.5));
+  animation: ageGatePulse 3s ease-in-out infinite;
+}
+
+.age-gate-brand {
+  display: block;
+  margin-top: 0.35rem;
+  font-family: 'Cinzel', 'Georgia', serif;
+  font-size: 1.35rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: #d4af37;
+}
+
+/* Title */
+.age-gate-title {
+  margin: 0 0 0.75rem;
+  font-family: 'Cinzel', 'Georgia', serif;
+  font-size: 1.15rem;
+  font-weight: 600;
+  color: #f0f0f5;
+  letter-spacing: 0.03em;
+}
+
+/* Message */
+.age-gate-message {
+  margin: 0 0 1.75rem;
+  font-size: 0.9rem;
+  line-height: 1.6;
+  color: rgba(240, 240, 245, 0.7);
+}
+
+/* Confirm button */
+.age-gate-confirm {
+  position: relative;
+  display: block;
+  width: 100%;
+  padding: 0.9rem 1.5rem;
+  margin-bottom: 1rem;
+  font-family: inherit;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #0d0f14;
+  background: linear-gradient(135deg, #d4af37, #f0d060, #d4af37);
+  background-size: 200% 100%;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  overflow: hidden;
+  transition: background-position 0.4s ease, box-shadow 0.3s ease, transform 0.15s ease;
+}
+
+.age-gate-confirm:hover {
+  background-position: 100% 0;
+  box-shadow: 0 4px 24px rgba(212, 175, 55, 0.35);
+  transform: translateY(-1px);
+}
+
+.age-gate-confirm:active {
+  transform: translateY(0);
+}
+
+.age-gate-confirm:focus-visible {
+  outline: 2px solid #d4af37;
+  outline-offset: 2px;
+}
+
+/* Deny link */
+.age-gate-deny {
+  display: inline-block;
+  margin-bottom: 1.25rem;
+  font-size: 0.85rem;
+  color: rgba(240, 240, 245, 0.4);
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+
+.age-gate-deny:hover {
+  color: rgba(240, 240, 245, 0.7);
+  text-decoration: underline;
+}
+
+/* Disclaimer */
+.age-gate-disclaimer {
+  margin: 0;
+  font-size: 0.75rem;
+  line-height: 1.5;
+  color: rgba(240, 240, 245, 0.3);
+}
+
+.age-gate-disclaimer a {
+  color: rgba(212, 175, 55, 0.6);
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+
+.age-gate-disclaimer a:hover {
+  color: #d4af37;
+  text-decoration: underline;
+}
+
+/* Animations */
+@keyframes ageGateFadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+@keyframes ageGateFadeOut {
+  from { opacity: 1; }
+  to   { opacity: 0; }
+}
+
+@keyframes ageGateCardIn {
+  from {
+    opacity: 0;
+    transform: scale(0.9) translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+@keyframes ageGatePulse {
+  0%, 100% { filter: drop-shadow(0 0 8px rgba(212, 175, 55, 0.4)); }
+  50%      { filter: drop-shadow(0 0 18px rgba(212, 175, 55, 0.7)); }
+}
+
+/* Mobile */
+@media (max-width: 480px) {
+  .age-gate-card {
+    padding: 2rem 1.25rem 1.5rem;
+    border-radius: 12px;
+  }
+  .age-gate-crown { font-size: 2rem; }
+  .age-gate-brand { font-size: 1.15rem; }
+  .age-gate-title { font-size: 1.05rem; }
+}
+
+/* Reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  .age-gate-overlay,
+  .age-gate-overlay.age-gate--exiting,
+  .age-gate-card {
+    animation-duration: 0.01ms;
+  }
+  .age-gate-crown {
+    animation: none;
+  }
+}
