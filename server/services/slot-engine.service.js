@@ -31,6 +31,31 @@ const db = require('../database');
 const featureFlags = require('./feature-flags.service');
 const universal = require('./slot-engine-universal.service');
 const bonusSessions = require('./bonus-session.service');
+const bonusAdapters = require('./bonus-adapters');
+
+function parseSessionState(json) {
+    if (!json) return {};
+    try { return JSON.parse(json) || {}; } catch (e) { return {}; }
+}
+
+/**
+ * Deterministic seeded PRNG handed to bonus adapters that need extra
+ * randomness (tumble symbol drops, multiplier picks, expanding symbol
+ * choice). Mixed from the same server_seed/client_seed/nonce that
+ * derives the spin so adapter outputs are also provably reproducible.
+ */
+function makeSpinPrng(serverSeed, clientSeed, nonce) {
+    let s = 0;
+    const seed = serverSeed + ':' + clientSeed + ':' + nonce + ':bonus';
+    for (let i = 0; i < seed.length; i++) s = (s * 31 + seed.charCodeAt(i)) >>> 0;
+    return function () {
+        s = (s + 0x6D2B79F5) >>> 0;
+        let t = s;
+        t = Math.imul(t ^ (t >>> 15), t | 1);
+        t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+        return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+    };
+}
 
 /* ────────────────────────────── games ────────────────────────────── */
 
@@ -417,6 +442,8 @@ async function consumeBonusSpinImpl({ userId, bonusSessionId, clientSeed }) {
     const normalizedClientSeed = normalizeClientSeed(effectiveSeed);
 
     let stops, win_cents, line, universalGrid = null, universalLines = null, scatterCount = 0;
+    let bonusEffect = null;
+    let nextState = parseSessionState(session.state_json);
     if (tunedGame) {
         stops = spinReels(tunedGame, commit.server_seed, normalizedClientSeed, nonce);
         const ev = evaluate(tunedGame, stops, bet);
@@ -426,9 +453,27 @@ async function consumeBonusSpinImpl({ userId, bonusSessionId, clientSeed }) {
         const floats = deriveFloats(commit.server_seed, normalizedClientSeed, nonce, universalGame.cols);
         universalGrid = universal.spinReelsUniversal(universalGame, floats);
         const ev = universal.evaluateUniversal(universalGame, universalGrid, bet);
-        win_cents = ev.win_cents;
-        universalLines = ev.lines;
         scatterCount = ev.scatter_count || 0;
+        // Bonus adapter pass: apply per-bonus-type effect (tumble cascade,
+        // multiplier wilds, expanding symbol, walking wilds, etc.). The
+        // adapter may rewrite the grid, scale the win, mutate session
+        // state, and grant extra respins. State persists across the
+        // session via state_json on bonus_sessions.
+        const adapterPrng = makeSpinPrng(commit.server_seed, normalizedClientSeed, nonce);
+        bonusEffect = bonusAdapters.applyBonusSpin({
+            state: nextState,
+            baseGrid: universalGrid,
+            baseWinCents: ev.win_cents,
+            baseLines: ev.lines || [],
+            game: universalGame,
+            betCents: bet,
+            prng: adapterPrng,
+            scatterCount,
+        });
+        if (bonusEffect.gridOverride) universalGrid = bonusEffect.gridOverride;
+        win_cents = Number(bonusEffect.winCents) || 0;
+        universalLines = bonusEffect.lines || [];
+        nextState = bonusEffect.state || nextState;
         stops = universalGrid.map((col, i) => ({ index: i, symbol: col[0], column: col }));
     }
 
@@ -466,8 +511,17 @@ async function consumeBonusSpinImpl({ userId, bonusSessionId, clientSeed }) {
     const roundId = roundRow && roundRow.id;
     const next = await rollNewCommit(userId);
 
+    // Persist the adapter's evolved per-session state (cascade level,
+    // walking-wild positions, collected wilds, chosen expanding symbol)
+    // so the next free spin sees it.
+    if (universalGame && nextState && Object.keys(nextState).length > 0) {
+        await bonusSessions.saveState(session.id, nextState);
+    }
+
     // Decrement / mark complete. Retrigger if scatters >= 3 again
-    // and the catalog allows retriggers for this game.
+    // and the catalog allows retriggers for this game. Adapters may
+    // also request extra respins (hold-and-win bonus rounds) via
+    // `bonusEffect.extraRespins`.
     let updated = await bonusSessions.consumeSpin(session.id, win_cents);
     if (universalGame && scatterCount >= 3) {
         const def = require('../../shared/game-definitions.js').find(g => g.id === gameId);
@@ -475,6 +529,10 @@ async function consumeBonusSpinImpl({ userId, bonusSessionId, clientSeed }) {
             await bonusSessions.addRetriggerSpins(session.id, def.freeSpinsCount);
             updated = await bonusSessions.getById(session.id);
         }
+    }
+    if (bonusEffect && Number(bonusEffect.extraRespins) > 0) {
+        await bonusSessions.addRetriggerSpins(session.id, Number(bonusEffect.extraRespins));
+        updated = await bonusSessions.getById(session.id);
     }
 
     return {

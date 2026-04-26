@@ -141,6 +141,10 @@ function getGame(id) {
     const norm = normalizeGame(def);
     if (norm) {
         norm._calibration = calibrate(norm);
+        // Stash the raw catalog row so bonus adapters can read
+        // game-specific tuning (tumbleMultipliers, randomMultiplierRange,
+        // jackpots, freeSpinsRetrigger) without re-finding the row.
+        norm._catalogDef = def;
         GAME_INDEX[id] = norm;
     }
     return norm;

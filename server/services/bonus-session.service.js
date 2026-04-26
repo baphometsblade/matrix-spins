@@ -132,6 +132,23 @@ async function consumeSpin(sessionId, winCents) {
 }
 
 /**
+ * Persist the per-bonus-type state for an active session. Adapters
+ * mutate state across spins (tumble cascade level, walking-wild
+ * positions, collected wild count, chosen expanding symbol) and need
+ * the next spin to see the new value.
+ *
+ * Refuses to write to a completed session — the caller has a stale
+ * read on the session row in that case.
+ */
+async function saveState(sessionId, state) {
+    const json = JSON.stringify(state || {});
+    await db.run(
+        "UPDATE bonus_sessions SET state_json = ? WHERE id = ? AND status = 'active'",
+        [json, sessionId]
+    );
+}
+
+/**
  * Trim the public-safe shape used in API responses.
  */
 function publicShape(s) {
@@ -154,5 +171,6 @@ module.exports = {
     open,
     addRetriggerSpins,
     consumeSpin,
+    saveState,
     publicShape,
 };

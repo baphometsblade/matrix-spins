@@ -1,5 +1,5 @@
 /* Royal Slots Casino - Bundled JavaScript */
-/* Generated: 2026-04-26T08:24:37.460Z */
+/* Generated: 2026-04-26T19:11:15.788Z */
 
 
 /* â”€â”€â”€ shared/game-definitions.js (2/56) â”€â”€â”€ */
