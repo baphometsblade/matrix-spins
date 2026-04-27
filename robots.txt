@@ -1,4 +1,7 @@
 User-agent: *
 Allow: /
-Disallow: /blockchain/
+Disallow: /api/
+Disallow: /admin.html
+Disallow: /deposit/
+
 Sitemap: https://msaart.online/sitemap.xml
