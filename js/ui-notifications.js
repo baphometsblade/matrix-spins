@@ -186,35 +186,70 @@
       listEl.innerHTML = '<div class="np-empty">You\'re all caught up! 🎉</div>';
       return;
     }
-    var html = notifications.map(function(n) {
-      var unreadCls = n.read ? '' : ' unread';
-      var dot = n.read ? '' : '<span class="np-dot"></span>';
-      var arrow = n.link_action ? '<span class="np-arrow">›</span>' : '';
-      return '<div class="np-item' + unreadCls + '" data-id="' + n.id
-        + '" data-action="' + escHtml(n.link_action || '') + '">'
-        + '<span class="np-icon">' + typeIcon(n.type) + '</span>'
-        + '<div class="np-content">'
-        + '<div class="np-title">' + escHtml(n.title) + '</div>'
-        + '<div class="np-body">' + escHtml(n.body) + '</div>'
-        + '<div class="np-time">' + timeAgo(n.created_at) + '</div>'
-        + '</div>'
-        + dot + arrow
-        + '</div>';
-    }).join('');
-    listEl.innerHTML = html;
-    listEl.querySelectorAll('.np-item').forEach(function(el) {
-      el.addEventListener('click', function() {
-        var id = el.getAttribute('data-id');
-        var action = el.getAttribute('data-action');
-        if (id) markRead(id);
-        el.classList.remove('unread');
-        var dot = el.querySelector('.np-dot');
-        if (dot) dot.remove();
-        if (action && typeof window[action] === 'function') {
+    // XSS-safe rebuild: createElement + textContent. Whitelist of safe
+    // link_action handlers — the server cannot name arbitrary globals like
+    // withdrawAll, closeAccount, initiateDeposit, etc. n.id is no longer
+    // interpolated into a data-id attribute value where it could break out.
+    var ALLOWED_ACTIONS = {
+      open_wallet:  function() { if (typeof showWalletModal === 'function') showWalletModal(); },
+      open_promo:   function() { if (typeof openPromoCode === 'function') openPromoCode(); },
+      open_profile: function() { if (typeof showProfileModal === 'function') showProfileModal(); },
+      open_vip:     function() { if (typeof showVipModal === 'function') showVipModal(); },
+      open_lobby:   function() { if (typeof showLobby === 'function') showLobby(); },
+      open_daily:   function() { if (typeof openDailyBonus === 'function') openDailyBonus(); },
+      open_wheel:   function() { if (typeof openBonusWheel === 'function') openBonusWheel(); }
+    };
+    listEl.replaceChildren();
+    notifications.forEach(function(n) {
+      var item = document.createElement('div');
+      item.className = 'np-item' + (n.read ? '' : ' unread');
+      // Store the id as a textual data-id, but also keep a JS-side reference
+      // so we never re-read it from the attribute (defence in depth).
+      var safeId = String(n.id == null ? '' : n.id);
+      item.setAttribute('data-id', safeId);
+      var iconSpan = document.createElement('span');
+      iconSpan.className = 'np-icon';
+      iconSpan.textContent = String(typeIcon(n.type) || '');
+      item.appendChild(iconSpan);
+      var content = document.createElement('div');
+      content.className = 'np-content';
+      var titleDiv = document.createElement('div');
+      titleDiv.className = 'np-title';
+      titleDiv.textContent = String(n.title == null ? '' : n.title);
+      var bodyDiv = document.createElement('div');
+      bodyDiv.className = 'np-body';
+      bodyDiv.textContent = String(n.body == null ? '' : n.body);
+      var timeDiv = document.createElement('div');
+      timeDiv.className = 'np-time';
+      timeDiv.textContent = String(timeAgo(n.created_at) || '');
+      content.appendChild(titleDiv);
+      content.appendChild(bodyDiv);
+      content.appendChild(timeDiv);
+      item.appendChild(content);
+      if (!n.read) {
+        var dotSpan = document.createElement('span');
+        dotSpan.className = 'np-dot';
+        item.appendChild(dotSpan);
+      }
+      var actionFn = null;
+      if (n.link_action && Object.prototype.hasOwnProperty.call(ALLOWED_ACTIONS, n.link_action)) {
+        actionFn = ALLOWED_ACTIONS[n.link_action];
+        var arrowSpan = document.createElement('span');
+        arrowSpan.className = 'np-arrow';
+        arrowSpan.textContent = '\u203A';
+        item.appendChild(arrowSpan);
+      }
+      item.addEventListener('click', function() {
+        if (safeId) markRead(safeId);
+        item.classList.remove('unread');
+        var d = item.querySelector('.np-dot');
+        if (d) d.remove();
+        if (actionFn) {
           closePanel();
-          window[action]();
+          try { actionFn(); } catch (_e) { /* swallow handler errors */ }
         }
       });
+      listEl.appendChild(item);
     });
   }
 

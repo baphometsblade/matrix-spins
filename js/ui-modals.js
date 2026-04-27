@@ -507,20 +507,49 @@
                         return;
                     }
                     var medals = ['\uD83E\uDD47', '\uD83E\uDD48', '\uD83E\uDD49'];
-                    list.innerHTML = entries.map(function(e, i) {
+                    // XSS-safe: rebuild rows with createElement + textContent.
+                    // Username comes from /api/leaderboard. Without escaping, a player
+                    // who registers `<svg/onload=...>` hijacks every other player's
+                    // session whenever the lobby leaderboard renders (CSP is disabled).
+                    list.replaceChildren();
+                    entries.forEach(function(e, i) {
                         var gameName = e.gameId || 'Unknown';
                         if (typeof games !== 'undefined') {
                             var g = games.find(function(x) { return x.id === e.gameId; });
                             if (g) gameName = g.name;
                         }
-                        return '<div class="ldb-row">'
-                            + '<span class="ldb-rank">' + (medals[i] || (i + 1)) + '</span>'
-                            + '<span class="ldb-player">' + e.username + (typeof getVipBadgeHtml === 'function' ? getVipBadgeHtml(e.vip_tier || null) : '') + '</span>'
-                            + '<span class="ldb-game">' + gameName + '</span>'
-                            + '<span class="ldb-mult">' + e.mult + '\xD7</span>'
-                            + '<span class="ldb-amount">$' + Number(e.winAmount).toLocaleString('en-AU', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + '</span>'
-                            + '</div>';
-                    }).join('');
+                        var row = document.createElement('div');
+                        row.className = 'ldb-row';
+                        var rank = document.createElement('span');
+                        rank.className = 'ldb-rank';
+                        rank.textContent = String(medals[i] || (i + 1));
+                        row.appendChild(rank);
+                        var player = document.createElement('span');
+                        player.className = 'ldb-player';
+                        player.textContent = String(e.username || '');
+                        // VIP badge: tier number → known class, no HTML parsing of server data.
+                        var tier = parseInt(e.vip_tier, 10);
+                        if (Number.isFinite(tier) && tier > 0) {
+                            var badge = document.createElement('span');
+                            badge.className = 'vip-badge vip-tier-' + tier;
+                            badge.textContent = ' ★' + tier;
+                            player.appendChild(badge);
+                        }
+                        row.appendChild(player);
+                        var gameSpan = document.createElement('span');
+                        gameSpan.className = 'ldb-game';
+                        gameSpan.textContent = String(gameName);
+                        row.appendChild(gameSpan);
+                        var multSpan = document.createElement('span');
+                        multSpan.className = 'ldb-mult';
+                        multSpan.textContent = String(e.mult) + '\xD7';
+                        row.appendChild(multSpan);
+                        var amtSpan = document.createElement('span');
+                        amtSpan.className = 'ldb-amount';
+                        amtSpan.textContent = '$' + Number(e.winAmount).toLocaleString('en-AU', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+                        row.appendChild(amtSpan);
+                        list.appendChild(row);
+                    });
                 })
                 .catch(function() {
                     list.innerHTML = '<div style="color:rgba(255,255,255,0.4);font-size:12px;padding:8px 0">Could not load leaderboard.</div>';

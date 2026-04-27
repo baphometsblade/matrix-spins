@@ -246,10 +246,30 @@ async function loadStats() {
         <div class="stat-card"><div class="label">Pending Deposits</div><div class="value" style="color:#fbbf24">${o.pendingDeposits || 0} ($${(o.pendingDepositAmount || 0).toLocaleString()})</div></div>
         <div class="stat-card"><div class="label">Pending Withdrawals</div><div class="value" style="color:#f97316">${o.pendingWithdrawals || 0} ($${(o.pendingWithdrawalAmount || 0).toLocaleString()})</div></div>
     `;
-    document.getElementById('gameStatsBody').innerHTML = data.gameStats.map(g => {
+    // XSS-safe: build rows with createElement + textContent (immune by construction).
+    // Previously used innerHTML with raw template-literal interpolation of g.game_id —
+    // a stored-XSS sink any time a game_id contains HTML.
+    const gsBody = document.getElementById('gameStatsBody');
+    gsBody.replaceChildren();
+    data.gameStats.forEach(g => {
         const profit = g.total_wagered - g.total_paid;
-        return `<tr><td>${g.game_id}</td><td>${g.total_spins}</td><td>$${g.total_wagered.toLocaleString()}</td><td>$${g.total_paid.toLocaleString()}</td><td>${(g.actual_rtp * 100).toFixed(2)}%</td><td style="color:${profit >= 0 ? '#10b981' : '#ef4444'}">$${profit.toLocaleString()}</td></tr>`;
-    }).join('');
+        const tr = document.createElement('tr');
+        const cells = [
+            String(g.game_id),
+            String(g.total_spins),
+            '$' + Number(g.total_wagered).toLocaleString(),
+            '$' + Number(g.total_paid).toLocaleString(),
+            (g.actual_rtp * 100).toFixed(2) + '%',
+            '$' + profit.toLocaleString(),
+        ];
+        cells.forEach((text, idx) => {
+            const td = document.createElement('td');
+            td.textContent = text;
+            if (idx === 5) td.style.color = profit >= 0 ? '#10b981' : '#ef4444';
+            tr.appendChild(td);
+        });
+        gsBody.appendChild(tr);
+    });
     loadUsers();
     loadSpins();
     loadDeposits();
@@ -260,24 +280,92 @@ async function loadStats() {
 async function loadUsers() {
     const data = await apiFetch('/admin/users');
     if (!data) return;
-    document.getElementById('usersBody').innerHTML = data.users.map(u => `
-        <tr>
-            <td>${u.id}</td><td>${u.username} ${u.is_admin ? '<span class="badge badge-admin">ADMIN</span>' : ''}</td>
-            <td>${u.email}</td><td>$${u.balance.toLocaleString()}</td>
-            <td>${u.is_banned ? '<span class="badge badge-banned">BANNED</span>' : 'Active'}</td>
-            <td>${new Date(u.created_at).toLocaleDateString()}</td>
-            <td>${!u.is_admin ? (u.is_banned ? `<button class="btn btn-success" onclick="unbanUser(${u.id})">Unban</button>` : `<button class="btn btn-danger" onclick="banUser(${u.id})">Ban</button>`) : ''}</td>
-        </tr>
-    `).join('');
+    // XSS-safe: createElement + textContent for every user-controlled field.
+    // Username and email come from registration — without escaping, a player who
+    // registers `<img src=x onerror=...>` triggers admin-side XSS (full session
+    // hijack since CSP is disabled and the admin holds ban / approve-deposit privileges).
+    const body = document.getElementById('usersBody');
+    body.replaceChildren();
+    data.users.forEach(u => {
+        const tr = document.createElement('tr');
+
+        const tdId = document.createElement('td'); tdId.textContent = String(u.id); tr.appendChild(tdId);
+
+        const tdName = document.createElement('td');
+        tdName.textContent = String(u.username);
+        if (u.is_admin) {
+            tdName.appendChild(document.createTextNode(' '));
+            const adminBadge = document.createElement('span');
+            adminBadge.className = 'badge badge-admin';
+            adminBadge.textContent = 'ADMIN';
+            tdName.appendChild(adminBadge);
+        }
+        tr.appendChild(tdName);
+
+        const tdEmail = document.createElement('td'); tdEmail.textContent = String(u.email || ''); tr.appendChild(tdEmail);
+        const tdBal = document.createElement('td'); tdBal.textContent = '$' + Number(u.balance).toLocaleString(); tr.appendChild(tdBal);
+
+        const tdStatus = document.createElement('td');
+        if (u.is_banned) {
+            const b = document.createElement('span');
+            b.className = 'badge badge-banned';
+            b.textContent = 'BANNED';
+            tdStatus.appendChild(b);
+        } else {
+            tdStatus.textContent = 'Active';
+        }
+        tr.appendChild(tdStatus);
+
+        const tdDate = document.createElement('td');
+        tdDate.textContent = new Date(u.created_at).toLocaleDateString();
+        tr.appendChild(tdDate);
+
+        const tdAction = document.createElement('td');
+        if (!u.is_admin) {
+            const btn = document.createElement('button');
+            btn.className = u.is_banned ? 'btn btn-success' : 'btn btn-danger';
+            btn.textContent = u.is_banned ? 'Unban' : 'Ban';
+            // Use addEventListener (not inline onclick) — id is server-controlled
+            // and would otherwise be interpolated into onclick="..." attribute.
+            const userId = Number(u.id);
+            if (Number.isFinite(userId)) {
+                btn.addEventListener('click', () => (u.is_banned ? unbanUser : banUser)(userId));
+            }
+            tdAction.appendChild(btn);
+        }
+        tr.appendChild(tdAction);
+
+        body.appendChild(tr);
+    });
 }
 
 async function loadSpins() {
     const data = await apiFetch('/admin/recent-spins');
     if (!data) return;
-    document.getElementById('spinsBody').innerHTML = data.spins.map(s => {
+    // XSS-safe: createElement + textContent. Username comes from registration,
+    // so without escaping a malicious player could XSS every admin who opens this tab.
+    const body = document.getElementById('spinsBody');
+    body.replaceChildren();
+    data.spins.forEach(s => {
         const profit = s.bet_amount - s.win_amount;
-        return `<tr><td>${s.id}</td><td>${s.username}</td><td>${s.game_id}</td><td>$${s.bet_amount}</td><td>$${s.win_amount}</td><td style="color:${profit >= 0 ? '#10b981' : '#ef4444'}">$${profit.toFixed(2)}</td><td>${new Date(s.created_at).toLocaleString()}</td></tr>`;
-    }).join('');
+        const tr = document.createElement('tr');
+        const cells = [
+            { text: String(s.id) },
+            { text: String(s.username) },
+            { text: String(s.game_id) },
+            { text: '$' + s.bet_amount },
+            { text: '$' + s.win_amount },
+            { text: '$' + profit.toFixed(2), color: profit >= 0 ? '#10b981' : '#ef4444' },
+            { text: new Date(s.created_at).toLocaleString() },
+        ];
+        cells.forEach(c => {
+            const td = document.createElement('td');
+            td.textContent = c.text;
+            if (c.color) td.style.color = c.color;
+            tr.appendChild(td);
+        });
+        body.appendChild(tr);
+    });
 }
 
 async function loadFraudAlerts() {

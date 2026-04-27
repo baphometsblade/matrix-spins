@@ -691,12 +691,25 @@ function showWinToast(message, tier, title) {
     var el = document.createElement('div');
     el.className = 'win-toast ' + tierClass;
     el.style.top = offset + 'px';
-    el.innerHTML =
-        '<span class="win-toast-icon">' + icon + '</span>' +
-        '<div class="win-toast-body">' +
-        (title ? '<div class="win-toast-title">' + title + '</div>' : '') +
-        '<div>' + message + '</div>' +
-        '</div>';
+    // XSS-safe: rebuild via createElement + textContent. The icon is whitelisted
+    // via the tier table above (line 683), but title/message are caller-supplied
+    // and would become XSS if any caller ever passes server data.
+    var iconSpan = document.createElement('span');
+    iconSpan.className = 'win-toast-icon';
+    iconSpan.textContent = String(icon || '');
+    el.appendChild(iconSpan);
+    var bodyDiv = document.createElement('div');
+    bodyDiv.className = 'win-toast-body';
+    if (title) {
+        var titleDiv = document.createElement('div');
+        titleDiv.className = 'win-toast-title';
+        titleDiv.textContent = String(title);
+        bodyDiv.appendChild(titleDiv);
+    }
+    var msgDiv = document.createElement('div');
+    msgDiv.textContent = String(message == null ? '' : message);
+    bodyDiv.appendChild(msgDiv);
+    el.appendChild(bodyDiv);
     document.body.appendChild(el);
 
     // Auto-dismiss after 3s

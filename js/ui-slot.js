@@ -3806,7 +3806,14 @@
         function showMessage(text, type) {
             lastMessage = { type, text };
             const msgDiv = document.getElementById('messageDisplay');
-            msgDiv.innerHTML = `<div class="message-display message-${type}">${text}</div>`;
+            // XSS-safe: textContent on a created div. Server-controlled strings
+            // (cashback.message, /api/spin details.message, error replies) cannot inject HTML.
+            msgDiv.replaceChildren();
+            const inner = document.createElement('div');
+            const safeType = String(type || '').replace(/[^a-z-]/gi, '');
+            inner.className = 'message-display message-' + safeType;
+            inner.textContent = String(text == null ? '' : text);
+            msgDiv.appendChild(inner);
         }
 
 
@@ -7992,7 +7999,14 @@
         function showMessage(text, type) {
             lastMessage = { type, text };
             const msgDiv = document.getElementById('messageDisplay');
-            msgDiv.innerHTML = `<div class="message-display message-${type}">${text}</div>`;
+            // XSS-safe: textContent on a created div. Server-controlled strings
+            // (cashback.message, /api/spin details.message, error replies) cannot inject HTML.
+            msgDiv.replaceChildren();
+            const inner = document.createElement('div');
+            const safeType = String(type || '').replace(/[^a-z-]/gi, '');
+            inner.className = 'message-display message-' + safeType;
+            inner.textContent = String(text == null ? '' : text);
+            msgDiv.appendChild(inner);
         }
 
 

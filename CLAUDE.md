@@ -9,9 +9,11 @@ Single-page app (`index.html`) served by an Express/Node server on port 3000.
 ## Running the Project
 
 ```bash
-npm start          # production server (port 3000)
-npm run dev        # same — node server/index.js
+npm start              # production server (port 3000)
+npm run dev            # same — node server/index.js
 npm run test:adapter   # query adapter unit tests (fast, no server needed)
+npm run test:security  # security invariant tests (fast, static-analysis, no server)
+npm run test:all       # adapter + security in one shot
 npm run qa:regression  # Playwright smoke suite (must pass before committing)
 ```
 
@@ -128,8 +130,19 @@ const WHEEL_STORAGE_KEY   = STORAGE_KEY_BONUS_WHEEL;
 ## QA / Testing
 
 ```bash
-npm run qa:regression   # full deterministic smoke test (Playwright headless)
+npm run test:adapter    # query adapter unit tests (~17 cases, fast, no server)
+npm run test:security   # security invariant static-analysis tests (~15 cases, no server)
+npm run test:all        # run both above in one shot
+npm run qa:regression   # full deterministic smoke test (Playwright headless, needs server up)
 ```
+
+**Both `test:all` and `qa:regression` must pass before every commit.**
+
+`test:security` (`scripts/test_security_invariants.js`) is a static-analysis
+fence that catches regressions of the documented security patterns — see
+"Security Invariants" below. **Do not skip or weaken** any test that fails.
+If a test failure looks "wrong," the fix is to update the assertion to be
+*more precise* about the rule it enforces, never to relax it.
 
 Regression verifies:
 - Lobby loads + `window.render_game_to_text` is available
@@ -139,10 +152,69 @@ Regression verifies:
 - Reset with "clear deterministic seed" restores default state
 - No new `console.error` / `pageerror` output
 
-**QA must pass before every commit.**
-
 Artifacts written to `output/web-game/regression/`.
 On failure: `errors.json` + `failure-shot.png` appear there.
+
+## Security Invariants (enforced by `test:security`)
+
+These are the rules every server-side change MUST follow. Each rule is
+backed by a static test that fails at commit time if the pattern regresses.
+Per project memory, the bonus_balance routing has been reverted SIX times
+by other sessions — the test suite is the regression fence around all of
+this work. Do not delete tests. Do not weaken assertions.
+
+1. **No `Math.random()` server-side.** Use `crypto.randomInt(n)`,
+   `crypto.randomBytes(n)`, or the helpers in `server/services/rng.service.js`.
+   Math.random is V8-predictable and a direct cash-exfil vector for any
+   prize-determining outcome.
+
+2. **All balance writes are atomic.** Never `SET balance = ?` (read-then-set
+   races). Use:
+   - Debits: `UPDATE users SET balance = balance - ? WHERE id = ? AND balance >= ?`
+     and check rowcount — return 400 if 0 rows changed (concurrent debit detected).
+   - Credits: `UPDATE users SET balance = balance + ? WHERE id = ?`.
+
+3. **Wagering accumulates, never overwrites.** Always
+   `wagering_requirement = COALESCE(wagering_requirement, 0) + ?`. Never
+   `wagering_requirement = ?` — that pattern lets a small new bonus replace
+   a large active bonus's requirement, instantly making the larger bonus
+   withdrawable.
+
+4. **Free credit → `bonus_balance`, not `balance`.** Daily bonus, bonus
+   wheel, promo codes, referral bonuses (both parties), VIP wheel, birthday
+   bonus, deposit-streak rewards, reload bonus, free-spin payouts, admin
+   send-bonus / bulk-bonus, tournament prizes — every one of these is FREE
+   money and MUST go to `bonus_balance` with appropriate wagering (15× standard,
+   10× free spins, 30× deposit match, 35× reload, 45× first deposit). Direct
+   `balance` credits are reserved for: real-money deposits, admin discretionary
+   adjustments, win payouts from real bets, and refunds of own debits.
+
+5. **OTP comparison is timing-safe.** `crypto.timingSafeEqual` on
+   equal-length buffers (pad to constant length first). Never `===`.
+
+6. **Webhook authentication is HMAC-only.** `/api/payment/webhook/confirm`
+   requires `X-Webhook-Signature: <hex(HMAC-SHA256(rawBody, WEBHOOK_SECRET))>`.
+   Never fall back to `JWT_SECRET` (cross-domain trust leak). Legacy
+   plaintext-secret-in-body path gated behind explicit `WEBHOOK_ALLOW_LEGACY=1`
+   env var only — for migration, not steady state.
+
+7. **Critical state transitions use race-safe flips.** Withdrawal cancel,
+   admin approve/reject withdrawal, deposit approve, jackpot pool claim,
+   free-spin decrement, birthday/referral flag flip — all use
+   `UPDATE ... WHERE status = 'pending'` (or equivalent guard) and check
+   rowcount. Return 409 Conflict if 0 rows changed.
+
+8. **`config.js` fails-closed in production.** Throws at module load if
+   `NODE_ENV=production` and any of `JWT_SECRET`, `ADMIN_PASSWORD`,
+   `ALLOWED_ORIGIN` are unset or default. Warns if `WEBHOOK_SECRET` is unset.
+
+9. **Legacy `/api/balance/withdraw` returns 410 Gone.** It bypassed
+   self-exclusion, OTP, 24h cooling-off, and bonus-wagering enforcement.
+   All clients must use `POST /api/payment/withdraw`.
+
+10. **Password-reset and webhook endpoints are rate-limited.**
+    `forgot-password` / `reset-password`: 3 / 15 min per IP.
+    `/webhook/confirm`: 30 / min per IP (brute-force HMAC defense).
 
 ### QA URL Parameters (manual testing)
 | Param | Effect |
