@@ -6,7 +6,7 @@
  * Every spin is settled here:
  *   1. We atomically debit the bet (conditional UPDATE prevents oversending).
  *   2. We derive reel positions from HMAC-SHA256(server_seed, client_seed:nonce:i).
- *   3. We evaluate the paytable for the game.
+ *   3. We delegate paytable evaluation to the per-game module.
  *   4. We credit any win.
  *   5. We log the round with the revealed seed.
  *   6. We roll a fresh commit so the next spin binds to a new server seed.
@@ -19,107 +19,24 @@
  *   entropy the server cannot choose.
  *
  * Games
- *   One game is wired today — "classic_777", a 3-reel single-payline
- *   fruit machine with a 10-symbol reel strip tuned to ~95% RTP. The
- *   structure here (games registry) accepts more games without any
- *   engine changes — define the reel strip + paytable and add it to
- *   GAMES.
+ *   Each live game lives under server/games/<id>.js and exports its
+ *   own reels, paytable, bet bounds, and evaluator. The engine here is
+ *   game-agnostic: it sources the catalog through server/games and
+ *   never branches on game id. Adding a new game is a single file —
+ *   the existing two modules (classic_777, neon_burst) are the
+ *   template; server/games/index.js wires the registry.
  */
 
 const crypto = require('crypto');
 const db = require('../database');
 const featureFlags = require('./feature-flags.service');
+const games = require('../games');
 
 /* ────────────────────────────── games ────────────────────────────── */
 
-/**
- * classic_777 — 3 reels × 1 payline (center row), reel length 10.
- *
- * Reel strip (one per reel, same composition on all three for RTP math):
- *   cherry × 4, lemon × 2, orange × 2, bar × 1, seven × 1
- *
- * Paytable (multiplier × bet for 3-of-a-kind on payline):
- *   cherry =   3x   →  4³  = 64  × 3  =  192
- *   lemon  =  10x   →  2³  =  8  × 10 =   80
- *   orange =  15x   →  2³  =  8  × 15 =  120
- *   bar    =  60x   →  1³  =  1  × 60 =   60
- *   seven  = 500x   →  1³  =  1  × 500=  500
- *                                       ────
- *                                       952 / 1000 = 95.2% RTP
- *
- * No partial wins, no scatter, no wild — one payline, center row,
- * matching three. Small and verifiable.
- */
-const CLASSIC_777_REEL = [
-    'cherry', 'cherry', 'cherry', 'cherry',
-    'lemon', 'lemon',
-    'orange', 'orange',
-    'bar',
-    'seven',
-];
-
-const CLASSIC_777_PAYTABLE = {
-    cherry: 3,
-    lemon: 10,
-    orange: 15,
-    bar: 60,
-    seven: 500,
-};
-
-/**
- * neon_burst — 5 reels × reel-length-15, single payline (5-of-a-kind on
- * the center row). Reel composition is identical on each reel so RTP
- * math is closed-form: P(5-of-a-kind for symbol with count c) = (c/15)^5,
- * contribution = pay × c^5 / 15^5.
- *
- * Counts: neon=5, pulse=4, star=3, comet=2, nova=1 (sum 15).
- *
- * Theoretical RTP:
- *   neon  0.4 × 3125 = 1250
- *   pulse 1   × 1024 = 1024
- *   star  8   ×  243 = 1944
- *   comet 60  ×   32 = 1920
- *   nova  1100 ×   1 = 1100
- *   total       7238 / 759375 = 0.9532 → 95.32% RTP
- */
-const NEON_BURST_REEL = [
-    'neon', 'neon', 'neon', 'neon', 'neon',
-    'pulse', 'pulse', 'pulse', 'pulse',
-    'star', 'star', 'star',
-    'comet', 'comet',
-    'nova',
-];
-
-const NEON_BURST_PAYTABLE = {
-    neon: 0.4,
-    pulse: 1,
-    star: 8,
-    comet: 60,
-    nova: 1100,
-};
-
-const GAMES = {
-    classic_777: {
-        name: 'Classic 777',
-        reels: [CLASSIC_777_REEL, CLASSIC_777_REEL, CLASSIC_777_REEL],
-        paytable: CLASSIC_777_PAYTABLE,
-        min_bet_cents: 10,      // $0.10
-        max_bet_cents: 10000,   // $100
-        rtp: 0.952,
-    },
-    neon_burst: {
-        name: 'Neon Burst',
-        reels: [NEON_BURST_REEL, NEON_BURST_REEL, NEON_BURST_REEL, NEON_BURST_REEL, NEON_BURST_REEL],
-        paytable: NEON_BURST_PAYTABLE,
-        min_bet_cents: 10,
-        max_bet_cents: 10000,
-        rtp: 0.9532,
-    },
-};
-
 function listGames() {
-    return Object.entries(GAMES).map(([id, g]) => ({
-        id,
+    return games.all().map((g) => ({
+        id: g.id,
         name: g.name,
         min_bet_cents: g.min_bet_cents,
         max_bet_cents: g.max_bet_cents,
@@ -137,7 +54,7 @@ function listGames() {
     }));
 }
 
-function hasGame(id) { return !!GAMES[id]; }
+function hasGame(id) { return games.has(id); }
 
 /* ─────────────────────────── RNG / reveal ─────────────────────────── */
 
@@ -195,16 +112,6 @@ function spinReels(game, serverSeed, clientSeed, nonce) {
         const safeIdx = idx >= reel.length ? reel.length - 1 : idx;
         return { index: safeIdx, symbol: reel[safeIdx] };
     });
-}
-
-function evaluate(game, stops, betCents) {
-    const symbols = stops.map(s => s.symbol);
-    const first = symbols[0];
-    const allMatch = symbols.every(s => s === first);
-    if (!allMatch) return { win_cents: 0, line: null };
-    const multiplier = Number(game.paytable[first] || 0);
-    const win = Math.round(multiplier * betCents);
-    return { win_cents: win, line: { symbols, multiplier } };
 }
 
 /* ──────────────────────── commit/reveal store ─────────────────────── */
@@ -391,7 +298,7 @@ async function spinImpl({ userId, gameId, betCents, clientSeed }) {
         throw e;
     }
 
-    const game = GAMES[gameId];
+    const game = games.get(gameId);
     if (!game) { const e = new Error('Unknown game.'); e.status = 404; throw e; }
     const bet = Math.round(Number(betCents));
     if (!Number.isFinite(bet) || bet < game.min_bet_cents || bet > game.max_bet_cents) {
@@ -463,7 +370,7 @@ async function spinImpl({ userId, gameId, betCents, clientSeed }) {
     const effectiveSeed = (clientSeed != null && clientSeed !== '') ? clientSeed : persistedClientSeed;
     const normalizedClientSeed = normalizeClientSeed(effectiveSeed);
     const stops = spinReels(game, commit.server_seed, normalizedClientSeed, nonce);
-    const { win_cents, line } = evaluate(game, stops, bet);
+    const { win_cents, line } = game.evaluate(stops, bet);
 
     // 3) Credit any win.
     if (win_cents > 0) {
@@ -575,7 +482,6 @@ module.exports = {
         sha256Hex,
         deriveFloats,
         spinReels,
-        evaluate,
-        GAMES,
+        games,
     },
 };

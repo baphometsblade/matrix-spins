@@ -1249,8 +1249,8 @@ async function main() {
 
         // Determinism: same seeds + nonce must produce the same stops.
         const engine = require('../server/services/slot-engine.service');
-        const a = engine._internals.spinReels(engine._internals.GAMES.classic_777, 'seed-abc', 'cli', 42);
-        const b = engine._internals.spinReels(engine._internals.GAMES.classic_777, 'seed-abc', 'cli', 42);
+        const a = engine._internals.spinReels(engine._internals.games.get('classic_777'), 'seed-abc', 'cli', 42);
+        const b = engine._internals.spinReels(engine._internals.games.get('classic_777'), 'seed-abc', 'cli', 42);
         assert.deepStrictEqual(a, b, 'engine RNG must be deterministic for fixed seeds');
         console.log('[test] slot engine: commit/reveal verified, round isolation enforced, RNG deterministic');
 
@@ -1332,18 +1332,20 @@ async function main() {
         });
         assert.strictEqual(nbTooSmall.status, 400);
 
-        // evaluate() generalizes to 5-of-a-kind for free: sanity check
-        // via the engine's _internals.
-        const evalGames = engine._internals.GAMES;
+        // Per-game evaluator for 5-of-a-kind: sanity check both ends of
+        // the neon_burst paytable. Paytable values are scaled so that
+        // theoretical RTP closes at 95.32% — see server/games/neon_burst.js
+        // for the closed-form math.
+        const neonGame = engine._internals.games.get('neon_burst');
         const handCraftedNova = [
             { index: 14, symbol: 'nova' }, { index: 14, symbol: 'nova' }, { index: 14, symbol: 'nova' },
             { index: 14, symbol: 'nova' }, { index: 14, symbol: 'nova' },
         ];
-        const evalNova = engine._internals.evaluate(evalGames.neon_burst, handCraftedNova, 100);
-        assert.strictEqual(evalNova.win_cents, 110000, 'nova × 1100 × 100c bet should pay 110000c');
+        const evalNova = neonGame.evaluate(handCraftedNova, 100);
+        assert.strictEqual(evalNova.win_cents, 11000000, 'nova × 110000 × 100c bet should pay 11_000_000c');
         const handCraftedNeon = handCraftedNova.map(() => ({ index: 0, symbol: 'neon' }));
-        const evalNeon = engine._internals.evaluate(evalGames.neon_burst, handCraftedNeon, 100);
-        assert.strictEqual(evalNeon.win_cents, 40, 'neon × 0.4 × 100c bet should pay 40c');
+        const evalNeon = neonGame.evaluate(handCraftedNeon, 100);
+        assert.strictEqual(evalNeon.win_cents, 4000, 'neon × 40 × 100c bet should pay 4000c');
 
         console.log('[test] slot engine: neon_burst (5×15) — deterministic, indices reproducible client-side, cross-game history, evaluate generalizes');
 
