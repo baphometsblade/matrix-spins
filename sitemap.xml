@@ -112,4 +112,22 @@
   <url><loc>https://msaart.online/referral.html</loc><changefreq>monthly</changefreq><priority>0.7</priority></url>
   <url><loc>https://msaart.online/spin-wheel.html</loc><changefreq>daily</changefreq><priority>0.7</priority></url>
   <url><loc>https://msaart.online/achievements.html</loc><changefreq>monthly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://msaart.online/privacy.html</loc><changefreq>monthly</changefreq><priority>0.5</priority></url>
+  <url><loc>https://msaart.online/faq.html</loc><changefreq>monthly</changefreq><priority>0.8</priority></url>
+  <!-- Category Pages -->
+  <url><loc>https://msaart.online/categories/egyptian-mythology.html</loc><changefreq>weekly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://msaart.online/categories/fruit-classics.html</loc><changefreq>weekly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://msaart.online/categories/space-scifi.html</loc><changefreq>weekly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://msaart.online/categories/fantasy-magic.html</loc><changefreq>weekly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://msaart.online/categories/dark-horror.html</loc><changefreq>weekly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://msaart.online/categories/asian-themed.html</loc><changefreq>weekly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://msaart.online/categories/animal-nature.html</loc><changefreq>weekly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://msaart.online/categories/australian-outback.html</loc><changefreq>weekly</changefreq><priority>0.8</priority></url>
+  <!-- Blog Articles -->
+  <url><loc>https://msaart.online/blog/</loc><changefreq>weekly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://msaart.online/blog/how-online-slots-work.html</loc><changefreq>monthly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://msaart.online/blog/slot-rtp-explained.html</loc><changefreq>monthly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://msaart.online/blog/provably-fair-gaming-guide.html</loc><changefreq>monthly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://msaart.online/blog/responsible-gambling-tips.html</loc><changefreq>monthly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://msaart.online/blog/online-casino-vip-programs.html</loc><changefreq>monthly</changefreq><priority>0.7</priority></url>
 </urlset>

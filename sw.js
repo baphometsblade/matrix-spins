@@ -1,7 +1,7 @@
 // Matrix Spins Casino — Service Worker
 // Production PWA: cache-first statics, network-first HTML, network-only API
 
-const CACHE_NAME = 'matrix-spins-v3';
+const CACHE_NAME = 'matrix-spins-v4';
 
 const PRECACHE_ASSETS = [
   '/index.html',
@@ -55,6 +55,8 @@ const PRECACHE_ASSETS = [
   '/terms.html',
   '/responsible-gambling.html',
   '/provably-fair.html',
+  '/privacy.html',
+  '/faq.html',
 ];
 
 // ── Install: pre-cache critical assets and take control immediately ──
