@@ -324,5 +324,5 @@
     getContainer: function(){ return _activeContainer; }
   };
 
-  console.log('[UPX-Integration] v1.0 loaded — hooks active');
+  console.log('[UPX-Integration] v1.0 loaded â€” hooks active');
 })();
