@@ -5,7 +5,8 @@
   "main": "server/index.js",
   "scripts": {
     "start": "node server/index.js",
-    "dev": "node server/index.js"
+    "dev": "node server/index.js",
+    "build": "echo 'No build step needed'"
   },
   "keywords": ["casino", "slots", "gaming"],
   "author": "Matrix Spins",
@@ -13,7 +14,9 @@
   "dependencies": {
     "express": "^5.1.0",
     "cors": "^2.8.5",
-    "compression": "^1.8.0",
+    "compression": "^1.8.0"
+  },
+  "optionalDependencies": {
     "canvas": "^3.2.3"
   },
   "engines": {
