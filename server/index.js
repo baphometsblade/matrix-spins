@@ -11,6 +11,7 @@
 
 const express = require('express');
 const path = require('path');
+const fs = require('fs');
 const cors = require('cors');
 
 const app = express();
@@ -46,12 +47,72 @@ try {
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// ── Security Headers ────────────────────────────────────────
+// ── Security Headers (production-grade) ────────────────────
 app.use((req, res, next) => {
   res.setHeader('X-Content-Type-Options', 'nosniff');
   res.setHeader('X-Frame-Options', 'SAMEORIGIN');
+  res.setHeader('X-XSS-Protection', '1; mode=block');
   res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
-  res.setHeader('Permissions-Policy', 'camera=(), microphone=(), geolocation=()');
+  res.setHeader('Permissions-Policy', 'camera=(), microphone=(), geolocation=(), payment=(self)');
+  res.setHeader('Strict-Transport-Security', 'max-age=31536000; includeSubDomains; preload');
+  // CSP: allow Stripe, Google Fonts, Google Analytics, self
+  res.setHeader('Content-Security-Policy', [
+    "default-src 'self'",
+    "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://js.stripe.com https://www.googletagmanager.com https://www.google-analytics.com",
+    "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
+    "font-src 'self' https://fonts.gstatic.com",
+    "img-src 'self' data: https: blob:",
+    "connect-src 'self' https://api.stripe.com https://www.google-analytics.com https://fonts.googleapis.com",
+    "frame-src https://js.stripe.com https://hooks.stripe.com",
+    "object-src 'none'",
+    "base-uri 'self'",
+  ].join('; '));
+  next();
+});
+
+// ── API Rate Limiting (in-memory, no dependencies) ─────────
+const rateLimitMap = new Map();
+const RATE_LIMIT_WINDOW = 60000; // 1 minute
+const RATE_LIMIT_MAX = 60;       // 60 requests per minute per IP
+
+function rateLimit(req, res, next) {
+  const ip = req.ip || req.connection.remoteAddress;
+  const now = Date.now();
+  const record = rateLimitMap.get(ip);
+
+  if (!record || now - record.windowStart > RATE_LIMIT_WINDOW) {
+    rateLimitMap.set(ip, { windowStart: now, count: 1 });
+    return next();
+  }
+
+  record.count++;
+  if (record.count > RATE_LIMIT_MAX) {
+    res.setHeader('Retry-After', Math.ceil((record.windowStart + RATE_LIMIT_WINDOW - now) / 1000));
+    return res.status(429).json({ error: 'Too many requests. Please slow down.' });
+  }
+  next();
+}
+
+// Apply rate limiting to API routes only
+app.use('/api', rateLimit);
+
+// Clean up stale rate limit entries every 5 minutes
+setInterval(() => {
+  const cutoff = Date.now() - RATE_LIMIT_WINDOW * 2;
+  for (const [ip, record] of rateLimitMap) {
+    if (record.windowStart < cutoff) rateLimitMap.delete(ip);
+  }
+}, 300000);
+
+// ── Request Logging ────────────────────────────────────────
+app.use((req, res, next) => {
+  const start = Date.now();
+  res.on('finish', () => {
+    const duration = Date.now() - start;
+    if (req.path.startsWith('/api/') || duration > 1000) {
+      console.log(`[${req.method}] ${req.path} → ${res.statusCode} (${duration}ms)`);
+    }
+  });
   next();
 });
 
@@ -522,28 +583,79 @@ console.log('[SERVER] ✓ Newsletter API loaded');
 
 // ── Health Check ─────────────────────────────────────────────
 app.get('/api/health', (req, res) => {
+  const mem = process.memoryUsage();
   res.json({
     status: 'ok',
     uptime: process.uptime(),
+    uptimeHuman: formatUptime(process.uptime()),
     timestamp: new Date().toISOString(),
-    version: '1.0.0',
+    version: '2.0.0',
     name: 'Matrix Spins Casino',
     mode: missing.length > 0 ? 'demo' : 'live',
+    memory: {
+      heapUsedMB: Math.round(mem.heapUsed / 1048576),
+      heapTotalMB: Math.round(mem.heapTotal / 1048576),
+      rssMB: Math.round(mem.rss / 1048576),
+    },
     env: {
       database: !!process.env.DATABASE_URL,
       stripe: !!process.env.STRIPE_SECRET_KEY,
-      auth: !!process.env.JWT_SECRET
-    }
+      auth: !!process.env.JWT_SECRET,
+      analytics: !!process.env.GA_MEASUREMENT_ID,
+    },
+    newsletterSubscribers: newsletterEmails.length,
+    jackpotMegaCents: jackpotState.mega.cents,
   });
 });
 
-// ── Catch-all: serve index.html for SPA routes ──────────────
-// Exclude admin.html, static files, and API routes from catch-all
+function formatUptime(seconds) {
+  const d = Math.floor(seconds / 86400);
+  const h = Math.floor((seconds % 86400) / 3600);
+  const m = Math.floor((seconds % 3600) / 60);
+  return `${d}d ${h}h ${m}m`;
+}
+
+// ── Catch-all: smart static file resolution + SPA fallback ──
+// 1. If the requested path maps to a real file on disk → serve it
+// 2. If no extension, try appending .html for clean URLs (e.g. /faq → faq.html)
+// 3. If path has /categories/ or /blog/, look in those subdirectories
+// 4. Otherwise → serve index.html for SPA client-side routing
+const FRONTEND_ROOT = path.join(__dirname, '..');
+
 app.get('/{*splat}', (req, res) => {
-  if (req.path === '/admin.html' || req.path.match(/\.\w+$/)) {
-    return res.status(404).sendFile(path.join(__dirname, '..', '404.html'));
+  const reqPath = decodeURIComponent(req.path);
+
+  // Never serve admin via catch-all
+  if (reqPath === '/admin.html') {
+    return res.status(404).sendFile(path.join(FRONTEND_ROOT, '404.html'));
   }
-  res.sendFile(path.join(__dirname, '..', 'index.html'));
+
+  // Strategy 1: Direct file match (handles /faq.html, /categories/egyptian-mythology.html, etc.)
+  const directFile = path.join(FRONTEND_ROOT, reqPath);
+  if (reqPath.match(/\.\w+$/) && fs.existsSync(directFile) && fs.statSync(directFile).isFile()) {
+    return res.sendFile(directFile);
+  }
+
+  // Strategy 2: Clean URL → try appending .html (e.g. /faq → /faq.html)
+  if (!reqPath.match(/\.\w+$/)) {
+    const htmlFile = path.join(FRONTEND_ROOT, reqPath + '.html');
+    if (fs.existsSync(htmlFile) && fs.statSync(htmlFile).isFile()) {
+      return res.sendFile(htmlFile);
+    }
+    // Try index.html inside directory (e.g. /blog → /blog/index.html)
+    const dirIndex = path.join(FRONTEND_ROOT, reqPath, 'index.html');
+    if (fs.existsSync(dirIndex) && fs.statSync(dirIndex).isFile()) {
+      return res.sendFile(dirIndex);
+    }
+  }
+
+  // Strategy 3: File has extension but doesn't exist → 404
+  if (reqPath.match(/\.\w+$/)) {
+    return res.status(404).sendFile(path.join(FRONTEND_ROOT, '404.html'));
+  }
+
+  // Strategy 4: No file found, no extension → SPA fallback (lobby)
+  res.sendFile(path.join(FRONTEND_ROOT, 'index.html'));
 });
 
 // ── Error Handler ────────────────────────────────────────────
