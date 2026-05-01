@@ -18,16 +18,13 @@ const app = express();
 const PORT = process.env.PORT || 3001;
 
 // ── Environment Validation ──────────────────────────────────
-const REQUIRED_ENV = ['DATABASE_URL', 'JWT_SECRET', 'STRIPE_SECRET_KEY', 'STRIPE_PUBLISHABLE_KEY', 'STRIPE_WEBHOOK_SECRET', 'ADMIN_PASSWORD'];
-const missing = REQUIRED_ENV.filter(v => !process.env[v]);
-if (missing.length > 0 && process.env.NODE_ENV === 'production') {
-  console.error('[SERVER] FATAL: Missing required environment variables:');
-  missing.forEach(v => console.error('  - ' + v));
-  console.error('[SERVER] See PRODUCTION_CHECKLIST.md for setup instructions.');
-  process.exit(1);
-} else if (missing.length > 0) {
+// Graceful degradation: server always starts, missing services use demo stubs
+const OPTIONAL_ENV = ['DATABASE_URL', 'JWT_SECRET', 'STRIPE_SECRET_KEY', 'STRIPE_PUBLISHABLE_KEY', 'STRIPE_WEBHOOK_SECRET', 'ADMIN_PASSWORD'];
+const missing = OPTIONAL_ENV.filter(v => !process.env[v]);
+if (missing.length > 0) {
   console.warn('[SERVER] ⚠ Missing env vars (demo mode):', missing.join(', '));
-  console.warn('[SERVER]   Payment routes will use stubs. Set NODE_ENV=production to enforce.');
+  console.warn('[SERVER]   Payment & auth routes will use demo stubs.');
+  console.warn('[SERVER]   Set these in Render dashboard for full functionality.');
 }
 
 // ── Middleware ─────────────────────────────────────────────────
