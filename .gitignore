@@ -1,61 +1,8 @@
-# Dependencies
 node_modules/
-__pycache__/
-*.pyc
-*.pyo
-
-# Environment & secrets
 .env
-.env.*
-.env.local
-.env.production
-.env.development
-
-# Database
-*.db
-
-# Logs
 *.log
-npm-debug.log*
-yarn-debug.log*
-generate_sdxl_log.txt
-generation_log.txt
-
-# Temp/build artifacts
-*.bat
-_*.js
-_*_log.txt
-nul
-output/
-test-results/
-screenshots/
-
-# IDE & tool config
-.claude/settings.local.json
-.claude/worktrees/
-.serena/
-.playwright-mcp/
-.superpowers/
-
-# Dev screenshots at root
-/*.png
-
-# Large generated assets
-assets/gui/
-assets/ui/
-assets/game_symbols_animated/
-
-# HD assets: WebP only — PNGs removed to keep repo under Render's build limits
-assets/game_symbols/**/*.png
-assets/game_symbols/**/*.svg
-assets/thumbnails/*.png
-assets/backgrounds/**/*.png
-assets/backgrounds/**/*.svg
-assets/backgrounds/**/*_portrait*
-
-# Build output (generated at deploy time)
-dist/
-.vercel
-casino.db.bak
-test_reg.json
-CASINO-PRODUCTION-PROMPT.md
+push_out.log
+push_err.log
+.DS_Store
+Thumbs.db
+*.tmp
