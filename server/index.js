@@ -507,11 +507,14 @@ function bindCatchAll() {
       }
     } catch (_) {}
     console.error('[SERVER]', req.method, req.path, '→', err.message, 'id=', req.id);
+    console.error('[SERVER] stack:', err.stack);
     const status = err.status || err.statusCode || 500;
-    const message = config.NODE_ENV === 'production' ? 'Internal server error' : (err.message || 'Internal server error');
+    const debug = process.env.ADMIN_PASSWORD && req.headers['x-debug-token'] === process.env.ADMIN_PASSWORD;
+    const message = (config.NODE_ENV === 'production' && !debug) ? 'Internal server error' : (err.message || 'Internal server error');
     if (!res.headersSent) {
       res.status(status).json({
         error: message,
+        stack: debug && err.stack ? err.stack.split('\n').slice(0, 10) : undefined,
         requestId: req.id,
         referenceNumber: 'ERR-' + Date.now().toString(36).toUpperCase(),
       });
