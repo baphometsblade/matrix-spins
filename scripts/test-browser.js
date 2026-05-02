@@ -116,6 +116,27 @@ async function main() {
         if (cards.length < 1) fail('no .game-card rendered — bundle likely died');
         else ok(cards.length + ' game cards rendered');
 
+        // Real-money vs free-play pills visible on every card so a
+        // logged-in player can never confuse a demo for a live slot.
+        // We assert every card carries exactly one mode pill and that
+        // at least one of each kind is present (the catalog has 2 live
+        // games + 65 demos).
+        const pillSummary = await page.evaluate(() => {
+            const cards = Array.from(document.querySelectorAll('.game-card'));
+            let live = 0, demo = 0, missing = 0;
+            for (const c of cards) {
+                const live1 = c.querySelector('.game-mode-pill.gmp-live');
+                const demo1 = c.querySelector('.game-mode-pill.gmp-demo');
+                if (live1 && !demo1) live += 1;
+                else if (demo1 && !live1) demo += 1;
+                else missing += 1;
+            }
+            return { live, demo, missing, total: cards.length };
+        });
+        if (pillSummary.missing > 0) fail('mode pill missing on ' + pillSummary.missing + '/' + pillSummary.total + ' cards');
+        else if (pillSummary.live < 1 || pillSummary.demo < 1) fail('mode pills not split: ' + JSON.stringify(pillSummary));
+        else ok('mode pills: ' + pillSummary.live + ' REAL MONEY, ' + pillSummary.demo + ' FREE PLAY across ' + pillSummary.total + ' cards');
+
         // Wait until at least one thumbnail has finished decoding.
         // Headless Chromium's SVG rasterizer is stochastic — the
         // "first" DOM card doesn't always decode first. What we care

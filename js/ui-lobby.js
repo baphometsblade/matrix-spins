@@ -58,7 +58,14 @@
                 // When a real PNG loads it covers the monogram naturally
                 // via z-index. When it fails, onerror hides it and the
                 // monogram underneath remains visible.
-                '.game-card .game-card-thumb{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:2;background:transparent;display:block}';
+                '.game-card .game-card-thumb{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:2;background:transparent;display:block}' +
+                // Real-money vs free-play ribbon. Sits above thumb, below
+                // hover overlay (z-index 3). Live games get a gold/green
+                // pill; demo games get a muted slate pill so the
+                // distinction is obvious at a glance.
+                '.game-card .game-mode-pill{position:absolute;left:6px;bottom:6px;z-index:3;font-size:9px;font-weight:800;letter-spacing:1.2px;padding:3px 7px;border-radius:10px;line-height:1;text-transform:uppercase;pointer-events:none;backdrop-filter:blur(2px);-webkit-backdrop-filter:blur(2px);box-shadow:0 1px 4px rgba(0,0,0,.4)}' +
+                '.game-card .game-mode-pill.gmp-live{background:linear-gradient(135deg,#0a8a3a 0%,#0f6f2e 100%);color:#fff;border:1px solid #5fd489}' +
+                '.game-card .game-mode-pill.gmp-demo{background:rgba(31,41,55,.78);color:#cbd5e1;border:1px solid rgba(148,163,184,.3)}';
             var s = document.createElement('style');
             s.id = 'gameCardMonogramStyles';
             s.textContent = css;
@@ -956,6 +963,15 @@ function renderGames() {
             var maxWinHtml = maxWin > 0
                 ? '<div class="game-max-win-badge" title="Max win multiplier">' + (maxWin >= 1000 ? (maxWin/1000).toFixed(1) + 'K' : maxWin) + 'x</div>'
                 : '';
+            // Real-money vs free-play pill. The 2 server-authoritative
+            // games (classic_777, neon_burst) carry liveMode:true in
+            // shared/game-definitions.js; everything else is a client-
+            // side demo whose wins are not credited. Without this label
+            // a logged-in player can't tell the two apart, which leads
+            // to "where did my winnings go?" support tickets.
+            var modePillHtml = (game.liveMode === true)
+                ? '<div class="game-mode-pill gmp-live" title="Real-money play with provably-fair RNG">REAL MONEY</div>'
+                : '<div class="game-mode-pill gmp-demo" title="Free-play demo. Wins are simulated, not credited.">FREE PLAY</div>';
             _seedCount(game.id, isHot || _hotIds.has(game.id));
             return `
                 <div class="game-card${isHot ? ' game-card-hot' : ''}${isJackpot ? ' game-card-jackpot' : ''}${gameDayCardClass}" onclick="try{if(typeof _compareMode!=='undefined'&&_compareMode){_addToCompare('${game.id}');this.classList.toggle('compare-selected',typeof _compareGames!=='undefined'&&_compareGames.indexOf('${game.id}')>=0);}else{(window.openSlot||openSlot)('${game.id}');}}catch(e){console.warn('Game click error:',e.message);}" style="position:relative" data-game-name="${(game.name || game.id || '').toLowerCase()}" data-game-id="${(game.id || '').toLowerCase()}">
@@ -966,6 +982,7 @@ function renderGames() {
                         ${procMonogram}
                         ${topTag}
                         ${jackpotBadge}
+                        ${modePillHtml}
                         <!-- card-players-live badge removed: no real per-game concurrency source -->
                         ${(function() { try { var _v = parseFloat(localStorage.getItem('personalBest_' + game.id) || '0'); if (_v > 0) { var _disp = _v >= 1000 ? ('$' + (_v/1000).toFixed(1) + 'K') : ('$' + Math.round(_v)); return '<div class="card-personal-best">\u{1F3C6} PB ' + _disp + '</div>'; } } catch(e) {} return ''; })()}
                         <div class="game-vol-badge ${volClass}" title="Volatility: ${vol}">

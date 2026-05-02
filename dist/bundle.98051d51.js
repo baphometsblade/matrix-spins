@@ -1,5 +1,5 @@
 /* Royal Slots Casino - Bundled JavaScript */
-/* Generated: 2026-04-27T21:03:20.769Z */
+/* Generated: 2026-05-02T13:37:29.521Z */
 
 
 /* â”€â”€â”€ shared/game-definitions.js (2/56) â”€â”€â”€ */
@@ -4517,7 +4517,14 @@ function destroyParticleEngine() {
                 // When a real PNG loads it covers the monogram naturally
                 // via z-index. When it fails, onerror hides it and the
                 // monogram underneath remains visible.
-                '.game-card .game-card-thumb{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:2;background:transparent;display:block}';
+                '.game-card .game-card-thumb{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:2;background:transparent;display:block}' +
+                // Real-money vs free-play ribbon. Sits above thumb, below
+                // hover overlay (z-index 3). Live games get a gold/green
+                // pill; demo games get a muted slate pill so the
+                // distinction is obvious at a glance.
+                '.game-card .game-mode-pill{position:absolute;left:6px;bottom:6px;z-index:3;font-size:9px;font-weight:800;letter-spacing:1.2px;padding:3px 7px;border-radius:10px;line-height:1;text-transform:uppercase;pointer-events:none;backdrop-filter:blur(2px);-webkit-backdrop-filter:blur(2px);box-shadow:0 1px 4px rgba(0,0,0,.4)}' +
+                '.game-card .game-mode-pill.gmp-live{background:linear-gradient(135deg,#0a8a3a 0%,#0f6f2e 100%);color:#fff;border:1px solid #5fd489}' +
+                '.game-card .game-mode-pill.gmp-demo{background:rgba(31,41,55,.78);color:#cbd5e1;border:1px solid rgba(148,163,184,.3)}';
             var s = document.createElement('style');
             s.id = 'gameCardMonogramStyles';
             s.textContent = css;
@@ -5415,6 +5422,15 @@ function renderGames() {
             var maxWinHtml = maxWin > 0
                 ? '<div class="game-max-win-badge" title="Max win multiplier">' + (maxWin >= 1000 ? (maxWin/1000).toFixed(1) + 'K' : maxWin) + 'x</div>'
                 : '';
+            // Real-money vs free-play pill. The 2 server-authoritative
+            // games (classic_777, neon_burst) carry liveMode:true in
+            // shared/game-definitions.js; everything else is a client-
+            // side demo whose wins are not credited. Without this label
+            // a logged-in player can't tell the two apart, which leads
+            // to "where did my winnings go?" support tickets.
+            var modePillHtml = (game.liveMode === true)
+                ? '<div class="game-mode-pill gmp-live" title="Real-money play with provably-fair RNG">REAL MONEY</div>'
+                : '<div class="game-mode-pill gmp-demo" title="Free-play demo. Wins are simulated, not credited.">FREE PLAY</div>';
             _seedCount(game.id, isHot || _hotIds.has(game.id));
             return `
                 <div class="game-card${isHot ? ' game-card-hot' : ''}${isJackpot ? ' game-card-jackpot' : ''}${gameDayCardClass}" onclick="try{if(typeof _compareMode!=='undefined'&&_compareMode){_addToCompare('${game.id}');this.classList.toggle('compare-selected',typeof _compareGames!=='undefined'&&_compareGames.indexOf('${game.id}')>=0);}else{(window.openSlot||openSlot)('${game.id}');}}catch(e){console.warn('Game click error:',e.message);}" style="position:relative" data-game-name="${(game.name || game.id || '').toLowerCase()}" data-game-id="${(game.id || '').toLowerCase()}">
@@ -5425,6 +5441,7 @@ function renderGames() {
                         ${procMonogram}
                         ${topTag}
                         ${jackpotBadge}
+                        ${modePillHtml}
                         <!-- card-players-live badge removed: no real per-game concurrency source -->
                         ${(function() { try { var _v = parseFloat(localStorage.getItem('personalBest_' + game.id) || '0'); if (_v > 0) { var _disp = _v >= 1000 ? ('$' + (_v/1000).toFixed(1) + 'K') : ('$' + Math.round(_v)); return '<div class="card-personal-best">\u{1F3C6} PB ' + _disp + '</div>'; } } catch(e) {} return ''; })()}
                         <div class="game-vol-badge ${volClass}" title="Volatility: ${vol}">
@@ -14751,6 +14768,69 @@ function renderGameStatsWidget() {
 
             applySlotThemeToModal(modal, currentGame);
 
+            // Free-play notice. The 65 non-live games run entirely in
+            // the client-side demo engine — wins are never persisted,
+            // bet "spends" never debit a server balance, and the
+            // server has no record of the spin. Without a visible
+            // banner a logged-in player can't tell this apart from a
+            // real-money slot, so they spin, "win" $50, refresh, see
+            // their real balance unchanged, and file a chargeback.
+            // The banner is created once and toggled per openSlot so we
+            // don't accumulate stale nodes.
+            (function showFreePlayBanner() {
+                var bannerId = 'freePlayBanner';
+                var existing = document.getElementById(bannerId);
+                if (existing) existing.remove();
+                if (currentGame.liveMode === true) return;
+                var banner = document.createElement('div');
+                banner.id = bannerId;
+                banner.setAttribute('role', 'note');
+                // Fixed strip across the very top of the slot modal so it
+                // never collides with the (absolutely-positioned) slot
+                // chrome below it. z-index sits above modal content but
+                // below toasts (toasts run in the 9999+ range).
+                banner.style.cssText = [
+                    'position:fixed', 'top:0', 'left:0', 'right:0',
+                    'z-index:1100',
+                    'padding:7px 14px',
+                    'background:linear-gradient(90deg, rgba(15,23,42,.97) 0%, rgba(31,41,55,.97) 100%)',
+                    'border-bottom:1px solid rgba(241,196,15,.22)',
+                    'color:#cbd5e1',
+                    'font-size:12px',
+                    'font-weight:600',
+                    'letter-spacing:.3px',
+                    'display:flex',
+                    'align-items:center',
+                    'justify-content:center',
+                    'gap:10px',
+                    'flex-wrap:wrap',
+                    'text-align:center',
+                    'pointer-events:auto',
+                ].join(';');
+                banner.innerHTML =
+                    '<span style="color:#fde047;text-transform:uppercase;letter-spacing:1.5px;font-size:10px;font-weight:800;">Free Play</span>' +
+                    '<span>Wins in this game are <strong>simulated</strong> and not credited to your balance.</span>' +
+                    '<button type="button" id="freePlayBannerCta" ' +
+                        'style="padding:5px 12px;border:1px solid #5fd489;border-radius:6px;' +
+                        'background:linear-gradient(135deg,#0a8a3a 0%,#0f6f2e 100%);color:#fff;font-weight:800;' +
+                        'font-size:11px;letter-spacing:1px;cursor:pointer;text-transform:uppercase;">' +
+                        'Play for Real Money' +
+                    '</button>';
+                document.body.appendChild(banner);
+                var cta = document.getElementById('freePlayBannerCta');
+                if (cta) {
+                    cta.addEventListener('click', function (e) {
+                        e.stopPropagation();
+                        if (typeof closeSlot === 'function') closeSlot();
+                        if (typeof window.openLiveSlot === 'function') {
+                            window.openLiveSlot('neon_burst');
+                        } else if (typeof openSlot === 'function') {
+                            openSlot('neon_burst');
+                        }
+                    });
+                }
+            })();
+
             // Apply unique per-game GUI skin (themed controls, reel frames, spin button shape)
             if (typeof SlotGUIEngine !== 'undefined' && typeof SlotGUIEngine.apply === 'function') {
                 SlotGUIEngine.apply(modal.querySelector('.slot-modal-fullscreen') || modal, currentGame);
@@ -15949,6 +16029,10 @@ function renderGameStatsWidget() {
                 showMessage('Free spins in progress! Wait for them to finish.', 'lose');
                 return;
             }
+            // Drop the free-play strip if it's up; openSlot recreates it
+            // for the next demo game and skips it for live games.
+            var _fpb = document.getElementById('freePlayBanner');
+            if (_fpb) _fpb.remove();
             // Stop auto-spin if active
             if (autoSpinActive) stopAutoSpin();
             // Reset new autoplay state
@@ -40933,10 +41017,21 @@ window._logAudit658 = _logAudit658;
                 'border:1px solid #f1c40f44;border-radius:14px;padding:22px;color:#fff;font-family:system-ui,sans-serif;' +
                 'box-shadow:0 18px 60px rgba(0,0,0,0.6);"' +
             '>' +
-                '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">' +
-                    '<div><div style="font-size:11px;letter-spacing:2px;color:#f1c40f;">LIVE</div>' +
-                    '<div id="liveSlotTitle" style="font-size:20px;font-weight:800;">' + (def.name || def.id).toUpperCase() + '</div></div>' +
-                    '<button id="liveSlotClose" aria-label="Close" style="background:none;border:none;color:#fff;font-size:22px;cursor:pointer;">&times;</button>' +
+                '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;gap:10px;">' +
+                    '<div style="min-width:0;flex:1;">' +
+                        '<div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:2px;">' +
+                            '<span style="font-size:10px;letter-spacing:2px;color:#fff;background:linear-gradient(135deg,#0a8a3a 0%,#0f6f2e 100%);' +
+                                'border:1px solid #5fd489;padding:2px 7px;border-radius:10px;font-weight:800;">REAL MONEY</span>' +
+                            '<a href="/provably-fair.html" target="_blank" rel="noopener" ' +
+                                'title="HMAC-SHA256 commit-reveal RNG. Click to read how it works." ' +
+                                'style="font-size:10px;letter-spacing:1.6px;color:#22d3ee;background:rgba(34,211,238,.08);' +
+                                'border:1px solid rgba(34,211,238,.4);padding:2px 7px;border-radius:10px;font-weight:800;text-decoration:none;">' +
+                                'PROVABLY FAIR' +
+                            '</a>' +
+                        '</div>' +
+                        '<div id="liveSlotTitle" style="font-size:20px;font-weight:800;line-height:1.15;overflow:hidden;text-overflow:ellipsis;">' + (def.name || def.id).toUpperCase() + '</div>' +
+                    '</div>' +
+                    '<button id="liveSlotClose" aria-label="Close" style="background:none;border:none;color:#fff;font-size:22px;cursor:pointer;flex-shrink:0;">&times;</button>' +
                 '</div>' +
 
                 '<div id="liveSlotBalance" style="font-size:13px;color:#94a3b8;margin-bottom:8px;">Balance: —</div>' +

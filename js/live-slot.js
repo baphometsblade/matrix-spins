@@ -99,10 +99,21 @@
                 'border:1px solid #f1c40f44;border-radius:14px;padding:22px;color:#fff;font-family:system-ui,sans-serif;' +
                 'box-shadow:0 18px 60px rgba(0,0,0,0.6);"' +
             '>' +
-                '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">' +
-                    '<div><div style="font-size:11px;letter-spacing:2px;color:#f1c40f;">LIVE</div>' +
-                    '<div id="liveSlotTitle" style="font-size:20px;font-weight:800;">' + (def.name || def.id).toUpperCase() + '</div></div>' +
-                    '<button id="liveSlotClose" aria-label="Close" style="background:none;border:none;color:#fff;font-size:22px;cursor:pointer;">&times;</button>' +
+                '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;gap:10px;">' +
+                    '<div style="min-width:0;flex:1;">' +
+                        '<div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:2px;">' +
+                            '<span style="font-size:10px;letter-spacing:2px;color:#fff;background:linear-gradient(135deg,#0a8a3a 0%,#0f6f2e 100%);' +
+                                'border:1px solid #5fd489;padding:2px 7px;border-radius:10px;font-weight:800;">REAL MONEY</span>' +
+                            '<a href="/provably-fair.html" target="_blank" rel="noopener" ' +
+                                'title="HMAC-SHA256 commit-reveal RNG. Click to read how it works." ' +
+                                'style="font-size:10px;letter-spacing:1.6px;color:#22d3ee;background:rgba(34,211,238,.08);' +
+                                'border:1px solid rgba(34,211,238,.4);padding:2px 7px;border-radius:10px;font-weight:800;text-decoration:none;">' +
+                                'PROVABLY FAIR' +
+                            '</a>' +
+                        '</div>' +
+                        '<div id="liveSlotTitle" style="font-size:20px;font-weight:800;line-height:1.15;overflow:hidden;text-overflow:ellipsis;">' + (def.name || def.id).toUpperCase() + '</div>' +
+                    '</div>' +
+                    '<button id="liveSlotClose" aria-label="Close" style="background:none;border:none;color:#fff;font-size:22px;cursor:pointer;flex-shrink:0;">&times;</button>' +
                 '</div>' +
 
                 '<div id="liveSlotBalance" style="font-size:13px;color:#94a3b8;margin-bottom:8px;">Balance: —</div>' +

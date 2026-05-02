@@ -1683,6 +1683,69 @@
 
             applySlotThemeToModal(modal, currentGame);
 
+            // Free-play notice. The 65 non-live games run entirely in
+            // the client-side demo engine — wins are never persisted,
+            // bet "spends" never debit a server balance, and the
+            // server has no record of the spin. Without a visible
+            // banner a logged-in player can't tell this apart from a
+            // real-money slot, so they spin, "win" $50, refresh, see
+            // their real balance unchanged, and file a chargeback.
+            // The banner is created once and toggled per openSlot so we
+            // don't accumulate stale nodes.
+            (function showFreePlayBanner() {
+                var bannerId = 'freePlayBanner';
+                var existing = document.getElementById(bannerId);
+                if (existing) existing.remove();
+                if (currentGame.liveMode === true) return;
+                var banner = document.createElement('div');
+                banner.id = bannerId;
+                banner.setAttribute('role', 'note');
+                // Fixed strip across the very top of the slot modal so it
+                // never collides with the (absolutely-positioned) slot
+                // chrome below it. z-index sits above modal content but
+                // below toasts (toasts run in the 9999+ range).
+                banner.style.cssText = [
+                    'position:fixed', 'top:0', 'left:0', 'right:0',
+                    'z-index:1100',
+                    'padding:7px 14px',
+                    'background:linear-gradient(90deg, rgba(15,23,42,.97) 0%, rgba(31,41,55,.97) 100%)',
+                    'border-bottom:1px solid rgba(241,196,15,.22)',
+                    'color:#cbd5e1',
+                    'font-size:12px',
+                    'font-weight:600',
+                    'letter-spacing:.3px',
+                    'display:flex',
+                    'align-items:center',
+                    'justify-content:center',
+                    'gap:10px',
+                    'flex-wrap:wrap',
+                    'text-align:center',
+                    'pointer-events:auto',
+                ].join(';');
+                banner.innerHTML =
+                    '<span style="color:#fde047;text-transform:uppercase;letter-spacing:1.5px;font-size:10px;font-weight:800;">Free Play</span>' +
+                    '<span>Wins in this game are <strong>simulated</strong> and not credited to your balance.</span>' +
+                    '<button type="button" id="freePlayBannerCta" ' +
+                        'style="padding:5px 12px;border:1px solid #5fd489;border-radius:6px;' +
+                        'background:linear-gradient(135deg,#0a8a3a 0%,#0f6f2e 100%);color:#fff;font-weight:800;' +
+                        'font-size:11px;letter-spacing:1px;cursor:pointer;text-transform:uppercase;">' +
+                        'Play for Real Money' +
+                    '</button>';
+                document.body.appendChild(banner);
+                var cta = document.getElementById('freePlayBannerCta');
+                if (cta) {
+                    cta.addEventListener('click', function (e) {
+                        e.stopPropagation();
+                        if (typeof closeSlot === 'function') closeSlot();
+                        if (typeof window.openLiveSlot === 'function') {
+                            window.openLiveSlot('neon_burst');
+                        } else if (typeof openSlot === 'function') {
+                            openSlot('neon_burst');
+                        }
+                    });
+                }
+            })();
+
             // Apply unique per-game GUI skin (themed controls, reel frames, spin button shape)
             if (typeof SlotGUIEngine !== 'undefined' && typeof SlotGUIEngine.apply === 'function') {
                 SlotGUIEngine.apply(modal.querySelector('.slot-modal-fullscreen') || modal, currentGame);
@@ -2881,6 +2944,10 @@
                 showMessage('Free spins in progress! Wait for them to finish.', 'lose');
                 return;
             }
+            // Drop the free-play strip if it's up; openSlot recreates it
+            // for the next demo game and skips it for live games.
+            var _fpb = document.getElementById('freePlayBanner');
+            if (_fpb) _fpb.remove();
             // Stop auto-spin if active
             if (autoSpinActive) stopAutoSpin();
             // Reset new autoplay state
