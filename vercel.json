@@ -1,14 +1,20 @@
 {
   "version": 2,
-  "buildCommand": "npm install",
-  "outputDirectory": ".",
+  "buildCommand": null,
+  "installCommand": "npm install",
   "framework": null,
+  "functions": {
+    "api/index.js": {
+      "maxDuration": 30,
+      "includeFiles": "{server/**,shared/**,blockchain/**}"
+    }
+  },
   "rewrites": [
-    { "source": "/api/(.*)", "destination": "/api/index.js" }
+    { "source": "/api/(.*)", "destination": "/api/index" }
   ],
   "headers": [
     {
-      "source": "/(.*\\.html)",
+      "source": "/(.*).html",
       "headers": [
         { "key": "Cache-Control", "value": "no-cache, must-revalidate" },
         { "key": "X-Content-Type-Options", "value": "nosniff" },
@@ -17,13 +23,43 @@
       ]
     },
     {
-      "source": "/(.*\\.(css|js))",
+      "source": "/(.*).css",
       "headers": [
         { "key": "Cache-Control", "value": "public, max-age=604800" }
       ]
     },
     {
-      "source": "/(.*\\.(png|jpg|jpeg|webp|svg|ico|woff2))",
+      "source": "/(.*).js",
+      "headers": [
+        { "key": "Cache-Control", "value": "public, max-age=604800" }
+      ]
+    },
+    {
+      "source": "/(.*).png",
+      "headers": [
+        { "key": "Cache-Control", "value": "public, max-age=2592000" }
+      ]
+    },
+    {
+      "source": "/(.*).jpg",
+      "headers": [
+        { "key": "Cache-Control", "value": "public, max-age=2592000" }
+      ]
+    },
+    {
+      "source": "/(.*).webp",
+      "headers": [
+        { "key": "Cache-Control", "value": "public, max-age=2592000" }
+      ]
+    },
+    {
+      "source": "/(.*).svg",
+      "headers": [
+        { "key": "Cache-Control", "value": "public, max-age=2592000" }
+      ]
+    },
+    {
+      "source": "/(.*).woff2",
       "headers": [
         { "key": "Cache-Control", "value": "public, max-age=2592000" }
       ]

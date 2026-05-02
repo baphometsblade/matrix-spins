@@ -3,37 +3,49 @@
  *
  * Mounts the actual Express app from server/index.js so Vercel deploys
  * have full revenue capability (auth, payment, spin, jackpot, etc.).
- *
- * Replaces the previous demo stub that returned hardcoded $1000 deposits.
- *
- * Environment requirements (set in Vercel dashboard):
- *   DATABASE_URL              — PostgreSQL connection string (Neon, Supabase, etc.)
- *   JWT_SECRET                — 32+ character random string
- *   STRIPE_SECRET_KEY         — sk_live_... for production
- *   STRIPE_PUBLISHABLE_KEY    — pk_live_... for production
- *   STRIPE_WEBHOOK_SECRET     — whsec_... from Stripe dashboard
- *   ADMIN_PASSWORD            — admin login password
- *   ALLOWED_ORIGIN            — https://msaart.online
- *   ALLOWED_COUNTRIES         — comma-separated ISO codes (e.g. "AU,NZ,CA,GB")
  */
 
-const { app, ensureReady } = (() => {
-  // Defer require until handler invocation so cold-start logging is captured
-  return require('../server/index.js');
-})();
+let cachedApp = null;
+let cachedReady = null;
+let loadError = null;
 
-// Vercel serverless handler — awaits DB init + route mount on cold start,
-// then reuses the cached Express app for warm invocations.
-module.exports = async (req, res) => {
+function loadApp() {
+  if (cachedApp || loadError) return;
   try {
-    if (typeof ensureReady === 'function') {
-      await ensureReady();
+    // Lazy require so we can capture errors instead of crashing the whole function
+    const mod = require('../server/index.js');
+    cachedApp = mod.app;
+    cachedReady = mod.ensureReady;
+    if (!cachedApp) loadError = new Error('server/index.js did not export `app`');
+  } catch (err) {
+    loadError = err;
+    console.error('[Vercel] Failed to load server/index.js:', err && err.stack || err);
+  }
+}
+
+module.exports = async (req, res) => {
+  loadApp();
+
+  if (loadError) {
+    return res.status(500).json({
+      error: 'Server failed to initialize',
+      detail: loadError.message,
+      stack: loadError.stack ? loadError.stack.split('\n').slice(0, 6) : null,
+      referenceNumber: 'VRC-LOAD-' + Date.now().toString(36).toUpperCase(),
+    });
+  }
+
+  try {
+    if (typeof cachedReady === 'function') {
+      await cachedReady();
     }
-    return app(req, res);
+    return cachedApp(req, res);
   } catch (err) {
     console.error('[Vercel] Handler error:', err && err.stack || err);
-    res.status(500).json({
+    return res.status(500).json({
       error: 'Internal server error',
+      detail: err.message,
+      stack: err.stack ? err.stack.split('\n').slice(0, 6) : null,
       referenceNumber: 'VRC-' + Date.now().toString(36).toUpperCase(),
     });
   }

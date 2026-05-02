@@ -8,8 +8,11 @@ function requireEnv(key, fallback) {
     const val = process.env[key];
     if (!val) {
         if (isProd) {
-            console.error(`[Config] FATAL: ${key} must be set in production. Exiting.`);
-            process.exit(1);
+            // Warn instead of exit — serverless platforms (Vercel, Render) need
+            // the process to start so health checks can return diagnostic info.
+            // Routes that depend on this env var will fail at request time
+            // (degraded mode, missing-env error responses), not at boot.
+            console.error(`[Config] WARNING: ${key} not set in production — using insecure fallback. Set this env var in your platform dashboard.`);
         }
         return fallback;
     }
