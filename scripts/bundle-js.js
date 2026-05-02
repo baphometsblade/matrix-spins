@@ -22,14 +22,10 @@ const EARLY_SCRIPTS = [
     'js/onclick-polyfill.js'
 ];
 
-// CSS files to bundle (in order)
+// CSS files to bundle (in order). Only files that actually live in the
+// repo — historic style sheets were merged into mobile-fixes.css.
 const CSS_FILES = [
-    'styles.css',
-    'visual-overhaul.css',
-    'bonus-games.css',
-    'mobile-fixes.css',
-    'premium-animations.css',
-    'slot-layout-fix.css'
+    'mobile-fixes.css'
 ];
 
 // â”€â”€â”€ Helper Functions â”€â”€â”€

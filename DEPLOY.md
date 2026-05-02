@@ -32,6 +32,11 @@ Open your service → Environment and add each of:
 | `STRIPE_WEBHOOK_SECRET` | yes | `whsec_…`. The webhook handler refuses to run without it. |
 | `NFT_SIGNING_SECRET` | yes | 32+ random bytes. If omitted, receipts signed in one boot can't be verified after a restart. |
 | `NFT_PROVIDER` | optional | Defaults to `db`. Change when you wire a real chain. |
+| `SMTP_HOST` | yes | e.g. `smtp.sendgrid.net`. Server boot fails in production if any one of `SMTP_HOST`/`SMTP_PORT`/`SMTP_FROM` is missing. |
+| `SMTP_PORT` | yes | `587` (STARTTLS) or `465` (TLS). |
+| `SMTP_USER` | conditional | Required if your provider authenticates (most do). |
+| `SMTP_PASS` | conditional | Required if your provider authenticates. Use a per-app key, not your main account password. |
+| `SMTP_FROM` | yes | The visible "From" address. Domain must be DKIM/SPF-verified at your provider or deposit-receipt and 2FA emails will land in spam. |
 | `MAINTENANCE_MODE` | optional | `1` to block the API except health/login/admin. |
 
 ## 3. Create the Stripe webhook endpoint
@@ -96,7 +101,7 @@ curl -sS -X POST https://<your-domain>/api/payment/stripe/webhook \
 These are intentional gaps that need a product/operational decision, not code:
 
 - **On-chain minting.** `server/services/nft.service.js :: mintFor()` is the only function to change. Pick a provider (Crossmint, thirdweb Engine), deploy or use an existing ERC-721 contract, drop the API key in env, replace the body.
-- **Withdrawals.** No code path credits the user's real bank. This is deliberate: wiring a payout flow usually moves the operation into money-transmission regulation, which is out of scope here.
+- **Automated payout rail.** The withdrawal *request* flow is fully wired (debit-on-request, 2FA gate, saved destinations with cooldown, admin approve/deny with refund-on-deny). But there is no integration with a payout provider — when an admin clicks "approve," they are recording that they *will* pay the user manually (bank transfer, crypto, etc.). Wiring something like Stripe Connect, Wise, or an on-chain payout typically pulls you into money-transmitter / VASP licensing, so it is intentionally left as an operator decision.
 - **Real on-chain crypto deposits.** The old stubs were removed. If you want MetaMask / WalletConnect deposits, wire ethers.js + a real on-chain check against `CRYPTO_WALLET_ADDRESS` and verify via Alchemy / Infura. Not started.
 - **KYC.** The only age gate is DOB at registration. Real KYC (document upload, identity verification) is a separate integration (Persona, Veriff, Onfido).
 

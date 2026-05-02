@@ -148,6 +148,10 @@ const paymentLimiter = rateLimit({
 });
 app.use('/api/deposit', paymentLimiter);
 app.use('/api/deposit', userRateLimit({ maxRequests: 20, windowMs: 60000 }));
+// Cash-out side relies on per-route limiters in withdrawal.routes.js
+// (10/min per user on /request and /destinations) plus the global
+// /api/* IP cap. Adding another layer here trips legitimate users
+// without buying us anything an attacker can't already trigger.
 
 /* ─── Stripe webhook — MUST be mounted BEFORE csrfMiddleware,
  *    because Stripe does not participate in our CSRF scheme and the

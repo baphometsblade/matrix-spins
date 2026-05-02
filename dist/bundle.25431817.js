@@ -1,8 +1,8 @@
 /* Royal Slots Casino - Bundled JavaScript */
-/* Generated: 2026-04-26T19:22:03.124Z */
+/* Generated: 2026-05-02T13:29:13.646Z */
 
 
-/* â”€â”€â”€ shared/game-definitions.js (2/57) â”€â”€â”€ */
+/* â”€â”€â”€ shared/game-definitions.js (1/46) â”€â”€â”€ */
 // Shared Game Definitions — used by both server and client
 const games = [
     // ── Live / server-authoritative game ────────────────────────────
@@ -689,7 +689,7 @@ if (typeof module !== 'undefined') {
     module.exports.getPaylineGeometry = getPaylineGeometry;
 }
 
-/* â”€â”€â”€ js/globals.js (8/57) â”€â”€â”€ */
+/* â”€â”€â”€ js/globals.js (2/46) â”€â”€â”€ */
         // Game data loaded from shared/game-definitions.js
         // (60 game definitions moved to separate module)
 
@@ -1100,7 +1100,7 @@ if (typeof module !== 'undefined') {
             return loadFavorites().includes(gameId);
         }
 
-/* â”€â”€â”€ js/particle-engine.js (9/57) â”€â”€â”€ */
+/* â”€â”€â”€ js/particle-engine.js (3/46) â”€â”€â”€ */
 /**
  * ============================================================
  * Casino App — Canvas Particle Engine
@@ -2165,7 +2165,7 @@ function destroyParticleEngine() {
     _particleEngineInstance = null;
 }
 
-/* â”€â”€â”€ js/auth.js (10/57) â”€â”€â”€ */
+/* â”€â”€â”€ js/auth.js (4/46) â”€â”€â”€ */
 // ═══════════════════════════════════════════════════════
 // AUTH MODULE
 // ═══════════════════════════════════════════════════════
@@ -2866,7 +2866,7 @@ function destroyParticleEngine() {
             });
         }
 
-/* â”€â”€â”€ js/spin-engine.js (11/57) â”€â”€â”€ */
+/* â”€â”€â”€ js/spin-engine.js (5/46) â”€â”€â”€ */
 // ═══════════════════════════════════════════════════════
 // SPIN-ENGINE MODULE
 // ═══════════════════════════════════════════════════════
@@ -3061,7 +3061,7 @@ function destroyParticleEngine() {
             return null;
         }
 
-/* â”€â”€â”€ js/win-logic.js (12/57) â”€â”€â”€ */
+/* â”€â”€â”€ js/win-logic.js (6/46) â”€â”€â”€ */
 // ═══════════════════════════════════════════════════════
 // WIN-LOGIC MODULE
 // ═══════════════════════════════════════════════════════
@@ -4486,7 +4486,7 @@ function destroyParticleEngine() {
             });
         }
 
-/* â”€â”€â”€ js/ui-lobby.js (13/57) â”€â”€â”€ */
+/* â”€â”€â”€ js/ui-lobby.js (7/46) â”€â”€â”€ */
 // ═══════════════════════════════════════════════════════
 // UI-LOBBY MODULE
 // ═══════════════════════════════════════════════════════
@@ -12168,7 +12168,7 @@ function renderGameStatsWidget() {
     });
 }
 
-/* â”€â”€â”€ js/search-autocomplete.js (14/57) â”€â”€â”€ */
+/* â”€â”€â”€ js/search-autocomplete.js (8/46) â”€â”€â”€ */
 (function() {
   'use strict';
 
@@ -12441,7 +12441,7 @@ function renderGameStatsWidget() {
   };
 })();
 
-/* â”€â”€â”€ js/slot-gui-engine.js (15/57) â”€â”€â”€ */
+/* â”€â”€â”€ js/slot-gui-engine.js (9/46) â”€â”€â”€ */
 (function() {
     'use strict';
 
@@ -13083,7 +13083,7 @@ function renderGameStatsWidget() {
     };
 })();
 
-/* â”€â”€â”€ js/ui-slot.js (16/57) â”€â”€â”€ */
+/* â”€â”€â”€ js/ui-slot.js (10/46) â”€â”€â”€ */
 ﻿// -------------------------------------------------------
 // UI-SLOT MODULE
 // -------------------------------------------------------
@@ -40701,7 +40701,7 @@ function _logAudit658(event, data) {
 }
 window._logAudit658 = _logAudit658;
 
-/* â”€â”€â”€ js/live-slot.js (17/57) â”€â”€â”€ */
+/* â”€â”€â”€ js/live-slot.js (11/46) â”€â”€â”€ */
 /**
  * Live slot — game-agnostic.
  *
@@ -40905,7 +40905,8 @@ window._logAudit658 = _logAudit658;
             '<div id="liveSlotCard" style="' +
                 'width:100%;max-width:520px;background:linear-gradient(180deg,#1a0705 0%,#2b0d07 100%);' +
                 'border:1px solid #f1c40f44;border-radius:14px;padding:22px;color:#fff;font-family:system-ui,sans-serif;' +
-                'box-shadow:0 18px 60px rgba(0,0,0,0.6);"' +
+                'box-shadow:0 18px 60px rgba(0,0,0,0.6);' +
+                'max-height:calc(100vh - 32px);overflow-y:auto;-webkit-overflow-scrolling:touch;"' +
             '>' +
                 '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">' +
                     '<div><div style="font-size:11px;letter-spacing:2px;color:#f1c40f;">LIVE</div>' +
@@ -41731,7 +41732,7 @@ window._logAudit658 = _logAudit658;
     window.closeLiveSlot = closeLiveSlot;
 })();
 
-/* â”€â”€â”€ js/ui-modals.js (18/57) â”€â”€â”€ */
+/* â”€â”€â”€ js/ui-modals.js (12/46) â”€â”€â”€ */
 // ═══════════════════════════════════════════════════════
 // UI-MODALS MODULE
 // ═══════════════════════════════════════════════════════
@@ -44799,7 +44800,7 @@ function settingsSetSessionLimit(val) {
     });
 }
 
-/* â”€â”€â”€ js/ui-wallet.js (19/57) â”€â”€â”€ */
+/* â”€â”€â”€ js/ui-wallet.js (13/46) â”€â”€â”€ */
 // ═══════════════════════════════════════════════════════
 // WALLET / CASHIER MODULE
 // ═══════════════════════════════════════════════════════
@@ -52252,7 +52253,7 @@ async function _saveLimits(modal, token, formOverlay) {
     }
 }
 
-/* â”€â”€â”€ js/ui-profile.js (20/57) â”€â”€â”€ */
+/* â”€â”€â”€ js/ui-profile.js (14/46) â”€â”€â”€ */
 // ═══════════════════════════════════════════════════════
 // PROFILE / ACCOUNT MODULE
 // ═══════════════════════════════════════════════════════
@@ -58022,7 +58023,7 @@ function renderLossStreakWidget() {
     return widget;
 }
 
-/* â”€â”€â”€ js/ui-vip.js (21/57) â”€â”€â”€ */
+/* â”€â”€â”€ js/ui-vip.js (15/46) â”€â”€â”€ */
 // =====================================================================
 // VIP / LOYALTY REWARDS MODULE
 // =====================================================================
@@ -59941,7 +59942,7 @@ setInterval(function() {
     }
 }, 30000);
 
-/* â”€â”€â”€ js/qa-tools.js (22/57) â”€â”€â”€ */
+/* â”€â”€â”€ js/qa-tools.js (16/46) â”€â”€â”€ */
 // ═══════════════════════════════════════════════════════
 // QA-TOOLS MODULE
 // ═══════════════════════════════════════════════════════
@@ -60322,7 +60323,7 @@ setInterval(function() {
             return JSON.stringify(payload);
         }
 
-/* â”€â”€â”€ js/session-rtp-client.js (23/57) â”€â”€â”€ */
+/* â”€â”€â”€ js/session-rtp-client.js (17/46) â”€â”€â”€ */
 'use strict';
 
 /**
@@ -60544,7 +60545,7 @@ setInterval(function() {
   }
 })();
 
-/* â”€â”€â”€ js/app.js (24/57) â”€â”€â”€ */
+/* â”€â”€â”€ js/app.js (18/46) â”€â”€â”€ */
 // ═══════════════════════════════════════════════════════
 // APP MODULE
 // ═══════════════════════════════════════════════════════
@@ -62796,7 +62797,7 @@ setInterval(function() {
             document.body.appendChild(overlay);
         }
 
-/* â”€â”€â”€ js/ui-premium-effects.js (25/57) â”€â”€â”€ */
+/* â”€â”€â”€ js/ui-premium-effects.js (19/46) â”€â”€â”€ */
 /**
  * ui-premium-effects.js
  * Premium micro-interaction effects for Matrix Spins Casino
@@ -63040,7 +63041,7 @@ setInterval(function() {
 
 })();
 
-/* â”€â”€â”€ js/legal-terms.js (26/57) â”€â”€â”€ */
+/* â”€â”€â”€ js/legal-terms.js (20/46) â”€â”€â”€ */
 /**
  * Legal Terms & Conditions Module
  * Matrix Spins Casino - msaart.online
@@ -63438,7 +63439,7 @@ window.showMatrixMoneyInfo = () => LegalTerms.showMatrixMoneyInfo();
     }
 })();
 
-/* â”€â”€â”€ js/matrix-money.js (27/57) â”€â”€â”€ */
+/* â”€â”€â”€ js/matrix-money.js (21/46) â”€â”€â”€ */
 /**
  * Matrix Money System Module
  * Matrix Spins Casino - msaart.online
@@ -64052,7 +64053,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 });
 
-/* â”€â”€â”€ js/session-timeout.js (28/57) â”€â”€â”€ */
+/* â”€â”€â”€ js/session-timeout.js (22/46) â”€â”€â”€ */
 (function() {
   'use strict';
 
@@ -64373,7 +64374,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 })();
 
-/* â”€â”€â”€ js/support-chat.js (29/57) â”€â”€â”€ */
+/* â”€â”€â”€ js/support-chat.js (23/46) â”€â”€â”€ */
 (function() {
   'use strict';
 
@@ -64940,7 +64941,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 })();
 
-/* â”€â”€â”€ js/self-exclusion.js (30/57) â”€â”€â”€ */
+/* â”€â”€â”€ js/self-exclusion.js (24/46) â”€â”€â”€ */
 /**
  * Self-Exclusion UI Module for Matrix Spins Casino
  * Responsible gambling feature — lets users voluntarily exclude themselves from play.
@@ -65100,7 +65101,7 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 })();
 
-/* â”€â”€â”€ js/loading-screen.js (31/57) â”€â”€â”€ */
+/* â”€â”€â”€ js/loading-screen.js (25/46) â”€â”€â”€ */
 /**
  * Loading Screen Module
  * Displays a stylish loading overlay with rotating tips when opening games
@@ -65404,7 +65405,7 @@ window.LoadingScreen = (function() {
 
 })();
 
-/* â”€â”€â”€ js/player-stats-ui.js (32/57) â”€â”€â”€ */
+/* â”€â”€â”€ js/player-stats-ui.js (26/46) â”€â”€â”€ */
 (function() {
   'use strict';
 
@@ -65901,7 +65902,7 @@ window.LoadingScreen = (function() {
   };
 })();
 
-/* â”€â”€â”€ js/win-limit.js (33/57) â”€â”€â”€ */
+/* â”€â”€â”€ js/win-limit.js (27/46) â”€â”€â”€ */
 ﻿/**
  * Win Limit Safety Feature
  * Responsible gambling tool to set session win limits and auto-cashout prompts
@@ -66547,7 +66548,7 @@ window.WinLimit = (function () {
 })();
 
 
-/* â”€â”€â”€ js/loss-limit.js (34/57) â”€â”€â”€ */
+/* â”€â”€â”€ js/loss-limit.js (28/46) â”€â”€â”€ */
 /**
  * Loss Limit Safety Feature
  * Net-loss caps over rolling daily / weekly / monthly windows.
@@ -66858,7 +66859,7 @@ window.LossLimit = (function () {
   document.head.appendChild(el);
 })();
 
-/* â”€â”€â”€ js/wager-cap.js (35/57) â”€â”€â”€ */
+/* â”€â”€â”€ js/wager-cap.js (29/46) â”€â”€â”€ */
 /**
  * Wager Cap (single-bet maximum)
  * Player-controlled cap on individual bet amounts — distinct from
@@ -67047,7 +67048,7 @@ window.WagerCap = (function () {
   document.head.appendChild(el);
 })();
 
-/* â”€â”€â”€ js/login-history.js (36/57) â”€â”€â”€ */
+/* â”€â”€â”€ js/login-history.js (30/46) â”€â”€â”€ */
 /**
  * Login History Tracker
  * Premium account-security feature: persistent local log of auth events
@@ -67228,7 +67229,7 @@ window.LoginHistory = (function () {
   document.head.appendChild(el);
 })();
 
-/* â”€â”€â”€ js/session-clock.js (37/57) â”€â”€â”€ */
+/* â”€â”€â”€ js/session-clock.js (31/46) â”€â”€â”€ */
 /**
  * Session Clock
  * Continuous elapsed-session display — companion to session-timeout.js
@@ -67373,7 +67374,7 @@ window.SessionClock = (function () {
   document.head.appendChild(el);
 })();
 
-/* â”€â”€â”€ js/cookie-consent.js (38/57) â”€â”€â”€ */
+/* â”€â”€â”€ js/cookie-consent.js (32/46) â”€â”€â”€ */
 /**
  * Cookie Consent Manager
  * Implements GDPR/CCPA compliant cookie consent banner with preference management
@@ -67947,7 +67948,7 @@ window.SessionClock = (function () {
 
 })();
 
-/* â”€â”€â”€ js/perf-monitor.js (39/57) â”€â”€â”€ */
+/* â”€â”€â”€ js/perf-monitor.js (33/46) â”€â”€â”€ */
 /**
  * Performance Monitoring Module (IIFE)
  * Collects Core Web Vitals and page performance metrics
@@ -68178,7 +68179,7 @@ if (document.readyState === 'loading') {
     window.PerfMonitor.init();
 }
 
-/* â”€â”€â”€ js/bankroll-calculator.js (40/57) â”€â”€â”€ */
+/* â”€â”€â”€ js/bankroll-calculator.js (34/46) â”€â”€â”€ */
 // ═══════════════════════════════════════════════════════════════════════════════════════
 // BANKROLL MANAGEMENT CALCULATOR
 // A responsible gambling tool to help players manage their bankroll effectively
@@ -68767,7 +68768,7 @@ if (document.readyState === 'loading') {
 
 })();
 
-/* â”€â”€â”€ js/i18n.js (41/57) â”€â”€â”€ */
+/* â”€â”€â”€ js/i18n.js (35/46) â”€â”€â”€ */
 (function() {
   'use strict';
 
@@ -69028,7 +69029,7 @@ if (document.readyState === 'loading') {
 
 })();
 
-/* â”€â”€â”€ js/game-history.js (42/57) â”€â”€â”€ */
+/* â”€â”€â”€ js/game-history.js (36/46) â”€â”€â”€ */
 /**
  * Game History / Spin History Viewer
  * IIFE module: window.GameHistory = { show(), init() }
@@ -69735,7 +69736,7 @@ if (document.readyState === 'loading') {
 
 })();
 
-/* â”€â”€â”€ js/player-chat.js (43/57) â”€â”€â”€ */
+/* â”€â”€â”€ js/player-chat.js (37/46) â”€â”€â”€ */
 (function() {
   'use strict';
 
@@ -70401,7 +70402,7 @@ if (document.readyState === 'loading') {
   };
 })();
 
-/* â”€â”€â”€ js/sound-settings.js (44/57) â”€â”€â”€ */
+/* â”€â”€â”€ js/sound-settings.js (38/46) â”€â”€â”€ */
 // ═══════════════════════════════════════════════════════════════════════════
 // Sound Settings UI Module — Casino Dark Theme with Gold Accents
 // ═══════════════════════════════════════════════════════════════════════════
@@ -70922,7 +70923,7 @@ if (document.readyState === 'loading') {
 
 })();
 
-/* â”€â”€â”€ js/keyboard-shortcuts.js (45/57) â”€â”€â”€ */
+/* â”€â”€â”€ js/keyboard-shortcuts.js (39/46) â”€â”€â”€ */
 /**
  * Keyboard Shortcuts Module
  * Provides keyboard shortcuts for the Royal Slots Casino game
@@ -71382,7 +71383,7 @@ if (document.readyState === 'loading') {
   console.warn('KeyboardShortcuts module loaded');
 })();
 
-/* â”€â”€â”€ js/csrf-helper.js (46/57) â”€â”€â”€ */
+/* â”€â”€â”€ js/csrf-helper.js (40/46) â”€â”€â”€ */
 /**
  * CSRF Token Helper
  * Manages CSRF tokens and automatically injects them into fetch requests
@@ -71501,7 +71502,7 @@ if (document.readyState === 'loading') {
     console.warn('[CSRF] Helper loaded');
 })();
 
-/* â”€â”€â”€ js/reality-check.js (47/57) â”€â”€â”€ */
+/* â”€â”€â”€ js/reality-check.js (41/46) â”€â”€â”€ */
 ﻿// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 // REALITY CHECK TIMER - Responsible Gambling Feature
 // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
@@ -72087,7 +72088,7 @@ window.RealityCheck = (function() {
 console.warn('[RealityCheck] Module loaded â€” call window.RealityCheck.init() to start');
 
 
-/* â”€â”€â”€ js/slot-events.js (48/57) â”€â”€â”€ */
+/* â”€â”€â”€ js/slot-events.js (42/46) â”€â”€â”€ */
 /**
  * Slot Events Widget
  * Limited-time FOMO slot events system with animated banners and scarcity indicators
@@ -72481,7 +72482,7 @@ console.warn('[RealityCheck] Module loaded â€” call window.RealityCheck.ini
 
 })();
 
-/* â”€â”€â”€ js/admin-analytics.js (49/57) â”€â”€â”€ */
+/* â”€â”€â”€ js/admin-analytics.js (43/46) â”€â”€â”€ */
 /**
  * Admin Revenue Analytics Dashboard
  * Real-time metrics, player activity, feature performance
@@ -72910,7 +72911,7 @@ console.warn('[RealityCheck] Module loaded â€” call window.RealityCheck.ini
 
 })();
 
-/* â”€â”€â”€ js/deposit-booster.js (50/57) â”€â”€â”€ */
+/* â”€â”€â”€ js/deposit-booster.js (44/46) â”€â”€â”€ */
 /* ============================================================
    Matrix Spins Casino — Deposit Booster Modal
    Auto-injecting IIFE — converts demo players into depositors
@@ -73548,7 +73549,7 @@ console.warn('[RealityCheck] Module loaded â€” call window.RealityCheck.ini
 
 })();
 
-/* â”€â”€â”€ js/ultra-premium-slot.js (55/57) â”€â”€â”€ */
+/* â”€â”€â”€ js/ultra-premium-slot.js (45/46) â”€â”€â”€ */
 /**
  * ultra-premium-slot.js v2.0
  * Industry-Standard Per-Game Visual Engine for Matrix Spins Casino
@@ -74609,7 +74610,7 @@ var fn = BG_RENDERERS[bgType] || BG_RENDERERS.shine;
 
 })();
 
-/* â”€â”€â”€ js/upx-integration.js (56/57) â”€â”€â”€ */
+/* â”€â”€â”€ js/upx-integration.js (46/46) â”€â”€â”€ */
 /* ================================================================
    UPX Integration Layer  v1.0
    Wires ultra-premium-slot.js (UPX) into the casino game flow.

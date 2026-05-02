@@ -35,12 +35,40 @@ async function fulfillCheckoutSession(session) {
     }
     if (deposit.status === 'paid') return { ok: true, alreadyPaid: true, deposit_id: depositId };
 
+    // Cross-check the actual paid amount/currency reported by Stripe against
+    // the deposit row we created at checkout. If a mismatch sneaks in
+    // (discount coupon, partial-pay, currency conversion, tampered metadata)
+    // we credit only the lesser of the two values and never trust a row that
+    // disagrees with Stripe on the currency. This is the last line of
+    // defense against amount-tampering between checkout-create and webhook.
+    const stripeAmount = Number(session.amount_total);
+    const stripeCurrency = String(session.currency || '').toLowerCase();
+    const rowCurrency = String(deposit.currency || '').toLowerCase();
+    if (Number.isFinite(stripeAmount) && stripeAmount > 0 && stripeCurrency) {
+        if (rowCurrency && stripeCurrency !== rowCurrency) {
+            console.warn(
+                '[fulfill] currency mismatch — refusing to credit',
+                'deposit_id=' + depositId, 'row=' + rowCurrency, 'stripe=' + stripeCurrency
+            );
+            return { ok: false, reason: 'currency_mismatch', deposit_id: depositId };
+        }
+        if (stripeAmount !== Number(deposit.amount_cents)) {
+            console.warn(
+                '[fulfill] amount mismatch — crediting min(row, stripe)',
+                'deposit_id=' + depositId, 'row=' + deposit.amount_cents, 'stripe=' + stripeAmount
+            );
+        }
+    }
+    const creditAmount = Number.isFinite(stripeAmount) && stripeAmount > 0
+        ? Math.min(Number(deposit.amount_cents), stripeAmount)
+        : Number(deposit.amount_cents);
+
     const isPg = db.kind === 'pg';
     const flip = await db.run(
         isPg
-            ? `UPDATE deposits SET status = ?, completed_at = NOW(), provider_ref = COALESCE(provider_ref, ?) WHERE id = ? AND status <> 'paid'`
-            : `UPDATE deposits SET status = ?, completed_at = strftime('%Y-%m-%dT%H:%M:%fZ','now'), provider_ref = COALESCE(provider_ref, ?) WHERE id = ? AND status <> 'paid'`,
-        ['paid', session.id, depositId]
+            ? `UPDATE deposits SET status = ?, amount_cents = ?, completed_at = NOW(), provider_ref = COALESCE(provider_ref, ?) WHERE id = ? AND status <> 'paid'`
+            : `UPDATE deposits SET status = ?, amount_cents = ?, completed_at = strftime('%Y-%m-%dT%H:%M:%fZ','now'), provider_ref = COALESCE(provider_ref, ?) WHERE id = ? AND status <> 'paid'`,
+        ['paid', creditAmount, session.id, depositId]
     );
     if (!flip || flip.changes === 0) {
         // Another worker already flipped it.
@@ -49,13 +77,13 @@ async function fulfillCheckoutSession(session) {
 
     await db.run(
         'UPDATE users SET balance_cents = balance_cents + ? WHERE id = ?',
-        [Number(deposit.amount_cents), deposit.user_id]
+        [creditAmount, deposit.user_id]
     );
 
     const receipt = await nftService.mintFor({
         userId: deposit.user_id,
         depositId: deposit.id,
-        amountCents: Number(deposit.amount_cents),
+        amountCents: creditAmount,
         currency: deposit.currency,
     });
 
@@ -66,7 +94,7 @@ async function fulfillCheckoutSession(session) {
             await mailer.sendDepositReceipt({
                 to: user.email,
                 username: user.username,
-                amount: Number(deposit.amount_cents) / 100,
+                amount: creditAmount / 100,
                 currency: deposit.currency,
                 depositId: deposit.id,
                 tier: tier && tier.value,
@@ -77,7 +105,7 @@ async function fulfillCheckoutSession(session) {
         console.warn('[fulfill] receipt email failed (non-fatal):', err.message);
     }
 
-    console.log(`[fulfill] deposit ${depositId} fulfilled for user ${deposit.user_id} (+${deposit.amount_cents} ${deposit.currency})`);
+    console.log(`[fulfill] deposit ${depositId} fulfilled for user ${deposit.user_id} (+${creditAmount} ${deposit.currency})`);
     return { ok: true, alreadyPaid: false, deposit_id: depositId, receipt_token: receipt && receipt.tokenId };
 }
 

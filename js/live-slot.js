@@ -201,7 +201,8 @@
             '<div id="liveSlotCard" style="' +
                 'width:100%;max-width:520px;background:linear-gradient(180deg,#1a0705 0%,#2b0d07 100%);' +
                 'border:1px solid #f1c40f44;border-radius:14px;padding:22px;color:#fff;font-family:system-ui,sans-serif;' +
-                'box-shadow:0 18px 60px rgba(0,0,0,0.6);"' +
+                'box-shadow:0 18px 60px rgba(0,0,0,0.6);' +
+                'max-height:calc(100vh - 32px);overflow-y:auto;-webkit-overflow-scrolling:touch;"' +
             '>' +
                 '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">' +
                     '<div><div style="font-size:11px;letter-spacing:2px;color:#f1c40f;">LIVE</div>' +

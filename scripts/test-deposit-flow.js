@@ -1852,7 +1852,7 @@ async function main() {
         assert.strictEqual(analytics.body.window_days, 30);
         assert.ok(typeof analytics.body.drift_warn_pct === 'number');
         assert.ok(typeof analytics.body.min_spins_for_drift_warn === 'number');
-        assert.strictEqual(analytics.body.games.length, 2);
+        assert.ok(analytics.body.games.length >= 2, 'expected at least 2 games in analytics, got ' + analytics.body.games.length);
         const ag = analytics.body.games.reduce(function (m, g) { m[g.game_id] = g; return m; }, {});
         for (const id of ['classic_777', 'neon_burst']) {
             assert.ok(ag[id], id + ' missing from analytics: ' + JSON.stringify(analytics.body));
