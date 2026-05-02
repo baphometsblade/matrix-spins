@@ -2,7 +2,7 @@ services:
   - type: web
     name: matrix-spins
     runtime: node
-    plan: free
+    plan: starter
     nodeVersion: "20"
     buildCommand: npm install --omit=dev && node scripts/bundle-js.js
     startCommand: node server/index.js
@@ -20,15 +20,10 @@ services:
         value: https://msaart.online
       - key: ADMIN_USERNAME
         value: admin
-      # ─── REQUIRED SECRETS — set each of these in the Render dashboard
-      # ─── before the service will start. There are no fallbacks.
+      # REQUIRED — set in Render dashboard Environment tab:
       # ADMIN_PASSWORD
-      # DATABASE_URL         (Postgres connection string — ephemeral SQLite is rejected for prod unless SQLITE_FILE is set explicitly)
+      # DATABASE_URL
       # STRIPE_SECRET_KEY
       # STRIPE_PUBLISHABLE_KEY
       # STRIPE_WEBHOOK_SECRET
-      # SMTP_HOST
-      # SMTP_PORT
-      # SMTP_FROM
-      # SMTP_USER            (if provider requires auth)
-      # SMTP_PASS            (if provider requires auth)
+      # SMTP_HOST / SMTP_PORT / SMTP_FROM / SMTP_USER / SMTP_PASS
