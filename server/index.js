@@ -176,6 +176,10 @@ app.use('/api/withdrawal', require('./routes/withdrawal.routes').router);
 app.use('/api/promo', require('./routes/promo.routes'));
 app.use('/api/admin', require('./routes/admin.routes'));
 
+/* --- SEO game landing pages --- */
+app.use('/games', require('./routes/games-seo.routes'));
+
+
 /* ─── 404 for unknown API routes ─── */
 app.use('/api', (_req, res) => {
     res.status(404).json({ error: 'Endpoint not found.' });
