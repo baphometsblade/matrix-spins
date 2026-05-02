@@ -1,5 +1,5 @@
 /* Royal Slots Casino - Bundled JavaScript */
-/* Generated: 2026-05-02T13:37:29.521Z */
+/* Generated: 2026-05-02T13:55:43.344Z */
 
 
 /* â”€â”€â”€ shared/game-definitions.js (2/56) â”€â”€â”€ */
@@ -16033,6 +16033,30 @@ function renderGameStatsWidget() {
             // for the next demo game and skips it for live games.
             var _fpb = document.getElementById('freePlayBanner');
             if (_fpb) _fpb.remove();
+            // Demo spins mutate the local `balance` variable to make the
+            // simulation feel real (currentBet debit, win credit). When
+            // the user closes the modal we resync from /api/balance so
+            // the lobby never displays a fictitious post-demo balance —
+            // otherwise a player can "win" $50 in sugar_rush, return to
+            // the lobby, and stare at $balance+50 even though the
+            // server never moved a cent. Live games settle their own
+            // balance through the live-slot client and don't go
+            // through this code path. Fire-and-forget — the lobby
+            // tolerates a stale balance for one frame.
+            if (currentGame && currentGame.liveMode !== true &&
+                typeof isServerAuthToken === 'function' && isServerAuthToken() &&
+                typeof apiRequest === 'function') {
+                apiRequest('/api/balance', { requireAuth: true })
+                    .then(function (res) {
+                        var srv = Number(res && res.balance);
+                        if (Number.isFinite(srv)) {
+                            balance = srv;
+                            if (typeof updateBalance === 'function') updateBalance();
+                            if (typeof saveBalance === 'function') saveBalance();
+                        }
+                    })
+                    .catch(function () { /* silent — next page load will sync */ });
+            }
             // Stop auto-spin if active
             if (autoSpinActive) stopAutoSpin();
             // Reset new autoplay state

@@ -463,6 +463,48 @@ async function main() {
                         document.getElementById('liveSlotAutoLoss').value = '0';
                         document.getElementById('liveSlotAutoFloor').value = '0';
                     });
+
+                    // Demo closeSlot resync. The 65 non-live games run
+                    // through the client-side demo engine, which mutates
+                    // the bundle-scoped `balance` variable to make the
+                    // simulation feel real. Without a resync the lobby
+                    // displays a fictitious post-demo balance until the
+                    // next page load. We can't mutate the let-scoped
+                    // `balance` from page-evaluate context, so instead
+                    // we intercept fetch and confirm closeSlot for a
+                    // demo game fires GET /api/balance — exactly the
+                    // refetch the fix introduces.
+                    await page.evaluate(() => { if (window.closeLiveSlot) window.closeLiveSlot(); });
+                    await page.evaluate(() => {
+                        window.__balanceFetches = 0;
+                        const orig = window.fetch.bind(window);
+                        window.fetch = function (url, opts) {
+                            if (typeof url === 'string' && /\/api\/balance(\?|$)/.test(url) &&
+                                (!opts || (opts.method || 'GET') === 'GET')) {
+                                window.__balanceFetches += 1;
+                            }
+                            return orig(url, opts);
+                        };
+                        if (typeof window.openSlot === 'function') window.openSlot('sugar_rush');
+                    });
+                    await page.waitForFunction(
+                        () => document.getElementById('slotModal') &&
+                              document.getElementById('slotModal').classList.contains('active'),
+                        { timeout: 5000 }
+                    ).catch(() => { /* reported below */ });
+                    const fetchBefore = await page.evaluate(() => Number(window.__balanceFetches || 0));
+                    await page.evaluate(() => { if (typeof closeSlot === 'function') closeSlot(); });
+                    const fired = await page.waitForFunction(
+                        (b) => Number(window.__balanceFetches || 0) > b,
+                        fetchBefore,
+                        { timeout: 4000 }
+                    ).then(() => true).catch(() => false);
+                    if (!fired) {
+                        const after = await page.evaluate(() => Number(window.__balanceFetches || 0));
+                        fail('demo closeSlot resync: GET /api/balance did not fire (before=' + fetchBefore + ' after=' + after + ')');
+                    } else {
+                        ok('demo closeSlot resync: GET /api/balance refetched after sugar_rush close');
+                    }
                 }
             } else {
                 fail('could not find registered user row for live-slot test');
