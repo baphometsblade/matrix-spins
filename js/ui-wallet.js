@@ -94,9 +94,30 @@ function showWalletModal() {
     if (!modal) return;
     walletActiveTab = 'deposit';
     modal.classList.add('active');
-    // Sync balance display in wallet header
+    // Sync balance display in wallet header. The local `balance` var
+    // can be inflated by demo-mode spins (the 65 client-side games
+    // mutate it as a "feel real" simulation), so paint immediately
+    // from the cached value, then resync from the server in the
+    // background and repaint. Otherwise a player who just closed
+    // sugar_rush with a "win" would see that fictitious number on
+    // the deposit screen — exactly the moment they need server truth.
     const walletBal = document.getElementById('walletBalance');
     if (walletBal) walletBal.textContent = formatMoney(balance);
+    if (typeof isServerAuthToken === 'function' && isServerAuthToken() &&
+        typeof apiRequest === 'function') {
+        apiRequest('/api/balance', { requireAuth: true })
+            .then(function (res) {
+                var srv = Number(res && res.balance);
+                if (Number.isFinite(srv)) {
+                    balance = srv;
+                    if (typeof updateBalance === 'function') updateBalance();
+                    if (typeof saveBalance === 'function') saveBalance();
+                    var b = document.getElementById('walletBalance');
+                    if (b) b.textContent = formatMoney(balance);
+                }
+            })
+            .catch(function () { /* keep cached value */ });
+    }
     loadPaymentMethods();
     // Check if user has any completed deposits (for first-deposit bonus banner)
     _checkFirstDepositStatus();

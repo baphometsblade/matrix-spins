@@ -1,5 +1,5 @@
 /* Royal Slots Casino - Bundled JavaScript */
-/* Generated: 2026-05-02T13:55:43.344Z */
+/* Generated: 2026-05-02T17:04:00.214Z */
 
 
 /* â”€â”€â”€ shared/game-definitions.js (2/56) â”€â”€â”€ */
@@ -4524,7 +4524,11 @@ function destroyParticleEngine() {
                 // distinction is obvious at a glance.
                 '.game-card .game-mode-pill{position:absolute;left:6px;bottom:6px;z-index:3;font-size:9px;font-weight:800;letter-spacing:1.2px;padding:3px 7px;border-radius:10px;line-height:1;text-transform:uppercase;pointer-events:none;backdrop-filter:blur(2px);-webkit-backdrop-filter:blur(2px);box-shadow:0 1px 4px rgba(0,0,0,.4)}' +
                 '.game-card .game-mode-pill.gmp-live{background:linear-gradient(135deg,#0a8a3a 0%,#0f6f2e 100%);color:#fff;border:1px solid #5fd489}' +
-                '.game-card .game-mode-pill.gmp-demo{background:rgba(31,41,55,.78);color:#cbd5e1;border:1px solid rgba(148,163,184,.3)}';
+                '.game-card .game-mode-pill.gmp-demo{background:rgba(31,41,55,.78);color:#cbd5e1;border:1px solid rgba(148,163,184,.3)}' +
+                // Real Money filter tab — accent the only tab that
+                // narrows the lobby to the slots that actually pay.
+                '.filter-tab.filter-tab-live{color:#5fd489;border:1px solid rgba(95,212,137,.45);background:rgba(10,138,58,.08)}' +
+                '.filter-tab.filter-tab-live.filter-tab-active{background:linear-gradient(135deg,#0a8a3a 0%,#0f6f2e 100%);color:#fff;border-color:#5fd489;box-shadow:0 0 12px rgba(95,212,137,.35)}';
             var s = document.createElement('style');
             s.id = 'gameCardMonogramStyles';
             s.textContent = css;
@@ -5588,6 +5592,10 @@ function renderGames() {
                 case 'jackpot':   list = games.filter(g => (g.tag === 'JACKPOT' || g.tag === 'MEGA') && !g.adult); break;
                 case 'favorites': list = games.filter(g => isFavorite(g.id)); break;
                 case 'adult':     list = games.filter(g => g.adult); break;
+                // "Real Money" — only the slots whose spins go through the
+                // server-authoritative engine (server/games/<id>.js).
+                // Everything else is the client demo and won't credit.
+                case 'live':      list = games.filter(g => g.liveMode === true); break;
                 default:          list = games.filter(g => !g.adult);
             }
             if (currentProviderFilter !== 'all') {
@@ -44769,9 +44777,30 @@ function showWalletModal() {
     if (!modal) return;
     walletActiveTab = 'deposit';
     modal.classList.add('active');
-    // Sync balance display in wallet header
+    // Sync balance display in wallet header. The local `balance` var
+    // can be inflated by demo-mode spins (the 65 client-side games
+    // mutate it as a "feel real" simulation), so paint immediately
+    // from the cached value, then resync from the server in the
+    // background and repaint. Otherwise a player who just closed
+    // sugar_rush with a "win" would see that fictitious number on
+    // the deposit screen — exactly the moment they need server truth.
     const walletBal = document.getElementById('walletBalance');
     if (walletBal) walletBal.textContent = formatMoney(balance);
+    if (typeof isServerAuthToken === 'function' && isServerAuthToken() &&
+        typeof apiRequest === 'function') {
+        apiRequest('/api/balance', { requireAuth: true })
+            .then(function (res) {
+                var srv = Number(res && res.balance);
+                if (Number.isFinite(srv)) {
+                    balance = srv;
+                    if (typeof updateBalance === 'function') updateBalance();
+                    if (typeof saveBalance === 'function') saveBalance();
+                    var b = document.getElementById('walletBalance');
+                    if (b) b.textContent = formatMoney(balance);
+                }
+            })
+            .catch(function () { /* keep cached value */ });
+    }
     loadPaymentMethods();
     // Check if user has any completed deposits (for first-deposit bonus banner)
     _checkFirstDepositStatus();

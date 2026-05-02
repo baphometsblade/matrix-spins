@@ -137,6 +137,30 @@ async function main() {
         else if (pillSummary.live < 1 || pillSummary.demo < 1) fail('mode pills not split: ' + JSON.stringify(pillSummary));
         else ok('mode pills: ' + pillSummary.live + ' REAL MONEY, ' + pillSummary.demo + ' FREE PLAY across ' + pillSummary.total + ' cards');
 
+        // Real Money filter — clicking the live tab must narrow the
+        // main "All Games" grid to liveMode slots only. Other lobby
+        // sections (Hot, New, recently-played carousels) keep their
+        // own card sets, so we scope the assertion to #allGames.
+        const liveFilter = await page.evaluate(async () => {
+            if (typeof setFilter !== 'function') return { ok: false, reason: 'setFilter not defined' };
+            setFilter('live');
+            await new Promise((r) => setTimeout(r, 100));
+            const grid = document.getElementById('allGames');
+            if (!grid) {
+                setFilter('all');
+                return { ok: false, reason: '#allGames not found' };
+            }
+            const cards = Array.from(grid.querySelectorAll('.game-card'));
+            const live = cards.filter((c) => c.querySelector('.game-mode-pill.gmp-live')).length;
+            const demo = cards.filter((c) => c.querySelector('.game-mode-pill.gmp-demo')).length;
+            setFilter('all');
+            return { ok: true, live, demo, total: cards.length };
+        });
+        if (!liveFilter.ok) fail('live filter setup failed: ' + liveFilter.reason);
+        else if (liveFilter.demo > 0) fail('live filter leaked ' + liveFilter.demo + ' demo card(s) into #allGames');
+        else if (liveFilter.live < 1) fail('live filter rendered no real-money cards in #allGames');
+        else ok('live filter (#allGames): ' + liveFilter.live + ' real-money cards, 0 demo cards');
+
         // Wait until at least one thumbnail has finished decoding.
         // Headless Chromium's SVG rasterizer is stochastic — the
         // "first" DOM card doesn't always decode first. What we care

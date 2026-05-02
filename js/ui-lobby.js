@@ -65,7 +65,11 @@
                 // distinction is obvious at a glance.
                 '.game-card .game-mode-pill{position:absolute;left:6px;bottom:6px;z-index:3;font-size:9px;font-weight:800;letter-spacing:1.2px;padding:3px 7px;border-radius:10px;line-height:1;text-transform:uppercase;pointer-events:none;backdrop-filter:blur(2px);-webkit-backdrop-filter:blur(2px);box-shadow:0 1px 4px rgba(0,0,0,.4)}' +
                 '.game-card .game-mode-pill.gmp-live{background:linear-gradient(135deg,#0a8a3a 0%,#0f6f2e 100%);color:#fff;border:1px solid #5fd489}' +
-                '.game-card .game-mode-pill.gmp-demo{background:rgba(31,41,55,.78);color:#cbd5e1;border:1px solid rgba(148,163,184,.3)}';
+                '.game-card .game-mode-pill.gmp-demo{background:rgba(31,41,55,.78);color:#cbd5e1;border:1px solid rgba(148,163,184,.3)}' +
+                // Real Money filter tab — accent the only tab that
+                // narrows the lobby to the slots that actually pay.
+                '.filter-tab.filter-tab-live{color:#5fd489;border:1px solid rgba(95,212,137,.45);background:rgba(10,138,58,.08)}' +
+                '.filter-tab.filter-tab-live.filter-tab-active{background:linear-gradient(135deg,#0a8a3a 0%,#0f6f2e 100%);color:#fff;border-color:#5fd489;box-shadow:0 0 12px rgba(95,212,137,.35)}';
             var s = document.createElement('style');
             s.id = 'gameCardMonogramStyles';
             s.textContent = css;
@@ -1129,6 +1133,10 @@ function renderGames() {
                 case 'jackpot':   list = games.filter(g => (g.tag === 'JACKPOT' || g.tag === 'MEGA') && !g.adult); break;
                 case 'favorites': list = games.filter(g => isFavorite(g.id)); break;
                 case 'adult':     list = games.filter(g => g.adult); break;
+                // "Real Money" — only the slots whose spins go through the
+                // server-authoritative engine (server/games/<id>.js).
+                // Everything else is the client demo and won't credit.
+                case 'live':      list = games.filter(g => g.liveMode === true); break;
                 default:          list = games.filter(g => !g.adult);
             }
             if (currentProviderFilter !== 'all') {
