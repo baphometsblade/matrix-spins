@@ -23,13 +23,34 @@ services:
       - key: ALLOWED_ORIGIN
         value: https://msaart.online
 
+      # ── Geo compliance (REQUIRED for real-money operation) ──
+      # Whitelist of ISO country codes allowed to play. Without this,
+      # the geo-block middleware is a no-op and you risk operating
+      # in jurisdictions you are not licensed in.
+      - key: ALLOWED_COUNTRIES
+        value: "AU,NZ,CA,GB,DE,FR,JP,BR,MX"
+      # Optional explicit denylist (applied after allowlist)
+      - key: BLOCKED_COUNTRIES
+        value: "US"
+      # On geo lookup failure: "open" allows (default), "closed" blocks
+      - key: GEO_FAIL_MODE
+        value: open
+
       # ── Crypto wallet addresses (receive ETH/BTC deposits) ──
       - key: CRYPTO_WALLET_ADDRESS
         value: "0x5cee55FF03c247c1C2b4b9b4e732B087758CD863"
       - key: BTC_WALLET_ADDRESS
         value: "bc1qtl6rrtzcnrjycjdccm08d42u2qucu7qnz7ma0q"
 
-      # ── Stripe (set manually in Render dashboard — keep secret) ──
+      # ── Database (REQUIRED — provision PostgreSQL on Neon/Supabase/Render) ──
+      # Without DATABASE_URL the server runs SQLite which is wiped on every
+      # redeploy — money operations will be permanently blocked in degraded mode.
+      # Set this manually in the Render dashboard with a real connection string:
+      #   postgresql://user:pass@host:5432/dbname?sslmode=require
+      # - key: DATABASE_URL
+      #   value: postgresql://...
+
+      # ── Stripe (REQUIRED for card deposits — set manually in dashboard) ──
       # - key: STRIPE_SECRET_KEY
       #   value: sk_live_...
       # - key: STRIPE_PUBLISHABLE_KEY
@@ -37,9 +58,11 @@ services:
       # - key: STRIPE_WEBHOOK_SECRET
       #   value: whsec_...
 
-      # ── Email / SMTP (optional — enables password reset emails) ──
+      # ── Email / SMTP (recommended — enables password reset + transactional) ──
       # - key: SMTP_HOST
       #   value: smtp.example.com
+      # - key: SMTP_PORT
+      #   value: "587"
       # - key: SMTP_USER
       #   value: noreply@msaart.online
       # - key: SMTP_PASS
@@ -47,6 +70,10 @@ services:
       # - key: ADMIN_EMAIL
       #   value: admin@msaart.online
 
-      # ── Database (optional — defaults to SQLite if not set) ──
-      # - key: DATABASE_URL
-      #   value: postgresql://...
+      # ── Withdrawal OTP threshold ($USD; withdrawals at/above need OTP) ──
+      - key: WITHDRAWAL_OTP_THRESHOLD
+        value: "500"
+
+      # ── Optional: Sentry error monitoring ──
+      # - key: SENTRY_DSN
+      #   value: https://...@sentry.io/...

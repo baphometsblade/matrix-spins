@@ -49,9 +49,56 @@ This enforces self-exclusion checks and daily bonus caps.
 
 ### 7. No Math.random() on server side
 
-Use `crypto.randomBytes()` for all server-side randomness. `Math.random()` is predictable in Node.js.
+Use `crypto.randomBytes()` for all server-side randomness. `Math.random()` is predictable in Node.js. The first line of `server/index.js` MUST be `require('./utils/secure-rng');` — this monkey-patches `Math.random` globally to use `crypto.randomBytes`, providing belt-and-suspenders protection against any forgotten `Math.random()` call.
+
+### 8. server/index.js MUST mount production routes from server/routes/
+
+**NEVER** ship a `server/index.js` that returns hardcoded demo data (e.g. `'$1000.00'` for deposits). The 95+ files in `server/routes/` ARE the casino — they handle auth, payments, spins, jackpots, withdrawals, bonuses. If `server/index.js` doesn't `require()` and `app.use()` them, the site cannot earn money.
+
+Required structure:
+1. `require('./utils/secure-rng');` — first line
+2. Setup middleware (cors, security headers, rate limits)
+3. `await initDatabase()` — must complete BEFORE routes mount (route bootstrap creates tables)
+4. Mount all routes from `server/routes/` — use a safe loader with try/catch per route
+5. Bind static files + SPA fallback + error handler AFTER routes (Express middleware order)
+6. `app.listen()` last
+
+The `ensureReady()` helper handles the async init order. Vercel adapter at `api/index.js` calls it on cold start.
+
+### 9. NEVER create stub route files that mask production failures
+
+The deleted `server/routes/payment.js` and `server/routes/game-session.js` were 60-line stubs that the catch-block fallback in `server/index.js` would mount when the real routes failed to load. This meant **deposits silently returned hardcoded $1000** if a require error occurred — masking the real bug while leaking revenue capability.
+
+If a route fails to load, log the error and let the API return 503 — never substitute fake data.
+
+## Deployment
+
+### Render
+- `render.yaml` declares env vars; set secrets (Stripe, DATABASE_URL, ADMIN_PASSWORD) manually in dashboard.
+- Health check: `/api/health`
+- Server runs `node server/index.js` (port from `$PORT`)
+- Site shows "degraded mode" banner when PostgreSQL is unreachable; money operations return 503
+
+### Vercel
+- `vercel.json` rewrites `/api/(.*)` → `/api/index.js`
+- `api/index.js` is the serverless adapter — wraps the real Express app from `server/index.js`
+- Same env vars required as Render (DATABASE_URL, JWT_SECRET, STRIPE_*, etc.)
+- Use Vercel as failover when Render is down; both deployments share the same database
+
+### Required environment variables for revenue
+| Variable | Required for | Failure mode |
+|---|---|---|
+| `DATABASE_URL` | All persistence | Degraded mode, money ops blocked |
+| `JWT_SECRET` (32+ chars) | Auth | Logins fail |
+| `STRIPE_SECRET_KEY` | Card deposits | Deposits return error |
+| `STRIPE_WEBHOOK_SECRET` | Async deposit confirmation | Webhooks unverified |
+| `STRIPE_PUBLISHABLE_KEY` | Frontend Stripe.js | Checkout UI broken |
+| `ADMIN_PASSWORD` | Admin dashboard | Admin login disabled |
+| `ALLOWED_ORIGIN` | CORS | Frontend cannot call API |
+| `ALLOWED_COUNTRIES` | Geo compliance | Inert if missing — UNSAFE for licensed operation |
 
 ## Workflow
 - Commit directly to `master` (no feature branches)
 - Run `npm run qa:regression` before every commit
 - Push to `origin/master` after every commit
+- Verify on live site (msaart.online), not locally

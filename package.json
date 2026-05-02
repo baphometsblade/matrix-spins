@@ -6,7 +6,10 @@
   "scripts": {
     "start": "node server/index.js",
     "dev": "node server/index.js",
-    "build": "echo 'No build step needed'"
+    "build": "echo 'No build step needed'",
+    "qa:regression": "node scripts/qa_regression.js",
+    "qa:smoke": "node scripts/smoke-money-flow.js",
+    "qa:rtp": "node scripts/verify-rtp.js"
   },
   "keywords": ["casino", "slots", "gaming"],
   "author": "Matrix Spins",
