@@ -119,49 +119,26 @@ function showWalletModal() {
             .catch(function () { /* keep cached value */ });
     }
     loadPaymentMethods();
-    // Check if user has any completed deposits (for first-deposit bonus banner)
     _checkFirstDepositStatus();
     renderWalletContent();
-    // Inject gem balance badge + Gem Shop button into wallet header (once)
-    _injectWalletGemBar(modal);
-    // Refresh gem and loyalty balances from server
-    if (typeof refreshGemBalance === 'function') refreshGemBalance();
-    refreshLoyaltyBalance();
-    refreshRakebackBalance();
-    refreshCashbackBalance();
-    // Render the full Loyalty Points card section (persistent slot above walletContent)
-    _renderLoyaltySection(modal);
-    // Render the Deposit Match card section below Loyalty, above Rakeback
-    _renderDepositMatchSection(modal);
-    // Render the Rakeback card section below Deposit Match
-    _renderRakebackSection(modal);
-    // Render the Daily Cashback card section below Rakeback
-    _renderDailyCashbackSection(modal);
-    // Render the Loyalty Shop card section below Daily Cashback
-    // walletRenderLoyaltySection applies the ID guard then delegates to _renderLoyaltyShopSection
-    walletRenderLoyaltySection(modal);
-    // Render the VIP Deposit Bonus card section below Loyalty Shop
-    walletRenderVipDepositSection(modal);
-    // Render the Weekend Cashback card section below VIP Deposit Bonus
-    walletRenderWeekendCashbackSection(modal);
-    // Render the Win-Back Bonus card section at the top (after modal is in place)
-    walletRenderWinbackSection(modal);
-    // Render the VIP Deposit Bonus section (new /api/vipdeposit/ endpoints)
-    walletRenderVipDepositBonusSection(modal);
-    // Render the Subscription status card
-    if (typeof walletRenderSubscriptionSection === 'function') walletRenderSubscriptionSection(modal);
-    // Render the Loyalty Shop redeem-points section
-    if (typeof walletRenderLoyaltyShopSection === 'function') walletRenderLoyaltyShopSection(modal);
-    if (typeof renderLimboCard === 'function') renderLimboCard(modal);
-    if (typeof renderBlackjackWidget === 'function') renderBlackjackWidget(modal);
-    if (typeof renderSicBoWidget === 'function') renderSicBoWidget(modal);
-    if (typeof renderRedDogCard === 'function') renderRedDogCard(modal);
-    if (typeof renderMoneyWheelCard === 'function') renderMoneyWheelCard(modal);
-    if (typeof renderWheelOfFortuneCard === 'function') renderWheelOfFortuneCard(modal);
-    if (typeof renderDepositStreakCard === 'function') renderDepositStreakCard(modal);
-    // Render the Reload Bonus card section
-    _renderReloadBonusSection(modal);
-    // Render the Deposit Limits section
+
+    // The wallet historically rendered ~17 promotional sections —
+    // gem balance, loyalty points, rakeback, daily cashback, weekend
+    // cashback, win-back bonus, VIP deposit bonus (×2), subscription,
+    // loyalty shop, deposit-match claim, deposit-streak gem awards,
+    // reload bonus, plus 6 mini-games (limbo / blackjack / sicbo /
+    // red dog / money wheel / wheel of fortune). None of them have a
+    // backing route in server/routes/, so every fetch returned 404
+    // and every "Claim $X bonus" button silently failed. Players who
+    // saw the cards expected real money; the server never paid. That
+    // is straightforward false advertising — chargeback magnet, and a
+    // license problem in any regulated jurisdiction.
+    //
+    // Disabled in one place. The renderers below stay in the file so
+    // they can be re-enabled when the matching server route ships;
+    // until then the wallet shows only the things that actually move
+    // money: the deposit form, the balance, and the deposit-limits
+    // self-service controls.
     _renderDepositLimitsSection(modal);
 }
 
@@ -717,12 +694,17 @@ function renderDepositForm() {
     if (!container) return;
 
     // ── VIP Tier Progress Bar ──────────────────────────────────────────────
+    // Tiers exist as a wagering-progression visual. Earlier draft
+    // advertised "6%/8%/10%/15%/20% cashback" labels on each tier, but
+    // no server-side cashback credit ever fires by tier — same false-
+    // advertising trap as the bonus banners. The labels stay; the
+    // unfounded percentages do not.
     const VIP_TIERS = [
-        { label: 'Bronze',   min: 100,    cashback: '6%'  },
-        { label: 'Silver',   min: 500,    cashback: '8%'  },
-        { label: 'Gold',     min: 2000,   cashback: '10%' },
-        { label: 'Platinum', min: 10000,  cashback: '15%' },
-        { label: 'Diamond',  min: 50000,  cashback: '20%' }
+        { label: 'Bronze',   min: 100    },
+        { label: 'Silver',   min: 500    },
+        { label: 'Gold',     min: 2000   },
+        { label: 'Platinum', min: 10000  },
+        { label: 'Diamond',  min: 50000  }
     ];
     const totalWagered = (typeof stats !== 'undefined' ? stats.totalWagered || 0 : 0);
     let curTierIdx = -1;
@@ -737,8 +719,8 @@ function renderDepositForm() {
     const tierColor = curTierIdx === 4 ? '#b9f2ff' : curTierIdx === 3 ? '#e5cfff' : curTierIdx === 2 ? '#ffd700' : curTierIdx === 1 ? '#94a3b8' : '#cd7f32';
     const vipBarHtml = `<div style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.1);border-radius:10px;padding:10px 14px;margin-bottom:10px;font-size:0.78rem;">
   <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
-    <span style="color:${tierColor};font-weight:700;">${tierLabel} Tier${curTier ? ' · ' + curTier.cashback + ' cashback' : ''}</span>
-    <span style="color:#94a3b8;">${nextTier ? '$' + (nextTier.min - totalWagered).toLocaleString() + ' to ' + nextTier.label + ' (' + nextTier.cashback + ' cashback)' : 'Max tier reached!'}</span>
+    <span style="color:${tierColor};font-weight:700;">${tierLabel} Tier</span>
+    <span style="color:#94a3b8;">${nextTier ? '$' + (nextTier.min - totalWagered).toLocaleString() + ' wagered to ' + nextTier.label : 'Top tier reached'}</span>
   </div>
   <div style="background:rgba(255,255,255,0.08);border-radius:4px;height:6px;overflow:hidden;">
     <div style="width:${pct.toFixed(1)}%;height:100%;background:linear-gradient(90deg,${tierColor},#fff8);border-radius:4px;transition:width 0.4s;"></div>
@@ -7330,9 +7312,13 @@ async function _renderDepositLimitsSection(modal) {
         }
     });
 
-    // Fetch and display limits
+    // Fetch and display limits. Real route is GET /api/deposit/limits
+    // (server/routes/deposit.routes.js:171). Earlier draft hit
+    // /api/deposit-limits/ which 404'd silently, so the form rendered
+    // with empty inputs and the "save" button POSTed to the same dead
+    // route — limits were never readable or settable from the wallet.
     try {
-        var resp = await fetch('/api/deposit-limits/', {
+        var resp = await fetch('/api/deposit/limits', {
             headers: { Authorization: 'Bearer ' + token }
         });
         if (!resp.ok) {
@@ -7399,19 +7385,30 @@ async function _renderDepositLimitsSection(modal) {
             limitsContainer.appendChild(row);
         }
 
-        // Display each limit
-        displayLimit('Daily Limit', data.dailyLimit || 0, data.dailyUsage || 0);
-        displayLimit('Weekly Limit', data.weeklyLimit || 0, data.weeklyUsage || 0);
-        displayLimit('Monthly Limit', data.monthlyLimit || 0, data.monthlyUsage || 0);
+        // Server returns cents for limits + used + remaining; convert
+        // to dollars for display. Earlier draft read data.dailyLimit /
+        // data.dailyUsage which never existed on the wire — every row
+        // showed "No limit set" with no usage bar regardless of what
+        // the user had actually configured.
+        var limitsObj = (data && data.limits) || {};
+        var usedObj = (data && data.used) || {};
+        var dDol = (Number(limitsObj.daily_cents)   || 0) / 100;
+        var wDol = (Number(limitsObj.weekly_cents)  || 0) / 100;
+        var mDol = (Number(limitsObj.monthly_cents) || 0) / 100;
+        var dUsed = (Number(usedObj.daily_cents)   || 0) / 100;
+        var wUsed = (Number(usedObj.weekly_cents)  || 0) / 100;
+        var mUsed = (Number(usedObj.monthly_cents) || 0) / 100;
+        displayLimit('Daily Limit',   dDol, dUsed);
+        displayLimit('Weekly Limit',  wDol, wUsed);
+        displayLimit('Monthly Limit', mDol, mUsed);
 
-        // Populate form inputs for editing
         var dailyInput = document.getElementById('dlDailyInput');
         var weeklyInput = document.getElementById('dlWeeklyInput');
         var monthlyInput = document.getElementById('dlMonthlyInput');
 
-        if (dailyInput && data.dailyLimit > 0) dailyInput.value = parseFloat(data.dailyLimit).toFixed(2);
-        if (weeklyInput && data.weeklyLimit > 0) weeklyInput.value = parseFloat(data.weeklyLimit).toFixed(2);
-        if (monthlyInput && data.monthlyLimit > 0) monthlyInput.value = parseFloat(data.monthlyLimit).toFixed(2);
+        if (dailyInput && dDol > 0) dailyInput.value = dDol.toFixed(2);
+        if (weeklyInput && wDol > 0) weeklyInput.value = wDol.toFixed(2);
+        if (monthlyInput && mDol > 0) monthlyInput.value = mDol.toFixed(2);
 
     } catch (err) {
         console.warn('[Deposit Limits] Error fetching limits:', err);
@@ -7420,7 +7417,14 @@ async function _renderDepositLimitsSection(modal) {
 }
 
 /**
- * Save new deposit limits via POST /api/deposit-limits/
+ * Save new deposit limits via PUT /api/deposit/limits.
+ *
+ * Cents-only on the wire — the server validates each limit fits in
+ * [0, 1,000,000c] and that daily ≤ weekly ≤ monthly. Increases are
+ * NOT applied here; the server returns the unchanged value plus a
+ * `rejected` array naming the windows that need an operator + 24h
+ * cooling-off (see deposit.routes.js:206). We surface that note so
+ * the user understands why their increase didn't stick.
  */
 async function _saveLimits(modal, token, formOverlay) {
     var dailyInput = document.getElementById('dlDailyInput');
@@ -7433,40 +7437,47 @@ async function _saveLimits(modal, token, formOverlay) {
     var weekly = parseFloat(weeklyInput.value) || 0;
     var monthly = parseFloat(monthlyInput.value) || 0;
 
-    // Basic validation
     if ((daily < 0 || daily > 999999) || (weekly < 0 || weekly > 999999) || (monthly < 0 || monthly > 999999)) {
         if (typeof showToast === 'function') {
             showToast('Please enter valid limit amounts (0-999999)', 'error', 3000);
         }
         return;
     }
+    if (daily > weekly || weekly > monthly) {
+        if (typeof showToast === 'function') {
+            showToast('Limits must satisfy daily ≤ weekly ≤ monthly.', 'error', 4000);
+        }
+        return;
+    }
 
     try {
-        var resp = await fetch('/api/deposit-limits/', {
-            method: 'POST',
+        var resp = await fetch('/api/deposit/limits', {
+            method: 'PUT',
             headers: {
                 Authorization: 'Bearer ' + token,
                 'Content-Type': 'application/json'
             },
             body: JSON.stringify({
-                dailyLimit: daily,
-                weeklyLimit: weekly,
-                monthlyLimit: monthly
+                daily_cents: Math.round(daily * 100),
+                weekly_cents: Math.round(weekly * 100),
+                monthly_cents: Math.round(monthly * 100)
             })
         });
 
         var result = await resp.json();
 
-        if (result.success) {
+        if (resp.ok && result && result.limits) {
             formOverlay.classList.remove('active');
             if (typeof showToast === 'function') {
-                showToast('✅ Deposit limits saved successfully!', 'success', 3000);
+                var msg = (result.rejected && result.rejected.length)
+                    ? 'Decreases applied. ' + result.rejected.join(', ') + ' increase(s) need operator approval (24h cooling-off).'
+                    : '✅ Deposit limits saved.';
+                showToast(msg, 'success', 5000);
             }
-            // Refresh the limits display
             await _renderDepositLimitsSection(modal);
         } else {
             if (typeof showToast === 'function') {
-                showToast(result.error || 'Failed to save limits', 'error', 3000);
+                showToast((result && result.error) || 'Failed to save limits', 'error', 3000);
             }
         }
     } catch (err) {
