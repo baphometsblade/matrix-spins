@@ -27,10 +27,11 @@ module.exports = async (req, res) => {
   loadApp();
 
   if (loadError) {
+    console.error('[Vercel] Load error:', loadError.stack || loadError);
+    const debug = process.env.ADMIN_PASSWORD && req.headers['x-admin-token'] === process.env.ADMIN_PASSWORD;
     return res.status(500).json({
       error: 'Server failed to initialize',
-      detail: loadError.message,
-      stack: loadError.stack ? loadError.stack.split('\n').slice(0, 6) : null,
+      detail: debug ? loadError.message : undefined,
       referenceNumber: 'VRC-LOAD-' + Date.now().toString(36).toUpperCase(),
     });
   }
@@ -42,10 +43,10 @@ module.exports = async (req, res) => {
     return cachedApp(req, res);
   } catch (err) {
     console.error('[Vercel] Handler error:', err && err.stack || err);
+    const debug = process.env.ADMIN_PASSWORD && req.headers['x-admin-token'] === process.env.ADMIN_PASSWORD;
     return res.status(500).json({
       error: 'Internal server error',
-      detail: err.message,
-      stack: err.stack ? err.stack.split('\n').slice(0, 6) : null,
+      detail: debug ? err.message : undefined,
       referenceNumber: 'VRC-' + Date.now().toString(36).toUpperCase(),
     });
   }

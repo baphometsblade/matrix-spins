@@ -1339,15 +1339,6 @@ router.post('/webhook/confirm', async (req, res) => {
         if (!deposit) {
             return res.status(404).json({ error: 'Deposit not found' });
         }
-        // Atomic: mark deposit completed FIRST to prevent double-confirm race condition
-        const confirmResult = await db.run(
-            "UPDATE deposits SET status = 'completed', completed_at = datetime('now') WHERE id = ? AND status = 'pending'",
-            [deposit.id]
-        );
-        if (!confirmResult || confirmResult.changes === 0) {
-            return res.status(200).json({ message: `Deposit already processed`, depositId: deposit.id });
-        }
-
         const user = await db.get('SELECT balance, bonus_balance FROM users WHERE id = ?', [deposit.user_id]);
         if (!user) {
             return res.status(404).json({ error: 'User not found' });
@@ -1355,37 +1346,51 @@ router.post('/webhook/confirm', async (req, res) => {
 
         const balanceBefore = user.balance;
 
-        // Determine bonus: first deposit or reload
+        // ── Entire deposit confirmation + bonus in ONE transaction ──
+        const isPg = typeof db.isPg === 'function' && db.isPg();
+        const nowExpr = isPg ? 'NOW()' : "datetime('now')";
+        const interval24h = isPg
+            ? "created_at >= NOW() - INTERVAL '24 hours'"
+            : "created_at >= datetime('now', '-24 hours')";
+
         let bonusAmount = 0;
         let wageringMult = 0;
         let bonusType = '';
-        const priorDeposits = await db.get(
-            "SELECT COUNT(*) as count FROM deposits WHERE user_id = ? AND status = 'completed'",
-            [deposit.user_id]
-        );
-        if (priorDeposits && priorDeposits.count <= 1) {
-            // count <= 1 because the current deposit was already marked completed above
-            bonusAmount = Math.min(deposit.amount * (config.FIRST_DEPOSIT_BONUS_PCT / 100), config.FIRST_DEPOSIT_BONUS_MAX);
-            wageringMult = config.FIRST_DEPOSIT_WAGERING_MULT || 45;
-            bonusType = 'first_deposit_bonus';
-        } else {
-            // Reload bonus limited to once per 24 hours
-            const recentReload = await db.get(
-                "SELECT id FROM transactions WHERE user_id = ? AND type = 'reload_bonus' AND created_at >= datetime('now', '-24 hours') LIMIT 1",
-                [deposit.user_id]
-            );
-            if (!recentReload) {
-                bonusAmount = Math.min(deposit.amount * ((config.RELOAD_BONUS_PCT || 25) / 100), config.RELOAD_BONUS_MAX || 100);
-                wageringMult = config.RELOAD_WAGERING_MULT || 35;
-                bonusType = 'reload_bonus';
-            }
-        }
-
-        // ── Wrap webhook deposit credit in transaction for atomicity ──
         await db.beginTransaction();
         let balanceAfter;
         try {
-            // Atomic balance credit — prevents race condition overwrites
+            // Atomic claim inside txn — prevents double-confirm AND partial-credit
+            const confirmResult = await db.run(
+                `UPDATE deposits SET status = 'completed', completed_at = ${nowExpr} WHERE id = ? AND status = 'pending'`,
+                [deposit.id]
+            );
+            if (!confirmResult || confirmResult.changes === 0) {
+                await db.rollback();
+                return res.status(200).json({ message: 'Deposit already processed', depositId: deposit.id });
+            }
+
+            // Bonus eligibility check inside txn for consistency
+            const priorDeposits = await db.get(
+                "SELECT COUNT(*) as count FROM deposits WHERE user_id = ? AND status = 'completed'",
+                [deposit.user_id]
+            );
+            if (priorDeposits && priorDeposits.count <= 1) {
+                bonusAmount = Math.min(deposit.amount * (config.FIRST_DEPOSIT_BONUS_PCT / 100), config.FIRST_DEPOSIT_BONUS_MAX);
+                wageringMult = config.FIRST_DEPOSIT_WAGERING_MULT || 45;
+                bonusType = 'first_deposit_bonus';
+            } else {
+                const recentReload = await db.get(
+                    `SELECT id FROM transactions WHERE user_id = ? AND type = 'reload_bonus' AND ${interval24h} LIMIT 1`,
+                    [deposit.user_id]
+                );
+                if (!recentReload) {
+                    bonusAmount = Math.min(deposit.amount * ((config.RELOAD_BONUS_PCT || 25) / 100), config.RELOAD_BONUS_MAX || 100);
+                    wageringMult = config.RELOAD_WAGERING_MULT || 30;
+                    bonusType = 'reload_bonus';
+                }
+            }
+
+            // Atomic balance credit
             await db.run('UPDATE users SET balance = balance + ? WHERE id = ?', [deposit.amount, deposit.user_id]);
             balanceAfter = balanceBefore + deposit.amount;
 

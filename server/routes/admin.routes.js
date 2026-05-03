@@ -31,15 +31,18 @@ async function checkTargetSelfExclusion(userId) {
     return false;
 }
 
-// Bootstrap admin audit log table
+// Bootstrap admin audit log table (PostgreSQL + SQLite compatible)
+const _isPgAdmin = typeof db.isPg === 'function' && db.isPg();
+const _idDefAdmin = _isPgAdmin ? 'SERIAL PRIMARY KEY' : 'INTEGER PRIMARY KEY AUTOINCREMENT';
+const _tsDefAdmin = _isPgAdmin ? 'TIMESTAMPTZ DEFAULT NOW()' : "TEXT DEFAULT (datetime('now'))";
 db.run(`CREATE TABLE IF NOT EXISTS admin_audit_log (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    id ${_idDefAdmin},
     admin_id INTEGER NOT NULL,
     action TEXT NOT NULL,
     target_user_id INTEGER,
     details TEXT,
-    created_at TEXT DEFAULT (datetime('now'))
-)`).catch(() => {});
+    created_at ${_tsDefAdmin}
+)`).catch(e => console.warn('[Admin] audit_log table init failed:', e.message));
 
 // GET /api/admin/revenue — Comprehensive P&L analytics (daily, lifetime, top players, WoW)
 router.get('/revenue', async (req, res) => {

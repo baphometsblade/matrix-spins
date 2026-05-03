@@ -11,9 +11,9 @@ const fraudDetection = require('../services/fraud-detection');
 const router = express.Router();
 const emailService = require('../services/email.service');
 
-var isPg = db.isPg();
-var idDef = isPg ? 'SERIAL PRIMARY KEY' : 'INTEGER PRIMARY KEY AUTOINCREMENT';
-var tsDef = isPg ? 'TIMESTAMPTZ DEFAULT NOW()' : "TEXT DEFAULT (datetime('now'))";
+function _authIsPg() { return typeof db.isPg === 'function' && db.isPg(); }
+function _authIdDef() { return _authIsPg() ? 'SERIAL PRIMARY KEY' : 'INTEGER PRIMARY KEY AUTOINCREMENT'; }
+function _authTsDef() { return _authIsPg() ? 'TIMESTAMPTZ DEFAULT NOW()' : "TEXT DEFAULT (datetime('now'))"; }
 
 // Dummy hash for constant-time auth when user not found (prevents timing attacks)
 const DUMMY_HASH = bcrypt.hashSync('dummy-password-never-matches', 13);
@@ -413,17 +413,17 @@ router.post('/login', async (req, res) => {
 
 // Bootstrap: create password_reset_tokens table
 db.run(`CREATE TABLE IF NOT EXISTS password_reset_tokens (
-    id ${idDef},
+    id ${_authIdDef()},
     user_id INTEGER NOT NULL,
     token TEXT NOT NULL UNIQUE,
     expires_at TEXT NOT NULL,
     used INTEGER DEFAULT 0,
-    created_at ${tsDef}
+    created_at ${_authTsDef()}
 )`).catch(function(e) { if (e && !String(e.message || e).match(/already exists/i)) console.warn('[Auth] Password reset tokens table create failed:', e.message || e); });
 
 // Bootstrap: create email_verification_tokens table
 db.run(`CREATE TABLE IF NOT EXISTS email_verification_tokens (
-    id ${idDef},
+    id ${_authIdDef()},
     user_id INTEGER NOT NULL,
     token TEXT NOT NULL UNIQUE,
     expires_at TEXT NOT NULL,

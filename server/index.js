@@ -40,9 +40,20 @@ if (missing.length > 0) {
   console.warn('[SERVER]   See render.yaml + .env.example for required values.');
 }
 
-if (config.NODE_ENV === 'production' && process.env.JWT_SECRET && process.env.JWT_SECRET.length < 32) {
-  console.error('[SERVER] FATAL: JWT_SECRET must be at least 32 characters in production.');
-  process.exit(1);
+if (config.NODE_ENV === 'production') {
+  if (process.env.JWT_SECRET && process.env.JWT_SECRET.length < 32) {
+    console.error('[SERVER] FATAL: JWT_SECRET must be at least 32 characters in production.');
+    process.exit(1);
+  }
+  const KNOWN_DEFAULTS = ['dev-secret-do-not-use-in-production', 'admin-change-me-now'];
+  if (KNOWN_DEFAULTS.includes(config.JWT_SECRET)) {
+    console.error('[SERVER] FATAL: JWT_SECRET is a known default — set a real secret.');
+    process.exit(1);
+  }
+  if (KNOWN_DEFAULTS.includes(config.ADMIN_PASSWORD)) {
+    console.error('[SERVER] FATAL: ADMIN_PASSWORD is a known default — set a real password.');
+    process.exit(1);
+  }
 }
 
 // ── Request ID + Slow Request Logging ──────────────────────
@@ -70,7 +81,7 @@ try {
 // ── Security Headers ────────────────────────────────────────
 app.use((req, res, next) => {
   res.setHeader('X-Content-Type-Options', 'nosniff');
-  res.setHeader('X-Frame-Options', 'SAMEORIGIN');
+  res.setHeader('X-Frame-Options', 'DENY');
   res.setHeader('X-XSS-Protection', '1; mode=block');
   res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
   res.setHeader('Permissions-Policy', 'camera=(), microphone=(), geolocation=(), payment=(self)');
@@ -93,11 +104,25 @@ app.use((req, res, next) => {
 });
 
 // ── CORS ────────────────────────────────────────────────────
-const corsOrigin = config.NODE_ENV === 'production'
-  ? (process.env.ALLOWED_ORIGIN || 'https://msaart.online')
-  : (process.env.ALLOWED_ORIGIN || 'http://localhost:3000');
+const ALLOWED_ORIGINS = (() => {
+  if (process.env.ALLOWED_ORIGIN) {
+    return process.env.ALLOWED_ORIGIN.split(',').map(o => o.trim()).filter(Boolean);
+  }
+  if (config.NODE_ENV === 'production') {
+    return [
+      'https://msaart.online',
+      'https://www.msaart.online',
+      'https://royal-slots-casino.vercel.app',
+    ];
+  }
+  return ['http://localhost:3000', 'http://localhost:5173', 'http://127.0.0.1:3000'];
+})();
 app.use(cors({
-  origin: corsOrigin,
+  origin(origin, cb) {
+    if (!origin || ALLOWED_ORIGINS.includes(origin)) return cb(null, true);
+    if (origin.endsWith('.vercel.app')) return cb(null, true);
+    cb(null, false);
+  },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization', 'X-CSRF-Token', 'X-Admin-Token'],
@@ -203,7 +228,7 @@ const claimPaths = [
 ];
 claimPaths.forEach(p => app.use(p, claimLimiter));
 
-const paymentLimiter = rateLimit({ windowMs: 60 * 1000, max: 60, standardHeaders: true, legacyHeaders: false });
+const paymentLimiter = rateLimit({ windowMs: 60 * 1000, max: 6, standardHeaders: true, legacyHeaders: false });
 app.use('/api/payment/deposit',         paymentLimiter);
 app.use('/api/payment/withdraw',        paymentLimiter);
 app.use('/api/payment/create-checkout', paymentLimiter);
@@ -354,7 +379,6 @@ mount('/api/ab',            './routes/abtesting.routes',     'ab-alias');
 mount('/api/chat',          './routes/chat.routes',          'chat');
 mount('/api/feedback',      './routes/feedback.routes',      'feedback');
 mount('/api/favorites',     './routes/favorites.routes',     'favorites');
-mount('/api/cosmetics',     './routes/cosmetics.routes',     'cosmetics');
 
 // Compliance / responsible-gambling
 mount('/api/self-exclusion', './routes/selfexclusion.routes', 'self-exclusion');
@@ -473,20 +497,24 @@ function bindCatchAll() {
   // Admin dashboard
   app.use('/admin', express.static(path.join(FRONTEND_ROOT, 'admin')));
 
-  // SPA fallback
+  // SPA fallback (path-traversal safe)
+  const resolvedRoot = path.resolve(FRONTEND_ROOT);
   app.get('/{*splat}', (req, res) => {
     if (req.path.startsWith('/api/')) {
       return res.status(404).json({ error: 'API endpoint not found', path: req.path });
     }
     const reqPath = decodeURIComponent(req.path);
-    const direct = path.join(FRONTEND_ROOT, reqPath);
-    if (reqPath.match(/\.\w+$/) && fs.existsSync(direct) && fs.statSync(direct).isFile()) {
-      return res.sendFile(direct);
+    const resolved = path.resolve(FRONTEND_ROOT, '.' + reqPath);
+    if (!resolved.startsWith(resolvedRoot)) {
+      return res.status(404).send('Not found');
+    }
+    if (reqPath.match(/\.\w+$/) && fs.existsSync(resolved) && fs.statSync(resolved).isFile()) {
+      return res.sendFile(resolved);
     }
     if (!reqPath.match(/\.\w+$/)) {
-      const html = path.join(FRONTEND_ROOT, reqPath + '.html');
+      const html = resolved + '.html';
       if (fs.existsSync(html) && fs.statSync(html).isFile()) return res.sendFile(html);
-      const dirIdx = path.join(FRONTEND_ROOT, reqPath, 'index.html');
+      const dirIdx = path.join(resolved, 'index.html');
       if (fs.existsSync(dirIdx) && fs.statSync(dirIdx).isFile()) return res.sendFile(dirIdx);
     }
     if (reqPath.match(/\.\w+$/)) {
