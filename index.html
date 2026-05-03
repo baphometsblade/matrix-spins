@@ -283,6 +283,21 @@
                         if (!r.ok) return;
                         var data = await r.json();
                         var wins = (data && data.wins) || [];
+                        // Hero stats — biggest win and total count over the
+                        // hot-wins window (24h, anonymized). Earlier the
+                        // hero printed stats.biggestWin (this user's
+                        // personal best) labelled "BIGGEST WIN TODAY",
+                        // and "12 wins in last hour" was a hardcoded
+                        // string. Both lied. We hydrate from the same
+                        // payload the ticker already polls so we don't
+                        // double the request rate.
+                        var biggest = wins.length
+                            ? Math.max.apply(null, wins.map(function (w) { return Number(w.win_cents) || 0; }))
+                            : 0;
+                        var bigEl = document.getElementById('biggestWin');
+                        if (bigEl) bigEl.textContent = (biggest / 100).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+                        var cntEl = document.getElementById('recentWinsCount');
+                        if (cntEl) cntEl.textContent = wins.length;
                         if (wins.length === 0) {
                             ticker.style.display = 'none';
                             return;
@@ -310,33 +325,28 @@
             <div class="hero-content">
                 <div class="hero-left">
                     <div class="hero-tags">
-                        <span class="hero-tag tag-hot">LIMITED OFFER</span>
-                        <span class="hero-tag tag-games">165+ GAMES</span>
+                        <span class="hero-tag tag-hot">REAL MONEY</span>
+                        <span class="hero-tag tag-games">PROVABLY FAIR</span>
                     </div>
                     <h2 class="hero-title">
                         SPIN TO <span class="hero-highlight">WIN BIG</span>
                     </h2>
                     <p class="hero-subtitle">
-                        165+ Premium Slot Games · Jackpots Up To $25,000 · Instant Withdrawals
+                        Server-Settled Slots · HMAC-SHA256 Commit-Reveal · 2FA-Protected Withdrawals
                     </p>
                     <div class="hero-buttons">
-                        <button class="btn btn-play" onclick="playRandomHotGame()">PLAY NOW</button>
-                        <!-- Removed: Bonus Wheel hero button -->
-                        <button class="btn btn-deposit-hero" onclick="typeof showWalletModal==='function'?showWalletModal():null">?? DEPOSIT</button>
+                        <button class="btn btn-play" onclick="(window.openLiveSlot||function(){})('neon_burst')">PLAY REAL MONEY</button>
+                        <button class="btn btn-deposit-hero" onclick="typeof showWalletModal==='function'?showWalletModal():null">DEPOSIT</button>
                     </div>
                 </div>
                 <div class="hero-stats">
-                    <div class="stats-label">BIGGEST WIN TODAY</div>
+                    <div class="stats-label">BIGGEST WIN (24h)</div>
                     <div class="stats-value">$<span id="biggestWin">0</span></div>
-                    <div class="stats-info"><span id="recentWinsCount">12</span> wins in last hour</div>
+                    <div class="stats-info"><span id="recentWinsCount">0</span> wins in last 24h</div>
                     <div class="balance-sparkline-wrap" id="balanceSparklineWrap" style="display:none">
                         <div class="sparkline-label">Balance Trend</div>
                         <svg id="balanceSparkline" class="balance-sparkline" viewBox="0 0 120 36" preserveAspectRatio="none"></svg>
                     </div>
-                </div>
-                <div class="hero-jackpot" id="heroJackpotDisplay" style="display:none">
-                    <div class="hero-jackpot-label">?? GRAND JACKPOT</div>
-                    <div class="hero-jackpot-amount" id="heroJackpotAmount">$25,000.00</div>
                 </div>
             </div>
         </div>

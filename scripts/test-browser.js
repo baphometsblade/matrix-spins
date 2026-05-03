@@ -137,6 +137,28 @@ async function main() {
         else if (pillSummary.live < 1 || pillSummary.demo < 1) fail('mode pills not split: ' + JSON.stringify(pillSummary));
         else ok('mode pills: ' + pillSummary.live + ' REAL MONEY, ' + pillSummary.demo + ' FREE PLAY across ' + pillSummary.total + ' cards');
 
+        // Hero copy — assertions guard against the old false claims
+        // (165+ games, $25,000 jackpot, instant withdrawals, hardcoded
+        // "12 wins in last hour"). Catalog is 67 games, only 2 take
+        // real money, and withdrawals require operator approval, so
+        // the hero must not say otherwise.
+        const heroCopy = await page.evaluate(() => {
+            const hero = document.querySelector('.hero-banner');
+            return hero ? (hero.textContent || '') : '';
+        });
+        const heroLies = [
+            { needle: '165+', label: '"165+ games" claim' },
+            { needle: '$25,000', label: '"$25,000 jackpot" claim' },
+            { needle: 'Instant Withdrawals', label: '"Instant Withdrawals" claim' },
+            { needle: 'wins in last hour', label: 'hardcoded "wins in last hour" copy' },
+        ];
+        const stillLying = heroLies.filter(l => heroCopy.indexOf(l.needle) >= 0);
+        if (stillLying.length) {
+            fail('hero still advertises: ' + stillLying.map(l => l.label).join(', '));
+        } else {
+            ok('hero copy is honest (no 165+/jackpot/instant-withdrawals/12-wins-per-hour claims)');
+        }
+
         // Real Money filter — clicking the live tab must narrow the
         // main "All Games" grid to liveMode slots only. Other lobby
         // sections (Hot, New, recently-played carousels) keep their

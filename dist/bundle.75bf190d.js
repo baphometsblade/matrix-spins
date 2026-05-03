@@ -1,5 +1,5 @@
 /* Royal Slots Casino - Bundled JavaScript */
-/* Generated: 2026-05-03T07:11:28.545Z */
+/* Generated: 2026-05-03T10:04:51.470Z */
 
 
 /* â”€â”€â”€ shared/game-definitions.js (2/56) â”€â”€â”€ */
@@ -41840,10 +41840,14 @@ window._logAudit658 = _logAudit658;
 
 
         function updateStatsSummary() {
-            const biggestWinEl = document.getElementById('biggestWin');
-            if (biggestWinEl) {
-                biggestWinEl.textContent = Math.round(stats.biggestWin).toLocaleString();
-            }
+            // The hero's #biggestWin element was previously overwritten
+            // here with the local stats.biggestWin (this user's personal
+            // best across all sessions, including demo wins) under a
+            // "BIGGEST WIN TODAY" label. Misleading: it wasn't today,
+            // wasn't anyone else's, and rolled in client-only demo
+            // payouts. The hero now sources biggest-win from the public
+            // hot-wins endpoint (server-aggregated, real money only,
+            // 24h window). Personal-best lives in the stats modal.
             updateStatsModal();
         }
 
