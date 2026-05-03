@@ -1,5 +1,5 @@
 /* Royal Slots Casino - Bundled JavaScript */
-/* Generated: 2026-05-03T01:55:27.034Z */
+/* Generated: 2026-05-03T07:11:28.545Z */
 
 
 /* â”€â”€â”€ shared/game-definitions.js (2/56) â”€â”€â”€ */
@@ -60770,27 +60770,21 @@ setInterval(function() {
             const urlParams = new URLSearchParams(window.location.search);
             const suppressBonus = urlParams.get('qaTools') === '1' || urlParams.get('qaTools') === 'true'
                 || urlParams.get('noBonus') === '1' || urlParams.get('autoSpin') === '1';
-            if (!dailyBonusState.claimedToday && !suppressBonus) {
-                setTimeout(() => showDailyBonusModal(), 1500);
-            }
+
+            // Post-auth engagement fetches. Only the two endpoints below
+            // exist in server/routes/ — the rest of the historical list
+            // (daily-bonus, birthday, achievements, level-up, milestones,
+            // weekend-cashback, comeback, subscription, XP sync,
+            // tournament, spinstreak, mystery, gifts, notifications)
+            // hits routes that have never been implemented. They 404'd
+            // silently and the modals they would have spawned promised
+            // coin / gem / cash rewards that were never credited
+            // server-side. Disabled here; the helper functions stay in
+            // the file dead until matching routes ship.
             if (!suppressBonus) {
                 _checkReturnStatus();
-                _checkBirthday();
                 _checkLossStreakOffer();
             }
-            if (!suppressBonus) {
-                _checkAchievements();
-                setTimeout(function() { if (typeof _checkLevelUpBonus === 'function') _checkLevelUpBonus(); }, 6000);
-                _checkMilestones();
-                _checkDailyStreak();
-                setTimeout(function() { _checkWeekendCashback(); }, 2000);
-                setTimeout(function() { _checkComebackBonus(); }, 4000);
-                _checkStreakBonuses();
-                _checkSubscriptionDailyGems();
-                _checkGiftsInbox();
-            }
-            _syncXpWithServer();
-            _initTournamentRecording();
             // Initialize onboarding funnel (early, before other systems)
             if (typeof OnboardingFunnel !== 'undefined' && OnboardingFunnel.init) {
                 OnboardingFunnel.init();
@@ -60804,13 +60798,13 @@ setInterval(function() {
             if (typeof NotificationBell !== 'undefined' && NotificationBell.init) {
                 NotificationBell.init();
             }
-            if (typeof checkDailyLoginReward === 'function') {
-                setTimeout(checkDailyLoginReward, 3000);
-            }
-            _initLossStreakMonitor();
-            _initSpinStreakTicker();
-            _initMysteryDropChecker();
-            _initNotificationBell();
+            // checkDailyLoginReward, _initSpinStreakTicker, _initMysteryDropChecker,
+            // _initLossStreakMonitor, _initNotificationBell all reach for endpoints
+            // that don't exist on the server (/api/daily-login/, /api/spinstreak/tick,
+            // /api/mystery, /api/notifications, /api/streak). They're disabled for the
+            // same reason as the post-auth bonus block above — fetches 404 silently
+            // and any UI they would have rendered promised value the engine never
+            // credits. Re-enable each individually once a matching server route lands.
             startSessionDurationWatch();
             // Initialize session idle timeout (responsible gambling)
             if (typeof SessionTimeout !== 'undefined' && SessionTimeout.init) {
