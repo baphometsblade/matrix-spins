@@ -346,7 +346,7 @@ const MatrixMoney = (() => {
 
         <div style="margin-bottom: 20px;">
           <label style="color: #56d2a0; font-weight: 600; font-size: 14px; display: block; margin-bottom: 10px;">Withdrawal Amount (AUD):</label>
-          <input type="number" id="mm-withdraw-amount" min="20" max="${Math.min(currentBalance, 50000)}" step="1" placeholder="Enter amount (min $20)"
+          <input type="number" id="mm-withdraw-amount" inputmode="decimal" enterkeyhint="done" autocomplete="off" pattern="[0-9]*" min="20" max="${Math.min(currentBalance, 50000)}" step="1" placeholder="Enter amount (min $20)"
                  style="width: 100%; padding: 12px 14px; background: rgba(15,23,42,0.8); border: 1px solid rgba(86,210,160,0.3); border-radius: 8px; color: #e0e0e0; font-size: 16px; box-sizing: border-box;">
           <div style="display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap;">
             ${quickHtml}

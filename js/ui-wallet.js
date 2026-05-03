@@ -756,6 +756,7 @@ function renderDepositForm() {
                 <div class="wallet-amount-input-wrap">
                     <span class="wallet-amount-input-wrap__prefix">$</span>
                     <input type="number" id="walletDepositAmount" class="wallet-input wallet-input--amount"
+                           inputmode="decimal" enterkeyhint="done" autocomplete="off" pattern="[0-9]*"
                            min="1" step="1" value="50" placeholder="0.00">
                 </div>
             </div>
@@ -1015,6 +1016,7 @@ function renderWithdrawForm() {
                 <div class="wallet-amount-input-wrap">
                     <span class="wallet-amount-input-wrap__prefix">$</span>
                     <input type="number" id="walletWithdrawAmount" class="wallet-input wallet-input--amount"
+                           inputmode="decimal" enterkeyhint="done" autocomplete="off" pattern="[0-9]*"
                            min="1" max="${balance}" step="1" value="" placeholder="0.00">
                 </div>
             </div>

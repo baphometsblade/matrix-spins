@@ -314,7 +314,7 @@
           <div style="margin-bottom:24px;">
             <label style="display:block;margin-bottom:8px;color:#999;font-size:13px;">Custom Amount</label>
             <div style="display:flex;gap:12px;">
-              <input id="deposit-custom-amount" type="number" min="5" max="10000" step="5" placeholder="Enter amount"
+              <input id="deposit-custom-amount" type="number" inputmode="decimal" enterkeyhint="done" autocomplete="off" pattern="[0-9]*" min="5" max="10000" step="5" placeholder="Enter amount"
                 style="flex:1;padding:12px;background:#0a0a0a;border:1px solid #333;color:#E0E0E0;
                        border-radius:6px;font-size:16px;">
               <button onclick="const v=document.getElementById('deposit-custom-amount').value;if(v>0)window.CasinoDeposit.processDeposit(parseFloat(v));"
@@ -402,7 +402,7 @@
           </div>
           <p style="margin-bottom:16px;color:#999;">Available balance: <strong style="color:#DAA520;">$${balance.toFixed(2)}</strong></p>
           <div style="margin-bottom:24px;">
-            <input id="withdraw-amount" type="number" min="10" max="${balance}" step="5" placeholder="Amount to withdraw"
+            <input id="withdraw-amount" type="number" inputmode="decimal" enterkeyhint="done" autocomplete="off" pattern="[0-9]*" min="10" max="${balance}" step="5" placeholder="Amount to withdraw"
               style="width:100%;padding:12px;background:#0a0a0a;border:1px solid #333;color:#E0E0E0;
                      border-radius:6px;font-size:16px;margin-bottom:12px;">
             <button onclick="window.CasinoWithdraw.processWithdraw()"

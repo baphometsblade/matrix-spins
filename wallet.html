@@ -71,7 +71,7 @@
 
     <div class="field" style="margin-bottom:0.8rem;">
       <label>Amount ($)</label>
-      <input id="wdAmount" type="number" min="20" step="1" required placeholder="Minimum $20">
+      <input id="wdAmount" type="number" inputmode="decimal" enterkeyhint="done" autocomplete="off" pattern="[0-9]*" min="20" step="1" required placeholder="Minimum $20">
     </div>
 
     <label style="display:block;font-size:.78rem;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:0.5rem;">Method</label>
@@ -149,7 +149,7 @@
 
     <div class="field" id="customAmountField" style="display:none;">
       <label>Custom amount ($)</label>
-      <input id="depAmount" type="number" min="10" max="10000" step="1" placeholder="Enter amount">
+      <input id="depAmount" type="number" inputmode="decimal" enterkeyhint="done" autocomplete="off" pattern="[0-9]*" min="10" max="10000" step="1" placeholder="Enter amount">
     </div>
 
     <label style="display:block;font-size:.78rem;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:0.5rem;">Payment method</label>

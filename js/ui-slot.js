@@ -1927,6 +1927,7 @@
                 if (typeof showToast === 'function') showToast('Games are still loading, please try again.', 'info');
                 return;
             }
+            try { document.body.classList.add('slot-open'); } catch(_) {}
             currentGame = games.find(g => g.id === gameId);
             if (!currentGame) { console.warn('[openSlot] Game not found:', gameId); return; }
 
@@ -3241,6 +3242,7 @@
                 showMessage('Free spins in progress! Wait for them to finish.', 'lose');
                 return;
             }
+            try { document.body.classList.remove('slot-open'); } catch(_) {}
             // Stop auto-spin if active
             if (autoSpinActive) stopAutoSpin();
             // Reset new autoplay state

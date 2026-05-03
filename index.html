@@ -2,7 +2,11 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="format-detection" content="telephone=no, date=no, address=no, email=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <title>Matrix Spins Casino — Premium Online Slots | 100 Games from 8 Studios</title>
     <meta name="description" content="Play 100 premium slot games from 8 world-class studios. Provably fair, instant play, no download required. Free $1,000 demo credits.">
     <meta name="theme-color" content="#D4A853">
@@ -566,13 +570,37 @@
             overflow: hidden;
         }
 
+        .game-thumb {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            z-index: 1;
+            transition: transform 0.4s ease;
+        }
+        .game-card:hover .game-thumb {
+            transform: scale(1.05);
+        }
+
+        /* Prevent pull-to-refresh from killing active spins */
+        html, body { overscroll-behavior-y: none; }
+        body.slot-open { overscroll-behavior: contain; overflow: hidden; }
+        .slot-modal-fullscreen,
+        .reels-container,
+        .reel { overscroll-behavior: contain; touch-action: manipulation; }
+        button, .btn, [role="button"], .game-card, .play-btn { touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
+
         .game-placeholder {
             font-family: 'Plus Jakarta Sans', sans-serif;
-            font-size: 120px;
-            font-weight: 800;
-            color: rgba(255, 255, 255, 0.1);
+            font-size: 96px;
+            font-weight: 900;
+            color: rgba(255, 255, 255, 0.85);
             line-height: 1;
             text-transform: uppercase;
+            text-shadow: 0 4px 24px rgba(0,0,0,0.5), 0 0 40px rgba(255,255,255,0.15);
+            letter-spacing: -0.04em;
+            z-index: 0;
         }
 
         .game-studio-badge {
@@ -1491,9 +1519,10 @@
                 const studioColor = studio ? studio.colors.primary : '#D4A853';
 
                 card.innerHTML = `
-                    <div class="game-visual" style="background: linear-gradient(135deg, ${studioColor}15, var(--bg-surface))">
+                    <div class="game-visual" style="background: ${game.bgGradient || `linear-gradient(135deg, ${studioColor}, ${studioColor}66)`}">
+                        ${game.thumbnail ? `<img class="game-thumb" src="${game.thumbnail}" alt="${game.name}" loading="lazy" decoding="async" onerror="this.style.display='none'">` : ''}
                         <div class="game-placeholder">${game.name.charAt(0)}</div>
-                        <div class="game-studio-badge" style="background: ${studioColor}80">${game.studio}</div>
+                        <div class="game-studio-badge" style="background: ${studioColor}cc">${game.studio || game.provider || ''}</div>
                         <div class="game-badges">
                             ${badgesHtml}
                         </div>
@@ -1634,8 +1663,11 @@
             stack.innerHTML = display.map(g => {
                 const studio = (typeof window.STUDIO_CONFIG !== 'undefined') ? window.STUDIO_CONFIG[g.studioId] : null;
                 const color = studio ? studio.colors.primary : '#D4A853';
+                const showcaseBg = g.bgGradient || ('linear-gradient(135deg,' + color + ',' + color + '66)');
+                const showcaseThumb = g.thumbnail ? '<img class="game-thumb" src="' + g.thumbnail + '" alt="' + g.name + '" loading="lazy" decoding="async" onerror="this.style.display=\'none\'">' : '';
                 return '<div class="showcase-card" onclick="navigateToGame(\'' + g.id + '\')">' +
-                    '<div class="showcase-card-visual" style="background:linear-gradient(135deg,' + color + '15,var(--bg-surface))">' +
+                    '<div class="showcase-card-visual" style="background:' + showcaseBg + '">' +
+                    showcaseThumb +
                     '<div class="game-placeholder" style="font-size:40px">' + g.name.charAt(0) + '</div>' +
                     '</div>' +
                     '<div class="showcase-card-info">' +
