@@ -1,5 +1,5 @@
 /* Royal Slots Casino - Bundled JavaScript */
-/* Generated: 2026-05-02T17:04:00.214Z */
+/* Generated: 2026-05-03T01:35:28.339Z */
 
 
 /* â”€â”€â”€ shared/game-definitions.js (2/56) â”€â”€â”€ */
@@ -45148,20 +45148,26 @@ function _claimDailyCashback() {
 }
 
 function _checkFirstDepositStatus() {
-    if (window._walletHasCompletedDeposit !== undefined) return; // already checked
+    // Used by the wagering-progress banner near the bottom of the
+    // deposit form — sums paid deposits so the user can see how much
+    // turnover they still owe before withdrawal. Earlier draft hit
+    // /api/payment/deposits (404) and filtered status === 'completed'
+    // (real status is 'paid'); both bugs silently zeroed the bar for
+    // every user. Now points at the real endpoint and matches the
+    // statuses /api/deposit/* actually persists.
+    if (window._walletTotalDeposited !== undefined) return; // already checked
     const token = localStorage.getItem(typeof STORAGE_KEY_TOKEN !== 'undefined' ? STORAGE_KEY_TOKEN : 'casinoToken');
-    if (!token || !isServerAuthToken(token)) { window._walletHasCompletedDeposit = false; return; }
-    fetch('/api/payment/deposits?limit=200', { headers: { Authorization: 'Bearer ' + token } })
+    if (!token || !isServerAuthToken(token)) { window._walletTotalDeposited = 0; return; }
+    fetch('/api/user/deposits', { headers: { Authorization: 'Bearer ' + token } })
         .then(r => r.ok ? r.json() : null)
         .then(data => {
-            if (data && data.deposits) {
-                const completed = data.deposits.filter(d => d.status === 'completed');
-                window._walletHasCompletedDeposit = completed.length > 0;
-                window._walletTotalDeposited = completed.reduce((sum, d) => sum + (parseFloat(d.amount) || 0), 0);
-                renderWalletContent(); // re-render with updated info
+            if (data && Array.isArray(data.deposits)) {
+                const settled = data.deposits.filter(d => d.status === 'paid' || d.status === 'partial_refund');
+                window._walletTotalDeposited = settled.reduce((sum, d) => sum + (parseFloat(d.amount) || 0), 0);
+                if (typeof renderWalletContent === 'function') renderWalletContent();
             }
         })
-        .catch(() => {});
+        .catch(() => { /* leave undefined; wagering bar simply won't render */ });
 }
 
 
@@ -45349,30 +45355,39 @@ function _injectFirstDepositBannerStyles() {
     var style = document.createElement('style');
     style.id = 'wallet-first-deposit-banner-styles';
     style.textContent = [
-        '.wallet-first-deposit-banner{background:linear-gradient(135deg,rgba(251,191,36,0.12),rgba(217,119,6,0.06));border:1.5px solid rgba(251,191,36,0.35);border-radius:14px;padding:16px;margin-bottom:16px;text-align:center;}',
-        '.wfdb-badge{display:inline-block;background:linear-gradient(135deg,#f59e0b,#d97706);color:#fff;font-size:11px;font-weight:800;letter-spacing:1px;padding:3px 12px;border-radius:20px;margin-bottom:8px;}',
-        '.wfdb-title{color:#fbbf24;font-size:17px;font-weight:900;margin-bottom:12px;}',
-        '.wfdb-offers{display:flex;justify-content:center;gap:16px;margin-bottom:10px;}',
-        '.wfdb-offer{display:flex;flex-direction:column;align-items:center;}',
-        '.wfdb-num{color:#fff;font-size:20px;font-weight:900;line-height:1;}',
-        '.wfdb-lbl{color:rgba(255,255,255,0.45);font-size:10px;margin-top:3px;}',
-        '.wfdb-note{color:rgba(255,255,255,0.3);font-size:10px;}'
+        '.wallet-welcome-banner{background:linear-gradient(135deg,rgba(34,211,238,0.10),rgba(10,138,58,0.08));border:1px solid rgba(95,212,137,0.35);border-radius:12px;padding:14px 16px;margin-bottom:16px;}',
+        '.wwb-row{display:flex;align-items:center;gap:10px;flex-wrap:wrap;}',
+        '.wwb-badge{display:inline-block;background:linear-gradient(135deg,#0a8a3a,#0f6f2e);color:#fff;font-size:10px;font-weight:800;letter-spacing:1.4px;padding:3px 10px;border-radius:14px;}',
+        '.wwb-title{color:#e2e8f0;font-size:14px;font-weight:700;}',
+        '.wwb-bullets{margin:8px 0 0 0;padding:0;list-style:none;display:flex;gap:14px;flex-wrap:wrap;font-size:11px;color:#94a3b8;}',
+        '.wwb-bullets li{display:flex;align-items:center;gap:5px;}',
+        '.wwb-bullets li::before{content:"\u2713";color:#5fd489;font-weight:900;}'
     ].join('');
     document.head.appendChild(style);
 }
 
+// Honest first-visit welcome strip. The earlier version advertised a
+// "100% match up to $1,000 + 50 free spins + $5 no-deposit gift" that
+// had zero backend implementation \u2014 depositing never credited any
+// of it, which is straightforward false advertising and a chargeback
+// magnet. Bonuses, when the operator decides to run them, ride the
+// existing /api/promo redeem flow (see server/services/promo.service.js)
+// and produce a real audit trail. This banner now only states facts:
+// the minimum, the rails, and the trust posture.
 function _renderFirstDepositBanner() {
     if (localStorage.getItem('hasEverDeposited')) return '';
     _injectFirstDepositBannerStyles();
-    return '<div class="wallet-first-deposit-banner">' +
-        '<div class="wfdb-badge">\uD83C\uDF81 WELCOME OFFER</div>' +
-        '<div class="wfdb-title">100% Match on Your First Deposit!</div>' +
-        '<div class="wfdb-offers">' +
-            '<div class="wfdb-offer"><span class="wfdb-num">$1,000</span><span class="wfdb-lbl">Max Bonus</span></div>' +
-            '<div class="wfdb-offer"><span class="wfdb-num">50</span><span class="wfdb-lbl">Free Spins</span></div>' +
-            '<div class="wfdb-offer"><span class="wfdb-num">+$5</span><span class="wfdb-lbl">No-Deposit Gift</span></div>' +
+    return '<div class="wallet-welcome-banner">' +
+        '<div class="wwb-row">' +
+            '<span class="wwb-badge">WELCOME</span>' +
+            '<span class="wwb-title">Fund your account to play the live slots.</span>' +
         '</div>' +
-        '<div class="wfdb-note">Minimum deposit $10 \xB7 T&Cs apply</div>' +
+        '<ul class="wwb-bullets">' +
+            '<li>Minimum deposit $10</li>' +
+            '<li>Card payments via Stripe</li>' +
+            '<li>Provably-fair gameplay</li>' +
+            '<li>Withdrawals require 2FA</li>' +
+        '</ul>' +
     '</div>';
 }
 
@@ -45517,20 +45532,11 @@ function renderDepositForm() {
         });
     });
 
-    // First-deposit bonus banner (DOM-safe)
-    if (!window._walletHasCompletedDeposit) {
-        const banner = document.createElement('div');
-        banner.style.cssText = 'background:linear-gradient(135deg,#ffd700,#ff8c00);color:#0d0d1a;padding:14px 18px;border-radius:10px;margin-bottom:16px;text-align:center;font-weight:700;box-shadow:0 0 20px rgba(255,215,0,0.4);';
-        const title = document.createElement('div');
-        title.style.cssText = 'font-size:1.3rem;margin-bottom:4px;';
-        title.textContent = '🎁 FIRST DEPOSIT BONUS';
-        const desc = document.createElement('div');
-        desc.style.cssText = 'font-weight:500;font-size:0.85rem;';
-        desc.textContent = 'Get +$5 free credits + 1,000 💎 gems on your first deposit!';
-        banner.appendChild(title);
-        banner.appendChild(desc);
-        container.insertBefore(banner, container.firstChild);
-    }
+    // Earlier this block injected a "+$5 free credits + 1,000 gems on
+    // your first deposit" banner with no server-side credit ever firing.
+    // Removed — the welcome strip rendered above by _renderFirstDepositBanner
+    // is honest about the actual deposit terms; real bonuses ship via
+    // operator-issued promo codes (POST /api/promo/redeem).
 
     // Free spins display — fetched asynchronously and injected into the balance section
     walletFetchAndShowFreeSpins(container);
