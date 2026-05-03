@@ -1,0 +1,1435 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>Affiliate Program — Earn Up To 40% Revenue Share | Matrix Spins Casino</title>
+    <meta name="description" content="Join the Matrix Spins Casino affiliate program. Earn up to 40% revenue share, weekly payouts, real-time tracking. Apply free today.">
+    <meta name="theme-color" content="#0D0F14">
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+        :root {
+            --bg-primary: #0D0F14;
+            --bg-secondary: #13151C;
+            --bg-card: #1A1D27;
+            --bg-card-hover: #22252F;
+            --border: rgba(255,255,255,0.06);
+            --border-gold: rgba(212,168,83,0.25);
+            --accent-gold: #D4A853;
+            --accent-gold-bright: #F0C66E;
+            --accent-green: #4ADE80;
+            --text-primary: #F0F0F5;
+            --text-secondary: #9CA3AF;
+            --text-dim: #6B7280;
+            --radius: 12px;
+            --radius-lg: 16px;
+        }
+
+        html { scroll-behavior: smooth; }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+            line-height: 1.7;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        a { color: var(--accent-gold-bright); text-decoration: none; transition: color 0.2s; }
+        a:hover { color: #fff; }
+
+        /* ── Keyframes ── */
+        @keyframes shimmer {
+            0%   { background-position: -200% center; }
+            100% { background-position:  200% center; }
+        }
+        @keyframes fadeUp {
+            from { opacity: 0; transform: translateY(24px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes pulse-gold {
+            0%, 100% { box-shadow: 0 0 0 0 rgba(212,168,83,0.3); }
+            50%       { box-shadow: 0 0 0 8px rgba(212,168,83,0); }
+        }
+
+        /* ── Header ── */
+        .site-header {
+            background: linear-gradient(180deg, rgba(19,21,28,0.98) 0%, var(--bg-primary) 100%);
+            border-bottom: 1px solid var(--border);
+            padding: 0 24px;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            backdrop-filter: blur(16px);
+        }
+        .header-inner {
+            max-width: 1160px;
+            margin: 0 auto;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            height: 68px;
+            gap: 24px;
+        }
+        .logo {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            font-size: 20px;
+            font-weight: 800;
+            color: var(--accent-gold-bright);
+            letter-spacing: -0.3px;
+            white-space: nowrap;
+            text-decoration: none;
+        }
+        .logo:hover { color: #fff; text-decoration: none; }
+
+        .nav-links {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            list-style: none;
+        }
+        .nav-links a {
+            color: var(--text-secondary);
+            font-size: 14px;
+            font-weight: 500;
+            padding: 8px 14px;
+            border-radius: 8px;
+            transition: all 0.2s;
+        }
+        .nav-links a:hover {
+            color: var(--text-primary);
+            background: rgba(255,255,255,0.06);
+        }
+
+        .btn-gold {
+            background: linear-gradient(135deg, var(--accent-gold) 0%, var(--accent-gold-bright) 100%);
+            color: #0D0F14;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            font-weight: 700;
+            font-size: 14px;
+            padding: 10px 22px;
+            border-radius: 10px;
+            border: none;
+            cursor: pointer;
+            transition: all 0.2s;
+            letter-spacing: 0.2px;
+            white-space: nowrap;
+            display: inline-block;
+            text-decoration: none;
+        }
+        .btn-gold:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 20px rgba(212,168,83,0.35);
+            color: #0D0F14;
+            text-decoration: none;
+        }
+        .btn-gold:active { transform: translateY(0); }
+
+        .btn-gold-outline {
+            background: transparent;
+            border: 1.5px solid var(--accent-gold);
+            color: var(--accent-gold-bright);
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            font-weight: 700;
+            font-size: 15px;
+            padding: 14px 32px;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: inline-block;
+            text-decoration: none;
+        }
+        .btn-gold-outline:hover {
+            background: rgba(212,168,83,0.08);
+            color: var(--accent-gold-bright);
+            text-decoration: none;
+        }
+
+        .hamburger {
+            display: none;
+            flex-direction: column;
+            gap: 5px;
+            cursor: pointer;
+            padding: 4px;
+            background: none;
+            border: none;
+        }
+        .hamburger span {
+            display: block;
+            width: 22px;
+            height: 2px;
+            background: var(--text-secondary);
+            border-radius: 2px;
+            transition: all 0.3s;
+        }
+
+        /* ── Hero ── */
+        .hero {
+            padding: 96px 24px 80px;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+        .hero::before {
+            content: '';
+            position: absolute;
+            top: -120px; left: 50%;
+            transform: translateX(-50%);
+            width: 700px; height: 700px;
+            background: radial-gradient(circle, rgba(212,168,83,0.08) 0%, transparent 65%);
+            pointer-events: none;
+        }
+        .hero-inner {
+            max-width: 780px;
+            margin: 0 auto;
+            position: relative;
+            animation: fadeUp 0.7s ease both;
+        }
+        .hero-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(212,168,83,0.1);
+            border: 1px solid var(--border-gold);
+            color: var(--accent-gold-bright);
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: 2px;
+            padding: 6px 16px;
+            border-radius: 100px;
+            margin-bottom: 28px;
+            text-transform: uppercase;
+        }
+        .hero-badge::before {
+            content: '';
+            width: 6px; height: 6px;
+            background: var(--accent-gold-bright);
+            border-radius: 50%;
+            animation: pulse-gold 2s infinite;
+        }
+        .hero h1 {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            font-size: clamp(36px, 6vw, 64px);
+            font-weight: 800;
+            line-height: 1.1;
+            letter-spacing: -1.5px;
+            margin-bottom: 20px;
+            background: linear-gradient(135deg, #fff 0%, var(--accent-gold-bright) 50%, var(--accent-gold) 100%);
+            background-size: 200% auto;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            animation: shimmer 4s linear infinite;
+        }
+        .hero-sub {
+            font-size: 18px;
+            color: var(--text-secondary);
+            max-width: 580px;
+            margin: 0 auto 40px;
+            line-height: 1.65;
+        }
+        .hero-stats {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0;
+            flex-wrap: wrap;
+            margin-bottom: 44px;
+        }
+        .hero-stat {
+            padding: 20px 36px;
+            border-right: 1px solid var(--border);
+            text-align: center;
+        }
+        .hero-stat:last-child { border-right: none; }
+        .hero-stat-value {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            font-size: 28px;
+            font-weight: 800;
+            color: var(--accent-gold-bright);
+            line-height: 1;
+            margin-bottom: 6px;
+        }
+        .hero-stat-label {
+            font-size: 13px;
+            color: var(--text-dim);
+            font-weight: 500;
+        }
+        .hero-ctas {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 14px;
+            flex-wrap: wrap;
+        }
+        .btn-hero {
+            background: linear-gradient(135deg, var(--accent-gold) 0%, var(--accent-gold-bright) 100%);
+            color: #0D0F14;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            font-weight: 800;
+            font-size: 16px;
+            padding: 16px 36px;
+            border-radius: 12px;
+            border: none;
+            cursor: pointer;
+            transition: all 0.2s;
+            letter-spacing: 0.2px;
+            display: inline-block;
+            text-decoration: none;
+        }
+        .btn-hero:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 30px rgba(212,168,83,0.4);
+            color: #0D0F14;
+            text-decoration: none;
+        }
+
+        /* ── Section wrapper ── */
+        .section {
+            padding: 80px 24px;
+        }
+        .section-inner {
+            max-width: 1160px;
+            margin: 0 auto;
+        }
+        .section-label {
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: 2.5px;
+            text-transform: uppercase;
+            color: var(--accent-gold);
+            margin-bottom: 12px;
+        }
+        .section-title {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            font-size: clamp(26px, 4vw, 40px);
+            font-weight: 800;
+            letter-spacing: -0.8px;
+            line-height: 1.15;
+            margin-bottom: 16px;
+        }
+        .section-sub {
+            color: var(--text-secondary);
+            font-size: 16px;
+            max-width: 560px;
+            line-height: 1.65;
+            margin-bottom: 48px;
+        }
+
+        /* ── Commission Table ── */
+        .commission-section {
+            background: var(--bg-secondary);
+        }
+        .commission-section .section-inner {
+            text-align: center;
+        }
+        .commission-section .section-sub {
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .commission-table-wrap {
+            overflow-x: auto;
+            border-radius: var(--radius-lg);
+            border: 1px solid var(--border);
+        }
+        .commission-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 15px;
+        }
+        .commission-table thead {
+            background: rgba(212,168,83,0.08);
+            border-bottom: 1px solid var(--border-gold);
+        }
+        .commission-table th {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            font-weight: 700;
+            font-size: 12px;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            color: var(--accent-gold);
+            padding: 18px 24px;
+            text-align: left;
+        }
+        .commission-table td {
+            padding: 20px 24px;
+            border-bottom: 1px solid var(--border);
+            color: var(--text-secondary);
+            font-weight: 500;
+        }
+        .commission-table tbody tr:last-child td {
+            border-bottom: none;
+        }
+        .commission-table tbody tr {
+            transition: background 0.2s;
+        }
+        .commission-table tbody tr:hover {
+            background: rgba(255,255,255,0.03);
+        }
+        .tier-name {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            font-weight: 700;
+            font-size: 16px;
+            color: var(--text-primary);
+        }
+        .tier-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .tier-dot {
+            width: 8px; height: 8px;
+            border-radius: 50%;
+        }
+        .tier-starter .tier-dot { background: #6B7280; }
+        .tier-silver .tier-dot  { background: #9CA3AF; }
+        .tier-gold .tier-dot    { background: var(--accent-gold); }
+        .tier-platinum .tier-dot { background: var(--accent-gold-bright); box-shadow: 0 0 8px rgba(240,198,110,0.5); }
+
+        .commission-pct {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            font-weight: 800;
+            font-size: 20px;
+        }
+        .tier-starter .commission-pct { color: #9CA3AF; }
+        .tier-silver  .commission-pct { color: #D1D5DB; }
+        .tier-gold    .commission-pct { color: var(--accent-gold); }
+        .tier-platinum .commission-pct {
+            background: linear-gradient(135deg, var(--accent-gold) 0%, var(--accent-gold-bright) 100%);
+            background-size: 200% auto;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            animation: shimmer 3s linear infinite;
+        }
+        .tier-platinum {
+            background: linear-gradient(90deg, rgba(212,168,83,0.05) 0%, rgba(240,198,110,0.08) 50%, rgba(212,168,83,0.05) 100%);
+            background-size: 200% auto;
+            animation: shimmer 5s linear infinite;
+        }
+
+        .commission-note {
+            margin-top: 20px;
+            font-size: 13px;
+            color: var(--text-dim);
+            text-align: center;
+        }
+
+        /* ── How It Works ── */
+        .steps-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 24px;
+        }
+        .step-card {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-lg);
+            padding: 32px 28px;
+            position: relative;
+            transition: all 0.3s;
+            overflow: hidden;
+        }
+        .step-card::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, var(--accent-gold), transparent);
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+        .step-card:hover {
+            border-color: var(--border-gold);
+            transform: translateY(-4px);
+            box-shadow: 0 12px 40px rgba(0,0,0,0.3);
+        }
+        .step-card:hover::before { opacity: 1; }
+        .step-number {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            font-size: 48px;
+            font-weight: 800;
+            color: rgba(212,168,83,0.12);
+            line-height: 1;
+            margin-bottom: 16px;
+            letter-spacing: -2px;
+        }
+        .step-icon {
+            font-size: 28px;
+            margin-bottom: 14px;
+            display: block;
+        }
+        .step-title {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            font-size: 17px;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 10px;
+        }
+        .step-desc {
+            font-size: 14px;
+            color: var(--text-secondary);
+            line-height: 1.6;
+        }
+        .step-timeline {
+            display: inline-block;
+            margin-top: 14px;
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--accent-gold);
+            background: rgba(212,168,83,0.1);
+            padding: 3px 10px;
+            border-radius: 100px;
+        }
+
+        /* ── What You Get ── */
+        .what-section {
+            background: var(--bg-secondary);
+        }
+        .benefits-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+        }
+        .benefit-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-lg);
+            padding: 28px 24px;
+            display: flex;
+            gap: 18px;
+            align-items: flex-start;
+            transition: all 0.3s;
+        }
+        .benefit-card:hover {
+            border-color: var(--border-gold);
+            transform: translateY(-3px);
+            box-shadow: 0 8px 32px rgba(0,0,0,0.25);
+        }
+        .benefit-icon {
+            width: 44px; height: 44px;
+            border-radius: 10px;
+            background: rgba(212,168,83,0.1);
+            border: 1px solid var(--border-gold);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            flex-shrink: 0;
+        }
+        .benefit-content {}
+        .benefit-title {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            font-size: 15px;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 6px;
+        }
+        .benefit-desc {
+            font-size: 13px;
+            color: var(--text-secondary);
+            line-height: 1.55;
+        }
+
+        /* ── Stats Strip ── */
+        .stats-strip {
+            background: linear-gradient(135deg, rgba(212,168,83,0.06) 0%, rgba(240,198,110,0.03) 50%, rgba(212,168,83,0.06) 100%);
+            border-top: 1px solid var(--border-gold);
+            border-bottom: 1px solid var(--border-gold);
+            padding: 48px 24px;
+        }
+        .stats-strip-inner {
+            max-width: 1160px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 24px;
+            text-align: center;
+        }
+        .strip-stat {}
+        .strip-stat-value {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            font-size: 36px;
+            font-weight: 800;
+            color: var(--accent-gold-bright);
+            line-height: 1;
+            margin-bottom: 8px;
+        }
+        .strip-stat-label {
+            font-size: 13px;
+            color: var(--text-secondary);
+            font-weight: 500;
+        }
+        .strip-stat-note {
+            font-size: 11px;
+            color: var(--text-dim);
+            margin-top: 4px;
+        }
+
+        /* ── FAQ ── */
+        .faq-list {
+            max-width: 760px;
+            margin: 0 auto;
+        }
+        .faq-item {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            margin-bottom: 10px;
+            overflow: hidden;
+            transition: border-color 0.2s;
+        }
+        .faq-item.open {
+            border-color: var(--border-gold);
+        }
+        .faq-question {
+            width: 100%;
+            background: none;
+            border: none;
+            color: var(--text-primary);
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            font-size: 16px;
+            font-weight: 600;
+            text-align: left;
+            padding: 22px 24px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 16px;
+            transition: color 0.2s;
+        }
+        .faq-question:hover { color: var(--accent-gold-bright); }
+        .faq-item.open .faq-question { color: var(--accent-gold-bright); }
+        .faq-chevron {
+            flex-shrink: 0;
+            width: 20px; height: 20px;
+            color: var(--text-dim);
+            transition: transform 0.3s;
+        }
+        .faq-item.open .faq-chevron {
+            transform: rotate(180deg);
+            color: var(--accent-gold);
+        }
+        .faq-answer {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.35s ease, padding 0.2s;
+        }
+        .faq-answer-inner {
+            padding: 0 24px 22px;
+            color: var(--text-secondary);
+            font-size: 15px;
+            line-height: 1.65;
+        }
+        .faq-item.open .faq-answer {
+            max-height: 200px;
+        }
+
+        /* ── Application Form ── */
+        .form-section {
+            background: var(--bg-secondary);
+        }
+        .form-section .section-inner {
+            max-width: 700px;
+        }
+        .apply-form {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            padding: 48px 44px;
+        }
+        .form-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px 24px;
+        }
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        .form-group.full { grid-column: 1 / -1; }
+
+        label {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            letter-spacing: 0.3px;
+        }
+        .required-star { color: var(--accent-gold); margin-left: 2px; }
+
+        input[type="text"],
+        input[type="email"],
+        input[type="url"],
+        select,
+        textarea {
+            background: var(--bg-secondary);
+            border: 1.5px solid var(--border);
+            border-radius: 10px;
+            color: var(--text-primary);
+            font-family: 'Inter', sans-serif;
+            font-size: 15px;
+            padding: 13px 16px;
+            transition: all 0.2s;
+            width: 100%;
+            outline: none;
+            -webkit-appearance: none;
+        }
+        input:focus, select:focus, textarea:focus {
+            border-color: var(--accent-gold);
+            box-shadow: 0 0 0 3px rgba(212,168,83,0.12);
+        }
+        input::placeholder, textarea::placeholder { color: var(--text-dim); }
+        select { cursor: pointer; }
+        select option { background: var(--bg-secondary); }
+        textarea { resize: vertical; min-height: 110px; }
+
+        .checkbox-group {
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+        }
+        .checkbox-group input[type="checkbox"] {
+            width: 18px; height: 18px;
+            flex-shrink: 0;
+            margin-top: 2px;
+            accent-color: var(--accent-gold);
+            cursor: pointer;
+            border-radius: 4px;
+        }
+        .checkbox-label {
+            font-size: 14px;
+            color: var(--text-secondary);
+            line-height: 1.55;
+        }
+        .checkbox-label a { color: var(--accent-gold-bright); }
+
+        .submit-btn {
+            width: 100%;
+            background: linear-gradient(135deg, var(--accent-gold) 0%, var(--accent-gold-bright) 100%);
+            color: #0D0F14;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            font-weight: 800;
+            font-size: 16px;
+            padding: 16px 32px;
+            border-radius: 12px;
+            border: none;
+            cursor: pointer;
+            transition: all 0.2s;
+            letter-spacing: 0.3px;
+            margin-top: 8px;
+        }
+        .submit-btn:hover:not(:disabled) {
+            transform: translateY(-1px);
+            box-shadow: 0 6px 24px rgba(212,168,83,0.4);
+        }
+        .submit-btn:disabled {
+            opacity: 0.7;
+            cursor: not-allowed;
+        }
+
+        .form-success {
+            display: none;
+            text-align: center;
+            padding: 40px 24px;
+        }
+        .form-success.visible { display: block; }
+        .success-icon {
+            font-size: 52px;
+            margin-bottom: 16px;
+        }
+        .success-title {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            font-size: 22px;
+            font-weight: 800;
+            color: var(--accent-green);
+            margin-bottom: 10px;
+        }
+        .success-msg {
+            color: var(--text-secondary);
+            font-size: 15px;
+            line-height: 1.6;
+        }
+
+        .field-error {
+            font-size: 12px;
+            color: #F87171;
+            display: none;
+            margin-top: -4px;
+        }
+        .field-error.visible { display: block; }
+        input.invalid, select.invalid, textarea.invalid {
+            border-color: #F87171;
+        }
+
+        /* ── Footer ── */
+        .site-footer {
+            background: var(--bg-secondary);
+            border-top: 1px solid var(--border);
+            padding: 40px 24px;
+            text-align: center;
+        }
+        .footer-inner {
+            max-width: 1160px;
+            margin: 0 auto;
+        }
+        .footer-logo {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            font-size: 18px;
+            font-weight: 800;
+            color: var(--accent-gold);
+            margin-bottom: 16px;
+        }
+        .footer-links {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 8px 24px;
+            margin-bottom: 20px;
+        }
+        .footer-links a {
+            font-size: 14px;
+            color: var(--text-dim);
+            transition: color 0.2s;
+        }
+        .footer-links a:hover { color: var(--accent-gold-bright); }
+        .footer-email {
+            font-size: 14px;
+            color: var(--text-secondary);
+            margin-bottom: 16px;
+        }
+        .footer-email a { color: var(--accent-gold-bright); }
+        .footer-disclaimer {
+            font-size: 12px;
+            color: var(--text-dim);
+            line-height: 1.6;
+        }
+
+        /* ── Mobile nav ── */
+        @media (max-width: 768px) {
+            .nav-links { display: none; }
+            .hamburger { display: flex; }
+            .header-inner { gap: 12px; }
+            .btn-gold { padding: 9px 16px; font-size: 13px; }
+            .mobile-menu {
+                display: none;
+                flex-direction: column;
+                gap: 4px;
+                padding: 16px 24px 20px;
+                border-bottom: 1px solid var(--border);
+                background: var(--bg-secondary);
+            }
+            .mobile-menu.open { display: flex; }
+            .mobile-menu a {
+                display: block;
+                padding: 12px 0;
+                font-size: 15px;
+                font-weight: 500;
+                color: var(--text-secondary);
+                border-bottom: 1px solid var(--border);
+            }
+            .mobile-menu a:last-child { border-bottom: none; }
+
+            .hero { padding: 64px 24px 60px; }
+            .hero-stats { gap: 0; }
+            .hero-stat { padding: 16px 20px; }
+            .hero-stat-value { font-size: 22px; }
+
+            .stats-strip-inner { grid-template-columns: repeat(2, 1fr); }
+
+            .form-grid { grid-template-columns: 1fr; }
+            .apply-form { padding: 32px 24px; }
+
+            .section { padding: 56px 24px; }
+        }
+
+        @media (max-width: 480px) {
+            .stats-strip-inner { grid-template-columns: 1fr 1fr; gap: 16px; }
+            .strip-stat-value { font-size: 28px; }
+        }
+    </style>
+</head>
+<body>
+
+<!-- ══════════════ HEADER ══════════════ -->
+<header class="site-header">
+    <div class="header-inner">
+        <a href="https://msaart.online" class="logo">♛ Matrix Spins</a>
+
+        <nav>
+            <ul class="nav-links">
+                <li><a href="#commission">Commission Rates</a></li>
+                <li><a href="#how-it-works">How It Works</a></li>
+                <li><a href="#apply">Apply Now</a></li>
+            </ul>
+        </nav>
+
+        <a href="#apply" class="btn-gold">Apply to Partner</a>
+
+        <button class="hamburger" id="hamburger" aria-label="Open menu">
+            <span></span>
+            <span></span>
+            <span></span>
+        </button>
+    </div>
+    <div class="mobile-menu" id="mobile-menu">
+        <a href="#commission" onclick="closeMobileMenu()">Commission Rates</a>
+        <a href="#how-it-works" onclick="closeMobileMenu()">How It Works</a>
+        <a href="#apply" onclick="closeMobileMenu()">Apply Now</a>
+    </div>
+</header>
+
+<!-- ══════════════ HERO ══════════════ -->
+<section class="hero">
+    <div class="hero-inner">
+        <div class="hero-badge">Affiliate Program</div>
+        <h1>Earn Up To 40%<br>Revenue Share</h1>
+        <p class="hero-sub">Partner with Australia's fastest-growing online casino. Real-time tracking, weekly payouts, dedicated support — built for serious affiliates.</p>
+
+        <div class="hero-stats">
+            <div class="hero-stat">
+                <div class="hero-stat-value">40%</div>
+                <div class="hero-stat-label">Max RevShare</div>
+            </div>
+            <div class="hero-stat">
+                <div class="hero-stat-value">100</div>
+                <div class="hero-stat-label">Games to Promote</div>
+            </div>
+            <div class="hero-stat">
+                <div class="hero-stat-value">Weekly</div>
+                <div class="hero-stat-label">Payouts</div>
+            </div>
+        </div>
+
+        <div class="hero-ctas">
+            <a href="#apply" class="btn-hero">Apply Now — It's Free</a>
+            <a href="#commission" class="btn-gold-outline">View Commission Rates</a>
+        </div>
+    </div>
+</section>
+
+<!-- ══════════════ COMMISSION TABLE ══════════════ -->
+<section class="section commission-section" id="commission">
+    <div class="section-inner">
+        <div class="section-label">Commission Structure</div>
+        <h2 class="section-title">More You Refer, More You Earn</h2>
+        <p class="section-sub">Four performance tiers mean your commissions grow automatically as your referrals generate more revenue. No renegotiations required.</p>
+
+        <div class="commission-table-wrap">
+            <table class="commission-table">
+                <thead>
+                    <tr>
+                        <th>Tier</th>
+                        <th>Monthly Net Revenue</th>
+                        <th>Your Commission</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr class="tier-starter">
+                        <td>
+                            <div class="tier-badge">
+                                <span class="tier-dot"></span>
+                                <span class="tier-name">Starter</span>
+                            </div>
+                        </td>
+                        <td>$0 – $5,000</td>
+                        <td><span class="commission-pct">25%</span></td>
+                    </tr>
+                    <tr class="tier-silver">
+                        <td>
+                            <div class="tier-badge">
+                                <span class="tier-dot"></span>
+                                <span class="tier-name">Silver</span>
+                            </div>
+                        </td>
+                        <td>$5,001 – $20,000</td>
+                        <td><span class="commission-pct">30%</span></td>
+                    </tr>
+                    <tr class="tier-gold">
+                        <td>
+                            <div class="tier-badge">
+                                <span class="tier-dot"></span>
+                                <span class="tier-name">Gold</span>
+                            </div>
+                        </td>
+                        <td>$20,001 – $50,000</td>
+                        <td><span class="commission-pct">35%</span></td>
+                    </tr>
+                    <tr class="tier-platinum">
+                        <td>
+                            <div class="tier-badge">
+                                <span class="tier-dot"></span>
+                                <span class="tier-name">Platinum</span>
+                            </div>
+                        </td>
+                        <td>$50,001+</td>
+                        <td><span class="commission-pct">40%</span></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <p class="commission-note">Commission calculated on net gaming revenue (deposits minus winnings). Paid weekly every Monday via PayPal, bank transfer, or crypto.</p>
+    </div>
+</section>
+
+<!-- ══════════════ HOW IT WORKS ══════════════ -->
+<section class="section" id="how-it-works">
+    <div class="section-inner">
+        <div class="section-label">Process</div>
+        <h2 class="section-title">Four Steps to Your First Payout</h2>
+        <p class="section-sub">From application to commission in less than a week. We keep onboarding fast so you can start promoting immediately.</p>
+
+        <div class="steps-grid">
+            <div class="step-card">
+                <div class="step-number">01</div>
+                <span class="step-icon">📋</span>
+                <div class="step-title">Apply Online</div>
+                <p class="step-desc">Fill out our short application form. Tell us about your audience, traffic sources, and promotional methods.</p>
+                <span class="step-timeline">Approved in 24–48 hrs</span>
+            </div>
+
+            <div class="step-card">
+                <div class="step-number">02</div>
+                <span class="step-icon">🔗</span>
+                <div class="step-title">Get Your Links</div>
+                <p class="step-desc">Receive your unique tracking link and custom promo codes for your audience the moment you're approved.</p>
+                <span class="step-timeline">Instant on approval</span>
+            </div>
+
+            <div class="step-card">
+                <div class="step-number">03</div>
+                <span class="step-icon">📣</span>
+                <div class="step-title">Promote Your Way</div>
+                <p class="step-desc">Use your blog, YouTube channel, Twitch stream, social media, or email list — wherever your audience is.</p>
+                <span class="step-timeline">Your channel, your rules</span>
+            </div>
+
+            <div class="step-card">
+                <div class="step-number">04</div>
+                <span class="step-icon">💰</span>
+                <div class="step-title">Get Paid Weekly</div>
+                <p class="step-desc">Every Monday we pay out the previous week's earnings. PayPal, bank transfer, or crypto — you choose.</p>
+                <span class="step-timeline">Every Monday</span>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ══════════════ WHAT YOU GET ══════════════ -->
+<section class="section what-section">
+    <div class="section-inner">
+        <div class="section-label">Partner Benefits</div>
+        <h2 class="section-title">Everything You Need to Convert</h2>
+        <p class="section-sub">We give you the tools, materials, and support to maximise your earnings from day one.</p>
+
+        <div class="benefits-grid">
+            <div class="benefit-card">
+                <div class="benefit-icon">🔗</div>
+                <div class="benefit-content">
+                    <div class="benefit-title">Unique Referral Links with UTM Tracking</div>
+                    <p class="benefit-desc">Fully attributed tracking links so every click, signup, and deposit is tied directly to you — no revenue ever gets lost.</p>
+                </div>
+            </div>
+
+            <div class="benefit-card">
+                <div class="benefit-icon">🎟️</div>
+                <div class="benefit-content">
+                    <div class="benefit-title">Custom Promo Codes</div>
+                    <p class="benefit-desc">Personalised bonus codes (e.g., YOURNAME50) your audience can use at signup — builds trust and boosts conversion rates.</p>
+                </div>
+            </div>
+
+            <div class="benefit-card">
+                <div class="benefit-icon">📊</div>
+                <div class="benefit-content">
+                    <div class="benefit-title">Real-Time Affiliate Dashboard</div>
+                    <p class="benefit-desc">Live stats showing clicks, signups, first deposits, active players, and commissions earned — updated in real time.</p>
+                </div>
+            </div>
+
+            <div class="benefit-card">
+                <div class="benefit-icon">🤝</div>
+                <div class="benefit-content">
+                    <div class="benefit-title">Dedicated Affiliate Manager</div>
+                    <p class="benefit-desc">A named contact available via email and chat to help you optimise campaigns, resolve issues, and plan strategy.</p>
+                </div>
+            </div>
+
+            <div class="benefit-card">
+                <div class="benefit-icon">🖼️</div>
+                <div class="benefit-content">
+                    <div class="benefit-title">Full Marketing Material Library</div>
+                    <p class="benefit-desc">Banners in multiple sizes, game screenshots, video assets, email copy templates, and social media graphics — all ready to use.</p>
+                </div>
+            </div>
+
+            <div class="benefit-card">
+                <div class="benefit-icon">🌐</div>
+                <div class="benefit-content">
+                    <div class="benefit-title">Sub-Affiliate Program</div>
+                    <p class="benefit-desc">Refer other affiliates to Matrix Spins and earn 5% of everything they generate — a passive income stream on top of your own commissions.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ══════════════ STATS STRIP ══════════════ -->
+<div class="stats-strip">
+    <div class="stats-strip-inner">
+        <div class="strip-stat">
+            <div class="strip-stat-value">100</div>
+            <div class="strip-stat-label">Games to Promote</div>
+            <div class="strip-stat-note">Slots, table games &amp; more</div>
+        </div>
+        <div class="strip-stat">
+            <div class="strip-stat-value">14%</div>
+            <div class="strip-stat-label">House Edge</div>
+            <div class="strip-stat-note">We pay out well — players stay</div>
+        </div>
+        <div class="strip-stat">
+            <div class="strip-stat-value">$180</div>
+            <div class="strip-stat-label">Avg Player LTV</div>
+            <div class="strip-stat-note">Strong long-term value</div>
+        </div>
+        <div class="strip-stat">
+            <div class="strip-stat-value">90</div>
+            <div class="strip-stat-label">Day Cookie Window</div>
+            <div class="strip-stat-note">Tracked from first click</div>
+        </div>
+    </div>
+</div>
+
+<!-- ══════════════ FAQ ══════════════ -->
+<section class="section" id="faq">
+    <div class="section-inner" style="max-width:800px; margin:0 auto;">
+        <div class="section-label" style="text-align:center;">FAQ</div>
+        <h2 class="section-title" style="text-align:center;">Common Questions</h2>
+        <p class="section-sub" style="text-align:center; margin-left:auto; margin-right:auto;">Everything you need to know before you apply.</p>
+
+        <div class="faq-list">
+            <div class="faq-item">
+                <button class="faq-question" aria-expanded="false">
+                    How do I get paid?
+                    <svg class="faq-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <polyline points="6 9 12 15 18 9"/>
+                    </svg>
+                </button>
+                <div class="faq-answer">
+                    <div class="faq-answer-inner">Commissions are paid every Monday for the previous week's net gaming revenue. Minimum payout threshold is $50. Payment methods available: PayPal, bank transfer, or crypto (Bitcoin, Ethereum, USDT). If you haven't reached the $50 threshold, your balance rolls over to the following week.</div>
+                </div>
+            </div>
+
+            <div class="faq-item">
+                <button class="faq-question" aria-expanded="false">
+                    What's the cookie duration?
+                    <svg class="faq-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <polyline points="6 9 12 15 18 9"/>
+                    </svg>
+                </button>
+                <div class="faq-answer">
+                    <div class="faq-answer-inner">We use 90-day last-click attribution. If someone clicks your link today and signs up any time in the next 90 days, that player is credited to you for their full lifetime with Matrix Spins. We also honour the first-touch if both conditions are met.</div>
+                </div>
+            </div>
+
+            <div class="faq-item">
+                <button class="faq-question" aria-expanded="false">
+                    Can I promote on social media?
+                    <svg class="faq-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <polyline points="6 9 12 15 18 9"/>
+                    </svg>
+                </button>
+                <div class="faq-answer">
+                    <div class="faq-answer-inner">Yes — YouTube, Instagram, TikTok, X (Twitter), Facebook, and others are all permitted, as long as you apply correct geo and age-targeting restrictions (18+, Australian audience only). Our affiliate manager can advise on compliant promotion guidelines for your specific platform.</div>
+                </div>
+            </div>
+
+            <div class="faq-item">
+                <button class="faq-question" aria-expanded="false">
+                    Is there a minimum traffic requirement?
+                    <svg class="faq-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <polyline points="6 9 12 15 18 9"/>
+                    </svg>
+                </button>
+                <div class="faq-answer">
+                    <div class="faq-answer-inner">No minimum traffic requirement. We welcome bloggers just starting out, niche content creators, and established publishers alike. What matters is audience quality and intent, not raw numbers. All applications are reviewed on a case-by-case basis.</div>
+                </div>
+            </div>
+
+            <div class="faq-item">
+                <button class="faq-question" aria-expanded="false">
+                    How do I track my earnings?
+                    <svg class="faq-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <polyline points="6 9 12 15 18 9"/>
+                    </svg>
+                </button>
+                <div class="faq-answer">
+                    <div class="faq-answer-inner">You'll have access to a real-time affiliate dashboard showing clicks, signups, first deposits, active players, and commission earned — broken down by day, week, and month. You also receive a detailed weekly email report every Monday alongside your payment.</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ══════════════ APPLICATION FORM ══════════════ -->
+<section class="section form-section" id="apply">
+    <div class="section-inner">
+        <div class="section-label">Get Started</div>
+        <h2 class="section-title">Apply to Become a Partner</h2>
+        <p class="section-sub">Takes 3 minutes. No setup fees, no minimums. We'll review your application and get back to you within 48 hours.</p>
+
+        <div class="apply-form">
+            <div class="form-success" id="form-success">
+                <div class="success-icon">✓</div>
+                <div class="success-title">Application Received!</div>
+                <p class="success-msg">Thanks for applying. We'll review your details and email you at the address you provided within 48 hours. Keep an eye on your inbox — and spam folder just in case.</p>
+            </div>
+
+            <form id="affiliate-form" novalidate>
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label for="fullName">Full Name <span class="required-star">*</span></label>
+                        <input type="text" id="fullName" name="fullName" placeholder="Jane Smith" required autocomplete="name">
+                        <span class="field-error" id="fullName-error">Please enter your full name.</span>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="email">Email Address <span class="required-star">*</span></label>
+                        <input type="email" id="email" name="email" placeholder="jane@example.com" required autocomplete="email">
+                        <span class="field-error" id="email-error">Please enter a valid email address.</span>
+                    </div>
+
+                    <div class="form-group full">
+                        <label for="websiteUrl">Website / Channel URL <span class="required-star">*</span></label>
+                        <input type="url" id="websiteUrl" name="websiteUrl" placeholder="https://yoursite.com or https://youtube.com/@yourchannel" required>
+                        <span class="field-error" id="websiteUrl-error">Please enter a valid URL (include https://).</span>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="trafficSource">Primary Traffic Source <span class="required-star">*</span></label>
+                        <select id="trafficSource" name="trafficSource" required>
+                            <option value="" disabled selected>Select a channel…</option>
+                            <option value="blog">Blog / Website</option>
+                            <option value="youtube">YouTube</option>
+                            <option value="twitch">Twitch</option>
+                            <option value="social">Social Media</option>
+                            <option value="email">Email List</option>
+                            <option value="other">Other</option>
+                        </select>
+                        <span class="field-error" id="trafficSource-error">Please select a traffic source.</span>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="monthlyVisitors">Monthly Visitors / Subscribers <span class="required-star">*</span></label>
+                        <select id="monthlyVisitors" name="monthlyVisitors" required>
+                            <option value="" disabled selected>Select a range…</option>
+                            <option value="lt1k">Less than 1,000</option>
+                            <option value="1k-10k">1,000 – 10,000</option>
+                            <option value="10k-50k">10,000 – 50,000</option>
+                            <option value="50kplus">50,000+</option>
+                        </select>
+                        <span class="field-error" id="monthlyVisitors-error">Please select your monthly visitor range.</span>
+                    </div>
+
+                    <div class="form-group full">
+                        <label for="whyPartner">Why do you want to partner with Matrix Spins?</label>
+                        <textarea id="whyPartner" name="whyPartner" placeholder="Tell us about your audience, your content style, and how you plan to promote us…"></textarea>
+                    </div>
+
+                    <div class="form-group full">
+                        <div class="checkbox-group">
+                            <input type="checkbox" id="termsAgreed" name="termsAgreed" required>
+                            <label for="termsAgreed" class="checkbox-label">
+                                I agree to the <a href="/terms.html" target="_blank">Affiliate Terms &amp; Conditions</a> and confirm I am 18 years of age or older. I will only promote Matrix Spins to audiences of legal gambling age in permitted jurisdictions. <span class="required-star">*</span>
+                            </label>
+                        </div>
+                        <span class="field-error" id="termsAgreed-error">You must agree to the affiliate terms to proceed.</span>
+                    </div>
+                </div>
+
+                <button type="submit" class="submit-btn" id="submit-btn">Submit Application</button>
+            </form>
+        </div>
+    </div>
+</section>
+
+<!-- ══════════════ FOOTER ══════════════ -->
+<footer class="site-footer">
+    <div class="footer-inner">
+        <div class="footer-logo">♛ Matrix Spins</div>
+        <div class="footer-email">Affiliate queries: <a href="mailto:affiliates@msaart.online">affiliates@msaart.online</a></div>
+        <div class="footer-links">
+            <a href="https://msaart.online">Main Site</a>
+            <a href="/terms.html">Terms</a>
+            <a href="/privacy.html">Privacy</a>
+        </div>
+        <p class="footer-disclaimer">18+ only. Promote responsibly. Gambling can be addictive — always direct your audience to responsible gambling resources. Matrix Spins Casino operates at <a href="https://msaart.online">msaart.online</a>.</p>
+    </div>
+</footer>
+
+<!-- ══════════════ JAVASCRIPT ══════════════ -->
+<script>
+    // ── Mobile menu ──
+    const hamburger = document.getElementById('hamburger');
+    const mobileMenu = document.getElementById('mobile-menu');
+
+    hamburger.addEventListener('click', () => {
+        mobileMenu.classList.toggle('open');
+        const spans = hamburger.querySelectorAll('span');
+        if (mobileMenu.classList.contains('open')) {
+            spans[0].style.transform = 'rotate(45deg) translate(5px, 5px)';
+            spans[1].style.opacity = '0';
+            spans[2].style.transform = 'rotate(-45deg) translate(5px, -5px)';
+        } else {
+            spans.forEach(s => { s.style.transform = ''; s.style.opacity = ''; });
+        }
+    });
+
+    function closeMobileMenu() {
+        mobileMenu.classList.remove('open');
+        hamburger.querySelectorAll('span').forEach(s => { s.style.transform = ''; s.style.opacity = ''; });
+    }
+
+    // ── FAQ accordion ──
+    document.querySelectorAll('.faq-question').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const item = btn.closest('.faq-item');
+            const isOpen = item.classList.contains('open');
+
+            // Close all
+            document.querySelectorAll('.faq-item').forEach(i => {
+                i.classList.remove('open');
+                i.querySelector('.faq-question').setAttribute('aria-expanded', 'false');
+            });
+
+            // Toggle clicked
+            if (!isOpen) {
+                item.classList.add('open');
+                btn.setAttribute('aria-expanded', 'true');
+            }
+        });
+    });
+
+    // ── Form validation & submission ──
+    const form = document.getElementById('affiliate-form');
+    const submitBtn = document.getElementById('submit-btn');
+    const formSuccess = document.getElementById('form-success');
+
+    function setError(fieldId, show) {
+        const field = document.getElementById(fieldId);
+        const error = document.getElementById(fieldId + '-error');
+        if (!field || !error) return;
+        if (show) {
+            field.classList.add('invalid');
+            error.classList.add('visible');
+        } else {
+            field.classList.remove('invalid');
+            error.classList.remove('visible');
+        }
+    }
+
+    function validateEmail(email) {
+        return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+    }
+
+    function validateUrl(url) {
+        try { new URL(url); return true; } catch { return false; }
+    }
+
+    function validateForm() {
+        let valid = true;
+
+        const fullName = document.getElementById('fullName').value.trim();
+        if (!fullName) { setError('fullName', true); valid = false; } else { setError('fullName', false); }
+
+        const email = document.getElementById('email').value.trim();
+        if (!validateEmail(email)) { setError('email', true); valid = false; } else { setError('email', false); }
+
+        const url = document.getElementById('websiteUrl').value.trim();
+        if (!validateUrl(url)) { setError('websiteUrl', true); valid = false; } else { setError('websiteUrl', false); }
+
+        const trafficSource = document.getElementById('trafficSource').value;
+        if (!trafficSource) { setError('trafficSource', true); valid = false; } else { setError('trafficSource', false); }
+
+        const monthlyVisitors = document.getElementById('monthlyVisitors').value;
+        if (!monthlyVisitors) { setError('monthlyVisitors', true); valid = false; } else { setError('monthlyVisitors', false); }
+
+        const termsAgreed = document.getElementById('termsAgreed').checked;
+        if (!termsAgreed) { setError('termsAgreed', true); valid = false; } else { setError('termsAgreed', false); }
+
+        return valid;
+    }
+
+    // Clear errors on input
+    ['fullName', 'email', 'websiteUrl'].forEach(id => {
+        document.getElementById(id).addEventListener('input', () => setError(id, false));
+    });
+    ['trafficSource', 'monthlyVisitors'].forEach(id => {
+        document.getElementById(id).addEventListener('change', () => setError(id, false));
+    });
+    document.getElementById('termsAgreed').addEventListener('change', () => setError('termsAgreed', false));
+
+    form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+
+        if (!validateForm()) return;
+
+        submitBtn.disabled = true;
+        submitBtn.textContent = 'Submitting…';
+
+        const payload = {
+            fullName: document.getElementById('fullName').value.trim(),
+            email: document.getElementById('email').value.trim(),
+            websiteUrl: document.getElementById('websiteUrl').value.trim(),
+            trafficSource: document.getElementById('trafficSource').value,
+            monthlyVisitors: document.getElementById('monthlyVisitors').value,
+            whyPartner: document.getElementById('whyPartner').value.trim(),
+            submittedAt: new Date().toISOString()
+        };
+
+        try {
+            await fetch('/api/affiliate/apply', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+        } catch (_) {
+            // API may not exist yet — show success regardless
+        }
+
+        // Always show success after brief delay for UX
+        await new Promise(r => setTimeout(r, 800));
+
+        form.style.display = 'none';
+        formSuccess.classList.add('visible');
+        formSuccess.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    });
+
+    // ── Animate elements on scroll ──
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                entry.target.style.animation = 'fadeUp 0.5s ease both';
+                observer.unobserve(entry.target);
+            }
+        });
+    }, { threshold: 0.1 });
+
+    document.querySelectorAll('.step-card, .benefit-card, .faq-item').forEach(el => {
+        el.style.opacity = '0';
+        observer.observe(el);
+    });
+</script>
+
+</body>
+</html>

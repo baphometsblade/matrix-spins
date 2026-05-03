@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Promotions — Matrix Spins Casino</title>
+<meta name="description" content="Exclusive bonuses, daily rewards, cashback, and tournament prizes at Matrix Spins Casino. Claim your offers today.">
+<meta property="og:title" content="Exclusive Promotions — Matrix Spins Casino">
+<meta property="og:description" content="Daily rewards, cashback, tournament prizes, and limited-time bonus offers. Claim your bonuses today.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://msaart.online/promotions.html">
+<meta name="twitter:card" content="summary">
+<link rel="canonical" href="https://msaart.online/promotions.html">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/auth.css">
+<link rel="stylesheet" href="css/promotions.css">
+<link rel="stylesheet" href="css/age-gate.css">
+<link rel="stylesheet" href="css/search.css">
+<link rel="stylesheet" href="css/favorites.css">
+<link rel="stylesheet" href="css/session-monitor.css">
+<link rel="stylesheet" href="css/chat-widget.css">
+<link rel="stylesheet" href="css/notifications.css">
+<link rel="stylesheet" href="css/conversion.css">
+</head>
+<body>
+
+<div class="topbar">
+  <a class="brand" href="index.html">Matrix Spins</a>
+  <div class="actions">
+    <span id="balanceChip" class="balance-chip">—</span>
+    <a href="wallet.html" class="btn btn-inline secondary">Wallet</a>
+    <a href="vip.html" class="btn btn-inline secondary">VIP</a>
+    <button id="logout" class="btn btn-inline secondary">Sign out</button>
+  </div>
+</div>
+
+<div class="rs-shell-wide">
+
+  <!-- ── Promo Hero ────────────────────────────────────────── -->
+  <div class="promo-hero">
+    <h1><span class="gold">Exclusive</span> Promotions</h1>
+    <p>Claim daily rewards, cashback, and limited-time offers. Higher VIP tiers unlock bigger bonuses.</p>
+  </div>
+
+  <!-- ── Category Tabs ─────────────────────────────────────── -->
+  <div class="promo-tabs">
+    <button class="promo-tab active" data-cat="all">All Offers</button>
+    <button class="promo-tab" data-cat="welcome">Welcome</button>
+    <button class="promo-tab" data-cat="daily">Daily</button>
+    <button class="promo-tab" data-cat="cashback">Cashback</button>
+    <button class="promo-tab" data-cat="tournament">Tournaments</button>
+    <button class="promo-tab" data-cat="referral">Referral</button>
+  </div>
+
+  <!-- ── Promo Cards ───────────────────────────────────────── -->
+  <div class="promo-grid" id="promoGrid">
+    <!-- Populated by JS -->
+  </div>
+
+</div>
+
+<!-- ── Terms Modal ─────────────────────────────────────────── -->
+<div class="terms-modal-backdrop" id="termsBackdrop">
+  <div class="terms-modal">
+    <button class="close" id="termsClose">&times;</button>
+    <h3 id="termsTitle">Terms & Conditions</h3>
+    <ul class="terms-list" id="termsList"></ul>
+  </div>
+</div>
+
+<script src="js/api-client.js"></script>
+<script src="js/age-gate.js" defer></script>
+<script src="js/cookie-consent.js" defer></script>
+<script src="js/search.js" defer></script>
+<script src="js/favorites.js" defer></script>
+<script src="js/session-monitor.js" defer></script>
+<script src="js/sound-manager.js" defer></script>
+<script src="js/analytics.js" defer></script>
+<script src="js/email-capture.js" defer></script>
+<script src="js/chat-widget.js" defer></script>
+<script src="js/notifications.js" defer></script>
+<script src="js/conversion.js" defer></script>
+<script>
+(async () => {
+  'use strict';
+
+  const api = window.MatrixSpinsAPI;
+  const user = await api.loadSession();
+
+  const $ = id => document.getElementById(id);
+
+  // Balance + Logout
+  if (user) {
+    $('logout').style.display = 'inline-block';
+    try { const b = await api.getBalance(); $('balanceChip').textContent = api.formatCents(b.availableCents); } catch {}
+  } else {
+    $('logout').style.display = 'none';
+  }
+  $('logout').addEventListener('click', async () => { await api.logout(); window.location.href = 'index.html'; });
+
+  // ── Promotion Definitions ──────────────────────────────────
+  const NOW = Date.now();
+  const HOUR = 3600000;
+  const DAY = 86400000;
+
+  const PROMOS = [
+    {
+      id: 'welcome-bonus',
+      cat: 'welcome',
+      tag: 'hot', tagText: 'HOT',
+      banner: 'welcome', emoji: '🎰',
+      title: 'Welcome Bonus Package',
+      desc: 'Get $1,000 in free demo credits plus 50 bonus spins on Pharaoh\'s Fortune. No deposit required.',
+      value: '$1,000 + 50 Spins',
+      expires: NOW + 7 * DAY,
+      claimed: false,
+      terms: [
+        'Available to new players only',
+        'Demo credits have no cash value',
+        '50 free spins valid for 7 days',
+        'Free spin winnings credited as bonus balance',
+        'Bonus balance subject to 30x wagering requirement',
+        'Maximum withdrawal from bonus: $500',
+      ],
+    },
+    {
+      id: 'daily-spin',
+      cat: 'daily',
+      tag: 'daily', tagText: 'DAILY',
+      banner: 'daily', emoji: '🎡',
+      title: 'Daily Free Spin Wheel',
+      desc: 'Spin the bonus wheel once every 24 hours for free credits, spins, or cashback multipliers.',
+      value: 'Up to $100',
+      expires: NOW + 18 * HOUR,
+      claimed: false,
+      terms: [
+        'One free spin per 24-hour period',
+        'Prizes range from $1 to $100 in bonus credits',
+        'Must be logged in to claim',
+        'Bonus credits expire after 48 hours if unused',
+        'Wagering requirement: 10x bonus amount',
+      ],
+    },
+    {
+      id: 'weekly-cashback',
+      cat: 'cashback',
+      tag: 'new', tagText: 'NEW',
+      banner: 'cashback', emoji: '💰',
+      title: 'Weekly Cashback',
+      desc: 'Get up to 5% cashback on your net losses every Monday. VIP tier determines your cashback rate.',
+      value: 'Up to 5%',
+      expires: NOW + 5 * DAY,
+      claimed: false,
+      terms: [
+        'Calculated on net losses (bets minus winnings) from Monday–Sunday',
+        'Credited automatically every Monday at 00:00 UTC',
+        'Base rate: 0.5% (Bronze), up to 5% (Diamond)',
+        'Minimum net loss of $50 required to qualify',
+        'Cashback credited as real balance (no wagering requirement)',
+        'Maximum weekly cashback: $10,000',
+      ],
+    },
+    {
+      id: 'refer-friend',
+      cat: 'referral',
+      tag: 'limited', tagText: 'LIMITED',
+      banner: 'referral', emoji: '🤝',
+      title: 'Refer a Friend — Get $50',
+      desc: 'Share your unique link. When your friend deposits $25+, you both get $50 in bonus credits.',
+      value: '$50 Each',
+      expires: NOW + 14 * DAY,
+      claimed: false,
+      terms: [
+        'Referred friend must create a new account using your link',
+        'Friend must deposit at least $25 to qualify',
+        'Both referrer and referee receive $50 bonus',
+        'Bonus subject to 20x wagering requirement',
+        'Maximum 10 referrals per calendar month',
+        'Self-referral or duplicate accounts will forfeit bonuses',
+      ],
+    },
+    {
+      id: 'mega-tournament',
+      cat: 'tournament',
+      tag: 'hot', tagText: 'HOT',
+      banner: 'tourney', emoji: '🏆',
+      title: 'Weekend Mega Tournament',
+      desc: 'Compete for a $25,000 prize pool every weekend. Top 50 players share the prizes based on total wagered.',
+      value: '$25,000 Pool',
+      expires: NOW + 3 * DAY,
+      claimed: false,
+      terms: [
+        'Tournament runs Saturday 00:00 UTC to Sunday 23:59 UTC',
+        'Entry is automatic — all qualifying bets count',
+        'Minimum bet to qualify: $0.50 per spin',
+        'Leaderboard ranked by total wagered amount',
+        'Top 50 players receive prizes',
+        '1st place: $5,000 | 2nd: $3,000 | 3rd: $2,000',
+        'Places 4–10: $1,000 each | 11–50: $100–$500',
+        'Prizes credited within 24 hours of tournament end',
+      ],
+    },
+    {
+      id: 'reload-bonus',
+      cat: 'cashback',
+      tag: 'limited', tagText: 'LIMITED',
+      banner: 'reload', emoji: '🔄',
+      title: '50% Reload Bonus',
+      desc: 'Deposit $50 or more today and receive a 50% match bonus up to $250. Use code RELOAD50.',
+      value: 'Up to $250',
+      expires: NOW + 2 * DAY,
+      claimed: false,
+      terms: [
+        'Minimum deposit: $50',
+        'Maximum bonus: $250 (on a $500 deposit)',
+        'Use promo code RELOAD50 during deposit',
+        'Bonus subject to 25x wagering requirement',
+        'Valid for 7 days from claim date',
+        'One reload bonus per player per week',
+        'Slot games contribute 100% to wagering',
+      ],
+    },
+  ];
+
+  // ── Render Functions ───────────────────────────────────────
+  function formatCountdown(ms) {
+    if (ms <= 0) return { d: '00', h: '00', m: '00', s: '00' };
+    const s = Math.floor(ms / 1000);
+    return {
+      d: String(Math.floor(s / 86400)).padStart(2, '0'),
+      h: String(Math.floor((s % 86400) / 3600)).padStart(2, '0'),
+      m: String(Math.floor((s % 3600) / 60)).padStart(2, '0'),
+      s: String(s % 60).padStart(2, '0'),
+    };
+  }
+
+  function renderPromo(p) {
+    const cd = formatCountdown(p.expires - Date.now());
+    return `<div class="promo-card" data-cat="${p.cat}" data-id="${p.id}">
+      <div class="promo-card-banner ${p.banner}">
+        ${p.emoji}
+        <div class="shine"></div>
+      </div>
+      <div class="promo-card-body">
+        <span class="promo-tag ${p.tag}">${p.tagText}</span>
+        <h3>${p.title}</h3>
+        <p class="desc">${p.desc}</p>
+        <div class="value">${p.value}</div>
+        <div class="countdown" data-expires="${p.expires}">
+          <div class="countdown-unit"><div class="num">${cd.d}</div><div class="label">Days</div></div>
+          <div class="countdown-unit"><div class="num">${cd.h}</div><div class="label">Hrs</div></div>
+          <div class="countdown-unit"><div class="num">${cd.m}</div><div class="label">Min</div></div>
+          <div class="countdown-unit"><div class="num">${cd.s}</div><div class="label">Sec</div></div>
+        </div>
+        <div class="promo-actions">
+          <button class="claim-btn ${p.claimed ? 'claimed' : ''}" data-claim="${p.id}" ${p.claimed ? 'disabled' : ''}>
+            ${p.claimed ? '✓ Claimed' : 'Claim Now'}
+          </button>
+          <span class="terms-link" data-terms="${p.id}">T&Cs</span>
+        </div>
+      </div>
+    </div>`;
+  }
+
+  let currentCat = 'all';
+
+  function renderAll() {
+    const filtered = currentCat === 'all' ? PROMOS : PROMOS.filter(p => p.cat === currentCat);
+    $('promoGrid').innerHTML = filtered.map(renderPromo).join('');
+    attachListeners();
+  }
+
+  renderAll();
+
+  // ── Category Tabs ──────────────────────────────────────────
+  document.querySelectorAll('.promo-tab').forEach(tab => {
+    tab.addEventListener('click', () => {
+      document.querySelectorAll('.promo-tab').forEach(t => t.classList.remove('active'));
+      tab.classList.add('active');
+      currentCat = tab.dataset.cat;
+      renderAll();
+    });
+  });
+
+  // ── Countdown Timers ───────────────────────────────────────
+  setInterval(() => {
+    document.querySelectorAll('.countdown').forEach(el => {
+      const exp = parseInt(el.dataset.expires);
+      const remaining = exp - Date.now();
+      const cd = formatCountdown(remaining);
+      const nums = el.querySelectorAll('.num');
+      if (nums[0]) nums[0].textContent = cd.d;
+      if (nums[1]) nums[1].textContent = cd.h;
+      if (nums[2]) nums[2].textContent = cd.m;
+      if (nums[3]) nums[3].textContent = cd.s;
+    });
+  }, 1000);
+
+  // ── Event Listeners ────────────────────────────────────────
+  function attachListeners() {
+    // Claim buttons
+    document.querySelectorAll('.claim-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const promoId = btn.dataset.claim;
+        const promo = PROMOS.find(p => p.id === promoId);
+        if (!promo || promo.claimed) return;
+
+        if (!user) {
+          window.location.href = 'login.html?next=promotions.html';
+          return;
+        }
+
+        promo.claimed = true;
+        btn.classList.add('claimed');
+        btn.disabled = true;
+        btn.textContent = '✓ Claimed';
+
+        // Show success feedback
+        btn.style.transition = 'transform 0.3s ease';
+        btn.style.transform = 'scale(1.05)';
+        setTimeout(() => { btn.style.transform = 'scale(1)'; }, 300);
+      });
+    });
+
+    // Terms links
+    document.querySelectorAll('.terms-link').forEach(link => {
+      link.addEventListener('click', () => {
+        const promoId = link.dataset.terms;
+        const promo = PROMOS.find(p => p.id === promoId);
+        if (!promo) return;
+        showTerms(promo);
+      });
+    });
+  }
+
+  // ── Terms Modal ────────────────────────────────────────────
+  const termsBackdrop = $('termsBackdrop');
+
+  function showTerms(promo) {
+    $('termsTitle').textContent = promo.title + ' — Terms';
+    $('termsList').innerHTML = promo.terms.map(t => `<li>${t}</li>`).join('');
+    termsBackdrop.classList.add('active');
+    document.body.style.overflow = 'hidden';
+  }
+
+  function closeTerms() {
+    termsBackdrop.classList.remove('active');
+    document.body.style.overflow = '';
+  }
+
+  $('termsClose').addEventListener('click', closeTerms);
+  termsBackdrop.addEventListener('click', e => { if (e.target === termsBackdrop) closeTerms(); });
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') closeTerms(); });
+})();
+</script>
+    <script src="js/social-proof.js" defer></script>
+    <script src="js/deposit-urgency.js" defer></script>
+    <script src="js/onboarding.js" defer></script>
+</body>
+</html>

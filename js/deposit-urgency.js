@@ -341,7 +341,7 @@
         html:
           '<div class="mdu-title">🎰 WELCOME BONUS</div>' +
           '<div class="mdu-text">' +
-            '<span class="mdu-highlight">200% up to $1,000 + 50 Free Spins!</span><br>' +
+            '<span class="mdu-highlight">100% up to $500 + 50 Free Spins!</span><br>' +
             'Exclusive offer for new players — claim it now before it\'s gone.' +
           '</div>' +
           '<div class="mdu-actions">' +
@@ -373,11 +373,11 @@
           '<div class="mdu-text">' +
             'Special offer just for you:<br>' +
             'Deposit <span class="mdu-highlight">$10</span> and play with ' +
-            '<span class="mdu-highlight">$30</span> — that\'s a ' +
-            '<span class="mdu-highlight">200% bonus!</span>' +
+            '<span class="mdu-highlight">$20</span> — that\'s a ' +
+            '<span class="mdu-highlight">100% bonus!</span>' +
           '</div>' +
           '<div class="mdu-actions">' +
-            '<a href="' + WALLET_URL + '" class="mdu-cta">Deposit $10, Get $30</a><br>' +
+            '<a href="' + WALLET_URL + '" class="mdu-cta">Deposit $10, Get $20</a><br>' +
             '<span class="mdu-link" data-mdu-dismiss="exit">No thanks, I\'ll pass</span>' +
           '</div>',
         onClose: function () { /* already stored in session */ }

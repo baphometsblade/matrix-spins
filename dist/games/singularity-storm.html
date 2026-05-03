@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Singularity Storm — Matrix Spins Casino</title>
+  <meta name="theme-color" content="#D4A853">
+  <meta name="description" content="Play Singularity Storm slot at Matrix Spins Casino. Free demo with $1,000 credits. Provably fair, instant play, no download required.">
+  <link rel="canonical" href="https://msaart.online/games/singularity-storm.html">
+  <meta property="og:title" content="Singularity Storm — Play Free at Matrix Spins Casino">
+  <meta property="og:description" content="Play Singularity Storm slot at Matrix Spins Casino. Free demo with $1,000 credits. Provably fair, instant play, no download required.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://msaart.online/games/singularity-storm.html">
+  <meta property="og:image" content="https://msaart.online/img/og-banner.png">
+  <meta name="twitter:card" content="summary_large_image">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html, body { height: 100%; }
+    body { background: #0D0F14; color: #F0F0F5; font-family: 'Inter', sans-serif; overflow-x: hidden; }
+  </style>
+  <link rel="stylesheet" href="../css/chat-widget.css">
+  <link rel="stylesheet" href="../css/notifications.css">
+  <link rel="stylesheet" href="../css/age-gate.css">
+  <link rel="stylesheet" href="../css/search.css">
+  <link rel="stylesheet" href="../css/favorites.css">
+  <link rel="stylesheet" href="../css/session-monitor.css">
+  <link rel="stylesheet" href="../css/conversion.css">
+</head>
+<body>
+  <h1 style="position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);border:0">Singularity Storm — Matrix Spins Casino</h1>
+  <div id="game-container" style="width:100%;min-height:100vh;"></div>
+
+  <script src="../js/api-client.js"></script>
+  <script src="../js/casino-engine.js"></script>
+  <script>
+    const gameConfig = {
+      name: 'Singularity Storm',
+      id: 'singularity-storm',
+      studioTheme: {
+        id: 'nebula-gaming',
+        name: 'Nebula Gaming',
+        primaryColor: '#00F0FF',
+        secondaryColor: '#9D4EDD',
+        accentColor: '#3A86FF',
+        bgGradient: 'linear-gradient(135deg, #0A0E27 0%, #1a0033 50%, #0A0E27 100%)',
+        fontFamily: "'Orbitron', sans-serif",
+        fontFamilyBody: "'Space Mono', monospace",
+        chromeStyle: 'custom',
+        logoUrl: 'assets/studios/nebula-gaming-logo.png',
+        reelBg: '#030810',
+        reelBorder: '#00F0FF',
+        winHighlight: '#39FF14',
+        borderStyle: '2px solid #00F0FF',
+        borderRadius: '4px',
+        boxShadow: '0 0 40px rgba(0,240,255,0.5), inset 0 0 30px rgba(157,78,221,0.2)',
+        buttonStyle: 'background: linear-gradient(180deg, #9D4EDD, #3A86FF); border-radius: 4px; border: 1px solid #00F0FF; text-transform: uppercase; letter-spacing: 3px; font-weight: bold;',
+        spinButtonGlow: '0 0 30px rgba(0,240,255,0.8)'
+      },
+      rtp: 0.92,
+      volatility: 'high',
+      mechanic: 'Reel Storm',
+      mechanicDesc: 'A storm sweeps across reels adding wilds, multipliers, and bonus symbols.',
+      minBet: 0.2,
+      maxBet: 100,
+      betStep: 0.20,
+      reels: 5,
+      rows: 3,
+      paylines: 25,
+      symbols: ["singularity","black-hole","warp-gate","plasma","ion","photon","quasar","pulsar"],
+      wilds: ["singularity"],
+      scatters: ["pulsar"],
+      symbolWeights: {"singularity":[7.968284409210854,7.80199406524988,8.078858188641039,8.224097266853587,7.971707592572316],"black-hole":[7.043338840142992,7.105109174360702,6.8690952731069626,6.934746315642335,6.902642439186852],"warp-gate":[6.015006815809807,6.179794733768822,5.794605749999656,6.144570350848752,5.959761483527493],"plasma":[4.886203759550725,5.0053890748203305,4.970746619273955,4.861854838791801,4.9241611402059995],"ion":[3.887448736976871,3.83378632123827,4.2149730628965525,4.174090451987443,3.9103258487636494],"photon":[3.160198590064801,2.767137261301973,3.0105014070028577,2.834600427878051,2.8041739290458434],"quasar":[2.194650699214698,1.9184645224208112,1.8990085706202318,1.8779090259844402,2.229300139545807],"pulsar":[0.9808246945516605,1.1572566227512389,0.9602073312392457,1.1636278873528965,1.1728862749619804]},
+      paytable: {"singularity":{"3":2,"4":5,"5":15},"black-hole":{"3":4,"4":12,"5":38},"warp-gate":{"3":7,"4":19,"5":61},"plasma":{"3":9,"4":26,"5":84},"ion":{"3":11,"4":33,"5":108},"photon":{"3":13,"4":39,"5":131},"quasar":{"3":16,"4":46,"5":154},"pulsar":{"3":18,"4":53,"5":177},"SCATTER":{"3":5,"4":20,"5":100}},
+      freeSpinCount: 10,
+      freeSpinMultiplier: 2,
+      onSound: function(label) { /* sound hooks ready */ }
+    };
+
+    CasinoEngine.init('game-container', gameConfig);
+  </script>
+  <script src="../js/chat-widget.js" defer></script>
+  <script src="../js/notifications.js" defer></script>
+  <script src="../js/age-gate.js" defer></script>
+  <script src="../js/cookie-consent.js" defer></script>
+  <script src="../js/search.js" defer></script>
+  <script src="../js/favorites.js" defer></script>
+  <script src="../js/session-monitor.js" defer></script>
+  <script src="../js/sound-manager.js" defer></script>
+  <script src="../js/analytics.js" defer></script>
+  <script src="../js/email-capture.js" defer></script>
+  <script src="../js/conversion.js" defer></script>
+    <script src="../js/social-proof.js" defer></script>
+    <script src="../js/deposit-urgency.js" defer></script>
+    <script src="../js/onboarding.js" defer></script>
+</body>
+</html>

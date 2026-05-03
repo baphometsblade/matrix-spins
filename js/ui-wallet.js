@@ -62,7 +62,9 @@ const WALLET_PAYMENT_TYPES = {
     }
 };
 
-const WALLET_QUICK_AMOUNTS = [10, 25, 50, 100, 250, 500];
+const WALLET_QUICK_AMOUNTS = [10, 25, 50, 100, 250];
+const WALLET_DEFAULT_DEPOSIT = 25;
+const WALLET_RECOMMENDED_AMOUNT = 25;
 
 
 // ═══════════════════════════════════════════════════════
@@ -707,7 +709,7 @@ function renderDepositForm() {
 </div>`;
 
     const quickBtns = WALLET_QUICK_AMOUNTS.map(amt =>
-        `<button class="wallet-quick-btn" onclick="walletSetDepositAmount(${amt})">$${amt}</button>`
+        `<button class="wallet-quick-btn${amt === WALLET_RECOMMENDED_AMOUNT ? ' wallet-quick-btn--recommended' : ''}" onclick="walletSetDepositAmount(${amt})">$${amt}${amt === WALLET_RECOMMENDED_AMOUNT ? '<span class="wallet-quick-popular">Popular</span>' : ''}</button>`
     ).join('');
 
     const payTypeCards = Object.entries(WALLET_PAYMENT_TYPES).map(([type, meta]) => `
@@ -757,7 +759,7 @@ function renderDepositForm() {
                     <span class="wallet-amount-input-wrap__prefix">$</span>
                     <input type="number" id="walletDepositAmount" class="wallet-input wallet-input--amount"
                            inputmode="decimal" enterkeyhint="done" autocomplete="off" pattern="[0-9]*"
-                           min="1" step="1" value="50" placeholder="0.00">
+                           min="1" step="1" value="25" placeholder="0.00">
                 </div>
             </div>
             <div class="wallet-quick-amounts">${quickBtns}</div>

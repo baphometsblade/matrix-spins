@@ -168,7 +168,7 @@
 
     /* --- Step 2: Welcome Bonus --- */
     var featureData = [
-      ['🎯', '200% match on your first deposit — up to $1,000'],
+      ['🎯', '100% match on your first deposit — up to $500'],
       ['🔒', 'Provably fair games verified on-chain'],
       ['⚡',        'Instant withdrawals, no waiting period']
     ];
@@ -181,16 +181,16 @@
     });
     var step2 = el('div', { className: 'mx-tour-slide' }, [
       el('h2', { textContent: 'Claim Your Welcome Bonus' }),
-      el('p', { textContent: 'Start strong with a massive 200% deposit match. Every dollar you deposit is tripled — giving you 3x the playtime and 3x the chances to win big.' }),
+      el('p', { textContent: 'Start strong with a 100% deposit match. Every dollar you deposit is doubled — giving you 2x the playtime and 2x the chances to win big.' }),
       featureList
     ]);
 
     /* --- Step 3: Deposit Tiers --- */
     var tiers = [
-      { amount: 10,  bonus: 20 },
-      { amount: 25,  bonus: 50 },
-      { amount: 50,  bonus: 100 },
-      { amount: 100, bonus: 200 }
+      { amount: 10,  bonus: 10 },
+      { amount: 25,  bonus: 25 },
+      { amount: 50,  bonus: 50 },
+      { amount: 100, bonus: 100 }
     ];
     var tierGrid = el('div', { className: 'mx-tiers' });
     tiers.forEach(function (t) {
@@ -204,7 +204,7 @@
     });
     var step3 = el('div', { className: 'mx-tour-slide' }, [
       el('h2', { textContent: 'Make Your First Deposit' }),
-      el('p', { textContent: 'Choose a deposit amount and your 200% bonus is applied instantly. Pick the tier that fits your style.' }),
+      el('p', { textContent: 'Choose a deposit amount and your 100% bonus is applied instantly. Pick the tier that fits your style.' }),
       tierGrid
     ]);
 

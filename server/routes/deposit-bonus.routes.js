@@ -51,8 +51,8 @@ async function _ensureDepositBonusTables() {
 var BONUS_TYPES = {
     'first_deposit': {
         name: 'First Deposit Bonus',
-        multiplier: 2.0,  // 200%
-        maxBonus: 5000,
+        multiplier: 1.0,  // 100%
+        maxBonus: 500,
         minDeposit: 10,
         wageringMultiplier: 45,  // per CLAUDE.md: first deposit = 45x
         oneTimeOnly: true,

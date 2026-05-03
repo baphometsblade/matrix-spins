@@ -717,6 +717,31 @@
     transform: none;
 }
 
+.signup-terms {
+    margin-top: 4px;
+}
+.signup-terms label {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    font-size: 12px;
+    color: var(--text-muted, #9CA3AF);
+    cursor: pointer;
+    line-height: 1.4;
+}
+.signup-terms input[type="checkbox"] {
+    width: 18px;
+    height: 18px;
+    min-width: 18px;
+    margin-top: 2px;
+    accent-color: var(--accent-gold, #D4A853);
+    cursor: pointer;
+}
+.signup-terms a {
+    color: var(--accent-gold, #D4A853);
+    text-decoration: underline;
+}
+
 .signup-footer {
     text-align: center;
     margin-top: 16px;

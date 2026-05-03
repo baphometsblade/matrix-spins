@@ -73,8 +73,8 @@ module.exports = {
     WITHDRAWAL_OTP_EXPIRY_MINUTES: 15,
 
     // First-deposit bonus (wagering mults per CLAUDE.md revenue-protection rules)
-    FIRST_DEPOSIT_BONUS_PCT: 50,      // 50% match
-    FIRST_DEPOSIT_BONUS_MAX: 200,     // cap at $200
+    FIRST_DEPOSIT_BONUS_PCT: 100,     // 100% match
+    FIRST_DEPOSIT_BONUS_MAX: 500,     // cap at $500
     FIRST_DEPOSIT_WAGERING_MULT: 45,  // 45x playthrough on first deposit bonus (CLAUDE.md)
     RELOAD_BONUS_PCT: 25,             // 25% match on reload deposits
     RELOAD_BONUS_MAX: 100,            // cap reload bonus at $100

@@ -8,10 +8,10 @@
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <title>Matrix Spins Casino — Premium Online Slots | 100 Games from 8 Studios</title>
-    <meta name="description" content="Play 100 premium slot games from 8 world-class studios. Provably fair, instant play, no download required. Free $1,000 demo credits.">
+    <meta name="description" content="Play 100 premium slot games from 8 world-class studios. 100% first deposit match up to $500. Provably fair, instant payouts, no download.">
     <meta name="theme-color" content="#D4A853">
     <meta property="og:title" content="Matrix Spins Casino — Premium Online Slots">
-    <meta property="og:description" content="100 premium slot games from 8 studios. Play now with $1,000 in demo credits.">
+    <meta property="og:description" content="100 premium slot games from 8 studios. 100% first deposit match up to $500. Play now.">
     <meta property="og:type" content="website">
     <meta property="og:url" content="https://royal-slots-casino.vercel.app/">
     <meta property="og:image" content="https://royal-slots-casino.vercel.app/img/og-banner.png">
@@ -1080,7 +1080,7 @@
             <div class="balance-card">
                 <div>
                     <div class="balance-label">Balance</div>
-                    <div class="balance-amount" id="balance">$1,000.00</div>
+                    <div class="balance-amount" id="balance">$0.00</div>
                 </div>
             </div>
             <button class="btn-deposit" id="depositBtn">Deposit</button>
@@ -1105,16 +1105,16 @@
                         <span id="livePlayerCount">4,382 Playing Now</span>
                     </div>
                     <h1>Play <span class="gold-text">100 Premium</span> Slot Games</h1>
-                    <p>From 8 world-class studios. Provably fair, instant play, no download. Start with $1,000 in free demo credits.</p>
+                    <p>From 8 world-class studios. Provably fair, instant payouts, no download required.</p>
                     <div class="hero-ctas">
-                        <button class="btn-primary-cta" id="heroSignupBtn">Claim Free Credits</button>
+                        <button class="btn-primary-cta" id="heroSignupBtn">Get Started</button>
                         <button class="btn-secondary-cta" id="exploreBtn">Explore Games</button>
                     </div>
                     <div class="welcome-bonus">
                         <div class="welcome-bonus-icon">🎰</div>
                         <div class="welcome-bonus-text">
-                            <strong>$1,000 Free Demo Credits</strong>
-                            No deposit required. Play every game instantly.
+                            <strong>100% First Deposit Match up to $500</strong>
+                            Deposit $25, play with $50. Double your money instantly.
                         </div>
                     </div>
                 </div>
@@ -1180,7 +1180,7 @@
                 <div class="step-card">
                     <div class="step-number">2</div>
                     <h3>Play Instantly</h3>
-                    <p>No download, no account required. Every game works in demo mode with $1,000 free credits.</p>
+                    <p>No download required. 100 premium games from 8 studios. Sign up and deposit to start winning.</p>
                 </div>
                 <div class="step-card">
                     <div class="step-number">3</div>
@@ -1197,8 +1197,12 @@
             <div class="signup-modal">
                 <button class="signup-modal-close" id="signupClose" aria-label="Close">&times;</button>
                 <h2>Join Matrix Spins</h2>
-                <p class="modal-subtitle">Create your account and claim $1,000 in free demo credits.</p>
+                <p class="modal-subtitle">Create your account &amp; get a <strong style="color:#fbbf24">100% deposit match up to $500</strong></p>
                 <form id="signupForm">
+                    <div class="signup-field">
+                        <label for="signupUsername">Username</label>
+                        <input type="text" id="signupUsername" placeholder="Pick a username" autocomplete="username" minlength="3" maxlength="20" pattern="[a-zA-Z0-9_]+" title="Letters, numbers, and underscores only" required>
+                    </div>
                     <div class="signup-field">
                         <label for="signupEmail">Email</label>
                         <input type="email" id="signupEmail" placeholder="you@example.com" autocomplete="email" required>
@@ -1209,12 +1213,14 @@
                     </div>
                     <div class="signup-field">
                         <label for="signupDob">Date of Birth</label>
-                        <input type="date" id="signupDob" required>
+                        <input type="date" id="signupDob" max="2008-05-03" required>
+                    </div>
+                    <div class="signup-field signup-terms">
+                        <label><input type="checkbox" id="signupTerms" required> I am 21+ and agree to the <a href="terms.html" target="_blank" style="color:var(--accent-gold,#D4A853)">Terms</a> &amp; <a href="responsible-gambling.html" target="_blank" style="color:var(--accent-gold,#D4A853)">Responsible Gambling</a> policy</label>
                     </div>
                     <button type="submit" class="signup-submit" id="signupSubmitBtn">Create Account</button>
                 </form>
                 <p class="signup-footer">Already have an account? <a href="login.html">Sign in</a></p>
-                <p class="signup-legal">By creating an account you confirm you are 21+ and agree to our <a href="terms.html" style="color:var(--accent-gold,#D4A853)">Terms</a> and <a href="responsible-gambling.html" style="color:var(--accent-gold,#D4A853)">Responsible Gambling</a> policy.</p>
             </div>
         </div>
 
@@ -1837,10 +1843,19 @@
             if (form) {
                 form.onsubmit = async (e) => {
                     e.preventDefault();
-                    const email = document.getElementById('signupEmail').value;
+                    const username = document.getElementById('signupUsername').value.trim();
+                    const email = document.getElementById('signupEmail').value.trim();
                     const password = document.getElementById('signupPassword').value;
                     const dob = document.getElementById('signupDob').value;
+                    const acceptTerms = document.getElementById('signupTerms').checked;
                     const btn = document.getElementById('signupSubmitBtn');
+
+                    if (!acceptTerms) {
+                        btn.textContent = 'Please accept terms';
+                        btn.style.background = 'var(--accent-red, #F87171)';
+                        setTimeout(() => { btn.textContent = 'Create Account'; btn.style.background = ''; }, 2000);
+                        return;
+                    }
 
                     btn.disabled = true;
                     btn.textContent = 'Creating account...';
@@ -1849,27 +1864,46 @@
                         const res = await fetch('/api/auth/register', {
                             method: 'POST',
                             headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({ email, password, dateOfBirth: dob }),
+                            body: JSON.stringify({ username, email, password, dateOfBirth: dob, acceptTerms }),
                         });
 
                         const data = await res.json();
 
-                        if (res.ok) {
-                            // Success — redirect to login or auto-login
-                            btn.textContent = 'Account Created!';
+                        if (res.ok && data.token) {
+                            // Auto-login: apply auth session immediately (no redirect to login.html)
+                            btn.textContent = 'Welcome!';
                             btn.style.background = 'var(--accent-green, #4ADE80)';
+
+                            // Use the auth system's applyAuthSession if available
+                            if (typeof applyAuthSession === 'function') {
+                                applyAuthSession(data.token, data.user);
+                            } else {
+                                // Fallback: store token + user directly
+                                localStorage.setItem('casinoToken', data.token);
+                                localStorage.setItem('casinoUser', JSON.stringify(data.user));
+                            }
+                            if (typeof updateAuthButton === 'function') updateAuthButton();
+                            if (typeof syncServerSession === 'function') syncServerSession();
+
                             setTimeout(() => {
                                 closeSignup();
-                                window.location.href = 'login.html?registered=true';
-                            }, 1500);
+                                // Show onboarding tour if available
+                                if (typeof MatrixOnboarding !== 'undefined' && MatrixOnboarding.startTour) {
+                                    MatrixOnboarding.startTour();
+                                }
+                                // Show success toast
+                                if (typeof showToast === 'function') {
+                                    showToast('Account created! Deposit now to claim your 100% match bonus.', 'success');
+                                }
+                            }, 800);
                         } else {
-                            btn.textContent = data.message || 'Something went wrong';
+                            btn.textContent = data.error || data.message || 'Something went wrong';
                             btn.style.background = 'var(--accent-red, #F87171)';
                             setTimeout(() => {
                                 btn.textContent = 'Create Account';
                                 btn.style.background = '';
                                 btn.disabled = false;
-                            }, 2000);
+                            }, 2500);
                         }
                     } catch (err) {
                         btn.textContent = 'Network error — try again';

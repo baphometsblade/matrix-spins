@@ -1,86 +1,175 @@
-const CACHE_VERSION = 1777003177200;
-const CACHE_NAME = 'matrix-spins-v' + CACHE_VERSION;
-const PRECACHE_URLS = [
-  '/',
-  '/manifest.json',
-  '/favicon.svg',
-  '/provably-fair.html'
+// Matrix Spins Casino — Service Worker
+// Production PWA: cache-first statics, network-first HTML, network-only API
+
+const CACHE_NAME = 'matrix-spins-v5';
+
+const PRECACHE_ASSETS = [
+  '/index.html',
+  '/404.html',
+  // Core CSS
+  '/css/landing-redesign.css',
+  '/css/performance-mobile.css',
+  '/css/jackpot.css',
+  '/css/chat-widget.css',
+  '/css/notifications.css',
+  // Compliance & UX CSS
+  '/css/cookie-consent.css',
+  '/css/age-gate.css',
+  '/css/skeleton.css',
+  '/css/search.css',
+  '/css/favorites.css',
+  '/css/session-monitor.css',
+  '/css/conversion.css',
+  // Page CSS
+  '/css/auth.css',
+  '/css/wallet.css',
+  '/css/vip.css',
+  '/css/promotions.css',
+  '/css/leaderboard.css',
+  '/css/referral.css',
+  '/css/achievements.css',
+  '/css/spin-wheel.css',
+  '/css/account.css',
+  '/css/email-capture.css',
+  // Core JS
+  '/js/api-client.js',
+  '/js/jackpot.js',
+  '/js/chat-widget.js',
+  '/js/notifications.js',
+  '/js/cookie-consent.js',
+  '/js/age-gate.js',
+  '/js/search.js',
+  '/js/favorites.js',
+  '/js/session-monitor.js',
+  '/js/sound-manager.js',
+  '/js/analytics.js',
+  '/js/email-capture.js',
+  '/js/conversion.js',
+  '/js/activity-feed.js',
+  '/js/social-proof.js',
+  '/js/deposit-urgency.js',
+  '/js/onboarding.js',
+  '/js/casino-engine.js',
+  '/js/game-registry.js',
+  '/js/studio-themes.js',
+  '/js/retention.js',
+  '/js/countries.js',
+  '/css/activity-feed.css',
+  '/terms.html',
+  '/responsible-gambling.html',
+  '/provably-fair.html',
+  '/privacy.html',
+  '/faq.html',
 ];
 
-self.addEventListener('install', event => {
-  event.waitUntil(
-    caches.open(CACHE_NAME)
-      .then(cache => cache.addAll(PRECACHE_URLS))
-      .catch(err => console.warn('[SW] Precache failed:', err))
-  );
+// ── Install: pre-cache critical assets and take control immediately ──
+self.addEventListener('install', (event) => {
   self.skipWaiting();
-});
-
-self.addEventListener('activate', event => {
   event.waitUntil(
-    caches.keys().then(keys =>
-      Promise.allSettled(keys.filter(k => k !== CACHE_NAME).map(k => caches.delete(k)))
-    )
-  );
-  self.clients.claim();
-});
-
-self.addEventListener('fetch', event => {
-  const url = new URL(event.request.url);
-
-  // Never cache API calls or non-GET requests
-  if (url.pathname.startsWith('/api/') || event.request.method !== 'GET') return;
-
-  // Cache-first for immutable hashed assets (bundle.XXXX.js, styles.XXXX.css)
-  if (/bundle\.[a-f0-9]+\.js|styles\.[a-f0-9]+\.css/.test(url.pathname)) {
-    event.respondWith(
-      caches.open(CACHE_NAME).then(cache =>
-        cache.match(event.request).then(cached => {
-          if (cached) return cached;
-          return fetch(event.request).then(resp => {
-            if (resp.ok) cache.put(event.request, resp.clone());
-            return resp;
-          }).catch(() => cached || new Response('<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Offline</title><style>body{background:#0a0e17;color:#e2e8f0;font-family:system-ui;display:flex;justify-content:center;align-items:center;min-height:100vh;margin:0;text-align:center}.c{max-width:400px;padding:2rem}h1{font-size:1.5rem;color:#f59e0b}p{color:#94a3b8;line-height:1.6}button{background:#f59e0b;color:#0a0e17;border:none;padding:.75rem 2rem;border-radius:8px;font-weight:600;cursor:pointer;margin-top:1rem}</style></head><body><div class="c"><h1>You\'re Offline</h1><p>Check your internet connection and try again.</p><button onclick="location.reload()">Retry</button></div></body></html>', { status: 503, headers: { 'Content-Type': 'text/html' } }));
-        })
-      )
-    );
-    return;
-  }
-
-  // Cache-first for static assets (images, fonts) — bounded by /assets/ path
-  if (url.pathname.startsWith('/assets/') || /\.(png|jpg|jpeg|gif|svg|webp|avif|woff2?|ico)$/.test(url.pathname)) {
-    event.respondWith(
-      caches.open(CACHE_NAME).then(cache =>
-        cache.match(event.request).then(cached => {
-          if (cached) return cached;
-          return fetch(event.request).then(resp => {
-            if (resp.ok) cache.put(event.request, resp.clone());
-            return resp;
-          }).catch(() => cached || new Response('', { status: 404 }));
-        })
-      )
-    );
-    return;
-  }
-
-  // Network-first for HTML/JS with offline fallback to cached index
-  event.respondWith(
-    fetch(event.request)
-      .then(resp => {
-        // Update cache with fresh response (only GET, only same-origin)
-        if (resp.ok && url.origin === self.location.origin) {
-          const clone = resp.clone();
-          caches.open(CACHE_NAME).then(cache => cache.put(event.request, clone));
-        }
-        return resp;
-      })
-      .catch(() => caches.match(event.request).then(cached => cached || caches.match('/')))
+    caches.open(CACHE_NAME).then((cache) => cache.addAll(PRECACHE_ASSETS))
   );
 });
 
-// Listen for messages to trigger update
-self.addEventListener('message', event => {
-  if (event.data === 'skipWaiting') {
-    self.skipWaiting();
-  }
+// ── Activate: purge old caches and claim all clients ──
+self.addEventListener('activate', (event) => {
+  event.waitUntil(
+    caches.keys().then((keys) =>
+      Promise.all(
+        keys
+          .filter((key) => key !== CACHE_NAME)
+          .map((key) => caches.delete(key))
+      )
+    ).then(() => clients.claim())
+  );
 });
+
+// ── Fetch: route requests by type ──
+self.addEventListener('fetch', (event) => {
+  const { request } = event;
+  const url = new URL(request.url);
+
+  // API requests — network only, never cache
+  if (url.pathname.startsWith('/api/')) {
+    event.respondWith(fetch(request));
+    return;
+  }
+
+  // Google Fonts — cache-first (fonts rarely change)
+  if (url.hostname.includes('fonts.googleapis.com') ||
+      url.hostname.includes('fonts.gstatic.com')) {
+    event.respondWith(cacheFirst(request));
+    return;
+  }
+
+  // CSS, JS, images — cache-first with network fallback
+  if (isStaticAsset(url.pathname)) {
+    event.respondWith(cacheFirst(request));
+    return;
+  }
+
+  // HTML navigation requests — network-first with cache fallback
+  if (request.mode === 'navigate' ||
+      request.headers.get('accept')?.includes('text/html')) {
+    event.respondWith(networkFirstHTML(request));
+    return;
+  }
+
+  // Everything else — network-first
+  event.respondWith(networkFirst(request));
+});
+
+// ── Strategies ──
+
+// Cache-first: serve from cache, fall back to network and store the response
+async function cacheFirst(request) {
+  const cached = await caches.match(request);
+  if (cached) return cached;
+
+  try {
+    const response = await fetch(request);
+    if (response.ok) {
+      const cache = await caches.open(CACHE_NAME);
+      cache.put(request, response.clone());
+    }
+    return response;
+  } catch {
+    return new Response('', { status: 408, statusText: 'Offline' });
+  }
+}
+
+// Network-first for HTML: try network, cache fallback, ultimate fallback 404
+async function networkFirstHTML(request) {
+  try {
+    const response = await fetch(request);
+    if (response.ok) {
+      const cache = await caches.open(CACHE_NAME);
+      cache.put(request, response.clone());
+    }
+    return response;
+  } catch {
+    const cached = await caches.match(request);
+    if (cached) return cached;
+    // Offline with no cache — serve pre-cached 404 page
+    return caches.match('/404.html');
+  }
+}
+
+// Network-first for miscellaneous requests
+async function networkFirst(request) {
+  try {
+    const response = await fetch(request);
+    if (response.ok) {
+      const cache = await caches.open(CACHE_NAME);
+      cache.put(request, response.clone());
+    }
+    return response;
+  } catch {
+    return caches.match(request);
+  }
+}
+
+// ── Helpers ──
+
+function isStaticAsset(pathname) {
+  return /\.(css|js|png|jpg|jpeg|gif|svg|webp|ico|woff2?|ttf|eot)(\?.*)?$/i.test(pathname);
+}

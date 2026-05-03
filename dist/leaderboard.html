@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Tournament Leaderboard — Matrix Spins Casino</title>
+<meta name="description" content="Live tournament rankings, prize distribution, and past winners at Matrix Spins Casino. Compete for massive prizes every week.">
+<meta property="og:title" content="Tournament Leaderboard — Matrix Spins Casino">
+<meta property="og:description" content="Live tournament rankings with massive prize pools. Compete against players worldwide for weekly prizes.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://msaart.online/leaderboard.html">
+<meta name="twitter:card" content="summary">
+<link rel="canonical" href="https://msaart.online/leaderboard.html">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/auth.css">
+<link rel="stylesheet" href="css/leaderboard.css">
+<link rel="stylesheet" href="css/chat-widget.css">
+<link rel="stylesheet" href="css/notifications.css">
+<link rel="stylesheet" href="css/age-gate.css">
+<link rel="stylesheet" href="css/search.css">
+<link rel="stylesheet" href="css/favorites.css">
+<link rel="stylesheet" href="css/session-monitor.css">
+<link rel="stylesheet" href="css/conversion.css">
+</head>
+<body>
+
+<!-- ── Top bar ──────────────────────────────────────────────── -->
+<div class="topbar">
+  <a class="brand" href="index.html">Matrix Spins</a>
+  <div class="actions">
+    <span id="balanceChip" class="balance-chip">—</span>
+    <a href="wallet.html" class="btn btn-inline secondary">Wallet</a>
+    <a href="account.html" class="btn btn-inline secondary">Account</a>
+    <button id="logout" class="btn btn-inline secondary">Sign out</button>
+  </div>
+</div>
+
+<div class="rs-shell-wide">
+
+  <!-- ── Tournament Hero ─────────────────────────────────────── -->
+  <div class="tourney-hero">
+    <div class="trophy">🏆</div>
+    <h1><span class="purple">Weekend</span> <span class="gold">Mega Tournament</span></h1>
+    <div class="prize-amount">$25,000</div>
+    <p class="sub">Spin to climb the ranks — top 50 players share the prize pool</p>
+
+    <div style="margin-top:1rem;">
+      <span class="tourney-status live"><span class="dot"></span> Live Now</span>
+    </div>
+
+    <div class="tourney-countdown" id="countdown">
+      <div class="cd-block">
+        <span class="num" id="cdDays">0</span>
+        <span class="unit">Days</span>
+      </div>
+      <div class="cd-block">
+        <span class="num" id="cdHours">00</span>
+        <span class="unit">Hours</span>
+      </div>
+      <div class="cd-block">
+        <span class="num" id="cdMins">00</span>
+        <span class="unit">Mins</span>
+      </div>
+      <div class="cd-block">
+        <span class="num" id="cdSecs">00</span>
+        <span class="unit">Secs</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Prize Distribution ──────────────────────────────────── -->
+  <div class="prize-grid">
+    <div class="prize-card first">
+      <div class="medal">🥇</div>
+      <div class="place">1st Place</div>
+      <div class="amount">$10,000</div>
+    </div>
+    <div class="prize-card second">
+      <div class="medal">🥈</div>
+      <div class="place">2nd Place</div>
+      <div class="amount">$5,000</div>
+    </div>
+    <div class="prize-card third">
+      <div class="medal">🥉</div>
+      <div class="place">3rd Place</div>
+      <div class="amount">$2,500</div>
+    </div>
+    <div class="prize-card">
+      <div class="medal">🎖️</div>
+      <div class="place">4th — 10th</div>
+      <div class="amount">$500</div>
+    </div>
+    <div class="prize-card">
+      <div class="medal">🎯</div>
+      <div class="place">11th — 25th</div>
+      <div class="amount">$100</div>
+    </div>
+    <div class="prize-card">
+      <div class="medal">⭐</div>
+      <div class="place">26th — 50th</div>
+      <div class="amount">$25</div>
+    </div>
+  </div>
+
+  <!-- ── Your Position Banner ────────────────────────────────── -->
+  <div class="your-position" id="yourPosition">
+    <div class="pos-info">
+      <div class="pos-rank">#12</div>
+      <div>
+        <div class="pos-label"><strong>8,450 Points</strong>Current Score</div>
+      </div>
+      <div>
+        <div class="pos-label"><strong>$100</strong>Prize Eligible</div>
+      </div>
+    </div>
+    <a href="index.html" class="btn btn-inline secondary">Keep Playing</a>
+  </div>
+
+  <!-- ── Leaderboard Table ───────────────────────────────────── -->
+  <div class="lb-card">
+    <div class="lb-card-header">
+      <h2>Live Rankings</h2>
+      <button class="lb-refresh" id="refreshBtn">↻ Refresh</button>
+    </div>
+    <table class="lb-table">
+      <thead>
+        <tr>
+          <th>Rank</th>
+          <th>Player</th>
+          <th style="text-align:right;">Spins</th>
+          <th style="text-align:right;">Points</th>
+          <th style="text-align:right;">Prize</th>
+        </tr>
+      </thead>
+      <tbody id="lbBody">
+        <tr>
+          <td class="rank gold">1</td>
+          <td><div class="lb-player"><div class="lb-avatar">AX</div><span class="name">AceX_High</span></div></td>
+          <td class="num">3,842</td>
+          <td class="num">24,510</td>
+          <td class="prize">$10,000</td>
+        </tr>
+        <tr>
+          <td class="rank silver">2</td>
+          <td><div class="lb-player"><div class="lb-avatar">NR</div><span class="name">NeonRider99</span></div></td>
+          <td class="num">3,617</td>
+          <td class="num">22,380</td>
+          <td class="prize">$5,000</td>
+        </tr>
+        <tr>
+          <td class="rank bronze">3</td>
+          <td><div class="lb-player"><div class="lb-avatar">QJ</div><span class="name">QueenJackpot</span></div></td>
+          <td class="num">3,201</td>
+          <td class="num">19,750</td>
+          <td class="prize">$2,500</td>
+        </tr>
+        <tr>
+          <td class="rank">4</td>
+          <td><div class="lb-player"><div class="lb-avatar">SM</div><span class="name">SpinMaster_77</span></div></td>
+          <td class="num">2,985</td>
+          <td class="num">17,400</td>
+          <td class="prize">$500</td>
+        </tr>
+        <tr>
+          <td class="rank">5</td>
+          <td><div class="lb-player"><div class="lb-avatar">LV</div><span class="name">LuckyViper</span></div></td>
+          <td class="num">2,744</td>
+          <td class="num">15,820</td>
+          <td class="prize">$500</td>
+        </tr>
+        <tr>
+          <td class="rank">6</td>
+          <td><div class="lb-player"><div class="lb-avatar">CW</div><span class="name">CryptoWhale42</span></div></td>
+          <td class="num">2,510</td>
+          <td class="num">14,600</td>
+          <td class="prize">$500</td>
+        </tr>
+        <tr>
+          <td class="rank">7</td>
+          <td><div class="lb-player"><div class="lb-avatar">RG</div><span class="name">RoyalGambit</span></div></td>
+          <td class="num">2,388</td>
+          <td class="num">13,250</td>
+          <td class="prize">$500</td>
+        </tr>
+        <tr>
+          <td class="rank">8</td>
+          <td><div class="lb-player"><div class="lb-avatar">MF</div><span class="name">MidnightFox_</span></div></td>
+          <td class="num">2,195</td>
+          <td class="num">12,100</td>
+          <td class="prize">$500</td>
+        </tr>
+        <tr>
+          <td class="rank">9</td>
+          <td><div class="lb-player"><div class="lb-avatar">BK</div><span class="name">BlitzKing</span></div></td>
+          <td class="num">2,040</td>
+          <td class="num">11,300</td>
+          <td class="prize">$500</td>
+        </tr>
+        <tr>
+          <td class="rank">10</td>
+          <td><div class="lb-player"><div class="lb-avatar">DJ</div><span class="name">DiamondJax</span></div></td>
+          <td class="num">1,920</td>
+          <td class="num">10,450</td>
+          <td class="prize">$500</td>
+        </tr>
+        <tr>
+          <td class="rank">11</td>
+          <td><div class="lb-player"><div class="lb-avatar">SC</div><span class="name">SlotCrusher</span></div></td>
+          <td class="num">1,803</td>
+          <td class="num">9,200</td>
+          <td class="prize">$100</td>
+        </tr>
+        <tr>
+          <td class="rank">12</td>
+          <td><div class="lb-player"><div class="lb-avatar" id="userAvatar">YO</div><span class="name" id="userName">You</span><span class="you-badge">You</span></div></td>
+          <td class="num">1,680</td>
+          <td class="num">8,450</td>
+          <td class="prize">$100</td>
+        </tr>
+        <tr>
+          <td class="rank">13</td>
+          <td><div class="lb-player"><div class="lb-avatar">WS</div><span class="name">WildStrike88</span></div></td>
+          <td class="num">1,555</td>
+          <td class="num">7,900</td>
+          <td class="prize">$100</td>
+        </tr>
+        <tr>
+          <td class="rank">14</td>
+          <td><div class="lb-player"><div class="lb-avatar">GR</div><span class="name">GoldRush_Pro</span></div></td>
+          <td class="num">1,410</td>
+          <td class="num">7,200</td>
+          <td class="prize">$100</td>
+        </tr>
+        <tr>
+          <td class="rank">15</td>
+          <td><div class="lb-player"><div class="lb-avatar">TH</div><span class="name">TurboHands</span></div></td>
+          <td class="num">1,298</td>
+          <td class="num">6,750</td>
+          <td class="prize">$100</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- ── Past Tournaments ────────────────────────────────────── -->
+  <div class="lb-card" style="padding:1.2rem 1.5rem;">
+    <h2 style="font-family:'Plus Jakarta Sans',sans-serif;font-size:1.1rem;margin:0 0 1rem;">Past Tournaments</h2>
+    <div class="past-tourney">
+      <div class="icon">🏆</div>
+      <div class="info">
+        <div class="title">Spring Jackpot Showdown</div>
+        <div class="meta">Apr 13 — Apr 19, 2026 &middot; 312 players</div>
+      </div>
+      <div class="winner">
+        <div class="name">AceX_High</div>
+        <div class="prize">Won $10,000</div>
+      </div>
+    </div>
+    <div class="past-tourney">
+      <div class="icon">🎰</div>
+      <div class="info">
+        <div class="title">Midnight Spin Madness</div>
+        <div class="meta">Apr 6 — Apr 12, 2026 &middot; 278 players</div>
+      </div>
+      <div class="winner">
+        <div class="name">NeonRider99</div>
+        <div class="prize">Won $8,000</div>
+      </div>
+    </div>
+    <div class="past-tourney">
+      <div class="icon">💎</div>
+      <div class="info">
+        <div class="title">Diamond Rush Weekend</div>
+        <div class="meta">Mar 30 — Apr 5, 2026 &middot; 345 players</div>
+      </div>
+      <div class="winner">
+        <div class="name">CryptoWhale42</div>
+        <div class="prize">Won $15,000</div>
+      </div>
+    </div>
+    <div class="past-tourney">
+      <div class="icon">🔥</div>
+      <div class="info">
+        <div class="title">Inferno High Roller</div>
+        <div class="meta">Mar 23 — Mar 29, 2026 &middot; 198 players</div>
+      </div>
+      <div class="winner">
+        <div class="name">QueenJackpot</div>
+        <div class="prize">Won $12,000</div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script src="js/api-client.js"></script>
+<script src="js/chat-widget.js" defer></script>
+<script src="js/notifications.js" defer></script>
+<script src="js/age-gate.js" defer></script>
+<script src="js/cookie-consent.js" defer></script>
+<script src="js/search.js" defer></script>
+<script src="js/favorites.js" defer></script>
+<script src="js/session-monitor.js" defer></script>
+<script src="js/sound-manager.js" defer></script>
+<script src="js/analytics.js" defer></script>
+<script src="js/email-capture.js" defer></script>
+<script src="js/conversion.js" defer></script>
+<script>
+(function() {
+  'use strict';
+
+  var $ = function(id) { return document.getElementById(id); };
+
+  // ── Session / Balance / Logout ──────────────────────────────
+  var user = null;
+  try { user = JSON.parse(sessionStorage.getItem('user')); } catch(e) {}
+
+  if (user) {
+    $('logout').style.display = 'inline-block';
+    var bal = sessionStorage.getItem('balanceCents');
+    if (bal) {
+      $('balanceChip').textContent = '$' + (parseInt(bal, 10) / 100).toFixed(2);
+    }
+    var displayName = user.firstName || user.username || user.email.split('@')[0];
+    var initials = displayName.substring(0, 2).toUpperCase();
+    $('userAvatar').textContent = initials;
+    $('userName').textContent = displayName;
+  } else {
+    $('logout').style.display = 'none';
+  }
+
+  $('logout').addEventListener('click', function() {
+    sessionStorage.removeItem('user');
+    sessionStorage.removeItem('token');
+    sessionStorage.removeItem('balanceCents');
+    window.location.href = 'index.html';
+  });
+
+  // ── Countdown Timer (to next Sunday midnight UTC) ───────────
+  function getNextSunday() {
+    var now = new Date();
+    var day = now.getUTCDay();
+    var daysUntilSunday = (7 - day) % 7;
+    if (daysUntilSunday === 0) daysUntilSunday = 7;
+    var target = new Date(Date.UTC(
+      now.getUTCFullYear(),
+      now.getUTCMonth(),
+      now.getUTCDate() + daysUntilSunday,
+      0, 0, 0, 0
+    ));
+    return target;
+  }
+
+  function updateCountdown() {
+    var target = getNextSunday();
+    var now = Date.now();
+    var diff = Math.max(0, target.getTime() - now);
+
+    var secs = Math.floor(diff / 1000);
+    var mins = Math.floor(secs / 60);
+    var hours = Math.floor(mins / 60);
+    var days = Math.floor(hours / 24);
+
+    $('cdDays').textContent = days;
+    $('cdHours').textContent = String(hours % 24).padStart(2, '0');
+    $('cdMins').textContent = String(mins % 60).padStart(2, '0');
+    $('cdSecs').textContent = String(secs % 60).padStart(2, '0');
+  }
+
+  updateCountdown();
+  setInterval(updateCountdown, 1000);
+
+  // ── Refresh Button ──────────────────────────────────────────
+  var refreshBtn = $('refreshBtn');
+  refreshBtn.addEventListener('click', function() {
+    refreshBtn.textContent = '↻ Refreshing...';
+    refreshBtn.disabled = true;
+    setTimeout(function() {
+      refreshBtn.textContent = '↻ Refresh';
+      refreshBtn.disabled = false;
+    }, 1200);
+  });
+
+  // ── Auto-refresh every 30 seconds ──────────────────────────
+  setInterval(function() {
+    refreshBtn.click();
+  }, 30000);
+
+})();
+</script>
+    <script src="js/social-proof.js" defer></script>
+    <script src="js/deposit-urgency.js" defer></script>
+    <script src="js/onboarding.js" defer></script>
+</body>
+</html>

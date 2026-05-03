@@ -17,8 +17,8 @@
   var COUNTDOWN_TOTAL_S    = 600;     // 10 minutes
   var PULSE_DELAY_MS       = 30000;   // 30 s after show
   var WALLET_URL           = 'wallet.html';
-  var PROMO_CODE           = 'booster50';
-  var BONUS_MULTIPLIER     = 1.5;     // 50% match
+  var PROMO_CODE           = 'booster100';
+  var BONUS_MULTIPLIER     = 2.0;     // 100% match
 
   var LS_AUTH_TOKEN        = 'ms_auth_token';
   var LS_DISMISSED         = 'ms_booster_dismissed';
@@ -298,8 +298,8 @@
 
           /* Offer box */
           '<div id="ms-booster-offer" role="region" aria-label="Current offer">',
-            '<div id="ms-booster-offer-title">50% Match on First Deposit</div>',
-            '<div id="ms-booster-offer-detail">Deposit $100 &rarr; Play with $150</div>',
+            '<div id="ms-booster-offer-title">100% Match on First Deposit</div>',
+            '<div id="ms-booster-offer-detail">Deposit $100 &rarr; Play with $200</div>',
           '</div>',
 
           /* Countdown */
@@ -320,11 +320,11 @@
 
           /* Play-with label */
           '<div id="ms-booster-play-with">',
-            'You\'ll play with: <span id="ms-booster-play-amount">$150.00</span>',
+            'You\'ll play with: <span id="ms-booster-play-amount">$200.00</span>',
           '</div>',
 
           /* CTA */
-          '<a id="ms-booster-cta" href="wallet.html?amount=100&promo=booster50" role="button" aria-label="Claim 50% bonus now with $100 deposit">',
+          '<a id="ms-booster-cta" href="wallet.html?amount=100&promo=booster100" role="button" aria-label="Claim 100% bonus now with $100 deposit">',
             '&rarr; CLAIM MY BONUS NOW',
           '</a>',
 
@@ -454,7 +454,7 @@
       var play = (selectedAmount * BONUS_MULTIPLIER).toFixed(2);
       playAmt.textContent = '$' + play;
       ctaLink.href = WALLET_URL + '?amount=' + selectedAmount + '&promo=' + PROMO_CODE;
-      ctaLink.setAttribute('aria-label', 'Claim 50% bonus now with $' + selectedAmount + ' deposit');
+      ctaLink.setAttribute('aria-label', 'Claim 100% bonus now with $' + selectedAmount + ' deposit');
     }
 
     amountBtns.forEach(function (btn) {

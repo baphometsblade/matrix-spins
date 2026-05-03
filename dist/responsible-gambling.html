@@ -2,1031 +2,617 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <title>Responsible Gambling | Matrix Spins Casino</title>
-    <meta name="description" content="Matrix Spins Casino is committed to responsible gambling. Set deposit limits, loss limits, session timers, self-exclusion, and more.">
-    <meta name="theme-color" content="#0D0F14">
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Responsible Gambling - Matrix Spins Casino</title>
+    <meta property="og:title" content="Responsible Gambling — Matrix Spins Casino">
+    <meta property="og:description" content="Matrix Spins Casino is committed to responsible gambling. Set deposit limits, session alerts, and self-exclusion options.">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://msaart.online/responsible-gambling.html">
+    <meta name="twitter:card" content="summary">
+    <link rel="canonical" href="https://msaart.online/responsible-gambling.html">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@700;800&display=swap" rel="stylesheet">
     <style>
-        *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
-        :root {
-            --bg: #0D0F14;
-            --card: #1A1D27;
-            --border: rgba(255,255,255,0.06);
-            --accent: #D4A853;
-            --accent-dim: #F0C66E;
-            --danger: #F87171;
-            --warning: #FBBF24;
-            --text: #F0F0F5;
-            --text-dim: #9CA3AF;
-            --radius: 12px;
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
         }
+
         body {
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-            background: var(--bg);
-            color: var(--text);
-            min-height: 100vh;
+            background-color: #0D0D0D;
+            color: #E8E8E8;
+            font-family: 'Inter', sans-serif;
             line-height: 1.6;
         }
-        a { color: var(--accent); text-decoration: none; }
-        a:hover { text-decoration: underline; }
 
-        /* Header */
-        .rg-header {
-            background: linear-gradient(180deg, rgba(19,21,28,0.98), var(--bg));
-            border-bottom: 1px solid var(--border);
-            padding: 16px 24px;
-            position: sticky;
-            top: 0;
-            z-index: 50;
-            backdrop-filter: blur(16px);
-        }
-        .rg-header-back {
-            background: rgba(212,168,83,0.08);
-            border: 1px solid rgba(212,168,83,0.2);
-            color: var(--accent-dim);
-            border-radius: 8px;
-            padding: 8px 16px;
-            cursor: pointer;
-            font-size: 14px;
-            font-family: inherit;
-            font-weight: 500;
-            transition: all 0.2s;
-            display: flex;
-            align-items: center;
-            gap: 6px;
-        }
-        .rg-header-back:hover { background: rgba(212,168,83,0.15); }
-        .rg-header-badge {
-            margin-left: auto;
-            background: rgba(212,168,83,0.1);
-            border: 1px solid rgba(212,168,83,0.2);
-            color: var(--accent);
-            font-size: 11px;
-            font-weight: 600;
-            padding: 4px 12px;
-            border-radius: 20px;
-            letter-spacing: 0.04em;
-            text-transform: uppercase;
-        }
-
-        /* Layout */
-        .rg-container {
-            max-width: 900px;
+        .container {
+            max-width: 1000px;
             margin: 0 auto;
-            padding: 32px 20px 80px;
+            padding: 60px 40px;
         }
 
-        /* Intro */
-        .rg-intro {
-            background: var(--card);
-            border: 1px solid var(--border);
-            border-radius: var(--radius);
-            padding: 28px;
-            margin-bottom: 28px;
-        }
-        .rg-intro h2 {
-            font-family: 'Plus Jakarta Sans', sans-serif;
-            font-size: 20px;
-            color: #fff;
-            margin-bottom: 12px;
-        }
-        .rg-intro p { color: var(--text-dim); font-size: 15px; }
-
-        /* Sections */
-        .rg-section {
-            background: var(--card);
-            border: 1px solid var(--border);
-            border-radius: var(--radius);
-            margin-bottom: 20px;
-            overflow: hidden;
-        }
-        .rg-section-header {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            padding: 20px 24px;
-            cursor: pointer;
-            user-select: none;
-            transition: background 0.2s;
-        }
-        .rg-section-header:hover { background: rgba(212,168,83,0.03); }
-        .rg-section-header .rg-icon {
-            width: 40px;
-            height: 40px;
-            border-radius: 10px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 20px;
-            flex-shrink: 0;
-        }
-        .rg-section-header h3 { font-family: 'Plus Jakarta Sans', sans-serif; font-size: 16px; color: #fff; flex: 1; }
-        .rg-section-header .rg-arrow {
-            color: var(--text-dim);
-            transition: transform 0.3s;
-            font-size: 14px;
-        }
-        .rg-section.open .rg-arrow { transform: rotate(180deg); }
-        .rg-section-body {
-            max-height: 0;
-            overflow: hidden;
-            transition: max-height 0.4s ease;
-        }
-        .rg-section.open .rg-section-body { max-height: 2000px; }
-        .rg-section-content {
-            padding: 0 24px 24px;
-            border-top: 1px solid var(--border);
+        .header {
+            text-align: center;
+            margin-bottom: 60px;
+            border-bottom: 2px solid #DAA520;
+            padding-bottom: 30px;
         }
 
-        /* Status badge */
-        .rg-status {
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-            font-size: 12px;
-            padding: 3px 10px;
-            border-radius: 20px;
-            font-weight: 600;
+        .header h1 {
+            color: #DAA520;
+            font-size: 48px;
+            margin-bottom: 15px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
         }
-        .rg-status.active { background: rgba(212,168,83,0.15); color: var(--accent); }
-        .rg-status.inactive { background: rgba(255,255,255,0.06); color: var(--text-dim); }
-        .rg-status.warning { background: rgba(255,170,0,0.15); color: var(--warning); }
-        .rg-status.danger { background: rgba(255,68,68,0.15); color: var(--danger); }
 
-        /* Form elements */
-        .rg-form-group {
-            margin-top: 16px;
+        .header p {
+            color: #999;
+            font-size: 16px;
         }
-        .rg-form-group label {
-            display: block;
-            font-size: 13px;
-            color: var(--text-dim);
-            margin-bottom: 6px;
-            font-weight: 500;
-        }
-        .rg-input {
-            width: 100%;
-            max-width: 300px;
-            background: var(--bg);
-            border: 1px solid rgba(255,255,255,0.1);
-            color: #fff;
-            padding: 10px 14px;
+
+        .warning-banner {
+            background: linear-gradient(135deg, rgba(218, 165, 32, 0.15) 0%, rgba(218, 165, 32, 0.05) 100%);
+            border: 2px solid #DAA520;
             border-radius: 8px;
-            font-size: 15px;
-            font-family: inherit;
-            transition: border-color 0.2s;
+            padding: 30px;
+            margin-bottom: 50px;
+            text-align: center;
         }
-        .rg-input:focus { outline: none; border-color: var(--accent); }
-        .rg-input::placeholder { color: #6B7280; }
 
-        .rg-select {
-            appearance: none;
-            background: var(--bg) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23888' stroke-width='2' fill='none'/%3E%3C/svg%3E") no-repeat right 12px center;
-            border: 1px solid rgba(255,255,255,0.1);
-            color: #fff;
-            padding: 10px 36px 10px 14px;
-            border-radius: 8px;
-            font-size: 15px;
-            font-family: inherit;
-            cursor: pointer;
-        }
-        .rg-select:focus { outline: none; border-color: var(--accent); }
-
-        .rg-btn {
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            padding: 10px 20px;
-            border-radius: 8px;
-            font-size: 14px;
-            font-weight: 600;
-            font-family: inherit;
-            cursor: pointer;
-            border: none;
-            transition: all 0.2s;
-        }
-        .rg-btn-primary {
-            background: var(--accent);
-            color: #000;
-        }
-        .rg-btn-primary:hover { background: #F0C66E; }
-        .rg-btn-danger {
-            background: var(--danger);
-            color: #fff;
-        }
-        .rg-btn-danger:hover { background: #FCA5A5; }
-        .rg-btn-secondary {
-            background: rgba(255,255,255,0.08);
-            color: var(--text);
-            border: 1px solid rgba(255,255,255,0.1);
-        }
-        .rg-btn-secondary:hover { background: rgba(255,255,255,0.12); }
-
-        /* Limit display */
-        .rg-limit-row {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 12px 0;
-            border-bottom: 1px solid rgba(255,255,255,0.04);
-        }
-        .rg-limit-row:last-child { border-bottom: none; }
-        .rg-limit-label { font-size: 14px; color: var(--text-dim); }
-        .rg-limit-value { font-size: 15px; font-weight: 600; color: #fff; }
-        .rg-limit-value.not-set { color: var(--text-dim); font-weight: 400; font-style: italic; }
-
-        /* Session timer display */
-        .rg-timer-display {
-            display: flex;
-            align-items: center;
-            gap: 16px;
-            padding: 16px;
-            background: rgba(212,168,83,0.05);
-            border: 1px solid var(--border);
-            border-radius: 10px;
-            margin-top: 16px;
-        }
-        .rg-timer-clock {
-            font-size: 32px;
-            font-weight: 800;
-            color: var(--accent);
-            font-variant-numeric: tabular-nums;
+        .warning-banner h2 {
+            color: #DAA520;
+            font-size: 28px;
+            margin-bottom: 15px;
+            text-transform: uppercase;
             letter-spacing: 1px;
         }
-        .rg-timer-meta { font-size: 13px; color: var(--text-dim); }
 
-        /* Self-exclusion options */
-        .rg-exclusion-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-            gap: 12px;
-            margin-top: 16px;
-        }
-        .rg-exclusion-card {
-            background: rgba(0,0,0,0.25);
-            border: 1px solid rgba(255,255,255,0.1);
-            border-radius: 10px;
-            padding: 16px;
-            text-align: center;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-        .rg-exclusion-card:hover {
-            border-color: var(--danger);
-            background: rgba(255,68,68,0.05);
-        }
-        .rg-exclusion-card.permanent {
-            border-color: rgba(248,113,113,0.27);
-            background: rgba(255,68,68,0.03);
-        }
-        .rg-exclusion-card .rg-exc-duration {
-            font-size: 20px;
-            font-weight: 700;
-            color: #fff;
-            margin-bottom: 4px;
-        }
-        .rg-exclusion-card .rg-exc-label {
-            font-size: 12px;
-            color: var(--text-dim);
+        .warning-banner p {
+            color: #E8E8E8;
+            font-size: 16px;
+            font-weight: 600;
         }
 
-        /* Help resources */
-        .rg-resources {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-            gap: 12px;
-            margin-top: 16px;
+        .section {
+            margin-bottom: 50px;
         }
-        .rg-resource-card {
-            background: rgba(0,0,0,0.25);
-            border: 1px solid rgba(255,255,255,0.1);
-            border-radius: 10px;
-            padding: 16px;
-            transition: border-color 0.2s;
+
+        .section h2 {
+            color: #DAA520;
+            font-size: 28px;
+            margin-bottom: 20px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            border-bottom: 2px solid #DAA520;
+            padding-bottom: 10px;
         }
-        .rg-resource-card:hover { border-color: var(--accent); }
-        .rg-resource-card h4 {
+
+        .section h3 {
+            color: #DAA520;
+            font-size: 18px;
+            margin-top: 25px;
+            margin-bottom: 15px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .section p {
+            margin-bottom: 15px;
+            color: #E8E8E8;
+            font-size: 15px;
+        }
+
+        .section ul, .section ol {
+            margin-left: 30px;
+            margin-bottom: 15px;
+        }
+
+        .section li {
+            margin-bottom: 10px;
+            color: #E8E8E8;
+        }
+
+        .highlight-box {
+            background: rgba(218, 165, 32, 0.1);
+            border-left: 4px solid #DAA520;
+            padding: 25px;
+            margin: 25px 0;
+            border-radius: 4px;
+        }
+
+        .highlight-box h4 {
+            color: #DAA520;
+            margin-bottom: 10px;
+            text-transform: uppercase;
             font-size: 14px;
-            color: #fff;
-            margin-bottom: 6px;
+            letter-spacing: 0.5px;
         }
-        .rg-resource-card p {
-            font-size: 13px;
-            color: var(--text-dim);
+
+        .highlight-box p {
+            margin-bottom: 10px;
+        }
+
+        .highlight-box strong {
+            color: #DAA520;
+        }
+
+        .questionnaire {
+            background: #1a1a1a;
+            border: 1px solid #DAA520;
+            border-radius: 8px;
+            padding: 30px;
+            margin: 30px 0;
+        }
+
+        .questionnaire h4 {
+            color: #DAA520;
+            margin-bottom: 15px;
+            font-size: 16px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .question {
+            margin-bottom: 20px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid #333;
+        }
+
+        .question:last-child {
+            border-bottom: none;
+            margin-bottom: 0;
+            padding-bottom: 0;
+        }
+
+        .question label {
+            display: flex;
+            align-items: flex-start;
+            cursor: pointer;
+            color: #E8E8E8;
             margin-bottom: 8px;
         }
 
-        /* Notification toast */
-        .rg-toast {
-            position: fixed;
-            bottom: 24px;
-            left: 50%;
-            transform: translateX(-50%) translateY(100px);
-            background: #1A1D27;
-            border: 1px solid var(--accent);
-            color: #fff;
-            padding: 14px 24px;
-            border-radius: 10px;
-            font-size: 14px;
-            font-weight: 500;
-            z-index: 10000;
-            opacity: 0;
-            transition: all 0.3s ease;
-            box-shadow: 0 8px 32px rgba(0,0,0,0.5);
-        }
-        .rg-toast.show {
-            opacity: 1;
-            transform: translateX(-50%) translateY(0);
+        .question input[type="checkbox"] {
+            margin-right: 12px;
+            margin-top: 4px;
+            cursor: pointer;
+            accent-color: #DAA520;
         }
 
-        /* Confirmation modal */
-        .rg-modal-overlay {
-            display: none;
-            position: fixed;
-            inset: 0;
-            background: rgba(0,0,0,0.8);
-            z-index: 9999;
-            align-items: center;
-            justify-content: center;
-        }
-        .rg-modal-overlay.show { display: flex; }
-        .rg-modal {
-            background: #1A1D27;
-            border: 1px solid var(--border);
-            border-radius: 16px;
-            padding: 32px;
-            max-width: 440px;
-            width: 90%;
-            text-align: center;
-        }
-        .rg-modal h3 {
-            font-size: 18px;
-            color: #fff;
-            margin-bottom: 12px;
-        }
-        .rg-modal p {
-            font-size: 14px;
-            color: var(--text-dim);
-            margin-bottom: 24px;
-        }
-        .rg-modal-actions {
-            display: flex;
-            gap: 12px;
-            justify-content: center;
+        .question-text {
+            flex: 1;
         }
 
-        /* Cooloff banner */
-        .rg-cooloff-banner {
-            background: rgba(255,170,0,0.1);
-            border: 1px solid rgba(255,170,0,0.3);
-            border-radius: 10px;
-            padding: 16px;
-            margin-top: 16px;
-            display: flex;
-            align-items: center;
-            gap: 12px;
+        .help-resources {
+            background: linear-gradient(135deg, #1a1a1a 0%, #151515 100%);
+            border: 2px solid #DAA520;
+            border-radius: 8px;
+            padding: 30px;
+            margin: 30px 0;
         }
-        .rg-cooloff-banner .rg-cooloff-icon { font-size: 24px; }
-        .rg-cooloff-banner .rg-cooloff-text { font-size: 14px; color: var(--warning); }
 
-        /* Reality check info */
-        .rg-reality-info {
-            display: flex;
-            gap: 20px;
-            margin-top: 16px;
-            flex-wrap: wrap;
+        .help-resources h3 {
+            margin-top: 0;
         }
-        .rg-reality-stat {
-            background: rgba(0,0,0,0.25);
-            border: 1px solid rgba(255,255,255,0.1);
-            border-radius: 10px;
-            padding: 14px 18px;
-            min-width: 140px;
+
+        .resource {
+            margin-bottom: 25px;
+            padding-bottom: 25px;
+            border-bottom: 1px solid #333;
         }
-        .rg-reality-stat .rg-rs-label {
-            font-size: 12px;
-            color: var(--text-dim);
-            margin-bottom: 4px;
+
+        .resource:last-child {
+            margin-bottom: 0;
+            padding-bottom: 0;
+            border-bottom: none;
         }
-        .rg-reality-stat .rg-rs-value {
+
+        .resource h4 {
+            color: #DAA520;
+            margin-bottom: 8px;
+            font-size: 16px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .resource p {
+            margin-bottom: 8px;
+            color: #E8E8E8;
+        }
+
+        .resource a {
+            color: #DAA520;
+            text-decoration: none;
+            font-weight: 600;
+            transition: color 0.3s ease;
+        }
+
+        .resource a:hover {
+            color: #FFD700;
+            text-decoration: underline;
+        }
+
+        .resource .phone {
             font-size: 18px;
             font-weight: 700;
-            color: #fff;
+            color: #DAA520;
         }
 
-        @media (max-width: 600px) {
-            .rg-container { padding: 16px 12px 60px; }
-            .rg-section-header { padding: 16px; }
-            .rg-section-content { padding: 0 16px 16px; }
-            .rg-exclusion-grid { grid-template-columns: 1fr 1fr; }
+        .resource .available {
+            font-size: 13px;
+            color: #999;
+        }
+
+        .tool-section {
+            background: rgba(218, 165, 32, 0.05);
+            border: 1px solid #DAA520;
+            border-radius: 8px;
+            padding: 25px;
+            margin: 20px 0;
+        }
+
+        .tool-section h4 {
+            color: #DAA520;
+            margin-bottom: 12px;
+            text-transform: uppercase;
+            font-size: 14px;
+            letter-spacing: 0.5px;
+        }
+
+        .tool-section p {
+            margin-bottom: 12px;
+        }
+
+        .limit-section {
+            background: #1a1a1a;
+            border-left: 4px solid #DAA520;
+            padding: 20px;
+            margin: 15px 0;
+            border-radius: 4px;
+        }
+
+        .limit-section strong {
+            color: #DAA520;
+        }
+
+        .footer-nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 80px;
+            padding-top: 30px;
+            border-top: 2px solid #DAA520;
+        }
+
+        .footer-nav a {
+            color: #DAA520;
+            text-decoration: none;
+            padding: 12px 30px;
+            border: 2px solid #DAA520;
+            border-radius: 4px;
+            transition: all 0.3s ease;
+            font-weight: 600;
+        }
+
+        .footer-nav a:hover {
+            background-color: #DAA520;
+            color: #0D0D0D;
+        }
+
+        .footer-nav .secondary {
+            background: transparent;
+            color: #DAA520;
+        }
+
+        .footer-contact {
+            text-align: center;
+            color: #999;
+            font-size: 13px;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 40px 20px;
+            }
+
+            .header h1 {
+                font-size: 36px;
+            }
+
+            .section h2 {
+                font-size: 22px;
+            }
+
+            .footer-nav {
+                flex-direction: column;
+                gap: 15px;
+            }
+
+            .footer-nav a {
+                width: 100%;
+                text-align: center;
+            }
         }
     </style>
+    <link rel="stylesheet" href="css/chat-widget.css">
+    <link rel="stylesheet" href="css/notifications.css">
+    <link rel="stylesheet" href="css/age-gate.css">
+    <link rel="stylesheet" href="css/search.css">
+    <link rel="stylesheet" href="css/favorites.css">
+    <link rel="stylesheet" href="css/session-monitor.css">
+    <link rel="stylesheet" href="css/conversion.css">
 </head>
 <body>
-
-<header class="rg-header"><div class="rg-header-inner"><button class="rg-header-back" onclick="window.location.href='/'"><span>&#8592;</span> Back to Casino</button><div class="rg-logo">Matrix <span>Spins</span></div><div class="rg-header-badge">&#x1F6E1; Responsible Play</div></div></header>
-
-<div class="rg-container">
-
-    <!-- Intro -->
-    <div class="rg-intro">
-        <h2>Your Wellbeing Comes First</h2>
-        <p>Matrix Spins Casino is committed to providing a safe, fair, and responsible gaming environment. Gambling should be an enjoyable form of entertainment, not a source of stress or financial difficulty. Use the tools below to stay in control of your play.</p>
-    </div>
-
-    <!-- 1. Session Timer -->
-    <div class="rg-section open" id="section-timer">
-        <div class="rg-section-header" onclick="toggleSection('section-timer')">
-            <div class="rg-icon" style="background:rgba(212,168,83,0.12);">&#9201;</div>
-            <h3>Session Timer</h3>
-            <span class="rg-status active" id="timer-status">Active</span>
-            <span class="rg-arrow">&#9660;</span>
+    <div class="container">
+        <div class="header">
+            <h1>Responsible Gambling</h1>
+            <p>Your health and safety are our priority. Gambling should be entertainment, not a problem.</p>
         </div>
-        <div class="rg-section-body">
-            <div class="rg-section-content">
-                <p style="color:var(--text-dim);font-size:14px;margin-top:12px;">Your session timer starts automatically when you log in. A reminder appears every 60 minutes to help you track your play time.</p>
-                <div class="rg-timer-display">
-                    <div class="rg-timer-clock" id="session-clock">00:00:00</div>
-                    <div>
-                        <div style="font-size:14px;color:#fff;font-weight:600;">Current Session</div>
-                        <div class="rg-timer-meta">Started: <span id="session-start-time">--</span></div>
-                        <div class="rg-timer-meta">Next reminder in: <span id="next-reminder">60:00</span></div>
-                    </div>
+
+        <div class="warning-banner">
+            <h2>If gambling is no longer fun, it's time to stop.</h2>
+            <p>We're here to help. Reach out to our support team or one of the resources below.</p>
+        </div>
+
+        <section class="section">
+            <h2>What is Responsible Gambling?</h2>
+            <p>Responsible gambling means:</p>
+            <ul>
+                <li>Understanding that gambling is entertainment, not a source of income</li>
+                <li>Playing within your means and setting strict limits</li>
+                <li>Recognizing the signs of problem gambling early</li>
+                <li>Knowing when to stop and seeking help if needed</li>
+            </ul>
+            <p>Matrix Spins Casino is committed to providing a safe, fair, and enjoyable gaming environment. We encourage all players to gamble responsibly and make informed decisions about their play.</p>
+        </section>
+
+        <section class="section">
+            <h2>Self-Assessment Questionnaire</h2>
+            <p>If you answer "yes" to any of the following questions, consider reaching out for help:</p>
+            <div class="questionnaire">
+                <h4>How Much Are You Playing?</h4>
+                <div class="question">
+                    <label>
+                        <input type="checkbox" name="q1">
+                        <span class="question-text">I spend more time and money on gambling than I intended</span>
+                    </label>
                 </div>
-                <div class="rg-form-group" style="margin-top:16px;">
-                    <label>Session Reminder Interval</label>
-                    <select class="rg-select" id="reminder-interval" onchange="setReminderInterval(this.value)">
-                        <option value="30">Every 30 minutes</option>
-                        <option value="60" selected>Every 60 minutes (default)</option>
-                        <option value="90">Every 90 minutes</option>
-                        <option value="120">Every 120 minutes</option>
-                    </select>
+                <div class="question">
+                    <label>
+                        <input type="checkbox" name="q2">
+                        <span class="question-text">I gamble to escape problems or negative feelings</span>
+                    </label>
+                </div>
+                <div class="question">
+                    <label>
+                        <input type="checkbox" name="q3">
+                        <span class="question-text">I've hidden my gambling activities from family or friends</span>
+                    </label>
+                </div>
+
+                <h4 style="margin-top: 30px;">Control & Impact</h4>
+                <div class="question">
+                    <label>
+                        <input type="checkbox" name="q4">
+                        <span class="question-text">I find it difficult to stop or cut back on gambling</span>
+                    </label>
+                </div>
+                <div class="question">
+                    <label>
+                        <input type="checkbox" name="q5">
+                        <span class="question-text">Gambling has negatively affected my relationships, work, or finances</span>
+                    </label>
+                </div>
+                <div class="question">
+                    <label>
+                        <input type="checkbox" name="q6">
+                        <span class="question-text">I've borrowed money or sold items to fund gambling</span>
+                    </label>
+                </div>
+
+                <h4 style="margin-top: 30px;">Help & Recovery</h4>
+                <div class="question">
+                    <label>
+                        <input type="checkbox" name="q7">
+                        <span class="question-text">I feel anxious or irritable when I'm not gambling</span>
+                    </label>
+                </div>
+                <div class="question">
+                    <label>
+                        <input type="checkbox" name="q8">
+                        <span class="question-text">I've attempted to control my gambling but been unsuccessful</span>
+                    </label>
                 </div>
             </div>
-        </div>
-    </div>
+            <p><strong>If you checked any of these boxes, please reach out to one of our support resources below.</strong></p>
+        </section>
 
-    <!-- 2. Deposit Limits -->
-    <div class="rg-section" id="section-deposit">
-        <div class="rg-section-header" onclick="toggleSection('section-deposit')">
-            <div class="rg-icon" style="background:rgba(0,200,255,0.12);">&#128179;</div>
-            <h3>Deposit Limits</h3>
-            <span class="rg-status inactive" id="deposit-status">Not Set</span>
-            <span class="rg-arrow">&#9660;</span>
-        </div>
-        <div class="rg-section-body">
-            <div class="rg-section-content">
-                <p style="color:var(--text-dim);font-size:14px;margin-top:12px;">Set a maximum amount you can deposit per day, week, or month. Lowering a limit takes effect immediately. Raising a limit requires a 24-hour cooling period.</p>
-                <div class="rg-limit-row">
-                    <span class="rg-limit-label">Daily Limit</span>
-                    <span class="rg-limit-value not-set" id="deposit-daily-val">Not set</span>
+        <section class="section">
+            <h2>Deposit Limits & Controls</h2>
+            <p>Matrix Spins Casino provides tools to help you manage your spending. You can set deposit limits that prevent you from wagering more than a specified amount within a given time period.</p>
+            
+            <div class="tool-section">
+                <h4>Daily Deposit Limit</h4>
+                <p>Set a maximum amount you can deposit in a single day. Once reached, no further deposits are permitted until the next calendar day.</p>
+            </div>
+
+            <div class="tool-section">
+                <h4>Weekly Deposit Limit</h4>
+                <p>Control your total wagering across a 7-day rolling period. This helps prevent excessive spending during a week.</p>
+            </div>
+
+            <div class="tool-section">
+                <h4>Monthly Deposit Limit</h4>
+                <p>Set boundaries for your monthly gambling expenditure. This is ideal for budgeting and long-term financial management.</p>
+            </div>
+
+            <p><strong>To set or modify deposit limits, visit your Account Settings or contact our support team.</strong></p>
+        </section>
+
+        <section class="section">
+            <h2>Session Time Reminders</h2>
+            <p>Responsible gambling includes managing the time you spend playing. Our session reminders help you stay aware of how long you've been gaming.</p>
+            
+            <div class="highlight-box">
+                <h4>How Session Reminders Work</h4>
+                <p>You can set notifications to alert you after a specified period of continuous play (e.g., every 30 minutes or 1 hour). These reminders give you a moment to pause, reflect, and decide whether to continue playing.</p>
+            </div>
+
+            <p><strong>Session reminders are optional but highly recommended.</strong> Taking regular breaks helps you:</p>
+            <ul>
+                <li>Stay aware of how much time you're spending</li>
+                <li>Prevent fatigue and decision-making errors</li>
+                <li>Maintain control over your gaming activity</li>
+                <li>Protect your overall wellbeing</li>
+            </ul>
+        </section>
+
+        <section class="section">
+            <h2>Self-Exclusion</h2>
+            <p>If you feel you need a break from gambling or have concerns about your gambling habits, Matrix Spins Casino offers a <strong>self-exclusion program</strong>.</p>
+            
+            <div class="highlight-box">
+                <h4>What is Self-Exclusion?</h4>
+                <p>Self-exclusion is a voluntary program that suspends your account and prevents you from accessing our platform for a specified period (minimum 1 month, maximum 5 years). During this time:</p>
+                <ul style="margin-left: 20px; margin-top: 10px;">
+                    <li>Your account cannot be accessed for gaming</li>
+                    <li>You cannot deposit funds</li>
+                    <li>Promotional communications are suspended</li>
+                    <li>Your account can only be reactivated after the exclusion period expires</li>
+                </ul>
+            </div>
+
+            <p><strong>To self-exclude, contact our support team at support@matrixspins.com or visit your Account Settings.</strong> Your request will be processed immediately.</p>
+        </section>
+
+        <section class="section">
+            <h2>Problem Gambling Help & Support Resources</h2>
+            <p>If you or someone you know is struggling with problem gambling, please reach out. Help is available, and recovery is possible.</p>
+
+            <div class="help-resources">
+                <div class="resource">
+                    <h4>Gambling Help Online (Australia)</h4>
+                    <p><strong>Website:</strong> <a href="https://www.gamblinghelponline.org.au" target="_blank">www.gamblinghelponline.org.au</a></p>
+                    <p>Free, confidential, 24/7 counseling and support for problem gambling. Includes live chat, phone, and online therapy.</p>
+                    <p class="available">Available: 24/7</p>
                 </div>
-                <div class="rg-limit-row">
-                    <span class="rg-limit-label">Weekly Limit</span>
-                    <span class="rg-limit-value not-set" id="deposit-weekly-val">Not set</span>
+
+                <div class="resource">
+                    <h4>Lifeline Australia</h4>
+                    <p class="phone">13 11 14</p>
+                    <p><strong>Website:</strong> <a href="https://www.lifeline.org.au" target="_blank">www.lifeline.org.au</a></p>
+                    <p>Crisis support and counseling available to all Australians. Experienced counselors provide emotional support.</p>
+                    <p class="available">Available: 24/7</p>
                 </div>
-                <div class="rg-limit-row">
-                    <span class="rg-limit-label">Monthly Limit</span>
-                    <span class="rg-limit-value not-set" id="deposit-monthly-val">Not set</span>
+
+                <div class="resource">
+                    <h4>National Problem Gambling Counseling Service (Australia)</h4>
+                    <p><strong>Phone:</strong> 1800-858-858</p>
+                    <p>Specialized counseling for problem gambling. Confidential and free service funded by the Australian government.</p>
+                    <p class="available">Available: Business hours</p>
                 </div>
-                <div class="rg-form-group" style="display:flex;gap:12px;flex-wrap:wrap;align-items:flex-end;">
-                    <div>
-                        <label>Period</label>
-                        <select class="rg-select" id="deposit-period">
-                            <option value="daily">Daily</option>
-                            <option value="weekly">Weekly</option>
-                            <option value="monthly">Monthly</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label>Amount ($)</label>
-                        <input type="number" class="rg-input" id="deposit-amount" placeholder="e.g. 100" min="1" style="max-width:160px;">
-                    </div>
-                    <button class="rg-btn rg-btn-primary" onclick="setLimit('deposit')">Set Limit</button>
+
+                <div class="resource">
+                    <h4>National Council on Problem Gambling (USA)</h4>
+                    <p><strong>Helpline:</strong> 1-800-522-4700</p>
+                    <p><strong>Website:</strong> <a href="https://www.ncpg.org" target="_blank">www.ncpg.org</a></p>
+                    <p>Free, confidential support and referrals to treatment services in the United States.</p>
+                    <p class="available">Available: 24/7</p>
+                </div>
+
+                <div class="resource">
+                    <h4>Gamblers Anonymous</h4>
+                    <p><strong>Website:</strong> <a href="https://www.gamblersanonymous.org" target="_blank">www.gamblersanonymous.org</a></p>
+                    <p>Peer support fellowships for individuals struggling with gambling. Find meetings in your area.</p>
+                    <p class="available">Available: Regular meetings nationwide</p>
+                </div>
+
+                <div class="resource">
+                    <h4>NCPG Problem Gambling Resources (USA)</h4>
+                    <p><strong>Website:</strong> <a href="https://www.ncpg.org/chat" target="_blank">www.ncpg.org/chat</a></p>
+                    <p>Online chat support, resource database, and treatment locator services.</p>
+                    <p class="available">Available: Online resources 24/7</p>
+                </div>
+
+                <div class="resource">
+                    <h4>Matrix Spins Casino Support Team</h4>
+                    <p><strong>Email:</strong> <a href="mailto:support@matrixspins.com">support@matrixspins.com</a></p>
+                    <p>We're available to discuss responsible gambling tools, account limits, and self-exclusion options. Confidential support always provided.</p>
+                    <p class="available">Available: 24/7</p>
                 </div>
             </div>
+        </section>
+
+        <section class="section">
+            <h2>Signs of Problem Gambling</h2>
+            <p>Recognizing warning signs early can help you or a loved one seek support. Problem gambling may include:</p>
+            <ul>
+                <li>Constant thoughts about gambling or past gambling sessions</li>
+                <li>Needing to gamble with increasing amounts of money for excitement</li>
+                <li>Unsuccessful attempts to control, cut back, or stop gambling</li>
+                <li>Gambling as an escape from problems or emotional distress</li>
+                <li>Lying to family and friends about gambling habits</li>
+                <li>Risking relationships, jobs, or educational opportunities due to gambling</li>
+                <li>Borrowing money or going into debt to gamble</li>
+                <li>Feeling desperate about financial losses and attempting to "win it back"</li>
+                <li>Experiencing withdrawal symptoms (irritability, anxiety) when not gambling</li>
+            </ul>
+            <p><strong>If you recognize any of these signs in yourself or someone else, please reach out to one of the support organizations listed above.</strong></p>
+        </section>
+
+        <section class="section">
+            <h2>Your Rights & Protections</h2>
+            <p>As a player at Matrix Spins Casino, you have the right to:</p>
+            <ul>
+                <li>Play on a platform that uses certified fair and random gaming systems</li>
+                <li>Access information about game odds and return-to-player percentages</li>
+                <li>Use deposit limits and time-out features at no charge</li>
+                <li>Self-exclude from our platform</li>
+                <li>Have your personal information protected in accordance with privacy laws</li>
+                <li>Request a dispute resolution process if you have concerns about a transaction or game outcome</li>
+                <li>Access responsible gambling resources and support</li>
+            </ul>
+        </section>
+
+        <section class="section">
+            <h2>Tips for Safe & Responsible Gaming</h2>
+            <ul>
+                <li><strong>Set a budget:</strong> Decide how much money you can afford to lose before you start playing</li>
+                <li><strong>Set time limits:</strong> Decide in advance how long you will play and stick to it</li>
+                <li><strong>Never chase losses:</strong> Accept losses and walk away rather than trying to "win it back"</li>
+                <li><strong>Take breaks:</strong> Step away from the game regularly to maintain perspective</li>
+                <li><strong>Don't gamble under the influence:</strong> Avoid playing after drinking alcohol or using substances</li>
+                <li><strong>Use deposit limits:</strong> Take advantage of our tools to control spending</li>
+                <li><strong>Talk to someone:</strong> Share your gambling activities with trusted friends or family</li>
+                <li><strong>Seek help early:</strong> Don't wait for problems to escalate before reaching out for support</li>
+            </ul>
+        </section>
+
+        <div class="footer-nav">
+            <a href="index.html">← Back to Lobby</a>
+            <a href="terms.html" class="secondary">View Terms & Conditions →</a>
+        </div>
+
+        <div class="footer-contact" style="margin-top: 40px;">
+            <p>&copy; 2024 Matrix Spins Casino. All rights reserved.</p>
+            <p style="margin-top: 10px; color: #DAA520; font-weight: 600;">Commitment to Player Safety & Wellbeing</p>
         </div>
     </div>
-
-    <!-- 3. Loss Limits -->
-    <div class="rg-section" id="section-loss">
-        <div class="rg-section-header" onclick="toggleSection('section-loss')">
-            <div class="rg-icon" style="background:rgba(255,170,0,0.12);">&#128200;</div>
-            <h3>Loss Limits</h3>
-            <span class="rg-status inactive" id="loss-status">Not Set</span>
-            <span class="rg-arrow">&#9660;</span>
-        </div>
-        <div class="rg-section-body">
-            <div class="rg-section-content">
-                <p style="color:var(--text-dim);font-size:14px;margin-top:12px;">Set a maximum net loss per day, week, or month. When you reach this limit, you will be unable to place further wagers until the period resets.</p>
-                <div class="rg-limit-row">
-                    <span class="rg-limit-label">Daily Loss Limit</span>
-                    <span class="rg-limit-value not-set" id="loss-daily-val">Not set</span>
-                </div>
-                <div class="rg-limit-row">
-                    <span class="rg-limit-label">Weekly Loss Limit</span>
-                    <span class="rg-limit-value not-set" id="loss-weekly-val">Not set</span>
-                </div>
-                <div class="rg-limit-row">
-                    <span class="rg-limit-label">Monthly Loss Limit</span>
-                    <span class="rg-limit-value not-set" id="loss-monthly-val">Not set</span>
-                </div>
-                <div class="rg-form-group" style="display:flex;gap:12px;flex-wrap:wrap;align-items:flex-end;">
-                    <div>
-                        <label>Period</label>
-                        <select class="rg-select" id="loss-period">
-                            <option value="daily">Daily</option>
-                            <option value="weekly">Weekly</option>
-                            <option value="monthly">Monthly</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label>Amount ($)</label>
-                        <input type="number" class="rg-input" id="loss-amount" placeholder="e.g. 50" min="1" style="max-width:160px;">
-                    </div>
-                    <button class="rg-btn rg-btn-primary" onclick="setLimit('loss')">Set Limit</button>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- 4. Wager Limits -->
-    <div class="rg-section" id="section-wager">
-        <div class="rg-section-header" onclick="toggleSection('section-wager')">
-            <div class="rg-icon" style="background:rgba(180,100,255,0.12);">&#127920;</div>
-            <h3>Wager Limits</h3>
-            <span class="rg-status inactive" id="wager-status">Not Set</span>
-            <span class="rg-arrow">&#9660;</span>
-        </div>
-        <div class="rg-section-body">
-            <div class="rg-section-content">
-                <p style="color:var(--text-dim);font-size:14px;margin-top:12px;">Control the total amount wagered per day, week, or month. This is the total sum of all bets placed, regardless of wins or losses.</p>
-                <div class="rg-limit-row">
-                    <span class="rg-limit-label">Daily Wager Limit</span>
-                    <span class="rg-limit-value not-set" id="wager-daily-val">Not set</span>
-                </div>
-                <div class="rg-limit-row">
-                    <span class="rg-limit-label">Weekly Wager Limit</span>
-                    <span class="rg-limit-value not-set" id="wager-weekly-val">Not set</span>
-                </div>
-                <div class="rg-limit-row">
-                    <span class="rg-limit-label">Monthly Wager Limit</span>
-                    <span class="rg-limit-value not-set" id="wager-monthly-val">Not set</span>
-                </div>
-                <div class="rg-form-group" style="display:flex;gap:12px;flex-wrap:wrap;align-items:flex-end;">
-                    <div>
-                        <label>Period</label>
-                        <select class="rg-select" id="wager-period">
-                            <option value="daily">Daily</option>
-                            <option value="weekly">Weekly</option>
-                            <option value="monthly">Monthly</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label>Amount ($)</label>
-                        <input type="number" class="rg-input" id="wager-amount" placeholder="e.g. 500" min="1" style="max-width:160px;">
-                    </div>
-                    <button class="rg-btn rg-btn-primary" onclick="setLimit('wager')">Set Limit</button>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- 5. Reality Check -->
-    <div class="rg-section" id="section-reality">
-        <div class="rg-section-header" onclick="toggleSection('section-reality')">
-            <div class="rg-icon" style="background:rgba(0,255,200,0.12);">&#128161;</div>
-            <h3>Reality Check</h3>
-            <span class="rg-status active" id="reality-status">Every 100 spins</span>
-            <span class="rg-arrow">&#9660;</span>
-        </div>
-        <div class="rg-section-body">
-            <div class="rg-section-content">
-                <p style="color:var(--text-dim);font-size:14px;margin-top:12px;">A reality check pauses your game periodically to show a summary of your session: time played, spins completed, and net result. This helps you make informed decisions about continuing play.</p>
-                <div class="rg-reality-info">
-                    <div class="rg-reality-stat">
-                        <div class="rg-rs-label">Spins This Session</div>
-                        <div class="rg-rs-value" id="rc-spins">0</div>
-                    </div>
-                    <div class="rg-reality-stat">
-                        <div class="rg-rs-label">Net Result</div>
-                        <div class="rg-rs-value" id="rc-net" style="color:var(--accent);">$0.00</div>
-                    </div>
-                    <div class="rg-reality-stat">
-                        <div class="rg-rs-label">Next Check At</div>
-                        <div class="rg-rs-value" id="rc-next">100 spins</div>
-                    </div>
-                </div>
-                <div class="rg-form-group">
-                    <label>Reality Check Frequency</label>
-                    <select class="rg-select" id="reality-freq" onchange="setRealityFreq(this.value)">
-                        <option value="50">Every 50 spins</option>
-                        <option value="100" selected>Every 100 spins (default)</option>
-                        <option value="200">Every 200 spins</option>
-                        <option value="500">Every 500 spins</option>
-                    </select>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- 6. Cool-Off Period -->
-    <div class="rg-section" id="section-cooloff">
-        <div class="rg-section-header" onclick="toggleSection('section-cooloff')">
-            <div class="rg-icon" style="background:rgba(100,200,255,0.12);">&#10052;</div>
-            <h3>Cool-Off Period</h3>
-            <span class="rg-status inactive" id="cooloff-status">Not Active</span>
-            <span class="rg-arrow">&#9660;</span>
-        </div>
-        <div class="rg-section-body">
-            <div class="rg-section-content">
-                <p style="color:var(--text-dim);font-size:14px;margin-top:12px;">Take a short break from gambling. During a cool-off period, you can log in and withdraw funds, but you cannot place any wagers. Cool-off periods cannot be reversed once activated.</p>
-                <div class="rg-exclusion-grid">
-                    <div class="rg-exclusion-card" onclick="activateCooloff(1)">
-                        <div class="rg-exc-duration">1 Hour</div>
-                        <div class="rg-exc-label">Quick break</div>
-                    </div>
-                    <div class="rg-exclusion-card" onclick="activateCooloff(6)">
-                        <div class="rg-exc-duration">6 Hours</div>
-                        <div class="rg-exc-label">Half day</div>
-                    </div>
-                    <div class="rg-exclusion-card" onclick="activateCooloff(12)">
-                        <div class="rg-exc-duration">12 Hours</div>
-                        <div class="rg-exc-label">Overnight</div>
-                    </div>
-                    <div class="rg-exclusion-card" onclick="activateCooloff(24)">
-                        <div class="rg-exc-duration">24 Hours</div>
-                        <div class="rg-exc-label">Full day</div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- 7. Self-Exclusion -->
-    <div class="rg-section" id="section-exclusion">
-        <div class="rg-section-header" onclick="toggleSection('section-exclusion')">
-            <div class="rg-icon" style="background:rgba(255,68,68,0.12);">&#128683;</div>
-            <h3>Self-Exclusion</h3>
-            <span class="rg-status inactive" id="exclusion-status">Not Active</span>
-            <span class="rg-arrow">&#9660;</span>
-        </div>
-        <div class="rg-section-body">
-            <div class="rg-section-content">
-                <p style="color:var(--text-dim);font-size:14px;margin-top:12px;">Self-exclusion blocks you from accessing any gambling features on Matrix Spins Casino. During this period, you will not receive promotional emails and your account will be locked. <strong style="color:var(--danger);">This action cannot be undone.</strong></p>
-                <div class="rg-exclusion-grid">
-                    <div class="rg-exclusion-card" onclick="confirmExclusion('1 Day', 1)">
-                        <div class="rg-exc-duration">1 Day</div>
-                        <div class="rg-exc-label">24 hours</div>
-                    </div>
-                    <div class="rg-exclusion-card" onclick="confirmExclusion('7 Days', 7)">
-                        <div class="rg-exc-duration">7 Days</div>
-                        <div class="rg-exc-label">One week</div>
-                    </div>
-                    <div class="rg-exclusion-card" onclick="confirmExclusion('30 Days', 30)">
-                        <div class="rg-exc-duration">30 Days</div>
-                        <div class="rg-exc-label">One month</div>
-                    </div>
-                    <div class="rg-exclusion-card permanent" onclick="confirmExclusion('Permanent', -1)">
-                        <div class="rg-exc-duration" style="color:var(--danger);">Permanent</div>
-                        <div class="rg-exc-label">Irreversible</div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- 8. Help & Resources -->
-    <div class="rg-section" id="section-help">
-        <div class="rg-section-header" onclick="toggleSection('section-help')">
-            <div class="rg-icon" style="background:rgba(255,255,255,0.08);">&#128149;</div>
-            <h3>Help &amp; Support Resources</h3>
-            <span class="rg-arrow">&#9660;</span>
-        </div>
-        <div class="rg-section-body">
-            <div class="rg-section-content">
-                <p style="color:var(--text-dim);font-size:14px;margin-top:12px;">If you feel that gambling is becoming a problem, please reach out to one of these organisations for free, confidential support.</p>
-                <div class="rg-resources">
-                    <a href="https://www.gamblinghelponline.org.au" target="_blank" rel="noopener" class="rg-resource-card">
-                        <h4>Gambling Help Online (Australia)</h4>
-                        <p>Free 24/7 support via phone, live chat, and email.</p>
-                        <span style="color:var(--accent);font-size:13px;">1800 858 858 &rarr;</span>
-                    </a>
-                    <a href="https://www.gamblersanonymous.org" target="_blank" rel="noopener" class="rg-resource-card">
-                        <h4>Gamblers Anonymous</h4>
-                        <p>Peer support groups available worldwide.</p>
-                        <span style="color:var(--accent);font-size:13px;">Visit website &rarr;</span>
-                    </a>
-                    <a href="https://www.begambleaware.org" target="_blank" rel="noopener" class="rg-resource-card">
-                        <h4>BeGambleAware (UK)</h4>
-                        <p>Free advice and treatment referrals.</p>
-                        <span style="color:var(--accent);font-size:13px;">0808 8020 133 &rarr;</span>
-                    </a>
-                    <a href="https://www.ncpgambling.org" target="_blank" rel="noopener" class="rg-resource-card">
-                        <h4>NCPG (US)</h4>
-                        <p>National Council on Problem Gambling.</p>
-                        <span style="color:var(--accent);font-size:13px;">1-800-522-4700 &rarr;</span>
-                    </a>
-                </div>
-            </div>
-        </div>
-    </div>
-
-</div>
-
-<!-- Confirmation Modal -->
-<div class="rg-modal-overlay" id="rg-confirm-modal">
-    <div class="rg-modal">
-        <h3 id="modal-title">Confirm Self-Exclusion</h3>
-        <p id="modal-body">Are you sure you want to self-exclude? This action cannot be undone.</p>
-        <div class="rg-modal-actions">
-            <button class="rg-btn rg-btn-secondary" onclick="closeModal()">Cancel</button>
-            <button class="rg-btn rg-btn-danger" id="modal-confirm-btn" onclick="executeExclusion()">Confirm</button>
-        </div>
-    </div>
-</div>
-
-<!-- Toast notification -->
-<div class="rg-toast" id="rg-toast"></div>
-
-<script>
-'use strict';
-
-/* ── Storage helpers ── */
-var RG_KEY = 'royalslots_rg_';
-
-function rgGet(key, fallback) {
-    try { var v = localStorage.getItem(RG_KEY + key); return v !== null ? JSON.parse(v) : fallback; }
-    catch(e) { return fallback; }
-}
-function rgSet(key, val) {
-    try { localStorage.setItem(RG_KEY + key, JSON.stringify(val)); } catch(e) {}
-}
-
-/* ── Accordion toggle ── */
-function toggleSection(id) {
-    var el = document.getElementById(id);
-    if (el) el.classList.toggle('open');
-}
-
-/* ── Toast ── */
-function showToast(msg) {
-    var t = document.getElementById('rg-toast');
-    t.textContent = msg;
-    t.classList.add('show');
-    setTimeout(function() { t.classList.remove('show'); }, 3000);
-}
-
-/* ── Session Timer ── */
-var sessionStart = rgGet('session_start', null);
-if (!sessionStart) {
-    sessionStart = Date.now();
-    rgSet('session_start', sessionStart);
-}
-var reminderInterval = rgGet('reminder_interval', 60); // minutes
-var lastReminder = Date.now();
-
-document.getElementById('session-start-time').textContent = new Date(sessionStart).toLocaleTimeString();
-document.getElementById('reminder-interval').value = String(reminderInterval);
-
-function updateSessionClock() {
-    var elapsed = Date.now() - sessionStart;
-    var h = Math.floor(elapsed / 3600000);
-    var m = Math.floor((elapsed % 3600000) / 60000);
-    var s = Math.floor((elapsed % 60000) / 1000);
-    document.getElementById('session-clock').textContent =
-        String(h).padStart(2,'0') + ':' + String(m).padStart(2,'0') + ':' + String(s).padStart(2,'0');
-
-    // Next reminder countdown
-    var sinceReminder = Date.now() - lastReminder;
-    var nextMs = (reminderInterval * 60000) - sinceReminder;
-    if (nextMs <= 0) {
-        lastReminder = Date.now();
-        nextMs = reminderInterval * 60000;
-        showToast('Session Reminder: You have been playing for ' + h + 'h ' + m + 'm. Consider taking a break.');
-    }
-    var nm = Math.floor(nextMs / 60000);
-    var ns = Math.floor((nextMs % 60000) / 1000);
-    document.getElementById('next-reminder').textContent =
-        String(nm).padStart(2,'0') + ':' + String(ns).padStart(2,'0');
-}
-setInterval(updateSessionClock, 1000);
-updateSessionClock();
-
-function setReminderInterval(val) {
-    reminderInterval = parseInt(val, 10);
-    rgSet('reminder_interval', reminderInterval);
-    lastReminder = Date.now();
-    showToast('Session reminder set to every ' + reminderInterval + ' minutes');
-}
-
-/* ── Limits (deposit, loss, wager) ── */
-function loadLimits() {
-    ['deposit', 'loss', 'wager'].forEach(function(type) {
-        var limits = rgGet(type + '_limits', {});
-        ['daily', 'weekly', 'monthly'].forEach(function(period) {
-            var el = document.getElementById(type + '-' + period + '-val');
-            if (limits[period]) {
-                el.textContent = '$' + Number(limits[period]).toLocaleString();
-                el.className = 'rg-limit-value';
-            } else {
-                el.textContent = 'Not set';
-                el.className = 'rg-limit-value not-set';
-            }
-        });
-        var statusEl = document.getElementById(type + '-status');
-        var hasAny = limits.daily || limits.weekly || limits.monthly;
-        if (hasAny) {
-            statusEl.textContent = 'Active';
-            statusEl.className = 'rg-status active';
-        } else {
-            statusEl.textContent = 'Not Set';
-            statusEl.className = 'rg-status inactive';
-        }
-    });
-}
-
-function setLimit(type) {
-    var period = document.getElementById(type + '-period').value;
-    var amount = parseFloat(document.getElementById(type + '-amount').value);
-    if (!amount || amount <= 0) {
-        showToast('Please enter a valid amount');
-        return;
-    }
-    var limits = rgGet(type + '_limits', {});
-    var oldVal = limits[period];
-    if (oldVal && amount > oldVal) {
-        // Raising a limit: 24h cooling period
-        rgSet(type + '_limit_pending', { period: period, amount: amount, activates: Date.now() + 86400000 });
-        showToast('Increase to $' + amount + ' ' + period + ' limit will take effect in 24 hours');
-    } else {
-        limits[period] = amount;
-        rgSet(type + '_limits', limits);
-        showToast(type.charAt(0).toUpperCase() + type.slice(1) + ' ' + period + ' limit set to $' + amount);
-    }
-    document.getElementById(type + '-amount').value = '';
-    loadLimits();
-}
-
-loadLimits();
-
-/* ── Reality Check ── */
-var realityFreq = rgGet('reality_freq', 100);
-document.getElementById('reality-freq').value = String(realityFreq);
-document.getElementById('rc-next').textContent = realityFreq + ' spins';
-document.getElementById('reality-status').textContent = 'Every ' + realityFreq + ' spins';
-
-function setRealityFreq(val) {
-    realityFreq = parseInt(val, 10);
-    rgSet('reality_freq', realityFreq);
-    document.getElementById('rc-next').textContent = realityFreq + ' spins';
-    document.getElementById('reality-status').textContent = 'Every ' + realityFreq + ' spins';
-    showToast('Reality check set to every ' + realityFreq + ' spins');
-}
-
-// Read current session stats from main app if available
-try {
-    var spins = parseInt(localStorage.getItem('ms_session_spins') || '0', 10);
-    var netResult = parseFloat(localStorage.getItem('ms_session_net') || '0');
-    document.getElementById('rc-spins').textContent = spins.toLocaleString();
-    var netEl = document.getElementById('rc-net');
-    netEl.textContent = (netResult >= 0 ? '+' : '') + '$' + Math.abs(netResult).toFixed(2);
-    netEl.style.color = netResult >= 0 ? 'var(--accent)' : 'var(--danger)';
-} catch(e) {}
-
-/* ── Cool-Off ── */
-function loadCooloff() {
-    var co = rgGet('cooloff', null);
-    var statusEl = document.getElementById('cooloff-status');
-    if (co && co.until > Date.now()) {
-        statusEl.textContent = 'Active until ' + new Date(co.until).toLocaleString();
-        statusEl.className = 'rg-status warning';
-    } else {
-        statusEl.textContent = 'Not Active';
-        statusEl.className = 'rg-status inactive';
-    }
-}
-
-function activateCooloff(hours) {
-    // Cool-off must be server-enforced. Map hours → server cool-off type.
-    var type = hours <= 1 ? 'cooloff_1h' : hours <= 6 ? 'cooloff_6h' : hours <= 12 ? 'cooloff_12h' : 'cooloff_24h';
-    var token = (typeof localStorage !== 'undefined') ? localStorage.getItem('casinoToken') : null;
-    if (!token) { showToast('Please log in to activate a cool-off period.', 'warning'); return; }
-    fetch('/api/self-exclusion/activate', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
-        body: JSON.stringify({ type: type, reason: 'User-initiated cool-off (' + hours + 'h)' })
-    })
-    .then(function(r) { return r.json().then(function(b) { return { ok: r.ok, body: b }; }); })
-    .then(function(resp) {
-        if (!resp.ok || !resp.body || resp.body.error) {
-            showToast('Could not activate cool-off: ' + ((resp.body && resp.body.error) || 'server error'), 'error');
-            return;
-        }
-        var until = Date.now() + (hours * 3600000);
-        rgSet('cooloff', { hours: hours, until: until, activated: Date.now() });
-        showToast('Cool-off period activated for ' + hours + ' hour' + (hours > 1 ? 's' : '') + ' — server-enforced.');
-        loadCooloff();
-    })
-    .catch(function(e) {
-        showToast('Could not reach server. Cool-off not activated.', 'error');
-        console.warn('[RG] Cool-off API error:', e.message);
-    });
-}
-
-loadCooloff();
-
-/* ── Self-Exclusion ── */
-var pendingExclusion = null;
-
-function loadExclusion() {
-    var ex = rgGet('self_exclusion', null);
-    var statusEl = document.getElementById('exclusion-status');
-    if (ex) {
-        if (ex.days === -1) {
-            statusEl.textContent = 'Permanently Excluded';
-            statusEl.className = 'rg-status danger';
-        } else if (ex.until > Date.now()) {
-            statusEl.textContent = 'Excluded until ' + new Date(ex.until).toLocaleDateString();
-            statusEl.className = 'rg-status danger';
-        } else {
-            statusEl.textContent = 'Expired';
-            statusEl.className = 'rg-status inactive';
-        }
-    } else {
-        statusEl.textContent = 'Not Active';
-        statusEl.className = 'rg-status inactive';
-    }
-}
-
-function confirmExclusion(label, days) {
-    pendingExclusion = { label: label, days: days };
-    document.getElementById('modal-title').textContent = 'Confirm Self-Exclusion: ' + label;
-    var bodyText = days === -1
-        ? 'You are about to permanently exclude yourself from Matrix Spins Casino. This action is irreversible. Your account will be permanently locked.'
-        : 'You are about to exclude yourself for ' + label + '. During this period, you will not be able to access any gambling features. This cannot be reversed.';
-    document.getElementById('modal-body').textContent = bodyText;
-    document.getElementById('rg-confirm-modal').classList.add('show');
-}
-
-function closeModal() {
-    document.getElementById('rg-confirm-modal').classList.remove('show');
-    pendingExclusion = null;
-}
-
-function executeExclusion() {
-    if (!pendingExclusion) return;
-    var days = pendingExclusion.days;
-    var label = pendingExclusion.label;
-    // Map UI days → server self-exclusion type
-    var type;
-    if (days === -1) type = 'permanent';
-    else if (days <= 1) type = 'cooldown_24h';
-    else if (days <= 7) type = 'cooldown_7d';
-    else if (days <= 30) type = 'cooldown_30d';
-    else type = 'cooldown_30d'; // fallback
-    var token = (typeof localStorage !== 'undefined') ? localStorage.getItem('casinoToken') : null;
-    if (!token) { showToast('Please log in to activate self-exclusion.', 'warning'); closeModal(); return; }
-    fetch('/api/self-exclusion/activate', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
-        body: JSON.stringify({ type: type, reason: 'User-initiated self-exclusion (' + label + ')' })
-    })
-    .then(function(r) { return r.json().then(function(b) { return { ok: r.ok, body: b }; }); })
-    .then(function(resp) {
-        if (!resp.ok || !resp.body || resp.body.error) {
-            showToast('Could not activate self-exclusion: ' + ((resp.body && resp.body.error) || 'server error'), 'error');
-            closeModal();
-            return;
-        }
-        var until = days === -1 ? Infinity : Date.now() + (days * 86400000);
-        rgSet('self_exclusion', { days: days, until: until, activated: Date.now() });
-        closeModal();
-        showToast('Self-exclusion activated: ' + label + ' — server-enforced.');
-        loadExclusion();
-        // For permanent exclusion, log the user out
-        if (days === -1) {
-            setTimeout(function() {
-                try { localStorage.removeItem('casinoToken'); localStorage.removeItem('casinoUser'); } catch(_) {}
-                window.location.href = '/';
-            }, 2500);
-        }
-    })
-    .catch(function(e) {
-        showToast('Could not reach server. Self-exclusion not activated.', 'error');
-        console.warn('[RG] Self-exclusion API error:', e.message);
-        closeModal();
-    });
-}
-
-loadExclusion();
-</script>
-
-<footer style="background:#13151C;border-top:1px solid rgba(255,255,255,0.06);padding:32px 24px;text-align:center;margin-top:40px"><div style="display:flex;justify-content:center;gap:24px;margin-bottom:16px;flex-wrap:wrap"><a href="/" style="color:#6B7280;font-size:13px;font-weight:500">Home</a><a href="/responsible-gambling.html" style="color:#F0C66E;font-size:13px;font-weight:500">Responsible Gambling</a><a href="/terms.html" style="color:#6B7280;font-size:13px;font-weight:500">Terms &amp; Conditions</a><a href="/provably-fair.html" style="color:#6B7280;font-size:13px;font-weight:500">Game Fairness</a><a href="mailto:support@msaart.online" style="color:#6B7280;font-size:13px;font-weight:500">Contact Support</a></div><div style="color:#6B7280;font-size:12px">&copy; 2024&ndash;2026 Matrix Spins Casino. All rights reserved. Play responsibly. 18+</div></footer>
-
+    <script src="js/api-client.js"></script>
+    <script src="js/chat-widget.js" defer></script>
+    <script src="js/notifications.js" defer></script>
+    <script src="js/age-gate.js" defer></script>
+    <script src="js/cookie-consent.js" defer></script>
+    <script src="js/search.js" defer></script>
+    <script src="js/favorites.js" defer></script>
+    <script src="js/session-monitor.js" defer></script>
+    <script src="js/sound-manager.js" defer></script>
+    <script src="js/analytics.js" defer></script>
+    <script src="js/email-capture.js" defer></script>
+    <script src="js/conversion.js" defer></script>
+    <script src="js/social-proof.js" defer></script>
+    <script src="js/deposit-urgency.js" defer></script>
+    <script src="js/onboarding.js" defer></script>
 </body>
 </html>

@@ -1,36 +1,214 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta http-equiv="refresh" content="8;url=/" />
-<title>404 - Page Not Found | Matrix Spins Casino</title>
-<meta name="robots" content="noindex, nofollow">
-<style>
-*{margin:0;padding:0;box-sizing:border-box}
-body{background:#0D0F14;color:#F0F0F5;font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;display:flex;align-items:center;justify-content:center;min-height:100vh;text-align:center}
-.container{max-width:500px;padding:40px 20px}
-h1{font-size:clamp(48px,15vw,96px);background:linear-gradient(135deg,#D4A853,#F0C66E);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:16px}
-h2{font-size:clamp(18px,4vw,24px);margin-bottom:12px;color:#F0F0F5}
-p{color:#9CA3AF;margin-bottom:32px;line-height:1.6;font-size:clamp(14px,3vw,16px)}
-.btn{display:inline-block;background:linear-gradient(135deg,#D4A853,#F0C66E);color:#0D0F14;padding:14px 32px;border-radius:8px;text-decoration:none;font-weight:700;font-size:16px;transition:transform .2s,box-shadow .2s}
-.btn:hover{transform:scale(1.05);box-shadow:0 4px 20px rgba(212,168,83,.4)}
-.btn:focus{outline:2px solid #F0C66E;outline-offset:4px}
-.slots{font-size:48px;margin-bottom:24px}
-.redirect{color:#6B7280;font-size:13px;margin-top:20px}
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>404 - Page Not Found | Matrix Spins Casino</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Plus+Jakarta+Sans:wght@700;800&display=swap" rel="stylesheet">
+    <style>
+        *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+        :root {
+            --bg: #0d0f14;
+            --text: #f0f0f5;
+            --text-muted: #8a8a9a;
+            --gold: #d4af37;
+            --gold-light: #f0d060;
+            --purple: #9b59b6;
+            --purple-dark: #6c3483;
+            --card-bg: rgba(255, 255, 255, 0.04);
+            --border: rgba(212, 175, 55, 0.15);
+        }
+
+        body {
+            background: var(--bg);
+            color: var(--text);
+            font-family: 'Inter', sans-serif;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            position: relative;
+        }
+
+        /* Floating casino chips */
+        .chip {
+            position: fixed;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            opacity: 0.08;
+            animation: floatChip linear infinite;
+            pointer-events: none;
+        }
+
+        .chip::before {
+            content: '';
+            position: absolute;
+            inset: 6px;
+            border-radius: 50%;
+            border: 2px dashed currentColor;
+        }
+
+        .chip:nth-child(1) { left: 8%; width: 30px; height: 30px; color: var(--gold); border: 2px solid var(--gold); animation-duration: 18s; animation-delay: 0s; }
+        .chip:nth-child(2) { left: 22%; width: 45px; height: 45px; color: var(--purple); border: 2px solid var(--purple); animation-duration: 22s; animation-delay: -4s; }
+        .chip:nth-child(3) { left: 38%; width: 35px; height: 35px; color: var(--gold-light); border: 2px solid var(--gold-light); animation-duration: 20s; animation-delay: -8s; }
+        .chip:nth-child(4) { left: 55%; width: 50px; height: 50px; color: var(--purple); border: 2px solid var(--purple); animation-duration: 25s; animation-delay: -2s; }
+        .chip:nth-child(5) { left: 70%; width: 28px; height: 28px; color: var(--gold); border: 2px solid var(--gold); animation-duration: 19s; animation-delay: -6s; }
+        .chip:nth-child(6) { left: 85%; width: 42px; height: 42px; color: var(--gold-light); border: 2px solid var(--gold-light); animation-duration: 23s; animation-delay: -10s; }
+
+        @keyframes floatChip {
+            0%   { transform: translateY(110vh) rotate(0deg); }
+            100% { transform: translateY(-120px) rotate(720deg); }
+        }
+
+        /* Main container */
+        .container {
+            text-align: center;
+            padding: 2rem;
+            max-width: 560px;
+            width: 100%;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* Slot emoji animation */
+        .slot-reel {
+            font-size: 2.5rem;
+            margin-bottom: 1.5rem;
+            display: flex;
+            justify-content: center;
+            gap: 0.3rem;
+        }
+
+        .slot-reel span {
+            display: inline-block;
+            animation: spinSlot 2s ease-in-out infinite;
+        }
+
+        .slot-reel span:nth-child(2) { animation-delay: 0.15s; }
+        .slot-reel span:nth-child(3) { animation-delay: 0.3s; }
+
+        @keyframes spinSlot {
+            0%, 100% { transform: translateY(0); }
+            20%      { transform: translateY(-12px); }
+            40%      { transform: translateY(4px); }
+        }
+
+        /* 404 heading */
+        .error-code {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            font-weight: 800;
+            font-size: clamp(6rem, 18vw, 10rem);
+            line-height: 1;
+            background: linear-gradient(135deg, var(--gold) 0%, var(--gold-light) 30%, var(--purple) 70%, var(--purple-dark) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 0.25rem;
+            filter: drop-shadow(0 0 40px rgba(212, 175, 55, 0.25));
+        }
+
+        .tagline {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            font-weight: 700;
+            font-size: clamp(1.1rem, 3vw, 1.4rem);
+            color: var(--gold);
+            margin-bottom: 0.75rem;
+        }
+
+        .description {
+            color: var(--text-muted);
+            font-size: 1rem;
+            line-height: 1.6;
+            margin-bottom: 2.5rem;
+        }
+
+        /* Buttons */
+        .buttons {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0.85rem 2rem;
+            border-radius: 10px;
+            font-family: 'Inter', sans-serif;
+            font-weight: 600;
+            font-size: 0.95rem;
+            text-decoration: none;
+            transition: all 0.25s ease;
+            cursor: pointer;
+            border: none;
+            min-width: 170px;
+        }
+
+        .btn-gold {
+            background: linear-gradient(135deg, var(--gold), var(--gold-light));
+            color: #0d0f14;
+            box-shadow: 0 4px 20px rgba(212, 175, 55, 0.3);
+        }
+
+        .btn-gold:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 28px rgba(212, 175, 55, 0.45);
+        }
+
+        .btn-outline {
+            background: transparent;
+            color: var(--gold);
+            border: 2px solid var(--gold);
+        }
+
+        .btn-outline:hover {
+            background: rgba(212, 175, 55, 0.1);
+            transform: translateY(-2px);
+        }
+
+        /* Reduced motion */
+        @media (prefers-reduced-motion: reduce) {
+            .chip, .slot-reel span { animation: none; }
+            .btn:hover { transform: none; }
+        }
+
+        @media (max-width: 480px) {
+            .buttons { flex-direction: column; align-items: center; }
+            .btn { width: 100%; max-width: 280px; }
+        }
+    </style>
 </head>
 <body>
-<main class="container" role="main">
-    <div class="slots" aria-hidden="true">&#127920;</div>
-    <h1>404</h1>
-    <h2>This reel came up empty!</h2>
-    <p>The page you're looking for doesn't exist. Head back to the lobby and try your luck on our 100 premium slot games.</p>
-    <a href="/" class="btn">Back to Lobby</a>
-    <p class="redirect">Redirecting to lobby in <span id="countdown">8</span> seconds&hellip;</p>
-</main>
-<script>
-(function(){var el=document.getElementById('countdown');var sec=8;var t=setInterval(function(){sec--;if(el)el.textContent=sec;if(sec<=0){clearInterval(t);window.location.href='/'}},1000);window.addEventListener('beforeunload',function(){clearInterval(t)})})();
-</script>
+    <!-- Floating chips background -->
+    <div class="chip"></div>
+    <div class="chip"></div>
+    <div class="chip"></div>
+    <div class="chip"></div>
+    <div class="chip"></div>
+    <div class="chip"></div>
+
+    <main class="container">
+        <div class="slot-reel">
+            <span>&#127920;</span>
+            <span>&#10060;</span>
+            <span>&#127920;</span>
+        </div>
+
+        <h1 class="error-code">404</h1>
+        <p class="tagline">This page hit a losing streak</p>
+        <p class="description">The page you're looking for doesn't exist or has been moved.</p>
+
+        <div class="buttons">
+            <a href="index.html" class="btn btn-gold">Back to Casino</a>
+            <a href="index.html#games" class="btn btn-outline">Try Your Luck</a>
+        </div>
+    </main>
 </body>
 </html>

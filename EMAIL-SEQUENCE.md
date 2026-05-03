@@ -67,11 +67,11 @@ We've loaded your account with **$1,000 in demo credits** so you can explore eve
 
 ### Subject Lines
 - **A:** Double Your Money — 100% Match Bonus (Expires Soon)
-- **B1:** Your Exclusive $100 Bonus Disappears in 48 Hours
+- **B1:** Your Exclusive $500 Bonus Disappears in 48 Hours
 - **B2:** Ready to Play for Real? We'll Match Every Dollar.
 
 ### Preheader
-Deposit any amount and we'll double it instantly. Up to $100 free. Offer ends in 48 hours.
+Deposit any amount and we'll double it instantly. Up to $500 free. Offer ends in 48 hours.
 
 ### Copy
 
@@ -79,15 +79,15 @@ Deposit any amount and we'll double it instantly. Up to $100 free. Offer ends in
 
 **Headline:** Double Your First Deposit
 
-**Subhead:** We'll match 100% of whatever you deposit, up to $100.
+**Subhead:** We'll match 100% of whatever you deposit, up to $500.
 
 **Bonus display:**
 - 100% Match Bonus
-- UP TO $100
-- Deposit $50, play with $100. Deposit $100, play with $200.
+- UP TO $500
+- Deposit $100, play with $200. Deposit $500, play with $1,000.
 
 **How It Works:**
-1. Make your first deposit (any amount from $10-$100)
+1. Make your first deposit (any amount from $10-$500)
 2. We instantly match it 100% — doubles your balance
 3. Play any of our 100 premium slots with double the funds
 

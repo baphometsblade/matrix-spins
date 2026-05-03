@@ -22060,12 +22060,12 @@ function _showFirstDepositFunnel() {
     if (!el) { el = document.createElement('div'); el.id = 'firstDepositFunnel'; el.className = 'first-deposit-funnel'; document.body.appendChild(el); }
     el.innerHTML = '<div class="fdf-card">' +
         '<div class="fdf-badge">LIMITED OFFER</div>' +
-        '<h3>200% First Deposit Bonus!</h3>' +
-        '<p>Deposit now and get <strong>triple</strong> your money to play with!</p>' +
+        '<h3>100% First Deposit Bonus!</h3>' +
+        '<p>Deposit now and get <strong>double</strong> your money to play with!</p>' +
         '<div class="fdf-tiers">' +
-        '<div class="fdf-tier"><span>$5</span><span class="fdf-arrow">→</span><span class="fdf-bonus">$15</span></div>' +
-        '<div class="fdf-tier fdf-popular"><span>$25</span><span class="fdf-arrow">→</span><span class="fdf-bonus">$75</span><span class="fdf-tag">POPULAR</span></div>' +
-        '<div class="fdf-tier"><span>$100</span><span class="fdf-arrow">→</span><span class="fdf-bonus">$300</span></div>' +
+        '<div class="fdf-tier"><span>$10</span><span class="fdf-arrow">→</span><span class="fdf-bonus">$20</span></div>' +
+        '<div class="fdf-tier fdf-popular"><span>$50</span><span class="fdf-arrow">→</span><span class="fdf-bonus">$100</span><span class="fdf-tag">POPULAR</span></div>' +
+        '<div class="fdf-tier"><span>$100</span><span class="fdf-arrow">→</span><span class="fdf-bonus">$200</span></div>' +
         '</div>' +
         '<button onclick="_firstDepositClick()" class="fdf-cta">Claim Bonus Now</button>' +
         '<button onclick="document.getElementById(&quot;firstDepositFunnel&quot;).style.display=&quot;none&quot;" class="fdf-dismiss">Maybe Later</button></div>';
@@ -22147,9 +22147,7 @@ function _openSpendDashboard() {
 
 // --- Sprint 456 — Deposit Match Engine ---
 var _depositMatchOffers = [
-    { minDeposit: 10, matchPct: 100, maxBonus: 100, name: '100% Match up to $100' },
-    { minDeposit: 50, matchPct: 150, maxBonus: 300, name: '150% Match up to $300' },
-    { minDeposit: 100, matchPct: 200, maxBonus: 500, name: '200% Match up to $500' }
+    { minDeposit: 10, matchPct: 100, maxBonus: 500, name: '100% Match up to $500' }
 ];
 function _initDepositMatchEngine() {}
 function _getDepositMatch(amount) {
@@ -23134,7 +23132,7 @@ function _openPromoROI() {
     var el = document.getElementById('promoROIOverlay');
     if (!el) { el = document.createElement('div'); el.id = 'promoROIOverlay'; el.className = 'promo-roi-overlay'; document.body.appendChild(el); }
     var promos = [
-        { name: 'First Deposit 200%', spent: 5000, revenue: 12000, roi: '+140%' },
+        { name: 'First Deposit 100%', spent: 5000, revenue: 12000, roi: '+140%' },
         { name: 'Happy Hour 2x', spent: 1200, revenue: 3500, roi: '+192%' },
         { name: 'Comeback Bonus', spent: 800, revenue: 2100, roi: '+163%' },
         { name: 'Loss Recovery 25%', spent: 600, revenue: 1400, roi: '+133%' }

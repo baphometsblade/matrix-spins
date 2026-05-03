@@ -1,15 +1,7 @@
 User-agent: *
 Allow: /
 Disallow: /api/
-Disallow: /admin/
 Disallow: /admin.html
-Disallow: /dist/
-Disallow: /js/
-Disallow: /shared/
-Disallow: /scripts/
-Disallow: /server/
-Disallow: /node_modules/
-Disallow: /.well-known/
-Crawl-delay: 0.5
+Disallow: /deposit/
 
 Sitemap: https://msaart.online/sitemap.xml

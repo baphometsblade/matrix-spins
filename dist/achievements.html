@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Achievements — Matrix Spins Casino</title>
+<meta name="description" content="Track your badges, unlock achievements, and earn points at Matrix Spins Casino. 30 achievements across Gameplay, Social, VIP, and Milestone categories.">
+<meta property="og:title" content="Achievements — Matrix Spins Casino">
+<meta property="og:description" content="Unlock badges, earn points, and track your gaming milestones across 24 achievements.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://msaart.online/achievements.html">
+<meta name="twitter:card" content="summary">
+<link rel="canonical" href="https://msaart.online/achievements.html">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/auth.css">
+<link rel="stylesheet" href="css/achievements.css">
+<link rel="stylesheet" href="css/chat-widget.css">
+<link rel="stylesheet" href="css/notifications.css">
+<link rel="stylesheet" href="css/age-gate.css">
+<link rel="stylesheet" href="css/search.css">
+<link rel="stylesheet" href="css/favorites.css">
+<link rel="stylesheet" href="css/session-monitor.css">
+<link rel="stylesheet" href="css/conversion.css">
+</head>
+<body>
+
+<!-- ── Top bar ──────────────────────────────────────────────── -->
+<div class="topbar">
+  <a class="brand" href="index.html">Matrix Spins</a>
+  <div class="actions">
+    <span id="balanceChip" class="balance-chip">—</span>
+    <a href="wallet.html" class="btn btn-inline secondary">Wallet</a>
+    <a href="account.html" class="btn btn-inline secondary">Account</a>
+    <button id="logout" class="btn btn-inline secondary">Sign out</button>
+  </div>
+</div>
+
+<div class="rs-shell-wide" style="max-width:1200px;">
+
+  <!-- ── Achievement Hero ────────────────────────────────────── -->
+  <div class="achieve-hero">
+    <span class="trophy-icon">🏆</span>
+    <h1>Your <span class="gold">Achievements</span></h1>
+    <p class="hero-sub">Complete challenges, earn badges, and collect achievement points. How many can you unlock?</p>
+    <div class="hero-progress-wrap">
+      <div class="hero-progress-label">
+        <span id="heroUnlockCount">0/30 Unlocked</span>
+        <span class="pts" id="heroTotalPts">0 pts</span>
+      </div>
+      <div class="hero-progress-bar">
+        <div class="hero-progress-fill" id="heroProgressFill"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Stats Bar ───────────────────────────────────────────── -->
+  <div class="achieve-stats" id="achieveStats"></div>
+
+  <!-- ── Filter Tabs ─────────────────────────────────────────── -->
+  <div class="achieve-tabs" id="achieveTabs">
+    <button class="achieve-tab active" data-filter="all">All</button>
+    <button class="achieve-tab" data-filter="unlocked">Unlocked</button>
+    <button class="achieve-tab" data-filter="locked">Locked</button>
+    <button class="achieve-tab" data-filter="gameplay">Gameplay</button>
+    <button class="achieve-tab" data-filter="social">Social</button>
+    <button class="achieve-tab" data-filter="vip">VIP</button>
+    <button class="achieve-tab" data-filter="milestones">Milestones</button>
+  </div>
+
+  <!-- ── Achievement Grid ────────────────────────────────────── -->
+  <div class="achieve-grid" id="achieveGrid"></div>
+
+  <!-- ── Recent Activity ─────────────────────────────────────── -->
+  <div class="recent-activity">
+    <h2>Recent Activity</h2>
+    <div class="activity-list" id="activityList"></div>
+  </div>
+
+  <!-- ── Rarity Legend ───────────────────────────────────────── -->
+  <div class="rarity-legend">
+    <div class="legend-item">
+      <span class="legend-dot common"></span>
+      <span class="legend-label">Common</span>
+      <span class="legend-pts">10 pts</span>
+    </div>
+    <div class="legend-item">
+      <span class="legend-dot uncommon"></span>
+      <span class="legend-label">Uncommon</span>
+      <span class="legend-pts">25 pts</span>
+    </div>
+    <div class="legend-item">
+      <span class="legend-dot rare"></span>
+      <span class="legend-label">Rare</span>
+      <span class="legend-pts">50 pts</span>
+    </div>
+    <div class="legend-item">
+      <span class="legend-dot epic"></span>
+      <span class="legend-label">Epic</span>
+      <span class="legend-pts">100 pts</span>
+    </div>
+    <div class="legend-item">
+      <span class="legend-dot legendary"></span>
+      <span class="legend-label">Legendary</span>
+      <span class="legend-pts">250 pts</span>
+    </div>
+  </div>
+
+</div>
+
+<script src="js/api-client.js"></script>
+<script src="js/chat-widget.js" defer></script>
+<script src="js/notifications.js" defer></script>
+<script src="js/age-gate.js" defer></script>
+<script src="js/cookie-consent.js" defer></script>
+<script src="js/search.js" defer></script>
+<script src="js/analytics.js" defer></script>
+<script src="js/email-capture.js" defer></script>
+<script src="js/conversion.js" defer></script>
+<script>
+(async () => {
+  'use strict';
+
+  const api = window.MatrixSpinsAPI;
+  const user = await api.loadSession();
+  const $ = id => document.getElementById(id);
+
+  // ── Balance + Logout ────────────────────────────────────────
+  if (user) {
+    $('logout').style.display = 'inline-block';
+    try {
+      const b = await api.getBalance();
+      $('balanceChip').textContent = api.formatCents(b.availableCents);
+    } catch {}
+  } else {
+    $('logout').style.display = 'none';
+  }
+  $('logout').addEventListener('click', async () => {
+    await api.logout();
+    window.location.href = 'index.html';
+  });
+
+  // ── Point Values ────────────────────────────────────────────
+  const RARITY_POINTS = {
+    common: 10,
+    uncommon: 25,
+    rare: 50,
+    epic: 100,
+    legendary: 250
+  };
+
+  // ── Achievement Data ────────────────────────────────────────
+  const ACHIEVEMENTS = [
+    // Gameplay
+    { id: 'first-spin',     cat: 'gameplay',    icon: '🎰', title: 'First Spin',     desc: 'Place your very first spin on any slot game.',                           rarity: 'common',    unlocked: true,  unlockedAt: '2026-03-15T14:22:00Z', progress: null, isNew: false },
+    { id: 'century-club',   cat: 'gameplay',    icon: '💯', title: 'Century Club',    desc: 'Complete 100 total spins across all games.',                              rarity: 'uncommon',  unlocked: false, unlockedAt: null, progress: { current: 67, target: 100 }, isNew: false },
+    { id: 'high-roller',    cat: 'gameplay',    icon: '💎', title: 'High Roller',     desc: 'Wager a total of $1,000 across all games.',                               rarity: 'rare',      unlocked: false, unlockedAt: null, progress: { current: 420, target: 1000 }, isNew: false },
+    { id: 'lucky-streak',   cat: 'gameplay',    icon: '🔥', title: 'Lucky Streak',    desc: 'Win 5 games in a row without a single loss.',                             rarity: 'epic',      unlocked: false, unlockedAt: null, progress: { current: 2, target: 5 }, isNew: false },
+    { id: 'jackpot-hunter', cat: 'gameplay',    icon: '🏅', title: 'Jackpot Hunter',  desc: 'Hit any jackpot prize on a progressive slot.',                            rarity: 'legendary', unlocked: false, unlockedAt: null, progress: null, isNew: false },
+    { id: 'night-owl',      cat: 'gameplay',    icon: '🦉', title: 'Night Owl',       desc: 'Play any game between midnight and 4 AM.',                                rarity: 'common',    unlocked: true,  unlockedAt: '2026-04-10T02:15:00Z', progress: null, isNew: false },
+    { id: 'marathon',       cat: 'gameplay',    icon: '⏱️', title: 'Marathon',        desc: 'Maintain an active gaming session for 1 hour.',                           rarity: 'uncommon',  unlocked: true,  unlockedAt: '2026-04-18T21:30:00Z', progress: null, isNew: false },
+    { id: 'all-rounder',    cat: 'gameplay',    icon: '🎲', title: 'All-Rounder',     desc: 'Play at least 10 different games from the library.',                      rarity: 'rare',      unlocked: false, unlockedAt: null, progress: { current: 7, target: 10 }, isNew: false },
+
+    // Social
+    { id: 'friendly',       cat: 'social',      icon: '🤝', title: 'Friendly',        desc: 'Refer your first friend to Matrix Spins.',                               rarity: 'common',    unlocked: true,  unlockedAt: '2026-03-20T10:45:00Z', progress: null, isNew: false },
+    { id: 'influencer',     cat: 'social',      icon: '📢', title: 'Influencer',      desc: 'Successfully refer 5 friends who sign up.',                              rarity: 'uncommon',  unlocked: false, unlockedAt: null, progress: { current: 4, target: 5 }, isNew: false },
+    { id: 'social-butterfly', cat: 'social',    icon: '🦋', title: 'Social Butterfly', desc: 'Share a winning moment on social media.',                                rarity: 'common',    unlocked: false, unlockedAt: null, progress: null, isNew: false },
+    { id: 'team-player',    cat: 'social',      icon: '⚔️', title: 'Team Player',     desc: 'Enter and compete in a tournament event.',                               rarity: 'uncommon',  unlocked: true,  unlockedAt: '2026-04-22T16:00:00Z', progress: null, isNew: true },
+
+    // VIP
+    { id: 'bronze-member',  cat: 'vip',         icon: '🥉', title: 'Bronze Member',   desc: 'Reach Bronze tier in the VIP program.',                                  rarity: 'common',    unlocked: true,  unlockedAt: '2026-03-18T09:00:00Z', progress: null, isNew: false },
+    { id: 'silver-elite',   cat: 'vip',         icon: '🥈', title: 'Silver Elite',    desc: 'Advance to Silver tier in the VIP program.',                             rarity: 'uncommon',  unlocked: false, unlockedAt: null, progress: null, isNew: false },
+    { id: 'gold-standard',  cat: 'vip',         icon: '🥇', title: 'Gold Standard',   desc: 'Achieve Gold tier status — a true veteran.',                             rarity: 'rare',      unlocked: false, unlockedAt: null, progress: null, isNew: false },
+    { id: 'platinum-power', cat: 'vip',         icon: '💠', title: 'Platinum Power',  desc: 'Ascend to Platinum tier — elite status.',                                rarity: 'epic',      unlocked: false, unlockedAt: null, progress: null, isNew: false },
+    { id: 'diamond-dynasty', cat: 'vip',        icon: '👑', title: 'Diamond Dynasty', desc: 'Reach the pinnacle: Diamond VIP tier.',                                  rarity: 'legendary', unlocked: false, unlockedAt: null, progress: null, isNew: false },
+
+    // Milestones
+    { id: 'welcome-aboard', cat: 'milestones',  icon: '🎉', title: 'Welcome Aboard',  desc: 'Log in to Matrix Spins for the first time.',                             rarity: 'common',    unlocked: true,  unlockedAt: '2026-03-15T14:00:00Z', progress: null, isNew: false },
+    { id: 'depositor',      cat: 'milestones',  icon: '💵', title: 'Depositor',       desc: 'Make your first deposit into your wallet.',                              rarity: 'common',    unlocked: true,  unlockedAt: '2026-03-15T14:35:00Z', progress: null, isNew: false },
+    { id: 'big-spender',    cat: 'milestones',  icon: '💰', title: 'Big Spender',     desc: 'Deposit a cumulative total of $500.',                                    rarity: 'rare',      unlocked: false, unlockedAt: null, progress: { current: 215, target: 500 }, isNew: false },
+    { id: 'lucky-seven',    cat: 'milestones',  icon: '🍀', title: 'Lucky Seven',     desc: 'Win with a 7x multiplier or higher.',                                    rarity: 'uncommon',  unlocked: true,  unlockedAt: '2026-04-05T19:12:00Z', progress: null, isNew: false },
+    { id: 'comeback-kid',   cat: 'milestones',  icon: '🔄', title: 'Comeback Kid',    desc: 'Score a win immediately after 10 consecutive losses.',                   rarity: 'rare',      unlocked: false, unlockedAt: null, progress: null, isNew: false },
+    { id: 'daily-devotee',  cat: 'milestones',  icon: '📅', title: 'Daily Devotee',   desc: 'Log in 7 days in a row without missing a day.',                          rarity: 'uncommon',  unlocked: false, unlockedAt: null, progress: { current: 5, target: 7 }, isNew: false },
+    { id: 'monthly-master', cat: 'milestones',  icon: '🗓️', title: 'Monthly Master',  desc: 'Maintain a 30-day consecutive login streak.',                            rarity: 'epic',      unlocked: false, unlockedAt: null, progress: { current: 5, target: 30 }, isNew: false }
+  ];
+
+  // ── Future API wrapper ──────────────────────────────────────
+  async function fetchAchievements() {
+    // Replace with: return api.get('/achievements');
+    return ACHIEVEMENTS;
+  }
+
+  const achievements = await fetchAchievements();
+
+  // ── Compute Stats ───────────────────────────────────────────
+  const unlocked = achievements.filter(a => a.unlocked);
+  const totalPts = unlocked.reduce((s, a) => s + RARITY_POINTS[a.rarity], 0);
+  const totalCount = achievements.length;
+  const unlockedCount = unlocked.length;
+  const pct = Math.round((unlockedCount / totalCount) * 100);
+
+  // Hero progress
+  $('heroUnlockCount').textContent = `${unlockedCount}/${totalCount} Unlocked`;
+  $('heroTotalPts').textContent = `${totalPts} pts`;
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => {
+      $('heroProgressFill').style.width = pct + '%';
+    });
+  });
+
+  // Stats bar
+  const catCounts = {};
+  achievements.forEach(a => {
+    if (!catCounts[a.cat]) catCounts[a.cat] = { total: 0, done: 0 };
+    catCounts[a.cat].total++;
+    if (a.unlocked) catCounts[a.cat].done++;
+  });
+  const statsHTML = [
+    `<div class="achieve-stat"><span class="num">${totalPts}</span><span class="label">Total Points</span></div>`,
+    `<div class="achieve-stat"><span class="num">${unlockedCount}</span><span class="label">Unlocked</span></div>`,
+    `<div class="achieve-stat"><span class="num">${totalCount - unlockedCount}</span><span class="label">Remaining</span></div>`,
+    ...Object.entries(catCounts).map(([cat, c]) =>
+      `<div class="achieve-stat"><span class="num">${c.done}/${c.total}</span><span class="label">${cat}</span></div>`
+    )
+  ].join('');
+  $('achieveStats').innerHTML = statsHTML;
+
+  // ── Render Cards ────────────────────────────────────────────
+  function renderCard(a) {
+    const pts = RARITY_POINTS[a.rarity];
+    const isLocked = !a.unlocked;
+    const newClass = a.isNew ? ' newly-unlocked' : '';
+    const lockedClass = isLocked ? ' locked' : '';
+
+    let progressHTML = '';
+    if (a.progress) {
+      const pPct = Math.round((a.progress.current / a.progress.target) * 100);
+      progressHTML = `
+        <div class="card-progress">
+          <div class="card-progress-info">
+            <span>${a.progress.current}/${a.progress.target}</span>
+            <span>${pPct}%</span>
+          </div>
+          <div class="card-progress-bar">
+            <div class="card-progress-fill ${a.rarity}" data-width="${pPct}"></div>
+          </div>
+        </div>`;
+    }
+
+    let footerHTML = '';
+    if (a.unlocked && a.unlockedAt) {
+      const d = new Date(a.unlockedAt);
+      const formatted = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+      footerHTML = `<div class="unlock-date"><span class="check">&#10003;</span> ${formatted}</div>`;
+    }
+
+    const lockIcon = isLocked ? '<div class="lock-overlay">🔒</div>' : '';
+
+    return `
+      <div class="achieve-card${lockedClass}${newClass}" data-rarity="${a.rarity}" data-cat="${a.cat}" data-status="${a.unlocked ? 'unlocked' : 'locked'}">
+        ${lockIcon}
+        <div class="badge-icon">${a.icon}</div>
+        <div class="card-header">
+          <span class="card-title">${a.title}</span>
+          <span class="card-points">${pts} pts</span>
+        </div>
+        <span class="rarity-badge ${a.rarity}">${a.rarity}</span>
+        <p class="card-desc">${a.desc}</p>
+        ${progressHTML}
+        ${footerHTML}
+      </div>`;
+  }
+
+  function renderGrid(filter) {
+    let filtered = achievements;
+    if (filter === 'unlocked') filtered = achievements.filter(a => a.unlocked);
+    else if (filter === 'locked') filtered = achievements.filter(a => !a.unlocked);
+    else if (['gameplay', 'social', 'vip', 'milestones'].includes(filter)) {
+      filtered = achievements.filter(a => a.cat === filter);
+    }
+    $('achieveGrid').innerHTML = filtered.map(renderCard).join('');
+
+    // Animate progress bars after paint
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        document.querySelectorAll('.card-progress-fill[data-width]').forEach(el => {
+          el.style.width = el.dataset.width + '%';
+        });
+      });
+    });
+  }
+
+  renderGrid('all');
+
+  // ── Filter Tabs ─────────────────────────────────────────────
+  const tabs = document.querySelectorAll('.achieve-tab');
+  tabs.forEach(tab => {
+    tab.addEventListener('click', () => {
+      tabs.forEach(t => t.classList.remove('active'));
+      tab.classList.add('active');
+      renderGrid(tab.dataset.filter);
+    });
+  });
+
+  // ── Recent Activity ─────────────────────────────────────────
+  const recentUnlocks = [...achievements]
+    .filter(a => a.unlocked && a.unlockedAt)
+    .sort((a, b) => new Date(b.unlockedAt) - new Date(a.unlockedAt))
+    .slice(0, 5);
+
+  function timeAgo(dateStr) {
+    const now = new Date();
+    const then = new Date(dateStr);
+    const diff = now - then;
+    const mins = Math.floor(diff / 60000);
+    const hours = Math.floor(diff / 3600000);
+    const days = Math.floor(diff / 86400000);
+    if (days > 0) return days === 1 ? '1 day ago' : `${days} days ago`;
+    if (hours > 0) return hours === 1 ? '1 hour ago' : `${hours} hours ago`;
+    return mins <= 1 ? 'Just now' : `${mins} mins ago`;
+  }
+
+  $('activityList').innerHTML = recentUnlocks.map(a => `
+    <div class="activity-item">
+      <span class="act-icon">${a.icon}</span>
+      <div class="act-info">
+        <div class="act-title">${a.title}</div>
+        <div class="act-desc">${a.desc}</div>
+      </div>
+      <span class="act-time">${timeAgo(a.unlockedAt)}</span>
+    </div>
+  `).join('');
+
+})();
+</script>
+<script src="js/favorites.js" defer></script>
+<script src="js/session-monitor.js" defer></script>
+<script src="js/sound-manager.js" defer></script>
+    <script src="js/social-proof.js" defer></script>
+    <script src="js/deposit-urgency.js" defer></script>
+    <script src="js/onboarding.js" defer></script>
+</body>
+</html>

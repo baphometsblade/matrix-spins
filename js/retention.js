@@ -280,7 +280,7 @@
   // DEPOSIT / WITHDRAW FLOW (Stripe-ready stubs)
   // ============================================================================
   const CasinoDeposit = {
-    QUICK_AMOUNTS: [10, 25, 50, 100, 250, 500],
+    QUICK_AMOUNTS: [10, 25, 50, 100, 250],
 
     show() {
       if (document.getElementById('deposit-modal')) return;
@@ -295,9 +295,9 @@
 
       const quickBtns = this.QUICK_AMOUNTS.map(a =>
         `<button class="deposit-quick-btn" onclick="window.CasinoDeposit.processDeposit(${a})"
-          style="padding:14px;background:#1a1a1a;border:2px solid #DAA520;color:#DAA520;
+          style="padding:14px;background:${a === 25 ? 'rgba(218,165,32,0.15)' : '#1a1a1a'};border:2px solid ${a === 25 ? '#FFD700' : '#DAA520'};color:#DAA520;
                  border-radius:8px;cursor:pointer;font-size:16px;font-weight:bold;
-                 transition:all 0.2s;">$${a}</button>`
+                 transition:all 0.2s;position:relative;">${a === 25 ? '<span style="position:absolute;top:-8px;right:-4px;background:#DAA520;color:#000;font-size:9px;font-weight:800;padding:1px 6px;border-radius:8px;letter-spacing:0.3px;">POPULAR</span>' : ''}$${a}</button>`
       ).join('');
 
       modal.innerHTML = `

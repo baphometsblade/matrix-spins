@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>VIP Rewards — Matrix Spins Casino</title>
+<meta name="description" content="Earn XP with every spin and unlock exclusive VIP rewards. Five tiers of benefits from cashback to personal account managers.">
+<meta property="og:title" content="VIP Rewards — Matrix Spins Casino">
+<meta property="og:description" content="Earn XP with every spin and unlock exclusive VIP rewards across five tiers. Cashback, bonuses, and personal managers.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://msaart.online/vip.html">
+<meta name="twitter:card" content="summary">
+<link rel="canonical" href="https://msaart.online/vip.html">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/auth.css">
+<link rel="stylesheet" href="css/vip.css">
+<link rel="stylesheet" href="css/age-gate.css">
+<link rel="stylesheet" href="css/search.css">
+<link rel="stylesheet" href="css/favorites.css">
+<link rel="stylesheet" href="css/session-monitor.css">
+<link rel="stylesheet" href="css/chat-widget.css">
+<link rel="stylesheet" href="css/notifications.css">
+<link rel="stylesheet" href="css/conversion.css">
+</head>
+<body>
+
+<div class="topbar">
+  <a class="brand" href="index.html">Matrix Spins</a>
+  <div class="actions">
+    <span id="balanceChip" class="balance-chip">—</span>
+    <a href="wallet.html" class="btn btn-inline secondary">Wallet</a>
+    <a href="account.html" class="btn btn-inline secondary">Account</a>
+    <button id="logout" class="btn btn-inline secondary">Sign out</button>
+  </div>
+</div>
+
+<div class="rs-shell-wide">
+
+  <!-- ── VIP Hero — Tier & XP Progress ─────────────────────── -->
+  <div class="vip-hero">
+    <div class="vip-tier-badge" id="tierBadge">
+      <span class="icon" id="tierIcon">🥉</span>
+      <span id="tierName">Bronze</span>
+    </div>
+    <h1 style="font-size:1.6rem;margin-bottom:0.3rem;" id="vipGreeting">Welcome to VIP Rewards</h1>
+    <p class="muted" style="margin-bottom:1.2rem;" id="vipSubtitle">Every spin earns XP toward your next tier.</p>
+
+    <div class="vip-xp-label">
+      <strong id="currentXP">0</strong> / <span id="nextTierXP">5,000</span> XP to <span id="nextTierName">Silver</span>
+    </div>
+    <div class="xp-bar-container">
+      <div class="xp-bar">
+        <div class="xp-bar-fill bronze" id="xpBarFill" style="width:0%;"></div>
+      </div>
+    </div>
+    <div class="xp-endpoints">
+      <span id="xpStart">0 XP</span>
+      <span id="xpEnd">5,000 XP</span>
+    </div>
+  </div>
+
+  <!-- ── Tier Roadmap ──────────────────────────────────────── -->
+  <div class="tier-roadmap" id="tierRoadmap">
+    <!-- Populated by JS -->
+  </div>
+
+  <!-- ── Current Tier Benefits ─────────────────────────────── -->
+  <h2 style="font-family:'Plus Jakarta Sans',sans-serif;font-size:1.2rem;margin-bottom:1rem;">
+    Your Benefits
+  </h2>
+  <div class="benefits-grid" id="benefitsGrid">
+    <!-- Populated by JS -->
+  </div>
+
+  <!-- ── All Tier Benefits Comparison ──────────────────────── -->
+  <div class="rs-card" style="margin-bottom:1.5rem;">
+    <h2 style="margin-top:0;">Tier Comparison</h2>
+    <div style="overflow-x:auto;">
+      <table class="table" id="tierTable">
+        <thead>
+          <tr>
+            <th>Benefit</th>
+            <th style="text-align:center;">🥉 Bronze</th>
+            <th style="text-align:center;">🥈 Silver</th>
+            <th style="text-align:center;">🥇 Gold</th>
+            <th style="text-align:center;">💎 Platinum</th>
+            <th style="text-align:center;">👑 Diamond</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ── Rewards History ───────────────────────────────────── -->
+  <div class="rs-card">
+    <h2 style="margin-top:0;">Reward History</h2>
+    <div id="rewardHistory">
+      <div style="text-align:center;padding:2rem;color:var(--muted);">Loading rewards...</div>
+    </div>
+  </div>
+
+</div>
+
+<script src="js/api-client.js"></script>
+<script src="js/age-gate.js" defer></script>
+<script src="js/cookie-consent.js" defer></script>
+<script src="js/search.js" defer></script>
+<script src="js/favorites.js" defer></script>
+<script src="js/session-monitor.js" defer></script>
+<script src="js/sound-manager.js" defer></script>
+<script src="js/analytics.js" defer></script>
+<script src="js/email-capture.js" defer></script>
+<script src="js/chat-widget.js" defer></script>
+<script src="js/notifications.js" defer></script>
+<script src="js/conversion.js" defer></script>
+<script>
+(async () => {
+  'use strict';
+
+  const api = window.MatrixSpinsAPI;
+  const user = await api.loadSession();
+  if (!user) { window.location.href = 'login.html?next=vip.html'; return; }
+
+  function fmt(c) { return api.formatCents(c); }
+  const $ = id => document.getElementById(id);
+
+  // Balance + Logout
+  $('logout').addEventListener('click', async () => { await api.logout(); window.location.href = 'index.html'; });
+  try { const b = await api.getBalance(); $('balanceChip').textContent = fmt(b.availableCents); } catch {}
+
+  // ── VIP Tier Configuration ─────────────────────────────────
+  const TIERS = [
+    { id: 'bronze',   name: 'Bronze',   icon: '🥉', xpRequired: 0,      color: '#cd7f32', cashback: 0.5,  weeklyBonus: 0,    birthdayBonus: 0,   prioritySupport: false, personalManager: false, exclusiveGames: false, freeSpinsMulti: 1 },
+    { id: 'silver',   name: 'Silver',   icon: '🥈', xpRequired: 5000,   color: '#c0c0c0', cashback: 1.0,  weeklyBonus: 500,  birthdayBonus: 1000, prioritySupport: false, personalManager: false, exclusiveGames: false, freeSpinsMulti: 1.5 },
+    { id: 'gold',     name: 'Gold',     icon: '🥇', xpRequired: 25000,  color: '#d4af37', cashback: 2.0,  weeklyBonus: 2500, birthdayBonus: 5000, prioritySupport: true,  personalManager: false, exclusiveGames: true,  freeSpinsMulti: 2 },
+    { id: 'platinum', name: 'Platinum', icon: '💎', xpRequired: 100000, color: '#e5e4e2', cashback: 3.5,  weeklyBonus: 10000,birthdayBonus: 25000,prioritySupport: true,  personalManager: true,  exclusiveGames: true,  freeSpinsMulti: 3 },
+    { id: 'diamond',  name: 'Diamond',  icon: '👑', xpRequired: 500000, color: '#b9f2ff', cashback: 5.0,  weeklyBonus: 50000,birthdayBonus: 100000,prioritySupport: true, personalManager: true,  exclusiveGames: true,  freeSpinsMulti: 5 },
+  ];
+
+  // ── Calculate Player's VIP Status ──────────────────────────
+  // In production this comes from API; demo uses transaction volume
+  let playerXP = 0;
+  try {
+    const txData = await api.getTransactions({ limit: 500 });
+    const tx = txData.transactions || [];
+    playerXP = tx.filter(t => /bet|wager/i.test(t.entry_type))
+                  .reduce((sum, t) => sum + Math.abs(t.amount_cents || 0), 0);
+    // Convert wagered cents to XP (1 XP per $1 wagered)
+    playerXP = Math.floor(playerXP / 100);
+  } catch {
+    playerXP = Math.floor(Math.random() * 8000) + 500; // Demo fallback
+  }
+
+  function getTierIndex(xp) {
+    let idx = 0;
+    for (let i = TIERS.length - 1; i >= 0; i--) {
+      if (xp >= TIERS[i].xpRequired) { idx = i; break; }
+    }
+    return idx;
+  }
+
+  const tierIdx = getTierIndex(playerXP);
+  const currentTier = TIERS[tierIdx];
+  const nextTier = TIERS[Math.min(tierIdx + 1, TIERS.length - 1)];
+  const isMaxTier = tierIdx === TIERS.length - 1;
+
+  // ── Render Hero ────────────────────────────────────────────
+  const badge = $('tierBadge');
+  badge.className = 'vip-tier-badge ' + currentTier.id;
+  $('tierIcon').textContent = currentTier.icon;
+  $('tierName').textContent = currentTier.name;
+
+  const name = (user.firstName || user.email.split('@')[0]);
+  $('vipGreeting').textContent = `${name}, you're ${currentTier.name} Tier`;
+  $('vipSubtitle').textContent = isMaxTier
+    ? 'You\'ve reached the highest tier. Enjoy exclusive Diamond benefits!'
+    : `Earn ${(nextTier.xpRequired - playerXP).toLocaleString()} more XP to reach ${nextTier.name}.`;
+
+  // XP Bar
+  const tierStartXP = currentTier.xpRequired;
+  const tierEndXP = nextTier.xpRequired;
+  const progress = isMaxTier ? 100 : Math.min(100, ((playerXP - tierStartXP) / (tierEndXP - tierStartXP)) * 100);
+
+  $('currentXP').textContent = playerXP.toLocaleString();
+  $('nextTierXP').textContent = tierEndXP.toLocaleString();
+  $('nextTierName').textContent = isMaxTier ? 'Max' : nextTier.name;
+  $('xpStart').textContent = tierStartXP.toLocaleString() + ' XP';
+  $('xpEnd').textContent = tierEndXP.toLocaleString() + ' XP';
+
+  const xpFill = $('xpBarFill');
+  xpFill.className = 'xp-bar-fill ' + currentTier.id;
+  setTimeout(() => { xpFill.style.width = progress + '%'; }, 100);
+
+  // ── Render Tier Roadmap ────────────────────────────────────
+  $('tierRoadmap').innerHTML = TIERS.map((t, i) => {
+    const state = i < tierIdx ? 'achieved' : i === tierIdx ? 'current' : 'locked';
+    return `<div class="roadmap-tier ${state}">
+      <div class="roadmap-dot">${t.icon}</div>
+      <div class="roadmap-label">${t.name}</div>
+      <div class="roadmap-xp">${t.xpRequired > 0 ? t.xpRequired.toLocaleString() + ' XP' : 'Start'}</div>
+    </div>`;
+  }).join('');
+
+  // ── Render Benefits Grid ───────────────────────────────────
+  const allBenefits = [
+    { icon: '💰', title: 'Cashback on Losses', desc: `Get ${currentTier.cashback}% back on net losses every week.`, unlocked: true },
+    { icon: '🎁', title: 'Weekly Bonus', desc: currentTier.weeklyBonus > 0 ? `${fmt(currentTier.weeklyBonus)} bonus credits every Monday.` : 'Unlock at Silver tier.', unlocked: currentTier.weeklyBonus > 0, reqTier: 'Silver' },
+    { icon: '🎂', title: 'Birthday Bonus', desc: currentTier.birthdayBonus > 0 ? `${fmt(currentTier.birthdayBonus)} special birthday bonus.` : 'Unlock at Silver tier.', unlocked: currentTier.birthdayBonus > 0, reqTier: 'Silver' },
+    { icon: '🎰', title: 'Free Spins Multiplier', desc: `${currentTier.freeSpinsMulti}x free spin rewards on all promotions.`, unlocked: true },
+    { icon: '⚡', title: 'Priority Support', desc: 'Jump the queue with priority live chat and email support.', unlocked: currentTier.prioritySupport, reqTier: 'Gold' },
+    { icon: '🎮', title: 'Exclusive Games', desc: 'Access VIP-only games with higher RTP and unique themes.', unlocked: currentTier.exclusiveGames, reqTier: 'Gold' },
+    { icon: '👤', title: 'Personal Account Manager', desc: 'Dedicated VIP host for tailored offers and support.', unlocked: currentTier.personalManager, reqTier: 'Platinum' },
+    { icon: '✈️', title: 'VIP Events & Trips', desc: 'Invitations to exclusive events, tournaments, and travel packages.', unlocked: tierIdx >= 4, reqTier: 'Diamond' },
+  ];
+
+  $('benefitsGrid').innerHTML = allBenefits.map(b =>
+    `<div class="benefit-card ${b.unlocked ? '' : 'locked'}">
+      <div class="icon">${b.icon}</div>
+      <h3>${b.title}</h3>
+      <p>${b.desc}</p>
+      ${!b.unlocked && b.reqTier ? `<span class="tier-req">Unlocks at ${b.reqTier}</span>` : ''}
+    </div>`
+  ).join('');
+
+  // ── Render Tier Comparison Table ───────────────────────────
+  const benefits = [
+    { name: 'Cashback Rate', values: TIERS.map(t => t.cashback + '%') },
+    { name: 'Weekly Bonus', values: TIERS.map(t => t.weeklyBonus ? fmt(t.weeklyBonus) : '—') },
+    { name: 'Birthday Bonus', values: TIERS.map(t => t.birthdayBonus ? fmt(t.birthdayBonus) : '—') },
+    { name: 'Free Spin Multiplier', values: TIERS.map(t => t.freeSpinsMulti + 'x') },
+    { name: 'Priority Support', values: TIERS.map(t => t.prioritySupport ? '✓' : '—') },
+    { name: 'Exclusive Games', values: TIERS.map(t => t.exclusiveGames ? '✓' : '—') },
+    { name: 'Personal Manager', values: TIERS.map(t => t.personalManager ? '✓' : '—') },
+    { name: 'VIP Events', values: ['—', '—', '—', '—', '✓'] },
+  ];
+
+  const tbody = document.querySelector('#tierTable tbody');
+  tbody.innerHTML = benefits.map(b =>
+    `<tr>
+      <td>${b.name}</td>
+      ${b.values.map((v, i) =>
+        `<td style="text-align:center;${i === tierIdx ? 'color:var(--gold);font-weight:700;' : ''}">${v}</td>`
+      ).join('')}
+    </tr>`
+  ).join('');
+
+  // ── Reward History (demo) ──────────────────────────────────
+  const demoRewards = [
+    { icon: '💰', title: 'Weekly Cashback', meta: 'Apr 21, 2026', value: fmt(currentTier.cashback > 0 ? 2340 : 0) },
+    { icon: '🎰', title: 'Daily Free Spins', meta: 'Apr 20, 2026', value: '10 spins' },
+    { icon: '💰', title: 'Weekly Cashback', meta: 'Apr 14, 2026', value: fmt(1870) },
+    { icon: '⬆️', title: 'Tier Upgrade Bonus', meta: 'Apr 10, 2026', value: fmt(5000) },
+    { icon: '🎰', title: 'Welcome Free Spins', meta: 'Apr 8, 2026', value: '50 spins' },
+  ];
+
+  $('rewardHistory').innerHTML = demoRewards.length
+    ? demoRewards.map(r => `<div class="reward-item">
+        <div class="reward-icon">${r.icon}</div>
+        <div class="reward-info">
+          <div class="title">${r.title}</div>
+          <div class="meta">${r.meta}</div>
+        </div>
+        <div class="reward-value">${r.value}</div>
+      </div>`).join('')
+    : '<div style="text-align:center;padding:2rem;color:var(--muted);">No rewards claimed yet.</div>';
+})();
+</script>
+    <script src="js/social-proof.js" defer></script>
+    <script src="js/deposit-urgency.js" defer></script>
+    <script src="js/onboarding.js" defer></script>
+</body>
+</html>
