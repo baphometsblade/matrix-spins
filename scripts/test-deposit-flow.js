@@ -1854,9 +1854,12 @@ async function main() {
         assert.strictEqual(analytics.body.window_days, 30);
         assert.ok(typeof analytics.body.drift_warn_pct === 'number');
         assert.ok(typeof analytics.body.min_spins_for_drift_warn === 'number');
-        assert.strictEqual(analytics.body.games.length, 2);
+        // Catalog size matches the registry. Anchor on the live games
+        // we know exist by id rather than hardcoding a count, so adding
+        // a future server-authoritative game doesn't trip this test.
+        assert.ok(analytics.body.games.length >= 3, 'expected ≥3 games in analytics, got ' + analytics.body.games.length);
         const ag = analytics.body.games.reduce(function (m, g) { m[g.game_id] = g; return m; }, {});
-        for (const id of ['classic_777', 'neon_burst']) {
+        for (const id of ['classic_777', 'neon_burst', 'lucky_diamond']) {
             assert.ok(ag[id], id + ' missing from analytics: ' + JSON.stringify(analytics.body));
             assert.strictEqual(typeof ag[id].theoretical_rtp, 'number');
             assert.ok(ag[id].theoretical_rtp > 0 && ag[id].theoretical_rtp < 1);

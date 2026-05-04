@@ -22,10 +22,12 @@
 
 const classic777 = require('./classic_777');
 const neonBurst = require('./neon_burst');
+const luckyDiamond = require('./lucky_diamond');
 
 const REGISTRY = Object.freeze({
     [classic777.id]: classic777,
     [neonBurst.id]: neonBurst,
+    [luckyDiamond.id]: luckyDiamond,
 });
 
 function get(id) {

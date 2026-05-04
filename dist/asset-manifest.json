@@ -35,6 +35,7 @@
     "immortal_blood.svg",
     "inferno_fiesta.svg",
     "jungle_fury.svg",
+    "lucky_diamond.svg",
     "madame_destiny.svg",
     "mega_diamond_rush.svg",
     "mega_safari.svg",
@@ -358,6 +359,13 @@
       "s5_jungle_king.svg",
       "wild_jungle_spirit.svg"
     ],
+    "lucky_diamond": [
+      "bell.svg",
+      "cherry.svg",
+      "diamond.svg",
+      "plum.svg",
+      "ruby.svg"
+    ],
     "madame_destiny": [
       "s1_candle.svg",
       "s2_potion.svg",
@@ -614,5 +622,5 @@
       "wild_golden_ball.svg"
     ]
   },
-  "generated_at": "2026-05-03T10:04:52.047Z"
+  "generated_at": "2026-05-04T09:13:25.019Z"
 }

@@ -1,5 +1,5 @@
 /* Royal Slots Casino - Bundled JavaScript */
-/* Generated: 2026-05-03T10:04:51.470Z */
+/* Generated: 2026-05-04T09:13:24.266Z */
 
 
 /* â”€â”€â”€ shared/game-definitions.js (2/56) â”€â”€â”€ */
@@ -27,6 +27,14 @@ const games = [
       rtp: 95.3, volatility: 'high', bonusType: null, freeSpinsCount: 0, freeSpinsRetrigger: false,
       bonusDesc: '5-reel single-payline neon-themed live slot. Server-authoritative spins with provably-fair commit-reveal.',
       payouts: { neon: 0.4, pulse: 1, star: 8, comet: 60, nova: 1100 }, minBet: 0.10, maxBet: 100, hot: false, jackpot: 0, liveMode: true },
+    { id: 'lucky_diamond', name: 'Lucky Diamond (Live)', provider: 'Matrix Spins House', tag: 'LIVE', tagClass: 'tag-new', thumbnail: 'assets/thumbnails/lucky_diamond.svg', bgGradient: 'linear-gradient(135deg, #1e3a8a 0%, #e2e8f0 100%)',
+      symbols: ['cherry','plum','bell','ruby','diamond'],
+      reelBg: 'linear-gradient(180deg, #0b1220 0%, #050a18 100%)', accentColor: '#93c5fd',
+      gridCols: 5, gridRows: 1, template: 'classic', winType: 'classic',
+      wildSymbol: null, scatterSymbol: null,
+      rtp: 95.16, volatility: 'high', bonusType: null, freeSpinsCount: 0, freeSpinsRetrigger: false,
+      bonusDesc: '5-reel single-payline live slot. Cherry/plum/bell/ruby/diamond ladder, top pay 25,000×. Server-authoritative spins with provably-fair commit-reveal.',
+      payouts: { cherry: 50, plum: 200, bell: 1500, ruby: 2000, diamond: 25000 }, minBet: 0.10, maxBet: 100, hot: false, jackpot: 0, liveMode: true },
     { id: 'sugar_rush', name: 'Candy Cascade 1000', provider: 'GoldenEdge Gaming', tag: 'HOT', tagClass: 'tag-hot', thumbnail: 'assets/thumbnails/sugar_rush.svg', bgGradient: 'linear-gradient(135deg, #ff6fd8 0%, #f7a531 100%)',
       symbols: ['s1_lollipop','s2_gummy_bear','s3_candy_cane','s4_cupcake','s5_diamond_candy','wild_sugar'],
       reelBg: 'linear-gradient(180deg, #3d1232 0%, #1a0a14 100%)', accentColor: '#ff6fd8',
@@ -40973,10 +40981,12 @@ window._logAudit658 = _logAudit658;
     var SYMBOL_GLYPHS = {
         cherry: '🍒', lemon: '🍋', orange: '🍊', bar: 'BAR', seven: '7',
         neon: 'NEON', pulse: '~', star: '★', comet: '☄', nova: '✦',
+        plum: '🍇', bell: '🔔', ruby: '◆', diamond: '💎',
     };
     var SYMBOL_COLORS = {
         cherry: '#ef4444', lemon: '#fde047', orange: '#fb923c', bar: '#e5e7eb', seven: '#f59e0b',
         neon: '#22d3ee',   pulse: '#a855f7', star: '#facc15',   comet: '#60a5fa', nova: '#f472b6',
+        plum: '#a78bfa',   bell: '#fbbf24',  ruby: '#f43f5e',   diamond: '#93c5fd',
     };
     function glyphFor(sym) { return SYMBOL_GLYPHS[sym] || (sym ? sym.slice(0, 3).toUpperCase() : '?'); }
     function colorFor(sym) { return SYMBOL_COLORS[sym] || '#fff'; }

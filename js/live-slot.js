@@ -23,10 +23,12 @@
     var SYMBOL_GLYPHS = {
         cherry: '🍒', lemon: '🍋', orange: '🍊', bar: 'BAR', seven: '7',
         neon: 'NEON', pulse: '~', star: '★', comet: '☄', nova: '✦',
+        plum: '🍇', bell: '🔔', ruby: '◆', diamond: '💎',
     };
     var SYMBOL_COLORS = {
         cherry: '#ef4444', lemon: '#fde047', orange: '#fb923c', bar: '#e5e7eb', seven: '#f59e0b',
         neon: '#22d3ee',   pulse: '#a855f7', star: '#facc15',   comet: '#60a5fa', nova: '#f472b6',
+        plum: '#a78bfa',   bell: '#fbbf24',  ruby: '#f43f5e',   diamond: '#93c5fd',
     };
     function glyphFor(sym) { return SYMBOL_GLYPHS[sym] || (sym ? sym.slice(0, 3).toUpperCase() : '?'); }
     function colorFor(sym) { return SYMBOL_COLORS[sym] || '#fff'; }
