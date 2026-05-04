@@ -107,7 +107,9 @@
       return out;
     },
     async login(email, password) {
-      const out = await apiFetch('/auth/login', { method: 'POST', body: { email, password } });
+      // Server reads req.body.username but queries WHERE username=? OR email=?
+      // so sending email via the 'username' field works for both username and email login
+      const out = await apiFetch('/auth/login', { method: 'POST', body: { username: email, password } });
       setAccessToken(out.token || out.accessToken);
       setUser(out.user);
       if (out.user) localStorage.setItem('casinoUser', JSON.stringify(out.user));
