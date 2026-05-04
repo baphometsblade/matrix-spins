@@ -12,18 +12,18 @@
   'use strict';
 
   const API_BASE = (typeof window !== 'undefined' && window.RS_API_BASE) || '/api';
-  const ACCESS_STORAGE_KEY = 'rs_access_token';
+  const ACCESS_STORAGE_KEY = 'casinoToken';
 
   const state = {
-    accessToken: sessionStorage.getItem(ACCESS_STORAGE_KEY) || null,
+    accessToken: localStorage.getItem(ACCESS_STORAGE_KEY) || null,
     user: null,
     listeners: new Set(),
   };
 
   function setAccessToken(t) {
     state.accessToken = t;
-    if (t) sessionStorage.setItem(ACCESS_STORAGE_KEY, t);
-    else sessionStorage.removeItem(ACCESS_STORAGE_KEY);
+    if (t) localStorage.setItem(ACCESS_STORAGE_KEY, t);
+    else localStorage.removeItem(ACCESS_STORAGE_KEY);
   }
   function setUser(u) {
     state.user = u;
@@ -51,7 +51,7 @@
     });
     if (!res.ok) return false;
     const data = await res.json();
-    setAccessToken(data.accessToken);
+    setAccessToken(data.token || data.accessToken);
     return true;
   }
 
@@ -100,58 +100,62 @@
 
     async register(payload) {
       const out = await apiFetch('/auth/register', { method: 'POST', body: payload });
-      setAccessToken(out.accessToken);
+      setAccessToken(out.token || out.accessToken);
       setUser(out.user);
+      // Also store user object for compatibility with main app
+      if (out.user) localStorage.setItem('casinoUser', JSON.stringify(out.user));
       return out;
     },
     async login(email, password) {
       const out = await apiFetch('/auth/login', { method: 'POST', body: { email, password } });
-      setAccessToken(out.accessToken);
+      setAccessToken(out.token || out.accessToken);
       setUser(out.user);
+      if (out.user) localStorage.setItem('casinoUser', JSON.stringify(out.user));
       return out;
     },
     async logout() {
       try { await apiFetch('/auth/logout', { method: 'POST' }); } catch (_) {}
       setAccessToken(null);
       setUser(null);
+      localStorage.removeItem('casinoUser');
     },
     changePassword: (currentPassword, newPassword) =>
       apiFetch('/auth/change-password', { method: 'POST', body: { currentPassword, newPassword } }),
 
-    // wallet
-    getBalance:      () => apiFetch('/wallet/balance'),
-    getTransactions: (params) => apiFetch(`/wallet/transactions${qs(params)}`),
+    // wallet — server mounts balance.routes.js at /api/balance
+    getBalance:      () => apiFetch('/balance/'),
+    getTransactions: (params) => apiFetch(`/balance/transactions${qs(params)}`),
 
-    // games
-    listGames:    (params) => apiFetch(`/games${qs(params)}`),
-    getGame:      (id)     => apiFetch(`/games/${encodeURIComponent(id)}`),
-    getSeeds:     ()       => apiFetch('/games/seeds/current'),
-    setClientSeed:(seed)   => apiFetch('/games/seeds/client', { method: 'POST', body: { clientSeed: seed } }),
-    rotateSeed:   ()       => apiFetch('/games/seeds/rotate', { method: 'POST' }),
+    // games — server mounts spin.routes.js at /api/spin
+    listGames:    (params) => apiFetch(`/spin/games${qs(params)}`),
+    getGame:      (id)     => apiFetch(`/spin/games/${encodeURIComponent(id)}`),
+    getSeeds:     ()       => apiFetch('/spin/seeds/current'),
+    setClientSeed:(seed)   => apiFetch('/spin/seeds/client', { method: 'POST', body: { clientSeed: seed } }),
+    rotateSeed:   ()       => apiFetch('/spin/seeds/rotate', { method: 'POST' }),
     spin:         (gameId, betCents, opts = {}) =>
-      apiFetch(`/games/${encodeURIComponent(gameId)}/spin`, {
+      apiFetch('/spin/', {
         method: 'POST',
-        body: { betCents, useFreeSpin: Boolean(opts.useFreeSpin) },
+        body: { gameId, bet: betCents / 100, useFreeSpin: Boolean(opts.useFreeSpin) },
       }),
-    getFreeSpins: (gameId) => apiFetch(`/games/${encodeURIComponent(gameId)}/free-spins`),
-    spinHistory:  (params) => apiFetch(`/games/history/spins${qs(params)}`),
-    spinDetails:  (spinId) => apiFetch(`/games/history/spins/${encodeURIComponent(spinId)}`),
+    getFreeSpins: (gameId) => apiFetch(`/freespins/available?gameId=${encodeURIComponent(gameId)}`),
+    spinHistory:  (params) => apiFetch(`/spin/history${qs(params)}`),
+    spinDetails:  (spinId) => apiFetch(`/spin/history/${encodeURIComponent(spinId)}`),
 
-    // payments
-    depositCheckout: (amountCents) =>
-      apiFetch('/payments/deposit/checkout', { method: 'POST', body: { amountCents } }),
-    listDeposits:    (params) => apiFetch(`/payments/deposits${qs(params)}`),
-    requestWithdrawal: (body) => apiFetch('/payments/withdrawals', { method: 'POST', body }),
-    cancelWithdrawal:  (id)   => apiFetch(`/payments/withdrawals/${encodeURIComponent(id)}/cancel`, { method: 'POST' }),
-    listWithdrawals:   (params) => apiFetch(`/payments/withdrawals${qs(params)}`),
+    // payments — server mounts payment.routes.js at /api/payment (singular)
+    depositCheckout: (amount) =>
+      apiFetch('/payment/create-checkout', { method: 'POST', body: { amount } }),
+    listDeposits:    (params) => apiFetch(`/payment/deposits${qs(params)}`),
+    requestWithdrawal: (body) => apiFetch('/payment/withdraw', { method: 'POST', body }),
+    cancelWithdrawal:  (id)   => apiFetch(`/payment/withdrawal/${encodeURIComponent(id)}/cancel`, { method: 'POST' }),
+    listWithdrawals:   (params) => apiFetch(`/payment/withdrawals${qs(params)}`),
 
-    // compliance
-    getLimits:    ()   => apiFetch('/compliance/limits'),
-    setLimits:    (b)  => apiFetch('/compliance/limits', { method: 'PUT', body: b }),
-    selfExclude:  (b)  => apiFetch('/compliance/self-exclude', { method: 'POST', body: b }),
-    endSession:   ()   => apiFetch('/compliance/session/end', { method: 'POST' }),
-    submitKyc:    (b)  => apiFetch('/compliance/kyc/documents', { method: 'POST', body: b }),
-    listKyc:      ()   => apiFetch('/compliance/kyc/documents'),
+    // compliance — server mounts at /api/payment for limits, /api/user for self-exclude
+    getLimits:    ()   => apiFetch('/payment/limits'),
+    setLimits:    (b)  => apiFetch('/payment/limits', { method: 'PUT', body: b }),
+    selfExclude:  (b)  => apiFetch('/user/self-exclude', { method: 'POST', body: b }),
+    endSession:   ()   => apiFetch('/auth/logout', { method: 'POST' }),
+    submitKyc:    (b)  => apiFetch('/user/kyc', { method: 'POST', body: b }),
+    listKyc:      ()   => apiFetch('/user/kyc'),
 
     // public config
     publicConfig: () => apiFetch('/config/public'),

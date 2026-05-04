@@ -98,8 +98,8 @@ async function createCheckoutSession(userId, amount, currency, returnUrl) {
             depositId: String(depositId),
             reference: reference,
         },
-        success_url: `${returnUrl || config.ALLOWED_ORIGIN || "https://msaart.online"}?deposit=success&ref=${reference}`,
-        cancel_url: `${returnUrl || config.ALLOWED_ORIGIN || "https://msaart.online"}?deposit=cancelled&ref=${reference}`,
+        success_url: `${returnUrl || config.ALLOWED_ORIGIN || "https://royal-slots-casino.vercel.app"}?deposit=success&ref=${reference}`,
+        cancel_url: `${returnUrl || config.ALLOWED_ORIGIN || "https://royal-slots-casino.vercel.app"}?deposit=cancelled&ref=${reference}`,
     });
 
     // Store the Stripe session ID as external_ref on the deposit
@@ -281,67 +281,88 @@ async function handlePaymentSuccess(metadata, externalId, amountFromStripe, even
     const depositAmount = deposit.amount;
     const depositUserId = deposit.user_id;
 
-    // Credit the user
-    const user = await db.get('SELECT balance, bonus_balance FROM users WHERE id = ?', [depositUserId]);
-    if (!user) {
-        console.warn(`[Stripe Webhook] User ${depositUserId} not found for deposit ${deposit.id}`);
-        return { type: eventType, handled: false, reason: 'user_not_found' };
-    }
+    // PostgreSQL vs SQLite timestamp expression
+    const _isPgStripe = typeof db.isPg === 'function' && db.isPg();
+    const nowExpr = _isPgStripe ? 'NOW()' : "datetime('now')";
 
-    const balanceBefore = user.balance;
-    const balanceAfter = balanceBefore + depositAmount;
-
-    // Determine bonus: first deposit or reload
+    // ── TRANSACTION: Claim deposit + credit balance atomically ──────────────
+    // The UPDATE WHERE status='pending' + changes check prevents double-credit
+    // if Stripe retries the webhook or two events arrive simultaneously.
     let bonusAmount = 0;
     let wageringMult = 0;
     let bonusType = '';
-    const priorDeposits = await db.get(
-        "SELECT COUNT(*) as count FROM deposits WHERE user_id = ? AND status = 'completed'",
-        [depositUserId]
-    );
-    if (priorDeposits && priorDeposits.count === 0) {
-        bonusAmount = Math.min(depositAmount * (config.FIRST_DEPOSIT_BONUS_PCT / 100), config.FIRST_DEPOSIT_BONUS_MAX);
-        wageringMult = config.FIRST_DEPOSIT_WAGERING_MULT || 30;
-        bonusType = 'first_deposit_bonus';
-    } else {
-        bonusAmount = Math.min(depositAmount * ((config.RELOAD_BONUS_PCT || 50) / 100), config.RELOAD_BONUS_MAX || 250);
-        wageringMult = config.RELOAD_WAGERING_MULT || 25;
-        bonusType = 'reload_bonus';
-    }
 
-    // Update user balance (atomic — prevents read-then-set races with concurrent spins)
-    await db.run('UPDATE users SET balance = balance + ? WHERE id = ?', [depositAmount, depositUserId]);
-
-    // Mark deposit as completed
-    await db.run(
-        "UPDATE deposits SET status = 'completed', external_ref = ?, completed_at = datetime('now') WHERE id = ?",
-        [externalId, deposit.id]
-    );
-
-    // Log the deposit transaction (balanceBefore/balanceAfter are snapshots for the audit log
-    // — the actual update above is atomic so a concurrent spin's bet deduction will not be lost)
-    await db.run(
-        'INSERT INTO transactions (user_id, type, amount, balance_before, balance_after, reference) VALUES (?, ?, ?, ?, ?, ?)',
-        [depositUserId, 'deposit', depositAmount, balanceBefore, balanceAfter, reference]
-    );
-
-    // Apply bonus if applicable — CLAUDE.md rule #5: wagering MUST accumulate, never overwrite
-    if (bonusAmount > 0) {
-        const wagerReq = bonusAmount * wageringMult;
-        await db.run(
-            'UPDATE users SET bonus_balance = COALESCE(bonus_balance, 0) + ?, wagering_requirement = COALESCE(wagering_requirement, 0) + ?, wagering_progress = COALESCE(wagering_progress, 0) WHERE id = ?',
-            [bonusAmount, wagerReq, depositUserId]
+    await db.beginTransaction();
+    try {
+        // Atomically claim the deposit (only succeeds once)
+        const claimResult = await db.run(
+            `UPDATE deposits SET status = 'completed', external_ref = ?, completed_at = ${nowExpr} WHERE id = ? AND status = 'pending'`,
+            [externalId, deposit.id]
         );
-        const refLabel = bonusType === 'first_deposit_bonus'
-            ? `FIRST-DEPOSIT-MATCH (${wageringMult}x wagering)`
-            : `RELOAD-MATCH (${wageringMult}x wagering)`;
+        if (!claimResult || claimResult.changes === 0) {
+            await db.rollback();
+            console.log(`[Stripe Webhook] Deposit ${deposit.id} already processed (race guard)`);
+            return { type: eventType, handled: true, reason: 'already_processed', depositId: deposit.id };
+        }
+
+        // Credit the user (balance snapshot for audit log)
+        const user = await db.get('SELECT balance, bonus_balance FROM users WHERE id = ?', [depositUserId]);
+        if (!user) {
+            await db.rollback();
+            console.warn(`[Stripe Webhook] User ${depositUserId} not found for deposit ${deposit.id}`);
+            return { type: eventType, handled: false, reason: 'user_not_found' };
+        }
+
+        const balanceBefore = user.balance;
+        const balanceAfter = balanceBefore + depositAmount;
+
+        // Determine bonus: first deposit or reload
+        const priorDeposits = await db.get(
+            "SELECT COUNT(*) as count FROM deposits WHERE user_id = ? AND status = 'completed' AND id != ?",
+            [depositUserId, deposit.id]
+        );
+        if (priorDeposits && priorDeposits.count === 0) {
+            bonusAmount = Math.min(depositAmount * (config.FIRST_DEPOSIT_BONUS_PCT / 100), config.FIRST_DEPOSIT_BONUS_MAX);
+            wageringMult = config.FIRST_DEPOSIT_WAGERING_MULT || 45;
+            bonusType = 'first_deposit_bonus';
+        } else {
+            bonusAmount = Math.min(depositAmount * ((config.RELOAD_BONUS_PCT || 25) / 100), config.RELOAD_BONUS_MAX || 100);
+            wageringMult = config.RELOAD_WAGERING_MULT || 30;
+            bonusType = 'reload_bonus';
+        }
+
+        // Update user balance (atomic)
+        await db.run('UPDATE users SET balance = balance + ? WHERE id = ?', [depositAmount, depositUserId]);
+
+        // Log the deposit transaction
         await db.run(
             'INSERT INTO transactions (user_id, type, amount, balance_before, balance_after, reference) VALUES (?, ?, ?, ?, ?, ?)',
-            [depositUserId, bonusType, bonusAmount, balanceAfter, balanceAfter, refLabel]
+            [depositUserId, 'deposit', depositAmount, balanceBefore, balanceAfter, reference]
         );
+
+        // Apply bonus — CLAUDE.md rule #1: bonus → bonus_balance, rule #5: wagering accumulates
+        if (bonusAmount > 0) {
+            const wagerReq = bonusAmount * wageringMult;
+            await db.run(
+                'UPDATE users SET bonus_balance = COALESCE(bonus_balance, 0) + ?, wagering_requirement = COALESCE(wagering_requirement, 0) + ?, wagering_progress = COALESCE(wagering_progress, 0) WHERE id = ?',
+                [bonusAmount, wagerReq, depositUserId]
+            );
+            const refLabel = bonusType === 'first_deposit_bonus'
+                ? `FIRST-DEPOSIT-MATCH (${wageringMult}x wagering)`
+                : `RELOAD-MATCH (${wageringMult}x wagering)`;
+            await db.run(
+                'INSERT INTO transactions (user_id, type, amount, balance_before, balance_after, reference) VALUES (?, ?, ?, ?, ?, ?)',
+                [depositUserId, bonusType, bonusAmount, balanceAfter, balanceAfter, refLabel]
+            );
+        }
+
+        await db.commit();
+    } catch (txErr) {
+        try { await db.rollback(); } catch (_) {}
+        throw txErr;
     }
 
-    // Gem reward (fire-and-forget)
+    // Gem reward (fire-and-forget — outside transaction, non-critical)
     const depositGems = Math.max(25, Math.min(Math.floor(depositAmount * 20), 2500));
     await db.run('UPDATE users SET gems = COALESCE(gems, 0) + ? WHERE id = ?', [depositGems, depositUserId]).catch(function() {});
 

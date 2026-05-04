@@ -19660,7 +19660,7 @@ function _showDepositModal() {
         { amount: 250, bonus: 125, label: '$250 + $125 bonus' }
     ];
     tiers.forEach(function(t) {
-        html += '<div class="deposit-tier" onclick="_processDeposit(&quot; + t.amount + &quot;)">' +
+        html += '<div class="deposit-tier" onclick="_processDeposit(' + t.amount + ')">' +
             '<span class="deposit-amount">$' + t.amount + '</span>' +
             (t.bonus > 0 ? '<span class="deposit-bonus">+$' + t.bonus + ' bonus</span>' : '') +
             '<span class="deposit-receipt">\u{2728} Instant Credit</span></div>';

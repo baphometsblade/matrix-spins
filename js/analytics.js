@@ -53,7 +53,7 @@
       gtag('config', GA_ID, {
         send_page_view: false,
         enhanced_measurement: true,
-        cookie_domain: 'msaart.online',
+        cookie_domain: 'auto',
         cookie_flags: 'SameSite=None;Secure'
       });
 

@@ -318,6 +318,7 @@ mount('/api/promocode',     './routes/promocode.routes',     'promocode');
 mount('/api/firstdeposit',  './routes/firstdeposit.routes',  'firstdeposit');
 mount('/api/reloadbonus',   './routes/reloadbonus.routes',   'reloadbonus');
 mount('/api/depositmatch',  './routes/depositmatch.routes',  'depositmatch');
+mount('/api/vipdeposit',   './routes/vipdeposit.routes',    'vipdeposit');
 mount('/api/deposit-bonus', './routes/deposit-bonus.routes', 'deposit-bonus');
 mount('/api/deposit-streak', './routes/depositstreak.routes', 'deposit-streak');
 mount('/api/cashback',      './routes/cashback.routes',      'cashback');

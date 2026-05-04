@@ -556,7 +556,7 @@
         var token = localStorage.getItem('casinoToken');
         if (token) {
             // Stripe-ready: POST to server which handles Stripe checkout + silent token minting
-            fetch('/api/stripe-checkout/create-session', {
+            fetch('/api/payment/create-checkout', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
                 body: JSON.stringify({ amount: amount })

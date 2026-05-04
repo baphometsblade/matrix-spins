@@ -86,8 +86,8 @@ router.post('/payment/create-checkout', authenticate, async (req, res) => {
             payment_method_types: ['card'],
             line_items: lineItems,
             mode: 'payment',
-            success_url: (process.env.APP_URL || 'https://msaart.online') + '?deposit=success&amount=' + amountNum,
-            cancel_url: (process.env.APP_URL || 'https://msaart.online') + '?deposit=cancelled',
+            success_url: (process.env.APP_URL || config.ALLOWED_ORIGIN || 'https://royal-slots-casino.vercel.app') + '?deposit=success&amount=' + amountNum,
+            cancel_url: (process.env.APP_URL || config.ALLOWED_ORIGIN || 'https://royal-slots-casino.vercel.app') + '?deposit=cancelled',
             metadata: {
                 type: 'casino_deposit',
                 amount: amountNum.toString(),
@@ -229,7 +229,7 @@ router.post('/payment/webhook', express.raw({ type: 'application/json' }), async
                 // Record in deposits table — required for wagering/withdrawal checks downstream
                 await db.run(
                     `INSERT INTO deposits (user_id, amount, currency, payment_type, status, external_ref, created_at)
-                     VALUES (?, ?, ?, 'stripe_checkout', 'completed', ?, datetime('now'))`,
+                     VALUES (?, ?, ?, 'stripe_checkout', 'completed', ?, CURRENT_TIMESTAMP)`,
                     [playerId, amount, (config.CURRENCY || 'AUD'), session.id]
                 );
 
@@ -411,7 +411,7 @@ router.post('/payment/webhook', express.raw({ type: 'application/json' }), async
                 // 3. Freeze the account. Admin can review & unban if the dispute is
                 // resolved in the operator's favour.
                 await db.run(
-                    "UPDATE users SET is_banned = 1, banned_at = datetime('now'), banned_reason = ? WHERE id = ?",
+                    "UPDATE users SET is_banned = 1, banned_at = CURRENT_TIMESTAMP, banned_reason = ? WHERE id = ?",
                     ['chargeback_dispute:' + dispute.id + ' (' + (dispute.reason || 'unspecified') + ')', deposit.user_id]
                 );
 
