@@ -343,22 +343,31 @@
         return;
       }
 
-      // In production, this calls Stripe checkout session
-      // For demo mode, just credit the balance
-      const currentBalance = parseFloat(localStorage.getItem(STORAGE_PREFIX + 'balance') || '1000');
-      const newBalance = currentBalance + amount;
-      localStorage.setItem(STORAGE_PREFIX + 'balance', newBalance.toFixed(2));
+      const token = typeof authToken !== 'undefined' ? authToken : '';
+      if (!token) {
+        window.location.href = '/login.html';
+        return;
+      }
 
-      // Update display
-      const balEl = document.getElementById('balanceDisplay');
-      if (balEl) balEl.textContent = `$${newBalance.toFixed(2)}`;
-
-      // Close modal
       const modal = document.getElementById('deposit-modal');
       if (modal) modal.remove();
 
-      // Show confirmation
-      this._showConfirmation(amount, newBalance);
+      fetch('/api/payment/create-checkout', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+        body: JSON.stringify({ amount: amount, playerId: typeof playerId !== 'undefined' ? playerId : 'anon' })
+      })
+      .then(r => r.json())
+      .then(data => {
+        if (data.url) {
+          window.location.href = data.url;
+        } else {
+          alert('Payment error. Please try again.');
+        }
+      })
+      .catch(e => {
+        alert('Connection error: ' + e.message);
+      });
     },
 
     _showConfirmation(amount, newBalance) {
