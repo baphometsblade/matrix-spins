@@ -1,5 +1,5 @@
 /* Royal Slots Casino - Bundled JavaScript */
-/* Generated: 2026-05-04T09:13:24.266Z */
+/* Generated: 2026-05-06T05:17:01.788Z */
 
 
 /* â”€â”€â”€ shared/game-definitions.js (2/56) â”€â”€â”€ */
@@ -35,6 +35,14 @@ const games = [
       rtp: 95.16, volatility: 'high', bonusType: null, freeSpinsCount: 0, freeSpinsRetrigger: false,
       bonusDesc: '5-reel single-payline live slot. Cherry/plum/bell/ruby/diamond ladder, top pay 25,000×. Server-authoritative spins with provably-fair commit-reveal.',
       payouts: { cherry: 50, plum: 200, bell: 1500, ruby: 2000, diamond: 25000 }, minBet: 0.10, maxBet: 100, hot: false, jackpot: 0, liveMode: true },
+    { id: 'royal_seven', name: 'Royal Seven (Live)', provider: 'Matrix Spins House', tag: 'LIVE', tagClass: 'tag-new', thumbnail: 'assets/thumbnails/royal_seven.svg', bgGradient: 'linear-gradient(135deg, #7c2d12 0%, #f59e0b 100%)',
+      symbols: ['cherry','lemon','plum','bell','crown','seven'],
+      reelBg: 'linear-gradient(180deg, #1f0c05 0%, #110603 100%)', accentColor: '#fbbf24',
+      gridCols: 3, gridRows: 1, template: 'classic', winType: 'classic',
+      wildSymbol: null, scatterSymbol: null,
+      rtp: 95.14, volatility: 'medium', bonusType: null, freeSpinsCount: 0, freeSpinsRetrigger: false,
+      bonusDesc: '3-reel single-payline live slot. Cherry/lemon/plum/bell/crown/seven ladder, top pay 400×. Faster hit rhythm than the 5-reel live slots.',
+      payouts: { cherry: 5, lemon: 12, plum: 40, bell: 80, crown: 200, seven: 400 }, minBet: 0.10, maxBet: 100, hot: false, jackpot: 0, liveMode: true },
     { id: 'sugar_rush', name: 'Candy Cascade 1000', provider: 'GoldenEdge Gaming', tag: 'HOT', tagClass: 'tag-hot', thumbnail: 'assets/thumbnails/sugar_rush.svg', bgGradient: 'linear-gradient(135deg, #ff6fd8 0%, #f7a531 100%)',
       symbols: ['s1_lollipop','s2_gummy_bear','s3_candy_cane','s4_cupcake','s5_diamond_candy','wild_sugar'],
       reelBg: 'linear-gradient(180deg, #3d1232 0%, #1a0a14 100%)', accentColor: '#ff6fd8',
@@ -40981,12 +40989,12 @@ window._logAudit658 = _logAudit658;
     var SYMBOL_GLYPHS = {
         cherry: '🍒', lemon: '🍋', orange: '🍊', bar: 'BAR', seven: '7',
         neon: 'NEON', pulse: '~', star: '★', comet: '☄', nova: '✦',
-        plum: '🍇', bell: '🔔', ruby: '◆', diamond: '💎',
+        plum: '🍇', bell: '🔔', ruby: '◆', diamond: '💎', crown: '♛',
     };
     var SYMBOL_COLORS = {
         cherry: '#ef4444', lemon: '#fde047', orange: '#fb923c', bar: '#e5e7eb', seven: '#f59e0b',
         neon: '#22d3ee',   pulse: '#a855f7', star: '#facc15',   comet: '#60a5fa', nova: '#f472b6',
-        plum: '#a78bfa',   bell: '#fbbf24',  ruby: '#f43f5e',   diamond: '#93c5fd',
+        plum: '#a78bfa',   bell: '#fbbf24',  ruby: '#f43f5e',   diamond: '#93c5fd', crown: '#fbbf24',
     };
     function glyphFor(sym) { return SYMBOL_GLYPHS[sym] || (sym ? sym.slice(0, 3).toUpperCase() : '?'); }
     function colorFor(sym) { return SYMBOL_COLORS[sym] || '#fff'; }
@@ -41145,6 +41153,51 @@ window._logAudit658 = _logAudit658;
         if (!el) return;
         el.textContent = text || '';
         el.style.color = color || '#fde047';
+    }
+
+    /**
+     * Render an inline "Add Funds" CTA inside the result strip.
+     *
+     * The server returns 402 + "Insufficient balance." when the user's
+     * balance < bet. Without a CTA the player sees the red text, has
+     * to discover the wallet button in the lobby header, and many
+     * just close the tab. This renders the message + a one-click
+     * deposit button right where they're already looking. Falls back
+     * to plain text if the wallet helper isn't loaded for any reason.
+     */
+    function setResultWithDepositCta(message) {
+        var el = document.getElementById('liveSlotResult');
+        if (!el) return;
+        el.textContent = '';
+        el.style.color = '#ef4444';
+        var msg = document.createElement('span');
+        msg.textContent = message + ' ';
+        el.appendChild(msg);
+        var btn = document.createElement('button');
+        btn.type = 'button';
+        btn.textContent = 'ADD FUNDS';
+        btn.style.cssText = [
+            'margin-left:8px',
+            'padding:5px 12px',
+            'border:1px solid #5fd489',
+            'border-radius:6px',
+            'background:linear-gradient(135deg,#0a8a3a 0%,#0f6f2e 100%)',
+            'color:#fff',
+            'font-weight:800',
+            'font-size:11px',
+            'letter-spacing:1px',
+            'cursor:pointer',
+            'text-transform:uppercase'
+        ].join(';');
+        btn.addEventListener('click', function () {
+            // Top-level helper from js/ui-wallet.js. Wallet open
+            // already resyncs balance so the user sees the post-
+            // deposit total without an extra refresh.
+            if (typeof window.showWalletModal === 'function') {
+                window.showWalletModal();
+            }
+        });
+        el.appendChild(btn);
     }
 
     function paintReels(stops) {
@@ -41355,6 +41408,20 @@ window._logAudit658 = _logAudit658;
         }
         state.betCents = Math.round(dollars * 100);
 
+        // Pre-check against the cached balance. The dataset is
+        // refreshed on every successful spin and on every refreshBalance
+        // call, so it's accurate to within one in-flight spin. Catching
+        // the underfund client-side avoids a wasted POST and surfaces
+        // the deposit CTA before the user even sees a "Spinning…" flash.
+        var balEl = document.getElementById('liveSlotBalance');
+        var cachedCents = balEl && balEl.dataset && balEl.dataset.cents != null
+            ? Number(balEl.dataset.cents)
+            : NaN;
+        if (Number.isFinite(cachedCents) && cachedCents < state.betCents) {
+            setResultWithDepositCta('Insufficient balance — bet ' + fmt(state.betCents) + ', balance ' + fmt(cachedCents) + '.');
+            return;
+        }
+
         state.spinning = true;
         setResult('Spinning…', '#94a3b8');
         var reels = document.querySelectorAll('#liveSlotReels .ls-reel');
@@ -41373,11 +41440,21 @@ window._logAudit658 = _logAudit658;
 
         if (res.status !== 200) {
             var msg = (res.body && res.body.error) || ('Error ' + res.status);
-            setResult(msg, '#ef4444');
+            // Server-side underfund (race against the pre-check above
+            // when a concurrent spin debited the balance, or when the
+            // cached balance was stale by more than one spin).
+            if (res.status === 402) {
+                setResultWithDepositCta(msg);
+            } else {
+                setResult(msg, '#ef4444');
+            }
             state.lastResult = null;
             // Re-fetch the commit — on 401 / self-exclusion we may be
             // working with a stale hash.
             refreshCommit();
+            // Resync the cached balance so the next attempt's pre-
+            // check reflects whatever the server actually thinks.
+            refreshBalance();
             return;
         }
 

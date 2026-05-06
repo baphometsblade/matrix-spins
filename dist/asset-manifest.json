@@ -54,6 +54,7 @@
     "reactoonz.svg",
     "rockstar_wild.svg",
     "rome_eternal.svg",
+    "royal_seven.svg",
     "san_quentin.svg",
     "starburst_xxl.svg",
     "starlight_princess.svg",
@@ -509,6 +510,14 @@
       "s5_julius_caesar.svg",
       "wild_roman_eagle.svg"
     ],
+    "royal_seven": [
+      "bell.svg",
+      "cherry.svg",
+      "crown.svg",
+      "lemon.svg",
+      "plum.svg",
+      "seven.svg"
+    ],
     "san_quentin": [
       "s1_handcuffs.svg",
       "s2_key_ring.svg",
@@ -622,5 +631,5 @@
       "wild_golden_ball.svg"
     ]
   },
-  "generated_at": "2026-05-04T09:13:25.019Z"
+  "generated_at": "2026-05-06T05:17:02.706Z"
 }

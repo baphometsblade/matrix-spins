@@ -23,12 +23,12 @@
     var SYMBOL_GLYPHS = {
         cherry: '🍒', lemon: '🍋', orange: '🍊', bar: 'BAR', seven: '7',
         neon: 'NEON', pulse: '~', star: '★', comet: '☄', nova: '✦',
-        plum: '🍇', bell: '🔔', ruby: '◆', diamond: '💎',
+        plum: '🍇', bell: '🔔', ruby: '◆', diamond: '💎', crown: '♛',
     };
     var SYMBOL_COLORS = {
         cherry: '#ef4444', lemon: '#fde047', orange: '#fb923c', bar: '#e5e7eb', seven: '#f59e0b',
         neon: '#22d3ee',   pulse: '#a855f7', star: '#facc15',   comet: '#60a5fa', nova: '#f472b6',
-        plum: '#a78bfa',   bell: '#fbbf24',  ruby: '#f43f5e',   diamond: '#93c5fd',
+        plum: '#a78bfa',   bell: '#fbbf24',  ruby: '#f43f5e',   diamond: '#93c5fd', crown: '#fbbf24',
     };
     function glyphFor(sym) { return SYMBOL_GLYPHS[sym] || (sym ? sym.slice(0, 3).toUpperCase() : '?'); }
     function colorFor(sym) { return SYMBOL_COLORS[sym] || '#fff'; }
@@ -187,6 +187,51 @@
         if (!el) return;
         el.textContent = text || '';
         el.style.color = color || '#fde047';
+    }
+
+    /**
+     * Render an inline "Add Funds" CTA inside the result strip.
+     *
+     * The server returns 402 + "Insufficient balance." when the user's
+     * balance < bet. Without a CTA the player sees the red text, has
+     * to discover the wallet button in the lobby header, and many
+     * just close the tab. This renders the message + a one-click
+     * deposit button right where they're already looking. Falls back
+     * to plain text if the wallet helper isn't loaded for any reason.
+     */
+    function setResultWithDepositCta(message) {
+        var el = document.getElementById('liveSlotResult');
+        if (!el) return;
+        el.textContent = '';
+        el.style.color = '#ef4444';
+        var msg = document.createElement('span');
+        msg.textContent = message + ' ';
+        el.appendChild(msg);
+        var btn = document.createElement('button');
+        btn.type = 'button';
+        btn.textContent = 'ADD FUNDS';
+        btn.style.cssText = [
+            'margin-left:8px',
+            'padding:5px 12px',
+            'border:1px solid #5fd489',
+            'border-radius:6px',
+            'background:linear-gradient(135deg,#0a8a3a 0%,#0f6f2e 100%)',
+            'color:#fff',
+            'font-weight:800',
+            'font-size:11px',
+            'letter-spacing:1px',
+            'cursor:pointer',
+            'text-transform:uppercase'
+        ].join(';');
+        btn.addEventListener('click', function () {
+            // Top-level helper from js/ui-wallet.js. Wallet open
+            // already resyncs balance so the user sees the post-
+            // deposit total without an extra refresh.
+            if (typeof window.showWalletModal === 'function') {
+                window.showWalletModal();
+            }
+        });
+        el.appendChild(btn);
     }
 
     function paintReels(stops) {
@@ -397,6 +442,20 @@
         }
         state.betCents = Math.round(dollars * 100);
 
+        // Pre-check against the cached balance. The dataset is
+        // refreshed on every successful spin and on every refreshBalance
+        // call, so it's accurate to within one in-flight spin. Catching
+        // the underfund client-side avoids a wasted POST and surfaces
+        // the deposit CTA before the user even sees a "Spinning…" flash.
+        var balEl = document.getElementById('liveSlotBalance');
+        var cachedCents = balEl && balEl.dataset && balEl.dataset.cents != null
+            ? Number(balEl.dataset.cents)
+            : NaN;
+        if (Number.isFinite(cachedCents) && cachedCents < state.betCents) {
+            setResultWithDepositCta('Insufficient balance — bet ' + fmt(state.betCents) + ', balance ' + fmt(cachedCents) + '.');
+            return;
+        }
+
         state.spinning = true;
         setResult('Spinning…', '#94a3b8');
         var reels = document.querySelectorAll('#liveSlotReels .ls-reel');
@@ -415,11 +474,21 @@
 
         if (res.status !== 200) {
             var msg = (res.body && res.body.error) || ('Error ' + res.status);
-            setResult(msg, '#ef4444');
+            // Server-side underfund (race against the pre-check above
+            // when a concurrent spin debited the balance, or when the
+            // cached balance was stale by more than one spin).
+            if (res.status === 402) {
+                setResultWithDepositCta(msg);
+            } else {
+                setResult(msg, '#ef4444');
+            }
             state.lastResult = null;
             // Re-fetch the commit — on 401 / self-exclusion we may be
             // working with a stale hash.
             refreshCommit();
+            // Resync the cached balance so the next attempt's pre-
+            // check reflects whatever the server actually thinks.
+            refreshBalance();
             return;
         }
 
