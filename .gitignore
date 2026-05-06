@@ -9,3 +9,6 @@ node_modules/
 server/data.sqlite
 server/*.sqlite
 server/*.sqlite-journal
+
+# Serena MCP server's local cache + project config
+.serena/
