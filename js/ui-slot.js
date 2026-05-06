@@ -17921,12 +17921,12 @@ function _showShareCard(winAmount, gameName) {
 }
 function _shareToTwitter() {
     var amt = document.querySelector('.sc335-amount');
-    var text = 'Just won ' + (amt ? amt.textContent : '') + ' on Matrix Spins! Try your luck at https://royal-slots-casino.vercel.app';
+    var text = 'Just won ' + (amt ? amt.textContent : '') + ' on Matrix Spins! Try your luck at https://msaart.online';
     window.open('https://twitter.com/intent/tweet?text=' + encodeURIComponent(text), '_blank');
     _dismissShareCard();
 }
 function _copyShareLink() {
-    navigator.clipboard.writeText('https://royal-slots-casino.vercel.app').then(function() {
+    navigator.clipboard.writeText('https://msaart.online').then(function() {
         if (typeof showNotification === 'function') showNotification('Link copied!', 'success');
     });
     _dismissShareCard();
@@ -20361,8 +20361,8 @@ function _initSEO() {
     _setMeta('og:title', 'Matrix Spins - Online Slots Casino');
     _setMeta('og:description', 'Play slots, win jackpots, earn rewards. Join Matrix Spins today!');
     _setMeta('og:type', 'website');
-    _setMeta('og:url', 'https://royal-slots-casino.vercel.app');
-    _setMeta('og:image', 'https://royal-slots-casino.vercel.app/og-image.png');
+    _setMeta('og:url', 'https://msaart.online');
+    _setMeta('og:image', 'https://msaart.online/og-image.png');
     _setMeta('twitter:card', 'summary_large_image');
     _setMeta('twitter:title', 'Matrix Spins Casino');
     _setMeta('twitter:description', 'Progressive jackpots, 100+ premium slot games');
@@ -20372,7 +20372,7 @@ function _initSEO() {
         '@context': 'https://schema.org',
         '@type': 'WebApplication',
         'name': 'Matrix Spins',
-        'url': 'https://royal-slots-casino.vercel.app',
+        'url': 'https://msaart.online',
         'description': 'Online slots casino with progressive jackpots and 100+ games',
         'applicationCategory': 'GameApplication',
         'operatingSystem': 'Any',

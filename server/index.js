@@ -110,8 +110,8 @@ const ALLOWED_ORIGINS = (() => {
   }
   if (config.NODE_ENV === 'production') {
     return [
-      'https://royal-slots-casino.vercel.app',
-      'https://royal-slots-casino.vercel.app',
+      'https://msaart.online',
+      'https://www.msaart.online',
       'https://royal-slots-casino.vercel.app',
     ];
   }

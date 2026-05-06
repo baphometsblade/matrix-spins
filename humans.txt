@@ -1,6 +1,6 @@
 /* TEAM */
 Site: Matrix Spins Casino
-URL: https://royal-slots-casino.vercel.app
+URL: https://msaart.online
 
 /* TECHNOLOGY */
 Runtime: Node.js + Express

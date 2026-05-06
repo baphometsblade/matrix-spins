@@ -12,7 +12,7 @@
  *   5. Check balance reconciliation
  *
  * Runs against http://localhost:3000 by default. Use env var
- *   CASINO_URL=https://royal-slots-casino.vercel.app
+ *   CASINO_URL=https://msaart.online
  * to hit a remote environment.
  *
  * Does NOT touch live Stripe — uses the admin approve-deposit

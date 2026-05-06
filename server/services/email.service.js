@@ -104,7 +104,7 @@ ${newGamesMsg}
 
 Come back and claim 50 free bonus coins — no deposit required!
 
-Play now: https://royal-slots-casino.vercel.app
+Play now: https://msaart.online
 
 Matrix Spins`,
         html: `<!DOCTYPE html>
@@ -128,10 +128,10 @@ Matrix Spins`,
         <div style="color:#fff;font-size:14px;margin:8px 0 0;">Waiting for your return!</div>
       </div>
 
-      <a href="https://royal-slots-casino.vercel.app" style="display:inline-block;background:linear-gradient(135deg,#ffd700,#ff8c00);color:#0d0d1a;text-decoration:none;padding:16px 40px;border-radius:10px;font-weight:900;font-size:18px;letter-spacing:0.5px;">Claim My Bonus &amp; Play &#8594;</a>
+      <a href="https://msaart.online" style="display:inline-block;background:linear-gradient(135deg,#ffd700,#ff8c00);color:#0d0d1a;text-decoration:none;padding:16px 40px;border-radius:10px;font-weight:900;font-size:18px;letter-spacing:0.5px;">Claim My Bonus &amp; Play &#8594;</a>
 
       <hr style="border:none;border-top:1px solid rgba(255,255,255,0.1);margin:28px 0 20px">
-      <p style="color:#475569;font-size:12px;margin:0;">Matrix Spins — Play responsibly. 18+ only. <a href="https://royal-slots-casino.vercel.app/unsubscribe" style="color:#888;text-decoration:none;">Unsubscribe</a></p>
+      <p style="color:#475569;font-size:12px;margin:0;">Matrix Spins — Play responsibly. 18+ only. <a href="https://msaart.online/unsubscribe" style="color:#888;text-decoration:none;">Unsubscribe</a></p>
     </div>
   </div>
 </body>
@@ -254,7 +254,7 @@ async function sendVerificationEmail(toEmail, username, token) {
         return false;
     }
 
-    const baseUrl = config.BASE_URL || 'https://royal-slots-casino.vercel.app';
+    const baseUrl = config.BASE_URL || 'https://msaart.online';
     const verificationUrl = `${baseUrl}/?verify=${token}`;
 
     await transporter.sendMail({
