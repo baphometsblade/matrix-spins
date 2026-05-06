@@ -473,7 +473,7 @@ router.post('/forgot-password', async (req, res) => {
         );
 
         // Plaintext reset token goes only in the email URL
-        const baseUrl = config.BASE_URL || 'https://msaart.online';
+        const baseUrl = config.BASE_URL || 'https://royal-slots-casino.vercel.app';
         const resetUrl = `${baseUrl}/?resetToken=${resetToken}`;
 
         // Send email (non-blocking — don't fail the request if email doesn't send)

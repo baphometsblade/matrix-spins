@@ -2,8 +2,8 @@ const fs = require('fs');
 const path = require('path');
 
 const GAMES_DIR = path.join(__dirname, 'games');
-const BASE_URL = 'https://msaart.online/games/';
-const OG_IMAGE = 'https://msaart.online/img/og-banner.png';
+const BASE_URL = 'https://royal-slots-casino.vercel.app/games/';
+const OG_IMAGE = 'https://royal-slots-casino.vercel.app/img/og-banner.png';
 
 function filenameToGameName(filename) {
   return filename

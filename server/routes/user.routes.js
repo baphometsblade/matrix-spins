@@ -680,7 +680,7 @@ router.post('/forgot-password', async (req, res) => {
         );
 
         // Build reset URL pointing back to the app
-        const origin = req.headers.origin || `https://www.msaart.online`;
+        const origin = req.headers.origin || `https://royal-slots-casino.vercel.app`;
         const resetUrl = `${origin}?resetToken=${token}`;
 
         // Send email (non-blocking — always return success to prevent email enumeration)
