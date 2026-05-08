@@ -112,7 +112,7 @@ const ALLOWED_ORIGINS = (() => {
     return [
       'https://msaart.online',
       'https://www.msaart.online',
-      'https://royal-slots-casino.vercel.app',
+      'https://msaart.online',
     ];
   }
   return ['http://localhost:3000', 'http://localhost:5173', 'http://127.0.0.1:3000'];
