@@ -26,11 +26,7 @@ const FOUNDER_PASS_PRODUCTS = Object.freeze([
         currency: 'aud',
         badge: 'Supporter',
         description: 'Digital supporter receipt, Founder Wall listing, and launch-progress updates.',
-        bullets: [
-            'Founder Wall listing',
-            'Digital supporter receipt',
-            'Launch-progress update email',
-        ],
+        bullets: ['Founder Wall listing', 'Digital supporter receipt', 'Launch-progress update email'],
     },
     {
         id: 'founder_pass',
@@ -39,11 +35,7 @@ const FOUNDER_PASS_PRODUCTS = Object.freeze([
         currency: 'aud',
         badge: 'Founder',
         description: 'Everything in Supporter plus early feature voting and MatrixMonster launch shoutout priority.',
-        bullets: [
-            'Founder Wall listing',
-            'Early feature voting',
-            'MatrixMonster launch shoutout priority',
-        ],
+        bullets: ['Founder Wall listing', 'Early feature voting', 'MatrixMonster launch shoutout priority'],
     },
     {
         id: 'sponsor_pass',
@@ -52,11 +44,7 @@ const FOUNDER_PASS_PRODUCTS = Object.freeze([
         currency: 'aud',
         badge: 'Launch Sponsor',
         description: 'Premium launch supporter package for brands, creators, and early sponsors.',
-        bullets: [
-            'Premium Founder Wall placement',
-            'Sponsor thank-you placement',
-            'Priority product feedback channel',
-        ],
+        bullets: ['Premium Founder Wall placement', 'Sponsor thank-you placement', 'Priority product feedback channel'],
     },
 ]);
 
@@ -86,49 +74,32 @@ function validEmail(value) {
     return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(value));
 }
 
-/**
- * Public catalog for the no-login revenue page. These products are
- * supporter/access packages only — they deliberately do not credit
- * wagering balance, do not unlock withdrawals, and do not promise prizes.
- */
-router.get('/founder-pass/catalog', (_req, res) => {
-    res.json({
-        enabled: !!config.STRIPE_SECRET_KEY,
-        mode: 'supporter_access_only',
-        disclaimer: 'Founder Pass purchases are digital supporter/access packages. They do not add gambling balance, create prize entitlement, or enable cash-out.',
-        products: FOUNDER_PASS_PRODUCTS.map(publicProduct),
-    });
-});
+function cleanEmail(value) {
+    return String(value || '').trim().toLowerCase();
+}
 
-/**
- * Public Stripe Checkout for Founder Pass packages.
- *
- * This is intentionally separate from /api/deposit/checkout. It does
- * not require registration, does not mutate balance, and does not share
- * the casino deposit fulfillment path. Stripe remains merchant-of-record
- * for the card checkout and sends its own receipt when enabled.
- */
-router.post('/founder-pass/checkout', async (req, res) => {
+async function createFounderPassSession({ productId, email }) {
     const stripe = stripeClient();
     if (!stripe) {
-        return res.status(503).json({
-            error: 'Payments are not configured on this server. Set STRIPE_SECRET_KEY, STRIPE_PUBLISHABLE_KEY, and STRIPE_WEBHOOK_SECRET to enable checkout.',
-        });
+        const err = new Error('Payments are not configured on this server. Set Stripe env vars to enable checkout.');
+        err.status = 503;
+        throw err;
     }
 
-    const productId = String((req.body && req.body.product_id) || '').trim();
-    const product = FOUNDER_PRODUCT_BY_ID.get(productId);
+    const product = FOUNDER_PRODUCT_BY_ID.get(String(productId || '').trim());
     if (!product) {
-        return res.status(400).json({ error: 'Unknown Founder Pass product.' });
+        const err = new Error('Unknown Founder Pass product.');
+        err.status = 400;
+        throw err;
     }
 
-    const customerEmail = String((req.body && req.body.email) || '').trim().toLowerCase();
+    const customerEmail = cleanEmail(email);
     if (!validEmail(customerEmail)) {
-        return res.status(400).json({ error: 'Enter a valid email address or leave it blank.' });
+        const err = new Error('Enter a valid email address or leave it blank.');
+        err.status = 400;
+        throw err;
     }
 
-    const successUrl = config.PUBLIC_URL + '/founder-pass.html?success=1&session_id={CHECKOUT_SESSION_ID}';
-    const cancelUrl = config.PUBLIC_URL + '/founder-pass.html?cancelled=1';
     const metadata = {
         kind: 'founder_pass',
         product_id: product.id,
@@ -138,38 +109,84 @@ router.post('/founder-pass/checkout', async (req, res) => {
         no_prize_entitlement: 'true',
     };
 
-    try {
-        const session = await stripe.checkout.sessions.create({
-            mode: 'payment',
-            payment_method_types: ['card'],
-            customer_email: customerEmail || undefined,
-            allow_promotion_codes: true,
-            billing_address_collection: 'auto',
-            client_reference_id: 'founder_pass:' + product.id + ':' + Date.now(),
-            metadata,
-            payment_intent_data: { metadata },
-            line_items: [{
-                quantity: 1,
-                price_data: {
-                    currency: product.currency,
-                    unit_amount: product.amount_cents,
-                    product_data: {
-                        name: product.name,
-                        description: product.description + ' No gambling balance, prize entitlement, or cash-out value.',
-                        metadata,
-                    },
+    const session = await stripe.checkout.sessions.create({
+        mode: 'payment',
+        payment_method_types: ['card'],
+        customer_email: customerEmail || undefined,
+        allow_promotion_codes: true,
+        billing_address_collection: 'auto',
+        client_reference_id: 'founder_pass:' + product.id + ':' + Date.now(),
+        metadata,
+        payment_intent_data: { metadata },
+        line_items: [{
+            quantity: 1,
+            price_data: {
+                currency: product.currency,
+                unit_amount: product.amount_cents,
+                product_data: {
+                    name: product.name,
+                    description: product.description + ' No game balance, prize entitlement, or cash-out value.',
+                    metadata,
                 },
-            }],
-            success_url: successUrl,
-            cancel_url: cancelUrl,
-        }, {
-            idempotencyKey: 'founder_pass_' + product.id + '_' + Date.now() + '_' + Math.random().toString(16).slice(2),
-        });
+            },
+        }],
+        success_url: config.PUBLIC_URL + '/founder-pass.html?success=1&session_id={CHECKOUT_SESSION_ID}',
+        cancel_url: config.PUBLIC_URL + '/founder-pass.html?cancelled=1',
+    }, {
+        idempotencyKey: 'founder_pass_' + product.id + '_' + Date.now() + '_' + Math.random().toString(16).slice(2),
+    });
 
+    return { session, product };
+}
+
+/**
+ * Public catalog for the no-login revenue page. These products are
+ * supporter/access packages only — they deliberately do not credit game
+ * balance, unlock withdrawals, or promise prizes.
+ */
+router.get('/founder-pass/catalog', (_req, res) => {
+    res.json({
+        enabled: !!config.STRIPE_SECRET_KEY,
+        mode: 'supporter_access_only',
+        disclaimer: 'Founder Pass purchases are digital supporter/access packages. They do not add game balance, create prize entitlement, or enable cash-out.',
+        products: FOUNDER_PASS_PRODUCTS.map(publicProduct),
+    });
+});
+
+/**
+ * Link-friendly checkout route. GET is used only to create a hosted
+ * Stripe Checkout session and immediately 303 redirect the visitor to
+ * Stripe; it does not mutate local balance or account state. This lets
+ * the sales page work without a logged-in account or CSRF token.
+ */
+router.get('/founder-pass/redirect', async (req, res) => {
+    try {
+        const { session } = await createFounderPassSession({
+            productId: req.query.product_id,
+            email: req.query.email,
+        });
+        res.redirect(303, session.url);
+    } catch (err) {
+        const msg = encodeURIComponent(err.message || 'Checkout failed.');
+        res.redirect(303, '/founder-pass.html?error=' + msg);
+    }
+});
+
+/**
+ * JSON checkout route for richer clients. Kept for API consumers that
+ * want to fetch /api/csrf-token and POST, while the static page can use
+ * the GET redirect above.
+ */
+router.post('/founder-pass/checkout', async (req, res) => {
+    try {
+        const { session, product } = await createFounderPassSession({
+            productId: req.body && req.body.product_id,
+            email: req.body && req.body.email,
+        });
         res.json({ url: session.url, sessionId: session.id, product: publicProduct(product) });
     } catch (err) {
         console.error('[founder-pass/checkout]', err);
-        res.status(500).json({ error: 'Could not start Founder Pass checkout. Please try again.' });
+        res.status(err.status || 500).json({ error: err.message || 'Could not start Founder Pass checkout. Please try again.' });
     }
 });
 
