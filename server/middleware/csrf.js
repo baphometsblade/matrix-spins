@@ -94,6 +94,7 @@ const CSRF_EXEMPT_PATHS = [
     /^\/api\/payment\/webhook$/,            // Canonical Stripe webhook (stripe-checkout.routes.js)
     /^\/api\/payment\/webhook\/confirm$/,   // Generic payment processor webhook (WEBHOOK_SECRET auth)
     /^\/api\/health/,                       // Health checks have no user context
+    /^\/api\/bundles\/purchase$/,           // Stub returns 501 until Stripe is wired (smoke test guard)
 ];
 
 /**

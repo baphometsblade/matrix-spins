@@ -400,6 +400,7 @@ mount('/api/deposit-campaigns', './routes/campaigns.routes',           'deposit-
 // Health + newsletter
 mount('/api/health',     './routes/health.routes',     'health');
 mount('/api/newsletter', './routes/newsletter.routes', 'newsletter');
+mount('/api/bundles',    './routes/bundles.routes',    'bundles (stub — 501 until Stripe wired)');
 
   // close mountAllRoutes()
 }

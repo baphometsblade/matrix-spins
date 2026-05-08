@@ -9,7 +9,7 @@ const db = require('../database');
 const isPg = db.isPg();
 const idDef = isPg ? 'SERIAL PRIMARY KEY' : 'INTEGER PRIMARY KEY AUTOINCREMENT';
 const tsType = isPg ? 'TIMESTAMPTZ' : 'TEXT';
-const tsDefault = isPg ? 'NOW()' : "datetime('now')";
+const tsDefault = isPg ? 'NOW()' : "(datetime('now'))";
 
 db.run(
   `CREATE TABLE IF NOT EXISTS session_reengage_claims (

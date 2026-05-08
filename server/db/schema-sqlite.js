@@ -14,6 +14,10 @@ const TABLES = [
         balance REAL DEFAULT 0,
         is_admin INTEGER DEFAULT 0,
         is_banned INTEGER DEFAULT 0,
+        role TEXT DEFAULT 'user',
+        referral_code TEXT,
+        email_verified INTEGER DEFAULT 0,
+        banned_at TEXT,
         created_at TEXT DEFAULT (datetime('now'))
     )`,
 
