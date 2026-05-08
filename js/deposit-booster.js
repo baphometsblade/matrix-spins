@@ -6,6 +6,25 @@
 (function () {
   'use strict';
 
+  /*
+   * DISABLED — the popup's offer ("50% Match on First Deposit") had
+   * zero backend implementation. The CTA linked to
+   * wallet.html?amount=100&promo=booster50 but no `booster50` row
+   * exists in the promo_codes table, the deposit-fulfillment service
+   * has no auto-credit logic for first deposits, and the Stripe
+   * webhook does not read the URL's promo parameter. Players who
+   * deposited expecting a $50 bonus on a $100 deposit got the $100
+   * they paid for — straightforward false advertising and a
+   * chargeback magnet.
+   *
+   * Early-return keeps the IIFE inert so the operator can re-enable
+   * the modal on the line below the moment a real auto-credit path
+   * ships. Operator-issued codes already work via
+   * POST /api/promo/redeem; what's missing is the auto-grant on
+   * first deposit. Until then, no popup, no false promise.
+   */
+  return;
+
   /* ------------------------------------------------------------------ */
   /* CONFIG                                                               */
   /* ------------------------------------------------------------------ */

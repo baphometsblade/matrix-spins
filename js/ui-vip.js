@@ -1027,7 +1027,22 @@ function _renderVipModalContent() {
 
 // ─── VIP Wheel ────────────────────────────────────────────────────────────────
 
+/**
+ * VIP Wheel — DISABLED.
+ *
+ * The status + spin endpoints (/api/vipwheel/status, /api/vipwheel/spin)
+ * advertised in this widget have no implementation in server/routes/.
+ * The widget rendered prize tiles for "$2 / $5 / $10 / $25 / 500-5000
+ * gems" that the engine never credits, and every VIP-modal open fired
+ * a 404 against /api/vipwheel/status. Early-return so the section
+ * stays out of the DOM (no false promise) and the request never fires.
+ * Re-enable the body below the moment the matching server route ships.
+ */
 async function _refreshVipWheelSection() {
+    var el = document.getElementById('vip-wheel-section');
+    if (el) el.innerHTML = '';
+    return;
+    // eslint-disable-next-line no-unreachable
     var el = document.getElementById('vipWheelSection');
     if (!el) return;
 
@@ -1725,7 +1740,14 @@ window.checkVipAcceleratorNudge = checkVipAcceleratorNudge;
 // ═══════════════════════════════════════════════════════════════
 
 function _renderMegaWheelSection(container) {
-    // Auth guard
+    // DISABLED — same pattern as _refreshVipWheelSection: the spin
+    // endpoint /api/megawheel/spin has no implementation in
+    // server/routes/. The widget rendered cash + gem prize tiles
+    // the engine never credited; clicking the spin button 404'd
+    // silently. Early-return so no widget renders and no false
+    // promise reaches the player.
+    return;
+    // eslint-disable-next-line no-unreachable
     if (typeof isServerAuthToken !== 'function' || !isServerAuthToken()) return;
     var token = localStorage.getItem(typeof STORAGE_KEY_TOKEN !== 'undefined' ? STORAGE_KEY_TOKEN : 'casinoToken');
     if (!token) return;

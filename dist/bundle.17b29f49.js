@@ -1,5 +1,5 @@
 /* Royal Slots Casino - Bundled JavaScript */
-/* Generated: 2026-05-08T06:54:27.761Z */
+/* Generated: 2026-05-08T11:36:33.547Z */
 
 
 /* â”€â”€â”€ shared/game-definitions.js (2/57) â”€â”€â”€ */
@@ -59174,7 +59174,22 @@ function _renderVipModalContent() {
 
 // ─── VIP Wheel ────────────────────────────────────────────────────────────────
 
+/**
+ * VIP Wheel — DISABLED.
+ *
+ * The status + spin endpoints (/api/vipwheel/status, /api/vipwheel/spin)
+ * advertised in this widget have no implementation in server/routes/.
+ * The widget rendered prize tiles for "$2 / $5 / $10 / $25 / 500-5000
+ * gems" that the engine never credits, and every VIP-modal open fired
+ * a 404 against /api/vipwheel/status. Early-return so the section
+ * stays out of the DOM (no false promise) and the request never fires.
+ * Re-enable the body below the moment the matching server route ships.
+ */
 async function _refreshVipWheelSection() {
+    var el = document.getElementById('vip-wheel-section');
+    if (el) el.innerHTML = '';
+    return;
+    // eslint-disable-next-line no-unreachable
     var el = document.getElementById('vipWheelSection');
     if (!el) return;
 
@@ -59872,7 +59887,14 @@ window.checkVipAcceleratorNudge = checkVipAcceleratorNudge;
 // ═══════════════════════════════════════════════════════════════
 
 function _renderMegaWheelSection(container) {
-    // Auth guard
+    // DISABLED — same pattern as _refreshVipWheelSection: the spin
+    // endpoint /api/megawheel/spin has no implementation in
+    // server/routes/. The widget rendered cash + gem prize tiles
+    // the engine never credited; clicking the spin button 404'd
+    // silently. Early-return so no widget renders and no false
+    // promise reaches the player.
+    return;
+    // eslint-disable-next-line no-unreachable
     if (typeof isServerAuthToken !== 'function' || !isServerAuthToken()) return;
     var token = localStorage.getItem(typeof STORAGE_KEY_TOKEN !== 'undefined' ? STORAGE_KEY_TOKEN : 'casinoToken');
     if (!token) return;
@@ -73014,6 +73036,25 @@ console.warn('[RealityCheck] Module loaded â€” call window.RealityCheck.ini
    ============================================================ */
 (function () {
   'use strict';
+
+  /*
+   * DISABLED — the popup's offer ("50% Match on First Deposit") had
+   * zero backend implementation. The CTA linked to
+   * wallet.html?amount=100&promo=booster50 but no `booster50` row
+   * exists in the promo_codes table, the deposit-fulfillment service
+   * has no auto-credit logic for first deposits, and the Stripe
+   * webhook does not read the URL's promo parameter. Players who
+   * deposited expecting a $50 bonus on a $100 deposit got the $100
+   * they paid for — straightforward false advertising and a
+   * chargeback magnet.
+   *
+   * Early-return keeps the IIFE inert so the operator can re-enable
+   * the modal on the line below the moment a real auto-credit path
+   * ships. Operator-issued codes already work via
+   * POST /api/promo/redeem; what's missing is the auto-grant on
+   * first deposit. Until then, no popup, no false promise.
+   */
+  return;
 
   /* ------------------------------------------------------------------ */
   /* CONFIG                                                               */
