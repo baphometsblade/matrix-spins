@@ -304,47 +304,21 @@
             const urlParams = new URLSearchParams(window.location.search);
             const suppressBonus = urlParams.get('qaTools') === '1' || urlParams.get('qaTools') === 'true'
                 || urlParams.get('noBonus') === '1' || urlParams.get('autoSpin') === '1';
-            if (!dailyBonusState.claimedToday && !suppressBonus) {
-                setTimeout(() => showDailyBonusModal(), 1500);
-            }
+            // Post-auth engagement fetches. Only the two endpoints below
+            // exist in server/routes/ — the rest of the historical list
+            // (daily-bonus, birthday, achievements, level-up, milestones,
+            // weekend-cashback, comeback, subscription, XP sync,
+            // tournament, spinstreak, mystery, gifts, notifications,
+            // daily-login) hits routes that have never been
+            // implemented. They 404'd silently and the modals they
+            // would have spawned promised coin / gem / cash rewards
+            // that were never credited server-side. Disabled here; the
+            // helper functions stay in the file dead until matching
+            // routes ship.
             if (!suppressBonus) {
                 _checkReturnStatus();
-                _checkBirthday();
                 _checkLossStreakOffer();
             }
-            if (!suppressBonus) {
-                _checkAchievements();
-                setTimeout(function() { if (typeof _checkLevelUpBonus === 'function') _checkLevelUpBonus(); }, 6000);
-                _checkMilestones();
-                _checkDailyStreak();
-                setTimeout(function() { _checkWeekendCashback(); }, 2000);
-                setTimeout(function() { _checkComebackBonus(); }, 4000);
-                _checkStreakBonuses();
-                _checkSubscriptionDailyGems();
-                _checkGiftsInbox();
-            }
-            _syncXpWithServer();
-            _initTournamentRecording();
-            // Initialize onboarding funnel (early, before other systems)
-            if (typeof OnboardingFunnel !== 'undefined' && OnboardingFunnel.init) {
-                OnboardingFunnel.init();
-            }
-            // Initialize notification manager (must happen before any notifications)
-            if (typeof NotificationManager !== 'undefined') {
-                NotificationManager.init();
-                NotificationManager.onLogin();
-            }
-            // Initialize notification bell and check daily login reward
-            if (typeof NotificationBell !== 'undefined' && NotificationBell.init) {
-                NotificationBell.init();
-            }
-            if (typeof checkDailyLoginReward === 'function') {
-                setTimeout(checkDailyLoginReward, 3000);
-            }
-            _initLossStreakMonitor();
-            _initSpinStreakTicker();
-            _initMysteryDropChecker();
-            _initNotificationBell();
             startSessionDurationWatch();
             // Initialize session idle timeout (responsible gambling)
             if (typeof SessionTimeout !== 'undefined' && SessionTimeout.init) {

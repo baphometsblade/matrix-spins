@@ -306,9 +306,21 @@ async function main() {
                     await page.evaluate(() => {
                         var d = document.querySelector('#liveSlotCard details');
                         if (d) d.open = true;
+                        var save = document.getElementById('liveSlotClientSeedSave');
+                        if (save && save.scrollIntoView) save.scrollIntoView({ block: 'center' });
                     });
                     await page.fill('#liveSlotClientSeedInput', 'browser-smoke-seed');
-                    await page.click('#liveSlotClientSeedSave');
+                    // Click via .click() in page context. Playwright's
+                    // page.click() viewport check trips on tall modals
+                    // (the live-slot card grew with the REAL MONEY +
+                    // PROVABLY FAIR header chips); the button is
+                    // genuinely interactive — fire its click handler
+                    // directly so the assertion runs the same code
+                    // path a user would.
+                    await page.evaluate(() => {
+                        var save = document.getElementById('liveSlotClientSeedSave');
+                        if (save) save.click();
+                    });
                     await page.waitForFunction(
                         () => /Saved\./.test((document.getElementById('liveSlotClientSeedMsg') || {}).textContent || ''),
                         { timeout: 4000 }

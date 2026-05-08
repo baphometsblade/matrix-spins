@@ -1,5 +1,5 @@
 /* Royal Slots Casino - Bundled JavaScript */
-/* Generated: 2026-04-26T19:22:03.124Z */
+/* Generated: 2026-05-08T06:54:27.761Z */
 
 
 /* â”€â”€â”€ shared/game-definitions.js (2/57) â”€â”€â”€ */
@@ -40907,10 +40907,21 @@ window._logAudit658 = _logAudit658;
                 'border:1px solid #f1c40f44;border-radius:14px;padding:22px;color:#fff;font-family:system-ui,sans-serif;' +
                 'box-shadow:0 18px 60px rgba(0,0,0,0.6);"' +
             '>' +
-                '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">' +
-                    '<div><div style="font-size:11px;letter-spacing:2px;color:#f1c40f;">LIVE</div>' +
-                    '<div id="liveSlotTitle" style="font-size:20px;font-weight:800;">' + (def.name || def.id).toUpperCase() + '</div></div>' +
-                    '<button id="liveSlotClose" aria-label="Close" style="background:none;border:none;color:#fff;font-size:22px;cursor:pointer;">&times;</button>' +
+                '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;gap:10px;">' +
+                    '<div style="min-width:0;flex:1;">' +
+                        '<div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:2px;">' +
+                            '<span style="font-size:10px;letter-spacing:2px;color:#fff;background:linear-gradient(135deg,#0a8a3a 0%,#0f6f2e 100%);' +
+                                'border:1px solid #5fd489;padding:2px 7px;border-radius:10px;font-weight:800;">REAL MONEY</span>' +
+                            '<a href="/provably-fair.html" target="_blank" rel="noopener" ' +
+                                'title="HMAC-SHA256 commit-reveal RNG. Click to read how it works." ' +
+                                'style="font-size:10px;letter-spacing:1.6px;color:#22d3ee;background:rgba(34,211,238,.08);' +
+                                'border:1px solid rgba(34,211,238,.4);padding:2px 7px;border-radius:10px;font-weight:800;text-decoration:none;">' +
+                                'PROVABLY FAIR' +
+                            '</a>' +
+                        '</div>' +
+                        '<div id="liveSlotTitle" style="font-size:20px;font-weight:800;line-height:1.15;overflow:hidden;text-overflow:ellipsis;">' + (def.name || def.id).toUpperCase() + '</div>' +
+                    '</div>' +
+                    '<button id="liveSlotClose" aria-label="Close" style="background:none;border:none;color:#fff;font-size:22px;cursor:pointer;flex-shrink:0;">&times;</button>' +
                 '</div>' +
 
                 '<div id="liveSlotBalance" style="font-size:13px;color:#94a3b8;margin-bottom:8px;">Balance: —</div>' +
@@ -41009,6 +41020,47 @@ window._logAudit658 = _logAudit658;
         if (!el) return;
         el.textContent = text || '';
         el.style.color = color || '#fde047';
+    }
+
+    /**
+     * Render an inline "Add Funds" CTA inside the result strip.
+     *
+     * The server returns 402 + "Insufficient balance." when the user's
+     * balance < bet. Without a CTA the player sees red text, has to
+     * discover the wallet button in the lobby header, and many just
+     * close the tab. This renders the message + a one-click deposit
+     * button right where they're already looking.
+     */
+    function setResultWithDepositCta(message) {
+        var el = document.getElementById('liveSlotResult');
+        if (!el) return;
+        el.textContent = '';
+        el.style.color = '#ef4444';
+        var msg = document.createElement('span');
+        msg.textContent = message + ' ';
+        el.appendChild(msg);
+        var btn = document.createElement('button');
+        btn.type = 'button';
+        btn.textContent = 'ADD FUNDS';
+        btn.style.cssText = [
+            'margin-left:8px',
+            'padding:5px 12px',
+            'border:1px solid #5fd489',
+            'border-radius:6px',
+            'background:linear-gradient(135deg,#0a8a3a 0%,#0f6f2e 100%)',
+            'color:#fff',
+            'font-weight:800',
+            'font-size:11px',
+            'letter-spacing:1px',
+            'cursor:pointer',
+            'text-transform:uppercase'
+        ].join(';');
+        btn.addEventListener('click', function () {
+            if (typeof window.showWalletModal === 'function') {
+                window.showWalletModal();
+            }
+        });
+        el.appendChild(btn);
     }
 
     /**
@@ -41374,6 +41426,24 @@ window._logAudit658 = _logAudit658;
         }
         state.betCents = Math.round(dollars * 100);
 
+        // Pre-check against the cached balance before hitting the
+        // server. The dataset is refreshed on every settled spin and
+        // every refreshBalance call, so it's accurate to within one
+        // in-flight spin. Free-spin sessions don't debit, so they
+        // skip the gate. Catching the underfund client-side avoids
+        // a wasted POST and surfaces the deposit CTA before the
+        // "Spinning…" flash even paints.
+        if (!state.bonusSession) {
+            var balEl = document.getElementById('liveSlotBalance');
+            var cachedCents = balEl && balEl.dataset && balEl.dataset.cents != null
+                ? Number(balEl.dataset.cents)
+                : NaN;
+            if (Number.isFinite(cachedCents) && cachedCents < state.betCents) {
+                setResultWithDepositCta('Insufficient balance — bet ' + fmt(state.betCents) + ', balance ' + fmt(cachedCents) + '.');
+                return;
+            }
+        }
+
         state.spinning = true;
         setResult('Spinning…', '#94a3b8');
         if (state.cellNodes) {
@@ -41406,11 +41476,21 @@ window._logAudit658 = _logAudit658;
 
         if (res.status !== 200) {
             var msg = (res.body && res.body.error) || ('Error ' + res.status);
-            setResult(msg, '#ef4444');
+            // Server-side underfund (race against the client-side
+            // pre-check above when a concurrent spin debited the
+            // balance, or when the cached balance was stale).
+            if (res.status === 402) {
+                setResultWithDepositCta(msg);
+            } else {
+                setResult(msg, '#ef4444');
+            }
             state.lastResult = null;
             // Re-fetch the commit — on 401 / self-exclusion we may be
             // working with a stale hash.
             refreshCommit();
+            // Resync cached balance so the next attempt's pre-check
+            // reflects whatever the server actually thinks.
+            refreshBalance();
             return;
         }
 
@@ -42123,10 +42203,14 @@ window._logAudit658 = _logAudit658;
 
 
         function updateStatsSummary() {
-            const biggestWinEl = document.getElementById('biggestWin');
-            if (biggestWinEl) {
-                biggestWinEl.textContent = Math.round(stats.biggestWin).toLocaleString();
-            }
+            // The hero's #biggestWin element was previously overwritten
+            // here with the local stats.biggestWin (this user's all-time
+            // personal best) under a "BIGGEST WIN TODAY" label. Misleading:
+            // it wasn't today, wasn't anyone else's. The hero now sources
+            // biggest-win from /api/public/hot-wins (server-aggregated,
+            // 24h window, anonymized) via the inline poll in index.html.
+            // Personal-best lives in the stats modal where the label is
+            // accurate.
             updateStatsModal();
         }
 
@@ -44896,53 +44980,51 @@ function showWalletModal() {
     if (!modal) return;
     walletActiveTab = 'deposit';
     modal.classList.add('active');
-    // Sync balance display in wallet header
+    // Sync balance display in wallet header. The local `balance` var
+    // can be inflated by demo-mode spins (the 65 client-side games
+    // mutate it as a "feel real" simulation), so paint immediately
+    // from the cached value, then resync from the server in the
+    // background and repaint. Otherwise a player who just closed
+    // sugar_rush with a "win" would see that fictitious number on
+    // the deposit screen — exactly the moment they need server truth.
     const walletBal = document.getElementById('walletBalance');
     if (walletBal) walletBal.textContent = formatMoney(balance);
+    if (typeof isServerAuthToken === 'function' && isServerAuthToken() &&
+        typeof apiRequest === 'function') {
+        apiRequest('/api/balance', { requireAuth: true })
+            .then(function (res) {
+                var srv = Number(res && res.balance);
+                if (Number.isFinite(srv)) {
+                    balance = srv;
+                    if (typeof updateBalance === 'function') updateBalance();
+                    if (typeof saveBalance === 'function') saveBalance();
+                    var b = document.getElementById('walletBalance');
+                    if (b) b.textContent = formatMoney(balance);
+                }
+            })
+            .catch(function () { /* keep cached value */ });
+    }
     loadPaymentMethods();
-    // Check if user has any completed deposits (for first-deposit bonus banner)
     _checkFirstDepositStatus();
     renderWalletContent();
-    // Inject gem balance badge + Gem Shop button into wallet header (once)
-    _injectWalletGemBar(modal);
-    // Refresh gem and loyalty balances from server
-    if (typeof refreshGemBalance === 'function') refreshGemBalance();
-    refreshLoyaltyBalance();
-    refreshRakebackBalance();
-    refreshCashbackBalance();
-    // Render the full Loyalty Points card section (persistent slot above walletContent)
-    _renderLoyaltySection(modal);
-    // Render the Deposit Match card section below Loyalty, above Rakeback
-    _renderDepositMatchSection(modal);
-    // Render the Rakeback card section below Deposit Match
-    _renderRakebackSection(modal);
-    // Render the Daily Cashback card section below Rakeback
-    _renderDailyCashbackSection(modal);
-    // Render the Loyalty Shop card section below Daily Cashback
-    // walletRenderLoyaltySection applies the ID guard then delegates to _renderLoyaltyShopSection
-    walletRenderLoyaltySection(modal);
-    // Render the VIP Deposit Bonus card section below Loyalty Shop
-    walletRenderVipDepositSection(modal);
-    // Render the Weekend Cashback card section below VIP Deposit Bonus
-    walletRenderWeekendCashbackSection(modal);
-    // Render the Win-Back Bonus card section at the top (after modal is in place)
-    walletRenderWinbackSection(modal);
-    // Render the VIP Deposit Bonus section (new /api/vipdeposit/ endpoints)
-    walletRenderVipDepositBonusSection(modal);
-    // Render the Subscription status card
-    if (typeof walletRenderSubscriptionSection === 'function') walletRenderSubscriptionSection(modal);
-    // Render the Loyalty Shop redeem-points section
-    if (typeof walletRenderLoyaltyShopSection === 'function') walletRenderLoyaltyShopSection(modal);
-    if (typeof renderLimboCard === 'function') renderLimboCard(modal);
-    if (typeof renderBlackjackWidget === 'function') renderBlackjackWidget(modal);
-    if (typeof renderSicBoWidget === 'function') renderSicBoWidget(modal);
-    if (typeof renderRedDogCard === 'function') renderRedDogCard(modal);
-    if (typeof renderMoneyWheelCard === 'function') renderMoneyWheelCard(modal);
-    if (typeof renderWheelOfFortuneCard === 'function') renderWheelOfFortuneCard(modal);
-    if (typeof renderDepositStreakCard === 'function') renderDepositStreakCard(modal);
-    // Render the Reload Bonus card section
-    _renderReloadBonusSection(modal);
-    // Render the Deposit Limits section
+
+    // The wallet historically rendered ~17 promotional sections —
+    // gem balance, loyalty points, rakeback, daily cashback, weekend
+    // cashback, win-back bonus, VIP deposit bonus (×2), subscription,
+    // loyalty shop, deposit-match claim, deposit-streak gem awards,
+    // reload bonus, plus 6 mini-games (limbo / blackjack / sicbo /
+    // red dog / money wheel / wheel of fortune). None of them have a
+    // backing route in server/routes/, so every fetch returned 404
+    // and every "Claim $X bonus" button silently failed. Players who
+    // saw the cards expected real money; the server never paid. That
+    // is straightforward false advertising — chargeback magnet, and a
+    // license problem in any regulated jurisdiction.
+    //
+    // Disabled in one place. The renderers below stay in the file so
+    // they can be re-enabled when the matching server route ships;
+    // until then the wallet shows only the things that actually move
+    // money: the deposit form, the balance, and the deposit-limits
+    // self-service controls.
     _renderDepositLimitsSection(modal);
 }
 
@@ -45246,20 +45328,26 @@ function _claimDailyCashback() {
 }
 
 function _checkFirstDepositStatus() {
-    if (window._walletHasCompletedDeposit !== undefined) return; // already checked
+    // Used by the wagering-progress banner near the bottom of the
+    // deposit form — sums paid deposits so the user can see how much
+    // turnover they still owe before withdrawal. Earlier draft hit
+    // /api/payment/deposits (404) and filtered status === 'completed'
+    // (real status is 'paid'); both bugs silently zeroed the bar for
+    // every user. Now points at the real endpoint and matches the
+    // statuses /api/deposit/* actually persists.
+    if (window._walletTotalDeposited !== undefined) return; // already checked
     const token = localStorage.getItem(typeof STORAGE_KEY_TOKEN !== 'undefined' ? STORAGE_KEY_TOKEN : 'casinoToken');
-    if (!token || !isServerAuthToken(token)) { window._walletHasCompletedDeposit = false; return; }
-    fetch('/api/payment/deposits?limit=200', { headers: { Authorization: 'Bearer ' + token } })
+    if (!token || !isServerAuthToken(token)) { window._walletTotalDeposited = 0; return; }
+    fetch('/api/user/deposits', { headers: { Authorization: 'Bearer ' + token } })
         .then(r => r.ok ? r.json() : null)
         .then(data => {
-            if (data && data.deposits) {
-                const completed = data.deposits.filter(d => d.status === 'completed');
-                window._walletHasCompletedDeposit = completed.length > 0;
-                window._walletTotalDeposited = completed.reduce((sum, d) => sum + (parseFloat(d.amount) || 0), 0);
-                renderWalletContent(); // re-render with updated info
+            if (data && Array.isArray(data.deposits)) {
+                const settled = data.deposits.filter(d => d.status === 'paid' || d.status === 'partial_refund');
+                window._walletTotalDeposited = settled.reduce((sum, d) => sum + (parseFloat(d.amount) || 0), 0);
+                if (typeof renderWalletContent === 'function') renderWalletContent();
             }
         })
-        .catch(() => {});
+        .catch(() => { /* leave undefined; wagering bar simply won't render */ });
 }
 
 
@@ -45447,30 +45535,39 @@ function _injectFirstDepositBannerStyles() {
     var style = document.createElement('style');
     style.id = 'wallet-first-deposit-banner-styles';
     style.textContent = [
-        '.wallet-first-deposit-banner{background:linear-gradient(135deg,rgba(251,191,36,0.12),rgba(217,119,6,0.06));border:1.5px solid rgba(251,191,36,0.35);border-radius:14px;padding:16px;margin-bottom:16px;text-align:center;}',
-        '.wfdb-badge{display:inline-block;background:linear-gradient(135deg,#f59e0b,#d97706);color:#fff;font-size:11px;font-weight:800;letter-spacing:1px;padding:3px 12px;border-radius:20px;margin-bottom:8px;}',
-        '.wfdb-title{color:#fbbf24;font-size:17px;font-weight:900;margin-bottom:12px;}',
-        '.wfdb-offers{display:flex;justify-content:center;gap:16px;margin-bottom:10px;}',
-        '.wfdb-offer{display:flex;flex-direction:column;align-items:center;}',
-        '.wfdb-num{color:#fff;font-size:20px;font-weight:900;line-height:1;}',
-        '.wfdb-lbl{color:rgba(255,255,255,0.45);font-size:10px;margin-top:3px;}',
-        '.wfdb-note{color:rgba(255,255,255,0.3);font-size:10px;}'
+        '.wallet-welcome-banner{background:linear-gradient(135deg,rgba(34,211,238,0.10),rgba(10,138,58,0.08));border:1px solid rgba(95,212,137,0.35);border-radius:12px;padding:14px 16px;margin-bottom:16px;}',
+        '.wwb-row{display:flex;align-items:center;gap:10px;flex-wrap:wrap;}',
+        '.wwb-badge{display:inline-block;background:linear-gradient(135deg,#0a8a3a,#0f6f2e);color:#fff;font-size:10px;font-weight:800;letter-spacing:1.4px;padding:3px 10px;border-radius:14px;}',
+        '.wwb-title{color:#e2e8f0;font-size:14px;font-weight:700;}',
+        '.wwb-bullets{margin:8px 0 0 0;padding:0;list-style:none;display:flex;gap:14px;flex-wrap:wrap;font-size:11px;color:#94a3b8;}',
+        '.wwb-bullets li{display:flex;align-items:center;gap:5px;}',
+        '.wwb-bullets li::before{content:"\u2713";color:#5fd489;font-weight:900;}'
     ].join('');
     document.head.appendChild(style);
 }
 
+// Honest first-visit welcome strip. The earlier version advertised a
+// "100% match up to $1,000 + 50 free spins + $5 no-deposit gift" that
+// had zero backend implementation \u2014 depositing never credited any
+// of it, which is straightforward false advertising and a chargeback
+// magnet. Bonuses, when the operator decides to run them, ride the
+// existing /api/promo redeem flow (see server/services/promo.service.js)
+// and produce a real audit trail. This banner now only states facts:
+// the minimum, the rails, and the trust posture.
 function _renderFirstDepositBanner() {
     if (localStorage.getItem('hasEverDeposited')) return '';
     _injectFirstDepositBannerStyles();
-    return '<div class="wallet-first-deposit-banner">' +
-        '<div class="wfdb-badge">\uD83C\uDF81 WELCOME OFFER</div>' +
-        '<div class="wfdb-title">100% Match on Your First Deposit!</div>' +
-        '<div class="wfdb-offers">' +
-            '<div class="wfdb-offer"><span class="wfdb-num">$1,000</span><span class="wfdb-lbl">Max Bonus</span></div>' +
-            '<div class="wfdb-offer"><span class="wfdb-num">50</span><span class="wfdb-lbl">Free Spins</span></div>' +
-            '<div class="wfdb-offer"><span class="wfdb-num">+$5</span><span class="wfdb-lbl">No-Deposit Gift</span></div>' +
+    return '<div class="wallet-welcome-banner">' +
+        '<div class="wwb-row">' +
+            '<span class="wwb-badge">WELCOME</span>' +
+            '<span class="wwb-title">Fund your account to play the live slots.</span>' +
         '</div>' +
-        '<div class="wfdb-note">Minimum deposit $10 \xB7 T&Cs apply</div>' +
+        '<ul class="wwb-bullets">' +
+            '<li>Minimum deposit $10</li>' +
+            '<li>Card payments via Stripe</li>' +
+            '<li>Provably-fair gameplay</li>' +
+            '<li>Withdrawals require 2FA</li>' +
+        '</ul>' +
     '</div>';
 }
 
@@ -45483,12 +45580,17 @@ function renderDepositForm() {
     if (!container) return;
 
     // ── VIP Tier Progress Bar ──────────────────────────────────────────────
+    // Tiers exist as a wagering-progression visual. Earlier draft
+    // advertised "6%/8%/10%/15%/20% cashback" labels on each tier, but
+    // no server-side cashback credit ever fires by tier — same false-
+    // advertising trap as the bonus banners. The labels stay; the
+    // unfounded percentages do not.
     const VIP_TIERS = [
-        { label: 'Bronze',   min: 100,    cashback: '6%'  },
-        { label: 'Silver',   min: 500,    cashback: '8%'  },
-        { label: 'Gold',     min: 2000,   cashback: '10%' },
-        { label: 'Platinum', min: 10000,  cashback: '15%' },
-        { label: 'Diamond',  min: 50000,  cashback: '20%' }
+        { label: 'Bronze',   min: 100    },
+        { label: 'Silver',   min: 500    },
+        { label: 'Gold',     min: 2000   },
+        { label: 'Platinum', min: 10000  },
+        { label: 'Diamond',  min: 50000  }
     ];
     const totalWagered = (typeof stats !== 'undefined' ? stats.totalWagered || 0 : 0);
     let curTierIdx = -1;
@@ -45503,8 +45605,8 @@ function renderDepositForm() {
     const tierColor = curTierIdx === 4 ? '#b9f2ff' : curTierIdx === 3 ? '#e5cfff' : curTierIdx === 2 ? '#ffd700' : curTierIdx === 1 ? '#94a3b8' : '#cd7f32';
     const vipBarHtml = `<div style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.1);border-radius:10px;padding:10px 14px;margin-bottom:10px;font-size:0.78rem;">
   <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
-    <span style="color:${tierColor};font-weight:700;">${tierLabel} Tier${curTier ? ' · ' + curTier.cashback + ' cashback' : ''}</span>
-    <span style="color:#94a3b8;">${nextTier ? '$' + (nextTier.min - totalWagered).toLocaleString() + ' to ' + nextTier.label + ' (' + nextTier.cashback + ' cashback)' : 'Max tier reached!'}</span>
+    <span style="color:${tierColor};font-weight:700;">${tierLabel} Tier</span>
+    <span style="color:#94a3b8;">${nextTier ? '$' + (nextTier.min - totalWagered).toLocaleString() + ' wagered to ' + nextTier.label : 'Top tier reached'}</span>
   </div>
   <div style="background:rgba(255,255,255,0.08);border-radius:4px;height:6px;overflow:hidden;">
     <div style="width:${pct.toFixed(1)}%;height:100%;background:linear-gradient(90deg,${tierColor},#fff8);border-radius:4px;transition:width 0.4s;"></div>
@@ -45615,20 +45717,11 @@ function renderDepositForm() {
         });
     });
 
-    // First-deposit bonus banner (DOM-safe)
-    if (!window._walletHasCompletedDeposit) {
-        const banner = document.createElement('div');
-        banner.style.cssText = 'background:linear-gradient(135deg,#ffd700,#ff8c00);color:#0d0d1a;padding:14px 18px;border-radius:10px;margin-bottom:16px;text-align:center;font-weight:700;box-shadow:0 0 20px rgba(255,215,0,0.4);';
-        const title = document.createElement('div');
-        title.style.cssText = 'font-size:1.3rem;margin-bottom:4px;';
-        title.textContent = '🎁 FIRST DEPOSIT BONUS';
-        const desc = document.createElement('div');
-        desc.style.cssText = 'font-weight:500;font-size:0.85rem;';
-        desc.textContent = 'Get +$5 free credits + 1,000 💎 gems on your first deposit!';
-        banner.appendChild(title);
-        banner.appendChild(desc);
-        container.insertBefore(banner, container.firstChild);
-    }
+    // Earlier this block injected a "+$5 free credits + 1,000 gems on
+    // your first deposit" banner with no server-side credit ever firing.
+    // Removed — the welcome strip rendered above by _renderFirstDepositBanner
+    // is honest about the actual deposit terms; real bonuses ship via
+    // operator-issued promo codes (POST /api/promo/redeem).
 
     // Free spins display — fetched asynchronously and injected into the balance section
     walletFetchAndShowFreeSpins(container);
@@ -52105,9 +52198,13 @@ async function _renderDepositLimitsSection(modal) {
         }
     });
 
-    // Fetch and display limits
+    // Fetch and display limits. Real route is GET /api/deposit/limits
+    // (server/routes/deposit.routes.js:171). Earlier draft hit
+    // /api/deposit-limits/ which 404'd silently, so the form rendered
+    // with empty inputs and the "save" button POSTed to the same dead
+    // route — limits were never readable or settable from the wallet.
     try {
-        var resp = await fetch('/api/deposit-limits/', {
+        var resp = await fetch('/api/deposit/limits', {
             headers: { Authorization: 'Bearer ' + token }
         });
         if (!resp.ok) {
@@ -52174,19 +52271,30 @@ async function _renderDepositLimitsSection(modal) {
             limitsContainer.appendChild(row);
         }
 
-        // Display each limit
-        displayLimit('Daily Limit', data.dailyLimit || 0, data.dailyUsage || 0);
-        displayLimit('Weekly Limit', data.weeklyLimit || 0, data.weeklyUsage || 0);
-        displayLimit('Monthly Limit', data.monthlyLimit || 0, data.monthlyUsage || 0);
+        // Server returns cents for limits + used + remaining; convert
+        // to dollars for display. Earlier draft read data.dailyLimit /
+        // data.dailyUsage which never existed on the wire — every row
+        // showed "No limit set" with no usage bar regardless of what
+        // the user had actually configured.
+        var limitsObj = (data && data.limits) || {};
+        var usedObj = (data && data.used) || {};
+        var dDol = (Number(limitsObj.daily_cents)   || 0) / 100;
+        var wDol = (Number(limitsObj.weekly_cents)  || 0) / 100;
+        var mDol = (Number(limitsObj.monthly_cents) || 0) / 100;
+        var dUsed = (Number(usedObj.daily_cents)   || 0) / 100;
+        var wUsed = (Number(usedObj.weekly_cents)  || 0) / 100;
+        var mUsed = (Number(usedObj.monthly_cents) || 0) / 100;
+        displayLimit('Daily Limit',   dDol, dUsed);
+        displayLimit('Weekly Limit',  wDol, wUsed);
+        displayLimit('Monthly Limit', mDol, mUsed);
 
-        // Populate form inputs for editing
         var dailyInput = document.getElementById('dlDailyInput');
         var weeklyInput = document.getElementById('dlWeeklyInput');
         var monthlyInput = document.getElementById('dlMonthlyInput');
 
-        if (dailyInput && data.dailyLimit > 0) dailyInput.value = parseFloat(data.dailyLimit).toFixed(2);
-        if (weeklyInput && data.weeklyLimit > 0) weeklyInput.value = parseFloat(data.weeklyLimit).toFixed(2);
-        if (monthlyInput && data.monthlyLimit > 0) monthlyInput.value = parseFloat(data.monthlyLimit).toFixed(2);
+        if (dailyInput && dDol > 0) dailyInput.value = dDol.toFixed(2);
+        if (weeklyInput && wDol > 0) weeklyInput.value = wDol.toFixed(2);
+        if (monthlyInput && mDol > 0) monthlyInput.value = mDol.toFixed(2);
 
     } catch (err) {
         console.warn('[Deposit Limits] Error fetching limits:', err);
@@ -52195,7 +52303,14 @@ async function _renderDepositLimitsSection(modal) {
 }
 
 /**
- * Save new deposit limits via POST /api/deposit-limits/
+ * Save new deposit limits via PUT /api/deposit/limits.
+ *
+ * Cents-only on the wire — the server validates each limit fits in
+ * [0, 1,000,000c] and that daily ≤ weekly ≤ monthly. Increases are
+ * NOT applied here; the server returns the unchanged value plus a
+ * `rejected` array naming the windows that need an operator + 24h
+ * cooling-off (see deposit.routes.js:206). We surface that note so
+ * the user understands why their increase didn't stick.
  */
 async function _saveLimits(modal, token, formOverlay) {
     var dailyInput = document.getElementById('dlDailyInput');
@@ -52208,40 +52323,47 @@ async function _saveLimits(modal, token, formOverlay) {
     var weekly = parseFloat(weeklyInput.value) || 0;
     var monthly = parseFloat(monthlyInput.value) || 0;
 
-    // Basic validation
     if ((daily < 0 || daily > 999999) || (weekly < 0 || weekly > 999999) || (monthly < 0 || monthly > 999999)) {
         if (typeof showToast === 'function') {
             showToast('Please enter valid limit amounts (0-999999)', 'error', 3000);
         }
         return;
     }
+    if (daily > weekly || weekly > monthly) {
+        if (typeof showToast === 'function') {
+            showToast('Limits must satisfy daily ≤ weekly ≤ monthly.', 'error', 4000);
+        }
+        return;
+    }
 
     try {
-        var resp = await fetch('/api/deposit-limits/', {
-            method: 'POST',
+        var resp = await fetch('/api/deposit/limits', {
+            method: 'PUT',
             headers: {
                 Authorization: 'Bearer ' + token,
                 'Content-Type': 'application/json'
             },
             body: JSON.stringify({
-                dailyLimit: daily,
-                weeklyLimit: weekly,
-                monthlyLimit: monthly
+                daily_cents: Math.round(daily * 100),
+                weekly_cents: Math.round(weekly * 100),
+                monthly_cents: Math.round(monthly * 100)
             })
         });
 
         var result = await resp.json();
 
-        if (result.success) {
+        if (resp.ok && result && result.limits) {
             formOverlay.classList.remove('active');
             if (typeof showToast === 'function') {
-                showToast('✅ Deposit limits saved successfully!', 'success', 3000);
+                var msg = (result.rejected && result.rejected.length)
+                    ? 'Decreases applied. ' + result.rejected.join(', ') + ' increase(s) need operator approval (24h cooling-off).'
+                    : '✅ Deposit limits saved.';
+                showToast(msg, 'success', 5000);
             }
-            // Refresh the limits display
             await _renderDepositLimitsSection(modal);
         } else {
             if (typeof showToast === 'function') {
-                showToast(result.error || 'Failed to save limits', 'error', 3000);
+                showToast((result && result.error) || 'Failed to save limits', 'error', 3000);
             }
         }
     } catch (err) {
@@ -60851,47 +60973,21 @@ setInterval(function() {
             const urlParams = new URLSearchParams(window.location.search);
             const suppressBonus = urlParams.get('qaTools') === '1' || urlParams.get('qaTools') === 'true'
                 || urlParams.get('noBonus') === '1' || urlParams.get('autoSpin') === '1';
-            if (!dailyBonusState.claimedToday && !suppressBonus) {
-                setTimeout(() => showDailyBonusModal(), 1500);
-            }
+            // Post-auth engagement fetches. Only the two endpoints below
+            // exist in server/routes/ — the rest of the historical list
+            // (daily-bonus, birthday, achievements, level-up, milestones,
+            // weekend-cashback, comeback, subscription, XP sync,
+            // tournament, spinstreak, mystery, gifts, notifications,
+            // daily-login) hits routes that have never been
+            // implemented. They 404'd silently and the modals they
+            // would have spawned promised coin / gem / cash rewards
+            // that were never credited server-side. Disabled here; the
+            // helper functions stay in the file dead until matching
+            // routes ship.
             if (!suppressBonus) {
                 _checkReturnStatus();
-                _checkBirthday();
                 _checkLossStreakOffer();
             }
-            if (!suppressBonus) {
-                _checkAchievements();
-                setTimeout(function() { if (typeof _checkLevelUpBonus === 'function') _checkLevelUpBonus(); }, 6000);
-                _checkMilestones();
-                _checkDailyStreak();
-                setTimeout(function() { _checkWeekendCashback(); }, 2000);
-                setTimeout(function() { _checkComebackBonus(); }, 4000);
-                _checkStreakBonuses();
-                _checkSubscriptionDailyGems();
-                _checkGiftsInbox();
-            }
-            _syncXpWithServer();
-            _initTournamentRecording();
-            // Initialize onboarding funnel (early, before other systems)
-            if (typeof OnboardingFunnel !== 'undefined' && OnboardingFunnel.init) {
-                OnboardingFunnel.init();
-            }
-            // Initialize notification manager (must happen before any notifications)
-            if (typeof NotificationManager !== 'undefined') {
-                NotificationManager.init();
-                NotificationManager.onLogin();
-            }
-            // Initialize notification bell and check daily login reward
-            if (typeof NotificationBell !== 'undefined' && NotificationBell.init) {
-                NotificationBell.init();
-            }
-            if (typeof checkDailyLoginReward === 'function') {
-                setTimeout(checkDailyLoginReward, 3000);
-            }
-            _initLossStreakMonitor();
-            _initSpinStreakTicker();
-            _initMysteryDropChecker();
-            _initNotificationBell();
             startSessionDurationWatch();
             // Initialize session idle timeout (responsible gambling)
             if (typeof SessionTimeout !== 'undefined' && SessionTimeout.init) {

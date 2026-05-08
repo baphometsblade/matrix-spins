@@ -63,7 +63,7 @@
     
     <!-- Maintenance Mode Check -->
     <script src="js/maintenance-check.js"></script>
-    <link rel="stylesheet" href="styles.af9a67d4.css">
+    <link rel="stylesheet" href="styles.e2017c9a.css">
 </head>
 <body>
     <script src="js/error-handler.js"></script>
@@ -284,6 +284,20 @@
                         if (!r.ok) return;
                         var data = await r.json();
                         var wins = (data && data.wins) || [];
+                        // Hero stats hydrate from the same poll the ticker
+                        // already runs (no extra request rate). Earlier
+                        // these elements were left empty; the surrounding
+                        // labels (BIGGEST WIN TODAY / wins in last hour)
+                        // had no data source. Keep paint cheap: max() over
+                        // win_cents and the array length, both already in
+                        // the same payload.
+                        var biggest = wins.length
+                            ? Math.max.apply(null, wins.map(function (w) { return Number(w.win_cents) || 0; }))
+                            : 0;
+                        var bigEl = document.getElementById('biggestWin');
+                        if (bigEl) bigEl.textContent = (biggest / 100).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+                        var cntEl = document.getElementById('recentWinsCount');
+                        if (cntEl) cntEl.textContent = wins.length;
                         if (wins.length === 0) {
                             ticker.style.display = 'none';
                             return;
@@ -318,18 +332,18 @@
                         SPIN TO <span class="hero-highlight">WIN BIG</span>
                     </h2>
                     <p class="hero-subtitle">
-                        <span id="heroSubtitleCount">67</span>+ Premium Slot Games · Provably Fair · Instant Withdrawals
+                        <span id="heroSubtitleCount">67</span>+ Slots · Provably Fair Commit-Reveal · 2FA-Protected Withdrawals
                     </p>
                     <div class="hero-buttons">
-                        <button class="btn btn-play" onclick="playRandomHotGame()">PLAY NOW</button>
+                        <button class="btn btn-play" onclick="(window.openLiveSlot||function(){})('classic_777')">PLAY NOW</button>
                         <!-- Removed: Bonus Wheel hero button -->
-                        <button class="btn btn-deposit-hero" onclick="typeof showWalletModal==='function'?showWalletModal():null">?? DEPOSIT</button>
+                        <button class="btn btn-deposit-hero" onclick="typeof showWalletModal==='function'?showWalletModal():null">DEPOSIT</button>
                     </div>
                 </div>
                 <div class="hero-stats">
-                    <div class="stats-label">BIGGEST WIN TODAY</div>
-                    <div class="stats-value">$<span id="biggestWin"></span></div>
-                    <div class="stats-info"><span id="recentWinsCount"></span> wins in last hour</div>
+                    <div class="stats-label">BIGGEST WIN (24h)</div>
+                    <div class="stats-value">$<span id="biggestWin">0</span></div>
+                    <div class="stats-info"><span id="recentWinsCount">0</span> wins in last 24h</div>
                     <div class="balance-sparkline-wrap" id="balanceSparklineWrap" style="display:none">
                         <div class="sparkline-label">Balance Trend</div>
                         <svg id="balanceSparkline" class="balance-sparkline" viewBox="0 0 120 36" preserveAspectRatio="none"></svg>
@@ -2169,7 +2183,7 @@ if ('serviceWorker' in navigator) {
     
     
     
-    <script src="bundle.56c7e9a0.js"></script>
+    <script src="bundle.321dfe23.js"></script>
 </body>
 </html>
 

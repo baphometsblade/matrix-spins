@@ -203,10 +203,21 @@
                 'border:1px solid #f1c40f44;border-radius:14px;padding:22px;color:#fff;font-family:system-ui,sans-serif;' +
                 'box-shadow:0 18px 60px rgba(0,0,0,0.6);"' +
             '>' +
-                '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">' +
-                    '<div><div style="font-size:11px;letter-spacing:2px;color:#f1c40f;">LIVE</div>' +
-                    '<div id="liveSlotTitle" style="font-size:20px;font-weight:800;">' + (def.name || def.id).toUpperCase() + '</div></div>' +
-                    '<button id="liveSlotClose" aria-label="Close" style="background:none;border:none;color:#fff;font-size:22px;cursor:pointer;">&times;</button>' +
+                '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;gap:10px;">' +
+                    '<div style="min-width:0;flex:1;">' +
+                        '<div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:2px;">' +
+                            '<span style="font-size:10px;letter-spacing:2px;color:#fff;background:linear-gradient(135deg,#0a8a3a 0%,#0f6f2e 100%);' +
+                                'border:1px solid #5fd489;padding:2px 7px;border-radius:10px;font-weight:800;">REAL MONEY</span>' +
+                            '<a href="/provably-fair.html" target="_blank" rel="noopener" ' +
+                                'title="HMAC-SHA256 commit-reveal RNG. Click to read how it works." ' +
+                                'style="font-size:10px;letter-spacing:1.6px;color:#22d3ee;background:rgba(34,211,238,.08);' +
+                                'border:1px solid rgba(34,211,238,.4);padding:2px 7px;border-radius:10px;font-weight:800;text-decoration:none;">' +
+                                'PROVABLY FAIR' +
+                            '</a>' +
+                        '</div>' +
+                        '<div id="liveSlotTitle" style="font-size:20px;font-weight:800;line-height:1.15;overflow:hidden;text-overflow:ellipsis;">' + (def.name || def.id).toUpperCase() + '</div>' +
+                    '</div>' +
+                    '<button id="liveSlotClose" aria-label="Close" style="background:none;border:none;color:#fff;font-size:22px;cursor:pointer;flex-shrink:0;">&times;</button>' +
                 '</div>' +
 
                 '<div id="liveSlotBalance" style="font-size:13px;color:#94a3b8;margin-bottom:8px;">Balance: —</div>' +
@@ -305,6 +316,47 @@
         if (!el) return;
         el.textContent = text || '';
         el.style.color = color || '#fde047';
+    }
+
+    /**
+     * Render an inline "Add Funds" CTA inside the result strip.
+     *
+     * The server returns 402 + "Insufficient balance." when the user's
+     * balance < bet. Without a CTA the player sees red text, has to
+     * discover the wallet button in the lobby header, and many just
+     * close the tab. This renders the message + a one-click deposit
+     * button right where they're already looking.
+     */
+    function setResultWithDepositCta(message) {
+        var el = document.getElementById('liveSlotResult');
+        if (!el) return;
+        el.textContent = '';
+        el.style.color = '#ef4444';
+        var msg = document.createElement('span');
+        msg.textContent = message + ' ';
+        el.appendChild(msg);
+        var btn = document.createElement('button');
+        btn.type = 'button';
+        btn.textContent = 'ADD FUNDS';
+        btn.style.cssText = [
+            'margin-left:8px',
+            'padding:5px 12px',
+            'border:1px solid #5fd489',
+            'border-radius:6px',
+            'background:linear-gradient(135deg,#0a8a3a 0%,#0f6f2e 100%)',
+            'color:#fff',
+            'font-weight:800',
+            'font-size:11px',
+            'letter-spacing:1px',
+            'cursor:pointer',
+            'text-transform:uppercase'
+        ].join(';');
+        btn.addEventListener('click', function () {
+            if (typeof window.showWalletModal === 'function') {
+                window.showWalletModal();
+            }
+        });
+        el.appendChild(btn);
     }
 
     /**
@@ -670,6 +722,24 @@
         }
         state.betCents = Math.round(dollars * 100);
 
+        // Pre-check against the cached balance before hitting the
+        // server. The dataset is refreshed on every settled spin and
+        // every refreshBalance call, so it's accurate to within one
+        // in-flight spin. Free-spin sessions don't debit, so they
+        // skip the gate. Catching the underfund client-side avoids
+        // a wasted POST and surfaces the deposit CTA before the
+        // "Spinning…" flash even paints.
+        if (!state.bonusSession) {
+            var balEl = document.getElementById('liveSlotBalance');
+            var cachedCents = balEl && balEl.dataset && balEl.dataset.cents != null
+                ? Number(balEl.dataset.cents)
+                : NaN;
+            if (Number.isFinite(cachedCents) && cachedCents < state.betCents) {
+                setResultWithDepositCta('Insufficient balance — bet ' + fmt(state.betCents) + ', balance ' + fmt(cachedCents) + '.');
+                return;
+            }
+        }
+
         state.spinning = true;
         setResult('Spinning…', '#94a3b8');
         if (state.cellNodes) {
@@ -702,11 +772,21 @@
 
         if (res.status !== 200) {
             var msg = (res.body && res.body.error) || ('Error ' + res.status);
-            setResult(msg, '#ef4444');
+            // Server-side underfund (race against the client-side
+            // pre-check above when a concurrent spin debited the
+            // balance, or when the cached balance was stale).
+            if (res.status === 402) {
+                setResultWithDepositCta(msg);
+            } else {
+                setResult(msg, '#ef4444');
+            }
             state.lastResult = null;
             // Re-fetch the commit — on 401 / self-exclusion we may be
             // working with a stale hash.
             refreshCommit();
+            // Resync cached balance so the next attempt's pre-check
+            // reflects whatever the server actually thinks.
+            refreshBalance();
             return;
         }
 

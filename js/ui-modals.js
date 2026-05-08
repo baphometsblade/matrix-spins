@@ -389,10 +389,14 @@
 
 
         function updateStatsSummary() {
-            const biggestWinEl = document.getElementById('biggestWin');
-            if (biggestWinEl) {
-                biggestWinEl.textContent = Math.round(stats.biggestWin).toLocaleString();
-            }
+            // The hero's #biggestWin element was previously overwritten
+            // here with the local stats.biggestWin (this user's all-time
+            // personal best) under a "BIGGEST WIN TODAY" label. Misleading:
+            // it wasn't today, wasn't anyone else's. The hero now sources
+            // biggest-win from /api/public/hot-wins (server-aggregated,
+            // 24h window, anonymized) via the inline poll in index.html.
+            // Personal-best lives in the stats modal where the label is
+            // accurate.
             updateStatsModal();
         }
 

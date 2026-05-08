@@ -1852,7 +1852,11 @@ async function main() {
         assert.strictEqual(analytics.body.window_days, 30);
         assert.ok(typeof analytics.body.drift_warn_pct === 'number');
         assert.ok(typeof analytics.body.min_spins_for_drift_warn === 'number');
-        assert.strictEqual(analytics.body.games.length, 2);
+        // Catalog size grew to 67 once the universal engine started
+        // listing every game in shared/game-definitions.js. Anchor on
+        // the two hand-tuned games by id rather than hardcoding a count
+        // so a future addition to the catalog doesn't trip the test.
+        assert.ok(analytics.body.games.length >= 2, 'expected ≥2 games in analytics, got ' + analytics.body.games.length);
         const ag = analytics.body.games.reduce(function (m, g) { m[g.game_id] = g; return m; }, {});
         for (const id of ['classic_777', 'neon_burst']) {
             assert.ok(ag[id], id + ' missing from analytics: ' + JSON.stringify(analytics.body));
