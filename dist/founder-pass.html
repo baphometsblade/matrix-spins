@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Matrix Spins Founder Pass</title>
+<meta name="description" content="Matrix Spins launch supporter passes with secure Stripe checkout.">
+<style>
+:root{color-scheme:dark;--bg:#050816;--card:#0f172a;--line:#1f3b33;--text:#e5eefc;--muted:#94a3b8;--green:#5fd489;--cyan:#22d3ee}*{box-sizing:border-box}body{margin:0;font-family:system-ui,-apple-system,Segoe UI,sans-serif;background:radial-gradient(circle at 20% 0%,rgba(34,211,238,.18),transparent 30%),linear-gradient(180deg,#050816,#02040d);color:var(--text)}main{max-width:1120px;margin:auto;padding:34px 18px 56px}.top{display:flex;justify-content:space-between;gap:18px;align-items:center;margin-bottom:44px}.brand{font-weight:950;letter-spacing:.12em}.brand span{display:block;font-size:12px;color:var(--muted);margin-top:3px}a{color:var(--green)}.hero{display:grid;grid-template-columns:1.15fr .85fr;gap:26px;align-items:center}.pill{display:inline-block;border:1px solid rgba(95,212,137,.35);color:var(--green);border-radius:999px;padding:8px 12px;font-size:12px;font-weight:900;letter-spacing:.12em}h1{font-size:clamp(42px,7vw,78px);line-height:.94;letter-spacing:-.07em;margin:18px 0}.grad{background:linear-gradient(90deg,#fff,var(--cyan),var(--green));-webkit-background-clip:text;background-clip:text;color:transparent}.lead{font-size:18px;line-height:1.6;color:#cbd5e1}.card,.plan{border:1px solid rgba(95,212,137,.26);background:linear-gradient(180deg,rgba(15,23,42,.9),rgba(5,8,22,.92));border-radius:24px;padding:24px}.stats{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:14px}.stat{background:rgba(255,255,255,.05);border-radius:16px;padding:14px}.stat b{display:block;font-size:28px}.stat span{color:var(--muted);font-size:12px}.plans{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-top:40px}.plan{display:flex;flex-direction:column;min-height:380px}.plan.best{border-color:rgba(95,212,137,.8);box-shadow:0 18px 70px rgba(95,212,137,.12)}.badge{color:var(--cyan);font-size:11px;font-weight:900;letter-spacing:.16em;text-transform:uppercase}.price{font-size:42px;font-weight:950;letter-spacing:-.06em;margin:10px 0}.price small{font-size:14px;color:var(--muted)}p{color:#cbd5e1;line-height:1.5}ul{padding:0;list-style:none;display:grid;gap:9px;margin:16px 0 22px}li{color:#dbeafe;font-size:14px}li:before{content:'✓ ';color:var(--green);font-weight:900}.btn{display:block;text-align:center;text-decoration:none;margin-top:auto;border-radius:14px;padding:14px 16px;background:linear-gradient(135deg,#0a8a3a,#0f6f2e);color:#fff;font-weight:950}.btn.alt{background:#111827;border:1px solid rgba(95,212,137,.35)}.notice{margin-top:24px;color:#fde68a;background:rgba(250,204,21,.07);border:1px solid rgba(250,204,21,.26);border-radius:18px;padding:16px}.status{margin-top:18px;border-radius:14px;padding:14px 16px;font-weight:800}.ok{background:rgba(95,212,137,.12);border:1px solid rgba(95,212,137,.36)}.err{background:rgba(239,68,68,.12);border:1px solid rgba(239,68,68,.36)}@media(max-width:850px){.hero,.plans{grid-template-columns:1fr}.top{align-items:flex-start}}
+</style>
+</head>
+<body>
+<main>
+  <div class="top"><div class="brand">MATRIX SPINS<span>FOUNDER PASS</span></div><a href="/">Back to lobby</a></div>
+  <section class="hero">
+    <div>
+      <span class="pill">SECURE STRIPE CHECKOUT</span>
+      <h1>Launch supporter passes for <span class="grad">Matrix Spins.</span></h1>
+      <p class="lead">A clean way to monetise the launch now: sell digital supporter and sponsor packages through Stripe before expanding the full product.</p>
+      <div id="status"></div>
+    </div>
+    <aside class="card">
+      <div class="badge">Launch target</div>
+      <h2>First $1,000 AUD</h2>
+      <p>Target either 35 Founder Passes at $29 AUD or 11 Launch Sponsor Passes at $99 AUD.</p>
+      <div class="stats"><div class="stat"><b>$9</b><span>entry offer</span></div><div class="stat"><b>$29</b><span>main offer</span></div><div class="stat"><b>$99</b><span>sponsor tier</span></div><div class="stat"><b>0</b><span>login friction</span></div></div>
+    </aside>
+  </section>
+  <section class="plans">
+    <article class="plan"><div class="badge">Supporter</div><h2>Supporter Pass</h2><div class="price">$9 <small>AUD</small></div><p>Low-friction entry offer for viewers who want to back the launch.</p><ul><li>Founder Wall listing</li><li>Digital supporter receipt</li><li>Launch-progress update email</li></ul><a class="btn alt" href="/api/stripe/config/founder-pass/redirect?product_id=supporter_pass">Buy Supporter</a></article>
+    <article class="plan best"><div class="badge">Founder</div><h2>Founder Pass</h2><div class="price">$29 <small>AUD</small></div><p>The main offer for early MatrixMonster supporters.</p><ul><li>Founder Wall listing</li><li>Early feature voting</li><li>MatrixMonster launch shoutout priority</li></ul><a class="btn" href="/api/stripe/config/founder-pass/redirect?product_id=founder_pass">Buy Founder Pass</a></article>
+    <article class="plan"><div class="badge">Sponsor</div><h2>Launch Sponsor</h2><div class="price">$99 <small>AUD</small></div><p>Higher-ticket supporter package for brands, creators, and premium supporters.</p><ul><li>Premium Founder Wall placement</li><li>Sponsor thank-you placement</li><li>Priority product feedback channel</li></ul><a class="btn alt" href="/api/stripe/config/founder-pass/redirect?product_id=sponsor_pass">Become Sponsor</a></article>
+  </section>
+  <div class="notice"><strong>Important:</strong> Founder Passes are digital supporter packages only. They do not add game balance, create prize entitlement, or provide withdrawal value.</div>
+</main>
+<script>
+const q=new URLSearchParams(location.search),s=document.getElementById('status');
+if(q.get('success'))s.innerHTML='<div class="status ok">Payment complete. Thank you for backing Matrix Spins.</div>';
+if(q.get('cancelled'))s.innerHTML='<div class="status err">Checkout cancelled. No payment was taken.</div>';
+if(q.get('error'))s.innerHTML='<div class="status err">'+q.get('error').replace(/[<>]/g,'')+'</div>';
+</script>
+</body>
+</html>
