@@ -187,82 +187,9 @@ router.get('/nft/my-nfts', authenticate, async (req, res) => {
     }
 });
 
-// ── Request withdrawal (creates pending request, selects NFT to sell back) ──
-// ROUND 33: Added authenticate middleware (was missing — relied on optional req.user)
-router.post('/nft/request-withdrawal', authenticate, async (req, res) => {
-    try {
-        const userId = req.user.id;
-
-        const { amount, accountDetails } = req.body;
-        // ROUND 61: Number.isFinite — isNaN alone allows Infinity withdrawals
-        const withdrawAmount = parseFloat(amount);
-        if (!Number.isFinite(withdrawAmount) || withdrawAmount <= 0) {
-            return res.status(400).json({ error: 'Withdrawal amount must be a valid number' });
-        }
-        if (withdrawAmount < config.MIN_WITHDRAWAL) {
-            return res.status(400).json({ error: `Minimum withdrawal is $${config.MIN_WITHDRAWAL}` });
-        }
-        if (withdrawAmount > config.MAX_WITHDRAWAL) {
-            return res.status(400).json({ error: `Maximum withdrawal is $${config.MAX_WITHDRAWAL}` });
-        }
-
-        const db = getBackend();
-        await ensureNFTTables();
-
-        // Check balance
-        const user = await db.get(`SELECT balance FROM users WHERE id = ?`, [userId]);
-        if (!user || user.balance < withdrawAmount) {
-            return res.status(400).json({ error: 'Insufficient balance' });
-        }
-
-        // Find an active NFT to associate with withdrawal (buy-back)
-        const nft = await db.get(
-            `SELECT id, amount FROM nfts WHERE user_id = ? AND status = 'active' ORDER BY amount DESC LIMIT 1`,
-            [userId]
-        );
-
-        // Use crypto-random ID to prevent collisions
-        const requestId = 'WD-' + crypto.randomBytes(8).toString('hex').toUpperCase();
-
-        // ── Wrap balance hold + request creation in transaction with atomic guard ──
-        await db.beginTransaction();
-        try {
-            // Atomic deduction with balance guard — prevents going negative
-            var deductResult = await db.run(
-                `UPDATE users SET balance = balance - ? WHERE id = ? AND balance >= ?`,
-                [withdrawAmount, userId, withdrawAmount]
-            );
-            if (!deductResult || deductResult.changes === 0) {
-                await db.rollback();
-                return res.status(400).json({ error: 'Insufficient balance' });
-            }
-
-            // Create withdrawal request
-            await db.run(
-                `INSERT INTO withdrawal_requests (id, user_id, amount, nft_id, account_details)
-                 VALUES (?, ?, ?, ?, ?)`,
-                [requestId, userId, withdrawAmount, nft ? nft.id : null, accountDetails || '']
-            );
-
-            await db.commit();
-        } catch (txErr) {
-            try { await db.rollback(); } catch (rbErr) { console.warn('[NFTDeposit] Rollback failed:', rbErr.message || rbErr); }
-            throw txErr;
-        }
-
-        console.warn(`[NFT] Withdrawal request ${requestId}: user ${userId} wants $${withdrawAmount}`);
-
-        res.json({
-            success: true,
-            requestId,
-            amount,
-            status: 'pending',
-            message: 'Withdrawal request submitted. An admin will review and authorize it.'
-        });
-    } catch (err) {
-        console.error('[NFT] Withdrawal request error:', err.message);
-        res.status(500).json({ error: 'Failed to create withdrawal request' });
-    }
-});
+// SECURITY 2026-05-08: /nft/request-withdrawal route removed.
+// It bypassed every withdrawal safeguard (KYC, AML, wagering, OTP,
+// velocity, deposit-hold) — only checked balance >= amount.
+// Use /api/payment/withdraw which enforces them all.
 
 module.exports = { router, ensureNFTTables };
