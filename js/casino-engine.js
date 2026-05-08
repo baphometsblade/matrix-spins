@@ -168,7 +168,7 @@
         $el('div', { style: { textAlign: 'center', padding: '.6rem 0 1.2rem' } },
           $el('h1', { style: { fontSize: '1.8rem', letterSpacing: '2px', textTransform: 'uppercase', color: primary, fontFamily: this.theme.fontFamily || 'Plus Jakarta Sans, Inter, sans-serif' } }, game.name || this.displayName),
           $el('p', { style: { opacity: .7, fontSize: '.85rem', marginTop: '.3rem' } },
-            `${(game.rtp * 100).toFixed(2)}% RTP  •  ${game.volatility || ''} volatility  •  ${game.paylines} lines`
+            `${game.rtp.toFixed(2)}% RTP  •  ${game.volatility || ''} volatility  •  ${game.paylines} lines`
           ),
         )
       );

@@ -22189,7 +22189,7 @@ function _openARPUDashboard() {
 
 
 // --- Sprint 458 — Dynamic House Edge ---
-var _houseEdgeConfig = { base: 0.04, minRTP: 0.92, maxRTP: 0.97, currentRTP: 0.95 };
+var _houseEdgeConfig = { base: 0.04, minRTP: 92, maxRTP: 97, currentRTP: 95 };
 function _initDynamicHouseEdge() {
     try { var saved = localStorage.getItem('ms_houseEdgeConfig'); if (saved) _houseEdgeConfig = JSON.parse(saved); } catch(e) {}
 }

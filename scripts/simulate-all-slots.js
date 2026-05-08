@@ -30,7 +30,7 @@ const houseEdge = require(path.join(__dirname, '..', 'server', 'services', 'hous
 const games = require(path.join(__dirname, '..', 'shared', 'game-definitions'));
 const cfg = (() => {
     try { return require(path.join(__dirname, '..', 'server', 'config')); }
-    catch (_) { return { TARGET_RTP: 0.86, MAX_WIN_MULTIPLIER: 250 }; }
+    catch (_) { return { TARGET_RTP: 86, MAX_WIN_MULTIPLIER: 250 }; }
 })();
 
 const N_ARG = process.argv.find(a => a.startsWith('--spins='));
