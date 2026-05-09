@@ -172,4 +172,36 @@ router.post('/create', authenticate, requireAdmin, async function(req, res) {
   }
 });
 
+// POST /api/promocode/deactivate — admin only
+router.post('/deactivate', authenticate, requireAdmin, async function(req, res) {
+  try {
+    var id = parseInt(req.body.id, 10);
+    if (!id) return res.status(400).json({ error: 'id required' });
+    var result = await db.run('UPDATE promo_codes SET active = 0 WHERE id = ?', [id]);
+    if (!result || result.changes === 0) {
+      return res.status(404).json({ error: 'Code not found' });
+    }
+    return res.json({ success: true });
+  } catch(err) {
+    return res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// GET /api/promocode/stats/:id — admin only — usage stats
+router.get('/stats/:id', authenticate, requireAdmin, async function(req, res) {
+  try {
+    var id = parseInt(req.params.id, 10);
+    if (!id) return res.status(400).json({ error: 'id required' });
+    var code = await db.get('SELECT id, code, uses_count, max_uses, reward_gems, reward_credits FROM promo_codes WHERE id = ?', [id]);
+    if (!code) return res.status(404).json({ error: 'Not found' });
+    var redemptions = await db.all(
+      'SELECT user_id, redeemed_at FROM promo_redemptions WHERE code_id = ? ORDER BY redeemed_at DESC LIMIT 100',
+      [id]
+    );
+    return res.json({ code: code, redemptions: redemptions });
+  } catch(err) {
+    return res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
 module.exports = router;

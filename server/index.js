@@ -14,6 +14,7 @@
 require('./utils/secure-rng');
 
 const express = require('express');
+const http = require('http');
 const path = require('path');
 const fs = require('fs');
 const cors = require('cors');
@@ -314,6 +315,9 @@ mount('/api/recommend',   './routes/recommend.routes',   'recommend');
 
 // Bonuses & promotions
 mount('/api/promocode',     './routes/promocode.routes',     'promocode');
+mount('/api/welcome-bonus', './routes/welcome-bonus.routes', 'welcome-bonus');
+mount('/api/bonus-history', './routes/bonus-history.routes', 'bonus-history');
+mount('/api/bonus-forfeit', './routes/bonus-forfeit.routes', 'bonus-forfeit');
 mount('/api/firstdeposit',  './routes/firstdeposit.routes',  'firstdeposit');
 mount('/api/reloadbonus',   './routes/reloadbonus.routes',   'reloadbonus');
 mount('/api/depositmatch',  './routes/depositmatch.routes',  'depositmatch');
@@ -636,7 +640,29 @@ async function start() {
     console.warn('[SERVER] scheduler failed:', err.message);
   }
 
-  const server = app.listen(PORT, () => {
+  // Build httpServer manually so socket.io can attach
+  const httpServer = http.createServer(app);
+  try {
+    const realtime = require('./services/realtime.service');
+    realtime.attach(httpServer);
+  } catch (err) {
+    console.warn('[SERVER] realtime attach failed:', err.message);
+  }
+
+  // Periodic jackpot broadcast (every 4s) for animated counters across clients
+  try {
+    const realtime = require('./services/realtime.service');
+    const jackpotService = require('./services/jackpot.service');
+    setInterval(async () => {
+      try {
+        if (!realtime.isAttached()) return;
+        const levels = await jackpotService.getJackpotLevels();
+        realtime.broadcastJackpotPools(levels);
+      } catch (e) { /* swallow — purely cosmetic */ }
+    }, 4000).unref();
+  } catch (_) { /* services unavailable */ }
+
+  const server = httpServer.listen(PORT, () => {
     console.log('');
     console.log('══════════════════════════════════════════════════');
     console.log('  MATRIX SPINS CASINO — Server Running');

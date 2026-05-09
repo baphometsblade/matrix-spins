@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Bonus History — Matrix Spins Casino</title>
+<meta name="description" content="View your bonus balance, wagering progress, and full bonus claim history.">
+<link rel="canonical" href="https://msaart.online/bonus-history.html">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@700;800&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; background: #0a0a14; color: #e6e6f0; min-height: 100vh; padding: 20px; }
+  .topbar { display: flex; justify-content: space-between; align-items: center; padding: 14px 20px; margin-bottom: 24px; background: rgba(20,20,35,0.9); border: 1px solid rgba(255,215,0,0.18); border-radius: 14px; }
+  .brand { font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 800; font-size: 20px; color: #ffd700; text-decoration: none; }
+  .actions a { margin-left: 8px; padding: 8px 16px; background: transparent; border: 1px solid rgba(255,215,0,0.3); color: #ffd700; border-radius: 8px; text-decoration: none; font-size: 14px; }
+  .container { max-width: 1100px; margin: 0 auto; }
+  h1 { font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 800; font-size: 32px; margin-bottom: 6px; background: linear-gradient(135deg, #ffd700, #ff8c00); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+  .sub { color: #8a8aa0; margin-bottom: 28px; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; margin-bottom: 24px; }
+  .card { background: linear-gradient(135deg, #15152a, #1a1a30); border: 1px solid rgba(255,215,0,0.12); border-radius: 14px; padding: 20px; }
+  .card .label { font-size: 12px; text-transform: uppercase; color: #8a8aa0; letter-spacing: 0.05em; margin-bottom: 8px; }
+  .card .value { font-size: 28px; font-weight: 700; color: #fff; }
+  .card.gold { border-color: rgba(255,215,0,0.4); }
+  .card.gold .value { color: #ffd700; }
+  .progress-wrap { background: linear-gradient(135deg, #15152a, #1a1a30); border: 1px solid rgba(255,215,0,0.18); border-radius: 14px; padding: 24px; margin-bottom: 24px; }
+  .progress-wrap h3 { font-size: 18px; margin-bottom: 12px; }
+  .progress-bar { height: 24px; background: rgba(0,0,0,0.4); border-radius: 12px; overflow: hidden; position: relative; margin: 12px 0; }
+  .progress-fill { height: 100%; background: linear-gradient(90deg, #ffd700, #ff8c00); transition: width 0.6s ease; }
+  .progress-text { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 13px; font-weight: 600; color: #fff; text-shadow: 0 1px 2px rgba(0,0,0,0.7); }
+  .forfeit-btn { margin-top: 14px; padding: 10px 18px; background: rgba(220,50,50,0.15); border: 1px solid rgba(220,50,50,0.5); color: #ff6b6b; border-radius: 8px; cursor: pointer; font-size: 14px; font-weight: 600; }
+  .forfeit-btn:hover { background: rgba(220,50,50,0.3); }
+  table { width: 100%; border-collapse: collapse; background: linear-gradient(135deg, #15152a, #1a1a30); border: 1px solid rgba(255,215,0,0.12); border-radius: 14px; overflow: hidden; }
+  th { background: rgba(0,0,0,0.4); padding: 14px 16px; text-align: left; font-size: 12px; text-transform: uppercase; color: #8a8aa0; letter-spacing: 0.05em; }
+  td { padding: 14px 16px; border-top: 1px solid rgba(255,255,255,0.04); font-size: 14px; }
+  td.amount { font-weight: 600; color: #4ade80; text-align: right; }
+  td.amount.neg { color: #ff6b6b; }
+  .empty { padding: 40px; text-align: center; color: #8a8aa0; }
+</style>
+</head>
+<body>
+
+<div class="container">
+
+  <div class="topbar">
+    <a class="brand" href="index.html">Matrix Spins</a>
+    <div class="actions">
+      <a href="wallet.html">Wallet</a>
+      <a href="promotions.html">Promotions</a>
+      <a href="jackpot-history.html">Jackpots</a>
+      <a href="account.html">Account</a>
+    </div>
+  </div>
+
+  <h1>Bonus History</h1>
+  <p class="sub">Track your bonus balance, wagering progress, and every promo claim.</p>
+
+  <div class="grid">
+    <div class="card"><div class="label">Withdrawable Balance</div><div class="value" id="withdrawable">$0.00</div></div>
+    <div class="card gold"><div class="label">Bonus Balance</div><div class="value" id="bonusBalance">$0.00</div></div>
+    <div class="card"><div class="label">Wagering Required</div><div class="value" id="wageringRequirement">$0.00</div></div>
+    <div class="card"><div class="label">Wagering Progress</div><div class="value" id="wageringProgress">$0.00</div></div>
+  </div>
+
+  <div class="progress-wrap" id="progressBox" style="display:none">
+    <h3>Wagering Progress</h3>
+    <div class="progress-bar">
+      <div class="progress-fill" id="progressFill" style="width:0%"></div>
+      <div class="progress-text" id="progressText">0%</div>
+    </div>
+    <p style="font-size:13px; color:#8a8aa0; margin-top:8px">
+      Wager <span id="wageringRemainingTxt">$0.00</span> more to unlock your bonus for withdrawal.
+    </p>
+    <button class="forfeit-btn" id="forfeitBtn">Forfeit bonus &amp; clear wagering</button>
+  </div>
+
+  <h3 style="margin-bottom:14px">Recent Bonus Activity</h3>
+  <table>
+    <thead>
+      <tr><th>Date</th><th>Type</th><th>Description</th><th style="text-align:right">Amount</th></tr>
+    </thead>
+    <tbody id="historyBody">
+      <tr><td colspan="4" class="empty">Loading…</td></tr>
+    </tbody>
+  </table>
+
+</div>
+
+<script>
+(function() {
+  'use strict';
+  function $ (id) { return document.getElementById(id); }
+  function fmt (n) { return '$' + Number(n || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
+
+  function getToken() {
+    return localStorage.getItem('token') || localStorage.getItem('authToken') || sessionStorage.getItem('token');
+  }
+  function authHeaders() {
+    var t = getToken();
+    var h = { 'Content-Type': 'application/json' };
+    if (t) h['Authorization'] = 'Bearer ' + t;
+    return h;
+  }
+
+  async function loadSummary() {
+    try {
+      var r = await fetch('/api/bonus-history/summary', { headers: authHeaders() });
+      if (!r.ok) {
+        if (r.status === 401) { window.location.href = 'login.html'; return; }
+        return;
+      }
+      var d = await r.json();
+      $('withdrawable').textContent = fmt(d.withdrawable);
+      $('bonusBalance').textContent = fmt(d.bonusBalance);
+      $('wageringRequirement').textContent = fmt(d.wageringRequirement);
+      $('wageringProgress').textContent = fmt(d.wageringProgress);
+      if (d.wageringRequirement > 0) {
+        $('progressBox').style.display = 'block';
+        $('progressFill').style.width = d.wageringPct + '%';
+        $('progressText').textContent = d.wageringPct.toFixed(1) + '%';
+        $('wageringRemainingTxt').textContent = fmt(d.wageringRemaining);
+      }
+    } catch (e) { console.warn('summary error', e); }
+  }
+
+  function buildRow(row) {
+    var tr = document.createElement('tr');
+    var amt = Number(row.amount || 0);
+    var sign = amt < 0 ? '-' : '+';
+    var cells = [
+      new Date(row.at).toLocaleString(),
+      row.type || '',
+      row.description || '',
+      sign + fmt(Math.abs(amt))
+    ];
+    for (var i = 0; i < cells.length; i++) {
+      var td = document.createElement('td');
+      td.textContent = cells[i];
+      if (i === 3) td.className = amt < 0 ? 'amount neg' : 'amount';
+      tr.appendChild(td);
+    }
+    return tr;
+  }
+
+  async function loadHistory() {
+    try {
+      var r = await fetch('/api/bonus-history/list?limit=100', { headers: authHeaders() });
+      if (!r.ok) return;
+      var d = await r.json();
+      var body = $('historyBody');
+      while (body.firstChild) body.removeChild(body.firstChild);
+      if (!d.history || d.history.length === 0) {
+        var tr = document.createElement('tr');
+        var td = document.createElement('td');
+        td.colSpan = 4; td.className = 'empty';
+        td.textContent = 'No bonus activity yet. Claim your welcome bonus!';
+        tr.appendChild(td);
+        body.appendChild(tr);
+        return;
+      }
+      d.history.forEach(function(row) { body.appendChild(buildRow(row)); });
+    } catch (e) { console.warn('history error', e); }
+  }
+
+  document.addEventListener('click', async function(e) {
+    if (e.target && e.target.id === 'forfeitBtn') {
+      try {
+        var q = await fetch('/api/bonus-forfeit/quote', { headers: authHeaders() }).then(r => r.json());
+        var msg = 'Forfeit ' + fmt(q.bonusBalanceForfeited) + ' bonus and clear ' + fmt(q.wageringRequirementCleared) + ' wagering requirement?\n\nThis CANNOT be undone.';
+        if (!confirm(msg)) return;
+        var r = await fetch('/api/bonus-forfeit/confirm', {
+          method: 'POST', headers: authHeaders(),
+          body: JSON.stringify({ acknowledge: true })
+        });
+        var d = await r.json();
+        if (r.ok) {
+          alert('Bonus forfeited. You can now withdraw your withdrawable balance.');
+          loadSummary(); loadHistory();
+        } else {
+          alert(d.error || 'Forfeiture failed');
+        }
+      } catch (err) { alert('Network error'); }
+    }
+  });
+
+  loadSummary();
+  loadHistory();
+  setInterval(loadSummary, 30000);
+})();
+</script>
+
+</body>
+</html>

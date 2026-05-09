@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Progressive Jackpots — Matrix Spins Casino</title>
+<meta name="description" content="Live progressive jackpots: Mini, Major, and Mega. Recent jackpot winners and prize history.">
+<link rel="canonical" href="https://msaart.online/jackpot-history.html">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@700;800&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Inter', sans-serif; background: #0a0a14; color: #e6e6f0; min-height: 100vh; padding: 20px; }
+  .topbar { display: flex; justify-content: space-between; align-items: center; padding: 14px 20px; margin-bottom: 24px; background: rgba(20,20,35,0.9); border: 1px solid rgba(255,215,0,0.18); border-radius: 14px; }
+  .brand { font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 800; font-size: 20px; color: #ffd700; text-decoration: none; }
+  .actions a { margin-left: 8px; padding: 8px 16px; border: 1px solid rgba(255,215,0,0.3); color: #ffd700; border-radius: 8px; text-decoration: none; font-size: 14px; }
+  .container { max-width: 1200px; margin: 0 auto; }
+  h1 { font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 800; font-size: 36px; margin-bottom: 8px; background: linear-gradient(135deg, #ffd700, #ff8c00); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+  .sub { color: #8a8aa0; margin-bottom: 36px; }
+
+  .tier-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; margin-bottom: 40px; }
+  .tier-card { position: relative; padding: 32px 24px; border-radius: 18px; text-align: center; overflow: hidden; }
+  .tier-card.mini  { background: linear-gradient(135deg, #1a3a5c, #0f2a4a); border: 2px solid #4a8fd1; box-shadow: 0 0 40px rgba(74,143,209,0.2); }
+  .tier-card.major { background: linear-gradient(135deg, #5c1a3a, #4a0f2a); border: 2px solid #d14a8f; box-shadow: 0 0 40px rgba(209,74,143,0.2); }
+  .tier-card.mega  { background: linear-gradient(135deg, #5c3a1a, #4a2a0f); border: 2px solid #ffd700; box-shadow: 0 0 60px rgba(255,215,0,0.35); }
+  .tier-card .name { font-family: 'Plus Jakarta Sans', sans-serif; font-size: 14px; text-transform: uppercase; letter-spacing: 0.2em; color: rgba(255,255,255,0.6); margin-bottom: 8px; }
+  .tier-card .amount { font-family: 'Plus Jakarta Sans', sans-serif; font-size: 56px; font-weight: 800; color: #fff; line-height: 1.1; }
+  .tier-card.mega .amount { color: #ffd700; text-shadow: 0 0 20px rgba(255,215,0,0.5); }
+  .tier-card .seed { font-size: 12px; color: rgba(255,255,255,0.5); margin-top: 10px; }
+  .tier-card .last-winner { font-size: 12px; color: rgba(255,255,255,0.6); margin-top: 14px; padding-top: 12px; border-top: 1px solid rgba(255,255,255,0.1); }
+  .pulse { animation: pulse 2s ease-in-out infinite; }
+  @keyframes pulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.02); } }
+
+  .live-dot { display: inline-block; width: 8px; height: 8px; background: #4ade80; border-radius: 50%; margin-right: 6px; animation: blink 1.4s infinite; }
+  @keyframes blink { 50% { opacity: 0.3; } }
+
+  table { width: 100%; border-collapse: collapse; background: linear-gradient(135deg, #15152a, #1a1a30); border: 1px solid rgba(255,215,0,0.12); border-radius: 14px; overflow: hidden; }
+  th { background: rgba(0,0,0,0.4); padding: 14px 16px; text-align: left; font-size: 12px; text-transform: uppercase; color: #8a8aa0; letter-spacing: 0.05em; }
+  td { padding: 14px 16px; border-top: 1px solid rgba(255,255,255,0.04); font-size: 14px; }
+  td.amt { font-weight: 700; color: #ffd700; text-align: right; }
+  .empty { padding: 40px; text-align: center; color: #8a8aa0; }
+  .badge { display: inline-block; padding: 3px 10px; border-radius: 999px; font-size: 11px; text-transform: uppercase; font-weight: 600; letter-spacing: 0.05em; }
+  .badge.mini  { background: rgba(74,143,209,0.2); color: #6ab6f0; }
+  .badge.minor { background: rgba(74,209,143,0.2); color: #6af0b6; }
+  .badge.major { background: rgba(209,74,143,0.2); color: #f06ab6; }
+  .badge.grand, .badge.mega { background: rgba(255,215,0,0.2); color: #ffd700; }
+
+  /* Win celebration overlay */
+  #winOverlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: 9999; align-items: center; justify-content: center; flex-direction: column; }
+  #winOverlay.active { display: flex; }
+  #winOverlay .win-card { background: linear-gradient(135deg, #2a1a0f, #5c3a1a); border: 3px solid #ffd700; border-radius: 24px; padding: 48px 64px; text-align: center; box-shadow: 0 0 80px rgba(255,215,0,0.6); animation: zoomIn 0.6s ease-out; }
+  @keyframes zoomIn { from { transform: scale(0.3); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+  #winOverlay h2 { font-family: 'Plus Jakarta Sans', sans-serif; font-size: 24px; color: #fff; margin-bottom: 12px; text-transform: uppercase; letter-spacing: 0.2em; }
+  #winOverlay .win-amount { font-family: 'Plus Jakarta Sans', sans-serif; font-size: 80px; font-weight: 800; color: #ffd700; text-shadow: 0 0 40px rgba(255,215,0,0.8); line-height: 1; }
+  #winOverlay .win-tier { font-size: 18px; color: rgba(255,255,255,0.9); margin: 16px 0 24px; }
+  #winOverlay .win-user { font-size: 14px; color: rgba(255,255,255,0.6); }
+  #winOverlay .close-btn { margin-top: 28px; padding: 12px 32px; background: rgba(255,215,0,0.2); border: 1px solid #ffd700; color: #ffd700; border-radius: 8px; cursor: pointer; font-size: 14px; font-weight: 600; }
+  #confettiCanvas { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 10000; }
+</style>
+</head>
+<body>
+
+<div class="container">
+
+  <div class="topbar">
+    <a class="brand" href="index.html">Matrix Spins</a>
+    <div class="actions">
+      <a href="index.html">Lobby</a>
+      <a href="promotions.html">Promotions</a>
+      <a href="bonus-history.html">Bonuses</a>
+      <a href="wallet.html">Wallet</a>
+    </div>
+  </div>
+
+  <h1>Progressive Jackpots</h1>
+  <p class="sub"><span class="live-dot"></span>Live pools — every spin contributes to the prize pool. Win on any qualifying spin.</p>
+
+  <div class="tier-grid" id="tierGrid">
+    <div class="tier-card mini pulse">
+      <div class="name">Mini Jackpot</div>
+      <div class="amount" data-tier="mini">$0.00</div>
+      <div class="seed">Seeds at $100 · 1 in 5,000 spin chance</div>
+      <div class="last-winner" data-winner="mini">—</div>
+    </div>
+    <div class="tier-card major pulse">
+      <div class="name">Major Jackpot</div>
+      <div class="amount" data-tier="major">$0.00</div>
+      <div class="seed">Seeds at $2,500 · 1 in 50,000 spin chance</div>
+      <div class="last-winner" data-winner="major">—</div>
+    </div>
+    <div class="tier-card mega pulse">
+      <div class="name">MEGA Jackpot</div>
+      <div class="amount" data-tier="mega">$0.00</div>
+      <div class="seed">Seeds at $25,000 · 1 in 500,000 spin chance</div>
+      <div class="last-winner" data-winner="mega">—</div>
+    </div>
+  </div>
+
+  <h3 style="margin-bottom:14px">Recent Winners</h3>
+  <table>
+    <thead><tr><th>Date</th><th>Player</th><th>Tier</th><th style="text-align:right">Amount</th></tr></thead>
+    <tbody id="winnersBody"><tr><td colspan="4" class="empty">Loading…</td></tr></tbody>
+  </table>
+
+</div>
+
+<!-- Win celebration overlay -->
+<div id="winOverlay" role="dialog" aria-modal="true">
+  <div class="win-card">
+    <h2>JACKPOT!</h2>
+    <div class="win-amount" id="winOverlayAmount">$0</div>
+    <div class="win-tier" id="winOverlayTier">Tier</div>
+    <div class="win-user" id="winOverlayUser">—</div>
+    <button class="close-btn" id="winOverlayClose">Close</button>
+  </div>
+</div>
+<canvas id="confettiCanvas"></canvas>
+
+<script src="js/confetti.min.js"></script>
+<script src="/socket.io/socket.io.js"></script>
+<script>
+(function() {
+  'use strict';
+  var displayedAmounts = { mini: 0, major: 0, mega: 0 };
+  var pendingTargets   = { mini: 0, major: 0, mega: 0 };
+
+  function fmt(n) { return '$' + Number(n || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
+
+  function setText(sel, val) {
+    var el = document.querySelector(sel);
+    if (el) el.textContent = val;
+  }
+
+  function animateCounters() {
+    ['mini', 'major', 'mega'].forEach(function(tier) {
+      var current = displayedAmounts[tier];
+      var target = pendingTargets[tier];
+      if (Math.abs(current - target) < 0.01) return;
+      var step = (target - current) * 0.12;
+      if (Math.abs(step) < 0.01) step = (target > current ? 0.01 : -0.01);
+      displayedAmounts[tier] = current + step;
+      var el = document.querySelector('[data-tier="' + tier + '"]');
+      if (el) el.textContent = fmt(displayedAmounts[tier]);
+    });
+  }
+  setInterval(animateCounters, 40);
+
+  function applyTiers(tiers) {
+    if (!tiers) return;
+    ['mini', 'major', 'mega'].forEach(function(tier) {
+      if (tiers[tier]) {
+        pendingTargets[tier] = Number(tiers[tier].currentAmount) || 0;
+        var winnerEl = document.querySelector('[data-winner="' + tier + '"]');
+        if (winnerEl) {
+          if (tiers[tier].lastWinner && tiers[tier].lastWinner.username) {
+            winnerEl.textContent = 'Last won by ' + tiers[tier].lastWinner.username;
+          } else {
+            winnerEl.textContent = 'No winner yet';
+          }
+        }
+      }
+    });
+  }
+
+  // Map internal 4-tier broadcast to 3-tier display
+  function mapPoolsToTiers(pools) {
+    var tiers = { mini: null, major: null, mega: null };
+    pools.forEach(function(p) {
+      var key = p.tier === 'grand' ? 'mega' : (p.tier === 'major' ? 'major' : (p.tier === 'mini' ? 'mini' : null));
+      if (!key) return;
+      tiers[key] = {
+        currentAmount: p.currentAmount,
+        lastWinner: p.lastWinnerId ? { username: 'Player #' + p.lastWinnerId, wonAt: p.lastWonAt } : null,
+      };
+    });
+    return tiers;
+  }
+
+  async function loadInitial() {
+    try {
+      var r = await fetch('/api/jackpot/three-tier');
+      if (r.ok) {
+        var d = await r.json();
+        applyTiers(d.tiers);
+        // First load: snap, don't animate, AND paint the DOM directly
+        ['mini', 'major', 'mega'].forEach(function(t) {
+          displayedAmounts[t] = pendingTargets[t];
+          var el = document.querySelector('[data-tier="' + t + '"]');
+          if (el) el.textContent = fmt(displayedAmounts[t]);
+        });
+      }
+    } catch (e) {}
+  }
+
+  function buildWinnerRow(w) {
+    var tr = document.createElement('tr');
+    var t1 = document.createElement('td'); t1.textContent = new Date(w.wonAt).toLocaleString();
+    var t2 = document.createElement('td'); t2.textContent = w.winner || 'Anonymous';
+    var t3 = document.createElement('td');
+    var b = document.createElement('span');
+    var displayTier = w.tier === 'grand' ? 'mega' : w.tier;
+    b.className = 'badge ' + displayTier;
+    b.textContent = displayTier.toUpperCase();
+    t3.appendChild(b);
+    var t4 = document.createElement('td'); t4.className = 'amt'; t4.textContent = fmt(w.amount);
+    tr.appendChild(t1); tr.appendChild(t2); tr.appendChild(t3); tr.appendChild(t4);
+    return tr;
+  }
+
+  async function loadWinners() {
+    try {
+      var r = await fetch('/api/jackpot/winners');
+      if (!r.ok) return;
+      var d = await r.json();
+      var body = document.getElementById('winnersBody');
+      while (body.firstChild) body.removeChild(body.firstChild);
+      if (!d.winners || d.winners.length === 0) {
+        var tr = document.createElement('tr');
+        var td = document.createElement('td');
+        td.colSpan = 4; td.className = 'empty';
+        td.textContent = 'No jackpot winners yet — be the first!';
+        tr.appendChild(td); body.appendChild(tr);
+        return;
+      }
+      d.winners.forEach(function(w) { body.appendChild(buildWinnerRow(w)); });
+    } catch (e) {}
+  }
+
+  // Confetti shower (uses self-hosted canvas-confetti)
+  function shower() {
+    if (typeof confetti !== 'function') return;
+    var defaults = { startVelocity: 30, spread: 360, ticks: 60, zIndex: 10000 };
+    function rand(min, max) { return Math.random() * (max - min) + min; }
+    var end = Date.now() + 4000;
+    (function frame() {
+      confetti(Object.assign({}, defaults, { particleCount: 50, origin: { x: rand(0.1,0.3), y: Math.random() - 0.2 } }));
+      confetti(Object.assign({}, defaults, { particleCount: 50, origin: { x: rand(0.7,0.9), y: Math.random() - 0.2 } }));
+      if (Date.now() < end) requestAnimationFrame(frame);
+    })();
+  }
+
+  function showWinOverlay(winData) {
+    document.getElementById('winOverlayAmount').textContent = fmt(winData.amount);
+    var displayTier = winData.tier === 'grand' ? 'mega' : winData.tier;
+    document.getElementById('winOverlayTier').textContent = displayTier.toUpperCase() + ' JACKPOT';
+    document.getElementById('winOverlayUser').textContent = 'Won by ' + (winData.username || 'Anonymous');
+    document.getElementById('winOverlay').classList.add('active');
+    shower();
+    try {
+      var ctx = new (window.AudioContext || window.webkitAudioContext)();
+      var osc = ctx.createOscillator(); var gain = ctx.createGain();
+      osc.connect(gain); gain.connect(ctx.destination);
+      osc.type = 'square'; osc.frequency.setValueAtTime(523, ctx.currentTime);
+      osc.frequency.exponentialRampToValueAtTime(1047, ctx.currentTime + 0.3);
+      gain.gain.setValueAtTime(0.18, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.6);
+      osc.start(); osc.stop(ctx.currentTime + 0.6);
+    } catch (e) {}
+  }
+
+  document.getElementById('winOverlayClose').addEventListener('click', function() {
+    document.getElementById('winOverlay').classList.remove('active');
+  });
+
+  // Connect socket.io for real-time updates
+  if (typeof io === 'function') {
+    var socket = io({ transports: ['websocket', 'polling'] });
+    socket.on('connect', function() { socket.emit('subscribe:jackpots'); });
+    socket.on('jackpot:pools', function(msg) {
+      if (msg && msg.pools) applyTiers(mapPoolsToTiers(msg.pools));
+    });
+    socket.on('jackpot:win', function(win) {
+      if (win) showWinOverlay(win);
+      loadWinners();
+    });
+  } else {
+    // Fallback: poll every 5s
+    setInterval(loadInitial, 5000);
+  }
+
+  loadInitial();
+  loadWinners();
+  setInterval(loadWinners, 30000);
+})();
+</script>
+
+</body>
+</html>
