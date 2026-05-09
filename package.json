@@ -9,7 +9,20 @@
     "build": "echo 'No build step needed'",
     "qa:regression": "node scripts/qa_regression.js",
     "qa:smoke": "node scripts/smoke-money-flow.js",
-    "qa:rtp": "node scripts/verify-rtp.js"
+    "qa:rtp": "node scripts/verify-rtp.js",
+    "test": "jest --runInBand --forceExit",
+    "test:unit": "jest --runInBand --forceExit tests/unit",
+    "test:integration": "jest --runInBand --forceExit tests/integration",
+    "test:watch": "jest --watch"
+  },
+  "jest": {
+    "testEnvironment": "node",
+    "testMatch": [
+      "**/tests/**/*.test.js"
+    ],
+    "testTimeout": 30000,
+    "verbose": true,
+    "clearMocks": true
   },
   "keywords": [
     "casino",
@@ -47,6 +60,8 @@
   },
   "devDependencies": {
     "clean-css": "^5.3.3",
+    "jest": "^29.7.0",
+    "supertest": "^7.0.0",
     "terser": "^5.46.2"
   }
 }
