@@ -36,13 +36,20 @@ const STANDALONE_SCRIPTS = [
     'js/referral-page.js',
     'js/responsible-gambling-page.js',
     'js/unified-ux.js',
-    'js/pwa-install.js'
+    'js/pwa-install.js',
+    // Site-wide compliance + search scripts — referenced by every HTML page
+    'js/age-gate.js',
+    'js/cookie-consent.js',
+    'js/search.js'
 ];
 
 // Standalone CSS files referenced directly by static HTML pages
 // (achievements.html, wallet.html, history.html, etc.) — copied to dist/
 const STANDALONE_CSS = [
-    'unified-ux.css'
+    'unified-ux.css',
+    'css/search.css',
+    'css/cookie-consent.css',
+    'css/age-gate.css'
 ];
 
 // CSS files to bundle (in specificity order — premium overrides MUST be last)
@@ -323,7 +330,7 @@ function generateDistIndex(jsInfo, cssInfo, originalHtml) {
 function copyStaticAssets() {
     log('Copying static assets...');
 
-    const staticFiles = ['manifest.json', 'favicon.svg', 'sw.js', 'robots.txt', 'sitemap.xml', 'offline.html', 'premium-v3-upgrades.js', 'premium-v2-fixes.js', 'provably-fair.html', 'responsible-gambling.html', 'terms.html', 'privacy.html', '404.html', 'launch.html', 'affiliates.html', 'referral.html', 'promotions.html', 'wallet.html', 'login.html', 'signup.html', 'leaderboard.html', 'account.html', 'achievements.html', 'vip.html', 'tournaments.html', 'bonus-history.html', 'jackpot-history.html', 'history.html', 'faq.html', 'spin-wheel.html', 'unified-ux.css'];
+    const staticFiles = ['manifest.json', 'favicon.svg', 'sw.js', 'robots.txt', 'sitemap.xml', 'offline.html', 'premium-v3-upgrades.js', 'premium-v2-fixes.js', 'provably-fair.html', 'responsible-gambling.html', 'terms.html', 'privacy.html', 'cookie-policy.html', 'aml.html', 'faq.html', '404.html', 'launch.html', 'affiliates.html', 'referral.html', 'promotions.html', 'wallet.html', 'login.html', 'signup.html', 'leaderboard.html', 'account.html', 'achievements.html', 'vip.html', 'tournaments.html', 'bonus-history.html', 'jackpot-history.html', 'history.html', 'spin-wheel.html', 'unified-ux.css'];
 
     staticFiles.forEach(file => {
         const src = path.join(ROOT_DIR, file);
@@ -368,6 +375,21 @@ function copyStaticAssets() {
             log(`Copied ${scriptPath}`);
         } else {
             log(`WARN: standalone script missing: ${scriptPath}`);
+        }
+    });
+
+    // Copy standalone CSS files (search.css, cookie-consent.css, age-gate.css, ...)
+    // referenced directly by every HTML page via <link rel="stylesheet" href="css/X.css">
+    STANDALONE_CSS.forEach(cssPath => {
+        const src = path.join(ROOT_DIR, cssPath);
+        const dst = path.join(DIST_DIR, cssPath);
+        const dir = path.dirname(dst);
+        if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+        if (fs.existsSync(src)) {
+            fs.copyFileSync(src, dst);
+            log(`Copied ${cssPath}`);
+        } else {
+            log(`WARN: standalone CSS missing: ${cssPath}`);
         }
     });
 

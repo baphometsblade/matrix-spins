@@ -322,6 +322,7 @@ mount('/api/fair',        './routes/fair.routes',        'fair (provably-fair)')
 mount('/api/buy-feature', './routes/buyfeature.routes',  'buy-feature');
 mount('/api/dynamic-rtp', './routes/dynamic-rtp.routes', 'dynamic-rtp');
 mount('/api/recommend',   './routes/recommend.routes',   'recommend');
+mount('/api/games',       './routes/games-catalog.routes', 'games-catalog (search + analytics)');
 
 // Bonuses & promotions
 mount('/api/promocode',     './routes/promocode.routes',     'promocode');

@@ -1,0 +1,771 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FAQ - Matrix Spins Casino | Frequently Asked Questions</title>
+    <meta name="description" content="Find answers to frequently asked questions about Matrix Spins Casino. Learn about our 100+ games, deposits, withdrawals, bonuses, VIP program, and responsible gambling tools.">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@700;800&display=swap" rel="stylesheet">
+    <meta property="og:title" content="FAQ — Matrix Spins Casino">
+    <meta property="og:description" content="Get answers to your questions about Matrix Spins Casino. Games, deposits, bonuses, safety, and more.">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://royal-slots-casino.vercel.app/faq.html">
+    <meta name="twitter:card" content="summary">
+    <link rel="canonical" href="https://royal-slots-casino.vercel.app/faq.html">
+    <link rel="stylesheet" href="css/chat-widget.css">
+    <link rel="stylesheet" href="css/notifications.css">
+    <link rel="stylesheet" href="css/age-gate.css">
+    <link rel="stylesheet" href="css/search.css">
+    <link rel="stylesheet" href="css/favorites.css">
+    <link rel="stylesheet" href="css/session-monitor.css">
+    <link rel="stylesheet" href="css/conversion.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background-color: #0D0D0D;
+            color: #E8E8E8;
+            font-family: 'Inter', sans-serif;
+            line-height: 1.6;
+        }
+
+        .container {
+            display: flex;
+            min-height: 100vh;
+        }
+
+        .sidebar {
+            position: fixed;
+            left: 0;
+            top: 0;
+            width: 280px;
+            height: 100vh;
+            background: linear-gradient(180deg, #1a1a1a 0%, #0D0D0D 100%);
+            border-right: 1px solid #DAA520;
+            padding: 30px 20px;
+            overflow-y: auto;
+        }
+
+        .sidebar h2 {
+            color: #DAA520;
+            font-size: 16px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 20px;
+            border-bottom: 1px solid #DAA520;
+            padding-bottom: 10px;
+        }
+
+        .sidebar ul {
+            list-style: none;
+        }
+
+        .sidebar li {
+            margin-bottom: 12px;
+        }
+
+        .sidebar a {
+            color: #E8E8E8;
+            text-decoration: none;
+            font-size: 14px;
+            transition: color 0.3s ease;
+            display: block;
+            padding: 8px 12px;
+            border-left: 3px solid transparent;
+            margin-left: -12px;
+        }
+
+        .sidebar a:hover {
+            color: #DAA520;
+            border-left-color: #DAA520;
+        }
+
+        .sidebar a.active {
+            color: #DAA520;
+            border-left-color: #DAA520;
+            font-weight: 600;
+        }
+
+        .main-content {
+            margin-left: 280px;
+            flex: 1;
+            padding: 60px 80px;
+        }
+
+        .header {
+            margin-bottom: 40px;
+            border-bottom: 2px solid #DAA520;
+            padding-bottom: 20px;
+        }
+
+        .header h1 {
+            color: #DAA520;
+            font-size: 42px;
+            margin-bottom: 10px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        .last-updated {
+            color: #999;
+            font-size: 13px;
+        }
+
+        .section {
+            margin-bottom: 50px;
+            scroll-margin-top: 100px;
+        }
+
+        .section h2 {
+            color: #DAA520;
+            font-size: 24px;
+            margin-bottom: 15px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .faq-item {
+            margin-bottom: 8px;
+            border: 1px solid #2a2a2a;
+            border-radius: 6px;
+            overflow: hidden;
+            transition: border-color 0.3s ease;
+        }
+
+        .faq-item:hover {
+            border-color: #DAA520;
+        }
+
+        .faq-question {
+            width: 100%;
+            background: #1a1a1a;
+            color: #E8E8E8;
+            border: none;
+            padding: 18px 50px 18px 20px;
+            font-family: 'Inter', sans-serif;
+            font-size: 15px;
+            font-weight: 600;
+            text-align: left;
+            cursor: pointer;
+            position: relative;
+            transition: background 0.3s ease, color 0.3s ease;
+        }
+
+        .faq-question:hover {
+            background: #222;
+            color: #DAA520;
+        }
+
+        .faq-question::after {
+            content: '+';
+            position: absolute;
+            right: 20px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 22px;
+            color: #DAA520;
+            transition: transform 0.3s ease;
+        }
+
+        .faq-item.active .faq-question {
+            color: #DAA520;
+            background: #1a1a1a;
+            border-bottom: 1px solid #2a2a2a;
+        }
+
+        .faq-item.active .faq-question::after {
+            content: '−';
+        }
+
+        .faq-answer {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.4s ease, padding 0.3s ease;
+            background: rgba(218, 165, 32, 0.03);
+        }
+
+        .faq-answer-inner {
+            padding: 20px;
+            color: #ccc;
+            font-size: 14px;
+            line-height: 1.8;
+        }
+
+        .faq-answer-inner a {
+            color: #DAA520;
+            text-decoration: none;
+            border-bottom: 1px solid transparent;
+            transition: border-color 0.3s ease;
+        }
+
+        .faq-answer-inner a:hover {
+            border-bottom-color: #DAA520;
+        }
+
+        .faq-item.active .faq-answer {
+            max-height: 500px;
+        }
+
+        .highlight-box {
+            background: rgba(218, 165, 32, 0.1);
+            border-left: 4px solid #DAA520;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 4px;
+        }
+
+        .highlight-box strong {
+            color: #DAA520;
+        }
+
+        .footer-nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 80px;
+            padding-top: 30px;
+            border-top: 2px solid #DAA520;
+        }
+
+        .footer-nav a {
+            color: #DAA520;
+            text-decoration: none;
+            padding: 12px 30px;
+            border: 2px solid #DAA520;
+            border-radius: 4px;
+            transition: all 0.3s ease;
+            font-weight: 600;
+        }
+
+        .footer-nav a:hover {
+            background-color: #DAA520;
+            color: #0D0D0D;
+        }
+
+        .footer-contact {
+            text-align: center;
+            color: #999;
+            font-size: 13px;
+        }
+
+        @media (max-width: 1024px) {
+            .sidebar {
+                width: 220px;
+            }
+
+            .main-content {
+                margin-left: 220px;
+                padding: 40px 40px;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                flex-direction: column;
+            }
+
+            .sidebar {
+                position: relative;
+                width: 100%;
+                height: auto;
+                border-right: none;
+                border-bottom: 1px solid #DAA520;
+                padding: 20px;
+            }
+
+            .main-content {
+                margin-left: 0;
+                padding: 40px 20px;
+            }
+
+            .header h1 {
+                font-size: 28px;
+            }
+
+            .section h2 {
+                font-size: 18px;
+            }
+
+            .faq-question {
+                font-size: 14px;
+                padding: 15px 45px 15px 15px;
+            }
+        }
+    </style>
+
+    <script type="application/ld+json">
+    {
+        "@context": "https://schema.org",
+        "@type": "FAQPage",
+        "mainEntity": [
+            {
+                "@type": "Question",
+                "name": "What is Matrix Spins Casino?",
+                "acceptedAnswer": {
+                    "@type": "Answer",
+                    "text": "Matrix Spins Casino is a premium online gaming platform featuring over 100 casino-style games including slots, table games, and specialty titles. Our platform uses provably fair technology and certified Random Number Generators to ensure transparent, trustworthy gameplay. Whether you prefer classic fruit machines or modern video slots, Matrix Spins delivers a gold-standard casino experience accessible from any device."
+                }
+            },
+            {
+                "@type": "Question",
+                "name": "How do I create an account?",
+                "acceptedAnswer": {
+                    "@type": "Answer",
+                    "text": "Creating an account at Matrix Spins Casino is quick and simple. Click the 'Sign Up' button on our homepage, enter your email address, choose a secure password, and verify your age. You must be at least 18 years old to register. Once your account is created, you'll receive demo credits to explore our full library of over 100 games before making any deposit."
+                }
+            },
+            {
+                "@type": "Question",
+                "name": "Is Matrix Spins free to play?",
+                "acceptedAnswer": {
+                    "@type": "Answer",
+                    "text": "Yes! Matrix Spins Casino offers a free-to-play demo mode for all games. Every new account receives complimentary demo credits so you can explore our entire library of 100+ games without spending real money. Demo mode uses the same game mechanics and RTP as real-money play, giving you an authentic experience. When you're ready, you can switch to real-money mode by making a deposit."
+                }
+            },
+            {
+                "@type": "Question",
+                "name": "What are demo credits?",
+                "acceptedAnswer": {
+                    "@type": "Answer",
+                    "text": "Demo credits are virtual currency provided free of charge so you can try any game on Matrix Spins Casino without financial risk. They function exactly like real wagers within the game engine, so you experience authentic gameplay, bonus rounds, and features. Demo credits cannot be withdrawn or converted to real money. They are automatically replenished so you can practice and explore as long as you like."
+                }
+            },
+            {
+                "@type": "Question",
+                "name": "How many games does Matrix Spins have?",
+                "acceptedAnswer": {
+                    "@type": "Answer",
+                    "text": "Matrix Spins Casino features over 100 games across multiple categories including classic slots, video slots, table games like blackjack and roulette, and specialty games. We regularly add new titles to keep the experience fresh. Browse our full library on the games page or use category filters to find exactly what you're looking for — from high-volatility jackpot slots to relaxed casual games."
+                }
+            },
+            {
+                "@type": "Question",
+                "name": "What is RTP (Return to Player)?",
+                "acceptedAnswer": {
+                    "@type": "Answer",
+                    "text": "RTP, or Return to Player, is a percentage that indicates how much of all wagered money a game is designed to pay back to players over time. At Matrix Spins Casino, our games have RTP rates ranging from 88% to 94%. For example, a game with 92% RTP returns $92 for every $100 wagered on average over millions of spins. RTP is a long-term statistical measure and individual sessions will vary."
+                }
+            },
+            {
+                "@type": "Question",
+                "name": "Are the games provably fair?",
+                "acceptedAnswer": {
+                    "@type": "Answer",
+                    "text": "Yes, all games at Matrix Spins Casino use provably fair technology. Our certified Random Number Generator (RNG) system ensures every spin, deal, and outcome is completely random and cannot be manipulated. The RNG is independently audited by third-party testing laboratories to meet international gaming standards. You can verify game fairness through the provably fair checker available on each game page."
+                }
+            },
+            {
+                "@type": "Question",
+                "name": "Can I play on my phone?",
+                "acceptedAnswer": {
+                    "@type": "Answer",
+                    "text": "Absolutely! Matrix Spins Casino is fully optimized for mobile play. Our responsive design works seamlessly on smartphones and tablets running iOS, Android, or any modern mobile browser. No app download is required — simply visit our website on your mobile device and log in. All 100+ games, account features, deposits, and withdrawals work perfectly on mobile with touch-friendly controls."
+                }
+            },
+            {
+                "@type": "Question",
+                "name": "How do I deposit money?",
+                "acceptedAnswer": {
+                    "@type": "Answer",
+                    "text": "To deposit funds, log into your Matrix Spins Casino account and navigate to the cashier section. Select your preferred payment method, enter the deposit amount (minimum $10 USD), and confirm the transaction. Deposits are processed securely and credited to your account instantly upon successful payment authorization. All transactions use industry-standard encryption to protect your financial information."
+                }
+            },
+            {
+                "@type": "Question",
+                "name": "What payment methods are accepted?",
+                "acceptedAnswer": {
+                    "@type": "Answer",
+                    "text": "Matrix Spins Casino accepts a variety of secure payment methods including major credit and debit cards (Visa, Mastercard), popular e-wallet services, and bank transfers. All payments are processed in USD with industry-standard encryption. Visit the cashier section of your account to see the full list of available payment options for your region. Additional payment methods may be added over time."
+                }
+            },
+            {
+                "@type": "Question",
+                "name": "What is the minimum deposit?",
+                "acceptedAnswer": {
+                    "@type": "Answer",
+                    "text": "The minimum deposit at Matrix Spins Casino is $10 USD, making it accessible for players of all budgets. The maximum deposit is $10,000 USD per transaction. You are responsible for any fees charged by your payment provider. We recommend setting personal deposit limits through our responsible gambling tools to help manage your gaming budget effectively and play within your means."
+                }
+            },
+            {
+                "@type": "Question",
+                "name": "How long do withdrawals take?",
+                "acceptedAnswer": {
+                    "@type": "Answer",
+                    "text": "Withdrawal processing times depend on your chosen payment method. E-wallet withdrawals are typically completed within 1-2 business days. Credit and debit card withdrawals take 3-5 business days, while bank transfers may take 5-7 business days. The minimum withdrawal is $20 USD. Account verification must be completed before your first withdrawal. Processing times are estimates and may vary by financial institution."
+                }
+            },
+            {
+                "@type": "Question",
+                "name": "What bonuses are available?",
+                "acceptedAnswer": {
+                    "@type": "Answer",
+                    "text": "Matrix Spins Casino offers a range of generous bonuses including welcome bonuses for new players, reload bonuses on subsequent deposits, free spins promotions, and special seasonal offers. All bonuses come with wagering requirements (typically 30x-40x the bonus amount) that must be met before withdrawal. Check our promotions page regularly for the latest offers, and remember that only one bonus can be active per account at a time."
+                }
+            },
+            {
+                "@type": "Question",
+                "name": "How does the VIP program work?",
+                "acceptedAnswer": {
+                    "@type": "Answer",
+                    "text": "The Matrix Spins VIP program rewards loyal players with exclusive perks and privileges. As you play, you earn loyalty points that elevate your VIP tier. Higher tiers unlock benefits such as faster withdrawal processing, higher deposit and withdrawal limits, personal account managers, exclusive bonus offers, and cashback rewards. Visit our VIP page for full details on tier levels and the rewards available at each stage."
+                }
+            },
+            {
+                "@type": "Question",
+                "name": "What is the Daily Spin Wheel?",
+                "acceptedAnswer": {
+                    "@type": "Answer",
+                    "text": "The Daily Spin Wheel is a free bonus feature available to all registered Matrix Spins Casino players. Once every 24 hours, you can spin the wheel for a chance to win demo credits, bonus funds, free spins, or other prizes. Simply log into your account and visit the Daily Spin Wheel section. It resets at midnight, so make sure to claim your daily spin and boost your bankroll every day."
+                }
+            },
+            {
+                "@type": "Question",
+                "name": "How does the referral program work?",
+                "acceptedAnswer": {
+                    "@type": "Answer",
+                    "text": "Matrix Spins Casino rewards you for inviting friends. Share your unique referral link with friends, and when they sign up and make their first deposit, both you and your friend receive a bonus reward. There is no limit to the number of friends you can refer. Track your referrals and earned rewards from your account dashboard. Referral bonuses are subject to standard wagering requirements before withdrawal."
+                }
+            },
+            {
+                "@type": "Question",
+                "name": "Is my personal information safe?",
+                "acceptedAnswer": {
+                    "@type": "Answer",
+                    "text": "Your security is our top priority. Matrix Spins Casino employs industry-standard SSL encryption to protect all data transmitted between your device and our servers. We never sell your personal information to third parties. Player data is stored securely in compliance with applicable privacy regulations, and we share information only with essential service providers such as payment processors and regulators. Read our full privacy policy in our terms and conditions page."
+                }
+            },
+            {
+                "@type": "Question",
+                "name": "What responsible gambling tools are available?",
+                "acceptedAnswer": {
+                    "@type": "Answer",
+                    "text": "Matrix Spins Casino is committed to responsible gambling and offers several tools to help you stay in control. These include customizable deposit limits, session time reminders, cooling-off periods, and self-exclusion options. You can access these tools from your account settings at any time. If you need support, our team is available 24/7, and we provide links to external help organizations such as Gambling Help Online and the National Council on Problem Gambling."
+                }
+            },
+            {
+                "@type": "Question",
+                "name": "How do I contact support?",
+                "acceptedAnswer": {
+                    "@type": "Answer",
+                    "text": "You can reach the Matrix Spins Casino support team 24 hours a day, 7 days a week. Use the live chat widget available on every page for instant assistance, or email us at support@matrixspins.com. Our support staff can help with account issues, payment queries, game questions, responsible gambling concerns, and any other inquiries. We aim to respond to all email inquiries within a few hours."
+                }
+            },
+            {
+                "@type": "Question",
+                "name": "What jurisdictions can play?",
+                "acceptedAnswer": {
+                    "@type": "Answer",
+                    "text": "Matrix Spins Casino is available to players in jurisdictions where online gambling is legal and permitted. You must be at least 18 years of age or the legal gambling age in your region, whichever is greater. Players are responsible for ensuring they comply with all local, state, and national laws regarding online gambling. Residents of countries or territories where online gambling is prohibited may not register or play. Check our terms and conditions page for full eligibility details."
+                }
+            }
+        ]
+    }
+    </script>
+<link rel="stylesheet" href="unified-ux.css">
+<script src="js/unified-ux.js" defer></script>
+</head>
+<body>
+    <div class="container">
+        <aside class="sidebar">
+            <h2>FAQ Sections</h2>
+            <ul>
+                <li><a href="#getting-started" class="active">Getting Started</a></li>
+                <li><a href="#games">Games</a></li>
+                <li><a href="#deposits-withdrawals">Deposits & Withdrawals</a></li>
+                <li><a href="#bonuses-rewards">Bonuses & Rewards</a></li>
+                <li><a href="#safety-support">Safety & Support</a></li>
+            </ul>
+            <h2 style="margin-top: 30px;">Quick Links</h2>
+            <ul>
+                <li><a href="index.html">Game Lobby</a></li>
+                <li><a href="terms.html">Terms & Conditions</a></li>
+                <li><a href="responsible-gambling.html">Responsible Gambling</a></li>
+                <li><a href="provably-fair.html">Provably Fair</a></li>
+            </ul>
+        </aside>
+
+        <main class="main-content">
+            <div class="header">
+                <h1>Frequently Asked Questions</h1>
+                <p class="last-updated">Last updated: April 2026</p>
+            </div>
+
+            <div class="highlight-box" style="margin-bottom: 40px;">
+                <p>Can't find what you're looking for? Our <strong>24/7 support team</strong> is ready to help. Use the live chat widget or email us at <strong>support@matrixspins.com</strong>.</p>
+            </div>
+
+            <!-- Getting Started -->
+            <section id="getting-started" class="section">
+                <h2>Getting Started</h2>
+
+                <div class="faq-item">
+                    <button class="faq-question">What is Matrix Spins Casino?</button>
+                    <div class="faq-answer">
+                        <div class="faq-answer-inner">
+                            Matrix Spins Casino is a premium online gaming platform featuring over 100 casino-style games including slots, table games, and specialty titles. Our platform uses <a href="provably-fair.html">provably fair technology</a> and certified Random Number Generators to ensure transparent, trustworthy gameplay. Whether you prefer classic fruit machines or modern video slots, Matrix Spins delivers a gold-standard casino experience accessible from any device. <a href="index.html">Visit the game lobby</a> to start exploring.
+                        </div>
+                    </div>
+                </div>
+
+                <div class="faq-item">
+                    <button class="faq-question">How do I create an account?</button>
+                    <div class="faq-answer">
+                        <div class="faq-answer-inner">
+                            Creating an account at Matrix Spins Casino is quick and simple. Click the "Sign Up" button on our <a href="index.html">homepage</a>, enter your email address, choose a secure password, and verify your age. You must be at least 18 years old to register. Once your account is created, you'll receive demo credits to explore our full library of over 100 games before making any deposit. See our <a href="terms.html#registration">account registration terms</a> for full details.
+                        </div>
+                    </div>
+                </div>
+
+                <div class="faq-item">
+                    <button class="faq-question">Is Matrix Spins free to play?</button>
+                    <div class="faq-answer">
+                        <div class="faq-answer-inner">
+                            Yes! Matrix Spins Casino offers a free-to-play demo mode for all games. Every new account receives complimentary demo credits so you can explore our entire library of <a href="index.html">100+ games</a> without spending real money. Demo mode uses the same game mechanics and RTP as real-money play, giving you an authentic experience. When you're ready, you can switch to real-money mode by making a deposit.
+                        </div>
+                    </div>
+                </div>
+
+                <div class="faq-item">
+                    <button class="faq-question">What are demo credits?</button>
+                    <div class="faq-answer">
+                        <div class="faq-answer-inner">
+                            Demo credits are virtual currency provided free of charge so you can try any game on Matrix Spins Casino without financial risk. They function exactly like real wagers within the game engine, so you experience authentic gameplay, bonus rounds, and features. Demo credits cannot be withdrawn or converted to real money. They are automatically replenished so you can practice and explore as long as you like. <a href="index.html">Try a game now</a>.
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Games -->
+            <section id="games" class="section">
+                <h2>Games</h2>
+
+                <div class="faq-item">
+                    <button class="faq-question">How many games does Matrix Spins have?</button>
+                    <div class="faq-answer">
+                        <div class="faq-answer-inner">
+                            Matrix Spins Casino features over 100 games across multiple categories including classic slots, video slots, table games like blackjack and roulette, and specialty games. We regularly add new titles to keep the experience fresh. Browse our full library on the <a href="index.html">games page</a> or use category filters to find exactly what you're looking for — from high-volatility jackpot slots to relaxed casual games.
+                        </div>
+                    </div>
+                </div>
+
+                <div class="faq-item">
+                    <button class="faq-question">What is RTP (Return to Player)?</button>
+                    <div class="faq-answer">
+                        <div class="faq-answer-inner">
+                            RTP, or Return to Player, is a percentage that indicates how much of all wagered money a game is designed to pay back to players over time. At Matrix Spins Casino, our games have RTP rates ranging from 88% to 94%. For example, a game with 92% RTP returns $92 for every $100 wagered on average over millions of spins. RTP is a long-term statistical measure and individual sessions will vary. Learn more on our <a href="provably-fair.html">provably fair page</a>.
+                        </div>
+                    </div>
+                </div>
+
+                <div class="faq-item">
+                    <button class="faq-question">Are the games provably fair?</button>
+                    <div class="faq-answer">
+                        <div class="faq-answer-inner">
+                            Yes, all games at Matrix Spins Casino use <a href="provably-fair.html">provably fair technology</a>. Our certified Random Number Generator (RNG) system ensures every spin, deal, and outcome is completely random and cannot be manipulated. The RNG is independently audited by third-party testing laboratories to meet international gaming standards. You can verify game fairness through the provably fair checker available on each game page.
+                        </div>
+                    </div>
+                </div>
+
+                <div class="faq-item">
+                    <button class="faq-question">Can I play on my phone?</button>
+                    <div class="faq-answer">
+                        <div class="faq-answer-inner">
+                            Absolutely! Matrix Spins Casino is fully optimized for mobile play. Our responsive design works seamlessly on smartphones and tablets running iOS, Android, or any modern mobile browser. No app download is required — simply visit our <a href="index.html">website</a> on your mobile device and log in. All 100+ games, account features, deposits, and withdrawals work perfectly on mobile with touch-friendly controls.
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Deposits & Withdrawals -->
+            <section id="deposits-withdrawals" class="section">
+                <h2>Deposits & Withdrawals</h2>
+
+                <div class="faq-item">
+                    <button class="faq-question">How do I deposit money?</button>
+                    <div class="faq-answer">
+                        <div class="faq-answer-inner">
+                            To deposit funds, log into your Matrix Spins Casino account and navigate to the cashier section. Select your preferred payment method, enter the deposit amount (minimum $10 USD), and confirm the transaction. Deposits are processed securely and credited to your account instantly upon successful payment authorization. All transactions use industry-standard encryption to protect your financial information. See our <a href="terms.html#deposits">deposit terms</a> for more details.
+                        </div>
+                    </div>
+                </div>
+
+                <div class="faq-item">
+                    <button class="faq-question">What payment methods are accepted?</button>
+                    <div class="faq-answer">
+                        <div class="faq-answer-inner">
+                            Matrix Spins Casino accepts a variety of secure payment methods including major credit and debit cards (Visa, Mastercard), popular e-wallet services, and bank transfers. All payments are processed in USD with industry-standard encryption. Visit the cashier section of your account to see the full list of available payment options for your region. Additional payment methods may be added over time. Review our <a href="terms.html#deposits">payment terms</a> for full details.
+                        </div>
+                    </div>
+                </div>
+
+                <div class="faq-item">
+                    <button class="faq-question">What is the minimum deposit?</button>
+                    <div class="faq-answer">
+                        <div class="faq-answer-inner">
+                            The minimum deposit at Matrix Spins Casino is $10 USD, making it accessible for players of all budgets. The maximum deposit is $10,000 USD per transaction. You are responsible for any fees charged by your payment provider. We recommend setting personal deposit limits through our <a href="responsible-gambling.html">responsible gambling tools</a> to help manage your gaming budget effectively and play within your means.
+                        </div>
+                    </div>
+                </div>
+
+                <div class="faq-item">
+                    <button class="faq-question">How long do withdrawals take?</button>
+                    <div class="faq-answer">
+                        <div class="faq-answer-inner">
+                            Withdrawal processing times depend on your chosen payment method. E-wallet withdrawals are typically completed within 1-2 business days. Credit and debit card withdrawals take 3-5 business days, while bank transfers may take 5-7 business days. The minimum withdrawal is $20 USD. Account verification must be completed before your first withdrawal. See our <a href="terms.html#deposits">full withdrawal terms</a> for additional details.
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Bonuses & Rewards -->
+            <section id="bonuses-rewards" class="section">
+                <h2>Bonuses & Rewards</h2>
+
+                <div class="faq-item">
+                    <button class="faq-question">What bonuses are available?</button>
+                    <div class="faq-answer">
+                        <div class="faq-answer-inner">
+                            Matrix Spins Casino offers a range of generous bonuses including welcome bonuses for new players, reload bonuses on subsequent deposits, free spins promotions, and special seasonal offers. All bonuses come with wagering requirements (typically 30x-40x the bonus amount) that must be met before withdrawal. Check our promotions page regularly for the latest offers. Only one bonus can be active per account at a time. See our <a href="terms.html#bonuses">bonus terms</a> for full conditions.
+                        </div>
+                    </div>
+                </div>
+
+                <div class="faq-item">
+                    <button class="faq-question">How does the VIP program work?</button>
+                    <div class="faq-answer">
+                        <div class="faq-answer-inner">
+                            The Matrix Spins VIP program rewards loyal players with exclusive perks and privileges. As you play, you earn loyalty points that elevate your VIP tier. Higher tiers unlock benefits such as faster withdrawal processing, higher deposit and withdrawal limits, personal account managers, exclusive bonus offers, and cashback rewards. Visit our <a href="vip.html">VIP page</a> for full details on tier levels and the rewards available at each stage.
+                        </div>
+                    </div>
+                </div>
+
+                <div class="faq-item">
+                    <button class="faq-question">What is the Daily Spin Wheel?</button>
+                    <div class="faq-answer">
+                        <div class="faq-answer-inner">
+                            The Daily Spin Wheel is a free bonus feature available to all registered Matrix Spins Casino players. Once every 24 hours, you can spin the wheel for a chance to win demo credits, bonus funds, free spins, or other prizes. Simply log into your account and visit the Daily Spin Wheel section from the <a href="index.html">game lobby</a>. It resets at midnight, so make sure to claim your daily spin and boost your bankroll every day.
+                        </div>
+                    </div>
+                </div>
+
+                <div class="faq-item">
+                    <button class="faq-question">How does the referral program work?</button>
+                    <div class="faq-answer">
+                        <div class="faq-answer-inner">
+                            Matrix Spins Casino rewards you for inviting friends. Share your unique referral link with friends, and when they sign up and make their first deposit, both you and your friend receive a bonus reward. There is no limit to the number of friends you can refer. Track your referrals and earned rewards from your account dashboard. Referral bonuses are subject to standard <a href="terms.html#bonuses">wagering requirements</a> before withdrawal.
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Safety & Support -->
+            <section id="safety-support" class="section">
+                <h2>Safety & Support</h2>
+
+                <div class="faq-item">
+                    <button class="faq-question">Is my personal information safe?</button>
+                    <div class="faq-answer">
+                        <div class="faq-answer-inner">
+                            Your security is our top priority. Matrix Spins Casino employs industry-standard SSL encryption to protect all data transmitted between your device and our servers. We never sell your personal information to third parties. Player data is stored securely in compliance with applicable privacy regulations, and we share information only with essential service providers such as payment processors and regulators. Read our full <a href="terms.html#privacy">privacy policy</a> for complete details.
+                        </div>
+                    </div>
+                </div>
+
+                <div class="faq-item">
+                    <button class="faq-question">What responsible gambling tools are available?</button>
+                    <div class="faq-answer">
+                        <div class="faq-answer-inner">
+                            Matrix Spins Casino is committed to responsible gambling and offers several tools to help you stay in control. These include customizable deposit limits, session time reminders, cooling-off periods, and self-exclusion options. You can access these tools from your account settings at any time. If you need support, our team is available 24/7, and we provide links to external help organizations. Visit our <a href="responsible-gambling.html">Responsible Gambling page</a> for more information.
+                        </div>
+                    </div>
+                </div>
+
+                <div class="faq-item">
+                    <button class="faq-question">How do I contact support?</button>
+                    <div class="faq-answer">
+                        <div class="faq-answer-inner">
+                            You can reach the Matrix Spins Casino support team 24 hours a day, 7 days a week. Use the live chat widget available on every page for instant assistance, or email us at <strong>support@matrixspins.com</strong>. Our support staff can help with account issues, payment queries, game questions, <a href="responsible-gambling.html">responsible gambling</a> concerns, and any other inquiries. We aim to respond to all email inquiries within a few hours.
+                        </div>
+                    </div>
+                </div>
+
+                <div class="faq-item">
+                    <button class="faq-question">What jurisdictions can play?</button>
+                    <div class="faq-answer">
+                        <div class="faq-answer-inner">
+                            Matrix Spins Casino is available to players in jurisdictions where online gambling is legal and permitted. You must be at least 18 years of age or the legal gambling age in your region, whichever is greater. Players are responsible for ensuring they comply with all local, state, and national laws regarding online gambling. Residents of countries or territories where online gambling is prohibited may not register or play. Check our <a href="terms.html#eligibility">terms and conditions</a> for full eligibility details.
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <div class="footer-nav">
+                <a href="index.html">&larr; Back to Lobby</a>
+                <div class="footer-contact">
+                    <p>&copy; 2024 Matrix Spins Casino. All rights reserved.</p>
+                </div>
+                <a href="terms.html">Terms &amp; Conditions &rarr;</a>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        // Accordion functionality
+        document.querySelectorAll('.faq-question').forEach(function(button) {
+            button.addEventListener('click', function() {
+                var item = this.parentElement;
+                var isActive = item.classList.contains('active');
+
+                // Close all items in the same section
+                var section = item.closest('.section');
+                section.querySelectorAll('.faq-item.active').forEach(function(activeItem) {
+                    activeItem.classList.remove('active');
+                });
+
+                // Toggle clicked item
+                if (!isActive) {
+                    item.classList.add('active');
+                }
+            });
+        });
+
+        // Sidebar active state on scroll
+        var sections = document.querySelectorAll('.section');
+        var sidebarLinks = document.querySelectorAll('.sidebar a[href^="#"]');
+
+        window.addEventListener('scroll', function() {
+            var scrollPos = window.scrollY + 150;
+            sections.forEach(function(section) {
+                if (section.offsetTop <= scrollPos && (section.offsetTop + section.offsetHeight) > scrollPos) {
+                    sidebarLinks.forEach(function(link) {
+                        link.classList.remove('active');
+                        if (link.getAttribute('href') === '#' + section.id) {
+                            link.classList.add('active');
+                        }
+                    });
+                }
+            });
+        });
+    </script>
+
+    <script src="js/api-client.js"></script>
+    <script src="js/chat-widget.js" defer></script>
+    <script src="js/notifications.js" defer></script>
+    <script src="js/age-gate.js" defer></script>
+    <script src="js/cookie-consent.js" defer></script>
+    <script src="js/search.js" defer></script>
+    <script src="js/favorites.js" defer></script>
+    <script src="js/session-monitor.js" defer></script>
+    <script src="js/sound-manager.js" defer></script>
+    <script src="js/analytics.js" defer></script>
+    <script src="js/email-capture.js" defer></script>
+    <script src="js/conversion.js" defer></script>
+    <script src="js/social-proof.js" defer></script>
+    <script src="js/deposit-urgency.js" defer></script>
+    <script src="js/onboarding.js" defer></script>
+</body>
+</html>

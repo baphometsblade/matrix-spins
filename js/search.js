@@ -5,29 +5,9 @@
 (function () {
   'use strict';
 
-  /* ---------- Default Game Catalog ---------- */
-  var DEFAULT_GAMES = [
-    { name: 'Golden Cherry Cascade',   studio: 'Matrix Originals', rtp: 96.5, volatility: 'Medium', icon: '🍒' },
-    { name: 'Retro Fruit Fiesta',      studio: 'ClassicPlay',      rtp: 95.8, volatility: 'Low',    icon: '🍋' },
-    { name: 'Nebula Space Odyssey',    studio: 'CosmicBet',        rtp: 96.2, volatility: 'High',   icon: '🚀' },
-    { name: 'Pharaoh Eternal Dynasty', studio: 'NileGames',        rtp: 95.4, volatility: 'High',   icon: '🏛️' },
-    { name: 'Dragon Pearl Deluxe',     studio: 'EastForge',        rtp: 96.8, volatility: 'Medium', icon: '🐉' },
-    { name: 'Neon Blitz',             studio: 'VoltSlots',         rtp: 97.0, volatility: 'High',   icon: '⚡' },
-    { name: 'Crystal Caves',          studio: 'GemStudio',         rtp: 95.6, volatility: 'Low',    icon: '💎' },
-    { name: 'Samurai Fortune',        studio: 'EastForge',         rtp: 96.1, volatility: 'Medium', icon: '⚔️' },
-    { name: 'Viking Thunder',         studio: 'NordicPlay',        rtp: 96.3, volatility: 'High',   icon: '🪓' },
-    { name: 'Aztec Gold Temple',      studio: 'NileGames',         rtp: 95.9, volatility: 'Medium', icon: '🏛️' },
-    { name: 'Lucky Sevens Infinity',   studio: 'ClassicPlay',      rtp: 96.7, volatility: 'Low',    icon: '🎰' },
-    { name: 'Cosmic Raider Mission',   studio: 'CosmicBet',        rtp: 95.3, volatility: 'High',   icon: '👾' },
-    { name: 'Cherry Blossom Bonus',    studio: 'EastForge',        rtp: 96.0, volatility: 'Low',    icon: '🌸' },
-    { name: 'Midnight Wolf Run',       studio: 'WildEdge',         rtp: 96.4, volatility: 'High',   icon: '🐺' },
-    { name: 'Diamond Dash Express',    studio: 'GemStudio',        rtp: 97.0, volatility: 'Medium', icon: '💎' },
-    { name: 'Ocean Treasure Hunter',   studio: 'AquaBet',          rtp: 95.7, volatility: 'Medium', icon: '🌊' },
-    { name: 'Fire Phoenix Rising',     studio: 'Matrix Originals', rtp: 96.6, volatility: 'High',   icon: '🔥' },
-    { name: 'Jungle Jackpot Safari',   studio: 'WildEdge',         rtp: 95.5, volatility: 'Medium', icon: '🦁' },
-    { name: 'Mystic Moonlight',        studio: 'Matrix Originals', rtp: 96.9, volatility: 'Low',    icon: '🌙' },
-    { name: 'Royal Flush Fortune',     studio: 'ClassicPlay',      rtp: 96.2, volatility: 'Medium', icon: '🂠' }
-  ];
+  /* ---------- Real catalog fetched from /api/games ---------- */
+  var API_BASE = '';
+  var DEBOUNCE_MS = 180;
 
   /* ---------- Helpers ---------- */
   function slugify(str) {
@@ -40,96 +20,50 @@
     return d.innerHTML;
   }
 
-  /* ---------- Build Catalog ---------- */
-  function buildCatalog() {
-    // Priority 1: window.GAME_CATALOG
-    if (window.GAME_CATALOG && Array.isArray(window.GAME_CATALOG) && window.GAME_CATALOG.length) {
-      return window.GAME_CATALOG.map(function (g) {
-        return {
-          name: g.name || 'Unknown',
-          studio: g.studio || g.provider || '',
-          rtp: parseFloat(g.rtp) || 96.0,
-          volatility: g.volatility || 'Medium',
-          icon: g.icon || g.emoji || '🎰',
-          slug: g.slug || slugify(g.name || 'game')
-        };
-      });
-    }
-
-    // Priority 2: DOM game-cards
-    var cards = document.querySelectorAll('.game-card');
-    if (cards.length > 0) {
-      var games = [];
-      cards.forEach(function (card) {
-        var nameEl = card.querySelector('.game-name, .game-title, h3, h4');
-        var name = nameEl ? nameEl.textContent.trim() : '';
-        if (!name) return;
-        var studioEl = card.querySelector('.game-studio, .game-provider, .studio');
-        var rtpEl = card.querySelector('.game-rtp, .rtp');
-        games.push({
-          name: name,
-          studio: studioEl ? studioEl.textContent.trim() : '',
-          rtp: rtpEl ? parseFloat(rtpEl.textContent) || 96.0 : 96.0,
-          volatility: card.getAttribute('data-volatility') || 'Medium',
-          icon: card.getAttribute('data-icon') || '🎰',
-          slug: card.getAttribute('data-slug') || slugify(name)
-        });
-      });
-      if (games.length) return games;
-    }
-
-    // Priority 3: Built-in defaults
-    return DEFAULT_GAMES.map(function (g) {
-      return Object.assign({}, g, { slug: slugify(g.name) });
-    });
+  /* ---------- Server search (live API) ---------- */
+  var searchAbort = null;
+  function serverSearch(query) {
+    if (searchAbort) try { searchAbort.abort(); } catch (_) {}
+    searchAbort = (typeof AbortController !== 'undefined') ? new AbortController() : null;
+    var url = API_BASE + '/api/games/search?q=' + encodeURIComponent(query) + '&limit=12';
+    return fetch(url, {
+      credentials: 'same-origin',
+      signal: searchAbort ? searchAbort.signal : undefined
+    }).then(function (r) {
+      if (!r.ok) throw new Error('search_failed');
+      return r.json();
+    }).then(function (d) { return (d && d.results) || []; });
   }
 
-  /* ---------- Fuzzy Scoring ---------- */
-  function fuzzyScore(query, text) {
-    var q = query.toLowerCase();
-    var t = text.toLowerCase();
-
-    // Exact substring match gets highest score
-    var idx = t.indexOf(q);
-    if (idx === 0) return 100;
-    if (idx > 0) return 80;
-
-    // Word-start matching
-    var words = t.split(/\s+/);
-    var qWords = q.split(/\s+/);
-    var matched = 0;
-    qWords.forEach(function (qw) {
-      for (var i = 0; i < words.length; i++) {
-        if (words[i].indexOf(qw) === 0) { matched++; break; }
-        if (words[i].indexOf(qw) !== -1) { matched += 0.5; break; }
-      }
-    });
-    if (matched > 0) return (matched / qWords.length) * 60;
-
-    // Character-sequence match
-    var qi = 0;
-    var score = 0;
-    for (var ti = 0; ti < t.length && qi < q.length; ti++) {
-      if (t[ti] === q[qi]) { score += 1; qi++; }
-    }
-    if (qi === q.length) return (score / t.length) * 40;
-
-    return 0;
+  function trackClick(query, gameId) {
+    try {
+      fetch(API_BASE + '/api/games/search/track', {
+        method: 'POST',
+        credentials: 'same-origin',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ query: query, gameId: gameId }),
+        keepalive: true
+      });
+    } catch (_) {}
   }
 
-  function searchGames(query, catalog) {
-    if (!query.trim()) return [];
-    var results = [];
-    catalog.forEach(function (game) {
-      var nameScore = fuzzyScore(query, game.name);
-      var studioScore = fuzzyScore(query, game.studio) * 0.5;
-      var best = Math.max(nameScore, studioScore);
-      if (best > 10) {
-        results.push({ game: game, score: best });
-      }
-    });
-    results.sort(function (a, b) { return b.score - a.score; });
-    return results.slice(0, 8);
+  function debounce(fn, ms) {
+    var t;
+    return function () {
+      var ctx = this, args = arguments;
+      clearTimeout(t);
+      t = setTimeout(function () { fn.apply(ctx, args); }, ms);
+    };
+  }
+
+  /* ---------- Popular searches ---------- */
+  var popularCache = null;
+  function fetchPopular() {
+    if (popularCache) return Promise.resolve(popularCache);
+    return fetch(API_BASE + '/api/games/popular', { credentials: 'same-origin' })
+      .then(function (r) { return r.ok ? r.json() : { popular: [] }; })
+      .then(function (d) { popularCache = (d && d.popular) || []; return popularCache; })
+      .catch(function () { return []; });
   }
 
   function highlightMatch(text, query) {
@@ -139,31 +73,33 @@
     return esc.replace(re, '<mark>$1</mark>');
   }
 
-  /* ---------- Recent Searches ---------- */
+  /* ---------- Recent Searches (persistent) ---------- */
   var STORAGE_KEY = 'ms_recent_searches';
 
   function getRecent() {
     try {
-      return JSON.parse(sessionStorage.getItem(STORAGE_KEY)) || [];
+      return JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
     } catch (e) { return []; }
   }
 
   function addRecent(term) {
+    if (!term) return;
     var list = getRecent().filter(function (t) { return t !== term; });
     list.unshift(term);
-    if (list.length > 5) list = list.slice(0, 5);
-    try { sessionStorage.setItem(STORAGE_KEY, JSON.stringify(list)); } catch (e) {}
+    if (list.length > 6) list = list.slice(0, 6);
+    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(list)); } catch (e) {}
   }
 
   function removeRecent(term) {
     var list = getRecent().filter(function (t) { return t !== term; });
-    try { sessionStorage.setItem(STORAGE_KEY, JSON.stringify(list)); } catch (e) {}
+    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(list)); } catch (e) {}
   }
 
   /* ---------- DOM Creation ---------- */
   var magnifyingSVG = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>';
 
-  var overlay, input, resultsContainer, catalog, focusedIdx = -1;
+  var overlay, input, resultsContainer, focusedIdx = -1;
+  var FALLBACK_THUMB = 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect width="64" height="64" fill="%231a1a1a"/><text x="50%" y="55%" font-size="32" text-anchor="middle" fill="%23DAA520">🎰</text></svg>';
 
   function createOverlay() {
     overlay = document.createElement('div');
@@ -194,10 +130,22 @@
       if (e.target === overlay) closeSearch();
     });
 
-    // Input handling
+    // Input handling — debounced server search
+    var debouncedSearch = debounce(function () {
+      var q = input.value.trim();
+      if (!q) { renderRecent(); return; }
+      serverSearch(q).then(function (results) {
+        if (input.value.trim() !== q) return; // stale response
+        renderResults(q, results);
+      }).catch(function (err) {
+        if (err && err.name === 'AbortError') return;
+        renderError();
+      });
+    }, DEBOUNCE_MS);
+
     input.addEventListener('input', function () {
       focusedIdx = -1;
-      renderResults(input.value.trim());
+      debouncedSearch();
     });
 
     input.addEventListener('keydown', function (e) {
@@ -230,71 +178,100 @@
   }
 
   /* ---------- Render ---------- */
-  function renderResults(query) {
-    if (!query) {
-      renderRecent();
-      return;
-    }
-
-    var results = searchGames(query, catalog);
+  function renderResults(query, results) {
     if (!results.length) {
       resultsContainer.innerHTML =
         '<div class="ms-search-empty">' +
           '<div class="ms-search-empty-icon">🔍</div>' +
-          '<div class="ms-search-empty-title">No games found</div>' +
+          '<div class="ms-search-empty-title">No games found for &ldquo;' + escapeHTML(query) + '&rdquo;</div>' +
           '<div class="ms-search-empty-hint">Try a shorter keyword or browse our categories</div>' +
         '</div>';
       return;
     }
 
-    var html = '<div class="ms-search-label">Results</div>';
-    results.forEach(function (r) {
+    var html = '<div class="ms-search-label">Results · ' + results.length + '</div>';
+    results.forEach(function (g) {
+      var thumb = g.thumbnail || FALLBACK_THUMB;
+      var url = g.url || ('games/' + encodeURIComponent(g.slug || g.id) + '.html');
+      var rtpStr = (typeof g.rtp === 'number')
+        ? '<span class="ms-search-item-rtp">' + g.rtp.toFixed(1) + '% RTP</span>'
+        : '';
+      var theme = g.themeCategory ? ' · <span class="ms-search-cat">' + escapeHTML(g.themeCategory) + '</span>' : '';
       html +=
-        '<a class="ms-search-item" href="games/' + encodeURIComponent(r.game.slug) + '.html" data-name="' + escapeHTML(r.game.name) + '">' +
-          '<div class="ms-search-item-icon">' + r.game.icon + '</div>' +
+        '<a class="ms-search-item" href="' + escapeHTML(url) +
+          '" data-name="' + escapeHTML(g.name || '') + '" data-id="' + escapeHTML(g.id || '') + '">' +
+          '<img class="ms-search-item-thumb" src="' + escapeHTML(thumb) + '" alt="" loading="lazy" onerror="this.src=\'' + FALLBACK_THUMB + '\'" />' +
           '<div class="ms-search-item-info">' +
-            '<div class="ms-search-item-name">' + highlightMatch(r.game.name, query) + '</div>' +
-            '<div class="ms-search-item-studio">' + escapeHTML(r.game.studio) + '</div>' +
+            '<div class="ms-search-item-name">' + highlightMatch(g.name || '', query) + '</div>' +
+            '<div class="ms-search-item-studio">' + highlightMatch(g.provider || '', query) + theme + '</div>' +
           '</div>' +
-          '<span class="ms-search-item-rtp">' + r.game.rtp.toFixed(1) + '% RTP</span>' +
+          rtpStr +
         '</a>';
     });
     resultsContainer.innerHTML = html;
 
-    // Track click for recent searches
     resultsContainer.querySelectorAll('.ms-search-item').forEach(function (el) {
       el.addEventListener('click', function () {
-        addRecent(el.getAttribute('data-name'));
+        var name = el.getAttribute('data-name');
+        var id = el.getAttribute('data-id');
+        addRecent(name);
+        trackClick(query, id);
       });
     });
   }
 
+  function renderError() {
+    resultsContainer.innerHTML =
+      '<div class="ms-search-empty">' +
+        '<div class="ms-search-empty-icon">⚠️</div>' +
+        '<div class="ms-search-empty-title">Search temporarily unavailable</div>' +
+        '<div class="ms-search-empty-hint">Please try again in a moment</div>' +
+      '</div>';
+  }
+
   function renderRecent() {
     var recent = getRecent();
-    if (!recent.length) {
-      resultsContainer.innerHTML =
-        '<div class="ms-search-empty">' +
-          '<div class="ms-search-empty-icon">🎰</div>' +
-          '<div class="ms-search-empty-title">Search 100+ Games</div>' +
-          '<div class="ms-search-empty-hint">Find slots, table games, and more by name or studio</div>' +
-        '</div>';
-      return;
+    var html = '';
+
+    if (recent.length) {
+      html += '<div class="ms-search-label">Recent</div>';
+      recent.forEach(function (term) {
+        html +=
+          '<div class="ms-search-item ms-search-recent" data-recent="' + escapeHTML(term) + '">' +
+            '<div class="ms-search-item-icon">🕒</div>' +
+            '<div class="ms-search-item-info">' +
+              '<div class="ms-search-item-name">' + escapeHTML(term) + '</div>' +
+            '</div>' +
+            '<button class="ms-search-item-remove" title="Remove" aria-label="Remove recent search" data-remove="' + escapeHTML(term) + '">&times;</button>' +
+          '</div>';
+      });
     }
 
-    var html = '<div class="ms-search-label">Recent Searches</div>';
-    recent.forEach(function (term) {
-      html +=
-        '<div class="ms-search-item" data-recent="' + escapeHTML(term) + '">' +
-          '<div class="ms-search-item-icon">🕒</div>' +
-          '<div class="ms-search-item-info">' +
-            '<div class="ms-search-item-name">' + escapeHTML(term) + '</div>' +
-          '</div>' +
-          '<button class="ms-search-item-remove" title="Remove" data-remove="' + escapeHTML(term) + '">&times;</button>' +
-        '</div>';
-    });
-    resultsContainer.innerHTML = html;
+    resultsContainer.innerHTML = html ||
+      '<div class="ms-search-empty">' +
+        '<div class="ms-search-empty-icon">🎰</div>' +
+        '<div class="ms-search-empty-title">Search 100+ Games</div>' +
+        '<div class="ms-search-empty-hint">Find slots by name, studio, or theme</div>' +
+      '</div>';
 
-    // Click recent to search again
+    fetchPopular().then(function (popular) {
+      if (input.value.trim()) return;
+      if (!popular || !popular.length) return;
+      var ph = '<div class="ms-search-label" style="margin-top:14px">Popular searches</div>';
+      ph += '<div class="ms-search-popular">';
+      popular.slice(0, 8).forEach(function (p) {
+        ph += '<button class="ms-search-chip" data-pop="' + escapeHTML(p.query) + '">' + escapeHTML(p.query) + '</button>';
+      });
+      ph += '</div>';
+      resultsContainer.insertAdjacentHTML('beforeend', ph);
+      resultsContainer.querySelectorAll('[data-pop]').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+          input.value = btn.getAttribute('data-pop');
+          input.dispatchEvent(new Event('input'));
+        });
+      });
+    });
+
     resultsContainer.querySelectorAll('[data-recent]').forEach(function (el) {
       el.addEventListener('click', function (e) {
         if (e.target.closest('.ms-search-item-remove')) return;
@@ -303,7 +280,6 @@
       });
     });
 
-    // Remove recent
     resultsContainer.querySelectorAll('[data-remove]').forEach(function (btn) {
       btn.addEventListener('click', function (e) {
         e.stopPropagation();
@@ -316,7 +292,6 @@
   /* ---------- Open / Close ---------- */
   function openSearch() {
     if (!overlay) createOverlay();
-    if (!catalog) catalog = buildCatalog();
     overlay.classList.add('active');
     document.body.style.overflow = 'hidden';
     input.value = '';
@@ -331,36 +306,59 @@
     document.body.style.overflow = '';
   }
 
-  /* ---------- Keyboard Shortcut ---------- */
+  /* ---------- Keyboard Shortcuts: Ctrl/Cmd+K + "/" ---------- */
   document.addEventListener('keydown', function (e) {
-    if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
+    var isOpen = overlay && overlay.classList.contains('active');
+    var key = e.key && e.key.toLowerCase();
+
+    if ((e.metaKey || e.ctrlKey) && key === 'k') {
       e.preventDefault();
-      if (overlay && overlay.classList.contains('active')) {
-        closeSearch();
-      } else {
+      isOpen ? closeSearch() : openSearch();
+      return;
+    }
+
+    if (e.key === '/' && !isOpen) {
+      var t = e.target;
+      var tag = t && t.tagName;
+      var typing = tag === 'INPUT' || tag === 'TEXTAREA' || (t && t.isContentEditable);
+      if (!typing) {
+        e.preventDefault();
         openSearch();
       }
     }
-    if (e.key === 'Escape' && overlay && overlay.classList.contains('active')) {
-      closeSearch();
-    }
+
+    if (e.key === 'Escape' && isOpen) closeSearch();
   });
 
   /* ---------- Inject Trigger Button ---------- */
   function injectTrigger() {
+    if (document.querySelector('.ms-search-trigger')) return;
+
     var btn = document.createElement('button');
+    btn.type = 'button';
     btn.className = 'ms-search-trigger';
-    btn.setAttribute('aria-label', 'Search games');
-    btn.setAttribute('title', 'Search games (Ctrl+K)');
-    btn.innerHTML = magnifyingSVG;
+    btn.setAttribute('aria-label', 'Search games (Ctrl+K)');
+    btn.setAttribute('title', 'Search (Ctrl+K)');
+    btn.innerHTML = magnifyingSVG +
+      '<span class="ms-search-trigger-label">Search</span>' +
+      '<span class="ms-search-trigger-kbd">Ctrl+K</span>';
     btn.addEventListener('click', function (e) {
       e.preventDefault();
       openSearch();
     });
 
-    var target = document.querySelector('.header-right') || document.querySelector('.actions');
+    var target =
+      document.querySelector('.header-right') ||
+      document.querySelector('.nav-right') ||
+      document.querySelector('.actions') ||
+      document.querySelector('.user-menu') ||
+      document.querySelector('header nav') ||
+      document.querySelector('.top-nav');
     if (target) {
       target.prepend(btn);
+    } else {
+      btn.classList.add('ms-search-trigger-floating');
+      document.body.appendChild(btn);
     }
   }
 
