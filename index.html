@@ -1657,10 +1657,7 @@
             initializeApp();
         }
 
-        // Register service worker
-        if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.register('sw.js').catch(() => {});
-        }
+        // Service worker registration handled by /js/pwa-install.js
 
         // ── HERO SHOWCASE — 4 featured game cards ──────────────
         function buildHeroShowcase() {
@@ -1930,16 +1927,8 @@
             }
         }
     </script>
-    <!-- Service Worker Registration -->
-    <script>
-    if ('serviceWorker' in navigator) {
-      window.addEventListener('load', () => {
-        navigator.serviceWorker.register('/sw.js').then(reg => {
-          console.log('[SW] Registered:', reg.scope);
-        }).catch(err => console.warn('[SW] Registration failed:', err));
-      });
-    }
-    </script>
+    <!-- PWA: SW registration + install prompt + update banner -->
+    <script src="/js/pwa-install.js" defer></script>
     <!-- Site-wide jackpot win celebration + real-time pool ticker (socket.io) -->
     <script src="js/confetti.min.js" defer></script>
     <script src="js/jackpot-celebration.js" defer></script>

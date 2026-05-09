@@ -415,10 +415,11 @@ mount('/api/session-analytics', './routes/session-analytics.routes',   'session-
 mount('/api/campaigns',         './routes/campaigns.routes',           'campaigns');
 mount('/api/deposit-campaigns', './routes/campaigns.routes',           'deposit-campaigns-alias');
 
-// Health + newsletter
+// Health + newsletter + SEO (dynamic sitemap/robots)
 mount('/api/health',     './routes/health.routes',     'health');
 mount('/api/newsletter', './routes/newsletter.routes', 'newsletter');
 mount('/api/bundles',    './routes/bundles.routes',    'bundles (stub — 501 until Stripe wired)');
+mount('/',               './routes/seo.routes',        'seo (sitemap, robots, structured-data)');
 
 // Email (preferences + admin broadcast)
 mount('/api/email',         './routes/email.routes',        'email-preferences');

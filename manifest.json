@@ -1,14 +1,64 @@
 {
-  "name": "Matrix Spins Casino",
+  "name": "Matrix Spins",
   "short_name": "Matrix Spins",
-  "description": "Premium online slots with 100 games from 8 world-class studios",
-  "start_url": "/",
+  "description": "Premium Matrix-themed online slots — 100 games from 8 world-class studios. Provably fair, instant payouts.",
+  "start_url": "/?utm_source=pwa",
+  "scope": "/",
+  "id": "/?source=pwa",
   "display": "standalone",
-  "background_color": "#0D0F14",
-  "theme_color": "#D4A853",
+  "display_override": ["window-controls-overlay", "standalone", "minimal-ui"],
   "orientation": "any",
+  "background_color": "#0a0a0a",
+  "theme_color": "#00ff41",
+  "categories": ["games", "entertainment", "casino"],
+  "lang": "en-US",
+  "dir": "ltr",
+  "prefer_related_applications": false,
   "icons": [
-    { "src": "assets/icon-192.png", "sizes": "192x192", "type": "image/png" },
-    { "src": "assets/icon-512.png", "sizes": "512x512", "type": "image/png" }
-  ]
+    { "src": "/assets/icon-192.svg", "sizes": "192x192", "type": "image/svg+xml", "purpose": "any" },
+    { "src": "/assets/icon-512.svg", "sizes": "512x512", "type": "image/svg+xml", "purpose": "any" },
+    { "src": "/assets/icon-maskable.svg", "sizes": "512x512", "type": "image/svg+xml", "purpose": "maskable" },
+    { "src": "/images/logo-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "/images/logo-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" }
+  ],
+  "shortcuts": [
+    {
+      "name": "Lobby",
+      "short_name": "Play",
+      "description": "Browse all 100 slot games",
+      "url": "/?from=shortcut",
+      "icons": [{ "src": "/assets/icon-192.svg", "sizes": "192x192", "type": "image/svg+xml" }]
+    },
+    {
+      "name": "Wallet",
+      "short_name": "Wallet",
+      "description": "Deposit, withdraw, view balance",
+      "url": "/wallet.html?from=shortcut",
+      "icons": [{ "src": "/assets/icon-192.svg", "sizes": "192x192", "type": "image/svg+xml" }]
+    },
+    {
+      "name": "Promotions",
+      "short_name": "Bonuses",
+      "description": "Active bonuses and promotions",
+      "url": "/promotions.html?from=shortcut",
+      "icons": [{ "src": "/assets/icon-192.svg", "sizes": "192x192", "type": "image/svg+xml" }]
+    },
+    {
+      "name": "VIP",
+      "short_name": "VIP",
+      "description": "VIP loyalty program",
+      "url": "/vip.html?from=shortcut",
+      "icons": [{ "src": "/assets/icon-192.svg", "sizes": "192x192", "type": "image/svg+xml" }]
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "/img/og-banner.png",
+      "sizes": "1200x630",
+      "type": "image/png",
+      "form_factor": "wide",
+      "label": "Matrix Spins Casino lobby"
+    }
+  ],
+  "related_applications": []
 }

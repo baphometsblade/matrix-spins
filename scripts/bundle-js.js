@@ -35,7 +35,8 @@ const STANDALONE_SCRIPTS = [
     'js/onboarding.js',
     'js/referral-page.js',
     'js/responsible-gambling-page.js',
-    'js/unified-ux.js'
+    'js/unified-ux.js',
+    'js/pwa-install.js'
 ];
 
 // Standalone CSS files referenced directly by static HTML pages
@@ -322,7 +323,7 @@ function generateDistIndex(jsInfo, cssInfo, originalHtml) {
 function copyStaticAssets() {
     log('Copying static assets...');
 
-    const staticFiles = ['manifest.json', 'favicon.svg', 'sw.js', 'robots.txt', 'sitemap.xml', 'premium-v3-upgrades.js', 'premium-v2-fixes.js', 'provably-fair.html', 'responsible-gambling.html', 'terms.html', 'privacy.html', '404.html', 'launch.html', 'affiliates.html', 'referral.html', 'promotions.html', 'wallet.html', 'login.html', 'signup.html', 'leaderboard.html', 'account.html', 'achievements.html', 'vip.html', 'tournaments.html', 'bonus-history.html', 'jackpot-history.html', 'history.html', 'unified-ux.css'];
+    const staticFiles = ['manifest.json', 'favicon.svg', 'sw.js', 'robots.txt', 'sitemap.xml', 'offline.html', 'premium-v3-upgrades.js', 'premium-v2-fixes.js', 'provably-fair.html', 'responsible-gambling.html', 'terms.html', 'privacy.html', '404.html', 'launch.html', 'affiliates.html', 'referral.html', 'promotions.html', 'wallet.html', 'login.html', 'signup.html', 'leaderboard.html', 'account.html', 'achievements.html', 'vip.html', 'tournaments.html', 'bonus-history.html', 'jackpot-history.html', 'history.html', 'faq.html', 'spin-wheel.html', 'unified-ux.css'];
 
     staticFiles.forEach(file => {
         const src = path.join(ROOT_DIR, file);

@@ -50,11 +50,18 @@ class PgBackend {
             }
         }
 
+        // Pool sizing: env-tunable for vertical scaling. Defaults sized for
+        // a 4 vCPU / 2GB Render Standard instance. Each pg connection costs
+        // ~10MB on the PG server, so cap conservatively unless DB is dedicated.
         this.pool = new Pool({
             connectionString: connectionString,
-            max: 20,
-            idleTimeoutMillis: 30000,
-            connectionTimeoutMillis: 15000,  // 15s — fail fast on unreachable PG
+            max: parseInt(process.env.PG_POOL_MAX, 10) || 20,
+            min: parseInt(process.env.PG_POOL_MIN, 10) || 2,
+            idleTimeoutMillis: parseInt(process.env.PG_IDLE_TIMEOUT_MS, 10) || 30000,
+            connectionTimeoutMillis: parseInt(process.env.PG_CONNECT_TIMEOUT_MS, 10) || 15000,
+            statement_timeout: parseInt(process.env.PG_STATEMENT_TIMEOUT_MS, 10) || 15000,
+            query_timeout: parseInt(process.env.PG_QUERY_TIMEOUT_MS, 10) || 15000,
+            keepAlive: true,
             ssl: sslSetting,
         });
 
