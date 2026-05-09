@@ -481,6 +481,11 @@ mount('/api/receipts',        './routes/receipts.routes',        'transaction-re
 // Withdrawal admin queue
 mount('/api/admin-withdrawals', './routes/admin-withdrawals.routes', 'admin-withdrawal-queue');
 
+// Table games (Blackjack, Roulette, Video Poker)
+mount('/api/blackjack',   './routes/blackjack.routes',   'blackjack');
+mount('/api/roulette',    './routes/roulette.routes',    'roulette');
+mount('/api/video-poker', './routes/video-poker.routes', 'video-poker');
+
   // close mountAllRoutes()
 }
 

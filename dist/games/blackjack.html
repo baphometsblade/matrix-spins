@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Blackjack — Matrix Spins Casino</title>
+  <meta name="description" content="Play real-money Blackjack at Matrix Spins Casino. 6-deck shoe, dealer hits soft 17, 3:2 blackjack, Perfect Pairs side bet.">
+  <link rel="canonical" href="https://msaart.online/games/blackjack.html">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&family=Plus+Jakarta+Sans:wght@700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../css/table-games.css">
+</head>
+<body class="tg-page">
+
+<header class="tg-topbar">
+  <a class="tg-back" href="/index.html">← Lobby</a>
+  <h1>Blackjack</h1>
+  <div class="tg-balance"><span class="label">Balance</span><span class="amount">$0.00</span></div>
+</header>
+
+<main class="tg-shell">
+  <div class="tg-felt" id="table">
+    <div class="tg-hand-label">Dealer</div>
+    <div class="tg-hand-value" id="dealerValue">—</div>
+    <div class="tg-hand" id="dealerHand"></div>
+
+    <hr style="border: none; border-top: 1px dashed rgba(0,255,127,.2); margin: 24px 0;">
+
+    <div class="tg-hand-label">Your Hands</div>
+    <div id="playerHands" style="display:flex;gap:24px;flex-wrap:wrap;justify-content:center;"></div>
+
+    <div class="tg-result-banner" id="resultBanner" style="display:none;"></div>
+
+    <div class="tg-actions" id="actions"></div>
+
+    <div style="margin-top:24px; text-align:center;" id="bettingArea">
+      <div class="tg-muted">Choose chip — main bet</div>
+      <div class="tg-chips" id="mainChips"></div>
+      <div class="tg-bet-display">Bet: <span id="mainBetAmt">$0</span></div>
+
+      <div class="tg-muted" style="margin-top:14px;">Perfect Pairs (optional)</div>
+      <div class="tg-chips" id="ppChips"></div>
+      <div class="tg-bet-display">Side: <span id="ppBetAmt">$0</span></div>
+
+      <div style="margin-top:18px;">
+        <button class="tg-btn" id="dealBtn">Deal Cards</button>
+        <button class="tg-btn alt" id="clearBetBtn">Clear</button>
+      </div>
+      <div class="tg-muted" style="margin-top:8px;">Min $1 · Max $500 · Side bet max $100</div>
+    </div>
+  </div>
+
+  <div class="tg-stat-grid" style="margin-top:18px;">
+    <div class="panel">
+      <h4>Rules</h4>
+      <div style="font-size:13px;line-height:1.6">
+        6-deck shoe. Dealer hits soft 17. Blackjack pays 3:2.<br>
+        Double on any 2 cards. Split a pair (one re-split allowed via dealing two new hands).<br>
+        Insurance pays 2:1 when dealer shows Ace.
+      </div>
+    </div>
+    <div class="panel">
+      <h4>Perfect Pairs Side Bet</h4>
+      <div style="font-size:13px;line-height:1.6">
+        <strong>Perfect</strong> (same rank+suit): <span style="color:var(--tg-gold)">25:1</span><br>
+        <strong>Coloured</strong> (same rank+colour): <span style="color:var(--tg-gold)">12:1</span><br>
+        <strong>Mixed</strong> (same rank): <span style="color:var(--tg-gold)">6:1</span>
+      </div>
+    </div>
+  </div>
+</main>
+
+<script src="../js/table-games-common.js"></script>
+<script>
+(function(){
+  'use strict';
+  if (!window.TG.requireAuth()) return;
+
+  const CHIP_VALUES = [1, 5, 10, 25, 50, 100];
+  let mainBet = 0, ppBet = 0;
+  let state = null;
+
+  function buildChips(target, onPick) {
+    target.textContent = '';
+    CHIP_VALUES.forEach(function (v) {
+      const c = document.createElement('div');
+      c.className = 'tg-chip';
+      c.dataset.amount = String(v);
+      c.textContent = '$' + v;
+      c.addEventListener('click', function () { onPick(v); });
+      target.appendChild(c);
+    });
+  }
+
+  buildChips(document.getElementById('mainChips'), function (v) {
+    mainBet = Math.min(500, mainBet + v);
+    document.getElementById('mainBetAmt').textContent = '$' + mainBet;
+  });
+  buildChips(document.getElementById('ppChips'), function (v) {
+    ppBet = Math.min(100, ppBet + v);
+    document.getElementById('ppBetAmt').textContent = '$' + ppBet;
+  });
+  document.getElementById('clearBetBtn').addEventListener('click', function () {
+    mainBet = 0; ppBet = 0;
+    document.getElementById('mainBetAmt').textContent = '$0';
+    document.getElementById('ppBetAmt').textContent = '$0';
+  });
+
+  document.getElementById('dealBtn').addEventListener('click', deal);
+
+  TG.refreshBalance();
+  loadState();
+
+  async function loadState() {
+    try {
+      const r = await TG.api('/blackjack/state');
+      TG.setBalance(r.balance);
+      if (r.state && r.state.phase !== 'settled') {
+        state = r.state;
+        render();
+      }
+    } catch (e) { TG.toast(e.message, true); }
+  }
+
+  async function deal() {
+    if (mainBet < 1) return TG.toast('Pick a main bet first (min $1).', true);
+    try {
+      const r = await TG.api('/blackjack/deal', { method: 'POST', body: { bet: mainBet, perfectPairsBet: ppBet } });
+      state = r.state;
+      TG.setBalance(r.balance);
+      render();
+      if (r.state.sideBet) {
+        if (r.state.sideBet.won) TG.toast('Perfect Pairs WIN! ' + r.state.sideBet.mult + ':1');
+      }
+    } catch (e) { TG.toast(e.message, true); }
+  }
+
+  async function action(path) {
+    try {
+      const r = await TG.api('/blackjack/' + path, { method: 'POST' });
+      state = r.state;
+      TG.setBalance(r.balance);
+      render();
+    } catch (e) { TG.toast(e.message, true); }
+  }
+
+  async function takeInsurance(take) {
+    try {
+      const r = await TG.api('/blackjack/insurance', { method: 'POST', body: { take } });
+      state = r.state;
+      TG.setBalance(r.balance);
+      render();
+    } catch (e) { TG.toast(e.message, true); }
+  }
+
+  function render() {
+    const dealerHand = document.getElementById('dealerHand');
+    const dealerVal = document.getElementById('dealerValue');
+    const playerHands = document.getElementById('playerHands');
+    const banner = document.getElementById('resultBanner');
+    const actions = document.getElementById('actions');
+    const bettingArea = document.getElementById('bettingArea');
+
+    if (!state) {
+      dealerHand.textContent = '';
+      playerHands.textContent = '';
+      dealerVal.textContent = '—';
+      banner.style.display = 'none';
+      actions.textContent = '';
+      bettingArea.style.display = 'block';
+      return;
+    }
+
+    bettingArea.style.display = state.phase === 'settled' ? 'block' : 'none';
+
+    TG.renderHand(dealerHand, state.dealer || []);
+    dealerVal.textContent = state.dealerValue && state.dealerValue.value
+      ? (state.phase === 'player' || state.phase === 'insurance' ? (state.dealerValue.value + ' / ?') : state.dealerValue.value)
+      : '—';
+
+    playerHands.textContent = '';
+    state.hands.forEach(function (h, idx) {
+      const wrap = document.createElement('div');
+      wrap.style.padding = '6px';
+      if (idx === state.active && state.phase === 'player') wrap.style.boxShadow = '0 0 0 2px var(--tg-gold)';
+      wrap.style.borderRadius = '12px';
+
+      const valLabel = document.createElement('div');
+      valLabel.className = 'tg-hand-value' + (h.value && h.value.busted ? ' bust' : (h.blackjack ? ' bj' : ''));
+      const valText = h.value ? (h.value.busted ? 'BUST ' + h.value.value : (h.blackjack ? 'BJ' : (h.value.soft ? 'soft ' + h.value.value : h.value.value))) : '';
+      valLabel.textContent = valText;
+      wrap.appendChild(valLabel);
+
+      const handDiv = document.createElement('div');
+      handDiv.className = 'tg-hand';
+      TG.renderHand(handDiv, h.cards);
+      wrap.appendChild(handDiv);
+
+      const meta = document.createElement('div');
+      meta.className = 'tg-muted';
+      meta.style.textAlign = 'center';
+      meta.textContent = 'Bet ' + TG.fmt(h.bet) + (h.doubled ? ' (doubled)' : '') +
+        (h.settled ? ' · ' + h.settled.result.toUpperCase() + ' ' + TG.fmt(h.settled.payout) : '');
+      wrap.appendChild(meta);
+      playerHands.appendChild(wrap);
+    });
+
+    actions.textContent = '';
+    if (state.phase === 'insurance') {
+      banner.style.display = 'block';
+      banner.className = 'tg-result-banner';
+      banner.textContent = 'Dealer shows Ace — Insurance? (' + TG.fmt(state.bet / 2) + ')';
+      actions.appendChild(makeBtn('Take Insurance', function () { takeInsurance(true); }));
+      actions.appendChild(makeBtn('No Insurance', function () { takeInsurance(false); }, 'alt'));
+      return;
+    }
+
+    if (state.phase === 'player') {
+      banner.style.display = 'none';
+      const h = state.hands[state.active];
+      const canDouble = h.cards.length === 2 && !h.doubled && !h.stood && !h.busted;
+      const canSplit = state.hands.length === 1 && h.cards.length === 2 &&
+        cardVal(h.cards[0]) === cardVal(h.cards[1]);
+      actions.appendChild(makeBtn('Hit',   function () { action('hit');   }));
+      actions.appendChild(makeBtn('Stand', function () { action('stand'); }));
+      if (canDouble) actions.appendChild(makeBtn('Double', function () { action('double'); }, 'alt'));
+      if (canSplit)  actions.appendChild(makeBtn('Split',  function () { action('split');  }, 'alt'));
+      return;
+    }
+
+    if (state.phase === 'settled') {
+      banner.style.display = 'block';
+      const net = Number(state.totalNet || 0);
+      banner.classList.remove('win','lose','push');
+      if (net > 0) { banner.classList.add('win');  banner.textContent = 'You WIN ' + TG.fmt(net); }
+      else if (net < 0) { banner.classList.add('lose'); banner.textContent = 'You LOSE ' + TG.fmt(-net); }
+      else { banner.classList.add('push'); banner.textContent = 'PUSH'; }
+      actions.appendChild(makeBtn('Deal Again', deal));
+      actions.appendChild(makeBtn('Clear Bet', function () {
+        mainBet = 0; ppBet = 0;
+        document.getElementById('mainBetAmt').textContent = '$0';
+        document.getElementById('ppBetAmt').textContent = '$0';
+        state = null; render();
+      }, 'alt'));
+    }
+  }
+
+  function makeBtn(label, fn, variant) {
+    const b = document.createElement('button');
+    b.className = 'tg-btn' + (variant ? ' ' + variant : '');
+    b.textContent = label;
+    b.addEventListener('click', fn);
+    return b;
+  }
+
+  function cardVal(card) {
+    if (!card) return 0;
+    if (card.r === 'A') return 11;
+    if (card.r === 'T' || card.r === 'J' || card.r === 'Q' || card.r === 'K') return 10;
+    return parseInt(card.r, 10);
+  }
+})();
+</script>
+</body>
+</html>
