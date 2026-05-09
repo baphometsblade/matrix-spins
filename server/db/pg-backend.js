@@ -111,6 +111,40 @@ class PgBackend {
             }
         }
 
+        // Transactions table column migrations
+        if (schema.TRANSACTION_MIGRATIONS) {
+            const txResult = await this.pool.query(
+                "SELECT column_name FROM information_schema.columns WHERE table_name = 'transactions'"
+            );
+            const txColNames = txResult.rows.map(r => r.column_name);
+            for (const [name, def] of schema.TRANSACTION_MIGRATIONS) {
+                if (!SAFE_COL_NAME.test(name) || !SAFE_COL_DEF.test(def)) {
+                    console.error('[DB/PG] Skipping unsafe tx migration:', name, def);
+                    continue;
+                }
+                if (!txColNames.includes(name)) {
+                    await this.pool.query(`ALTER TABLE transactions ADD COLUMN ${name} ${def}`);
+                }
+            }
+        }
+
+        // Spins table column migrations
+        if (schema.SPIN_MIGRATIONS) {
+            const spResult = await this.pool.query(
+                "SELECT column_name FROM information_schema.columns WHERE table_name = 'spins'"
+            );
+            const spColNames = spResult.rows.map(r => r.column_name);
+            for (const [name, def] of schema.SPIN_MIGRATIONS) {
+                if (!SAFE_COL_NAME.test(name) || !SAFE_COL_DEF.test(def)) {
+                    console.error('[DB/PG] Skipping unsafe spin migration:', name, def);
+                    continue;
+                }
+                if (!spColNames.includes(name)) {
+                    await this.pool.query(`ALTER TABLE spins ADD COLUMN ${name} ${def}`);
+                }
+            }
+        }
+
         // Indexes
         for (const idx of schema.INDEXES) {
             await this.pool.query(idx);

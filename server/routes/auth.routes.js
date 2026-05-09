@@ -294,7 +294,7 @@ router.post('/register', async (req, res) => {
                     await db.beginTransaction();
                     try {
                         await db.run(
-                            'INSERT INTO referrals (referrer_id, referred_id, bonus_amount) VALUES (?, ?, ?)',
+                            'INSERT INTO referral_claims (referrer_id, referred_id, bonus_given) VALUES (?, ?, 1)',
                             [referrerId, userId, REFERRAL_BONUS]
                         );
                         await db.run(
@@ -302,7 +302,7 @@ router.post('/register', async (req, res) => {
                             [REFERRAL_BONUS, REFERRAL_BONUS * WAGERING_MULT, REFERRAL_BONUS, referrerId]
                         );
                         await db.run(
-                            "INSERT INTO transactions (user_id, type, amount, description) VALUES (?, 'bonus', ?, ?)",
+                            "INSERT INTO transactions (user_id, type, amount, balance_before, balance_after, reference) VALUES (?, 'bonus', ?, 0, 0, ?)",
                             [referrerId, REFERRAL_BONUS, 'Referral bonus — new user joined with your code']
                         );
                         await db.run(
@@ -310,7 +310,7 @@ router.post('/register', async (req, res) => {
                             [REFERRAL_BONUS, REFERRAL_BONUS * WAGERING_MULT, userId]
                         );
                         await db.run(
-                            "INSERT INTO transactions (user_id, type, amount, description) VALUES (?, 'bonus', ?, ?)",
+                            "INSERT INTO transactions (user_id, type, amount, balance_before, balance_after, reference) VALUES (?, 'bonus', ?, 0, 0, ?)",
                             [userId, REFERRAL_BONUS, 'Welcome bonus — joined via referral code']
                         );
                         await db.commit();

@@ -1213,7 +1213,7 @@
                     </div>
                     <div class="signup-field">
                         <label for="signupDob">Date of Birth</label>
-                        <input type="date" id="signupDob" max="2008-05-03" required>
+                        <input type="date" id="signupDob" max="2005-01-01" required>
                     </div>
                     <div class="signup-field signup-terms">
                         <label><input type="checkbox" id="signupTerms" required> I am 21+ and agree to the <a href="terms.html" target="_blank" style="color:var(--accent-gold,#D4A853)">Terms</a> &amp; <a href="responsible-gambling.html" target="_blank" style="color:var(--accent-gold,#D4A853)">Responsible Gambling</a> policy</label>
@@ -1342,6 +1342,8 @@
     </nav>
 
     <!-- SCRIPTS — deferred for faster first paint -->
+    <script src="js/csrf-helper.js" defer></script>
+    <script src="js/api-client.js" defer></script>
     <script src="js/game-registry.js" defer></script>
     <script src="js/retention.js" defer></script>
     <script src="js/jackpot.js" defer></script>
@@ -1364,7 +1366,7 @@
     <script>
         let allGames = [];
         let filteredGames = [];
-        let currentFilter = 'all';
+        currentFilter = 'all';
         let currentStudioFilter = null;
 
         // Initialize App
@@ -1823,6 +1825,14 @@
             function closeSignup() {
                 if (overlay) overlay.classList.remove('active');
                 document.body.style.overflow = '';
+            }
+
+            // Dynamic 21+ age check — override static max fallback
+            const dobInput = document.getElementById('signupDob');
+            if (dobInput) {
+                const today = new Date();
+                const minAge = new Date(today.getFullYear() - 21, today.getMonth(), today.getDate());
+                dobInput.max = minAge.toISOString().split('T')[0];
             }
 
             if (heroBtn) heroBtn.onclick = openSignup;

@@ -97,7 +97,7 @@
         // Right thumbnail - use actual game thumbnail image
         var right = _el('div', 'hc-right');
         var thumb = _el('div', 'hc-thumbnail', null, 'background:' + (g.bgGradient || '#222'));
-        var thumbSrc = g.thumbnail || ('assets/thumbnails/' + g.id + '.png');
+        var thumbSrc = g.thumbnail || ('assets/thumbnails/' + g.id + '.webp');
         var thumbImg = document.createElement('img');
         thumbImg.className = 'hc-thumb-img';
         thumbImg.src = thumbSrc;

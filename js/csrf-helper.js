@@ -13,17 +13,25 @@
     const originalFetch = window.fetch;
 
     /**
-     * Initialize CSRF protection (call after login)
+     * Initialize CSRF protection (call after login or on page load if session exists)
      */
     async function init() {
         try {
-            const response = await originalFetch('/api/csrf-token');
+            // Must include auth header — /api/csrf-token requires authentication
+            var authToken = localStorage.getItem('casinoToken');
+            if (!authToken) {
+                // Not logged in — skip CSRF init, will retry after login
+                return;
+            }
+
+            var headers = { 'Authorization': 'Bearer ' + authToken };
+            var response = await originalFetch('/api/csrf-token', { headers: headers });
             if (!response.ok) {
                 console.warn('[CSRF] Failed to fetch initial token:', response.status);
                 return;
             }
 
-            const data = await response.json();
+            var data = await response.json();
             csrfToken = data.csrfToken;
             lastTokenFetchTime = Date.now();
 
@@ -44,13 +52,16 @@
             Date.now() - lastTokenFetchTime > TOKEN_REFRESH_INTERVAL
         ) {
             try {
-                const response = await originalFetch('/api/csrf-token');
+                var authToken = localStorage.getItem('casinoToken');
+                if (!authToken) return csrfToken; // Not logged in
+                var headers = { 'Authorization': 'Bearer ' + authToken };
+                var response = await originalFetch('/api/csrf-token', { headers: headers });
                 if (!response.ok) {
                     console.warn('[CSRF] Failed to refresh token:', response.status);
                     return csrfToken; // Return stale token as fallback
                 }
 
-                const data = await response.json();
+                var data = await response.json();
                 csrfToken = data.csrfToken;
                 lastTokenFetchTime = Date.now();
             } catch (err) {
@@ -88,6 +99,11 @@
         init,
         getToken,
     };
+
+    // Auto-initialize if user is already logged in (page refresh / SPA nav)
+    if (localStorage.getItem('casinoToken')) {
+        setTimeout(init, 100);
+    }
 
     console.log('[CSRF] Helper loaded');
 })();

@@ -10,6 +10,8 @@
             // Trigger the existing wallet/deposit modal
             if (typeof window.showDepositModal === 'function') {
                 window.showDepositModal();
+            } else if (typeof _showDepositModal === 'function') {
+                _showDepositModal();
             } else if (typeof window.openWalletPanel === 'function') {
                 window.openWalletPanel('deposit');
             } else {
