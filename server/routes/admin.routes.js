@@ -1960,4 +1960,518 @@ router.get('/stats/24h', async (req, res) => {
     }
 });
 
+// ═══════════════════════════════════════════════════════════════════════
+//  DASHBOARD ENDPOINTS — back the multi-tab admin UI in admin.html.
+//  Money is returned in cents (×100) to match the UI's cents() formatter.
+// ═══════════════════════════════════════════════════════════════════════
+
+// Lazy-load game definitions so we can look up display name + studio per game_id.
+let _gameDefsCache = null;
+function getGameDefs() {
+    if (_gameDefsCache) return _gameDefsCache;
+    try {
+        // Bust require cache so updates to game-definitions.js are picked up
+        // without a server restart while the admin UI is active.
+        const path = require('path');
+        const defsPath = path.resolve(__dirname, '..', '..', 'shared', 'game-definitions.js');
+        delete require.cache[require.resolve(defsPath)];
+        const defs = require(defsPath);
+        const list = Array.isArray(defs) ? defs : (defs.games || defs.default || []);
+        const map = {};
+        for (const g of list) { if (g && g.id) map[g.id] = g; }
+        _gameDefsCache = { list, map };
+    } catch (e) {
+        console.warn('[Admin] Failed to load game-definitions.js:', e.message);
+        _gameDefsCache = { list: [], map: {} };
+    }
+    return _gameDefsCache;
+}
+function clampDays(raw, def, max) {
+    const n = parseInt(raw, 10);
+    if (!Number.isFinite(n) || n <= 0) return def;
+    return Math.min(n, max);
+}
+function clampLimit(raw, def, max) {
+    const n = parseInt(raw, 10);
+    if (!Number.isFinite(n) || n <= 0) return def;
+    return Math.min(n, max);
+}
+function toCents(v) { return Math.round((Number(v) || 0) * 100); }
+
+// GET /api/admin/dashboard/overview — top-level KPI cards
+router.get('/dashboard/overview', async (req, res) => {
+    try {
+        const [
+            usersAgg, verifiedAgg, active24h, active7d, new24h, new7d,
+            spinsAgg, spins24h, wagered24h, deposits24h, deposits7d, depositsTotal,
+            withdrawalsTotal, ggrAll
+        ] = await Promise.all([
+            db.get("SELECT COUNT(*) as count FROM users WHERE COALESCE(is_admin, 0) = 0").catch(() => ({ count: 0 })),
+            db.get("SELECT COUNT(*) as count FROM users WHERE COALESCE(kyc_status, '') = 'verified'").catch(() => ({ count: 0 })),
+            db.get("SELECT COUNT(DISTINCT user_id) as count FROM spins WHERE created_at >= datetime('now', '-1 day')").catch(() => ({ count: 0 })),
+            db.get("SELECT COUNT(DISTINCT user_id) as count FROM spins WHERE created_at >= datetime('now', '-7 days')").catch(() => ({ count: 0 })),
+            db.get("SELECT COUNT(*) as count FROM users WHERE COALESCE(is_admin, 0) = 0 AND created_at >= datetime('now', '-1 day')").catch(() => ({ count: 0 })),
+            db.get("SELECT COUNT(*) as count FROM users WHERE COALESCE(is_admin, 0) = 0 AND created_at >= datetime('now', '-7 days')").catch(() => ({ count: 0 })),
+            db.get("SELECT COUNT(*) as spins, COALESCE(SUM(bet_amount), 0) as wagered, COALESCE(SUM(win_amount), 0) as won FROM spins").catch(() => ({ spins: 0, wagered: 0, won: 0 })),
+            db.get("SELECT COUNT(*) as count FROM spins WHERE created_at >= datetime('now', '-1 day')").catch(() => ({ count: 0 })),
+            db.get("SELECT COALESCE(SUM(bet_amount), 0) as total FROM spins WHERE created_at >= datetime('now', '-1 day')").catch(() => ({ total: 0 })),
+            db.get("SELECT COALESCE(SUM(amount), 0) as total FROM deposits WHERE status = 'completed' AND created_at >= datetime('now', '-1 day')").catch(() => ({ total: 0 })),
+            db.get("SELECT COALESCE(SUM(amount), 0) as total FROM deposits WHERE status = 'completed' AND created_at >= datetime('now', '-7 days')").catch(() => ({ total: 0 })),
+            db.get("SELECT COALESCE(SUM(amount), 0) as total FROM deposits WHERE status = 'completed'").catch(() => ({ total: 0 })),
+            db.get("SELECT COALESCE(SUM(amount), 0) as total FROM withdrawals WHERE status = 'completed'").catch(() => ({ total: 0 })),
+            db.get("SELECT COALESCE(SUM(bet_amount) - SUM(win_amount), 0) as ggr FROM spins").catch(() => ({ ggr: 0 })),
+        ]);
+
+        const totalGames = getGameDefs().list.length;
+        const activeGameRow = await db.get("SELECT COUNT(DISTINCT game_id) as count FROM spins WHERE created_at >= datetime('now', '-7 days')").catch(() => ({ count: 0 }));
+
+        const totalDepositsCents = toCents(depositsTotal.total);
+        const totalWithdrawalsCents = toCents(withdrawalsTotal.total);
+
+        res.json({
+            revenue: {
+                netRevenueCents: totalDepositsCents - totalWithdrawalsCents,
+                ggr: toCents(ggrAll.ggr),
+                deposits24hCents: toCents(deposits24h.total),
+                deposits7dCents: toCents(deposits7d.total),
+                totalDepositsCents,
+                totalWithdrawalsCents,
+            },
+            players: {
+                totalUsers: usersAgg.count,
+                verifiedUsers: verifiedAgg.count,
+                active24h: active24h.count,
+                active7d: active7d.count,
+                new24h: new24h.count,
+                new7d: new7d.count,
+            },
+            activity: {
+                totalSpins: spinsAgg.spins,
+                spins24h: spins24h.count,
+                wagered24hCents: toCents(wagered24h.total),
+                totalWageredCents: toCents(spinsAgg.wagered),
+                totalWonCents: toCents(spinsAgg.won),
+            },
+            games: {
+                totalGames,
+                activeGames: activeGameRow.count,
+            },
+        });
+    } catch (err) {
+        console.warn('[Admin] dashboard/overview error:', err.message);
+        res.status(500).json({ error: 'Failed to load dashboard overview' });
+    }
+});
+
+// GET /api/admin/dashboard/revenue-chart?days=N — daily deposits / withdrawals / GGR
+router.get('/dashboard/revenue-chart', async (req, res) => {
+    try {
+        const days = clampDays(req.query.days, 30, 180);
+        const [deposits, withdrawals, spins] = await Promise.all([
+            db.all(
+                "SELECT DATE(created_at) as day, COALESCE(SUM(amount), 0) as total FROM deposits " +
+                "WHERE status = 'completed' AND created_at >= datetime('now', '-' || ? || ' days') " +
+                "GROUP BY DATE(created_at)",
+                [days]
+            ).catch(() => []),
+            db.all(
+                "SELECT DATE(created_at) as day, COALESCE(SUM(amount), 0) as total FROM withdrawals " +
+                "WHERE status = 'completed' AND created_at >= datetime('now', '-' || ? || ' days') " +
+                "GROUP BY DATE(created_at)",
+                [days]
+            ).catch(() => []),
+            db.all(
+                "SELECT DATE(created_at) as day, COALESCE(SUM(bet_amount) - SUM(win_amount), 0) as ggr FROM spins " +
+                "WHERE created_at >= datetime('now', '-' || ? || ' days') " +
+                "GROUP BY DATE(created_at)",
+                [days]
+            ).catch(() => []),
+        ]);
+
+        const byDay = {};
+        const ymd = (d) => {
+            const dt = new Date(d);
+            return dt.toISOString().slice(0, 10);
+        };
+        for (let i = days - 1; i >= 0; i--) {
+            const d = new Date(Date.now() - i * 86400000);
+            byDay[ymd(d)] = { date: ymd(d), depositsCents: 0, withdrawalsCents: 0, ggrCents: 0 };
+        }
+        for (const r of deposits) {
+            const k = String(r.day).slice(0, 10);
+            if (byDay[k]) byDay[k].depositsCents = toCents(r.total);
+        }
+        for (const r of withdrawals) {
+            const k = String(r.day).slice(0, 10);
+            if (byDay[k]) byDay[k].withdrawalsCents = toCents(r.total);
+        }
+        for (const r of spins) {
+            const k = String(r.day).slice(0, 10);
+            if (byDay[k]) byDay[k].ggrCents = toCents(r.ggr);
+        }
+
+        res.json({ days: Object.values(byDay) });
+    } catch (err) {
+        console.warn('[Admin] dashboard/revenue-chart error:', err.message);
+        res.status(500).json({ error: 'Failed to load revenue chart' });
+    }
+});
+
+// GET /api/admin/dashboard/player-chart?days=N — daily registrations + active players
+router.get('/dashboard/player-chart', async (req, res) => {
+    try {
+        const days = clampDays(req.query.days, 30, 180);
+        const [regs, active] = await Promise.all([
+            db.all(
+                "SELECT DATE(created_at) as day, COUNT(*) as count FROM users " +
+                "WHERE COALESCE(is_admin, 0) = 0 AND created_at >= datetime('now', '-' || ? || ' days') " +
+                "GROUP BY DATE(created_at)",
+                [days]
+            ).catch(() => []),
+            db.all(
+                "SELECT DATE(created_at) as day, COUNT(DISTINCT user_id) as count FROM spins " +
+                "WHERE created_at >= datetime('now', '-' || ? || ' days') " +
+                "GROUP BY DATE(created_at)",
+                [days]
+            ).catch(() => []),
+        ]);
+
+        const ymd = (d) => new Date(d).toISOString().slice(0, 10);
+        const byDay = {};
+        for (let i = days - 1; i >= 0; i--) {
+            const d = new Date(Date.now() - i * 86400000);
+            byDay[ymd(d)] = { date: ymd(d), registrations: 0, activePlayers: 0 };
+        }
+        for (const r of regs)   { const k = String(r.day).slice(0, 10); if (byDay[k]) byDay[k].registrations = Number(r.count) || 0; }
+        for (const r of active) { const k = String(r.day).slice(0, 10); if (byDay[k]) byDay[k].activePlayers = Number(r.count) || 0; }
+
+        res.json({ days: Object.values(byDay) });
+    } catch (err) {
+        console.warn('[Admin] dashboard/player-chart error:', err.message);
+        res.status(500).json({ error: 'Failed to load player chart' });
+    }
+});
+
+// GET /api/admin/dashboard/top-games?days=N&limit=N — most-played + GGR per game
+router.get('/dashboard/top-games', async (req, res) => {
+    try {
+        const days  = clampDays(req.query.days, 30, 180);
+        const limit = clampLimit(req.query.limit, 10, 50);
+
+        const rows = await db.all(
+            "SELECT game_id, COUNT(*) as spin_count, COUNT(DISTINCT user_id) as unique_players, " +
+            "COALESCE(SUM(bet_amount), 0) as wagered, COALESCE(SUM(win_amount), 0) as paid " +
+            "FROM spins WHERE created_at >= datetime('now', '-' || ? || ' days') " +
+            "GROUP BY game_id ORDER BY spin_count DESC LIMIT ?",
+            [days, limit]
+        );
+
+        const defs = getGameDefs().map;
+        const games = rows.map(r => {
+            const def = defs[r.game_id] || {};
+            const wagered = Number(r.wagered) || 0;
+            const paid    = Number(r.paid) || 0;
+            const ggr = wagered - paid;
+            return {
+                gameId: r.game_id,
+                name: def.name || r.game_id,
+                studioId: def.provider || '-',
+                spinCount: Number(r.spin_count) || 0,
+                uniquePlayers: Number(r.unique_players) || 0,
+                totalWageredCents: toCents(wagered),
+                totalPayoutsCents: toCents(paid),
+                ggrCents: toCents(ggr),
+                configuredRtp: typeof def.rtp === 'number' ? Math.round(def.rtp * 100) / 100 : 0,
+                actualRtp: wagered > 0 ? Math.round((paid / wagered) * 10000) / 100 : 0,
+            };
+        });
+
+        res.json({ games });
+    } catch (err) {
+        console.warn('[Admin] dashboard/top-games error:', err.message);
+        res.status(500).json({ error: 'Failed to load top games' });
+    }
+});
+
+// GET /api/admin/dashboard/top-players?days=N&limit=N
+router.get('/dashboard/top-players', async (req, res) => {
+    try {
+        const days  = clampDays(req.query.days, 30, 180);
+        const limit = clampLimit(req.query.limit, 15, 100);
+
+        const rows = await db.all(
+            "SELECT u.id, u.username, u.email, u.balance, " +
+            "       COALESCE(u.kyc_status, 'unverified') as kyc_status, " +
+            "       COALESCE(s.spin_count, 0) as spin_count, " +
+            "       COALESCE(s.wagered, 0)    as wagered, " +
+            "       COALESCE(s.won, 0)        as won, " +
+            "       COALESCE(d.deposits, 0)   as deposits " +
+            "FROM users u " +
+            "LEFT JOIN ( " +
+            "    SELECT user_id, COUNT(*) as spin_count, SUM(bet_amount) as wagered, SUM(win_amount) as won " +
+            "    FROM spins WHERE created_at >= datetime('now', '-' || ? || ' days') GROUP BY user_id " +
+            ") s ON s.user_id = u.id " +
+            "LEFT JOIN ( " +
+            "    SELECT user_id, SUM(amount) as deposits FROM deposits " +
+            "    WHERE status = 'completed' AND created_at >= datetime('now', '-' || ? || ' days') GROUP BY user_id " +
+            ") d ON d.user_id = u.id " +
+            "WHERE COALESCE(u.is_admin, 0) = 0 " +
+            "ORDER BY COALESCE(s.wagered, 0) DESC LIMIT ?",
+            [days, days, limit]
+        );
+
+        const players = rows.map(r => {
+            const wagered = Number(r.wagered) || 0;
+            const won     = Number(r.won) || 0;
+            return {
+                userId: r.id,
+                displayName: r.username,
+                email: r.email,
+                countryCode: r.country_code || null,
+                kycStatus: r.kyc_status,
+                balanceCents: toCents(r.balance),
+                totalDepositsCents: toCents(r.deposits),
+                totalWageredCents: toCents(wagered),
+                ggrCents: toCents(wagered - won),
+                spinCount: Number(r.spin_count) || 0,
+            };
+        });
+
+        res.json({ players });
+    } catch (err) {
+        console.warn('[Admin] dashboard/top-players error:', err.message);
+        res.status(500).json({ error: 'Failed to load top players' });
+    }
+});
+
+// GET /api/admin/dashboard/recent-activity?limit=N — recent transactions feed
+router.get('/dashboard/recent-activity', async (req, res) => {
+    try {
+        const limit = clampLimit(req.query.limit, 30, 100);
+        const rows = await db.all(
+            "SELECT t.id, t.type, t.amount, t.balance_after, t.created_at, " +
+            "       u.username, u.email " +
+            "FROM transactions t JOIN users u ON u.id = t.user_id " +
+            "ORDER BY t.id DESC LIMIT ?",
+            [limit]
+        );
+        const entries = rows.map(r => {
+            // Normalize the transaction type to one of the badges the UI knows.
+            // Anything ending in _bonus → 'bonus'; admin_adjustment → 'adjustment';
+            // win/loss credits handled by UI based on amount sign.
+            let type = String(r.type || 'other');
+            if (/_bonus$/.test(type)) type = 'bonus';
+            else if (type === 'admin_adjustment') type = 'adjustment';
+            else if (/^withdraw/.test(type)) type = 'withdrawal';
+            else if (type === 'deposit') type = 'deposit';
+            else if (type === 'bet')   type = 'bet';
+            else if (type === 'win')   type = 'win';
+            return {
+                id: r.id,
+                type,
+                rawType: r.type,
+                playerName: r.username,
+                playerEmail: r.email,
+                amountCents: toCents(r.amount),
+                balanceAfterCents: toCents(r.balance_after),
+                createdAt: r.created_at,
+            };
+        });
+        res.json({ entries });
+    } catch (err) {
+        console.warn('[Admin] dashboard/recent-activity error:', err.message);
+        res.status(500).json({ error: 'Failed to load recent activity' });
+    }
+});
+
+// ═══════════════════════════════════════════════════════════════════════
+//  TRANSACTION LOG — searchable list with filters by type / user / date
+// ═══════════════════════════════════════════════════════════════════════
+
+// GET /api/admin/transactions?type=&userId=&from=&to=&limit=&offset=
+router.get('/transactions', async (req, res) => {
+    try {
+        const limit  = clampLimit(req.query.limit, 100, 500);
+        const offset = Math.max(parseInt(req.query.offset, 10) || 0, 0);
+
+        const where = [];
+        const params = [];
+        if (req.query.type && typeof req.query.type === 'string') {
+            where.push('t.type = ?');
+            params.push(req.query.type);
+        }
+        const userId = parseInt(req.query.userId, 10);
+        if (Number.isFinite(userId) && userId > 0) {
+            where.push('t.user_id = ?');
+            params.push(userId);
+        }
+        if (req.query.from) {
+            where.push('t.created_at >= ?');
+            params.push(String(req.query.from));
+        }
+        if (req.query.to) {
+            where.push('t.created_at <= ?');
+            params.push(String(req.query.to));
+        }
+        const whereSql = where.length ? 'WHERE ' + where.join(' AND ') : '';
+
+        const rows = await db.all(
+            "SELECT t.id, t.user_id, t.type, t.amount, t.balance_before, t.balance_after, " +
+            "       t.reference, t.created_at, u.username, u.email " +
+            "FROM transactions t LEFT JOIN users u ON u.id = t.user_id " +
+            whereSql + " ORDER BY t.id DESC LIMIT ? OFFSET ?",
+            params.concat([limit, offset])
+        );
+        const totalRow = await db.get(
+            "SELECT COUNT(*) as count FROM transactions t " + whereSql,
+            params
+        ).catch(() => ({ count: 0 }));
+
+        res.json({
+            transactions: rows,
+            total: totalRow ? totalRow.count : 0,
+            limit,
+            offset,
+        });
+    } catch (err) {
+        console.warn('[Admin] transactions list error:', err.message);
+        res.status(500).json({ error: 'Failed to load transactions' });
+    }
+});
+
+// GET /api/admin/transaction-types — distinct types for filter dropdown
+router.get('/transaction-types', async (req, res) => {
+    try {
+        const rows = await db.all('SELECT DISTINCT type FROM transactions ORDER BY type ASC');
+        res.json({ types: rows.map(r => r.type).filter(Boolean) });
+    } catch (err) {
+        console.warn('[Admin] transaction-types error:', err.message);
+        res.status(500).json({ error: 'Failed to load transaction types' });
+    }
+});
+
+// ═══════════════════════════════════════════════════════════════════════
+//  AUDIT LOG — admin actions trail for compliance
+// ═══════════════════════════════════════════════════════════════════════
+router.get('/audit-log', async (req, res) => {
+    try {
+        const limit  = clampLimit(req.query.limit, 100, 500);
+        const offset = Math.max(parseInt(req.query.offset, 10) || 0, 0);
+        const rows = await db.all(
+            "SELECT a.id, a.admin_id, a.action, a.target_user_id, a.details, a.created_at, " +
+            "       admin_u.username as admin_username, target_u.username as target_username " +
+            "FROM admin_audit_log a " +
+            "LEFT JOIN users admin_u  ON admin_u.id  = a.admin_id " +
+            "LEFT JOIN users target_u ON target_u.id = a.target_user_id " +
+            "ORDER BY a.id DESC LIMIT ? OFFSET ?",
+            [limit, offset]
+        ).catch(() => []);
+        res.json({ entries: rows, limit, offset });
+    } catch (err) {
+        console.warn('[Admin] audit-log error:', err.message);
+        res.status(500).json({ error: 'Failed to load audit log' });
+    }
+});
+
+// ═══════════════════════════════════════════════════════════════════════
+//  SYSTEM SETTINGS — maintenance toggle + house-edge config view
+// ═══════════════════════════════════════════════════════════════════════
+
+const fs = require('fs');
+const path = require('path');
+const MAINTENANCE_FILE = path.join(__dirname, '..', 'data', 'maintenance.json');
+
+function _ensureDataDir() {
+    const dir = path.dirname(MAINTENANCE_FILE);
+    if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+}
+
+// GET /api/admin/maintenance — read current maintenance state
+router.get('/maintenance', async (req, res) => {
+    try {
+        const maintenance = require('../middleware/maintenance');
+        res.json(maintenance.getMaintenanceState());
+    } catch (err) {
+        res.status(500).json({ error: 'Failed to read maintenance state' });
+    }
+});
+
+// POST /api/admin/maintenance — toggle maintenance mode
+// Body: { enabled: boolean, message?: string }
+router.post('/maintenance', async (req, res) => {
+    try {
+        const enabled = Boolean(req.body.enabled);
+        const message = (typeof req.body.message === 'string' ? req.body.message : '').slice(0, 500)
+            || 'Matrix Spins is undergoing scheduled maintenance. We\'ll be back shortly!';
+        _ensureDataDir();
+        fs.writeFileSync(MAINTENANCE_FILE, JSON.stringify({ enabled, message, updated_at: new Date().toISOString() }, null, 2));
+        try { require('../middleware/maintenance').invalidateCache(); } catch (_) {}
+        await db.run(
+            "INSERT INTO admin_audit_log (admin_id, action, target_user_id, details, created_at) VALUES (?, 'maintenance_toggle', NULL, ?, datetime('now'))",
+            [req.user.id, JSON.stringify({ enabled, message })]
+        ).catch(() => {});
+        res.json({ enabled, message });
+    } catch (err) {
+        console.warn('[Admin] maintenance toggle error:', err.message);
+        res.status(500).json({ error: 'Failed to update maintenance state' });
+    }
+});
+
+// GET /api/admin/settings — current house-edge / wagering config snapshot
+router.get('/settings', async (req, res) => {
+    try {
+        const cfg = require('../config');
+        res.json({
+            houseEdge: {
+                TARGET_RTP: cfg.TARGET_RTP,
+                MAX_WIN_MULTIPLIER: cfg.MAX_WIN_MULTIPLIER,
+                SESSION_WIN_CAP: cfg.SESSION_WIN_CAP,
+                PROFIT_FLOOR: cfg.PROFIT_FLOOR,
+            },
+            wagering: {
+                FIRST_DEPOSIT_BONUS_PCT: cfg.FIRST_DEPOSIT_BONUS_PCT,
+                FIRST_DEPOSIT_BONUS_MAX: cfg.FIRST_DEPOSIT_BONUS_MAX,
+                FIRST_DEPOSIT_WAGERING_MULT: cfg.FIRST_DEPOSIT_WAGERING_MULT,
+                RELOAD_BONUS_PCT: cfg.RELOAD_BONUS_PCT,
+                RELOAD_BONUS_MAX: cfg.RELOAD_BONUS_MAX,
+                RELOAD_WAGERING_MULT: cfg.RELOAD_WAGERING_MULT,
+            },
+            withdrawal: {
+                WITHDRAWAL_OTP_THRESHOLD: cfg.WITHDRAWAL_OTP_THRESHOLD,
+                MIN_WITHDRAWAL: cfg.MIN_WITHDRAWAL,
+                MAX_WITHDRAWAL: cfg.MAX_WITHDRAWAL,
+            },
+        });
+    } catch (err) {
+        res.status(500).json({ error: 'Failed to read settings' });
+    }
+});
+
+// ═══════════════════════════════════════════════════════════════════════
+//  REAL-TIME STATS — for the live ticker on the overview tab
+// ═══════════════════════════════════════════════════════════════════════
+router.get('/realtime', async (req, res) => {
+    try {
+        const [active5m, spins5m, deposits5m, wagered5m, lastSpin] = await Promise.all([
+            db.get("SELECT COUNT(DISTINCT user_id) as count FROM spins WHERE created_at >= datetime('now', '-5 minutes')").catch(() => ({ count: 0 })),
+            db.get("SELECT COUNT(*) as count FROM spins WHERE created_at >= datetime('now', '-5 minutes')").catch(() => ({ count: 0 })),
+            db.get("SELECT COALESCE(SUM(amount), 0) as total, COUNT(*) as count FROM deposits WHERE status='completed' AND created_at >= datetime('now', '-5 minutes')").catch(() => ({ total: 0, count: 0 })),
+            db.get("SELECT COALESCE(SUM(bet_amount), 0) as total FROM spins WHERE created_at >= datetime('now', '-5 minutes')").catch(() => ({ total: 0 })),
+            db.get("SELECT created_at FROM spins ORDER BY id DESC LIMIT 1").catch(() => null),
+        ]);
+        res.json({
+            activePlayers5m: active5m.count,
+            spins5m: spins5m.count,
+            deposits5mCents: toCents(deposits5m.total),
+            depositCount5m: deposits5m.count,
+            wagered5mCents: toCents(wagered5m.total),
+            lastSpinAt: lastSpin ? lastSpin.created_at : null,
+            serverTime: new Date().toISOString(),
+        });
+    } catch (err) {
+        console.warn('[Admin] realtime error:', err.message);
+        res.status(500).json({ error: 'Failed to load realtime stats' });
+    }
+});
+
 module.exports = router;
