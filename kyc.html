@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Identity Verification (KYC) — Matrix Spins Casino</title>
+<meta name="description" content="Verify your identity to lift deposit limits and enable withdrawals.">
+<link rel="canonical" href="https://msaart.online/kyc.html">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="unified-ux.css">
+<style>
+  :root { --m-green:#00FF41; --m-bg:#04080a; --m-panel:#0c1318; --m-border:#1a2a31; --m-muted:#7da098; --m-danger:#ff4055; --m-amber:#FFB000; }
+  body { background:var(--m-bg); color:#e8f4ee; font-family:Inter,sans-serif; margin:0; padding:0; }
+  .topbar { display:flex; justify-content:space-between; align-items:center; padding:14px 24px; border-bottom:1px solid var(--m-border); background:#06100d; }
+  .topbar a.brand { color:var(--m-green); font-weight:800; font-size:18px; text-decoration:none; }
+  .topbar .actions a { color:#cfe7d7; margin-left:14px; text-decoration:none; font-size:14px; }
+  .wrap { max-width:780px; margin:48px auto; padding:0 20px; }
+  h1 { font-size:28px; margin:0 0 8px; }
+  .sub { color:var(--m-muted); margin:0 0 28px; }
+  .card { background:var(--m-panel); border:1px solid var(--m-border); border-radius:14px; padding:24px; margin-bottom:18px; }
+  .tier-row { display:grid; grid-template-columns:repeat(3,1fr); gap:12px; margin:14px 0; }
+  .tier { background:#06100d; border:1px solid var(--m-border); border-radius:10px; padding:14px; }
+  .tier.active { border-color:var(--m-green); box-shadow:0 0 0 2px rgba(0,255,65,0.15); }
+  .tier h4 { margin:0 0 6px; font-size:14px; color:var(--m-green); letter-spacing:0.5px; text-transform:uppercase; }
+  .tier .lim { color:#fff; font-size:18px; font-weight:700; margin:6px 0; }
+  .tier ul { margin:6px 0 0; padding-left:18px; color:var(--m-muted); font-size:13px; }
+  .pill { padding:4px 10px; border-radius:999px; font-size:11px; font-weight:600; letter-spacing:0.5px; text-transform:uppercase; display:inline-block; }
+  .pill.unverified { background:rgba(255,176,0,0.15); color:var(--m-amber); border:1px solid rgba(255,176,0,0.3); }
+  .pill.basic { background:rgba(0,224,255,0.15); color:#00E0FF; border:1px solid rgba(0,224,255,0.3); }
+  .pill.full { background:rgba(0,255,65,0.15); color:var(--m-green); border:1px solid rgba(0,255,65,0.3); }
+  .pill.pending { background:rgba(255,176,0,0.15); color:var(--m-amber); border:1px solid rgba(255,176,0,0.3); }
+  .pill.approved { background:rgba(0,255,65,0.15); color:var(--m-green); border:1px solid rgba(0,255,65,0.3); }
+  .pill.rejected { background:rgba(255,64,85,0.15); color:#ff8896; border:1px solid rgba(255,64,85,0.3); }
+  .btn { background:var(--m-green); color:#04080a; border:0; border-radius:10px; padding:11px 18px; font-weight:700; cursor:pointer; font-size:14px; }
+  .btn.secondary { background:transparent; color:#cfe7d7; border:1px solid var(--m-border); }
+  .btn.danger { background:var(--m-danger); color:#fff; }
+  select, input[type=file] { background:#06100d; color:#fff; border:1px solid var(--m-border); border-radius:8px; padding:10px 12px; font-size:14px; width:100%; max-width:340px; }
+  table { width:100%; border-collapse:collapse; margin-top:12px; }
+  th, td { text-align:left; padding:10px 6px; border-bottom:1px solid var(--m-border); font-size:14px; }
+  th { color:var(--m-muted); font-weight:500; font-size:12px; text-transform:uppercase; letter-spacing:0.5px; }
+  .alert { padding:12px 14px; border-radius:8px; margin:12px 0; font-size:14px; }
+  .alert.error { background:rgba(255,64,85,0.1); color:#ff8896; border:1px solid rgba(255,64,85,0.3); }
+  .alert.success { background:rgba(0,255,65,0.1); color:var(--m-green); border:1px solid rgba(0,255,65,0.3); }
+  .row { display:flex; gap:12px; align-items:flex-start; flex-wrap:wrap; margin-top:12px; }
+  label { color:var(--m-muted); font-size:13px; display:block; margin-bottom:4px; }
+  h3 { font-size:16px; margin:0 0 10px; }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <a class="brand" href="index.html">Matrix Spins</a>
+  <div class="actions">
+    <a href="account.html">Account</a>
+    <a href="2fa-settings.html">2FA</a>
+    <a href="wallet.html">Wallet</a>
+  </div>
+</div>
+
+<div class="wrap">
+  <h1>Identity Verification</h1>
+  <p class="sub">We verify identity to comply with anti-money-laundering rules. Higher tiers unlock larger deposits and withdrawals.</p>
+
+  <div id="needAuth" class="card" style="display:none;">
+    <h3>Sign in required</h3>
+    <p class="sub">You need to be signed in to verify your identity. <a href="login.html" style="color:var(--m-green);">Go to login</a>.</p>
+  </div>
+
+  <div id="statusCard" class="card" style="display:none;">
+    <div class="row" style="margin-top:0;">
+      <h3 style="margin:0;">Your tier:</h3>
+      <span id="tierPill" class="pill unverified">UNVERIFIED</span>
+      <span id="statusPill" class="pill pending" style="display:none;"></span>
+    </div>
+
+    <div class="tier-row">
+      <div class="tier" id="tierUnverified">
+        <h4>Unverified</h4>
+        <div class="lim">$500 deposit cap</div>
+        <ul><li>Withdrawals blocked</li><li>No verification needed</li></ul>
+      </div>
+      <div class="tier" id="tierBasic">
+        <h4>Basic</h4>
+        <div class="lim">$5,000 deposit cap</div>
+        <ul><li>Email + phone verified</li><li>Withdrawals enabled</li></ul>
+      </div>
+      <div class="tier" id="tierFull">
+        <h4>Full</h4>
+        <div class="lim">No limits</div>
+        <ul><li>ID document approved</li><li>Proof of address approved</li></ul>
+      </div>
+    </div>
+
+    <p style="margin-top:8px;">
+      <span id="emailStatus">Email: —</span> &nbsp;·&nbsp;
+      <span id="phoneStatus">Phone: —</span>
+    </p>
+    <p id="adminNotes" style="margin:6px 0 0; color:var(--m-amber); display:none;"></p>
+  </div>
+
+  <div id="uploadCard" class="card" style="display:none;">
+    <h3>Upload Verification Document</h3>
+    <p class="sub">Accepted: passport, driver's license, national ID, or proof of address. JPG/PNG/WebP/PDF up to 8 MB.</p>
+    <div class="row">
+      <div>
+        <label for="docType">Document type</label>
+        <select id="docType">
+          <option value="passport">Passport</option>
+          <option value="drivers_license">Driver's License</option>
+          <option value="national_id">National ID</option>
+          <option value="proof_of_address">Proof of Address</option>
+        </select>
+      </div>
+      <div>
+        <label for="docFile">File</label>
+        <input type="file" id="docFile" accept="image/jpeg,image/png,image/webp,application/pdf">
+      </div>
+    </div>
+    <div class="row">
+      <button id="uploadBtn" class="btn">Upload Document</button>
+    </div>
+    <div id="uploadAlert"></div>
+  </div>
+
+  <div id="docsCard" class="card" style="display:none;">
+    <h3>Submitted Documents</h3>
+    <table>
+      <thead><tr><th>Type</th><th>File</th><th>Status</th><th>Submitted</th><th>Notes</th><th></th></tr></thead>
+      <tbody id="docsBody"></tbody>
+    </table>
+  </div>
+</div>
+
+<script>
+  const token = localStorage.getItem('token');
+  const $ = (id) => document.getElementById(id);
+  function show(id, on) { $(id).style.display = on ? 'block' : 'none'; }
+  function alertMsg(elId, msg, kind) {
+    const host = $(elId);
+    host.textContent = '';
+    const div = document.createElement('div');
+    div.className = 'alert ' + kind;
+    div.textContent = msg;
+    host.appendChild(div);
+  }
+  function el(tag, opts) {
+    const e = document.createElement(tag);
+    if (opts) {
+      if (opts.text != null) e.textContent = opts.text;
+      if (opts.cls) e.className = opts.cls;
+      if (opts.attrs) Object.keys(opts.attrs).forEach(k => e.setAttribute(k, opts.attrs[k]));
+    }
+    return e;
+  }
+  async function api(path, opts) {
+    opts = opts || {};
+    opts.headers = Object.assign({ 'Authorization': 'Bearer ' + token, 'Accept': 'application/json' }, opts.headers || {});
+    if (opts.body && typeof opts.body === 'string' && !opts.headers['Content-Type']) opts.headers['Content-Type'] = 'application/json';
+    const r = await fetch(path, opts);
+    let body = null;
+    try { body = await r.json(); } catch (_) {}
+    if (!r.ok) throw new Error((body && body.error) || ('HTTP ' + r.status));
+    return body;
+  }
+
+  const DOC_LABEL = {
+    passport: 'Passport',
+    drivers_license: "Driver's License",
+    national_id: 'National ID',
+    proof_of_address: 'Proof of Address',
+  };
+
+  if (!token) { show('needAuth', true); } else { loadStatus(); }
+
+  async function loadStatus() {
+    try {
+      const s = await api('/api/kyc/status');
+      show('statusCard', true);
+      show('uploadCard', true);
+      const pill = $('tierPill');
+      pill.textContent = s.tier.toUpperCase();
+      pill.className = 'pill ' + s.tier;
+      ['Unverified','Basic','Full'].forEach(t => {
+        const tEl = $('tier' + t);
+        if (tEl) tEl.classList.toggle('active', s.tier.toLowerCase() === t.toLowerCase());
+      });
+      if (s.status && s.status !== 'unverified') {
+        const sp = $('statusPill');
+        sp.style.display = 'inline-block';
+        sp.textContent = s.status.toUpperCase();
+        sp.className = 'pill ' + s.status;
+      }
+      $('emailStatus').textContent = 'Email: ' + (s.emailVerified ? '✓ verified' : '✗ unverified');
+      $('phoneStatus').textContent = 'Phone: ' + (s.phoneVerified ? '✓ verified' : '✗ unverified');
+      if (s.adminNotes && (s.status === 'rejected' || s.status === 'approved')) {
+        $('adminNotes').style.display = 'block';
+        $('adminNotes').textContent = 'Reviewer note: ' + s.adminNotes;
+      }
+      const docs = s.documents || [];
+      if (docs.length) {
+        show('docsCard', true);
+        const tbody = $('docsBody');
+        tbody.textContent = '';
+        docs.forEach(d => {
+          const tr = document.createElement('tr');
+          tr.appendChild(el('td', { text: DOC_LABEL[d.doc_type] || d.doc_type }));
+          tr.appendChild(el('td', { text: d.file_name || '—' }));
+          const stTd = el('td');
+          const stPill = el('span', { cls: 'pill ' + d.status, text: d.status });
+          stTd.appendChild(stPill);
+          tr.appendChild(stTd);
+          tr.appendChild(el('td', { text: d.submitted_at ? String(d.submitted_at).slice(0, 16) : '—' }));
+          tr.appendChild(el('td', { text: d.admin_notes || '' }));
+          const actTd = el('td');
+          if (d.status === 'pending') {
+            const delBtn = el('button', { cls: 'btn secondary', text: 'Delete' });
+            delBtn.onclick = async () => {
+              if (!confirm('Delete this document?')) return;
+              try { await api('/api/kyc/document/' + d.id, { method: 'DELETE' }); loadStatus(); }
+              catch (e) { alert('Delete failed: ' + e.message); }
+            };
+            actTd.appendChild(delBtn);
+          }
+          tr.appendChild(actTd);
+          tbody.appendChild(tr);
+        });
+      } else {
+        show('docsCard', false);
+      }
+    } catch (e) {
+      if (String(e.message).match(/auth/i)) show('needAuth', true);
+      else alert('Failed: ' + e.message);
+    }
+  }
+
+  $('uploadBtn').onclick = async () => {
+    const file = $('docFile').files[0];
+    if (!file) return alertMsg('uploadAlert', 'Choose a file first', 'error');
+    if (file.size > 8 * 1024 * 1024) return alertMsg('uploadAlert', 'File too large (max 8 MB)', 'error');
+    const fd = new FormData();
+    fd.append('file', file);
+    fd.append('doc_type', $('docType').value);
+    try {
+      $('uploadBtn').disabled = true;
+      const r = await fetch('/api/kyc/upload', {
+        method: 'POST',
+        headers: { 'Authorization': 'Bearer ' + token },
+        body: fd,
+      });
+      const body = await r.json().catch(() => ({}));
+      if (!r.ok) throw new Error(body.error || ('HTTP ' + r.status));
+      alertMsg('uploadAlert', 'Uploaded — review takes 1-3 business days.', 'success');
+      $('docFile').value = '';
+      loadStatus();
+    } catch (e) {
+      alertMsg('uploadAlert', e.message, 'error');
+    } finally {
+      $('uploadBtn').disabled = false;
+    }
+  };
+</script>
+</body>
+</html>

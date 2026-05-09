@@ -323,6 +323,39 @@
                     body: { username, password },
                     requireAuth: false
                 });
+                // ── 2FA challenge ──
+                // Server returns { needs2FA: true, twofaToken } if the account
+                // has TOTP enabled. Prompt for the 6-digit code (or backup
+                // code) and exchange it for the real session JWT.
+                if (response && response.needs2FA && response.twofaToken) {
+                    const code = (typeof window !== 'undefined' && typeof window.prompt === 'function')
+                        ? window.prompt('Enter your 6-digit authenticator code (or backup code):')
+                        : null;
+                    if (!code) {
+                        showToast('2FA code is required.', 'error');
+                        throw new Error('2FA code is required');
+                    }
+                    const trimmed = String(code).trim();
+                    const body = /^\d{6}$/.test(trimmed)
+                        ? { twofaToken: response.twofaToken, code: trimmed }
+                        : { twofaToken: response.twofaToken, backupCode: trimmed };
+                    const verifyResp = await apiRequest('/api/2fa/login-verify', {
+                        method: 'POST',
+                        body,
+                        requireAuth: false
+                    });
+                    if (!verifyResp.token || !verifyResp.user) {
+                        throw new Error('2FA verification failed.');
+                    }
+                    applyAuthSession(verifyResp.token, verifyResp.user);
+                    updateAuthButton();
+                    document.body.classList.remove('auth-gate');
+                    hideAuthModal();
+                    showToast(`Welcome back, ${verifyResp.user.username}!`, 'success');
+                    if (typeof onPostAuthInit === 'function') onPostAuthInit();
+                    checkDailyLoginReward();
+                    return;
+                }
                 if (!response.token || !response.user) {
                     throw new Error('Invalid login response from server.');
                 }

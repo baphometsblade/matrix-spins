@@ -114,6 +114,20 @@
       // Server reads req.body.username but queries WHERE username=? OR email=?
       // so sending email via the 'username' field works for both username and email login
       const out = await apiFetch('/auth/login', { method: 'POST', body: { username: email, password } });
+      // If 2FA is required, return the challenge to the caller WITHOUT applying
+      // session. Caller must prompt for code and call verify2fa().
+      if (out && out.needs2FA && out.twofaToken) return out;
+      setAccessToken(out.token || out.accessToken);
+      setUser(out.user);
+      if (out.user) localStorage.setItem('casinoUser', JSON.stringify(out.user));
+      return out;
+    },
+    async verify2fa(twofaToken, codeOrBackup) {
+      const trimmed = String(codeOrBackup || '').trim();
+      const body = /^\d{6}$/.test(trimmed)
+        ? { twofaToken, code: trimmed }
+        : { twofaToken, backupCode: trimmed };
+      const out = await apiFetch('/2fa/login-verify', { method: 'POST', body });
       setAccessToken(out.token || out.accessToken);
       setUser(out.user);
       if (out.user) localStorage.setItem('casinoUser', JSON.stringify(out.user));
