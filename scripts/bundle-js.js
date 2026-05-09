@@ -20,7 +20,9 @@ const EARLY_SCRIPTS = [
     'js/maintenance-check.js',
     'js/error-handler.js',
     'js/onclick-polyfill.js',
-    'js/eager-thumbs.js'
+    'js/eager-thumbs.js',
+    'js/confetti.min.js',
+    'js/jackpot-celebration.js'
 ];
 
 // Standalone-page scripts referenced directly by login/signup/account/etc HTML.
@@ -312,7 +314,7 @@ function generateDistIndex(jsInfo, cssInfo, originalHtml) {
 function copyStaticAssets() {
     log('Copying static assets...');
 
-    const staticFiles = ['manifest.json', 'favicon.svg', 'sw.js', 'robots.txt', 'sitemap.xml', 'premium-v3-upgrades.js', 'premium-v2-fixes.js', 'provably-fair.html', 'responsible-gambling.html', 'terms.html', 'privacy.html', '404.html', 'launch.html', 'affiliates.html', 'referral.html', 'promotions.html', 'wallet.html', 'login.html', 'signup.html', 'leaderboard.html', 'account.html', 'achievements.html', 'vip.html', 'tournaments.html'];
+    const staticFiles = ['manifest.json', 'favicon.svg', 'sw.js', 'robots.txt', 'sitemap.xml', 'premium-v3-upgrades.js', 'premium-v2-fixes.js', 'provably-fair.html', 'responsible-gambling.html', 'terms.html', 'privacy.html', '404.html', 'launch.html', 'affiliates.html', 'referral.html', 'promotions.html', 'wallet.html', 'login.html', 'signup.html', 'leaderboard.html', 'account.html', 'achievements.html', 'vip.html', 'tournaments.html', 'bonus-history.html', 'jackpot-history.html'];
 
     staticFiles.forEach(file => {
         const src = path.join(ROOT_DIR, file);

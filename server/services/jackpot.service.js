@@ -4,6 +4,14 @@ const db = require('../database');
 const crypto = require('crypto');
 const config = require('../config');
 
+// Lazy realtime — service may not be attached yet at module load
+let _realtime = null;
+function _getRealtime() {
+    if (_realtime) return _realtime;
+    try { _realtime = require('./realtime.service'); } catch (_) { _realtime = null; }
+    return _realtime;
+}
+
 /**
  * Jackpot Pooling Service
  *
@@ -233,6 +241,21 @@ async function checkAndAward(userId, betAmount, minBet, isJackpotGame) {
                 // Race lost — try the next tier
                 continue;
             }
+
+            // Broadcast win to all connected clients (best-effort)
+            try {
+                var rt = _getRealtime();
+                if (rt) {
+                    var u = await db.get('SELECT username FROM users WHERE id = ?', [userId]);
+                    rt.broadcastJackpotWin({
+                        tier: tierName,
+                        amount: wonAmount,
+                        username: u ? u.username : 'Anonymous',
+                        userId: userId,
+                        wonAt: new Date().toISOString(),
+                    });
+                }
+            } catch (_) { /* non-critical */ }
 
             return { tier: tierName, amount: wonAmount };
         }

@@ -3,12 +3,13 @@
  *
  * Centralised wiring for the Socket.IO server. Wired from server/index.js
  * after the HTTP server is created. Other services (notifications, support
- * chat) call into this module to push events to the right room.
+ * chat, jackpot, bonuses) call into this module to push events.
  *
  * Rooms:
  *   user:<id>     — every authenticated socket joins their own user room
  *   agent         — every authenticated admin/agent socket joins this room
  *   support:<id>  — agent + the conversation owner join when an agent opens it
+ *   jackpots      — opt-in for live jackpot pool ticks
  */
 'use strict';
 
@@ -18,6 +19,7 @@ const db = require('../database');
 const support = require('./support-chat.service');
 
 let _io = null;
+let _lastPoolsHash = '';
 
 /**
  * Initialize Socket.IO on the provided HTTP server.
@@ -65,7 +67,6 @@ function init(httpServer) {
     try {
       const token = (socket.handshake.auth && socket.handshake.auth.token) || socket.handshake.query.token;
       if (!token) {
-        // Anonymous sockets get connection but can only join public rooms (chat lobby).
         socket.user = null;
         return next();
       }
@@ -102,6 +103,11 @@ function init(httpServer) {
 
     // Heartbeat / ping
     socket.on('ping:client', () => socket.emit('pong:server', { t: Date.now() }));
+
+    // ── Jackpot live pool subscription (anonymous OK) ──────────
+    socket.emit('hello', { t: Date.now() });
+    socket.on('subscribe:jackpots',   () => socket.join('jackpots'));
+    socket.on('unsubscribe:jackpots', () => socket.leave('jackpots'));
 
     // ── Support chat events ────────────────────────────────────
     socket.on('support:join', async () => {
@@ -146,7 +152,6 @@ function init(httpServer) {
       }
     });
 
-    // Disconnect handling — automatic cleanup by socket.io
     socket.on('disconnect', () => {/* nothing extra needed */});
   });
 
@@ -157,6 +162,8 @@ function init(httpServer) {
 function getIO() {
   return _io;
 }
+
+function isAttached() { return !!_io; }
 
 function sendToUser(userId, event, payload) {
   if (!_io) return;
@@ -181,4 +188,34 @@ function broadcastAll(event, payload) {
   try { _io.emit(event, payload); } catch (_) {}
 }
 
-module.exports = { init, getIO, sendToUser, broadcastToAgents, broadcastAll };
+// ── Jackpot + Bonus broadcasts ────────────────────────────────
+function broadcastJackpotPools(pools) {
+  if (!_io) return;
+  try {
+    const hash = JSON.stringify(pools);
+    if (hash === _lastPoolsHash) return;
+    _lastPoolsHash = hash;
+    _io.to('jackpots').emit('jackpot:pools', { pools, t: Date.now() });
+  } catch (err) {
+    console.warn('[Realtime] broadcastJackpotPools failed:', err.message);
+  }
+}
+
+function broadcastJackpotWin(payload) {
+  if (!_io) return;
+  try { _io.emit('jackpot:win', { ...payload, t: Date.now() }); } catch (_) {}
+}
+
+function broadcastBonusGranted(userId, payload) {
+  if (!_io || !userId) return;
+  try { _io.emit('bonus:granted:' + userId, { ...payload, t: Date.now() }); } catch (_) {}
+}
+
+// Legacy alias — earlier paths called attach()
+const attach = init;
+
+module.exports = {
+  init, attach, getIO, isAttached,
+  sendToUser, broadcastToAgents, broadcastAll,
+  broadcastJackpotPools, broadcastJackpotWin, broadcastBonusGranted,
+};

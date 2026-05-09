@@ -315,6 +315,9 @@ mount('/api/recommend',   './routes/recommend.routes',   'recommend');
 
 // Bonuses & promotions
 mount('/api/promocode',     './routes/promocode.routes',     'promocode');
+mount('/api/welcome-bonus', './routes/welcome-bonus.routes', 'welcome-bonus');
+mount('/api/bonus-history', './routes/bonus-history.routes', 'bonus-history');
+mount('/api/bonus-forfeit', './routes/bonus-forfeit.routes', 'bonus-forfeit');
 mount('/api/firstdeposit',  './routes/firstdeposit.routes',  'firstdeposit');
 mount('/api/reloadbonus',   './routes/reloadbonus.routes',   'reloadbonus');
 mount('/api/depositmatch',  './routes/depositmatch.routes',  'depositmatch');
@@ -649,12 +652,27 @@ async function start() {
     const realtime = require('./services/realtime.service');
     io = realtime.init(httpServer);
     if (io) {
-      const notify = require('./services/notification.service');
-      notify.setIO(io);
+      try {
+        const notify = require('./services/notification.service');
+        if (typeof notify.setIO === 'function') notify.setIO(io);
+      } catch (_) { /* notification service optional */ }
     }
   } catch (err) {
     console.warn('[SERVER] realtime init failed:', err.message);
   }
+
+  // Periodic jackpot broadcast (every 4s) for animated counters across clients
+  try {
+    const realtime = require('./services/realtime.service');
+    const jackpotService = require('./services/jackpot.service');
+    setInterval(async () => {
+      try {
+        if (!realtime.isAttached()) return;
+        const levels = await jackpotService.getJackpotLevels();
+        realtime.broadcastJackpotPools(levels);
+      } catch (e) { /* swallow — purely cosmetic */ }
+    }, 4000).unref();
+  } catch (_) { /* services unavailable */ }
 
   const server = httpServer.listen(PORT, () => {
     console.log('');

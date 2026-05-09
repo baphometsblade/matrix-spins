@@ -19,14 +19,8 @@ const TIER_ORDER = { mini: 0, minor: 1, major: 2, grand: 3 };
  */
 async function _ensureJackpotTables() {
   var isPg = db.isPg();
-
-  // Check if tables exist
-  const checkTableSql = isPg
-    ? "SELECT EXISTS(SELECT 1 FROM information_schema.tables WHERE table_name='jackpot_pool')"
-    : "SELECT name FROM sqlite_master WHERE type='table' AND name='jackpot_pool'";
-
-  const tableExists = await db.get(checkTableSql);
-  if (tableExists) return; // Tables already exist, jackpot.service.js will seed them
+  // Always create jackpot_contributions / jackpot_wins (jackpot_pool is owned by jackpot.service.js).
+  // Previously this returned early when jackpot_pool existed — leaving wins/contribs missing.
 
   // Create contribution tracking table
   const createContribSql = isPg
@@ -309,6 +303,106 @@ router.get('/mywin', authenticate, async (req, res) => {
   } catch (err) {
     console.warn('[Jackpot] mywin error:', err.message);
     return res.status(500).json({ error: 'Failed to fetch recent win' });
+  }
+});
+
+// ---------------------------------------------------------------------------
+// GET /api/jackpot/three-tier  (public)
+// User-spec compatible endpoint — exposes Mini, Major, Mega tiers.
+// Maps internal 4-tier (mini/minor/major/grand) to spec's 3-tier:
+//   Mini   = mini  ($100 seed)
+//   Major  = major ($2500 seed)  — closest to spec's $1000 in tier band
+//   Mega   = grand ($25000 seed) — highest jackpot
+// ---------------------------------------------------------------------------
+router.get('/three-tier', async (req, res) => {
+  try {
+    await _ensureJackpotTables();
+    const rows = await db.all(
+      `SELECT jp.tier, jp.current_amount, jp.seed_amount, jp.last_won_at,
+              u.username AS last_winner_username
+       FROM jackpot_pool jp
+       LEFT JOIN users u ON jp.last_winner_id = u.id
+       WHERE jp.tier IN ('mini','major','grand')`
+    );
+    const tiers = { mini: null, major: null, mega: null };
+    rows.forEach(r => {
+      const out = {
+        tier: r.tier === 'grand' ? 'mega' : r.tier,
+        currentAmount: parseFloat(r.current_amount) || 0,
+        seedAmount: parseFloat(r.seed_amount) || 0,
+        lastWinner: r.last_winner_username
+          ? { username: r.last_winner_username, wonAt: r.last_won_at }
+          : null,
+      };
+      if (r.tier === 'mini')  tiers.mini  = out;
+      if (r.tier === 'major') tiers.major = out;
+      if (r.tier === 'grand') tiers.mega  = out;
+    });
+    return res.json({ tiers });
+  } catch (err) {
+    console.warn('[Jackpot] three-tier error:', err.message);
+    return res.status(500).json({ error: 'Failed to fetch jackpot tiers' });
+  }
+});
+
+// ---------------------------------------------------------------------------
+// POST /api/jackpot/admin/seed  (admin only)
+// Manually set the current_amount of a jackpot pool. Audited.
+// ---------------------------------------------------------------------------
+const { requireAdmin } = require('../middleware/auth');
+router.post('/admin/seed', authenticate, requireAdmin, async (req, res) => {
+  try {
+    const { tier, amount } = req.body;
+    const validTiers = ['mini', 'minor', 'major', 'grand'];
+    if (!validTiers.includes(tier)) return res.status(400).json({ error: 'Invalid tier' });
+    const amt = parseFloat(amount);
+    if (!isFinite(amt) || amt < 0) return res.status(400).json({ error: 'Invalid amount' });
+
+    const result = await db.run(
+      'UPDATE jackpot_pool SET current_amount = ? WHERE tier = ?',
+      [amt, tier]
+    );
+    if (!result || result.changes === 0) {
+      return res.status(404).json({ error: 'Tier not found in pool' });
+    }
+    try {
+      await db.run(
+        'INSERT INTO audit_log (event_type, user_id, amount, reference, details) VALUES (?, ?, ?, ?, ?)',
+        ['jackpot_seed', req.user.id, amt, 'jackpot:' + tier, JSON.stringify({ tier, amount: amt })]
+      );
+    } catch (_) { /* audit best-effort */ }
+    return res.json({ success: true, tier, currentAmount: amt });
+  } catch (err) {
+    console.warn('[Jackpot] admin/seed error:', err.message);
+    return res.status(500).json({ error: 'Failed to seed jackpot' });
+  }
+});
+
+// ---------------------------------------------------------------------------
+// GET /api/jackpot/admin/state  (admin only)
+// Full unredacted jackpot pool state (no display rounding)
+// ---------------------------------------------------------------------------
+router.get('/admin/state', authenticate, requireAdmin, async (req, res) => {
+  try {
+    const rows = await db.all(
+      `SELECT tier, current_amount, seed_amount, total_contributed, total_paid_out,
+              last_won_at, last_winner_id
+       FROM jackpot_pool
+       ORDER BY seed_amount ASC`
+    );
+    return res.json({
+      pools: rows.map(r => ({
+        tier: r.tier,
+        currentAmount: parseFloat(r.current_amount) || 0,
+        seedAmount: parseFloat(r.seed_amount) || 0,
+        totalContributed: parseFloat(r.total_contributed) || 0,
+        totalPaidOut: parseFloat(r.total_paid_out) || 0,
+        lastWonAt: r.last_won_at,
+        lastWinnerId: r.last_winner_id,
+      })),
+    });
+  } catch (err) {
+    return res.status(500).json({ error: 'Failed to fetch admin state' });
   }
 });
 

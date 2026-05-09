@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Promo Codes — Matrix Spins Admin</title>
+<meta name="robots" content="noindex, nofollow">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #0d0d1a; color: #e0e0e0; min-height: 100vh; padding: 20px; }
+  .container { max-width: 1200px; margin: 0 auto; }
+  header { display: flex; justify-content: space-between; align-items: center; padding: 16px 22px; background: linear-gradient(135deg, #1a1a2e, #16213e); border: 1px solid rgba(255,215,0,0.3); border-radius: 12px; margin-bottom: 22px; }
+  h1 { background: linear-gradient(135deg, #ffd700, #ff8c00); -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-size: 22px; }
+  .nav a { margin-left: 12px; color: #ffd700; text-decoration: none; font-size: 14px; }
+
+  .panel { background: linear-gradient(135deg, #1a1a2e, #16213e); border: 1px solid rgba(255,215,0,0.2); border-radius: 12px; padding: 22px; margin-bottom: 18px; }
+  .panel h2 { color: #ffd700; font-size: 18px; margin-bottom: 14px; }
+
+  form { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; }
+  label { display: block; font-size: 12px; color: #aaa; margin-bottom: 4px; text-transform: uppercase; letter-spacing: 0.04em; }
+  input, select { width: 100%; padding: 9px 12px; background: rgba(0,0,0,0.4); border: 1px solid rgba(255,215,0,0.2); border-radius: 6px; color: #fff; font-size: 14px; }
+  input:focus, select:focus { border-color: #ffd700; outline: none; }
+  button.primary { background: linear-gradient(135deg, #ffd700, #ff8c00); color: #000; border: none; padding: 10px 20px; border-radius: 6px; font-weight: 700; cursor: pointer; font-size: 14px; }
+  button.danger { background: rgba(220,50,50,0.2); border: 1px solid rgba(220,50,50,0.5); color: #ff6b6b; padding: 6px 12px; border-radius: 5px; font-size: 12px; cursor: pointer; }
+
+  .form-row { grid-column: 1 / -1; display: flex; justify-content: flex-end; }
+
+  table { width: 100%; border-collapse: collapse; }
+  th { background: rgba(0,0,0,0.4); padding: 10px 12px; text-align: left; font-size: 11px; text-transform: uppercase; color: #888; letter-spacing: 0.05em; }
+  td { padding: 10px 12px; border-top: 1px solid rgba(255,255,255,0.05); font-size: 13px; }
+  td.code { font-family: 'SF Mono', monospace; color: #ffd700; font-weight: 600; }
+  td.uses { color: #4ade80; }
+  .pill { display: inline-block; padding: 2px 8px; border-radius: 999px; font-size: 11px; }
+  .pill.active { background: rgba(74,222,128,0.2); color: #4ade80; }
+  .pill.inactive { background: rgba(220,50,50,0.2); color: #ff6b6b; }
+
+  #toast { position: fixed; top: 20px; right: 20px; padding: 14px 22px; background: #1a1a2e; border: 1px solid #ffd700; border-radius: 8px; display: none; }
+  #toast.success { border-color: #4ade80; }
+  #toast.error { border-color: #ff6b6b; }
+  #toast.show { display: block; }
+
+  .empty { padding: 40px; text-align: center; color: #888; }
+</style>
+</head>
+<body>
+
+<div class="container">
+
+  <header>
+    <h1>Promo Code Management</h1>
+    <div class="nav">
+      <a href="index.html">← Admin Dashboard</a>
+      <a href="../index.html">Site</a>
+    </div>
+  </header>
+
+  <div class="panel">
+    <h2>Create New Promo Code</h2>
+    <form id="createForm">
+      <div>
+        <label>Code (uppercase)</label>
+        <input type="text" id="code" placeholder="e.g. SUMMER100" required maxlength="32" pattern="[A-Z0-9_-]+">
+      </div>
+      <div>
+        <label>Type</label>
+        <select id="type">
+          <option value="mixed">Mixed (gems + credits)</option>
+          <option value="gems">Gems only</option>
+          <option value="credits">Bonus credits only</option>
+          <option value="spins">Free spins</option>
+        </select>
+      </div>
+      <div>
+        <label>Reward Gems</label>
+        <input type="number" id="reward_gems" min="0" max="100000" step="10" value="0">
+      </div>
+      <div>
+        <label>Reward Credits ($)</label>
+        <input type="number" id="reward_credits" min="0" max="1000" step="0.5" value="0">
+      </div>
+      <div>
+        <label>Reward Free Spins</label>
+        <input type="number" id="reward_spins" min="0" max="500" step="1" value="0">
+      </div>
+      <div>
+        <label>Max Uses (0 = unlimited)</label>
+        <input type="number" id="max_uses" min="0" step="1" value="100">
+      </div>
+      <div>
+        <label>Expires At (optional)</label>
+        <input type="datetime-local" id="expires_at">
+      </div>
+      <div class="form-row">
+        <button class="primary" type="submit">Create Code</button>
+      </div>
+    </form>
+  </div>
+
+  <div class="panel">
+    <h2>Active Promo Codes</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>Code</th><th>Type</th><th>Gems</th><th>Credits</th><th>Spins</th>
+          <th>Uses</th><th>Limit</th><th>Expires</th><th>Status</th><th></th>
+        </tr>
+      </thead>
+      <tbody id="tableBody"><tr><td colspan="10" class="empty">Loading…</td></tr></tbody>
+    </table>
+  </div>
+
+</div>
+
+<div id="toast"></div>
+
+<script>
+(function() {
+  'use strict';
+  function $ (id) { return document.getElementById(id); }
+  function fmt(n) { return Number(n || 0).toLocaleString('en-US'); }
+
+  function getToken() {
+    return localStorage.getItem('token') || localStorage.getItem('authToken') || sessionStorage.getItem('token') || localStorage.getItem('adminToken');
+  }
+  function authHeaders() {
+    var t = getToken();
+    var h = { 'Content-Type': 'application/json' };
+    if (t) h['Authorization'] = 'Bearer ' + t;
+    return h;
+  }
+
+  function toast(msg, kind) {
+    var el = $('toast');
+    el.textContent = msg;
+    el.className = 'show ' + (kind || '');
+    setTimeout(function() { el.className = ''; }, 3000);
+  }
+
+  function buildRow(c) {
+    var tr = document.createElement('tr');
+    var cells = [
+      { text: c.code, cls: 'code' },
+      { text: c.type || '' },
+      { text: fmt(c.reward_gems) },
+      { text: '$' + Number(c.reward_credits || 0).toFixed(2) },
+      { text: fmt(c.reward_spins) },
+      { text: fmt(c.uses_count), cls: 'uses' },
+      { text: c.max_uses > 0 ? fmt(c.max_uses) : '∞' },
+      { text: c.expires_at ? new Date(c.expires_at).toLocaleString() : 'never' },
+    ];
+    cells.forEach(function(cell) {
+      var td = document.createElement('td');
+      td.textContent = cell.text;
+      if (cell.cls) td.className = cell.cls;
+      tr.appendChild(td);
+    });
+    var statusTd = document.createElement('td');
+    var pill = document.createElement('span');
+    pill.className = 'pill ' + (c.active ? 'active' : 'inactive');
+    pill.textContent = c.active ? 'Active' : 'Inactive';
+    statusTd.appendChild(pill);
+    tr.appendChild(statusTd);
+
+    var actTd = document.createElement('td');
+    if (c.active) {
+      var btn = document.createElement('button');
+      btn.className = 'danger';
+      btn.textContent = 'Deactivate';
+      btn.addEventListener('click', function() { deactivate(c.id, c.code); });
+      actTd.appendChild(btn);
+    }
+    tr.appendChild(actTd);
+    return tr;
+  }
+
+  async function loadList() {
+    try {
+      var r = await fetch('/api/promocode/list', { headers: authHeaders() });
+      if (!r.ok) {
+        if (r.status === 401 || r.status === 403) {
+          toast('Admin login required', 'error');
+        }
+        return;
+      }
+      var d = await r.json();
+      var body = $('tableBody');
+      while (body.firstChild) body.removeChild(body.firstChild);
+      if (!d.codes || d.codes.length === 0) {
+        var tr = document.createElement('tr');
+        var td = document.createElement('td');
+        td.colSpan = 10; td.className = 'empty';
+        td.textContent = 'No promo codes yet. Create your first one above.';
+        tr.appendChild(td); body.appendChild(tr);
+        return;
+      }
+      d.codes.forEach(function(c) { body.appendChild(buildRow(c)); });
+    } catch (e) {
+      toast('Network error: ' + e.message, 'error');
+    }
+  }
+
+  async function deactivate(id, code) {
+    if (!confirm('Deactivate code "' + code + '"? Existing redemptions stay logged.')) return;
+    try {
+      var r = await fetch('/api/promocode/deactivate', {
+        method: 'POST',
+        headers: authHeaders(),
+        body: JSON.stringify({ id: id })
+      });
+      var d = await r.json();
+      if (r.ok) { toast('Deactivated', 'success'); loadList(); }
+      else { toast(d.error || 'Failed', 'error'); }
+    } catch (e) { toast('Network error', 'error'); }
+  }
+
+  $('createForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    var payload = {
+      code: $('code').value.trim().toUpperCase(),
+      type: $('type').value,
+      reward_gems: parseInt($('reward_gems').value, 10) || 0,
+      reward_credits: parseFloat($('reward_credits').value) || 0,
+      reward_spins: parseInt($('reward_spins').value, 10) || 0,
+      max_uses: parseInt($('max_uses').value, 10) || 0,
+      expires_at: $('expires_at').value ? new Date($('expires_at').value).toISOString() : null,
+    };
+    try {
+      var r = await fetch('/api/promocode/create', {
+        method: 'POST',
+        headers: authHeaders(),
+        body: JSON.stringify(payload)
+      });
+      var d = await r.json();
+      if (r.ok) {
+        toast('Code "' + payload.code + '" created', 'success');
+        $('createForm').reset();
+        loadList();
+      } else {
+        toast(d.error || 'Failed', 'error');
+      }
+    } catch (err) { toast('Network error', 'error'); }
+  });
+
+  loadList();
+  setInterval(loadList, 60000);
+})();
+</script>
+
+</body>
+</html>
