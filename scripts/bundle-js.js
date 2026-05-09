@@ -30,7 +30,9 @@ const STANDALONE_SCRIPTS = [
     'js/countries.js',
     'js/social-proof.js',
     'js/deposit-urgency.js',
-    'js/onboarding.js'
+    'js/onboarding.js',
+    'js/referral-page.js',
+    'js/responsible-gambling-page.js'
 ];
 
 // CSS files to bundle (in specificity order — premium overrides MUST be last)

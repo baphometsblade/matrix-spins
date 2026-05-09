@@ -374,6 +374,7 @@ mount('/api/rentals',       './routes/rental.routes',        'rental');
 mount('/api/gifts',         './routes/gifts.routes',         'gifts');
 mount('/api/referral',      './routes/referral.routes',      'referral');
 mount('/api/referralbonus', './routes/referralbonus.routes', 'referralbonus');
+mount('/api/referral-commission', './routes/referral-commission.routes', 'referral-commission');
 mount('/api/affiliate',     './routes/affiliate.routes',     'affiliate');
 mount('/api/xpshop',        './routes/xpshop.routes',        'xpshop');
 mount('/api/abtesting',     './routes/abtesting.routes',     'abtesting');
@@ -386,6 +387,8 @@ mount('/api/favorites',     './routes/favorites.routes',     'favorites');
 // Compliance / responsible-gambling
 mount('/api/self-exclusion', './routes/selfexclusion.routes', 'self-exclusion');
 mount('/api/deposit-limits', './routes/depositlimits.routes', 'deposit-limits');
+mount('/api/loss-limits',    './routes/loss-limits.routes',   'loss-limits');
+mount('/api/admin-rg',       './routes/admin-rg.routes',      'admin-rg');
 mount('/api/account',        './routes/accountdeletion.routes', 'account-deletion');
 mount('/api/activity-log',   './routes/activitylog.routes',  'activity-log');
 mount('/api/maintenance',    './routes/maintenance.routes',  'maintenance');

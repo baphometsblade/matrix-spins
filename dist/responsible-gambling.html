@@ -352,8 +352,107 @@
 
         <div class="warning-banner">
             <h2>If gambling is no longer fun, it's time to stop.</h2>
-            <p>We're here to help. Reach out to our support team or one of the resources below.</p>
+            <p>We're here to help. Reach out to our support team or call <strong>Gambling Help 1800 858 858</strong> (Australia, 24/7).</p>
         </div>
+
+        <!-- ── INTERACTIVE CONTROLS ─────────────────────────────────── -->
+        <section class="section" id="rgControls">
+            <h2>My Controls</h2>
+            <p id="rgLoginPrompt" style="display:none;">Please <a href="login.html?next=responsible-gambling.html">log in</a> to set your personal limits.</p>
+
+            <div id="rgPanels" style="display:none;">
+
+                <!-- Deposit Limits -->
+                <div class="rg-panel">
+                    <h3>Deposit Limits</h3>
+                    <p>Cap the total you can deposit per day, week, or month. Lowering takes effect immediately. Raising requires 24 hours.</p>
+                    <div class="rg-grid">
+                        <label>Daily ($)<input type="number" id="dlDaily" min="0" step="1" placeholder="No limit"></label>
+                        <label>Weekly ($)<input type="number" id="dlWeekly" min="0" step="1" placeholder="No limit"></label>
+                        <label>Monthly ($)<input type="number" id="dlMonthly" min="0" step="1" placeholder="No limit"></label>
+                    </div>
+                    <div class="rg-usage" id="dlUsage">Loading current usage…</div>
+                    <button class="rg-btn" id="dlSave">Update deposit limits</button>
+                    <div class="rg-msg" id="dlMsg"></div>
+                </div>
+
+                <!-- Loss Limits -->
+                <div class="rg-panel">
+                    <h3>Loss Limits</h3>
+                    <p>Cap your <strong>net losses</strong> (wagered − won) per day, week, or month. Hitting a limit blocks further play in that window.</p>
+                    <div class="rg-grid">
+                        <label>Daily ($)<input type="number" id="llDaily" min="0" step="1" placeholder="No limit"></label>
+                        <label>Weekly ($)<input type="number" id="llWeekly" min="0" step="1" placeholder="No limit"></label>
+                        <label>Monthly ($)<input type="number" id="llMonthly" min="0" step="1" placeholder="No limit"></label>
+                    </div>
+                    <div class="rg-usage" id="llUsage">Loading current usage…</div>
+                    <button class="rg-btn" id="llSave">Update loss limits</button>
+                    <div class="rg-msg" id="llMsg"></div>
+                </div>
+
+                <!-- Wager / Max Bet -->
+                <div class="rg-panel">
+                    <h3>Wager Limits</h3>
+                    <p>Set a per-spin maximum bet and a daily total wager cap. Spins exceeding either limit are blocked.</p>
+                    <div class="rg-grid">
+                        <label>Max bet per spin ($)<input type="number" id="maxBet" min="0" step="0.50" placeholder="No limit"></label>
+                        <label>Daily wager cap ($)<input type="number" id="wagerDaily" min="0" step="1" placeholder="No limit"></label>
+                    </div>
+                    <button class="rg-btn" id="wagerSave">Update wager limits</button>
+                    <div class="rg-msg" id="wagerMsg"></div>
+                </div>
+
+                <!-- Session timer + Reality check -->
+                <div class="rg-panel">
+                    <h3>Session Time &amp; Reality Check</h3>
+                    <p>Limit how long a single session can last and how often we remind you to review your activity.</p>
+                    <div class="rg-grid">
+                        <label>Session limit (minutes, 15-1440)<input type="number" id="sessionLimit" min="15" max="1440" step="5" placeholder="No limit"></label>
+                        <label>Reality check every
+                            <select id="realityCheck">
+                                <option value="30">30 minutes</option>
+                                <option value="60" selected>60 minutes</option>
+                                <option value="120">2 hours</option>
+                            </select>
+                        </label>
+                    </div>
+                    <div class="rg-usage" id="sessionUsage">Loading session info…</div>
+                    <button class="rg-btn" id="sessionSave">Update session settings</button>
+                    <div class="rg-msg" id="sessionMsg"></div>
+                </div>
+
+                <!-- Self-exclusion -->
+                <div class="rg-panel rg-danger">
+                    <h3>Self-Exclusion / Cool-Off</h3>
+                    <p>Take a break from gambling. During exclusion, deposits and gameplay are blocked. Once activated, exclusions cannot be lifted early.</p>
+                    <div class="rg-grid">
+                        <button class="rg-btn rg-btn-danger" data-exclude="cooldown_24h">24-hour cool-off</button>
+                        <button class="rg-btn rg-btn-danger" data-exclude="cooldown_7d">7-day exclusion</button>
+                        <button class="rg-btn rg-btn-danger" data-exclude="cooldown_30d">30-day exclusion</button>
+                        <button class="rg-btn rg-btn-danger" data-exclude="permanent">Permanent</button>
+                    </div>
+                    <div class="rg-msg" id="excludeMsg"></div>
+                    <div id="excludeStatus" style="margin-top:1rem;"></div>
+                </div>
+
+            </div>
+        </section>
+
+        <style>
+            #rgControls .rg-panel { background:#161616; border:1px solid #2a2a2a; border-radius:8px; padding:24px; margin-bottom:20px; }
+            #rgControls .rg-panel h3 { color:#DAA520; margin-bottom:8px; font-size:1.25rem; }
+            #rgControls .rg-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:14px; margin:14px 0; }
+            #rgControls label { display:flex; flex-direction:column; gap:6px; font-size:.85rem; opacity:.85; }
+            #rgControls input, #rgControls select { background:#0d0d0d; border:1px solid #333; color:#fff; padding:.6rem; border-radius:6px; font-size:1rem; }
+            #rgControls .rg-btn { background:#DAA520; color:#000; font-weight:700; border:none; padding:.7rem 1.2rem; border-radius:6px; cursor:pointer; margin-top:8px; }
+            #rgControls .rg-btn:hover { background:#FFD700; }
+            #rgControls .rg-btn-danger { background:#7B0000; color:#fff; font-size:.9rem; padding:.7rem 1rem; }
+            #rgControls .rg-btn-danger:hover { background:#A00000; }
+            #rgControls .rg-msg { margin-top:.6rem; min-height:1.2em; font-size:.9rem; }
+            #rgControls .rg-usage { font-size:.85rem; opacity:.75; margin:.6rem 0; padding:.6rem; background:rgba(255,255,255,.03); border-radius:6px; }
+            #rgControls .rg-danger { border-color:#7B0000; }
+            #rgControls .pending-tag { display:inline-block; background:rgba(255,193,7,.18); color:#FFC107; padding:.15rem .5rem; font-size:.75rem; border-radius:4px; margin-left:.5rem; }
+        </style>
 
         <section class="section">
             <h2>What is Responsible Gambling?</h2>
@@ -611,6 +710,7 @@
     <script src="js/analytics.js" defer></script>
     <script src="js/email-capture.js" defer></script>
     <script src="js/conversion.js" defer></script>
+    <script src="js/responsible-gambling-page.js" defer></script>
     <script src="js/social-proof.js" defer></script>
     <script src="js/deposit-urgency.js" defer></script>
     <script src="js/onboarding.js" defer></script>

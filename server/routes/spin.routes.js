@@ -338,6 +338,89 @@ router.post('/', authenticate, async (req, res) => {
             }
         }
 
+        // ── Per-spin max-bet limit (responsible-gambling user setting) ──
+        try {
+            const maxBetRow = await db.get(
+                'SELECT max_bet_per_spin, pending_max_bet, pending_max_bet_at FROM user_limits WHERE user_id = ?',
+                [userId]
+            );
+            if (maxBetRow) {
+                let effectiveMax = maxBetRow.max_bet_per_spin;
+                if (maxBetRow.pending_max_bet && maxBetRow.pending_max_bet_at &&
+                    new Date(maxBetRow.pending_max_bet_at) <= new Date()) {
+                    effectiveMax = maxBetRow.pending_max_bet;
+                }
+                if (effectiveMax !== null && effectiveMax !== undefined && bet > effectiveMax) {
+                    activeSpins.delete(userId);
+                    return res.status(403).json({
+                        error: 'max_bet_per_spin',
+                        message: 'Your per-spin max bet is $' + Number(effectiveMax).toFixed(2) + '.',
+                        limit: Number(effectiveMax)
+                    });
+                }
+            }
+        } catch (mbErr) {
+            // user_limits column may not exist yet — skip
+            if (mbErr.message && !/no such column|column .* does not exist/i.test(mbErr.message)) {
+                console.warn('[Spin] max-bet check error:', mbErr.message);
+            }
+        }
+
+        // ── Weekly / Monthly loss-limit check (CLAUDE.md responsible gambling) ──
+        try {
+            const llRow = await db.get(
+                'SELECT weekly_loss_limit, monthly_loss_limit, ' +
+                'pending_weekly_loss, pending_weekly_loss_at, pending_monthly_loss, pending_monthly_loss_at ' +
+                'FROM user_limits WHERE user_id = ?',
+                [userId]
+            );
+            if (llRow) {
+                const now = new Date();
+                const effective = (cur, pend, pendAt) => {
+                    if (pend !== null && pend !== undefined && pendAt && new Date(pendAt) <= now) return pend;
+                    return cur;
+                };
+                const weeklyLim = effective(llRow.weekly_loss_limit, llRow.pending_weekly_loss, llRow.pending_weekly_loss_at);
+                const monthlyLim = effective(llRow.monthly_loss_limit, llRow.pending_monthly_loss, llRow.pending_monthly_loss_at);
+
+                const computeLoss = async (sinceClause) => {
+                    const r = await db.get(
+                        "SELECT COALESCE(SUM(bet_amount), 0) as wagered, COALESCE(SUM(win_amount), 0) as won " +
+                        "FROM spins WHERE user_id = ? AND created_at >= " + sinceClause,
+                        [userId]
+                    );
+                    return Math.max(0, Number((r?.wagered || 0)) - Number((r?.won || 0)));
+                };
+
+                if (weeklyLim !== null && weeklyLim !== undefined) {
+                    const wkLoss = await computeLoss("datetime('now', '-7 days')");
+                    if (wkLoss + bet > weeklyLim) {
+                        activeSpins.delete(userId);
+                        return res.status(403).json({
+                            error: 'weekly_loss_limit',
+                            message: 'Weekly loss limit reached',
+                            weeklyLoss: wkLoss, limit: weeklyLim
+                        });
+                    }
+                }
+                if (monthlyLim !== null && monthlyLim !== undefined) {
+                    const mLoss = await computeLoss("datetime('now', 'start of month')");
+                    if (mLoss + bet > monthlyLim) {
+                        activeSpins.delete(userId);
+                        return res.status(403).json({
+                            error: 'monthly_loss_limit',
+                            message: 'Monthly loss limit reached',
+                            monthlyLoss: mLoss, limit: monthlyLim
+                        });
+                    }
+                }
+            }
+        } catch (llErr) {
+            if (llErr.message && !/no such column|column .* does not exist/i.test(llErr.message)) {
+                console.warn('[Spin] weekly/monthly loss check error:', llErr.message);
+            }
+        }
+
         // ── Daily loss limit check (before spinning) ──
         const lossLimitService = require('../services/loss-limit.service');
         const lossCheck = await lossLimitService.checkDailyLossLimit(userId, bet);
@@ -776,6 +859,18 @@ router.post('/', authenticate, async (req, res) => {
 
         // ── Update game stats (house edge tracking) ──
         await houseEdge.updateGameStats(db, gameId, usedFreeSpin ? 0 : bet, spinResult.winAmount);
+
+        // ── Accrue referral commissions on real-money spin losses ──
+        // Tier 1 = 5% of net loss to direct referrer, Tier 2 = 1% to referrer's referrer.
+        // Only fires for real bets within the 30-day commission window (service enforces).
+        if (!usedFreeSpin && bet > 0) {
+            (async function () {
+                try {
+                    const commissionService = require('../services/referral-commission.service');
+                    await commissionService.accrueCommission(userId, bet, spinResult.winAmount);
+                } catch (commErr) { console.warn('[Spin] commission accrue error:', commErr.message); }
+            }());
+        }
 
         // ── Daily challenges progress (async fire-and-forget, non-blocking) ──
         if (!usedFreeSpin) {
