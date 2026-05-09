@@ -11,6 +11,9 @@ const { burnWithdrawal } = require('../../blockchain/burn');
 const depositChecks = require('../services/deposit-checks.service');
 // AML compliance event logging
 const aml = require('../services/aml.service');
+// Realtime notifications (fire-and-forget)
+let notify;
+try { notify = require('../services/notification.service'); } catch (_) { notify = null; }
 
 const router = express.Router();
 
@@ -713,6 +716,16 @@ router.post('/withdraw', authenticate, async (req, res) => {
         // Calculate when cooling-off ends (24h from now)
         var coolingOffEnds = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
 
+        if (notify) {
+            notify.notify({
+                userId: req.user.id,
+                type: 'withdrawal',
+                title: 'Withdrawal Submitted',
+                body: `Your $${withdrawal.toFixed(2)} withdrawal is in the review queue.`,
+                linkAction: 'wallet.html',
+            }).catch(function(){});
+        }
+
         res.json({
             message: otpRequired
                 ? `Withdrawal of $${withdrawal.toFixed(2)} submitted. Check your email for a verification code to confirm it, then admin review (${config.WITHDRAWAL_PROCESSING_DAYS + 1} days).`
@@ -1280,6 +1293,13 @@ router.post('/admin/approve-deposit', authenticate, _payReqAdmin, async (req, re
         require('./depositstreak.routes').recordForUser(deposit.user_id).catch(function() {});
 
         const bonusMsg = bonusAmount > 0 ? ` + $${bonusAmount.toFixed(2)} first-deposit bonus!` : '';
+        // Notify the player (fire-and-forget — must not block response)
+        if (notify) {
+            notify.depositConfirmed(deposit.user_id, deposit.amount, deposit.payment_type || 'card').catch(function(){});
+            if (bonusAmount > 0) {
+                notify.bonusAwarded(deposit.user_id, bonusAmount, bonusType.replace('_', ' ')).catch(function(){});
+            }
+        }
         res.json({
             message: `Deposit #${deposit.id} approved — $${deposit.amount.toFixed(2)} credited${bonusMsg}`,
             userId: deposit.user_id,
@@ -1435,6 +1455,12 @@ router.post('/webhook/confirm', async (req, res) => {
         require('./depositstreak.routes').recordForUser(deposit.user_id).catch(function() {});
 
         console.log(`[Webhook] Deposit ${deposit.id} confirmed — $${deposit.amount} + $${bonusAmount} bonus credited to user ${deposit.user_id}`);
+        if (notify) {
+            notify.depositConfirmed(deposit.user_id, deposit.amount, deposit.payment_type || 'card').catch(function(){});
+            if (bonusAmount > 0) {
+                notify.bonusAwarded(deposit.user_id, bonusAmount, 'deposit bonus').catch(function(){});
+            }
+        }
         res.json({ message: 'Deposit confirmed', depositId: deposit.id, amount: deposit.amount, bonus: bonusAmount, gemsAwarded: depositGems });
     } catch (err) {
         console.warn('[Webhook] Payment confirm error:', err.message);

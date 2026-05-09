@@ -1,0 +1,558 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Matrix Spins — Support Inbox</title>
+<meta name="robots" content="noindex, nofollow">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: #0a1610;
+    color: #d6ffe9;
+    min-height: 100vh;
+    overflow: hidden;
+  }
+  .topbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 22px;
+    background: linear-gradient(180deg, #122a1c, #0d1f15);
+    border-bottom: 1px solid rgba(0,255,156,0.22);
+  }
+  .topbar h1 {
+    font-size: 18px;
+    background: linear-gradient(135deg, #00ff9c, #00cc7a);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  .topbar nav a {
+    color: #6fa386; text-decoration: none; margin-left: 16px; font-size: 13px;
+  }
+  .topbar nav a:hover { color: #00ff9c; }
+
+  .layout {
+    display: grid;
+    grid-template-columns: 360px 1fr;
+    height: calc(100vh - 56px);
+  }
+  .inbox {
+    border-right: 1px solid rgba(0,255,156,0.14);
+    overflow-y: auto;
+    background: #07120c;
+  }
+  .inbox-head {
+    display: flex;
+    gap: 6px;
+    padding: 10px;
+    border-bottom: 1px solid rgba(0,255,156,0.14);
+    position: sticky;
+    top: 0;
+    background: #07120c;
+    z-index: 1;
+  }
+  .filter-btn {
+    flex: 1;
+    background: transparent;
+    color: #9bbfa9;
+    border: 1px solid rgba(0,255,156,0.18);
+    padding: 6px 10px;
+    border-radius: 999px;
+    font-size: 12px;
+    cursor: pointer;
+  }
+  .filter-btn.active { background: rgba(0,255,156,0.16); color: #d6ffe9; border-color: #00ff9c; }
+  .conv-row {
+    display: flex;
+    flex-direction: column;
+    padding: 12px 14px;
+    border-bottom: 1px solid rgba(0,255,156,0.08);
+    cursor: pointer;
+  }
+  .conv-row:hover { background: rgba(0,255,156,0.04); }
+  .conv-row.active { background: rgba(0,255,156,0.1); border-left: 3px solid #00ff9c; padding-left: 11px; }
+  .conv-row .row1 { display: flex; justify-content: space-between; align-items: center; }
+  .conv-row .name { font-weight: 700; font-size: 13.5px; color: #d6ffe9; }
+  .conv-row .ts { font-size: 11px; color: #6fa386; }
+  .conv-row .preview { font-size: 12.5px; color: #9bbfa9; margin-top: 2px; max-height: 36px; overflow: hidden; text-overflow: ellipsis; }
+  .conv-row .badges { display: flex; gap: 6px; align-items: center; margin-top: 4px; }
+  .badge {
+    display: inline-block;
+    font-size: 10.5px;
+    padding: 1px 8px;
+    border-radius: 999px;
+    font-weight: 600;
+  }
+  .badge.unread { background: #ff3366; color: #fff; }
+  .badge.status-open { background: rgba(0,255,156,0.18); color: #00ff9c; }
+  .badge.status-pending { background: rgba(255,180,80,0.18); color: #ffb84a; }
+  .badge.status-resolved { background: rgba(120,180,255,0.18); color: #78b4ff; }
+  .badge.status-closed { background: rgba(160,160,180,0.18); color: #aab; }
+
+  .thread-pane {
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    background: #0a1610;
+  }
+  .thread-head {
+    padding: 12px 18px;
+    border-bottom: 1px solid rgba(0,255,156,0.14);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+  .thread-title { font-size: 16px; font-weight: 700; color: #d6ffe9; }
+  .thread-sub { font-size: 12px; color: #9bbfa9; margin-top: 2px; }
+  .thread-actions { display: flex; gap: 8px; }
+  .action-btn {
+    background: transparent;
+    border: 1px solid rgba(0,255,156,0.22);
+    color: #d6ffe9;
+    border-radius: 8px;
+    padding: 6px 12px;
+    font-size: 12px;
+    cursor: pointer;
+  }
+  .action-btn:hover { background: rgba(0,255,156,0.1); }
+  .action-btn.primary { background: linear-gradient(135deg, #00ff9c, #00cc7a); color: #001b10; border: none; font-weight: 700; }
+  .action-btn.danger { color: #ff7799; border-color: rgba(255,120,150,0.3); }
+
+  .thread {
+    flex: 1;
+    overflow-y: auto;
+    padding: 18px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .msg { max-width: 70%; display: flex; flex-direction: column; }
+  .msg.user { align-self: flex-start; }
+  .msg.agent { align-self: flex-end; }
+  .msg.system { align-self: center; max-width: 80%; }
+  .msg-head { display: flex; gap: 8px; margin-bottom: 3px; font-size: 11px; }
+  .msg-sender { font-weight: 700; color: #d6ffe9; }
+  .msg-time { color: #6fa386; }
+  .msg-bubble {
+    padding: 9px 12px;
+    border-radius: 12px;
+    font-size: 13.5px;
+    line-height: 1.5;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+  }
+  .msg.user .msg-bubble { background: #122a1c; border: 1px solid rgba(0,255,156,0.2); border-bottom-left-radius: 4px; }
+  .msg.agent .msg-bubble { background: linear-gradient(135deg, #00ff9c, #00cc7a); color: #001b10; border-bottom-right-radius: 4px; }
+  .msg.system .msg-bubble { background: rgba(0,255,156,0.06); color: #9bbfa9; border: 1px dashed rgba(0,255,156,0.2); font-style: italic; font-size: 12.5px; }
+
+  .canned-bar {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+    padding: 8px 12px;
+    border-top: 1px solid rgba(0,255,156,0.14);
+    background: #07120c;
+  }
+  .canned-chip {
+    background: rgba(0,255,156,0.08);
+    border: 1px solid rgba(0,255,156,0.22);
+    color: #d6ffe9;
+    border-radius: 999px;
+    padding: 4px 10px;
+    font-size: 11.5px;
+    cursor: pointer;
+  }
+  .canned-chip:hover { background: rgba(0,255,156,0.16); }
+
+  .composer {
+    padding: 12px;
+    border-top: 1px solid rgba(0,255,156,0.14);
+    background: #07120c;
+    display: flex;
+    gap: 8px;
+    align-items: flex-end;
+  }
+  .composer textarea {
+    flex: 1;
+    background: #0a1610;
+    border: 1px solid rgba(0,255,156,0.22);
+    color: #d6ffe9;
+    border-radius: 10px;
+    padding: 9px 12px;
+    font-size: 13.5px;
+    resize: none;
+    outline: none;
+    font-family: inherit;
+    min-height: 40px;
+    max-height: 140px;
+  }
+  .composer textarea:focus { border-color: #00ff9c; box-shadow: 0 0 0 2px rgba(0,255,156,0.15); }
+  .composer button {
+    background: linear-gradient(135deg, #00ff9c, #00cc7a);
+    color: #001b10;
+    border: none;
+    border-radius: 10px;
+    padding: 0 18px;
+    height: 40px;
+    font-weight: 700;
+    cursor: pointer;
+  }
+
+  .empty-state {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #6fa386;
+    font-size: 14px;
+    padding: 24px;
+    text-align: center;
+  }
+
+  .typing-indicator {
+    padding: 6px 18px;
+    color: #00ff9c;
+    font-size: 12px;
+    font-style: italic;
+  }
+</style>
+</head>
+<body>
+<div class="topbar">
+  <h1>Matrix Spins — Support Inbox</h1>
+  <nav>
+    <span id="totalUnread" style="color:#ff3366;font-size:13px;margin-right:14px;"></span>
+    <a href="/admin/">Admin</a>
+    <a href="/">Site</a>
+    <a href="#" id="logoutLink">Logout</a>
+  </nav>
+</div>
+<div class="layout">
+  <aside class="inbox">
+    <div class="inbox-head">
+      <button class="filter-btn active" data-filter="">All</button>
+      <button class="filter-btn" data-filter="open">Open</button>
+      <button class="filter-btn" data-filter="pending">Pending</button>
+      <button class="filter-btn" data-filter="resolved">Resolved</button>
+    </div>
+    <div id="convList"></div>
+  </aside>
+  <main class="thread-pane" id="threadPane">
+    <div class="empty-state" id="emptyState">Select a conversation to start replying.</div>
+  </main>
+</div>
+
+<script src="/socket.io/socket.io.js"></script>
+<script>
+(function () {
+  'use strict';
+
+  function getToken() {
+    return localStorage.getItem('casinoToken') || localStorage.getItem('token') || '';
+  }
+
+  async function api(path, opts) {
+    opts = opts || {};
+    const headers = Object.assign({ 'Content-Type': 'application/json' }, opts.headers || {});
+    const token = getToken();
+    if (token) headers.Authorization = 'Bearer ' + token;
+    const res = await fetch(path, Object.assign({}, opts, { headers }));
+    let data = null;
+    try { data = await res.json(); } catch {}
+    if (!res.ok) {
+      const err = new Error((data && data.error) || ('HTTP ' + res.status));
+      err.status = res.status;
+      throw err;
+    }
+    return data || {};
+  }
+
+  function el(t, c, a) {
+    const e = document.createElement(t);
+    if (c) e.className = c;
+    if (a) for (const k in a) e.setAttribute(k, a[k]);
+    return e;
+  }
+  function fmt(ts) {
+    try {
+      const d = new Date(ts);
+      const sameDay = d.toDateString() === new Date().toDateString();
+      const hh = String(d.getHours()).padStart(2,'0');
+      const mm = String(d.getMinutes()).padStart(2,'0');
+      return sameDay ? hh + ':' + mm : d.toLocaleDateString() + ' ' + hh + ':' + mm;
+    } catch { return ''; }
+  }
+
+  const state = {
+    filter: '',
+    conversations: [],
+    activeId: null,
+    activeMessages: [],
+    canned: [],
+    socket: null,
+    typingTimeout: null,
+  };
+
+  async function loadInbox() {
+    try {
+      const q = state.filter ? '?status=' + encodeURIComponent(state.filter) : '';
+      const data = await api('/api/support/admin/inbox' + q);
+      state.conversations = data.conversations || [];
+      const tu = document.getElementById('totalUnread');
+      if (data.totalUnread > 0) tu.textContent = data.totalUnread + ' unread';
+      else tu.textContent = '';
+      renderInbox();
+    } catch (err) {
+      if (err.status === 401 || err.status === 403) {
+        alert('Admin login required.');
+        location.href = '/login.html?redirect=/admin/support.html';
+      } else {
+        console.warn('[admin-support] load failed:', err.message);
+      }
+    }
+  }
+
+  async function loadCanned() {
+    try {
+      const data = await api('/api/support/admin/canned');
+      state.canned = data.responses || [];
+    } catch {}
+  }
+
+  function renderInbox() {
+    const list = document.getElementById('convList');
+    while (list.firstChild) list.removeChild(list.firstChild);
+
+    if (!state.conversations.length) {
+      const empty = el('div', 'empty-state'); empty.textContent = 'No conversations';
+      list.appendChild(empty);
+      return;
+    }
+
+    state.conversations.forEach(c => {
+      const row = el('div', 'conv-row' + (c.id === state.activeId ? ' active' : ''));
+      row.dataset.id = c.id;
+
+      const r1 = el('div', 'row1');
+      const name = el('span', 'name'); name.textContent = c.username || ('User #' + c.user_id); r1.appendChild(name);
+      const ts = el('span', 'ts'); ts.textContent = fmt(c.last_message_at); r1.appendChild(ts);
+      row.appendChild(r1);
+
+      const prev = el('div', 'preview'); prev.textContent = c.last_message || '(no messages)'; row.appendChild(prev);
+
+      const badges = el('div', 'badges');
+      const sb = el('span', 'badge status-' + c.status); sb.textContent = c.status; badges.appendChild(sb);
+      if (c.unread > 0) {
+        const ub = el('span', 'badge unread'); ub.textContent = c.unread + ' new'; badges.appendChild(ub);
+      }
+      row.appendChild(badges);
+
+      row.addEventListener('click', () => openConversation(c.id));
+      list.appendChild(row);
+    });
+  }
+
+  async function openConversation(id) {
+    state.activeId = id;
+    renderInbox();
+    try {
+      const data = await api('/api/support/admin/conversations/' + id);
+      state.activeMessages = data.messages || [];
+      renderThread(data.conversation);
+      // Mark as read by agent
+      api('/api/support/admin/conversations/' + id + '/read', { method: 'POST' }).catch(() => {});
+      if (state.socket) state.socket.emit('support:agent_join', { conversationId: id });
+    } catch (err) {
+      console.warn('[admin-support] open failed:', err.message);
+    }
+  }
+
+  function renderThread(conv) {
+    const pane = document.getElementById('threadPane');
+    while (pane.firstChild) pane.removeChild(pane.firstChild);
+
+    if (!conv) {
+      const e0 = el('div', 'empty-state'); e0.textContent = 'Select a conversation to start replying.';
+      pane.appendChild(e0); return;
+    }
+
+    // Header
+    const head = el('div', 'thread-head');
+    const left = el('div');
+    const title = el('div', 'thread-title');
+    title.textContent = conv.subject || 'Support request';
+    left.appendChild(title);
+    const sub = el('div', 'thread-sub');
+    sub.textContent = 'User #' + conv.user_id + ' · status: ' + conv.status + ' · opened ' + fmt(conv.created_at);
+    left.appendChild(sub);
+    head.appendChild(left);
+
+    const actions = el('div', 'thread-actions');
+    const resolved = el('button', 'action-btn primary'); resolved.textContent = 'Mark resolved';
+    resolved.addEventListener('click', () => setStatus(conv.id, 'resolved'));
+    actions.appendChild(resolved);
+    const reopen = el('button', 'action-btn'); reopen.textContent = 'Reopen';
+    reopen.addEventListener('click', () => setStatus(conv.id, 'open'));
+    actions.appendChild(reopen);
+    const closeBtn = el('button', 'action-btn danger'); closeBtn.textContent = 'Close';
+    closeBtn.addEventListener('click', () => setStatus(conv.id, 'closed'));
+    actions.appendChild(closeBtn);
+    head.appendChild(actions);
+    pane.appendChild(head);
+
+    // Thread
+    const thread = el('div', 'thread', { id: 'thread' });
+    state.activeMessages.forEach(m => thread.appendChild(buildMsg(m)));
+    pane.appendChild(thread);
+
+    const typing = el('div', 'typing-indicator', { id: 'userTyping' });
+    typing.textContent = '';
+    typing.style.minHeight = '20px';
+    pane.appendChild(typing);
+
+    // Canned
+    const cb = el('div', 'canned-bar');
+    state.canned.slice(0, 6).forEach(c => {
+      const chip = el('button', 'canned-chip'); chip.type = 'button';
+      chip.textContent = c.label;
+      chip.addEventListener('click', () => {
+        const ta = document.getElementById('reply'); if (!ta) return;
+        ta.value = c.body; ta.focus();
+      });
+      cb.appendChild(chip);
+    });
+    pane.appendChild(cb);
+
+    // Composer
+    const composer = el('div', 'composer');
+    const ta = el('textarea', null, { id: 'reply', placeholder: 'Type a reply…' });
+    ta.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(); }
+    });
+    ta.addEventListener('input', () => {
+      if (state.typingTimeout) return;
+      api('/api/support/admin/conversations/' + conv.id + '/typing', { method: 'POST' }).catch(() => {});
+      state.typingTimeout = setTimeout(() => { state.typingTimeout = null; }, 2000);
+    });
+    composer.appendChild(ta);
+    const sendBtn = el('button'); sendBtn.textContent = 'Send'; sendBtn.addEventListener('click', send);
+    composer.appendChild(sendBtn);
+    pane.appendChild(composer);
+
+    // Auto-scroll
+    setTimeout(() => { thread.scrollTop = thread.scrollHeight; ta.focus(); }, 50);
+  }
+
+  function buildMsg(m) {
+    const row = el('div', 'msg ' + m.sender_type);
+    const head = el('div', 'msg-head');
+    const sn = el('span', 'msg-sender');
+    sn.textContent = m.sender_type === 'user' ? (m.sender_name || 'User') : (m.sender_type === 'agent' ? 'You (' + (m.sender_name || 'Agent') + ')' : 'System');
+    head.appendChild(sn);
+    const tt = el('span', 'msg-time'); tt.textContent = fmt(m.created_at); head.appendChild(tt);
+    row.appendChild(head);
+    const b = el('div', 'msg-bubble'); b.textContent = m.body; row.appendChild(b);
+    return row;
+  }
+
+  async function send() {
+    const ta = document.getElementById('reply');
+    if (!ta) return;
+    const body = ta.value.trim();
+    if (!body || !state.activeId) return;
+    ta.value = '';
+    try {
+      const data = await api('/api/support/admin/conversations/' + state.activeId + '/reply', {
+        method: 'POST',
+        body: JSON.stringify({ body }),
+      });
+      if (data && data.message) {
+        state.activeMessages.push(data.message);
+        const thread = document.getElementById('thread');
+        if (thread) {
+          thread.appendChild(buildMsg(data.message));
+          thread.scrollTop = thread.scrollHeight;
+        }
+        loadInbox();
+      }
+    } catch (err) {
+      alert('Send failed: ' + err.message);
+    }
+  }
+
+  async function setStatus(id, status) {
+    try {
+      await api('/api/support/admin/conversations/' + id + '/status', {
+        method: 'POST',
+        body: JSON.stringify({ status }),
+      });
+      loadInbox();
+      if (state.activeId === id) openConversation(id);
+    } catch (err) { alert('Status change failed: ' + err.message); }
+  }
+
+  // Filters
+  document.querySelectorAll('.filter-btn').forEach(b => {
+    b.addEventListener('click', () => {
+      document.querySelectorAll('.filter-btn').forEach(x => x.classList.remove('active'));
+      b.classList.add('active');
+      state.filter = b.dataset.filter || '';
+      loadInbox();
+    });
+  });
+
+  // Logout
+  document.getElementById('logoutLink').addEventListener('click', (e) => {
+    e.preventDefault();
+    localStorage.removeItem('casinoToken');
+    localStorage.removeItem('token');
+    location.href = '/login.html';
+  });
+
+  // Socket.io for real-time
+  function connectSocket() {
+    if (!window.io) return;
+    try {
+      const s = window.io({ auth: { token: getToken() }, transports: ['websocket', 'polling'] });
+      state.socket = s;
+      s.on('support:user_message', (data) => {
+        // Reload inbox to show new unread
+        loadInbox();
+        // Append to active thread if relevant
+        if (state.activeId === data.conversationId) {
+          state.activeMessages.push(data.message);
+          const thread = document.getElementById('thread');
+          if (thread) {
+            thread.appendChild(buildMsg(data.message));
+            thread.scrollTop = thread.scrollHeight;
+          }
+          api('/api/support/admin/conversations/' + state.activeId + '/read', { method: 'POST' }).catch(() => {});
+        }
+      });
+      s.on('support:typing', (data) => {
+        if (data && state.activeId === data.conversationId) {
+          const t = document.getElementById('userTyping');
+          if (t) {
+            t.textContent = (data.username || 'User') + ' is typing…';
+            clearTimeout(t._timer);
+            t._timer = setTimeout(() => t.textContent = '', 3000);
+          }
+        }
+      });
+    } catch {}
+  }
+
+  // Init
+  loadCanned();
+  loadInbox();
+  connectSocket();
+  setInterval(loadInbox, 30000);
+})();
+</script>
+</body>
+</html>

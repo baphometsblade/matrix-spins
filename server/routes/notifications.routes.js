@@ -2,6 +2,8 @@
 const router = require('express').Router();
 const { authenticate } = require('../middleware/auth');
 const db = require('../database');
+let _notify;
+try { _notify = require('../services/notification.service'); } catch (_) { _notify = null; }
 
 // Bootstrap: create notifications table
 {
@@ -79,10 +81,15 @@ router.post('/system', async function(req, res) {
     var notifBody = body.body || '';
     var linkAction = body.linkAction || null;
     if (!userId) return res.status(400).json({ error: 'userId required' });
-    await db.run(
-      'INSERT INTO notifications (user_id, type, title, body, link_action) VALUES (?, ?, ?, ?, ?)',
-      [userId, type, title, notifBody, linkAction]
-    );
+    // Prefer the notification service so connected sockets get a realtime push.
+    if (_notify) {
+      await _notify.notify({ userId: userId, type: type, title: title, body: notifBody, linkAction: linkAction });
+    } else {
+      await db.run(
+        'INSERT INTO notifications (user_id, type, title, body, link_action) VALUES (?, ?, ?, ?, ?)',
+        [userId, type, title, notifBody, linkAction]
+      );
+    }
     return res.json({ success: true });
   } catch(err) {
     return res.status(500).json({ error: 'Internal server error' });

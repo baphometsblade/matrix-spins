@@ -4,6 +4,8 @@ const router = require('express').Router();
 const { authenticate } = require('../middleware/auth');
 const { bonusGuard } = require('../middleware/bonus-guard');
 const db = require('../database');
+let _notify;
+try { _notify = require('../services/notification.service'); } catch (_) { _notify = null; }
 
 // Database initialization — lazy init pattern
 var _dbInitialized = false;
@@ -305,6 +307,7 @@ router.post('/claim', authenticate, bonusGuard, async function(req, res) {
             throw txErr;
         }
 
+        if (_notify) _notify.bonusAwarded(userId, bonusAmount, 'daily login (Day ' + newStreak + ')').catch(function(){});
         res.json({
             success: true,
             claimedAmount: bonusAmount,

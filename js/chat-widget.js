@@ -1,254 +1,374 @@
 /**
- * Matrix Spins Casino — Live Chat Support Widget
+ * Matrix Spins Casino — Live Support Chat Widget
  *
- * Features:
- *   • Floating FAB with unread badge
- *   • Expand/collapse animation
- *   • Bot auto-responses for common questions
- *   • Quick reply buttons
- *   • Typing indicator simulation
- *   • Message history in sessionStorage
- *   • Timestamps
- *
- * Usage:
- *   <link rel="stylesheet" href="css/chat-widget.css">
- *   <script src="js/chat-widget.js" defer></script>
- *   <!-- Widget auto-injects itself into the page -->
+ * Real-time, socket.io-powered chat between players and support agents.
+ * Falls back to REST when socket.io is unavailable. Auto-injects on every
+ * page that includes this script.
  */
 (function () {
   'use strict';
 
-  // ── Bot Knowledge Base ─────────────────────────────────────
-  const RESPONSES = [
-    { patterns: [/deposit|add funds|payment/i], reply: 'To make a deposit, head to your <a href="wallet.html">Wallet</a> and click "Deposit". We accept all major cards via Stripe. Minimum deposit is $10.' },
-    { patterns: [/withdraw|cash out|payout/i], reply: 'Withdrawals can be requested from your <a href="wallet.html">Wallet</a>. We support bank transfer, crypto, and card. Processing takes 1–3 business days after review.' },
-    { patterns: [/bonus|promo|offer|free/i], reply: 'Check our <a href="promotions.html">Promotions</a> page for current offers! New players get $1,000 in demo credits plus 50 free spins.' },
-    { patterns: [/vip|loyalty|reward|tier/i], reply: 'Every bet earns XP toward your VIP tier. Visit the <a href="vip.html">VIP Rewards</a> page to see your progress. Higher tiers unlock cashback, bonuses, and exclusive games.' },
-    { patterns: [/verify|kyc|identity|document/i], reply: 'Go to <a href="account.html">Account</a> → Verification to submit your documents. We accept passport, driver\'s license, or national ID. Review takes 1–2 business days.' },
-    { patterns: [/password|login|sign in|account/i], reply: 'You can change your password from <a href="account.html">Account</a> → Security. If you\'re locked out, use the "Forgot password" link on the login page.' },
-    { patterns: [/fair|rng|random|seed|provably/i], reply: 'All games use provably fair algorithms. Check your seeds at <a href="account.html">Account</a> → Security → Provably Fair Seeds. You can verify any spin independently.' },
-    { patterns: [/self.?exclu|gambling|addict|limit|responsible/i], reply: 'We take responsible gambling seriously. Set deposit, loss, and session limits at <a href="account.html">Account</a> → Responsible Play. Self-exclusion is also available. Need help? Contact <a href="https://www.begambleaware.org" target="_blank">BeGambleAware.org</a>.' },
-    { patterns: [/jackpot|progressive|pool/i], reply: 'We have four progressive jackpot tiers: Mega, Major, Minor, and Mini. A small portion of every bet feeds the pools. The jackpot bar shows real-time amounts at the top of every page!' },
-    { patterns: [/game|slot|play|spin/i], reply: 'We have 100 premium slot games from 8 studios. Browse them on our <a href="index.html">home page</a>. Use category filters to find your perfect game!' },
-    { patterns: [/hello|hi|hey|sup|good/i], reply: 'Hey there! 👋 Welcome to Matrix Spins support. How can I help you today?' },
-    { patterns: [/thank|thanks|thx/i], reply: 'You\'re welcome! Is there anything else I can help with? 😊' },
-    { patterns: [/human|agent|real person|live agent/i], reply: 'I\'m currently an AI assistant. For complex issues, you can email us at <strong>support@matrixspins.com</strong> and a human agent will respond within 24 hours.' },
-  ];
+  if (location.pathname.startsWith('/admin')) return;
 
-  const FALLBACK_REPLIES = [
-    'I\'m not sure I understand. Could you rephrase that? You can also try asking about deposits, withdrawals, bonuses, VIP rewards, or account verification.',
-    'I didn\'t quite catch that. Try asking about a specific topic like payments, promotions, or game fairness. Or type "help" for a list of things I can assist with.',
-    'Hmm, I\'m not sure about that one. For complex issues, email us at <strong>support@matrixspins.com</strong> and our team will get back to you within 24 hours.',
-  ];
+  function getToken() {
+    try {
+      const k = (typeof STORAGE_KEY_TOKEN !== 'undefined') ? STORAGE_KEY_TOKEN : 'casinoToken';
+      return localStorage.getItem(k) || localStorage.getItem('casinoToken') || localStorage.getItem('token') || '';
+    } catch { return ''; }
+  }
 
-  const QUICK_REPLIES = [
-    'How do I deposit?',
-    'Withdrawal status',
-    'Current promotions',
-    'VIP rewards',
-    'Provably fair',
-    'Talk to a human',
-  ];
+  async function api(path, opts) {
+    opts = opts || {};
+    const headers = Object.assign({ 'Content-Type': 'application/json' }, opts.headers || {});
+    const token = getToken();
+    if (token) headers.Authorization = 'Bearer ' + token;
+    const res = await fetch(path, { ...opts, headers });
+    let data = null;
+    try { data = await res.json(); } catch {}
+    if (!res.ok) {
+      const err = new Error((data && data.error) || ('HTTP ' + res.status));
+      err.status = res.status;
+      throw err;
+    }
+    return data || {};
+  }
 
-  // ── State ──────────────────────────────────────────────────
+  function esc(s) {
+    return String(s == null ? '' : s)
+      .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+  }
+
+  function timeFmt(ts) {
+    try {
+      const d = new Date(ts);
+      const now = new Date();
+      const sameDay = d.toDateString() === now.toDateString();
+      const hh = String(d.getHours()).padStart(2, '0');
+      const mm = String(d.getMinutes()).padStart(2, '0');
+      if (sameDay) return hh + ':' + mm;
+      return d.toLocaleDateString() + ' ' + hh + ':' + mm;
+    } catch { return ''; }
+  }
+
   const state = {
     open: false,
+    conversationId: null,
     messages: [],
-    unread: 1,
-    fallbackIdx: 0,
+    canned: [],
+    socket: null,
+    isAuthed: !!getToken(),
+    typingTimeout: null,
+    agentTypingTimeout: null,
+    unreadCount: 0,
   };
 
-  // Load from session
-  try {
-    const saved = sessionStorage.getItem('ms_chat_history');
-    if (saved) {
-      state.messages = JSON.parse(saved);
-      state.unread = 0;
-    }
-  } catch {}
-
-  function saveMessages() {
-    try { sessionStorage.setItem('ms_chat_history', JSON.stringify(state.messages.slice(-50))); } catch {}
+  function el(tag, cls, attrs) {
+    const e = document.createElement(tag);
+    if (cls) e.className = cls;
+    if (attrs) for (const k in attrs) e.setAttribute(k, attrs[k]);
+    return e;
   }
 
-  // ── Inject DOM ─────────────────────────────────────────────
-  function init() {
-    const container = document.createElement('div');
-    container.id = 'chatWidgetRoot';
-    container.innerHTML = `
-      <button class="chat-fab" id="chatFab" aria-label="Open chat support">
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/>
-        </svg>
-        <div class="unread-dot ${state.unread > 0 ? '' : 'hidden'}" id="chatUnread">${state.unread}</div>
-      </button>
-      <div class="chat-window" id="chatWindow">
-        <div class="chat-header">
-          <div class="chat-agent-avatar">
-            MS
-            <div class="online-dot"></div>
-          </div>
-          <div class="chat-header-info">
-            <div class="name">Matrix Spins Support</div>
-            <div class="status">Online — typically replies instantly</div>
-          </div>
-          <button class="chat-minimize" id="chatMinimize" aria-label="Minimize chat">−</button>
-        </div>
-        <div class="chat-messages" id="chatMessages"></div>
-        <div class="quick-replies" id="chatQuickReplies">
-          ${QUICK_REPLIES.map(q => `<button class="quick-reply" data-msg="${q}">${q}</button>`).join('')}
-        </div>
-        <div class="chat-input-area">
-          <textarea class="chat-input" id="chatInput" placeholder="Type a message..." rows="1"></textarea>
-          <button class="chat-send" id="chatSend" aria-label="Send message">
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/>
-            </svg>
-          </button>
-        </div>
-      </div>
-    `;
-    document.body.appendChild(container);
+  function buildDom() {
+    const root = el('div'); root.id = 'ms-support-chat';
 
-    // Render existing messages
-    const msgArea = document.getElementById('chatMessages');
-    if (state.messages.length === 0) {
-      addMessage('agent', 'Hi! 👋 I\'m the Matrix Spins support bot. I can help with deposits, withdrawals, bonuses, VIP rewards, account issues, and more. What can I help you with?');
-    } else {
-      state.messages.forEach(m => renderMessage(m, false));
+    // FAB
+    const fab = el('button', 'msc-fab');
+    fab.id = 'msc-fab';
+    fab.setAttribute('aria-label', 'Open support chat');
+    fab.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" width="26" height="26"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg><span class="msc-fab-badge" id="msc-fab-badge" hidden>0</span>';
+    root.appendChild(fab);
+
+    // Panel skeleton (static markup — no user data)
+    const panel = el('div', 'msc-panel');
+    panel.id = 'msc-panel';
+    panel.hidden = true;
+    panel.setAttribute('role', 'dialog');
+    panel.setAttribute('aria-label', 'Support chat');
+    panel.innerHTML = [
+      '<header class="msc-header">',
+      '  <div class="msc-title">',
+      '    <div class="msc-avatar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 2"/></svg></div>',
+      '    <div><div class="msc-name">Matrix Support</div><div class="msc-status"><span class="msc-dot"></span><span id="msc-status-text">Online · typically replies in minutes</span></div></div>',
+      '  </div>',
+      '  <button class="msc-close" id="msc-close" aria-label="Close">&times;</button>',
+      '</header>',
+      '<div class="msc-quick" id="msc-quick"></div>',
+      '<div class="msc-thread" id="msc-thread" aria-live="polite"></div>',
+      '<div class="msc-typing" id="msc-typing" hidden><span class="msc-typing-dot"></span><span class="msc-typing-dot"></span><span class="msc-typing-dot"></span><span class="msc-typing-label">Support is typing…</span></div>',
+      '<form class="msc-input-form" id="msc-form">',
+      '  <textarea class="msc-input" id="msc-input" placeholder="Type a message…" rows="1" maxlength="2000"></textarea>',
+      '  <button class="msc-send" id="msc-send" type="submit" aria-label="Send"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" width="20" height="20"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg></button>',
+      '</form>',
+      '<div class="msc-foot"><span id="msc-foot-text">Powered by Matrix Spins</span></div>',
+    ].join('');
+    root.appendChild(panel);
+
+    document.body.appendChild(root);
+    return root;
+  }
+
+  function renderMessages() {
+    const thread = document.getElementById('msc-thread');
+    if (!thread) return;
+    while (thread.firstChild) thread.removeChild(thread.firstChild);
+    if (!state.isAuthed) {
+      const empty = el('div', 'msc-empty');
+      const p1 = el('p'); p1.innerHTML = '<strong>Sign in to chat with support.</strong>'; empty.appendChild(p1);
+      const p2 = el('p'); p2.innerHTML = 'Already have an account? <a href="login.html">Log in</a> · New here? <a href="signup.html">Create account</a>'; empty.appendChild(p2);
+      const p3 = el('p', 'msc-empty-sub'); p3.innerHTML = 'For urgent issues email <a href="mailto:support@matrixspins.com">support@matrixspins.com</a>'; empty.appendChild(p3);
+      thread.appendChild(empty);
+      return;
     }
+    if (!state.messages.length) {
+      const e0 = el('div', 'msc-empty'); e0.textContent = 'Loading conversation…'; thread.appendChild(e0); return;
+    }
+    state.messages.forEach(m => thread.appendChild(buildMessage(m)));
+    thread.scrollTop = thread.scrollHeight;
+  }
 
-    // ── Event Listeners ────────────────────────────────────────
-    const fab = document.getElementById('chatFab');
-    const win = document.getElementById('chatWindow');
-    const input = document.getElementById('chatInput');
+  function buildMessage(m) {
+    const row = el('div', m.sender_type === 'user' ? 'msc-msg user' : (m.sender_type === 'agent' ? 'msc-msg agent' : 'msc-msg system'));
+    if (m._failed) row.classList.add('failed');
+    if (m._pending) row.classList.add('pending');
 
-    fab.addEventListener('click', () => {
-      state.open = !state.open;
-      win.classList.toggle('open', state.open);
-      fab.classList.toggle('open', state.open);
-      if (state.open) {
-        state.unread = 0;
-        document.getElementById('chatUnread').classList.add('hidden');
-        input.focus();
-        msgArea.scrollTop = msgArea.scrollHeight;
+    const head = el('div', 'msc-msg-head');
+    const sender = el('span', 'msc-sender');
+    sender.textContent = m.sender_type === 'user' ? 'You' : (m.sender_name || (m.sender_type === 'agent' ? 'Support Agent' : 'Matrix Spins'));
+    head.appendChild(sender);
+    const time = el('span', 'msc-time');
+    time.textContent = timeFmt(m.created_at);
+    head.appendChild(time);
+    row.appendChild(head);
+
+    const bubble = el('div', 'msc-bubble');
+    bubble.textContent = m.body;  // textContent: safe by construction
+    row.appendChild(bubble);
+
+    if (m.sender_type === 'user') {
+      const meta = el('div', 'msc-meta');
+      const r = el('span', 'msc-read');
+      r.textContent = m._failed ? '! failed' : (m._pending ? '…' : (m.read_by_agent ? '✓✓' : '✓'));
+      r.title = m._failed ? 'Failed to send' : (m._pending ? 'Sending' : (m.read_by_agent ? 'Read by agent' : 'Sent'));
+      meta.appendChild(r);
+      row.appendChild(meta);
+    }
+    return row;
+  }
+
+  function renderQuick() {
+    const q = document.getElementById('msc-quick');
+    if (!q) return;
+    while (q.firstChild) q.removeChild(q.firstChild);
+    if (!state.canned.length || !state.isAuthed) return;
+    state.canned.slice(0, 6).forEach(c => {
+      const b = el('button', 'msc-chip', { type: 'button' });
+      b.textContent = c.label;
+      b.addEventListener('click', () => sendMessage(c.label));
+      q.appendChild(b);
+    });
+  }
+
+  function updateBadge() {
+    const b = document.getElementById('msc-fab-badge');
+    if (!b) return;
+    if (state.unreadCount > 0) {
+      b.textContent = state.unreadCount > 9 ? '9+' : String(state.unreadCount);
+      b.hidden = false;
+    } else { b.hidden = true; }
+  }
+
+  function showAgentTyping() {
+    const t = document.getElementById('msc-typing');
+    if (!t) return;
+    t.hidden = false;
+    if (state.agentTypingTimeout) clearTimeout(state.agentTypingTimeout);
+    state.agentTypingTimeout = setTimeout(() => { t.hidden = true; }, 4000);
+  }
+
+  async function loadConversation() {
+    if (!state.isAuthed) return;
+    try {
+      const data = await api('/api/support/messages');
+      state.conversationId = data.conversation && data.conversation.id;
+      state.messages = data.messages || [];
+      state.unreadCount = data.unread || 0;
+      renderMessages();
+      updateBadge();
+    } catch (err) {
+      const t = document.getElementById('msc-thread');
+      if (t) {
+        while (t.firstChild) t.removeChild(t.firstChild);
+        const e0 = el('div', 'msc-empty');
+        e0.textContent = 'Could not load support chat. ';
+        const btn = el('button', 'msc-link', { type: 'button' });
+        btn.textContent = 'Retry';
+        btn.addEventListener('click', loadConversation);
+        e0.appendChild(btn);
+        t.appendChild(e0);
       }
-    });
+    }
+  }
 
-    document.getElementById('chatMinimize').addEventListener('click', () => {
-      state.open = false;
-      win.classList.remove('open');
-      fab.classList.remove('open');
-    });
+  async function loadCanned() {
+    try {
+      const data = await api('/api/support/canned');
+      state.canned = data.responses || [];
+      renderQuick();
+    } catch {}
+  }
 
-    document.getElementById('chatSend').addEventListener('click', sendMessage);
+  async function sendMessage(text) {
+    text = (text || '').trim();
+    if (!text || !state.isAuthed) return;
 
-    input.addEventListener('keydown', (e) => {
-      if (e.key === 'Enter' && !e.shiftKey) {
-        e.preventDefault();
-        sendMessage();
-      }
-    });
+    const optimistic = {
+      id: 'tmp-' + Date.now(),
+      sender_type: 'user',
+      sender_name: 'You',
+      body: text,
+      created_at: new Date().toISOString(),
+      read_by_agent: 0,
+      _pending: true,
+    };
+    state.messages.push(optimistic);
+    renderMessages();
 
-    // Auto-resize textarea
-    input.addEventListener('input', () => {
-      input.style.height = 'auto';
-      input.style.height = Math.min(input.scrollHeight, 80) + 'px';
-    });
+    const input = document.getElementById('msc-input');
+    if (input) { input.value = ''; autoSize(input); }
 
-    // Quick replies
-    document.querySelectorAll('.quick-reply').forEach(btn => {
-      btn.addEventListener('click', () => {
-        input.value = btn.dataset.msg;
-        sendMessage();
+    try {
+      const data = await api('/api/support/send', { method: 'POST', body: JSON.stringify({ body: text }) });
+      const idx = state.messages.findIndex(m => m.id === optimistic.id);
+      if (idx >= 0 && data && data.message) state.messages[idx] = data.message;
+      renderMessages();
+    } catch (err) {
+      const idx = state.messages.findIndex(m => m.id === optimistic.id);
+      if (idx >= 0) { state.messages[idx]._failed = true; state.messages[idx]._pending = false; }
+      renderMessages();
+      showError(err.message || 'Failed to send');
+    }
+  }
+
+  function showError(msg) {
+    const foot = document.getElementById('msc-foot-text');
+    if (!foot) return;
+    foot.textContent = msg;
+    foot.style.color = '#ff5577';
+    setTimeout(() => { foot.textContent = 'Powered by Matrix Spins'; foot.style.color = ''; }, 4000);
+  }
+
+  function autoSize(el2) {
+    el2.style.height = 'auto';
+    el2.style.height = Math.min(120, el2.scrollHeight) + 'px';
+  }
+
+  function open() {
+    const panel = document.getElementById('msc-panel');
+    if (!panel) return;
+    panel.hidden = false;
+    state.open = true;
+    document.getElementById('msc-fab').classList.add('msc-fab-open');
+    requestAnimationFrame(() => panel.classList.add('msc-panel-open'));
+    state.unreadCount = 0;
+    updateBadge();
+    if (state.isAuthed) {
+      api('/api/support/read', { method: 'POST' }).catch(() => {});
+      if (!state.messages.length) loadConversation();
+    }
+    setTimeout(() => { const i = document.getElementById('msc-input'); if (i) i.focus(); }, 250);
+  }
+
+  function close() {
+    const panel = document.getElementById('msc-panel');
+    if (!panel) return;
+    panel.classList.remove('msc-panel-open');
+    state.open = false;
+    document.getElementById('msc-fab').classList.remove('msc-fab-open');
+    setTimeout(() => { panel.hidden = true; }, 200);
+  }
+
+  function connectSocket() {
+    if (!window.io || !state.isAuthed) return;
+    try {
+      const s = window.io({ auth: { token: getToken() }, transports: ['websocket', 'polling'] });
+      state.socket = s;
+      s.on('connect', () => s.emit('support:join'));
+      s.on('support:agent_message', (data) => {
+        if (!data || !data.message) return;
+        if (state.messages.find(m => m.id === data.message.id)) return;
+        state.messages.push(data.message);
+        if (!state.open) state.unreadCount++;
+        renderMessages();
+        updateBadge();
+        if (state.open) {
+          api('/api/support/read', { method: 'POST' }).catch(() => {});
+        } else if (window.MatrixNotifications && window.MatrixNotifications.toast) {
+          window.MatrixNotifications.toast('💬', 'New message from Support', data.message.body);
+        }
       });
+      s.on('support:agent_typing', () => showAgentTyping());
+      s.on('support:status', (data) => {
+        if (data && data.status === 'resolved') showError('This conversation was marked resolved by support.');
+      });
+    } catch (err) {
+      console.warn('[chat-widget] socket connect failed:', err.message);
+    }
+  }
+
+  function ensureSocketIoLoaded(cb) {
+    if (window.io) return cb();
+    if (document.querySelector('script[data-msc-io]')) {
+      const wait = setInterval(() => { if (window.io) { clearInterval(wait); cb(); } }, 100);
+      return;
+    }
+    const s = document.createElement('script');
+    s.src = '/socket.io/socket.io.js';
+    s.async = true;
+    s.setAttribute('data-msc-io', '1');
+    s.onload = cb;
+    s.onerror = () => console.warn('[chat-widget] socket.io client failed to load');
+    document.head.appendChild(s);
+  }
+
+  function init() {
+    if (document.getElementById('ms-support-chat')) return;
+    buildDom();
+
+    document.getElementById('msc-fab').addEventListener('click', () => state.open ? close() : open());
+    document.getElementById('msc-close').addEventListener('click', close);
+    document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && state.open) close(); });
+
+    const form = document.getElementById('msc-form');
+    const input = document.getElementById('msc-input');
+    form.addEventListener('submit', (e) => { e.preventDefault(); sendMessage(input.value); });
+    input.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(input.value); }
     });
-  }
-
-  // ── Message Handling ───────────────────────────────────────
-  function formatTime() {
-    return new Date().toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
-  }
-
-  function addMessage(role, text) {
-    const msg = { role, text, time: formatTime() };
-    state.messages.push(msg);
-    saveMessages();
-    renderMessage(msg, true);
-  }
-
-  function renderMessage(msg, animate) {
-    const msgArea = document.getElementById('chatMessages');
-    if (!msgArea) return;
-    const div = document.createElement('div');
-    div.className = `chat-msg ${msg.role}`;
-    div.innerHTML = `<div>${msg.text}</div><div class="time">${msg.time}</div>`;
-    if (!animate) div.style.animation = 'none';
-    msgArea.appendChild(div);
-    msgArea.scrollTop = msgArea.scrollHeight;
-  }
-
-  function sendMessage() {
-    const input = document.getElementById('chatInput');
-    const text = input.value.trim();
-    if (!text) return;
-
-    input.value = '';
-    input.style.height = 'auto';
-    addMessage('user', text.replace(/</g, '&lt;').replace(/>/g, '&gt;'));
-
-    // Show typing indicator
-    showTyping();
-
-    // Generate response after delay
-    const delay = 800 + Math.random() * 1200;
-    setTimeout(() => {
-      hideTyping();
-      const reply = findReply(text);
-      addMessage('agent', reply);
-
-      // If chat is closed, show unread badge
-      if (!state.open) {
-        state.unread++;
-        const badge = document.getElementById('chatUnread');
-        badge.textContent = state.unread;
-        badge.classList.remove('hidden');
+    input.addEventListener('input', () => {
+      autoSize(input);
+      if (state.socket) {
+        if (state.typingTimeout) return;
+        state.socket.emit('support:typing');
+        state.typingTimeout = setTimeout(() => { state.typingTimeout = null; }, 1500);
       }
-    }, delay);
-  }
+    });
 
-  function findReply(text) {
-    for (const r of RESPONSES) {
-      if (r.patterns.some(p => p.test(text))) return r.reply;
+    if (state.isAuthed) {
+      loadConversation();
+      loadCanned();
+      ensureSocketIoLoaded(connectSocket);
+    } else {
+      renderMessages();
     }
-    // Cycle through fallback replies
-    const reply = FALLBACK_REPLIES[state.fallbackIdx % FALLBACK_REPLIES.length];
-    state.fallbackIdx++;
-    return reply;
+
+    window.MatrixSupport = { open, close, reload: loadConversation, send: sendMessage, isAuthed: () => state.isAuthed };
   }
 
-  function showTyping() {
-    let indicator = document.getElementById('chatTyping');
-    if (!indicator) {
-      indicator = document.createElement('div');
-      indicator.id = 'chatTyping';
-      indicator.className = 'typing-indicator';
-      indicator.innerHTML = '<div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div>';
-      document.getElementById('chatMessages').appendChild(indicator);
-    }
-    indicator.classList.add('visible');
-    document.getElementById('chatMessages').scrollTop = document.getElementById('chatMessages').scrollHeight;
-  }
-
-  function hideTyping() {
-    const indicator = document.getElementById('chatTyping');
-    if (indicator) indicator.classList.remove('visible');
-  }
-
-  // ── Auto-init on DOM ready ─────────────────────────────────
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', init);
   } else {
-    init();
+    setTimeout(init, 50);
   }
 })();

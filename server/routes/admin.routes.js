@@ -1,6 +1,8 @@
 const express = require('express');
 const { authenticate, requireAdmin } = require('../middleware/auth');
 const db = require('../database');
+let _notify;
+try { _notify = require('../services/notification.service'); } catch (_) { _notify = null; }
 
 const router = express.Router();
 
@@ -911,6 +913,7 @@ router.post('/approve-withdrawal', async (req, res) => {
             [req.user.id, wd.user_id, JSON.stringify({ withdrawalId, amount: wd.amount })]
         ).catch(function(_) { /* audit table may not exist in older envs */ });
 
+        if (_notify) _notify.withdrawalProcessed(wd.user_id, wd.amount, 'approved').catch(function(){});
         res.json({ message: 'Withdrawal approved and ready for payout', withdrawalId, amount: wd.amount });
     } catch (err) {
         console.warn('[Admin] Approve withdrawal error:', err.message);
@@ -957,6 +960,7 @@ router.post('/reject-withdrawal', async (req, res) => {
             [req.user.id, wd.user_id, JSON.stringify({ withdrawalId: Number(withdrawalId), amount: wd.amount, reason: admin_note })]
         ).catch(() => {});
 
+        if (_notify) _notify.withdrawalProcessed(wd.user_id, wd.amount, 'rejected').catch(function(){});
         res.json({ message: 'Withdrawal rejected and refunded', withdrawalId, amount: wd.amount, newBalance: balanceAfter });
     } catch (err) {
         console.warn('[Admin] Reject withdrawal error:', err.message);

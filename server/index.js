@@ -14,6 +14,7 @@
 require('./utils/secure-rng');
 
 const express = require('express');
+const http = require('http');
 const path = require('path');
 const fs = require('fs');
 const cors = require('cors');
@@ -378,6 +379,7 @@ mount('/api/xpshop',        './routes/xpshop.routes',        'xpshop');
 mount('/api/abtesting',     './routes/abtesting.routes',     'abtesting');
 mount('/api/ab',            './routes/abtesting.routes',     'ab-alias');
 mount('/api/chat',          './routes/chat.routes',          'chat');
+mount('/api/support',       './routes/support.routes',       'support (live chat)');
 mount('/api/feedback',      './routes/feedback.routes',      'feedback');
 mount('/api/favorites',     './routes/favorites.routes',     'favorites');
 
@@ -636,7 +638,22 @@ async function start() {
     console.warn('[SERVER] scheduler failed:', err.message);
   }
 
-  const server = app.listen(PORT, () => {
+  const httpServer = http.createServer(app);
+
+  // ── Realtime (Socket.IO) ────────────────────────────────
+  let io = null;
+  try {
+    const realtime = require('./services/realtime.service');
+    io = realtime.init(httpServer);
+    if (io) {
+      const notify = require('./services/notification.service');
+      notify.setIO(io);
+    }
+  } catch (err) {
+    console.warn('[SERVER] realtime init failed:', err.message);
+  }
+
+  const server = httpServer.listen(PORT, () => {
     console.log('');
     console.log('══════════════════════════════════════════════════');
     console.log('  MATRIX SPINS CASINO — Server Running');
@@ -646,11 +663,13 @@ async function start() {
     console.log(`  Routes loaded: ${loadedRoutes.length}`);
     console.log(`  Routes failed: ${failedRoutes.length}`);
     console.log(`  DB degraded:   ${isDegraded()}`);
+    console.log(`  Realtime:      ${io ? 'on' : 'off'}`);
     console.log(`  Time:          ${new Date().toISOString()}`);
     console.log('══════════════════════════════════════════════════');
     console.log('');
   });
   app.set('server', server);
+  app.set('io', io);
 
   // Tournament service bootstrap
   try {
