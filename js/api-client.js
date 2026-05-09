@@ -175,6 +175,9 @@
     return parts.length ? `?${parts.join('&')}` : '';
   }
 
+  // Generic API call for routes not wrapped above
+  api.fetch = (path, opts) => apiFetch(path, opts);
+
   // Helpers for the UI
   api.formatCents = function (cents, currency = 'USD') {
     const n = Number(cents) || 0;

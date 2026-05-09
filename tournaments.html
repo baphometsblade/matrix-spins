@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Tournaments — Matrix Spins Casino</title>
+<meta name="description" content="Daily and weekly slot tournaments with cash prize pools. Compete for the top of the leaderboard and win bonus credits.">
+<meta property="og:title" content="Tournaments — Matrix Spins Casino">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://msaart.online/tournaments.html">
+<link rel="canonical" href="https://msaart.online/tournaments.html">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/auth.css">
+<link rel="stylesheet" href="css/notifications.css">
+<style>
+  body { font-family: Inter, sans-serif; }
+  .t-tabs { display: flex; gap: 0.5rem; margin-bottom: 1.2rem; flex-wrap: wrap; }
+  .t-tab { padding: 0.6rem 1.2rem; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.08); color: #ccc; border-radius: 8px; cursor: pointer; font-weight: 600; }
+  .t-tab.active { background: linear-gradient(135deg, #FFD700, #FFA500); color: #000; border-color: #FFD700; }
+  .t-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(360px, 1fr)); gap: 1.2rem; }
+  .t-card { background: linear-gradient(135deg, #1a1f2e, #2a2f3e); border: 1px solid rgba(255,215,0,0.2); border-radius: 14px; padding: 1.5rem; }
+  .t-card h3 { margin: 0 0 0.5rem; font-family: 'Plus Jakarta Sans', sans-serif; }
+  .t-card .desc { color: #aaa; font-size: 0.9rem; min-height: 2.6em; }
+  .t-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.6rem; margin: 1rem 0; }
+  .t-stat { background: rgba(0,0,0,0.3); padding: 0.6rem; border-radius: 8px; text-align: center; }
+  .t-stat .v { font-size: 1.2rem; font-weight: 800; color: #FFD700; }
+  .t-stat .l { font-size: 0.7rem; color: #aaa; text-transform: uppercase; letter-spacing: 0.05em; }
+  .t-actions { display: flex; gap: 0.6rem; margin-top: 1rem; }
+  .t-btn { flex: 1; padding: 0.7rem; border-radius: 8px; border: none; font-weight: 700; cursor: pointer; }
+  .t-btn-primary { background: linear-gradient(135deg, #FFD700, #FFA500); color: #000; }
+  .t-btn-secondary { background: rgba(255,255,255,0.08); color: #ddd; border: 1px solid rgba(255,255,255,0.1); }
+  .t-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+  .t-prize-split { display: flex; gap: 0.4rem; justify-content: space-around; font-size: 0.8rem; color: #aaa; margin-bottom: 0.5rem; }
+  .t-prize-split span strong { color: #FFD700; }
+  .t-modal-bg { position: fixed; inset: 0; background: rgba(0,0,0,0.8); display: none; align-items: center; justify-content: center; z-index: 1000; padding: 1rem; }
+  .t-modal-bg.show { display: flex; }
+  .t-modal { background: #1a1f2e; border: 1px solid #FFD700; border-radius: 12px; padding: 1.5rem; max-width: 600px; width: 100%; max-height: 90vh; overflow-y: auto; }
+  .t-leader-row { display: grid; grid-template-columns: 50px 1fr 90px 110px; gap: 0.5rem; padding: 0.5rem; border-bottom: 1px solid rgba(255,255,255,0.06); align-items: center; }
+  .t-leader-row.me { background: rgba(255,215,0,0.08); }
+  .t-leader-row .rank { font-weight: 800; color: #FFD700; }
+  .t-rank-badge-1 { color: #FFD700; }
+  .t-rank-badge-2 { color: #C0C0C0; }
+  .t-rank-badge-3 { color: #CD7F32; }
+  .t-history-card { background: rgba(255,255,255,0.04); padding: 1rem; border-radius: 8px; margin-bottom: 0.6rem; }
+  .t-history-card .winners { font-size: 0.85rem; color: #aaa; margin-top: 0.3rem; }
+  .closebtn { background: none; border: none; color: #aaa; font-size: 1.6rem; cursor: pointer; float: right; }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <a class="brand" href="index.html">Matrix Spins</a>
+  <div class="actions">
+    <span id="balanceChip" class="balance-chip">—</span>
+    <a href="vip.html" class="btn btn-inline secondary">VIP</a>
+    <a href="achievements.html" class="btn btn-inline secondary">Achievements</a>
+    <a href="wallet.html" class="btn btn-inline secondary">Wallet</a>
+    <button id="logout" class="btn btn-inline secondary">Sign out</button>
+  </div>
+</div>
+
+<div class="rs-shell-wide" style="max-width:1200px;">
+
+  <div style="text-align:center;margin-bottom:2rem;">
+    <h1 style="font-family:'Plus Jakarta Sans',sans-serif;margin:0;">🏆 Slot Tournaments</h1>
+    <p style="color:#aaa;margin:0.4rem 0 0;">Compete for cash prize pools. Top 3 split 50% / 30% / 20%.</p>
+  </div>
+
+  <div class="t-tabs" id="tabs">
+    <button class="t-tab active" data-view="active">⚡ Active</button>
+    <button class="t-tab" data-view="upcoming">📅 Upcoming</button>
+    <button class="t-tab" data-view="history">🏅 History</button>
+  </div>
+
+  <div id="content">
+    <div style="text-align:center;color:#aaa;padding:2rem;">Loading tournaments...</div>
+  </div>
+</div>
+
+<div class="t-modal-bg" id="modal">
+  <div class="t-modal">
+    <button class="closebtn" id="closeModal">×</button>
+    <h2 id="modalTitle" style="margin-top:0;"></h2>
+    <p id="modalDesc" style="color:#aaa;"></p>
+    <div id="modalMyRank" style="margin:1rem 0;padding:0.8rem;background:rgba(255,215,0,0.08);border-radius:8px;display:none;"></div>
+    <h3>Leaderboard — Top 20</h3>
+    <div id="modalLeaderboard"></div>
+  </div>
+</div>
+
+<script src="js/api-client.js"></script>
+<script>
+(async () => {
+  'use strict';
+  const api = window.MatrixSpinsAPI;
+  const user = await api.loadSession();
+  if (!user) { window.location.href = 'login.html?next=tournaments.html'; return; }
+
+  const $ = (id) => document.getElementById(id);
+  function clearEl(e) { while (e.firstChild) e.removeChild(e.firstChild); }
+  function el(tag, props, text) {
+    const e = document.createElement(tag);
+    if (props) Object.keys(props).forEach(k => {
+      if (k === 'class') e.className = props[k];
+      else if (k === 'style') e.setAttribute('style', props[k]);
+      else e.setAttribute(k, props[k]);
+    });
+    if (text != null) e.textContent = String(text);
+    return e;
+  }
+
+  $('logout').addEventListener('click', async () => {
+    try { await api.logout(); } catch (_) {}
+    window.location.href = 'index.html';
+  });
+  try {
+    const b = await api.getBalance();
+    $('balanceChip').textContent = api.formatCents(b.availableCents || 0);
+  } catch (_) {}
+
+  let view = 'active';
+
+  document.querySelectorAll('.t-tab').forEach(t => {
+    t.addEventListener('click', () => {
+      document.querySelectorAll('.t-tab').forEach(x => x.classList.remove('active'));
+      t.classList.add('active');
+      view = t.getAttribute('data-view');
+      load();
+    });
+  });
+
+  function tournamentCard(t, ctx) {
+    const card = el('div', { class: 't-card' });
+    card.appendChild(el('h3', null, t.name || 'Tournament'));
+    card.appendChild(el('div', { class: 'desc' }, t.description || ''));
+
+    const stats = el('div', { class: 't-stats' });
+    const s1 = el('div', { class: 't-stat' });
+    s1.appendChild(el('div', { class: 'v' }, '$' + Number(t.prize_pool || 0).toFixed(2)));
+    s1.appendChild(el('div', { class: 'l' }, 'Prize Pool'));
+    stats.appendChild(s1);
+
+    const s2 = el('div', { class: 't-stat' });
+    s2.appendChild(el('div', { class: 'v' }, t.entry_count != null ? t.entry_count : '—'));
+    s2.appendChild(el('div', { class: 'l' }, 'Players'));
+    stats.appendChild(s2);
+
+    const s3 = el('div', { class: 't-stat' });
+    s3.appendChild(el('div', { class: 'v' }, t.time_remaining || (ctx === 'upcoming' ? 'Soon' : 'Ended')));
+    s3.appendChild(el('div', { class: 'l' }, ctx === 'upcoming' ? 'Starts In' : 'Time Left'));
+    stats.appendChild(s3);
+    card.appendChild(stats);
+
+    // Prize split row
+    const pool = Number(t.prize_pool || 0);
+    if (pool > 0) {
+      const split = el('div', { class: 't-prize-split' });
+      const p1 = el('span'); p1.appendChild(document.createTextNode('🥇 ')); p1.appendChild(el('strong', null, '$' + (pool * 0.5).toFixed(2))); split.appendChild(p1);
+      const p2 = el('span'); p2.appendChild(document.createTextNode('🥈 ')); p2.appendChild(el('strong', null, '$' + (pool * 0.3).toFixed(2))); split.appendChild(p2);
+      const p3 = el('span'); p3.appendChild(document.createTextNode('🥉 ')); p3.appendChild(el('strong', null, '$' + (pool * 0.2).toFixed(2))); split.appendChild(p3);
+      card.appendChild(split);
+    }
+
+    // Scoring info
+    const scoreLabel = (t.scoring === 'best_multiplier') ? 'Best multiplier wins' : 'Most winnings wins';
+    card.appendChild(el('div', { style: 'font-size:0.85rem;color:#aaa;margin-bottom:0.6rem;' },
+      '🎯 ' + scoreLabel + (Number(t.entry_fee) > 0 ? '  ·  💵 $' + Number(t.entry_fee).toFixed(2) + ' buy-in' : '  ·  🆓 Free entry')));
+
+    if (ctx === 'active') {
+      const actions = el('div', { class: 't-actions' });
+      const enterBtn = el('button', { class: 't-btn t-btn-primary' }, Number(t.entry_fee) > 0 ? 'Enter ($' + Number(t.entry_fee).toFixed(2) + ')' : 'Enter Free');
+      enterBtn.addEventListener('click', async () => {
+        enterBtn.disabled = true;
+        enterBtn.textContent = 'Joining...';
+        try {
+          await api.fetch('/tournament/' + t.id + '/enter', { method: 'POST', body: {} });
+          enterBtn.textContent = '✓ Entered';
+          enterBtn.classList.remove('t-btn-primary');
+          enterBtn.classList.add('t-btn-secondary');
+        } catch (e) {
+          enterBtn.textContent = (e.message && e.message.indexOf('Already') >= 0) ? '✓ Entered' : 'Failed';
+          if ((e.message || '').indexOf('Already') < 0) {
+            setTimeout(() => { enterBtn.disabled = false; enterBtn.textContent = 'Enter'; }, 2000);
+          }
+        }
+      });
+      actions.appendChild(enterBtn);
+
+      const viewBtn = el('button', { class: 't-btn t-btn-secondary' }, 'Leaderboard');
+      viewBtn.addEventListener('click', () => openModal(t));
+      actions.appendChild(viewBtn);
+
+      card.appendChild(actions);
+    } else if (ctx === 'history' && t.winners && t.winners.length > 0) {
+      const w = el('div', { class: 'winners' });
+      const medals = ['🥇', '🥈', '🥉'];
+      t.winners.slice(0, 3).forEach(win => {
+        const row = el('div', null,
+          (medals[win.rank - 1] || '') + ' ' + win.username + ' — $' + Number(win.prize || 0).toFixed(2));
+        w.appendChild(row);
+      });
+      card.appendChild(w);
+    }
+    return card;
+  }
+
+  async function openModal(t) {
+    $('modalTitle').textContent = t.name;
+    $('modalDesc').textContent = t.description || '';
+    const myRankEl = $('modalMyRank');
+    myRankEl.style.display = 'none';
+    clearEl($('modalLeaderboard'));
+    $('modal').classList.add('show');
+
+    try {
+      const [details, mine] = await Promise.all([
+        api.fetch('/tournament/' + t.id),
+        api.fetch('/tournament/' + t.id + '/my-rank').catch(() => ({ entered: false }))
+      ]);
+      if (mine && mine.entered) {
+        myRankEl.style.display = 'block';
+        myRankEl.textContent = 'Your Rank: #' + mine.rank + ' · Score: ' + Number(mine.score).toFixed(2) +
+          ' · Spins: ' + mine.spins_played + ' · Best win: $' + Number(mine.biggest_win).toFixed(2);
+      }
+      const board = (details && details.leaderboard) || [];
+      const wrap = $('modalLeaderboard');
+      if (board.length === 0) {
+        wrap.appendChild(el('p', { style: 'color:#aaa;text-align:center;' }, 'No entries yet — be the first!'));
+      } else {
+        const header = el('div', { class: 't-leader-row', style: 'font-weight:700;color:#FFD700;border-bottom:1px solid #FFD700;' });
+        header.appendChild(el('span', null, 'Rank'));
+        header.appendChild(el('span', null, 'Player'));
+        header.appendChild(el('span', { style: 'text-align:right;' }, 'Spins'));
+        header.appendChild(el('span', { style: 'text-align:right;' }, 'Score'));
+        wrap.appendChild(header);
+        board.forEach(row => {
+          const cls = (mine && mine.entered && row.user_id === mine.user_id) ? 't-leader-row me' : 't-leader-row';
+          const tr = el('div', { class: cls });
+          let medal = '';
+          if (row.rank === 1) medal = '🥇 ';
+          else if (row.rank === 2) medal = '🥈 ';
+          else if (row.rank === 3) medal = '🥉 ';
+          tr.appendChild(el('span', { class: 'rank' }, medal + '#' + row.rank));
+          tr.appendChild(el('span', null, row.username));
+          tr.appendChild(el('span', { style: 'text-align:right;' }, String(row.spins_played || 0)));
+          tr.appendChild(el('span', { style: 'text-align:right;color:#FFD700;font-weight:700;' }, Number(row.score || 0).toFixed(2)));
+          wrap.appendChild(tr);
+        });
+      }
+    } catch (e) {
+      $('modalLeaderboard').textContent = 'Failed to load leaderboard: ' + (e.message || 'unknown');
+    }
+  }
+
+  $('closeModal').addEventListener('click', () => $('modal').classList.remove('show'));
+  $('modal').addEventListener('click', (e) => { if (e.target.id === 'modal') $('modal').classList.remove('show'); });
+
+  async function load() {
+    const c = $('content');
+    clearEl(c);
+    c.appendChild(el('div', { style: 'text-align:center;color:#aaa;padding:2rem;' }, 'Loading...'));
+    try {
+      let path;
+      if (view === 'active') path = '/tournament/active';
+      else if (view === 'upcoming') path = '/tournament/upcoming';
+      else path = '/tournament/history';
+
+      const data = await api.fetch(path);
+      const list = data.tournaments || data.history || [];
+
+      clearEl(c);
+      if (list.length === 0) {
+        c.appendChild(el('p', { style: 'text-align:center;color:#aaa;padding:2rem;' },
+          view === 'active' ? 'No active tournaments — check back soon!' :
+          view === 'upcoming' ? 'No upcoming tournaments scheduled.' :
+          'No completed tournaments yet.'));
+        return;
+      }
+
+      const grid = el('div', { class: 't-grid' });
+      list.forEach(t => grid.appendChild(tournamentCard(t, view)));
+      c.appendChild(grid);
+    } catch (e) {
+      clearEl(c);
+      c.appendChild(el('p', { style: 'text-align:center;color:#f88;' }, 'Failed to load: ' + (e.message || 'unknown')));
+    }
+  }
+
+  load();
+  // Refresh active tab every 30s to keep counters live
+  setInterval(() => { if (view === 'active') load(); }, 30000);
+})();
+</script>
+</body>
+</html>

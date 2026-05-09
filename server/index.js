@@ -357,6 +357,7 @@ mount('/api/battle-pass',   './routes/battle-pass.routes',   'battle-pass');
 mount('/api/battlepass',    './routes/battle-pass.routes',   'battlepass-alias');
 
 // Engagement systems
+mount('/api/vip',           './routes/vip.routes',           'vip-loyalty');
 mount('/api/achievements',  './routes/achievements.routes',  'achievements');
 mount('/api/challenges',    './routes/challenges.routes',    'challenges');
 mount('/api/milestones',    './routes/milestones.routes',    'milestones');
