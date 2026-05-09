@@ -28,9 +28,6 @@ const { buildHelmet, permissionsPolicy } = require('./middleware/security-header
 const { requestLogger, getPerfSnapshot } = require('./middleware/request-logger');
 const { suspiciousActivity, getBlockedIps } = require('./middleware/suspicious-activity');
 const { notFoundApiHandler, globalErrorHandler } = require('./middleware/error-handler');
-const { metricsMiddleware, exposition: metricsExposition } = require('./middleware/metrics');
-const heapWatch = require('./utils/heap-watch');
-const slowQuery = require('./utils/slow-query');
 
 const app = express();
 const PORT = config.PORT || process.env.PORT || 3000;
@@ -73,11 +70,6 @@ app.use((req, res, next) => {
 
 // ── Structured request/perf logging via winston ─────────────────
 app.use(requestLogger());
-
-// ── Prometheus metrics middleware (must run before route handlers) ──
-app.use(metricsMiddleware());
-// Public, unauthenticated metrics endpoint for scraping
-app.get('/api/metrics', metricsExposition);
 
 // ── IP-based suspicious-activity guard (before rate limits) ─────
 app.use(suspiciousActivity);
@@ -481,10 +473,10 @@ mount('/api/receipts',        './routes/receipts.routes',        'transaction-re
 // Withdrawal admin queue
 mount('/api/admin-withdrawals', './routes/admin-withdrawals.routes', 'admin-withdrawal-queue');
 
-// Table games (Blackjack, Roulette, Video Poker)
-mount('/api/blackjack',   './routes/blackjack.routes',   'blackjack');
-mount('/api/roulette',    './routes/roulette.routes',    'roulette');
-mount('/api/video-poker', './routes/video-poker.routes', 'video-poker');
+// Table games removed - slots only casino
+// mount('/api/blackjack',   './routes/blackjack.routes',   'blackjack');
+// mount('/api/roulette',    './routes/roulette.routes',    'roulette');
+// mount('/api/video-poker', './routes/video-poker.routes', 'video-poker');
 
   // close mountAllRoutes()
 }
@@ -716,12 +708,6 @@ async function ensureReady() {
     } catch (err) {
       logger.error('Database init failed (continuing in degraded mode)', { error: err.message, stack: err.stack });
     }
-    // Wrap the DB facade so every query that exceeds SLOW_QUERY_MS is logged
-    try {
-      slowQuery.install(require('./database'));
-    } catch (e) {
-      logger.warn('slow-query install failed', { error: e.message });
-    }
     // Mount routes AFTER DB is ready — fire-and-forget bootstraps now succeed
     mountAllRoutes();
     // Bind the catch-all/static (must come after routes)
@@ -735,9 +721,6 @@ async function ensureReady() {
 // ── Start Server ───────────────────────────────────────────
 async function start() {
   await ensureReady();
-
-  // Heap-usage sampler (logs every HEAP_WATCH_INTERVAL_MS, warns on growth)
-  try { heapWatch.start(logger); } catch (e) { logger.warn('heap-watch start failed', { error: e.message }); }
 
   // Background scheduler (re-engagement emails, daily reports)
   try {
