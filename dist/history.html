@@ -3,6 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <link rel="manifest" href="/manifest.json">
 <title>Game History & Stats — Matrix Spins Casino</title>
 <meta name="description" content="Your complete spin history, lifetime stats, win/loss timeline, sessions, and the games where luck favors you most.">
 <meta name="robots" content="noindex,nofollow">
@@ -767,6 +768,7 @@
   await Promise.all([loadStats(), loadChart(30)]);
 })();
 </script>
+    <script src="/js/pwa-install.js" defer></script>
     <script src="js/age-gate.js" defer></script>
     <script src="js/cookie-consent.js" defer></script>
     <script src="js/search.js" defer></script>

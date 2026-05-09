@@ -1,175 +1,183 @@
 // Matrix Spins Casino — Service Worker
-// Production PWA: cache-first statics, network-first HTML, network-only API
+// PWA: cache-first statics, network-first HTML, network-only API,
+// offline fallback, version-update messaging.
 
-const CACHE_NAME = 'matrix-spins-v5';
+const VERSION = 'v6.0.0';
+const STATIC_CACHE  = `matrix-spins-static-${VERSION}`;
+const RUNTIME_CACHE = `matrix-spins-runtime-${VERSION}`;
+const HTML_CACHE    = `matrix-spins-html-${VERSION}`;
+const ALL_CACHES    = [STATIC_CACHE, RUNTIME_CACHE, HTML_CACHE];
 
-const PRECACHE_ASSETS = [
+const APP_SHELL = [
+  '/',
   '/index.html',
+  '/offline.html',
   '/404.html',
-  // Core CSS
+  '/manifest.json',
+  '/assets/icon-192.svg',
+  '/assets/icon-512.svg',
+];
+
+// Best-effort precache — must not block install if any 404
+const PRECACHE_OPTIONAL = [
   '/css/landing-redesign.css',
   '/css/performance-mobile.css',
   '/css/jackpot.css',
-  '/css/chat-widget.css',
   '/css/notifications.css',
-  // Compliance & UX CSS
-  '/css/cookie-consent.css',
-  '/css/age-gate.css',
   '/css/skeleton.css',
-  '/css/search.css',
-  '/css/favorites.css',
-  '/css/session-monitor.css',
-  '/css/conversion.css',
-  // Page CSS
-  '/css/auth.css',
-  '/css/wallet.css',
-  '/css/vip.css',
-  '/css/promotions.css',
-  '/css/leaderboard.css',
-  '/css/referral.css',
-  '/css/achievements.css',
-  '/css/spin-wheel.css',
-  '/css/account.css',
-  '/css/email-capture.css',
-  // Core JS
   '/js/api-client.js',
-  '/js/jackpot.js',
-  '/js/chat-widget.js',
   '/js/notifications.js',
-  '/js/cookie-consent.js',
-  '/js/age-gate.js',
-  '/js/search.js',
-  '/js/favorites.js',
-  '/js/session-monitor.js',
-  '/js/sound-manager.js',
-  '/js/analytics.js',
-  '/js/email-capture.js',
-  '/js/conversion.js',
-  '/js/activity-feed.js',
-  '/js/social-proof.js',
-  '/js/deposit-urgency.js',
-  '/js/onboarding.js',
-  '/js/casino-engine.js',
-  '/js/game-registry.js',
-  '/js/studio-themes.js',
-  '/js/retention.js',
-  '/js/countries.js',
-  '/css/activity-feed.css',
+  '/js/pwa-install.js',
   '/terms.html',
   '/responsible-gambling.html',
-  '/provably-fair.html',
   '/privacy.html',
-  '/faq.html',
 ];
 
-// ── Install: pre-cache critical assets and take control immediately ──
+// ─── Install: precache app shell ───────────────────────────────
 self.addEventListener('install', (event) => {
-  self.skipWaiting();
-  event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => cache.addAll(PRECACHE_ASSETS))
-  );
+  event.waitUntil((async () => {
+    const cache = await caches.open(STATIC_CACHE);
+    await cache.addAll(APP_SHELL);
+    // Optional assets — fetched individually so one 404 doesn't fail install
+    await Promise.allSettled(
+      PRECACHE_OPTIONAL.map(url => cache.add(url).catch(() => null))
+    );
+    // Don't auto-skipWaiting — wait for client postMessage so the user
+    // sees the "update available" banner before reload.
+  })());
 });
 
-// ── Activate: purge old caches and claim all clients ──
+// ─── Activate: purge old caches, claim clients ─────────────────
 self.addEventListener('activate', (event) => {
-  event.waitUntil(
-    caches.keys().then((keys) =>
-      Promise.all(
-        keys
-          .filter((key) => key !== CACHE_NAME)
-          .map((key) => caches.delete(key))
-      )
-    ).then(() => clients.claim())
-  );
+  event.waitUntil((async () => {
+    const keys = await caches.keys();
+    await Promise.all(
+      keys.filter(k => !ALL_CACHES.includes(k)).map(k => caches.delete(k))
+    );
+    await self.clients.claim();
+    // Inform pages a new SW is active so they can show "Update applied"
+    const clients = await self.clients.matchAll({ includeUncontrolled: true });
+    clients.forEach(c => c.postMessage({ type: 'SW_ACTIVATED', version: VERSION }));
+  })());
 });
 
-// ── Fetch: route requests by type ──
+// ─── Message: client requests immediate skipWaiting ────────────
+self.addEventListener('message', (event) => {
+  if (!event.data) return;
+  if (event.data.type === 'SKIP_WAITING') {
+    self.skipWaiting();
+  }
+  if (event.data.type === 'GET_VERSION') {
+    event.ports[0]?.postMessage({ version: VERSION });
+  }
+});
+
+// ─── Fetch routing ─────────────────────────────────────────────
 self.addEventListener('fetch', (event) => {
   const { request } = event;
+  // Only intercept GET — never POST/PUT/DELETE
+  if (request.method !== 'GET') return;
+
   const url = new URL(request.url);
 
-  // API requests — network only, never cache
+  // Skip non-http(s) requests (chrome-extension, data:, etc.)
+  if (!url.protocol.startsWith('http')) return;
+
+  // API: network only, never cache (sensitive data, auth, balance)
   if (url.pathname.startsWith('/api/')) {
-    event.respondWith(fetch(request));
+    event.respondWith(networkOnlyAPI(request));
     return;
   }
 
-  // Google Fonts — cache-first (fonts rarely change)
-  if (url.hostname.includes('fonts.googleapis.com') ||
-      url.hostname.includes('fonts.gstatic.com')) {
-    event.respondWith(cacheFirst(request));
+  // Google Fonts — cache-first (rarely change, small)
+  if (url.hostname.endsWith('fonts.googleapis.com') ||
+      url.hostname.endsWith('fonts.gstatic.com')) {
+    event.respondWith(cacheFirst(request, RUNTIME_CACHE));
     return;
   }
 
-  // CSS, JS, images — cache-first with network fallback
+  // Static asset — cache-first
   if (isStaticAsset(url.pathname)) {
-    event.respondWith(cacheFirst(request));
+    event.respondWith(cacheFirst(request, RUNTIME_CACHE));
     return;
   }
 
-  // HTML navigation requests — network-first with cache fallback
+  // HTML navigation — network-first with offline fallback
   if (request.mode === 'navigate' ||
-      request.headers.get('accept')?.includes('text/html')) {
+      (request.headers.get('accept') || '').includes('text/html')) {
     event.respondWith(networkFirstHTML(request));
     return;
   }
 
-  // Everything else — network-first
-  event.respondWith(networkFirst(request));
+  // Everything else — stale-while-revalidate
+  event.respondWith(staleWhileRevalidate(request, RUNTIME_CACHE));
 });
 
-// ── Strategies ──
+// ─── Strategies ────────────────────────────────────────────────
 
-// Cache-first: serve from cache, fall back to network and store the response
-async function cacheFirst(request) {
-  const cached = await caches.match(request);
-  if (cached) return cached;
-
+async function networkOnlyAPI(request) {
   try {
-    const response = await fetch(request);
-    if (response.ok) {
-      const cache = await caches.open(CACHE_NAME);
-      cache.put(request, response.clone());
-    }
-    return response;
-  } catch {
-    return new Response('', { status: 408, statusText: 'Offline' });
+    return await fetch(request);
+  } catch (_) {
+    return new Response(
+      JSON.stringify({ error: 'offline', message: 'Network unavailable' }),
+      { status: 503, headers: { 'Content-Type': 'application/json' } }
+    );
   }
 }
 
-// Network-first for HTML: try network, cache fallback, ultimate fallback 404
+async function cacheFirst(request, cacheName) {
+  const cached = await caches.match(request);
+  if (cached) return cached;
+  try {
+    const response = await fetch(request);
+    if (response.ok && response.status === 200 && response.type !== 'opaque') {
+      const cache = await caches.open(cacheName);
+      cache.put(request, response.clone()).catch(() => {});
+    }
+    return response;
+  } catch {
+    return new Response('', { status: 504, statusText: 'Offline' });
+  }
+}
+
 async function networkFirstHTML(request) {
   try {
     const response = await fetch(request);
     if (response.ok) {
-      const cache = await caches.open(CACHE_NAME);
-      cache.put(request, response.clone());
+      const cache = await caches.open(HTML_CACHE);
+      cache.put(request, response.clone()).catch(() => {});
     }
     return response;
   } catch {
     const cached = await caches.match(request);
     if (cached) return cached;
-    // Offline with no cache — serve pre-cached 404 page
-    return caches.match('/404.html');
+    // Pre-cached offline page — Matrix-themed fallback
+    const offline = await caches.match('/offline.html');
+    if (offline) return offline;
+    const fourOhFour = await caches.match('/404.html');
+    if (fourOhFour) return fourOhFour;
+    return new Response('<h1>Offline</h1><p>You appear to be offline.</p>', {
+      status: 503,
+      headers: { 'Content-Type': 'text/html; charset=utf-8' },
+    });
   }
 }
 
-// Network-first for miscellaneous requests
-async function networkFirst(request) {
-  try {
-    const response = await fetch(request);
-    if (response.ok) {
-      const cache = await caches.open(CACHE_NAME);
-      cache.put(request, response.clone());
+async function staleWhileRevalidate(request, cacheName) {
+  const cache = await caches.open(cacheName);
+  const cached = await cache.match(request);
+  const fetchPromise = fetch(request).then(response => {
+    if (response.ok && response.status === 200 && response.type !== 'opaque') {
+      cache.put(request, response.clone()).catch(() => {});
     }
     return response;
-  } catch {
-    return caches.match(request);
-  }
+  }).catch(() => cached);
+  return cached || fetchPromise;
 }
 
-// ── Helpers ──
+// ─── Helpers ───────────────────────────────────────────────────
 
 function isStaticAsset(pathname) {
-  return /\.(css|js|png|jpg|jpeg|gif|svg|webp|ico|woff2?|ttf|eot)(\?.*)?$/i.test(pathname);
+  return /\.(css|js|mjs|json|png|jpg|jpeg|gif|svg|webp|avif|ico|woff2?|ttf|eot|otf|mp3|wav|ogg)(\?.*)?$/i.test(pathname);
 }

@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Connection Lost — Matrix Spins</title>
+<meta name="theme-color" content="#00ff41">
+<meta name="robots" content="noindex">
+<link rel="icon" type="image/svg+xml" href="/assets/icon-192.svg">
+<style>
+  *,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+  html,body{height:100%;background:#0a0a0a;color:#00ff41;
+    font-family:'Courier New',Consolas,monospace;overflow:hidden}
+  canvas#rain{position:fixed;inset:0;z-index:0;display:block}
+  .panel{position:relative;z-index:1;display:flex;flex-direction:column;
+    align-items:center;justify-content:center;height:100%;text-align:center;
+    padding:24px;background:radial-gradient(ellipse at center,
+      rgba(0,255,65,0.08) 0%, rgba(10,10,10,0.6) 60%, rgba(0,0,0,0.85) 100%)}
+  h1{font-size:clamp(2rem,7vw,4rem);font-weight:900;letter-spacing:.18em;
+    text-shadow:0 0 20px #00ff41,0 0 40px #00b82e;
+    animation:flicker 3.4s infinite}
+  .sub{margin-top:14px;font-size:clamp(.95rem,2.4vw,1.15rem);
+    opacity:.8;letter-spacing:.06em;max-width:42ch}
+  .codes{margin-top:28px;font-size:.85rem;opacity:.55;letter-spacing:.08em}
+  .codes span{display:inline-block;animation:blink 1.6s infinite;animation-delay:var(--d,0s)}
+  .actions{margin-top:36px;display:flex;gap:12px;flex-wrap:wrap;justify-content:center}
+  button,a.btn{appearance:none;border:1px solid #00ff41;background:transparent;
+    color:#00ff41;font:600 .95rem/1 'Courier New',monospace;letter-spacing:.1em;
+    padding:14px 22px;cursor:pointer;text-transform:uppercase;
+    transition:all .2s;text-decoration:none;display:inline-block}
+  button:hover,button:focus,a.btn:hover,a.btn:focus{background:#00ff41;color:#000;
+    box-shadow:0 0 24px #00ff41,inset 0 0 12px rgba(0,0,0,.2);outline:none}
+  .status{margin-top:24px;font-size:.8rem;opacity:.5;letter-spacing:.12em;
+    display:flex;align-items:center;justify-content:center;gap:8px}
+  .dot{display:inline-block;width:8px;height:8px;border-radius:50%;
+    background:#ff3a3a;
+    box-shadow:0 0 8px #ff3a3a;animation:pulse 1.4s infinite}
+  .status.online .dot{background:#00ff41;box-shadow:0 0 8px #00ff41}
+  @keyframes flicker{0%,18%,22%,25%,53%,57%,100%{opacity:1}
+    20%,24%,55%{opacity:.55}}
+  @keyframes blink{0%,50%{opacity:.3}51%,100%{opacity:1}}
+  @keyframes pulse{0%,100%{transform:scale(1);opacity:1}
+    50%{transform:scale(1.6);opacity:.4}}
+  @media(prefers-reduced-motion:reduce){
+    canvas#rain{display:none}
+    h1,.codes span,.dot{animation:none}
+  }
+</style>
+</head>
+<body>
+<canvas id="rain" aria-hidden="true"></canvas>
+<main class="panel" role="main">
+  <h1>CONNECTION LOST</h1>
+  <p class="sub">The Matrix has temporarily disconnected.<br>
+    Your balance and game history are safe.</p>
+  <p class="codes" aria-hidden="true">
+    <span style="--d:0s">[0xE_NET_FAIL]</span>
+    <span style="--d:.3s">·</span>
+    <span style="--d:.6s">RETRY_QUEUED</span>
+    <span style="--d:.9s">·</span>
+    <span style="--d:1.2s">CACHE_OK</span>
+  </p>
+  <div class="actions">
+    <button type="button" id="retryBtn" aria-label="Retry connection">&#8635; Retry</button>
+    <a class="btn" href="/">&larr; Lobby</a>
+  </div>
+  <p class="status" id="netStatus" aria-live="polite">
+    <span class="dot" aria-hidden="true"></span><span id="netLabel">OFFLINE &mdash; waiting for network</span>
+  </p>
+</main>
+<script>
+(function(){
+  var canvas=document.getElementById('rain'),ctx=canvas.getContext('2d');
+  var W,H,cols,drops,fontSize=16;
+  var chars='01MLT RIXSPINS$0123456789ABCDEF'.split('');
+  function resize(){
+    W=canvas.width=innerWidth;H=canvas.height=innerHeight;
+    cols=Math.floor(W/fontSize);
+    drops=new Array(cols).fill(0).map(function(){return Math.floor(Math.random()*-50);});
+  }
+  resize();addEventListener('resize',resize);
+  function draw(){
+    ctx.fillStyle='rgba(10,10,10,0.08)';
+    ctx.fillRect(0,0,W,H);
+    ctx.font=fontSize+'px Consolas,monospace';
+    for(var i=0;i<cols;i++){
+      var ch=chars[Math.floor(Math.random()*chars.length)];
+      var x=i*fontSize,y=drops[i]*fontSize;
+      ctx.fillStyle=(Math.random()<0.04)?'#caffd0':'#00ff41';
+      ctx.fillText(ch,x,y);
+      if(y>H&&Math.random()>0.972)drops[i]=0;
+      drops[i]++;
+    }
+  }
+  if(!matchMedia('(prefers-reduced-motion: reduce)').matches){
+    setInterval(draw,55);
+  }
+  var status=document.getElementById('netStatus');
+  var label=document.getElementById('netLabel');
+  function updateStatus(){
+    if(navigator.onLine){
+      status.classList.add('online');
+      label.textContent='RECONNECTED — reloading...';
+      setTimeout(function(){location.reload();},900);
+    }else{
+      status.classList.remove('online');
+      label.textContent='OFFLINE — waiting for network';
+    }
+  }
+  addEventListener('online',updateStatus);
+  addEventListener('offline',updateStatus);
+  document.getElementById('retryBtn').addEventListener('click',function(){location.reload();});
+  updateStatus();
+})();
+</script>
+</body>
+</html>
