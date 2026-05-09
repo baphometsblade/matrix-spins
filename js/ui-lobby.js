@@ -641,7 +641,7 @@ function renderGames() {
                     if (typeof renderBoostsWidget === 'function') renderBoostsWidget();
                     // Mines mini-game widget
                     // // Hi-Lo card game widget
-                    // Roulette quick-bet widget
+                    // Quick-bet widget removed
                     // // Keno mini-game widget
                     // // REMOVED: Chuck-a-Luck dice game widget (deleted)
                     // Big Six Wheel game widget
