@@ -307,6 +307,7 @@ mount('/api/session',     './routes/session.routes',     'session');
 mount('/api/game-of-day', './routes/gameofday.routes',   'game-of-day');
 mount('/api/game-stats',  './routes/gamestats.routes',   'game-stats');
 mount('/api/game-history', './routes/gamehistory.routes', 'game-history');
+mount('/api/sessions',     './routes/sessions.routes',    'sessions (history-derived)');
 mount('/api/player-stats', './routes/playerstats.routes', 'player-stats');
 mount('/api/fair',        './routes/fair.routes',        'fair (provably-fair)');
 mount('/api/buy-feature', './routes/buyfeature.routes',  'buy-feature');

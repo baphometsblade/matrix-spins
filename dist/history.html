@@ -1,0 +1,770 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Game History & Stats — Matrix Spins Casino</title>
+<meta name="description" content="Your complete spin history, lifetime stats, win/loss timeline, sessions, and the games where luck favors you most.">
+<meta name="robots" content="noindex,nofollow">
+<link rel="canonical" href="https://msaart.online/history.html">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/auth.css">
+<link rel="stylesheet" href="unified-ux.css">
+<style>
+  body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: var(--ms-bg-0);
+    color: var(--ms-text);
+    margin: 0;
+  }
+  .hist-shell { max-width: 1200px; margin: 0 auto; padding: 1rem 1rem 4rem; }
+  .hist-hero {
+    background: linear-gradient(135deg, #0a1410 0%, #112418 100%);
+    border: 1px solid var(--ms-border);
+    border-radius: var(--ms-radius-lg);
+    padding: 1.6rem 1.5rem;
+    text-align: center;
+    margin-bottom: 1.4rem;
+    position: relative;
+    overflow: hidden;
+  }
+  .hist-hero::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(circle at top right, rgba(0, 255, 65, 0.18), transparent 60%);
+    pointer-events: none;
+  }
+  .hist-hero h1 {
+    margin: 0.4rem 0 0.5rem;
+    color: var(--ms-green);
+    text-shadow: 0 0 24px rgba(0, 255, 65, 0.3);
+    font-size: clamp(1.4rem, 4vw, 2rem);
+    font-weight: 800;
+  }
+  .hist-hero p { color: var(--ms-text-dim); margin: 0; font-size: 0.95rem; }
+  .hist-stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.85rem; margin-bottom: 1.4rem; }
+  @media (max-width: 900px) { .hist-stats { grid-template-columns: repeat(2, 1fr); } }
+  .stat-card {
+    background: var(--ms-bg-1);
+    border: 1px solid var(--ms-border-soft);
+    border-radius: var(--ms-radius);
+    padding: 1.05rem 1rem;
+    transition: all var(--ms-fast);
+  }
+  .stat-card:hover {
+    border-color: var(--ms-green);
+    transform: translateY(-2px);
+    box-shadow: var(--ms-shadow-glow);
+  }
+  .stat-card .lbl { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--ms-text-muted); font-weight: 700; margin-bottom: 0.4rem; }
+  .stat-card .val { font-size: 1.5rem; font-weight: 800; color: var(--ms-text); line-height: 1.1; min-height: 1.5rem; }
+  .stat-card .val.green { color: var(--ms-green); text-shadow: 0 0 12px rgba(0, 255, 65, 0.35); }
+  .stat-card .val.red   { color: #ff7878; }
+  .stat-card .sub { font-size: 0.78rem; color: var(--ms-text-muted); margin-top: 0.3rem; }
+  .panel {
+    background: var(--ms-bg-1);
+    border: 1px solid var(--ms-border-soft);
+    border-radius: var(--ms-radius);
+    padding: 1.1rem;
+    margin-bottom: 1.2rem;
+  }
+  .panel h2 { margin: 0 0 0.85rem; font-size: 1.05rem; color: var(--ms-text); font-weight: 700; display: flex; align-items: center; gap: 0.5rem; }
+  .panel h2 .badge { font-size: 0.7rem; color: var(--ms-green); background: var(--ms-green-soft); padding: 0.18rem 0.5rem; border-radius: 999px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; }
+  .filters { display: flex; gap: 0.6rem; flex-wrap: wrap; align-items: end; margin-bottom: 1rem; }
+  .filter-field { display: flex; flex-direction: column; gap: 0.3rem; flex: 1; min-width: 140px; }
+  .filter-field label { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--ms-text-muted); font-weight: 700; }
+  .filter-field input, .filter-field select {
+    background: var(--ms-bg-2);
+    border: 1px solid var(--ms-border-soft);
+    color: var(--ms-text);
+    padding: 0.55rem 0.7rem;
+    border-radius: var(--ms-radius-sm);
+    font-size: 0.9rem;
+    font-family: inherit;
+  }
+  .filter-field input:focus, .filter-field select:focus {
+    outline: 0;
+    border-color: var(--ms-green);
+    box-shadow: 0 0 0 3px var(--ms-green-soft);
+  }
+  .filter-actions { display: flex; gap: 0.4rem; }
+  .btn-primary {
+    background: linear-gradient(135deg, var(--ms-green), var(--ms-green-dim));
+    color: #001a08;
+    border: 0;
+    padding: 0.55rem 1rem;
+    border-radius: var(--ms-radius-sm);
+    font-weight: 800;
+    cursor: pointer;
+    transition: transform var(--ms-fast), box-shadow var(--ms-fast);
+    min-height: var(--ms-touch);
+    font-size: 0.85rem;
+  }
+  .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 6px 16px rgba(0, 255, 65, 0.3); }
+  .btn-ghost {
+    background: transparent;
+    color: var(--ms-text-dim);
+    border: 1px solid var(--ms-border-soft);
+    padding: 0.55rem 0.9rem;
+    border-radius: var(--ms-radius-sm);
+    cursor: pointer;
+    font-weight: 600;
+    min-height: var(--ms-touch);
+    font-size: 0.85rem;
+  }
+  .btn-ghost:hover { color: var(--ms-text); border-color: var(--ms-green); }
+  .chart-host { position: relative; height: 300px; width: 100%; }
+  @media (max-width: 640px) { .chart-host { height: 220px; } }
+  .res-pill { display: inline-block; padding: 0.18rem 0.55rem; border-radius: 999px; font-size: 0.7rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; }
+  .res-pill.win { background: rgba(0, 255, 65, 0.15); color: var(--ms-green); border: 1px solid rgba(0, 255, 65, 0.35); }
+  .res-pill.loss { background: rgba(255, 80, 80, 0.12); color: #ff7878; border: 1px solid rgba(255, 80, 80, 0.3); }
+  .res-pill.jackpot { background: linear-gradient(135deg, #ffd700, #ff8c00); color: #1a0c00; border: 0; }
+  .res-pill.break-even { background: rgba(255, 255, 255, 0.06); color: var(--ms-text-dim); border: 1px solid var(--ms-border-soft); }
+  .pagination { display: flex; justify-content: center; align-items: center; gap: 0.6rem; padding: 1rem 0; color: var(--ms-text-dim); font-size: 0.9rem; }
+  .pagination button {
+    background: var(--ms-bg-2);
+    border: 1px solid var(--ms-border-soft);
+    color: var(--ms-text);
+    padding: 0.4rem 0.85rem;
+    border-radius: var(--ms-radius-sm);
+    cursor: pointer;
+    font-weight: 700;
+    min-height: 36px;
+  }
+  .pagination button:disabled { opacity: 0.4; cursor: not-allowed; }
+  .pagination button:not(:disabled):hover { border-color: var(--ms-green); color: var(--ms-green); }
+  .session-item {
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    gap: 0.85rem;
+    padding: 0.85rem;
+    border: 1px solid var(--ms-border-soft);
+    border-radius: var(--ms-radius);
+    background: var(--ms-bg-2);
+    align-items: center;
+    margin-bottom: 0.5rem;
+    transition: border-color var(--ms-fast);
+  }
+  @media (max-width: 640px) {
+    .session-item { grid-template-columns: 1fr; gap: 0.4rem; }
+    .session-net { text-align: left !important; }
+  }
+  .session-item:hover { border-color: var(--ms-green); }
+  .session-when { font-size: 0.85rem; color: var(--ms-text); font-weight: 600; min-width: 130px; }
+  .session-when .ago { color: var(--ms-text-muted); font-size: 0.72rem; font-weight: 500; }
+  .session-meta { display: flex; gap: 0.85rem; flex-wrap: wrap; font-size: 0.85rem; color: var(--ms-text-dim); }
+  .session-meta .ml { color: var(--ms-text-muted); font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.06em; margin-right: 0.25rem; }
+  .session-net { font-weight: 800; font-size: 1.05rem; min-width: 90px; text-align: right; }
+  .session-net.green { color: var(--ms-green); }
+  .session-net.red { color: #ff7878; }
+  .tabs { display: flex; gap: 0.4rem; margin-bottom: 1rem; flex-wrap: wrap; }
+  .tab {
+    background: var(--ms-bg-1);
+    border: 1px solid var(--ms-border-soft);
+    color: var(--ms-text-dim);
+    padding: 0.55rem 1rem;
+    border-radius: 999px;
+    cursor: pointer;
+    font-weight: 700;
+    font-size: 0.85rem;
+    min-height: var(--ms-touch);
+  }
+  .tab:hover { color: var(--ms-text); border-color: var(--ms-border); }
+  .tab.active { background: var(--ms-green); color: #001a08; border-color: var(--ms-green); }
+  .topbar {
+    position: sticky;
+    top: 0;
+    z-index: 90;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.7rem 1rem;
+    background: rgba(6, 8, 8, 0.92);
+    backdrop-filter: blur(10px);
+    border-bottom: 1px solid var(--ms-border-soft);
+  }
+  .topbar .brand { color: var(--ms-green); font-weight: 800; text-decoration: none; letter-spacing: 0.04em; text-transform: uppercase; }
+  .topbar .actions { display: flex; gap: 0.5rem; align-items: center; }
+  .balance-chip { background: var(--ms-bg-1); border: 1px solid var(--ms-border); color: var(--ms-green); padding: 0.4rem 0.85rem; border-radius: 999px; font-weight: 700; font-size: 0.85rem; }
+  .btn-inline { background: transparent; color: var(--ms-text); border: 1px solid var(--ms-border-soft); padding: 0.45rem 0.85rem; border-radius: 999px; cursor: pointer; text-decoration: none; font-weight: 600; font-size: 0.85rem; }
+  .btn-inline.secondary:hover { border-color: var(--ms-green); color: var(--ms-green); }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <a class="brand" href="index.html">Matrix Spins</a>
+  <div class="actions">
+    <span id="balanceChip" class="balance-chip">—</span>
+    <a href="wallet.html" class="btn-inline secondary">Wallet</a>
+  </div>
+</div>
+
+<div class="hist-shell">
+
+  <div class="hist-hero">
+    <div style="font-size:2.6rem;line-height:1;">📊</div>
+    <h1>History &amp; Stats</h1>
+    <p>Every spin, every session, every win — your complete play timeline.</p>
+  </div>
+
+  <div class="hist-stats" id="statsGrid">
+    <div class="stat-card"><div class="lbl">Total Wagered</div><div class="val" id="statWagered"></div></div>
+    <div class="stat-card"><div class="lbl">Total Won</div><div class="val green" id="statWon"></div></div>
+    <div class="stat-card"><div class="lbl">Net P/L</div><div class="val" id="statNet"></div></div>
+    <div class="stat-card"><div class="lbl">Biggest Win</div><div class="val green" id="statBig"></div></div>
+    <div class="stat-card"><div class="lbl">Total Spins</div><div class="val" id="statSpins"></div></div>
+    <div class="stat-card"><div class="lbl">Average Bet</div><div class="val" id="statAvgBet"></div></div>
+    <div class="stat-card"><div class="lbl">Win Rate</div><div class="val" id="statWinRate"></div></div>
+    <div class="stat-card"><div class="lbl">Player RTP</div><div class="val" id="statRtp"></div></div>
+    <div class="stat-card"><div class="lbl">Favorite Game</div><div class="val" style="font-size:1rem;" id="statFav"></div><div class="sub" id="statFavSub"></div></div>
+    <div class="stat-card"><div class="lbl">Lucky Game</div><div class="val green" style="font-size:1rem;" id="statLucky"></div><div class="sub" id="statLuckySub"></div></div>
+  </div>
+
+  <div class="tabs" id="viewTabs">
+    <button class="tab active" data-view="chart">📈 Chart</button>
+    <button class="tab" data-view="spins">🎰 Spins</button>
+    <button class="tab" data-view="sessions">⏱ Sessions</button>
+  </div>
+
+  <div class="panel" id="chartPanel">
+    <h2>Win / Loss Over Time <span class="badge" id="chartRange">30 days</span></h2>
+    <div class="filters" style="margin-bottom:0.9rem;">
+      <div class="filter-field" style="max-width:160px;">
+        <label for="chartDays">Range</label>
+        <select id="chartDays">
+          <option value="7">Last 7 days</option>
+          <option value="30" selected>Last 30 days</option>
+          <option value="90">Last 90 days</option>
+          <option value="365">Last 365 days</option>
+        </select>
+      </div>
+    </div>
+    <div class="chart-host" id="chartHost">
+      <canvas id="winLossChart"></canvas>
+    </div>
+    <div id="chartFallback"></div>
+  </div>
+
+  <div class="panel" id="spinsPanel" hidden>
+    <h2>Spin History <span class="badge" id="spinTotal">—</span></h2>
+    <div class="filters">
+      <div class="filter-field">
+        <label for="filterGame">Game</label>
+        <input type="text" id="filterGame" placeholder="e.g. wild-frontier" autocomplete="off">
+      </div>
+      <div class="filter-field">
+        <label for="filterFrom">From</label>
+        <input type="date" id="filterFrom">
+      </div>
+      <div class="filter-field">
+        <label for="filterTo">To</label>
+        <input type="date" id="filterTo">
+      </div>
+      <div class="filter-field">
+        <label for="filterResult">Result</label>
+        <select id="filterResult">
+          <option value="">All</option>
+          <option value="win">Wins only</option>
+          <option value="loss">Losses only</option>
+          <option value="jackpot">Jackpots</option>
+        </select>
+      </div>
+      <div class="filter-actions">
+        <button class="btn-primary ms-press" id="applyFilters">Apply</button>
+        <button class="btn-ghost ms-press" id="clearFilters">Clear</button>
+      </div>
+    </div>
+
+    <div id="spinsHost">
+      <table class="ms-responsive-table">
+        <thead>
+          <tr>
+            <th>When</th>
+            <th>Game</th>
+            <th>Bet</th>
+            <th>Win</th>
+            <th>Multi</th>
+            <th>Result</th>
+          </tr>
+        </thead>
+        <tbody id="spinsTbody"></tbody>
+      </table>
+    </div>
+
+    <div class="pagination" id="pagination" hidden>
+      <button class="ms-press" id="pgPrev">‹ Prev</button>
+      <span id="pgInfo">—</span>
+      <button class="ms-press" id="pgNext">Next ›</button>
+    </div>
+  </div>
+
+  <div class="panel" id="sessionsPanel" hidden>
+    <h2>Session History <span class="badge" id="sessTotal">—</span></h2>
+    <div id="sessionsHost"></div>
+  </div>
+
+</div>
+
+<script src="js/api-client.js"></script>
+<script src="js/unified-ux.js"></script>
+<script>
+(async () => {
+  'use strict';
+  const api = window.MatrixSpinsAPI;
+  const Ux = window.MSUx;
+  const $ = (id) => document.getElementById(id);
+
+  function clearNode(n) { while (n && n.firstChild) n.removeChild(n.firstChild); }
+
+  const user = await api.loadSession();
+  if (!user) {
+    window.location.href = 'login.html?next=history.html';
+    return;
+  }
+
+  try {
+    const b = await api.getBalance();
+    $('balanceChip').textContent = api.formatCents(b.availableCents || 0);
+  } catch (_) { $('balanceChip').textContent = '—'; }
+
+  function fmtMoney(n) { return '$' + (parseFloat(n) || 0).toFixed(2); }
+  function fmtSigned(n) { const v = parseFloat(n) || 0; return (v >= 0 ? '+' : '−') + '$' + Math.abs(v).toFixed(2); }
+  function fmtDate(ts) { try { return new Date(ts).toLocaleString(undefined, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }); } catch (_) { return ts; } }
+  function timeAgo(ts) {
+    const sec = Math.max(0, (Date.now() - new Date(ts).getTime()) / 1000);
+    if (sec < 60) return 'just now';
+    if (sec < 3600) return Math.round(sec / 60) + 'm ago';
+    if (sec < 86400) return Math.round(sec / 3600) + 'h ago';
+    return Math.round(sec / 86400) + 'd ago';
+  }
+  function escGameName(id) { if (!id) return '—'; return String(id).replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase()); }
+
+  // Show skeletons in stat values
+  ['statWagered','statWon','statNet','statBig','statSpins','statAvgBet','statWinRate','statRtp','statFav','statLucky'].forEach(id => {
+    const elNode = $(id);
+    if (elNode) {
+      const sk = document.createElement('span');
+      sk.className = 'ms-skeleton line';
+      sk.style.display = 'inline-block';
+      sk.style.width = '70%';
+      sk.style.minHeight = '1em';
+      elNode.appendChild(sk);
+    }
+  });
+
+  async function loadStats() {
+    try {
+      const s = await api.fetch('/sessions/extended-stats');
+      $('statWagered').textContent = fmtMoney(s.totalWagered);
+      $('statWon').textContent = fmtMoney(s.totalWon);
+      const netEl = $('statNet');
+      netEl.textContent = fmtSigned(s.netPl);
+      netEl.classList.remove('green', 'red');
+      netEl.classList.add(s.netPl >= 0 ? 'green' : 'red');
+      $('statBig').textContent = fmtMoney(s.biggestWin);
+      $('statSpins').textContent = (s.totalSpins || 0).toLocaleString();
+      $('statAvgBet').textContent = fmtMoney(s.averageBet);
+      $('statWinRate').textContent = (s.winRate || 0) + '%';
+      $('statRtp').textContent = (s.playerRtp || 0) + '%';
+      $('statFav').textContent = s.favoriteGame ? escGameName(s.favoriteGame) : 'No data yet';
+      $('statFavSub').textContent = s.favoriteGameSpins ? (s.favoriteGameSpins + ' spins') : '';
+      $('statLucky').textContent = s.luckyGame ? escGameName(s.luckyGame) : 'Need 20+ spins';
+      $('statLuckySub').textContent = s.luckyGameRtp ? ('RTP ' + s.luckyGameRtp + '%') : '';
+    } catch (e) {
+      console.warn('Stats load failed:', e);
+      ['statWagered','statWon','statNet','statBig','statSpins','statAvgBet','statWinRate','statRtp','statFav','statLucky']
+        .forEach(id => { $(id).textContent = '—'; });
+      Ux.toast({ title: 'Stats unavailable', msg: 'Could not load your stats. Check back shortly.', kind: 'error' });
+    }
+  }
+
+  /* Lightweight canvas line chart — no external dependency, CSP-safe */
+  function drawLineChart(canvas, series) {
+    const dpr = window.devicePixelRatio || 1;
+    const cssW = canvas.clientWidth;
+    const cssH = canvas.clientHeight;
+    canvas.width = Math.floor(cssW * dpr);
+    canvas.height = Math.floor(cssH * dpr);
+    const ctx = canvas.getContext('2d');
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    ctx.clearRect(0, 0, cssW, cssH);
+
+    const padL = 56, padR = 16, padT = 24, padB = 38;
+    const w = cssW - padL - padR;
+    const h = cssH - padT - padB;
+    if (w <= 0 || h <= 0) return;
+
+    const labels = series.labels;
+    const sets = series.datasets;
+    const allVals = sets.flatMap(s => s.data);
+    let minV = Math.min(0, ...allVals);
+    let maxV = Math.max(0, ...allVals);
+    if (minV === maxV) { maxV = minV + 1; }
+    const pad = (maxV - minV) * 0.1;
+    minV -= pad; maxV += pad;
+
+    const xAt = (i) => padL + (labels.length === 1 ? w / 2 : (i / (labels.length - 1)) * w);
+    const yAt = (v) => padT + h - ((v - minV) / (maxV - minV)) * h;
+
+    // Y gridlines (5 ticks)
+    ctx.strokeStyle = 'rgba(255,255,255,0.05)';
+    ctx.lineWidth = 1;
+    ctx.fillStyle = '#6b7771';
+    ctx.font = '11px Inter, sans-serif';
+    ctx.textAlign = 'right';
+    ctx.textBaseline = 'middle';
+    for (let i = 0; i <= 4; i++) {
+      const v = minV + (maxV - minV) * (i / 4);
+      const y = yAt(v);
+      ctx.beginPath();
+      ctx.moveTo(padL, y);
+      ctx.lineTo(padL + w, y);
+      ctx.stroke();
+      ctx.fillText('$' + Math.round(v), padL - 6, y);
+    }
+
+    // X labels (max 6)
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'top';
+    const xStep = Math.max(1, Math.ceil(labels.length / 6));
+    for (let i = 0; i < labels.length; i += xStep) {
+      const x = xAt(i);
+      ctx.fillText(labels[i].slice(5), x, padT + h + 6);
+    }
+
+    // Zero baseline
+    if (minV < 0 && maxV > 0) {
+      ctx.strokeStyle = 'rgba(255,255,255,0.18)';
+      ctx.beginPath();
+      ctx.moveTo(padL, yAt(0));
+      ctx.lineTo(padL + w, yAt(0));
+      ctx.stroke();
+    }
+
+    // Net P/L area fill (first dataset with fill:true)
+    sets.forEach(set => {
+      if (set.fill) {
+        const grad = ctx.createLinearGradient(0, padT, 0, padT + h);
+        grad.addColorStop(0, set.fillColor || 'rgba(0,255,65,0.28)');
+        grad.addColorStop(1, 'rgba(0,255,65,0)');
+        ctx.fillStyle = grad;
+        ctx.beginPath();
+        ctx.moveTo(xAt(0), yAt(0));
+        set.data.forEach((v, i) => ctx.lineTo(xAt(i), yAt(v)));
+        ctx.lineTo(xAt(set.data.length - 1), yAt(0));
+        ctx.closePath();
+        ctx.fill();
+      }
+    });
+
+    // Lines
+    sets.forEach(set => {
+      if (set.lineColor === false) return;
+      ctx.strokeStyle = set.color;
+      ctx.lineWidth = 2.2;
+      ctx.lineJoin = 'round';
+      ctx.lineCap = 'round';
+      ctx.beginPath();
+      set.data.forEach((v, i) => {
+        const x = xAt(i), y = yAt(v);
+        if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+      });
+      ctx.stroke();
+      // Points
+      ctx.fillStyle = set.color;
+      set.data.forEach((v, i) => {
+        ctx.beginPath();
+        ctx.arc(xAt(i), yAt(v), 2.5, 0, Math.PI * 2);
+        ctx.fill();
+      });
+    });
+
+    // Legend (top of chart)
+    let lx = padL;
+    const ly = 8;
+    ctx.font = '11px Inter, sans-serif';
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'middle';
+    sets.forEach(set => {
+      if (set.hideFromLegend) return;
+      ctx.fillStyle = set.color;
+      ctx.fillRect(lx, ly + 2, 10, 3);
+      ctx.fillStyle = '#9aa8a1';
+      ctx.fillText(set.label, lx + 14, ly + 4);
+      lx += ctx.measureText(set.label).width + 38;
+    });
+  }
+
+  let _chartSeries = null;
+  function renderCurrentChart() {
+    const cnv = $('winLossChart');
+    if (!cnv || !_chartSeries) return;
+    drawLineChart(cnv, _chartSeries);
+  }
+  window.addEventListener('resize', () => {
+    clearTimeout(window._chartResizeT);
+    window._chartResizeT = setTimeout(renderCurrentChart, 120);
+  });
+
+  async function loadChart(days) {
+    const host = $('chartFallback');
+    clearNode(host);
+    $('chartRange').textContent = 'Last ' + days + ' days';
+    let series;
+    try {
+      series = await api.fetch('/sessions/timeseries?days=' + days);
+    } catch (e) {
+      Ux.error(host, { title: 'Chart unavailable', msg: e.message || 'Could not load the timeseries.', onRetry: () => loadChart(days) });
+      return;
+    }
+    const data = series.data || [];
+    const cnv = $('winLossChart');
+    if (data.length === 0) {
+      Ux.empty(host, {
+        icon: '📉',
+        title: 'No spins in this range',
+        msg: 'Play a few games and your win/loss timeline will appear here.',
+        cta: { href: 'index.html', label: 'Browse games' }
+      });
+      if (cnv) cnv.style.display = 'none';
+      _chartSeries = null;
+      return;
+    }
+    if (cnv) cnv.style.display = '';
+
+    _chartSeries = {
+      labels: data.map(d => d.day),
+      datasets: [
+        { label: 'Net P/L', data: data.map(d => d.net),     color: '#00ff41', fill: true, fillColor: 'rgba(0,255,65,0.28)' },
+        { label: 'Wagered', data: data.map(d => d.wagered), color: '#ff7878' },
+        { label: 'Won',     data: data.map(d => d.won),     color: '#57b2ff' }
+      ]
+    };
+    renderCurrentChart();
+  }
+
+  $('chartDays').addEventListener('change', (e) => loadChart(parseInt(e.target.value, 10) || 30));
+
+  // ─── Spin history ──────────────────────────────────────────
+  let curPage = 1;
+  const perPage = 20;
+  let curFilters = {};
+
+  async function loadSpins() {
+    const tbody = $('spinsTbody');
+    clearNode(tbody);
+    for (let i = 0; i < 5; i++) {
+      const tr = document.createElement('tr');
+      const td = document.createElement('td');
+      td.colSpan = 6;
+      const sk = document.createElement('div');
+      sk.className = 'ms-skeleton line';
+      td.appendChild(sk);
+      tr.appendChild(td);
+      tbody.appendChild(tr);
+    }
+    const params = new URLSearchParams();
+    params.set('page', curPage);
+    params.set('limit', perPage);
+    if (curFilters.game) params.set('game', curFilters.game);
+    if (curFilters.from) params.set('from', curFilters.from);
+    if (curFilters.to) params.set('to', curFilters.to);
+
+    let resp;
+    try {
+      resp = await api.fetch('/game-history/?' + params.toString());
+    } catch (e) {
+      clearNode(tbody);
+      const tr = document.createElement('tr');
+      const td = document.createElement('td');
+      td.colSpan = 6;
+      const errHost = document.createElement('div');
+      td.appendChild(errHost);
+      tr.appendChild(td);
+      tbody.appendChild(tr);
+      Ux.error(errHost, { title: 'Could not load spins', msg: e.message || 'Network error', onRetry: loadSpins });
+      return;
+    }
+
+    let rows = resp.data || [];
+    if (curFilters.result) rows = rows.filter(r => r.resultType === curFilters.result);
+
+    clearNode(tbody);
+    $('spinTotal').textContent = (resp.total || 0).toLocaleString() + ' total';
+
+    if (rows.length === 0) {
+      const tr = document.createElement('tr');
+      const td = document.createElement('td');
+      td.colSpan = 6;
+      const emptyHost = document.createElement('div');
+      td.appendChild(emptyHost);
+      tr.appendChild(td);
+      tbody.appendChild(tr);
+      Ux.empty(emptyHost, {
+        icon: '🎰',
+        title: 'No spins match your filters',
+        msg: 'Try adjusting the date range, game, or result type.',
+        cta: { label: 'Clear filters', onClick: () => { $('clearFilters').click(); } }
+      });
+      $('pagination').hidden = true;
+      return;
+    }
+
+    rows.forEach(r => {
+      const tr = document.createElement('tr');
+
+      const tdWhen = document.createElement('td');
+      tdWhen.dataset.label = 'When';
+      tdWhen.textContent = fmtDate(r.timestamp);
+      tr.appendChild(tdWhen);
+
+      const tdGame = document.createElement('td');
+      tdGame.dataset.label = 'Game';
+      tdGame.textContent = escGameName(r.gameName);
+      tr.appendChild(tdGame);
+
+      const tdBet = document.createElement('td');
+      tdBet.dataset.label = 'Bet';
+      tdBet.textContent = '$' + r.betAmount;
+      tr.appendChild(tdBet);
+
+      const tdWin = document.createElement('td');
+      tdWin.dataset.label = 'Win';
+      tdWin.textContent = '$' + r.winAmount;
+      if (parseFloat(r.winAmount) > 0) tdWin.style.color = 'var(--ms-green)';
+      tr.appendChild(tdWin);
+
+      const tdMul = document.createElement('td');
+      tdMul.dataset.label = 'Multi';
+      tdMul.textContent = (parseFloat(r.multiplier) || 0) + '×';
+      tr.appendChild(tdMul);
+
+      const tdRes = document.createElement('td');
+      tdRes.dataset.label = 'Result';
+      const pill = document.createElement('span');
+      pill.className = 'res-pill ' + r.resultType;
+      pill.textContent = r.resultType.toUpperCase();
+      tdRes.appendChild(pill);
+      tr.appendChild(tdRes);
+
+      tbody.appendChild(tr);
+    });
+
+    const total = resp.total || 0;
+    const totalPages = resp.totalPages || Math.max(1, Math.ceil(total / perPage));
+    $('pagination').hidden = totalPages <= 1;
+    $('pgInfo').textContent = 'Page ' + curPage + ' of ' + totalPages;
+    $('pgPrev').disabled = curPage <= 1;
+    $('pgNext').disabled = curPage >= totalPages;
+  }
+
+  $('applyFilters').addEventListener('click', () => {
+    curFilters = {
+      game: $('filterGame').value.trim().toLowerCase().replace(/\s+/g, '-'),
+      from: $('filterFrom').value,
+      to: $('filterTo').value ? ($('filterTo').value + ' 23:59:59') : '',
+      result: $('filterResult').value
+    };
+    curPage = 1;
+    loadSpins();
+  });
+  $('clearFilters').addEventListener('click', () => {
+    $('filterGame').value = '';
+    $('filterFrom').value = '';
+    $('filterTo').value = '';
+    $('filterResult').value = '';
+    curFilters = {};
+    curPage = 1;
+    loadSpins();
+  });
+  $('pgPrev').addEventListener('click', () => { curPage = Math.max(1, curPage - 1); loadSpins(); });
+  $('pgNext').addEventListener('click', () => { curPage = curPage + 1; loadSpins(); });
+
+  // ─── Sessions ──────────────────────────────────────────────
+  async function loadSessions() {
+    const host = $('sessionsHost');
+    Ux.skeleton(host, { rows: 4 });
+    let resp;
+    try {
+      resp = await api.fetch('/sessions?limit=30');
+    } catch (e) {
+      Ux.error(host, { title: 'Could not load sessions', msg: e.message || 'Network error', onRetry: loadSessions });
+      return;
+    }
+    const sessions = resp.sessions || [];
+    $('sessTotal').textContent = sessions.length + ' tracked';
+    Ux.clear(host);
+    if (sessions.length === 0) {
+      Ux.empty(host, {
+        icon: '⏱',
+        title: 'No sessions yet',
+        msg: 'Once you start playing, your sessions will be grouped here automatically.',
+        cta: { href: 'index.html', label: 'Start playing' }
+      });
+      return;
+    }
+    sessions.forEach(s => {
+      const item = document.createElement('div');
+      item.className = 'session-item ms-press';
+
+      const when = document.createElement('div');
+      when.className = 'session-when';
+      const main = document.createElement('div');
+      main.textContent = fmtDate(s.startedAt);
+      when.appendChild(main);
+      const ago = document.createElement('div');
+      ago.className = 'ago';
+      ago.textContent = timeAgo(s.startedAt);
+      when.appendChild(ago);
+      item.appendChild(when);
+
+      const meta = document.createElement('div');
+      meta.className = 'session-meta';
+      [
+        ['DURATION', s.durationMinutes + 'm'],
+        ['SPINS', s.spins.toLocaleString()],
+        ['SPM', s.spinsPerMinute],
+        ['WAGERED', '$' + s.wagered.toFixed(2)],
+        ['WON', '$' + s.won.toFixed(2)],
+        ['GAMES', s.gameCount]
+      ].forEach(([lbl, val]) => {
+        const span = document.createElement('span');
+        const ml = document.createElement('span');
+        ml.className = 'ml';
+        ml.textContent = lbl;
+        span.appendChild(ml);
+        span.appendChild(document.createTextNode(val));
+        meta.appendChild(span);
+      });
+      item.appendChild(meta);
+
+      const net = document.createElement('div');
+      net.className = 'session-net ' + (s.net >= 0 ? 'green' : 'red');
+      net.textContent = fmtSigned(s.net);
+      item.appendChild(net);
+
+      host.appendChild(item);
+    });
+  }
+
+  document.querySelectorAll('#viewTabs .tab').forEach(tab => {
+    tab.addEventListener('click', () => {
+      document.querySelectorAll('#viewTabs .tab').forEach(t => t.classList.remove('active'));
+      tab.classList.add('active');
+      const view = tab.dataset.view;
+      $('chartPanel').hidden = view !== 'chart';
+      $('spinsPanel').hidden = view !== 'spins';
+      $('sessionsPanel').hidden = view !== 'sessions';
+      if (view === 'spins' && !window._spinsLoaded) { window._spinsLoaded = true; loadSpins(); }
+      if (view === 'sessions' && !window._sessLoaded) { window._sessLoaded = true; loadSessions(); }
+    });
+  });
+
+  await Promise.all([loadStats(), loadChart(30)]);
+})();
+</script>
+</body>
+</html>

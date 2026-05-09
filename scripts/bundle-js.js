@@ -34,7 +34,14 @@ const STANDALONE_SCRIPTS = [
     'js/deposit-urgency.js',
     'js/onboarding.js',
     'js/referral-page.js',
-    'js/responsible-gambling-page.js'
+    'js/responsible-gambling-page.js',
+    'js/unified-ux.js'
+];
+
+// Standalone CSS files referenced directly by static HTML pages
+// (achievements.html, wallet.html, history.html, etc.) — copied to dist/
+const STANDALONE_CSS = [
+    'unified-ux.css'
 ];
 
 // CSS files to bundle (in specificity order — premium overrides MUST be last)
@@ -58,7 +65,8 @@ const CSS_FILES = [
     'premium-animations.css',
     'modals-v2.css',
     'premium-v2-fixes.css',
-    'premium-v3-upgrades.css'
+    'premium-v3-upgrades.css',
+    'unified-ux.css'
 ];
 
 // --- Helper Functions ---
@@ -314,7 +322,7 @@ function generateDistIndex(jsInfo, cssInfo, originalHtml) {
 function copyStaticAssets() {
     log('Copying static assets...');
 
-    const staticFiles = ['manifest.json', 'favicon.svg', 'sw.js', 'robots.txt', 'sitemap.xml', 'premium-v3-upgrades.js', 'premium-v2-fixes.js', 'provably-fair.html', 'responsible-gambling.html', 'terms.html', 'privacy.html', '404.html', 'launch.html', 'affiliates.html', 'referral.html', 'promotions.html', 'wallet.html', 'login.html', 'signup.html', 'leaderboard.html', 'account.html', 'achievements.html', 'vip.html', 'tournaments.html', 'bonus-history.html', 'jackpot-history.html'];
+    const staticFiles = ['manifest.json', 'favicon.svg', 'sw.js', 'robots.txt', 'sitemap.xml', 'premium-v3-upgrades.js', 'premium-v2-fixes.js', 'provably-fair.html', 'responsible-gambling.html', 'terms.html', 'privacy.html', '404.html', 'launch.html', 'affiliates.html', 'referral.html', 'promotions.html', 'wallet.html', 'login.html', 'signup.html', 'leaderboard.html', 'account.html', 'achievements.html', 'vip.html', 'tournaments.html', 'bonus-history.html', 'jackpot-history.html', 'history.html', 'unified-ux.css'];
 
     staticFiles.forEach(file => {
         const src = path.join(ROOT_DIR, file);
