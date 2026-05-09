@@ -170,7 +170,10 @@
       if (!key) return;
       tiers[key] = {
         currentAmount: p.currentAmount,
-        lastWinner: p.lastWinnerId ? { username: 'Player #' + p.lastWinnerId, wonAt: p.lastWonAt } : null,
+        // Real username from the JOIN in getJackpotLevels — never fabricate
+        lastWinner: p.lastWinnerUsername
+          ? { username: p.lastWinnerUsername, wonAt: p.lastWonAt }
+          : null,
       };
     });
     return tiers;

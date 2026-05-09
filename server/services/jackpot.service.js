@@ -148,7 +148,13 @@ async function processJackpotContribution(userId, betAmount) {
  * Used by the public GET /api/jackpot endpoint.
  */
 async function getJackpotLevels() {
-    const rows = await db.all('SELECT tier, current_amount, seed_amount, last_won_at, last_winner_id FROM jackpot_pool ORDER BY seed_amount ASC');
+    const rows = await db.all(
+        `SELECT jp.tier, jp.current_amount, jp.seed_amount, jp.last_won_at,
+                jp.last_winner_id, u.username AS last_winner_username
+         FROM jackpot_pool jp
+         LEFT JOIN users u ON jp.last_winner_id = u.id
+         ORDER BY jp.seed_amount ASC`
+    );
     return rows.map(r => {
         // SECURITY: Round displayed amounts to nearest $50-$100 to prevent
         // exact mustHitAt threshold prediction. Players should see approximate
@@ -161,7 +167,8 @@ async function getJackpotLevels() {
             currentAmount: displayAmount,
             seedAmount: r.seed_amount,
             lastWonAt: r.last_won_at,
-            lastWinnerId: r.last_winner_id
+            lastWinnerId: r.last_winner_id,
+            lastWinnerUsername: r.last_winner_username || null,
         };
     });
 }

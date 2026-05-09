@@ -34,13 +34,8 @@ setTimeout(async function() {
     UNIQUE(user_id, code_id)
   )`);
 
-    // Seed default promo codes if table is empty
-    var count = await db.get('SELECT COUNT(*) as cnt FROM promo_codes');
-    if (count && count.cnt === 0) {
-      await db.run("INSERT OR IGNORE INTO promo_codes (code, type, reward_gems, reward_credits, max_uses) VALUES (?, ?, ?, ?, ?)", ['WELCOME100', 'gems', 100, 0, 500]);
-      await db.run("INSERT OR IGNORE INTO promo_codes (code, type, reward_gems, reward_credits, max_uses) VALUES (?, ?, ?, ?, ?)", ['SPIN25', 'mixed', 25, 0.50, 500]);
-      await db.run("INSERT OR IGNORE INTO promo_codes (code, type, reward_gems, reward_credits, max_uses) VALUES (?, ?, ?, ?, ?)", ['BIGWIN', 'mixed', 200, 1.00, 1000]);
-    }
+    // No seeded codes — promo codes only exist when an admin creates them
+    // via /api/promocode/create. Users see an empty list until then.
   } catch(e) { console.warn('[Promocode] Bootstrap failed:', e.message); }
 }, 3000);
 
