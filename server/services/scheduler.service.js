@@ -198,7 +198,40 @@ function start() {
     // VIP tier-up notifications: daily at 11 AM
     cron.schedule('0 11 * * *', _sendVipTierUpEmails);
 
-    console.warn('[Scheduler] Cron jobs started (re-engagement daily 10AM, P&L weekly Mon 8AM, deposit nudge every 6h, VIP tier-up daily 11AM)');
+    // ── Tournament lifecycle ─────────────────────────────────
+    // Every 5 minutes: complete expired tournaments, create replacements
+    cron.schedule('*/5 * * * *', async function () {
+        try {
+            var tournament = require('./tournament.service');
+            await tournament.tick();
+        } catch (e) {
+            console.warn('[Scheduler] Tournament tick:', e.message);
+        }
+    });
+
+    // Daily at 00:01 UTC: ensure daily tournaments are seeded for the new day
+    cron.schedule('1 0 * * *', async function () {
+        try {
+            var tournament = require('./tournament.service');
+            await tournament.ensureActive();
+        } catch (e) {
+            console.warn('[Scheduler] Daily tournament create:', e.message);
+        }
+    }, { timezone: 'UTC' });
+
+    // ── Monthly VIP cashback ─────────────────────────────────
+    // 1st of each month, 00:30 UTC: auto-credit cashback to all eligible players
+    cron.schedule('30 0 1 * *', async function () {
+        try {
+            var vip = require('./vip.service');
+            var result = await vip.autoCreditMonthlyCashback();
+            console.warn('[Scheduler] VIP cashback credited to', result.credited, 'players ($' + result.totalAmount.toFixed(2) + ')');
+        } catch (e) {
+            console.warn('[Scheduler] VIP cashback error:', e.message);
+        }
+    }, { timezone: 'UTC' });
+
+    console.warn('[Scheduler] Cron jobs started (re-engagement, P&L, deposit nudge, VIP tier-up, tournament tick 5m, monthly cashback)');
 }
 
 module.exports = { start };

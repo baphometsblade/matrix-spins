@@ -931,6 +931,16 @@ const USER_MIGRATIONS = [
     // Daily login rewards calendar
     ['current_streak', 'INTEGER DEFAULT 0'],
     ['last_login_date', 'TEXT'],
+    // VIP / Loyalty
+    ['vip_tier', "TEXT DEFAULT 'Bronze'"],
+    ['vip_xp', 'INTEGER DEFAULT 0'],
+    ['vip_xp_lifetime', 'INTEGER DEFAULT 0'],
+    ['vip_tier_reached_at', 'TEXT'],
+    ['vip_cashback_pending', 'REAL DEFAULT 0'],
+    ['vip_cashback_last_credited', 'TEXT'],
+    ['vip_monthly_loss', 'REAL DEFAULT 0'],
+    ['vip_monthly_period', 'TEXT'],
+    ['achievement_points', 'INTEGER DEFAULT 0'],
 ];
 
 /** Extra columns added to withdrawals table via migrations (column name → definition). */

@@ -924,13 +924,51 @@ router.post('/', authenticate, async (req, res) => {
             const distinctGames = distinctRow  ? distinctRow.cnt    : 0;
             const totalWagered = wageredRow    ? wageredRow.total   : 0;
             const winMult = bet > 0 ? spinResult.winAmount / bet : 0;
-            newAchievements = await achievementService.checkSpinAchievements(userId, spinCount, winMult, distinctGames, totalWagered);
+            const maxBetRow = await db.get('SELECT MAX(bet_amount) as mx FROM spins WHERE user_id = ?', [userId]);
+            const maxBet = (maxBetRow && maxBetRow.mx != null) ? Number(maxBetRow.mx) : 0;
+            newAchievements = await achievementService.checkSpinAchievements(userId, spinCount, winMult, distinctGames, totalWagered, maxBet);
             // jackpot_winner achievement if a jackpot was won this spin
             if (spinResult.jackpotWon) {
                 const r = await achievementService.grant(userId, 'jackpot_winner');
                 if (r) newAchievements.push(r);
             }
+            // free_spin_win achievement if a winning spin was a free spin
+            if (usedFreeSpin && spinResult.winAmount > 0) {
+                const r2 = await achievementService.grant(userId, 'free_spin_win');
+                if (r2) newAchievements.push(r2);
+            }
         } catch (e) { console.warn('[Achievement] check error:', e.message); }
+
+        // ── VIP XP + monthly cashback tracking (fire-and-forget) ──
+        if (!usedFreeSpin && bet > 0) {
+            (async function () {
+                try {
+                    const vipService = require('../services/vip.service');
+                    const xpResult = await vipService.addXp(userId, bet);
+                    // Track net loss for monthly cashback
+                    const netLoss = bet - (spinResult.winAmount || 0);
+                    if (netLoss > 0) {
+                        await vipService.trackNetLoss(userId, netLoss);
+                    }
+                    // Tier-up notification (already created in vip service); also push to socket if available
+                    if (xpResult && xpResult.tierUp) {
+                        try {
+                            const ach = require('../services/achievement.service');
+                            await ach.grant(userId, 'vip_' + xpResult.newTier.toLowerCase());
+                        } catch (_) {}
+                    }
+                } catch (e) { console.warn('[VIP] addXp error:', e.message); }
+            }());
+        }
+
+        // ── Tournament spin submission (new service) ──
+        if (!usedFreeSpin && bet > 0) {
+            (async function () {
+                try {
+                    await require('../services/tournament.service').submitSpin(userId, spinResult.winAmount || 0, bet);
+                } catch (e) { console.warn('[Tournament] submitSpin error:', e.message); }
+            }());
+        }
 
         // ── Gems from wins (engagement incentive, fire-and-forget) ──────
         if (!usedFreeSpin && spinResult.winAmount >= 5) {

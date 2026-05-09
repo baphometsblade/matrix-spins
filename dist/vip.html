@@ -4,24 +4,29 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>VIP Rewards — Matrix Spins Casino</title>
-<meta name="description" content="Earn XP with every spin and unlock exclusive VIP rewards. Five tiers of benefits from cashback to personal account managers.">
+<meta name="description" content="Earn XP with every spin and unlock exclusive VIP rewards. Five tiers from Bronze to Diamond with cashback, deposit bonuses, withdrawal priority, and exclusive games access.">
 <meta property="og:title" content="VIP Rewards — Matrix Spins Casino">
-<meta property="og:description" content="Earn XP with every spin and unlock exclusive VIP rewards across five tiers. Cashback, bonuses, and personal managers.">
+<meta property="og:description" content="Earn XP with every spin and unlock exclusive VIP rewards across five tiers.">
 <meta property="og:type" content="website">
-<meta property="og:url" content="https://royal-slots-casino.vercel.app/vip.html">
-<meta name="twitter:card" content="summary">
-<link rel="canonical" href="https://royal-slots-casino.vercel.app/vip.html">
+<meta property="og:url" content="https://msaart.online/vip.html">
+<link rel="canonical" href="https://msaart.online/vip.html">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="css/auth.css">
 <link rel="stylesheet" href="css/vip.css">
 <link rel="stylesheet" href="css/age-gate.css">
-<link rel="stylesheet" href="css/search.css">
-<link rel="stylesheet" href="css/favorites.css">
-<link rel="stylesheet" href="css/session-monitor.css">
-<link rel="stylesheet" href="css/chat-widget.css">
 <link rel="stylesheet" href="css/notifications.css">
-<link rel="stylesheet" href="css/conversion.css">
+<style>
+  .vip-status-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.5rem; }
+  @media (max-width: 768px) { .vip-status-grid { grid-template-columns: 1fr; } }
+  .cashback-card { padding: 1.5rem; border-radius: 12px; background: linear-gradient(135deg, #1a1f2e 0%, #2a2f3e 100%); border: 1px solid rgba(255,215,0,0.2); }
+  .cashback-amount { font-size: 2.4rem; font-weight: 800; color: #FFD700; font-family: 'Plus Jakarta Sans', sans-serif; }
+  .cashback-claim-btn { margin-top: 1rem; padding: 0.8rem 1.5rem; background: linear-gradient(135deg, #FFD700, #FFA500); color: #000; border: none; border-radius: 8px; font-weight: 700; cursor: pointer; width: 100%; font-size: 1rem; }
+  .cashback-claim-btn:disabled { opacity: 0.4; cursor: not-allowed; background: #444; color: #888; }
+  .leaderboard-row { display: flex; justify-content: space-between; padding: 0.6rem 0.8rem; border-bottom: 1px solid rgba(255,255,255,0.05); }
+  .leaderboard-row.me { background: rgba(255,215,0,0.08); }
+  .rank-num { font-weight: 800; min-width: 2rem; }
+</style>
 </head>
 <body>
 
@@ -29,25 +34,25 @@
   <a class="brand" href="index.html">Matrix Spins</a>
   <div class="actions">
     <span id="balanceChip" class="balance-chip">—</span>
+    <a href="achievements.html" class="btn btn-inline secondary">Achievements</a>
+    <a href="tournaments.html" class="btn btn-inline secondary">Tournaments</a>
     <a href="wallet.html" class="btn btn-inline secondary">Wallet</a>
-    <a href="account.html" class="btn btn-inline secondary">Account</a>
     <button id="logout" class="btn btn-inline secondary">Sign out</button>
   </div>
 </div>
 
 <div class="rs-shell-wide">
 
-  <!-- ── VIP Hero — Tier & XP Progress ─────────────────────── -->
   <div class="vip-hero">
     <div class="vip-tier-badge" id="tierBadge">
       <span class="icon" id="tierIcon">🥉</span>
       <span id="tierName">Bronze</span>
     </div>
     <h1 style="font-size:1.6rem;margin-bottom:0.3rem;" id="vipGreeting">Welcome to VIP Rewards</h1>
-    <p class="muted" style="margin-bottom:1.2rem;" id="vipSubtitle">Every spin earns XP toward your next tier.</p>
+    <p class="muted" style="margin-bottom:1.2rem;" id="vipSubtitle">Every $1 wagered earns 1 XP toward your next tier.</p>
 
     <div class="vip-xp-label">
-      <strong id="currentXP">0</strong> / <span id="nextTierXP">5,000</span> XP to <span id="nextTierName">Silver</span>
+      <strong id="currentXP">0</strong> / <span id="nextTierXP">1,000</span> XP to <span id="nextTierName">Silver</span>
     </div>
     <div class="xp-bar-container">
       <div class="xp-bar">
@@ -56,24 +61,34 @@
     </div>
     <div class="xp-endpoints">
       <span id="xpStart">0 XP</span>
-      <span id="xpEnd">5,000 XP</span>
+      <span id="xpEnd">1,000 XP</span>
     </div>
   </div>
 
-  <!-- ── Tier Roadmap ──────────────────────────────────────── -->
-  <div class="tier-roadmap" id="tierRoadmap">
-    <!-- Populated by JS -->
+  <div class="tier-roadmap" id="tierRoadmap"></div>
+
+  <div class="vip-status-grid">
+    <div class="cashback-card">
+      <h3 style="margin-top:0;">Monthly Cashback</h3>
+      <p class="muted" style="font-size:0.9rem;">Net losses this period: $<span id="monthlyLoss">0.00</span></p>
+      <div class="cashback-amount">$<span id="cashbackAmount">0.00</span></div>
+      <p class="muted" style="font-size:0.85rem;margin:0.4rem 0 0 0;"><span id="cashbackPct">2</span>% of monthly losses, credited to bonus balance with 10x wagering.</p>
+      <button id="claimCashbackBtn" class="cashback-claim-btn" disabled>Claim Cashback</button>
+      <div id="cashbackMsg" style="margin-top:0.6rem;font-size:0.85rem;color:#aaa;"></div>
+    </div>
+
+    <div class="cashback-card">
+      <h3 style="margin-top:0;">Your Tier Benefits</h3>
+      <ul style="list-style:none;padding:0;margin:0;font-size:0.95rem;">
+        <li style="padding:0.4rem 0;border-bottom:1px solid rgba(255,255,255,0.05);">💰 Cashback: <strong id="benefitCashback">2%</strong></li>
+        <li style="padding:0.4rem 0;border-bottom:1px solid rgba(255,255,255,0.05);">💳 Deposit bonus: <strong id="benefitDepMult">1.0x</strong></li>
+        <li style="padding:0.4rem 0;border-bottom:1px solid rgba(255,255,255,0.05);">⚡ Withdrawal priority: <strong id="benefitPriority">Standard</strong></li>
+        <li style="padding:0.4rem 0;border-bottom:1px solid rgba(255,255,255,0.05);">🎮 Exclusive games: <strong id="benefitExclusive">No</strong></li>
+        <li style="padding:0.4rem 0;">🌟 Daily login XP bonus: <strong id="benefitDailyXp">0</strong></li>
+      </ul>
+    </div>
   </div>
 
-  <!-- ── Current Tier Benefits ─────────────────────────────── -->
-  <h2 style="font-family:'Plus Jakarta Sans',sans-serif;font-size:1.2rem;margin-bottom:1rem;">
-    Your Benefits
-  </h2>
-  <div class="benefits-grid" id="benefitsGrid">
-    <!-- Populated by JS -->
-  </div>
-
-  <!-- ── All Tier Benefits Comparison ──────────────────────── -->
   <div class="rs-card" style="margin-bottom:1.5rem;">
     <h2 style="margin-top:0;">Tier Comparison</h2>
     <div style="overflow-x:auto;">
@@ -88,187 +103,187 @@
             <th style="text-align:center;">👑 Diamond</th>
           </tr>
         </thead>
-        <tbody></tbody>
+        <tbody id="tierTableBody"></tbody>
       </table>
     </div>
   </div>
 
-  <!-- ── Rewards History ───────────────────────────────────── -->
   <div class="rs-card">
-    <h2 style="margin-top:0;">Reward History</h2>
-    <div id="rewardHistory">
-      <div style="text-align:center;padding:2rem;color:var(--muted);">Loading rewards...</div>
+    <h2 style="margin-top:0;">VIP Leaderboard — Top 25</h2>
+    <div id="vipLeaderboard">
+      <div style="text-align:center;padding:2rem;color:var(--muted);">Loading...</div>
     </div>
   </div>
 
 </div>
 
 <script src="js/api-client.js"></script>
-<script src="js/age-gate.js" defer></script>
-<script src="js/cookie-consent.js" defer></script>
-<script src="js/search.js" defer></script>
-<script src="js/favorites.js" defer></script>
-<script src="js/session-monitor.js" defer></script>
-<script src="js/sound-manager.js" defer></script>
-<script src="js/analytics.js" defer></script>
-<script src="js/email-capture.js" defer></script>
-<script src="js/chat-widget.js" defer></script>
-<script src="js/notifications.js" defer></script>
-<script src="js/conversion.js" defer></script>
 <script>
 (async () => {
   'use strict';
-
   const api = window.MatrixSpinsAPI;
   const user = await api.loadSession();
   if (!user) { window.location.href = 'login.html?next=vip.html'; return; }
 
-  function fmt(c) { return api.formatCents(c); }
-  const $ = id => document.getElementById(id);
+  const $ = (id) => document.getElementById(id);
+  const fmt = (n) => Number(n || 0).toFixed(2);
+  // Safe-set DOM helpers — use textContent (no HTML parsing) to avoid XSS
+  function clearEl(el) { while (el.firstChild) el.removeChild(el.firstChild); }
+  function el(tag, props, text) {
+    const e = document.createElement(tag);
+    if (props) Object.keys(props).forEach(k => {
+      if (k === 'class') e.className = props[k];
+      else if (k === 'style') e.setAttribute('style', props[k]);
+      else e.setAttribute(k, props[k]);
+    });
+    if (text != null) e.textContent = String(text);
+    return e;
+  }
 
-  // Balance + Logout
-  $('logout').addEventListener('click', async () => { await api.logout(); window.location.href = 'index.html'; });
-  try { const b = await api.getBalance(); $('balanceChip').textContent = fmt(b.availableCents); } catch {}
+  $('logout').addEventListener('click', async () => {
+    try { await api.logout(); } catch (_) {}
+    window.location.href = 'index.html';
+  });
 
-  // ── VIP Tier Configuration ─────────────────────────────────
-  const TIERS = [
-    { id: 'bronze',   name: 'Bronze',   icon: '🥉', xpRequired: 0,      color: '#cd7f32', cashback: 0.5,  weeklyBonus: 0,    birthdayBonus: 0,   prioritySupport: false, personalManager: false, exclusiveGames: false, freeSpinsMulti: 1 },
-    { id: 'silver',   name: 'Silver',   icon: '🥈', xpRequired: 5000,   color: '#c0c0c0', cashback: 1.0,  weeklyBonus: 500,  birthdayBonus: 1000, prioritySupport: false, personalManager: false, exclusiveGames: false, freeSpinsMulti: 1.5 },
-    { id: 'gold',     name: 'Gold',     icon: '🥇', xpRequired: 25000,  color: '#d4af37', cashback: 2.0,  weeklyBonus: 2500, birthdayBonus: 5000, prioritySupport: true,  personalManager: false, exclusiveGames: true,  freeSpinsMulti: 2 },
-    { id: 'platinum', name: 'Platinum', icon: '💎', xpRequired: 100000, color: '#e5e4e2', cashback: 3.5,  weeklyBonus: 10000,birthdayBonus: 25000,prioritySupport: true,  personalManager: true,  exclusiveGames: true,  freeSpinsMulti: 3 },
-    { id: 'diamond',  name: 'Diamond',  icon: '👑', xpRequired: 500000, color: '#b9f2ff', cashback: 5.0,  weeklyBonus: 50000,birthdayBonus: 100000,prioritySupport: true, personalManager: true,  exclusiveGames: true,  freeSpinsMulti: 5 },
-  ];
-
-  // ── Calculate Player's VIP Status ──────────────────────────
-  // In production this comes from API; demo uses transaction volume
-  let playerXP = 0;
   try {
-    const txData = await api.getTransactions({ limit: 500 });
-    const tx = txData.transactions || [];
-    playerXP = tx.filter(t => /bet|wager/i.test(t.entry_type))
-                  .reduce((sum, t) => sum + Math.abs(t.amount_cents || 0), 0);
-    // Convert wagered cents to XP (1 XP per $1 wagered)
-    playerXP = Math.floor(playerXP / 100);
-  } catch {
-    playerXP = Math.floor(Math.random() * 8000) + 500; // Demo fallback
+    const b = await api.getBalance();
+    $('balanceChip').textContent = api.formatCents(b.availableCents || 0);
+  } catch (_) {}
+
+  let status, tiers, lb;
+  try {
+    [status, tiers, lb] = await Promise.all([
+      api.fetch('/vip/status'),
+      api.fetch('/vip/tiers'),
+      api.fetch('/vip/leaderboard'),
+    ]);
+  } catch (e) {
+    document.querySelector('.vip-hero').textContent = 'Failed to load VIP data: ' + (e.message || 'unknown');
+    return;
   }
 
-  function getTierIndex(xp) {
-    let idx = 0;
-    for (let i = TIERS.length - 1; i >= 0; i--) {
-      if (xp >= TIERS[i].xpRequired) { idx = i; break; }
+  const tierIcons = { Bronze: '🥉', Silver: '🥈', Gold: '🥇', Platinum: '💎', Diamond: '👑' };
+  const tierClass = (status.tier || 'Bronze').toLowerCase();
+  $('tierBadge').className = 'vip-tier-badge ' + tierClass;
+  $('tierIcon').textContent = status.tierIcon || tierIcons[status.tier] || '🥉';
+  $('tierName').textContent = status.tier;
+  const userName = (user.firstName || (user.email || user.username || 'Player').split('@')[0]);
+  $('vipGreeting').textContent = userName + ', you are ' + status.tier + ' Tier';
+
+  if (status.nextTier) {
+    $('vipSubtitle').textContent = 'Earn ' + (status.xpToNext || 0).toLocaleString() + ' more XP to reach ' + status.nextTier + '.';
+    $('currentXP').textContent = (status.xpLifetime || 0).toLocaleString();
+    $('nextTierXP').textContent = (status.nextTierMinXp || 0).toLocaleString();
+    $('nextTierName').textContent = status.nextTier;
+    $('xpStart').textContent = (status.xpLifetime || 0).toLocaleString() + ' XP';
+    $('xpEnd').textContent = (status.nextTierMinXp || 0).toLocaleString() + ' XP';
+  } else {
+    $('vipSubtitle').textContent = 'You have reached the highest tier — Diamond. Enjoy maximum benefits!';
+    $('currentXP').textContent = (status.xpLifetime || 0).toLocaleString();
+    $('nextTierName').textContent = 'Max';
+    $('xpEnd').textContent = '∞';
+  }
+  const fill = $('xpBarFill');
+  fill.className = 'xp-bar-fill ' + tierClass;
+  setTimeout(() => { fill.style.width = (status.progressPct || 100) + '%'; }, 100);
+
+  // ── Roadmap ──
+  const tierList = (tiers && tiers.tiers) || [];
+  const currentIdx = tierList.findIndex(t => t.name === status.tier);
+  const roadmap = $('tierRoadmap');
+  clearEl(roadmap);
+  tierList.forEach((t, i) => {
+    const state = i < currentIdx ? 'achieved' : i === currentIdx ? 'current' : 'locked';
+    const wrap = el('div', { class: 'roadmap-tier ' + state });
+    wrap.appendChild(el('div', { class: 'roadmap-dot' }, t.icon || tierIcons[t.name]));
+    wrap.appendChild(el('div', { class: 'roadmap-label' }, t.name));
+    wrap.appendChild(el('div', { class: 'roadmap-xp' }, t.minXp.toLocaleString() + ' XP'));
+    roadmap.appendChild(wrap);
+  });
+
+  // ── Benefits panel ──
+  const b = status.benefits || {};
+  const priorityNames = { 1: 'Highest', 2: 'High', 3: 'Medium', 4: 'Standard' };
+  $('benefitCashback').textContent = (b.cashbackPct || 0) + '%';
+  $('benefitDepMult').textContent = (b.depositBonusMult || 1).toFixed(2) + 'x';
+  $('benefitPriority').textContent = priorityNames[b.withdrawalPriority] || 'Standard';
+  $('benefitExclusive').textContent = b.exclusiveGames ? 'Yes' : 'No';
+  $('benefitDailyXp').textContent = (b.dailySpinBonusXp || 0) + ' XP';
+
+  // ── Cashback card ──
+  const cb = status.cashback || {};
+  $('monthlyLoss').textContent = fmt(cb.monthlyLoss);
+  $('cashbackAmount').textContent = fmt(cb.availableAmount);
+  $('cashbackPct').textContent = b.cashbackPct || 0;
+  const claimBtn = $('claimCashbackBtn');
+  if (cb.canClaim) {
+    claimBtn.disabled = false;
+    claimBtn.textContent = 'Claim $' + fmt(cb.availableAmount) + ' Cashback';
+  } else {
+    claimBtn.disabled = true;
+    if (cb.lastCredited) claimBtn.textContent = 'Cashback claimed this month';
+    else claimBtn.textContent = (cb.availableAmount > 0) ? 'Claim Cashback' : 'No cashback yet';
+  }
+  claimBtn.addEventListener('click', async () => {
+    claimBtn.disabled = true;
+    claimBtn.textContent = 'Claiming...';
+    try {
+      const result = await api.fetch('/vip/cashback/claim', { method: 'POST', body: {} });
+      $('cashbackMsg').style.color = '#5cff8c';
+      $('cashbackMsg').textContent = 'Credited $' + fmt(result.amount) + ' to bonus balance with ' + Number(result.wagering || 0).toFixed(2) + ' wagering required.';
+      claimBtn.textContent = 'Cashback claimed';
+    } catch (e) {
+      $('cashbackMsg').style.color = '#f88';
+      $('cashbackMsg').textContent = e.message || 'Failed to claim';
+      claimBtn.disabled = false;
+      claimBtn.textContent = 'Try again';
     }
-    return idx;
+  });
+
+  // ── Tier comparison table ──
+  const order = ['Bronze', 'Silver', 'Gold', 'Platinum', 'Diamond'];
+  const tierByName = {};
+  tierList.forEach(t => { tierByName[t.name] = t; });
+  const rows = [
+    { label: 'Min XP',                values: order.map(n => (tierByName[n] && tierByName[n].minXp.toLocaleString()) || '0') },
+    { label: 'Cashback',              values: order.map(n => ((tierByName[n] && tierByName[n].cashbackPct) || 0) + '%') },
+    { label: 'Deposit bonus mult.',   values: order.map(n => ((tierByName[n] && tierByName[n].depositBonusMult) || 1).toFixed(2) + 'x') },
+    { label: 'Withdrawal priority',   values: order.map(n => priorityNames[(tierByName[n] && tierByName[n].withdrawalPriority) || 4]) },
+    { label: 'Exclusive games',       values: order.map(n => (tierByName[n] && tierByName[n].exclusiveGames ? '✓' : '—')) },
+    { label: 'Daily login XP bonus',  values: order.map(n => ((tierByName[n] && tierByName[n].dailySpinBonusXp) || 0) + ' XP') },
+  ];
+  const tbody = $('tierTableBody');
+  clearEl(tbody);
+  rows.forEach(r => {
+    const tr = document.createElement('tr');
+    tr.appendChild(el('td', null, r.label));
+    r.values.forEach((v, i) => {
+      const td = el('td', { style: order[i] === status.tier ? 'color:var(--gold);font-weight:700;text-align:center;' : 'text-align:center;' }, v);
+      tr.appendChild(td);
+    });
+    tbody.appendChild(tr);
+  });
+
+  // ── Leaderboard ──
+  const lbEl = $('vipLeaderboard');
+  const board = (lb && lb.leaderboard) || [];
+  clearEl(lbEl);
+  if (board.length === 0) {
+    lbEl.appendChild(el('p', { style: 'text-align:center;color:var(--muted);' }, 'No XP earned yet — be the first!'));
+  } else {
+    board.slice(0, 25).forEach(row => {
+      const me = (user && row.username === (user.username || user.displayName)) ? ' me' : '';
+      const wrap = el('div', { class: 'leaderboard-row' + me });
+      const left = el('span');
+      left.appendChild(el('span', { class: 'rank-num' }, '#' + row.rank));
+      left.appendChild(document.createTextNode(' ' + (tierIcons[row.tier] || '🥉') + ' '));
+      left.appendChild(el('span', null, row.username));
+      wrap.appendChild(left);
+      wrap.appendChild(el('strong', null, Number(row.xp).toLocaleString() + ' XP'));
+      lbEl.appendChild(wrap);
+    });
   }
-
-  const tierIdx = getTierIndex(playerXP);
-  const currentTier = TIERS[tierIdx];
-  const nextTier = TIERS[Math.min(tierIdx + 1, TIERS.length - 1)];
-  const isMaxTier = tierIdx === TIERS.length - 1;
-
-  // ── Render Hero ────────────────────────────────────────────
-  const badge = $('tierBadge');
-  badge.className = 'vip-tier-badge ' + currentTier.id;
-  $('tierIcon').textContent = currentTier.icon;
-  $('tierName').textContent = currentTier.name;
-
-  const name = (user.firstName || user.email.split('@')[0]);
-  $('vipGreeting').textContent = `${name}, you're ${currentTier.name} Tier`;
-  $('vipSubtitle').textContent = isMaxTier
-    ? 'You\'ve reached the highest tier. Enjoy exclusive Diamond benefits!'
-    : `Earn ${(nextTier.xpRequired - playerXP).toLocaleString()} more XP to reach ${nextTier.name}.`;
-
-  // XP Bar
-  const tierStartXP = currentTier.xpRequired;
-  const tierEndXP = nextTier.xpRequired;
-  const progress = isMaxTier ? 100 : Math.min(100, ((playerXP - tierStartXP) / (tierEndXP - tierStartXP)) * 100);
-
-  $('currentXP').textContent = playerXP.toLocaleString();
-  $('nextTierXP').textContent = tierEndXP.toLocaleString();
-  $('nextTierName').textContent = isMaxTier ? 'Max' : nextTier.name;
-  $('xpStart').textContent = tierStartXP.toLocaleString() + ' XP';
-  $('xpEnd').textContent = tierEndXP.toLocaleString() + ' XP';
-
-  const xpFill = $('xpBarFill');
-  xpFill.className = 'xp-bar-fill ' + currentTier.id;
-  setTimeout(() => { xpFill.style.width = progress + '%'; }, 100);
-
-  // ── Render Tier Roadmap ────────────────────────────────────
-  $('tierRoadmap').innerHTML = TIERS.map((t, i) => {
-    const state = i < tierIdx ? 'achieved' : i === tierIdx ? 'current' : 'locked';
-    return `<div class="roadmap-tier ${state}">
-      <div class="roadmap-dot">${t.icon}</div>
-      <div class="roadmap-label">${t.name}</div>
-      <div class="roadmap-xp">${t.xpRequired > 0 ? t.xpRequired.toLocaleString() + ' XP' : 'Start'}</div>
-    </div>`;
-  }).join('');
-
-  // ── Render Benefits Grid ───────────────────────────────────
-  const allBenefits = [
-    { icon: '💰', title: 'Cashback on Losses', desc: `Get ${currentTier.cashback}% back on net losses every week.`, unlocked: true },
-    { icon: '🎁', title: 'Weekly Bonus', desc: currentTier.weeklyBonus > 0 ? `${fmt(currentTier.weeklyBonus)} bonus credits every Monday.` : 'Unlock at Silver tier.', unlocked: currentTier.weeklyBonus > 0, reqTier: 'Silver' },
-    { icon: '🎂', title: 'Birthday Bonus', desc: currentTier.birthdayBonus > 0 ? `${fmt(currentTier.birthdayBonus)} special birthday bonus.` : 'Unlock at Silver tier.', unlocked: currentTier.birthdayBonus > 0, reqTier: 'Silver' },
-    { icon: '🎰', title: 'Free Spins Multiplier', desc: `${currentTier.freeSpinsMulti}x free spin rewards on all promotions.`, unlocked: true },
-    { icon: '⚡', title: 'Priority Support', desc: 'Jump the queue with priority live chat and email support.', unlocked: currentTier.prioritySupport, reqTier: 'Gold' },
-    { icon: '🎮', title: 'Exclusive Games', desc: 'Access VIP-only games with higher RTP and unique themes.', unlocked: currentTier.exclusiveGames, reqTier: 'Gold' },
-    { icon: '👤', title: 'Personal Account Manager', desc: 'Dedicated VIP host for tailored offers and support.', unlocked: currentTier.personalManager, reqTier: 'Platinum' },
-    { icon: '✈️', title: 'VIP Events & Trips', desc: 'Invitations to exclusive events, tournaments, and travel packages.', unlocked: tierIdx >= 4, reqTier: 'Diamond' },
-  ];
-
-  $('benefitsGrid').innerHTML = allBenefits.map(b =>
-    `<div class="benefit-card ${b.unlocked ? '' : 'locked'}">
-      <div class="icon">${b.icon}</div>
-      <h3>${b.title}</h3>
-      <p>${b.desc}</p>
-      ${!b.unlocked && b.reqTier ? `<span class="tier-req">Unlocks at ${b.reqTier}</span>` : ''}
-    </div>`
-  ).join('');
-
-  // ── Render Tier Comparison Table ───────────────────────────
-  const benefits = [
-    { name: 'Cashback Rate', values: TIERS.map(t => t.cashback + '%') },
-    { name: 'Weekly Bonus', values: TIERS.map(t => t.weeklyBonus ? fmt(t.weeklyBonus) : '—') },
-    { name: 'Birthday Bonus', values: TIERS.map(t => t.birthdayBonus ? fmt(t.birthdayBonus) : '—') },
-    { name: 'Free Spin Multiplier', values: TIERS.map(t => t.freeSpinsMulti + 'x') },
-    { name: 'Priority Support', values: TIERS.map(t => t.prioritySupport ? '✓' : '—') },
-    { name: 'Exclusive Games', values: TIERS.map(t => t.exclusiveGames ? '✓' : '—') },
-    { name: 'Personal Manager', values: TIERS.map(t => t.personalManager ? '✓' : '—') },
-    { name: 'VIP Events', values: ['—', '—', '—', '—', '✓'] },
-  ];
-
-  const tbody = document.querySelector('#tierTable tbody');
-  tbody.innerHTML = benefits.map(b =>
-    `<tr>
-      <td>${b.name}</td>
-      ${b.values.map((v, i) =>
-        `<td style="text-align:center;${i === tierIdx ? 'color:var(--gold);font-weight:700;' : ''}">${v}</td>`
-      ).join('')}
-    </tr>`
-  ).join('');
-
-  // ── Reward History (demo) ──────────────────────────────────
-  const demoRewards = [
-    { icon: '💰', title: 'Weekly Cashback', meta: 'Apr 21, 2026', value: fmt(currentTier.cashback > 0 ? 2340 : 0) },
-    { icon: '🎰', title: 'Daily Free Spins', meta: 'Apr 20, 2026', value: '10 spins' },
-    { icon: '💰', title: 'Weekly Cashback', meta: 'Apr 14, 2026', value: fmt(1870) },
-    { icon: '⬆️', title: 'Tier Upgrade Bonus', meta: 'Apr 10, 2026', value: fmt(5000) },
-    { icon: '🎰', title: 'Welcome Free Spins', meta: 'Apr 8, 2026', value: '50 spins' },
-  ];
-
-  $('rewardHistory').innerHTML = demoRewards.length
-    ? demoRewards.map(r => `<div class="reward-item">
-        <div class="reward-icon">${r.icon}</div>
-        <div class="reward-info">
-          <div class="title">${r.title}</div>
-          <div class="meta">${r.meta}</div>
-        </div>
-        <div class="reward-value">${r.value}</div>
-      </div>`).join('')
-    : '<div style="text-align:center;padding:2rem;color:var(--muted);">No rewards claimed yet.</div>';
 })();
 </script>
-    <script src="js/social-proof.js" defer></script>
-    <script src="js/deposit-urgency.js" defer></script>
-    <script src="js/onboarding.js" defer></script>
 </body>
 </html>
