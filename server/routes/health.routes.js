@@ -3,6 +3,9 @@ const config = require('../config');
 const { authenticate, requireAdmin } = require('../middleware/auth');
 const fs = require('fs');
 const path = require('path');
+const os = require('os');
+let perfMod = null;
+try { perfMod = require('../middleware/request-logger'); } catch (_) { /* optional */ }
 
 const router = express.Router();
 
@@ -133,6 +136,10 @@ router.get('/detailed', authenticate, requireAdmin, async (req, res) => {
         }
 
         const now = new Date().toISOString();
+        const loadAvg = os.loadavg();
+        const perf = perfMod && typeof perfMod.getPerfSnapshot === 'function'
+            ? perfMod.getPerfSnapshot(15)
+            : null;
         res.json({
             status: 'ok',
             uptime: Math.floor(process.uptime()),
@@ -144,6 +151,14 @@ router.get('/detailed', authenticate, requireAdmin, async (req, res) => {
                 heapTotal: formatBytes(memUsage.heapTotal),
                 external: formatBytes(memUsage.external)
             },
+            system: {
+                platform: process.platform,
+                arch: process.arch,
+                cpus: os.cpus().length,
+                loadAvg: loadAvg.map(n => Number(n.toFixed(2))),
+                freeMemMB: Math.round(os.freemem() / 1048576),
+                totalMemMB: Math.round(os.totalmem() / 1048576),
+            },
             database: {
                 status: 'connected',
                 responseTime: dbResponseTime + 'ms'
@@ -151,7 +166,14 @@ router.get('/detailed', authenticate, requireAdmin, async (req, res) => {
             env: config.NODE_ENV,
             nodeVersion: process.version,
             totalUsers: totalUsers,
-            activeSessionsToday: activeSessionsToday
+            activeSessionsToday: activeSessionsToday,
+            perf: perf,
+            featureFlags: {
+                stripeConfigured: !!process.env.STRIPE_SECRET_KEY,
+                webhookConfigured: !!process.env.STRIPE_WEBHOOK_SECRET,
+                adminApiKeyConfigured: !!process.env.ADMIN_API_KEY,
+                geoBlockEnabled: !!process.env.ALLOWED_COUNTRIES,
+            },
         });
     } catch (err) {
         console.warn('[Health] Detailed health check error:', err.message);

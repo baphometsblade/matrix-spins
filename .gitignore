@@ -1,6 +1,8 @@
 node_modules/
 .env
 *.log
+*.log.gz
+logs/
 push_out.log
 push_err.log
 .DS_Store

@@ -10,6 +10,8 @@ const fraudDetection = require('../services/fraud-detection');
 
 const router = express.Router();
 const emailService = require('../services/email.service');
+const logger = require('../utils/logger');
+const { audit } = require('../utils/audit-log');
 
 function _authIsPg() { return typeof db.isPg === 'function' && db.isPg(); }
 function _authIdDef() { return _authIsPg() ? 'SERIAL PRIMARY KEY' : 'INTEGER PRIMARY KEY AUTOINCREMENT'; }
@@ -346,12 +348,19 @@ router.post('/register', async (req, res) => {
 
         const token = jwt.sign({ userId }, config.JWT_SECRET, { expiresIn: config.JWT_EXPIRES_IN });
 
+        audit('auth.register', {
+            userId,
+            ip: clientIp,
+            requestId: req.id,
+            details: { referrerId: referrerId || null, signupBonus: startBalance, signupWageringMult: SIGNUP_WAGERING_MULT },
+        }).catch(() => {});
+
         res.status(201).json({
             token,
             user: { id: userId, username, email, balance: 0, bonusBalance: startBalance, referralCode: newReferralCode, referralBonusGranted: !!referrerId },
         });
     } catch (err) {
-        console.warn('[Auth] Register error:', err.message);
+        logger.error('Register failed', { error: err.message, stack: err.stack, requestId: req.id });
         res.status(500).json({ error: 'Registration failed' });
     }
 });
@@ -390,9 +399,21 @@ router.post('/login', async (req, res) => {
                 if (record.count >= MAX_FAILED_ATTEMPTS) {
                     record.lockedUntil = Date.now() + LOCKOUT_DURATION_MS;
                     record.count = 0;
+                    audit('auth.lockout', {
+                        userId: user.id,
+                        ip: req.ip,
+                        requestId: req.id,
+                        details: { lockoutDurationMs: LOCKOUT_DURATION_MS },
+                    }).catch(() => {});
                 }
                 failedLogins.set(user.id, record);
             }
+            audit('auth.login.fail', {
+                userId: user ? user.id : null,
+                ip: req.ip,
+                requestId: req.id,
+                details: { username },
+            }).catch(() => {});
             return res.status(401).json({ error: 'Invalid credentials' });
         }
 
@@ -409,6 +430,13 @@ router.post('/login', async (req, res) => {
 
         const token = jwt.sign({ userId: user.id }, config.JWT_SECRET, { expiresIn: config.JWT_EXPIRES_IN });
 
+        audit('auth.login.success', {
+            userId: user.id,
+            ip: req.ip,
+            requestId: req.id,
+            details: { isAdmin: !!user.is_admin },
+        }).catch(() => {});
+
         res.json({
             token,
             user: {
@@ -420,7 +448,7 @@ router.post('/login', async (req, res) => {
             },
         });
     } catch (err) {
-        console.warn('[Auth] Login error:', err.message);
+        logger.error('Login failed', { error: err.message, stack: err.stack, requestId: req.id });
         res.status(500).json({ error: 'Login failed' });
     }
 });
@@ -771,6 +799,11 @@ router.post('/admin-reset', async (req, res) => {
 // --- Logout: blacklist current JWT ---
 router.post('/logout', authenticate, (req, res) => {
     blacklistToken(req.token);
+    audit('auth.logout', {
+        userId: req.user && req.user.id,
+        ip: req.ip,
+        requestId: req.id,
+    }).catch(() => {});
     res.json({ ok: true, message: 'Logged out successfully' });
 });
 

@@ -23,6 +23,11 @@ const rateLimit = require('express-rate-limit');
 
 const config = require('./config');
 const { initDatabase, isDegraded, lastPgError } = require('./database');
+const logger = require('./utils/logger');
+const { buildHelmet, permissionsPolicy } = require('./middleware/security-headers');
+const { requestLogger, getPerfSnapshot } = require('./middleware/request-logger');
+const { suspiciousActivity, getBlockedIps } = require('./middleware/suspicious-activity');
+const { notFoundApiHandler, globalErrorHandler } = require('./middleware/error-handler');
 
 const app = express();
 const PORT = config.PORT || process.env.PORT || 3000;
@@ -36,71 +41,52 @@ app.set('etag', 'strong');
 const REQUIRED_ENV = ['DATABASE_URL', 'JWT_SECRET', 'STRIPE_SECRET_KEY', 'STRIPE_PUBLISHABLE_KEY', 'STRIPE_WEBHOOK_SECRET', 'ADMIN_PASSWORD'];
 const missing = REQUIRED_ENV.filter(v => !process.env[v]);
 if (missing.length > 0) {
-  console.warn('[SERVER] Missing env vars (degraded mode):', missing.join(', '));
-  console.warn('[SERVER]   Money operations may be unavailable until set.');
-  console.warn('[SERVER]   See render.yaml + .env.example for required values.');
+  logger.warn('Missing env vars (degraded mode)', { missing });
+  logger.warn('Money operations may be unavailable until set; see render.yaml + .env.example');
 }
 
 if (config.NODE_ENV === 'production') {
   if (process.env.JWT_SECRET && process.env.JWT_SECRET.length < 32) {
-    console.error('[SERVER] FATAL: JWT_SECRET must be at least 32 characters in production.');
+    logger.error('FATAL: JWT_SECRET must be at least 32 characters in production');
     process.exit(1);
   }
   const KNOWN_DEFAULTS = ['dev-secret-do-not-use-in-production', 'admin-change-me-now'];
   if (KNOWN_DEFAULTS.includes(config.JWT_SECRET)) {
-    console.error('[SERVER] FATAL: JWT_SECRET is a known default — set a real secret.');
+    logger.error('FATAL: JWT_SECRET is a known default — set a real secret');
     process.exit(1);
   }
   if (KNOWN_DEFAULTS.includes(config.ADMIN_PASSWORD)) {
-    console.error('[SERVER] FATAL: ADMIN_PASSWORD is a known default — set a real password.');
+    logger.error('FATAL: ADMIN_PASSWORD is a known default — set a real password');
     process.exit(1);
   }
 }
 
-// ── Request ID + Slow Request Logging ──────────────────────
+// ── Request ID (early — used by every downstream middleware) ───
 app.use((req, res, next) => {
   req.id = crypto.randomBytes(4).toString('hex');
   res.setHeader('X-Request-Id', req.id);
-  const start = process.hrtime.bigint();
-  res.on('finish', () => {
-    const ms = Number(process.hrtime.bigint() - start) / 1e6;
-    if (req.path.startsWith('/api/') || ms > 1000) {
-      console.log(`[${req.method}] ${req.path} ${res.statusCode} ${Math.round(ms)}ms id=${req.id}`);
-    }
-  });
   next();
 });
+
+// ── Structured request/perf logging via winston ─────────────────
+app.use(requestLogger());
+
+// ── IP-based suspicious-activity guard (before rate limits) ─────
+app.use(suspiciousActivity);
 
 // ── Compression (gzip) ──────────────────────────────────────
 try {
   const compression = require('compression');
   app.use(compression({ level: 6, threshold: 512 }));
 } catch (_) {
-  console.warn('[SERVER] compression not installed — responses will be uncompressed');
+  logger.warn('compression not installed — responses will be uncompressed');
 }
 
-// ── Security Headers ────────────────────────────────────────
+// ── Security Headers (helmet + Permissions-Policy + Vary) ──
+app.use(buildHelmet());
+app.use(permissionsPolicy);
 app.use((req, res, next) => {
-  res.setHeader('X-Content-Type-Options', 'nosniff');
-  res.setHeader('X-Frame-Options', 'DENY');
-  res.setHeader('X-XSS-Protection', '1; mode=block');
-  res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
-  res.setHeader('Permissions-Policy', 'camera=(), microphone=(), geolocation=(), payment=(self)');
-  res.setHeader('Strict-Transport-Security', 'max-age=31536000; includeSubDomains; preload');
   res.setHeader('Vary', 'Accept-Encoding, Origin');
-  res.setHeader('Content-Security-Policy', [
-    "default-src 'self'",
-    "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://js.stripe.com https://www.googletagmanager.com https://www.google-analytics.com",
-    "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
-    "font-src 'self' data: https://fonts.gstatic.com",
-    "img-src 'self' data: https: blob:",
-    "connect-src 'self' https://api.stripe.com https://www.google-analytics.com https://api.coingecko.com https://cloudflare-eth.com https://ipapi.co",
-    "frame-src https://js.stripe.com https://hooks.stripe.com",
-    "object-src 'none'",
-    "frame-ancestors 'none'",
-    "base-uri 'self'",
-    "form-action 'self'",
-  ].join('; '));
   next();
 });
 
@@ -145,7 +131,7 @@ app.use(express.urlencoded({ extended: false, limit: '100kb' }));
 try {
   app.use(require('cookie-parser')());
 } catch (_) {
-  console.warn('[SERVER] cookie-parser not installed — cookie middleware disabled');
+  logger.warn('cookie-parser not installed — cookie middleware disabled');
 }
 
 // ── Sanitize, CSRF, Maintenance ────────────────────────────
@@ -153,7 +139,7 @@ function safeMiddleware(modulePath, name) {
   try {
     return require(modulePath);
   } catch (err) {
-    console.warn(`[SERVER] Middleware ${name} failed to load: ${err.message}`);
+    logger.warn(`Middleware ${name} failed to load`, { error: err.message });
     return (req, res, next) => next();
   }
 }
@@ -168,7 +154,7 @@ try {
   optionalAuth = auth.optionalAuth;
   verifyToken = auth.authenticate;
 } catch (err) {
-  console.warn('[SERVER] auth middleware failed:', err.message);
+  logger.warn('auth middleware failed', { error: err.message });
 }
 app.use('/api', optionalAuth);
 
@@ -177,23 +163,26 @@ try {
   app.get('/api/csrf-token', verifyToken, getCsrfTokenHandler);
   app.use(csrfMiddleware);
 } catch (err) {
-  console.warn('[SERVER] csrf middleware failed:', err.message);
+  logger.warn('csrf middleware failed', { error: err.message });
 }
 
 try {
   const { maintenanceMiddleware } = require('./middleware/maintenance');
   app.use(maintenanceMiddleware);
 } catch (err) {
-  console.warn('[SERVER] maintenance middleware failed:', err.message);
+  logger.warn('maintenance middleware failed', { error: err.message });
 }
 
 const { degradedModeGuard } = require('./middleware/degraded-mode');
 const { geoBlock } = require('./middleware/geo-block');
 
 // ── Rate Limiters ──────────────────────────────────────────
+// General API limit: 100 req/min/IP per spec. Polling endpoints (jackpot,
+// balance) are heavily cached client-side and use realtime websockets, so
+// 100/min/IP is plenty for a single user; bots and scrapers get clipped.
 const globalLimiter = rateLimit({
   windowMs: 60 * 1000,
-  max: 3000,
+  max: parseInt(process.env.RL_API_PER_MIN, 10) || 100,
   standardHeaders: true,
   legacyHeaders: false,
   message: { error: 'Too many requests. Please slow down.' },
@@ -207,9 +196,17 @@ app.use('/api/', (req, res, next) => {
   next();
 });
 
-const authLimiter = rateLimit({ windowMs: 15 * 60 * 1000, max: 50, standardHeaders: true, legacyHeaders: false });
+// Auth: 5/min/IP per spec (matches password-spray budget for honest users).
+const authLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  max: parseInt(process.env.RL_AUTH_PER_MIN, 10) || 5,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Too many auth attempts. Please wait a minute.' },
+});
 app.use('/api/auth/register', authLimiter);
 app.use('/api/auth/login',    authLimiter);
+app.use('/api/auth/logout',   authLimiter);
 
 const passwordResetLimiter = rateLimit({ windowMs: 60 * 60 * 1000, max: 3, standardHeaders: true, legacyHeaders: false });
 app.use('/api/auth/forgot-password', passwordResetLimiter);
@@ -235,10 +232,22 @@ app.use('/api/payment/create-checkout', paymentLimiter);
 app.use('/api/crypto/verify-deposit',   paymentLimiter);
 app.use('/api/withdrawal-enhance',      paymentLimiter);
 
-const adminLimiter = rateLimit({ windowMs: 60 * 1000, max: 60, standardHeaders: true, legacyHeaders: false });
+const adminLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  max: parseInt(process.env.RL_ADMIN_PER_MIN, 10) || 30,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Admin rate limit exceeded.' },
+});
 app.use('/api/admin', adminLimiter);
 
-const spinLimiter = rateLimit({ windowMs: 60 * 1000, max: 180, standardHeaders: true, legacyHeaders: false });
+const spinLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  max: parseInt(process.env.RL_SPIN_PER_MIN, 10) || 60,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Spin rate limit exceeded — slow down.' },
+});
 app.use('/api/spin', spinLimiter);
 
 // ── Geo-Block (only active if ALLOWED_COUNTRIES is set) ────
@@ -269,7 +278,7 @@ function mount(prefix, modulePath, label) {
     loadedRoutes.push({ prefix, label: label || modulePath });
   } catch (err) {
     failedRoutes.push({ prefix, modulePath, error: err.message });
-    console.warn(`[SERVER] Route mount failed: ${prefix} (${modulePath}) — ${err.message}`);
+    logger.warn('Route mount failed', { prefix, modulePath, error: err.message });
   }
 }
 
@@ -415,10 +424,22 @@ mount('/api/bundles',    './routes/bundles.routes',    'bundles (stub — 501 un
 }
 
 // ── Health Check (always available) ────────────────────────
-app.get('/api/health-summary', (req, res) => {
+app.get('/api/health-summary', async (req, res) => {
   const mem = process.memoryUsage();
+  let dbOk = false, dbResponseMs = null;
+  try {
+    const db = require('./database');
+    const t = Date.now();
+    await Promise.race([
+      db.get('SELECT 1'),
+      new Promise((_, rej) => setTimeout(() => rej(new Error('db ping timeout')), 2000)),
+    ]);
+    dbResponseMs = Date.now() - t;
+    dbOk = true;
+  } catch (_) { dbOk = false; }
+
   res.json({
-    status: isDegraded() ? 'degraded' : 'ok',
+    status: isDegraded() || !dbOk ? 'degraded' : 'ok',
     degraded: isDegraded(),
     pgError: lastPgError() || null,
     uptime: process.uptime(),
@@ -429,23 +450,49 @@ app.get('/api/health-summary', (req, res) => {
       heapUsedMB: Math.round(mem.heapUsed / 1048576),
       heapTotalMB: Math.round(mem.heapTotal / 1048576),
       rssMB: Math.round(mem.rss / 1048576),
+      externalMB: Math.round((mem.external || 0) / 1048576),
+    },
+    db: {
+      ok: dbOk,
+      responseMs: dbResponseMs,
     },
     env: {
       database: !!process.env.DATABASE_URL,
       stripe: !!process.env.STRIPE_SECRET_KEY,
       auth: !!process.env.JWT_SECRET,
+      adminApiKey: !!process.env.ADMIN_API_KEY,
+      logging: { dir: logger.logDir, fileTransports: !!logger.canWriteFiles },
     },
     routesLoaded: loadedRoutes.length,
     routesFailed: failedRoutes.length,
+    nodeVersion: process.version,
   });
 });
 
-// ── Diagnostic: list routes (admin only) ───────────────────
+// ── Diagnostic: list routes (admin API key only) ───────────
+function adminGuard(req, res) {
+  const expected = process.env.ADMIN_API_KEY || process.env.ADMIN_PASSWORD;
+  if (!expected) { res.status(503).json({ error: 'admin key not configured' }); return false; }
+  const provided = req.headers['x-admin-api-key'] || req.headers['x-admin-token'];
+  if (!provided || provided !== expected) { res.status(403).json({ error: 'forbidden' }); return false; }
+  return true;
+}
 app.get('/api/debug/routes', (req, res) => {
-  if (process.env.NODE_ENV === 'production' && req.headers['x-admin-token'] !== process.env.ADMIN_PASSWORD) {
-    return res.status(403).json({ error: 'forbidden' });
-  }
+  if (!adminGuard(req, res)) return;
   res.json({ loaded: loadedRoutes, failed: failedRoutes });
+});
+
+// ── Diagnostic: rolling perf snapshot ─────────────────────
+app.get('/api/debug/perf', (req, res) => {
+  if (!adminGuard(req, res)) return;
+  const limit = Math.min(parseInt(req.query.limit, 10) || 25, 100);
+  res.json({ endpoints: getPerfSnapshot(limit), generatedAt: new Date().toISOString() });
+});
+
+// ── Diagnostic: blocked IPs from suspicious-activity ──────
+app.get('/api/debug/blocked-ips', (req, res) => {
+  if (!adminGuard(req, res)) return;
+  res.json({ blocked: getBlockedIps(), generatedAt: new Date().toISOString() });
 });
 
 // ── Static Files / SPA fallback / error handler ────────────
@@ -468,7 +515,7 @@ function bindCatchAll() {
   });
 
   if (hasBundle) {
-    console.log('[SERVER] Serving production bundle from /dist');
+    logger.info('Serving production bundle from /dist');
     app.use('/dist', express.static(distPath, { maxAge: '365d', immutable: true, etag: true }));
     app.use(express.static(distPath, {
       dotfiles: 'deny',
@@ -537,28 +584,8 @@ function bindCatchAll() {
     res.sendFile(indexPath);
   });
 
-  // Global error handler (4-arg, must be last)
-  app.use((err, req, res, _next) => {
-    try {
-      const db = require('./database');
-      if (typeof db.rollback === 'function') {
-        db.rollback().catch(e => console.warn('[err-handler] rollback:', e && e.message));
-      }
-    } catch (_) {}
-    console.error('[SERVER]', req.method, req.path, '→', err.message, 'id=', req.id);
-    console.error('[SERVER] stack:', err.stack);
-    const status = err.status || err.statusCode || 500;
-    const debug = process.env.ADMIN_PASSWORD && req.headers['x-debug-token'] === process.env.ADMIN_PASSWORD;
-    const message = (config.NODE_ENV === 'production' && !debug) ? 'Internal server error' : (err.message || 'Internal server error');
-    if (!res.headersSent) {
-      res.status(status).json({
-        error: message,
-        stack: debug && err.stack ? err.stack.split('\n').slice(0, 10) : undefined,
-        requestId: req.id,
-        referenceNumber: 'ERR-' + Date.now().toString(36).toUpperCase(),
-      });
-    }
-  });
+  // Global error handler (4-arg, must be last) — winston-backed, redacts in prod
+  app.use(globalErrorHandler);
 }
 
 // ── Service schema init (called from ensureReady) ──────────
@@ -580,7 +607,7 @@ async function initSchemas() {
       )`
     );
   } catch (e) {
-    console.warn('[SERVER] audit_log table init failed:', e.message);
+    logger.warn('audit_log table init failed', { error: e.message });
   }
 
   const schemaInits = [
@@ -599,7 +626,7 @@ async function initSchemas() {
       if (typeof svc.initSchema === 'function') await svc.initSchema();
       else if (typeof svc.initJackpotPool === 'function') await svc.initJackpotPool();
     } catch (err) {
-      console.warn(`[SERVER] schema init ${sp} failed: ${err.message}`);
+      logger.warn(`schema init failed`, { service: sp, error: err.message });
     }
   }
 
@@ -609,7 +636,7 @@ async function initSchemas() {
       await nftRoutes.ensureNFTTables();
     }
   } catch (err) {
-    console.warn('[SERVER] NFT tables init deferred:', err.message);
+    logger.warn('NFT tables init deferred', { error: err.message });
   }
 }
 
@@ -621,7 +648,7 @@ async function ensureReady() {
     try {
       await initDatabase();
     } catch (err) {
-      console.error('[SERVER] Database init failed (continuing in degraded mode):', err.message);
+      logger.error('Database init failed (continuing in degraded mode)', { error: err.message, stack: err.stack });
     }
     // Mount routes AFTER DB is ready — fire-and-forget bootstraps now succeed
     mountAllRoutes();
@@ -642,7 +669,7 @@ async function start() {
     const scheduler = require('./services/scheduler.service');
     if (typeof scheduler.start === 'function') scheduler.start();
   } catch (err) {
-    console.warn('[SERVER] scheduler failed:', err.message);
+    logger.warn('scheduler failed', { error: err.message });
   }
 
   const httpServer = http.createServer(app);
@@ -659,7 +686,7 @@ async function start() {
       } catch (_) { /* notification service optional */ }
     }
   } catch (err) {
-    console.warn('[SERVER] realtime init failed:', err.message);
+    logger.warn('realtime init failed', { error: err.message });
   }
 
   // Periodic jackpot broadcast (every 4s) for animated counters across clients
@@ -676,19 +703,16 @@ async function start() {
   } catch (_) { /* services unavailable */ }
 
   const server = httpServer.listen(PORT, () => {
-    console.log('');
-    console.log('══════════════════════════════════════════════════');
-    console.log('  MATRIX SPINS CASINO — Server Running');
-    console.log('══════════════════════════════════════════════════');
-    console.log(`  URL:           http://localhost:${PORT}`);
-    console.log(`  Mode:          ${config.NODE_ENV}`);
-    console.log(`  Routes loaded: ${loadedRoutes.length}`);
-    console.log(`  Routes failed: ${failedRoutes.length}`);
-    console.log(`  DB degraded:   ${isDegraded()}`);
-    console.log(`  Realtime:      ${io ? 'on' : 'off'}`);
-    console.log(`  Time:          ${new Date().toISOString()}`);
-    console.log('══════════════════════════════════════════════════');
-    console.log('');
+    logger.info('Matrix Spins Casino — server listening', {
+      url: `http://localhost:${PORT}`,
+      mode: config.NODE_ENV,
+      routesLoaded: loadedRoutes.length,
+      routesFailed: failedRoutes.length,
+      dbDegraded: isDegraded(),
+      realtime: !!io,
+      logDir: logger.logDir,
+      fileLogs: !!logger.canWriteFiles,
+    });
   });
   app.set('server', server);
   app.set('io', io);
@@ -697,8 +721,8 @@ async function start() {
   try {
     const tournament = require('./services/tournament.service');
     if (typeof tournament.ensureActive === 'function') {
-      tournament.ensureActive().catch(e => console.warn('[Tournament] bootstrap:', e.message));
-      setInterval(() => tournament.tick && tournament.tick().catch(e => console.warn('[Tournament] tick:', e.message)), 5 * 60 * 1000);
+      tournament.ensureActive().catch(e => logger.warn('Tournament bootstrap', { error: e.message }));
+      setInterval(() => tournament.tick && tournament.tick().catch(e => logger.warn('Tournament tick', { error: e.message })), 5 * 60 * 1000);
     }
   } catch (_) {}
 
@@ -706,8 +730,8 @@ async function start() {
   try {
     const wager = require('./services/wagerace.service');
     if (typeof wager.ensureActiveRace === 'function') {
-      wager.ensureActiveRace().catch(e => console.warn('[WagerRace] bootstrap:', e.message));
-      setInterval(() => wager.tick && wager.tick().catch(e => console.warn('[WagerRace] tick:', e.message)), 60 * 1000);
+      wager.ensureActiveRace().catch(e => logger.warn('WagerRace bootstrap', { error: e.message }));
+      setInterval(() => wager.tick && wager.tick().catch(e => logger.warn('WagerRace tick', { error: e.message })), 60 * 1000);
     }
   } catch (_) {}
 
@@ -719,15 +743,21 @@ let shuttingDown = false;
 async function gracefulShutdown(signal) {
   if (shuttingDown) return;
   shuttingDown = true;
-  console.log(`[SERVER] Received ${signal}, shutting down gracefully...`);
+  logger.info('Received signal, shutting down gracefully', { signal });
 
   const httpServer = app.get('server');
   if (httpServer) {
-    httpServer.close(() => console.log('[SERVER] HTTP closed'));
+    httpServer.close(() => logger.info('HTTP server closed'));
   }
 
-  setTimeout(() => process.exit(1), 15000).unref();
+  // Hard-fail timer — never let shutdown hang past 15s
+  const hardKill = setTimeout(() => {
+    logger.error('Graceful shutdown timed out — force exit');
+    process.exit(1);
+  }, 15000);
+  hardKill.unref();
 
+  // Drain in-flight requests (3s)
   await new Promise(r => setTimeout(r, 3000));
 
   try {
@@ -736,9 +766,10 @@ async function gracefulShutdown(signal) {
     if (backend) {
       if (typeof backend._flushToDisk === 'function') backend._flushToDisk();
       if (typeof backend.close === 'function') await backend.close();
+      logger.info('Database closed cleanly');
     }
   } catch (e) {
-    console.warn('[SERVER] DB close error:', e.message);
+    logger.warn('DB close error during shutdown', { error: e.message });
   }
 
   process.exit(0);
@@ -748,18 +779,20 @@ process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
 process.on('SIGINT',  () => gracefulShutdown('SIGINT'));
 
 process.on('unhandledRejection', (reason) => {
-  console.error('[SERVER] Unhandled Rejection:', reason);
+  const err = reason instanceof Error ? reason : new Error(String(reason));
+  logger.error('Unhandled rejection', { error: err.message, stack: err.stack });
 });
 process.on('uncaughtException', (err) => {
-  console.error('[SERVER] Uncaught Exception:', err && err.stack || err);
-  // Render restarts on exit; let it
-  setTimeout(() => process.exit(1), 100).unref();
+  logger.error('Uncaught exception', { error: err && err.message, stack: err && err.stack });
+  // Render/Vercel will restart on exit; bail out so the process doesn't run in
+  // an undefined state. Give logger a tick to flush.
+  setTimeout(() => process.exit(1), 250).unref();
 });
 
 // Only start if invoked directly (not when imported by Vercel adapter)
 if (require.main === module) {
   start().catch(err => {
-    console.error('[SERVER] FATAL start error:', err);
+    logger.error('FATAL start error', { error: err.message, stack: err.stack });
     process.exit(1);
   });
 }
