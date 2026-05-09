@@ -23,6 +23,16 @@ const EARLY_SCRIPTS = [
     'js/eager-thumbs.js'
 ];
 
+// Standalone-page scripts referenced directly by login/signup/account/etc HTML.
+// NOT bundled — copied to dist/js/ so the <script src="js/X.js"> tags resolve.
+const STANDALONE_SCRIPTS = [
+    'js/api-client.js',
+    'js/countries.js',
+    'js/social-proof.js',
+    'js/deposit-urgency.js',
+    'js/onboarding.js'
+];
+
 // CSS files to bundle (in specificity order — premium overrides MUST be last)
 const CSS_FILES = [
     'design-tokens.css',
@@ -330,6 +340,21 @@ function copyStaticAssets() {
         if (fs.existsSync(src)) {
             fs.copyFileSync(src, dst);
             log(`Copied ${scriptPath}`);
+        }
+    });
+
+    // Copy standalone-page scripts (api-client, countries, social-proof, ...)
+    // referenced directly by login.html, signup.html, account.html, etc.
+    STANDALONE_SCRIPTS.forEach(scriptPath => {
+        const src = path.join(ROOT_DIR, scriptPath);
+        const dst = path.join(DIST_DIR, scriptPath);
+        const dir = path.dirname(dst);
+        if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+        if (fs.existsSync(src)) {
+            fs.copyFileSync(src, dst);
+            log(`Copied ${scriptPath}`);
+        } else {
+            log(`WARN: standalone script missing: ${scriptPath}`);
         }
     });
 
