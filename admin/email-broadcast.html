@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Email Broadcast — Matrix Spins Admin</title>
+<meta name="robots" content="noindex, nofollow">
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background:#0d0d1a; color:#e0e0e0; min-height:100vh; padding:24px; }
+.container { max-width:1100px; margin:0 auto; }
+header { display:flex; justify-content:space-between; align-items:center; padding:18px 24px; background:linear-gradient(135deg,#1a1a2e,#16213e); border:1px solid rgba(255,215,0,0.3); border-radius:12px; margin-bottom:24px; }
+header h1 { background:linear-gradient(135deg,#ffd700,#ff8c00); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; font-size:22px; }
+header a { color:#ffd700; text-decoration:none; font-size:13px; }
+.row { display:grid; grid-template-columns:1fr 1fr; gap:24px; }
+@media(max-width:900px){ .row { grid-template-columns:1fr; } }
+.panel { background:linear-gradient(135deg,#1a1a2e,#16213e); border:1px solid rgba(255,215,0,0.2); border-radius:12px; padding:24px; }
+.panel h2 { color:#ffd700; font-size:18px; margin-bottom:18px; }
+label { display:block; color:#aaa; font-size:13px; margin:14px 0 6px; }
+input, select, textarea { width:100%; background:#0d0d1a; border:1px solid rgba(255,215,0,0.2); color:#e0e0e0; padding:11px 14px; border-radius:7px; font-size:14px; font-family:inherit; }
+input:focus, select:focus, textarea:focus { outline:none; border-color:#ffd700; box-shadow:0 0 0 3px rgba(255,215,0,0.15); }
+textarea { resize:vertical; min-height:140px; }
+.help { color:#666; font-size:12px; margin-top:4px; }
+button { background:linear-gradient(135deg,#ffd700,#ff8c00); color:#0d0d1a; border:none; padding:12px 24px; border-radius:8px; font-weight:700; cursor:pointer; font-size:14px; margin-top:18px; }
+button:disabled { opacity:.5; cursor:not-allowed; }
+button.secondary { background:transparent; border:1px solid rgba(255,215,0,0.3); color:#ffd700; }
+.status { padding:14px; border-radius:8px; background:rgba(0,0,0,0.3); margin:14px 0; font-size:13px; line-height:1.6; }
+.status.ok { border-left:3px solid #10b981; color:#10b981; }
+.status.err { border-left:3px solid #ff3860; color:#ff3860; }
+.broadcasts { margin-top:18px; }
+.bcast-row { padding:14px; background:rgba(0,0,0,0.3); border-radius:8px; margin-bottom:8px; font-size:13px; }
+.bcast-row .meta { color:#888; font-size:11px; margin-top:4px; }
+.queue-stats { display:grid; grid-template-columns:repeat(3,1fr); gap:10px; margin-bottom:14px; }
+.queue-stat { padding:14px; background:rgba(0,0,0,0.3); border-radius:8px; text-align:center; }
+.queue-stat .num { color:#ffd700; font-size:24px; font-weight:700; }
+.queue-stat .lbl { color:#aaa; font-size:11px; text-transform:uppercase; letter-spacing:1px; margin-top:4px; }
+.queue-stat.failed .num { color:#ff3860; }
+.queue-stat.sent .num { color:#10b981; }
+</style>
+</head>
+<body>
+<div class="container">
+  <header>
+    <h1>Email Broadcast Console</h1>
+    <a href="index.html">&larr; Back to admin</a>
+  </header>
+
+  <div class="row">
+    <div class="panel">
+      <h2>New Broadcast</h2>
+
+      <label for="segment">Recipient segment</label>
+      <select id="segment">
+        <option value="all">All players</option>
+        <option value="active_7d">Active (last 7 days)</option>
+        <option value="inactive_30d">Inactive (30+ days)</option>
+        <option value="high_value">High value (balance ≥ $100)</option>
+        <option value="never_deposited">Never deposited</option>
+        <option value="vip:silver">VIP — Silver</option>
+        <option value="vip:gold">VIP — Gold</option>
+        <option value="vip:platinum">VIP — Platinum</option>
+        <option value="vip:diamond">VIP — Diamond</option>
+      </select>
+      <div class="help" id="segmentCount">Recipient count: —</div>
+
+      <label for="subject">Subject line</label>
+      <input id="subject" type="text" maxlength="200" placeholder="Friday surprise — 50 free spins on the house">
+
+      <label for="headline">Headline (in-email)</label>
+      <input id="headline" type="text" maxlength="200" placeholder="Defaults to subject if empty">
+
+      <label for="body">Body (plain text — paragraphs separated by blank lines)</label>
+      <textarea id="body" maxlength="8000" placeholder="Hi player,&#10;&#10;Tonight only..."></textarea>
+
+      <label for="ctaLabel">CTA button label (optional)</label>
+      <input id="ctaLabel" type="text" maxlength="50" placeholder="Claim my free spins">
+
+      <label for="ctaUrl">CTA URL (optional, https://)</label>
+      <input id="ctaUrl" type="url" placeholder="https://msaart.online/promotions">
+
+      <button id="sendBtn">Send broadcast</button>
+      <button id="testBtn" class="secondary">Send test to me</button>
+
+      <div id="result"></div>
+    </div>
+
+    <div class="panel">
+      <h2>Email Queue</h2>
+      <div id="queueStats" class="queue-stats">
+        <div class="queue-stat"><div class="num" id="qPending">—</div><div class="lbl">Pending</div></div>
+        <div class="queue-stat sent"><div class="num" id="qSent">—</div><div class="lbl">Sent</div></div>
+        <div class="queue-stat failed"><div class="num" id="qFailed">—</div><div class="lbl">Failed</div></div>
+      </div>
+      <button id="processBtn" class="secondary">Process queue now</button>
+      <div id="queueResult"></div>
+
+      <h2 style="margin-top:24px;">Recent Broadcasts</h2>
+      <div class="broadcasts" id="broadcastList">Loading…</div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  'use strict';
+  var ADMIN_TOKEN = localStorage.getItem('admin_token') || prompt('Admin password (X-Admin-Token):') || '';
+  if (ADMIN_TOKEN) localStorage.setItem('admin_token', ADMIN_TOKEN);
+  var JWT = localStorage.getItem('msaart_token') || localStorage.getItem('token') || '';
+
+  var headers = { 'Content-Type': 'application/json', 'X-Admin-Token': ADMIN_TOKEN };
+  if (JWT) headers['Authorization'] = 'Bearer ' + JWT;
+
+  function $(id) { return document.getElementById(id); }
+
+  function clear(el) { while (el.firstChild) el.removeChild(el.firstChild); }
+
+  function showResult(elId, msg, ok) {
+    var el = $(elId);
+    clear(el);
+    var div = document.createElement('div');
+    div.className = 'status ' + (ok ? 'ok' : 'err');
+    div.textContent = msg;
+    el.appendChild(div);
+  }
+
+  function loadQueueStats() {
+    fetch('/api/admin-email/queue', { headers: headers, credentials: 'include' })
+      .then(function(r){ return r.json(); })
+      .then(function(data){
+        if (!data.success) throw new Error(data.error || 'Failed');
+        $('qPending').textContent = data.stats.pending || 0;
+        $('qSent').textContent    = data.stats.sent || 0;
+        $('qFailed').textContent  = data.stats.failed || 0;
+      })
+      .catch(function(err){ showResult('queueResult', err.message, false); });
+  }
+
+  function loadBroadcasts() {
+    fetch('/api/admin-email/broadcasts?limit=20', { headers: headers, credentials: 'include' })
+      .then(function(r){ return r.json(); })
+      .then(function(data){
+        var box = $('broadcastList');
+        clear(box);
+        if (!data.success || !data.broadcasts || !data.broadcasts.length) {
+          box.textContent = 'No broadcasts yet.';
+          return;
+        }
+        data.broadcasts.forEach(function(b){
+          var row = document.createElement('div');
+          row.className = 'bcast-row';
+          var t = document.createElement('div');
+          t.textContent = b.subject;
+          t.style.color = '#ffd700';
+          t.style.fontWeight = '600';
+          var m = document.createElement('div');
+          m.className = 'meta';
+          m.textContent = '[' + b.segment + '] ' + (b.sent_count || 0) + '/' + (b.recipients_count || 0) + ' sent · ' + (b.created_at || '');
+          row.appendChild(t);
+          row.appendChild(m);
+          box.appendChild(row);
+        });
+      })
+      .catch(function(){ $('broadcastList').textContent = 'Failed to load broadcasts.'; });
+  }
+
+  function previewSegment() {
+    var seg = $('segment').value;
+    fetch('/api/admin-email/segments/' + encodeURIComponent(seg) + '/preview',
+      { headers: headers, credentials: 'include' })
+      .then(function(r){ return r.json(); })
+      .then(function(data){
+        if (data.success) {
+          var sample = data.sample.map(function(s){ return s.email; }).join(', ');
+          $('segmentCount').textContent = 'Recipient count: ' + data.count + (sample ? ' (e.g. ' + sample + ')' : '');
+        } else {
+          $('segmentCount').textContent = 'Recipient count: —';
+        }
+      })
+      .catch(function(){ $('segmentCount').textContent = 'Recipient count: —'; });
+  }
+
+  $('segment').addEventListener('change', previewSegment);
+
+  $('sendBtn').addEventListener('click', function(){
+    var payload = {
+      segment: $('segment').value,
+      subject: $('subject').value.trim(),
+      headline: $('headline').value.trim() || $('subject').value.trim(),
+      body: $('body').value.trim(),
+      ctaLabel: $('ctaLabel').value.trim() || null,
+      ctaUrl: $('ctaUrl').value.trim() || null,
+    };
+    if (!payload.subject || !payload.body) { showResult('result', 'Subject and body are required.', false); return; }
+    if (!confirm('Send broadcast to "' + payload.segment + '"? This cannot be undone.')) return;
+
+    this.disabled = true;
+    var self = this;
+    fetch('/api/admin-email/broadcast', {
+      method: 'POST', headers: headers, credentials: 'include',
+      body: JSON.stringify(payload),
+    })
+      .then(function(r){ return r.json(); })
+      .then(function(data){
+        if (data.success) {
+          showResult('result', 'Broadcast queued: ' + data.queued + ' recipients (skipped ' + (data.skipped || 0) + ' opt-outs).', true);
+          loadQueueStats(); loadBroadcasts();
+        } else {
+          showResult('result', (data.error || 'Failed'), false);
+        }
+      })
+      .catch(function(err){ showResult('result', err.message, false); })
+      .finally(function(){ self.disabled = false; });
+  });
+
+  $('testBtn').addEventListener('click', function(){
+    this.disabled = true;
+    var self = this;
+    fetch('/api/admin-email/test', {
+      method: 'POST', headers: headers, credentials: 'include', body: '{}',
+    })
+      .then(function(r){ return r.json(); })
+      .then(function(data){
+        showResult('result', data.success ? 'Test email sent (' + (data.sent ? 'delivered' : 'queued') + ').' : (data.error || 'Failed'), data.success);
+        loadQueueStats();
+      })
+      .catch(function(err){ showResult('result', err.message, false); })
+      .finally(function(){ self.disabled = false; });
+  });
+
+  $('processBtn').addEventListener('click', function(){
+    this.disabled = true;
+    var self = this;
+    fetch('/api/admin-email/process', {
+      method: 'POST', headers: headers, credentials: 'include',
+      body: JSON.stringify({ limit: 100 }),
+    })
+      .then(function(r){ return r.json(); })
+      .then(function(data){
+        if (data.success) {
+          showResult('queueResult', 'Processed ' + data.processed + ' (sent ' + data.sent + ', failed ' + data.failed + ')', true);
+          loadQueueStats();
+        } else {
+          showResult('queueResult', (data.error || 'Failed'), false);
+        }
+      })
+      .catch(function(err){ showResult('queueResult', err.message, false); })
+      .finally(function(){ self.disabled = false; });
+  });
+
+  loadQueueStats();
+  loadBroadcasts();
+  previewSegment();
+  setInterval(loadQueueStats, 15000);
+})();
+</script>
+</body>
+</html>

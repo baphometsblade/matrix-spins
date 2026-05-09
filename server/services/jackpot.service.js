@@ -136,6 +136,25 @@ async function processJackpotContribution(userId, betAmount) {
                 console.warn('[Jackpot] Transaction log failed:', txLogErr.message);
             }
 
+            // Jackpot win email (fire-and-forget — never blocks payout)
+            try {
+                const u = await db.get('SELECT username, email FROM users WHERE id = ?', [userId]);
+                if (u && u.email) {
+                    const emailService = require('./email.service');
+                    const tierLabel = ({
+                        mini:  'Mini Jackpot',
+                        minor: 'Minor Jackpot',
+                        major: 'Major Jackpot',
+                        grand: 'GRAND JACKPOT',
+                    })[tierName] || tierName;
+                    emailService.sendJackpotWin(u.email, userId, {
+                        username: u.username,
+                        amount: wonAmount,
+                        jackpotTier: tierLabel,
+                    }).catch(e => console.warn('[Jackpot] email failed:', e.message));
+                }
+            } catch (_) {}
+
             return { tier: tierName, amount: wonAmount };
         }
     }

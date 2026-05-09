@@ -1,437 +1,724 @@
 'use strict';
 
+/**
+ * Matrix Spins Email Service.
+ *
+ * Architecture:
+ *   1. Templates live in ./email-templates.js (pure functions)
+ *   2. send() enqueues to email_queue with status='pending' and tries
+ *      synchronous delivery once. On failure, the queue worker retries
+ *      with exponential backoff (1m → 5m → 30m → 2h → 12h, max 5 attempts).
+ *   3. User preferences (email_preferences) gate every send except
+ *      transactional types (security, payment, password reset).
+ *   4. Unsubscribe tokens are HMAC-signed so they can't be forged.
+ *
+ * SMTP env: SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS, SMTP_FROM, SMTP_SECURE
+ *
+ * If SMTP is not configured, send() still enqueues (so deliveries resume
+ * automatically once env is set) but logs a warning.
+ */
+
+const crypto = require('crypto');
 const nodemailer = require('nodemailer');
 const config = require('../config');
+const db = require('../database');
+const templates = require('./email-templates');
 
 let _transporter = null;
+let _transporterError = null;
+let _schemaReady = false;
+let _workerInterval = null;
+
+const BASE_URL = process.env.PUBLIC_URL || process.env.BASE_URL || 'https://msaart.online';
+
+// Email categories — used for preferences and to gate "transactional" sends
+// past unsubscribes. Transactional emails are always delivered (security/legal
+// requirement); marketing/engagement respect the opt-out flags.
+const CATEGORY = {
+    TRANSACTIONAL: 'transactional', // password reset, OTP, deposit/withdrawal confirms, security
+    ACCOUNT:       'account',       // VIP tier, self-exclusion confirm, balance receipts
+    PROMOTIONAL:   'promotional',   // welcome bonus nudge, deposit nudge, broadcast
+    REENGAGEMENT:  'reengagement',  // weekly summary, comeback offers
+    REPORTING:     'reporting',     // weekly P&L (admin-only)
+};
+
+const TEMPLATE_CATEGORY = {
+    welcome:                    CATEGORY.TRANSACTIONAL,
+    emailVerification:          CATEGORY.TRANSACTIONAL,
+    passwordReset:              CATEGORY.TRANSACTIONAL,
+    withdrawalOtp:              CATEGORY.TRANSACTIONAL,
+    depositConfirmation:        CATEGORY.TRANSACTIONAL,
+    withdrawalRequested:        CATEGORY.TRANSACTIONAL,
+    withdrawalApproved:         CATEGORY.TRANSACTIONAL,
+    withdrawalRejected:         CATEGORY.TRANSACTIONAL,
+    selfExclusionConfirmation:  CATEGORY.TRANSACTIONAL,
+    transactionReceipt:         CATEGORY.TRANSACTIONAL,
+    vipTierUpgrade:             CATEGORY.ACCOUNT,
+    jackpotWin:                 CATEGORY.ACCOUNT,
+    weeklyActivitySummary:      CATEGORY.REENGAGEMENT,
+    broadcast:                  CATEGORY.PROMOTIONAL,
+};
+
+// ─────────────────────────────────────────────────────────────
+// SCHEMA
+// ─────────────────────────────────────────────────────────────
+
+function _isPg() { return typeof db.isPg === 'function' && db.isPg(); }
+function _idDef() { return _isPg() ? 'SERIAL PRIMARY KEY' : 'INTEGER PRIMARY KEY AUTOINCREMENT'; }
+function _tsDef() { return _isPg() ? 'TIMESTAMPTZ DEFAULT NOW()' : "TEXT DEFAULT (datetime('now'))"; }
+function _tsNullable() { return _isPg() ? 'TIMESTAMPTZ' : 'TEXT'; }
+
+async function ensureSchema() {
+    if (_schemaReady) return;
+    try {
+        await db.run(`CREATE TABLE IF NOT EXISTS email_queue (
+            id ${_idDef()},
+            to_email TEXT NOT NULL,
+            user_id INTEGER,
+            template TEXT NOT NULL,
+            category TEXT NOT NULL,
+            subject TEXT NOT NULL,
+            text_body TEXT,
+            html_body TEXT,
+            status TEXT NOT NULL DEFAULT 'pending',
+            attempts INTEGER NOT NULL DEFAULT 0,
+            last_error TEXT,
+            next_attempt_at ${_tsNullable()},
+            sent_at ${_tsNullable()},
+            created_at ${_tsDef()}
+        )`);
+        await db.run(`CREATE INDEX IF NOT EXISTS idx_email_queue_status ON email_queue(status, next_attempt_at)`);
+        await db.run(`CREATE INDEX IF NOT EXISTS idx_email_queue_user ON email_queue(user_id, created_at)`);
+
+        await db.run(`CREATE TABLE IF NOT EXISTS email_preferences (
+            user_id INTEGER PRIMARY KEY,
+            promotional INTEGER NOT NULL DEFAULT 1,
+            reengagement INTEGER NOT NULL DEFAULT 1,
+            account INTEGER NOT NULL DEFAULT 1,
+            unsubscribed_all INTEGER NOT NULL DEFAULT 0,
+            updated_at ${_tsDef()}
+        )`);
+
+        await db.run(`CREATE TABLE IF NOT EXISTS email_broadcasts (
+            id ${_idDef()},
+            admin_id INTEGER NOT NULL,
+            segment TEXT NOT NULL,
+            subject TEXT NOT NULL,
+            headline TEXT,
+            body_text TEXT NOT NULL,
+            cta_label TEXT,
+            cta_url TEXT,
+            recipients_count INTEGER NOT NULL DEFAULT 0,
+            sent_count INTEGER NOT NULL DEFAULT 0,
+            failed_count INTEGER NOT NULL DEFAULT 0,
+            status TEXT NOT NULL DEFAULT 'sending',
+            created_at ${_tsDef()},
+            completed_at ${_tsNullable()}
+        )`);
+        _schemaReady = true;
+    } catch (err) {
+        console.warn('[Email] schema init failed:', err.message);
+    }
+}
+
+// fire-and-forget bootstrap
+ensureSchema().catch(() => {});
+
+// ─────────────────────────────────────────────────────────────
+// TRANSPORT
+// ─────────────────────────────────────────────────────────────
 
 function getTransporter() {
     if (_transporter) return _transporter;
-    if (!config.SMTP_HOST || !config.SMTP_USER) return null;
-
-    _transporter = nodemailer.createTransport({
-        host: config.SMTP_HOST,
-        port: config.SMTP_PORT,
-        secure: config.SMTP_SECURE,
-        auth: { user: config.SMTP_USER, pass: config.SMTP_PASS },
-    });
-    return _transporter;
+    if (_transporterError) return null;
+    if (!config.SMTP_HOST || !config.SMTP_USER || !config.SMTP_PASS) {
+        _transporterError = 'SMTP not configured';
+        return null;
+    }
+    try {
+        _transporter = nodemailer.createTransport({
+            host: config.SMTP_HOST,
+            port: config.SMTP_PORT || 587,
+            secure: !!config.SMTP_SECURE,
+            auth: { user: config.SMTP_USER, pass: config.SMTP_PASS },
+        });
+        return _transporter;
+    } catch (err) {
+        _transporterError = err.message;
+        console.error('[Email] transporter init failed:', err.message);
+        return null;
+    }
 }
 
-/**
- * Send a password reset email.
- * Returns true on success, false if SMTP is not configured.
- * Throws on SMTP delivery failure.
- */
-async function sendPasswordReset(toEmail, resetUrl, expiryHours) {
-    const transporter = getTransporter();
-    if (!transporter) {
-        console.warn('[Email] SMTP not configured — password reset email not sent');
-        return false;
+function isAvailable() {
+    return !!getTransporter();
+}
+
+// ─────────────────────────────────────────────────────────────
+// PREFERENCES
+// ─────────────────────────────────────────────────────────────
+
+async function getPreferences(userId) {
+    if (!userId) return { promotional: 1, reengagement: 1, account: 1, unsubscribed_all: 0 };
+    await ensureSchema();
+    const row = await db.get('SELECT * FROM email_preferences WHERE user_id = ?', [userId]);
+    if (!row) return { promotional: 1, reengagement: 1, account: 1, unsubscribed_all: 0 };
+    return {
+        promotional: row.promotional ? 1 : 0,
+        reengagement: row.reengagement ? 1 : 0,
+        account: row.account ? 1 : 0,
+        unsubscribed_all: row.unsubscribed_all ? 1 : 0,
+    };
+}
+
+async function setPreferences(userId, prefs) {
+    if (!userId) return;
+    await ensureSchema();
+    const existing = await db.get('SELECT user_id FROM email_preferences WHERE user_id = ?', [userId]);
+    const cols = {
+        promotional: prefs.promotional ? 1 : 0,
+        reengagement: prefs.reengagement ? 1 : 0,
+        account: prefs.account ? 1 : 0,
+        unsubscribed_all: prefs.unsubscribed_all ? 1 : 0,
+    };
+    if (existing) {
+        await db.run(
+            `UPDATE email_preferences SET promotional=?, reengagement=?, account=?, unsubscribed_all=?,
+             updated_at=${_isPg() ? 'NOW()' : "datetime('now')"} WHERE user_id=?`,
+            [cols.promotional, cols.reengagement, cols.account, cols.unsubscribed_all, userId]
+        );
+    } else {
+        await db.run(
+            `INSERT INTO email_preferences (user_id, promotional, reengagement, account, unsubscribed_all)
+             VALUES (?, ?, ?, ?, ?)`,
+            [userId, cols.promotional, cols.reengagement, cols.account, cols.unsubscribed_all]
+        );
     }
+}
 
-    await transporter.sendMail({
-        from: config.SMTP_FROM,
-        to: toEmail,
-        subject: 'Matrix Spins — Password Reset',
-        text: [
-            'You requested a password reset for your Matrix Spins account.',
-            '',
-            `Click the link below to reset your password (expires in ${expiryHours} hour${expiryHours !== 1 ? 's' : ''}):`,
-            '',
-            resetUrl,
-            '',
-            'If you did not request this, please ignore this email.',
-            '',
-            'Matrix Spins',
-        ].join('\n'),
-        html: `<!DOCTYPE html>
-<html>
-<head><meta charset="utf-8"></head>
-<body style="font-family:Arial,sans-serif;background:#0d0d1a;color:#fff;padding:40px;margin:0">
-  <div style="max-width:520px;margin:0 auto;background:linear-gradient(135deg,#1a1a2e,#16213e);border:1px solid rgba(255,215,0,0.3);border-radius:12px;overflow:hidden">
-    <div style="background:linear-gradient(135deg,#ffd700,#ff8c00);padding:20px;text-align:center">
-      <h1 style="margin:0;color:#0d0d1a;font-size:24px">&#127920; Matrix Spins</h1>
-    </div>
-    <div style="padding:32px">
-      <h2 style="color:#ffd700;margin-top:0">Password Reset Request</h2>
-      <p style="color:#ccc;line-height:1.6">We received a request to reset your password. Click the button below to create a new one. This link expires in <strong style="color:#ffd700">${expiryHours} hour${expiryHours !== 1 ? 's' : ''}</strong>.</p>
-      <div style="text-align:center;margin:32px 0">
-        <a href="${resetUrl}" style="background:linear-gradient(135deg,#ffd700,#ff8c00);color:#0d0d1a;text-decoration:none;padding:14px 32px;border-radius:8px;font-weight:bold;font-size:16px;display:inline-block">Reset My Password</a>
-      </div>
-      <p style="color:#888;font-size:13px">If the button doesn&rsquo;t work, copy and paste this link:</p>
-      <p style="color:#aaa;font-size:12px;word-break:break-all">${resetUrl}</p>
-      <hr style="border:none;border-top:1px solid rgba(255,255,255,0.1);margin:24px 0">
-      <p style="color:#666;font-size:12px">If you did not request a password reset, please ignore this email. Your account remains secure.</p>
-    </div>
-  </div>
-</body>
-</html>`,
-    });
-
+async function isAllowed(userId, category) {
+    if (category === CATEGORY.TRANSACTIONAL) return true; // always send
+    if (!userId) return true; // can't enforce w/o user (e.g. password reset by email-only)
+    const prefs = await getPreferences(userId);
+    if (prefs.unsubscribed_all) return false;
+    if (category === CATEGORY.PROMOTIONAL) return !!prefs.promotional;
+    if (category === CATEGORY.REENGAGEMENT) return !!prefs.reengagement;
+    if (category === CATEGORY.ACCOUNT) return !!prefs.account;
     return true;
 }
 
+// ─────────────────────────────────────────────────────────────
+// UNSUBSCRIBE TOKENS
+// ─────────────────────────────────────────────────────────────
+
+function _hmacKey() {
+    return config.JWT_SECRET || 'dev-unsubscribe-key';
+}
+
+function makeUnsubscribeToken(userId) {
+    if (!userId) return null;
+    const payload = String(userId);
+    const sig = crypto.createHmac('sha256', _hmacKey()).update(payload).digest('hex').slice(0, 16);
+    return `${payload}.${sig}`;
+}
+
+function verifyUnsubscribeToken(token) {
+    if (!token || typeof token !== 'string') return null;
+    const parts = token.split('.');
+    if (parts.length !== 2) return null;
+    const [userId, sig] = parts;
+    const expected = crypto.createHmac('sha256', _hmacKey()).update(userId).digest('hex').slice(0, 16);
+    if (!crypto.timingSafeEqual(Buffer.from(sig), Buffer.from(expected))) return null;
+    const id = parseInt(userId, 10);
+    return Number.isFinite(id) && id > 0 ? id : null;
+}
+
+function unsubscribeUrl(userId) {
+    const token = makeUnsubscribeToken(userId);
+    if (!token) return null;
+    return `${BASE_URL}/api/email/unsubscribe?t=${encodeURIComponent(token)}`;
+}
+
+// ─────────────────────────────────────────────────────────────
+// CORE SEND
+// ─────────────────────────────────────────────────────────────
+
 /**
- * Send a reengagement email to inactive users.
- * Includes personalized message and bonus offer to encourage return.
- * @param {string} toEmail - User's email address
- * @param {string} username - Username for personalization
- * @param {number} daysSinceLogin - Days since last login
- * @returns {boolean} true if sent, false if SMTP not configured
+ * Render and enqueue an email. Attempts immediate delivery; on failure or
+ * when SMTP is unconfigured, the row stays in email_queue for the worker
+ * to retry. Returns { queued: true, sent: bool, queueId }.
+ *
+ * @param {object} opts
+ * @param {string} opts.to - recipient email
+ * @param {number|null} opts.userId - for preference checks + unsub link
+ * @param {string} opts.template - template name (key of email-templates.js)
+ * @param {object} opts.data - template data
  */
-async function sendReengagementEmail(toEmail, username, daysSinceLogin) {
-    const transporter = getTransporter();
-    if (!transporter) {
-        console.warn('[Email] SMTP not configured — reengagement email not sent for', username);
-        return false;
+async function send(opts) {
+    if (!opts || !opts.to || !opts.template) {
+        throw new Error('send() requires { to, template }');
+    }
+    await ensureSchema();
+    const tmplFn = templates[opts.template];
+    if (typeof tmplFn !== 'function') {
+        throw new Error(`Unknown email template: ${opts.template}`);
+    }
+    const category = TEMPLATE_CATEGORY[opts.template] || CATEGORY.TRANSACTIONAL;
+
+    if (!(await isAllowed(opts.userId || null, category))) {
+        return { queued: false, sent: false, skipped: 'unsubscribed' };
     }
 
-    const daysStr = daysSinceLogin === 1 ? 'day' : 'days';
-    const newGamesMsg = daysSinceLogin > 7
-        ? 'We\'ve added exciting new games that you won\'t want to miss!'
-        : 'Check out the latest games added to our collection!';
+    const data = Object.assign({}, opts.data || {});
+    if (opts.userId && !data.unsubscribeUrl) {
+        data.unsubscribeUrl = unsubscribeUrl(opts.userId);
+    }
 
-    await transporter.sendMail({
-        from: config.SMTP_FROM,
+    const rendered = tmplFn(data);
+    const result = await db.run(
+        `INSERT INTO email_queue (to_email, user_id, template, category, subject, text_body, html_body, status, attempts, next_attempt_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?, 'pending', 0, ${_isPg() ? 'NOW()' : "datetime('now')"})`,
+        [
+            String(opts.to).toLowerCase().trim(),
+            opts.userId || null,
+            opts.template,
+            category,
+            rendered.subject,
+            rendered.text || '',
+            rendered.html || '',
+        ]
+    );
+    const queueId = result && (result.lastID || result.insertId || result.id);
+
+    // Try synchronous delivery once
+    let sent = false;
+    try {
+        sent = await _deliverRow({
+            id: queueId,
+            to_email: opts.to,
+            subject: rendered.subject,
+            text_body: rendered.text,
+            html_body: rendered.html,
+        });
+    } catch (err) {
+        console.warn('[Email] sync delivery failed for', opts.template, '→', err.message);
+    }
+    return { queued: true, sent, queueId };
+}
+
+async function _deliverRow(row) {
+    const transporter = getTransporter();
+    if (!transporter) {
+        await _markFailure(row.id, 'SMTP not configured');
+        return false;
+    }
+    try {
+        await transporter.sendMail({
+            from: config.SMTP_FROM,
+            to: row.to_email,
+            subject: row.subject,
+            text: row.text_body || undefined,
+            html: row.html_body || undefined,
+        });
+        await db.run(
+            `UPDATE email_queue SET status='sent', sent_at=${_isPg() ? 'NOW()' : "datetime('now')"}, last_error=NULL WHERE id=?`,
+            [row.id]
+        );
+        return true;
+    } catch (err) {
+        await _markFailure(row.id, err.message);
+        return false;
+    }
+}
+
+const BACKOFF_MS = [60_000, 5 * 60_000, 30 * 60_000, 2 * 60 * 60_000, 12 * 60 * 60_000];
+const MAX_ATTEMPTS = BACKOFF_MS.length;
+
+async function _markFailure(id, errMessage) {
+    const row = await db.get('SELECT attempts FROM email_queue WHERE id = ?', [id]);
+    if (!row) return;
+    const attempts = (row.attempts || 0) + 1;
+    if (attempts >= MAX_ATTEMPTS) {
+        await db.run(
+            `UPDATE email_queue SET status='failed', attempts=?, last_error=? WHERE id=?`,
+            [attempts, String(errMessage || '').slice(0, 500), id]
+        );
+        return;
+    }
+    const nextDelay = BACKOFF_MS[attempts] || BACKOFF_MS[BACKOFF_MS.length - 1];
+    const nextAt = new Date(Date.now() + nextDelay);
+    const nextSql = _isPg() ? 'to_timestamp(?/1000.0)' : '?';
+    const nextVal = _isPg() ? nextAt.getTime() : nextAt.toISOString().replace('T', ' ').slice(0, 19);
+    await db.run(
+        `UPDATE email_queue SET status='pending', attempts=?, last_error=?, next_attempt_at=${nextSql} WHERE id=?`,
+        [attempts, String(errMessage || '').slice(0, 500), nextVal, id]
+    );
+}
+
+// ─────────────────────────────────────────────────────────────
+// QUEUE WORKER
+// ─────────────────────────────────────────────────────────────
+
+async function processQueue(limit) {
+    await ensureSchema();
+    if (!isAvailable()) return { processed: 0 };
+    const cap = Math.max(1, Math.min(100, limit || 25));
+
+    const dueClause = _isPg()
+        ? "(next_attempt_at IS NULL OR next_attempt_at <= NOW())"
+        : "(next_attempt_at IS NULL OR next_attempt_at <= datetime('now'))";
+
+    const rows = await db.all(
+        `SELECT id, to_email, subject, text_body, html_body
+         FROM email_queue
+         WHERE status='pending' AND ${dueClause}
+         ORDER BY id ASC
+         LIMIT ${cap}`
+    );
+
+    let sent = 0, failed = 0;
+    for (const r of rows) {
+        const ok = await _deliverRow(r).catch(() => false);
+        if (ok) sent++; else failed++;
+    }
+    return { processed: rows.length, sent, failed };
+}
+
+function startWorker(intervalMs) {
+    if (_workerInterval) return;
+    const interval = intervalMs || 60_000; // 60s default
+    _workerInterval = setInterval(() => {
+        processQueue(25).catch(err => {
+            console.warn('[Email worker]', err.message);
+        });
+    }, interval);
+    if (_workerInterval.unref) _workerInterval.unref();
+    console.log(`[Email] queue worker started (interval=${interval}ms, smtp=${isAvailable()})`);
+}
+
+function stopWorker() {
+    if (_workerInterval) {
+        clearInterval(_workerInterval);
+        _workerInterval = null;
+    }
+}
+
+// ─────────────────────────────────────────────────────────────
+// HIGH-LEVEL HELPERS — backwards-compatible with old API + new triggers
+// ─────────────────────────────────────────────────────────────
+
+async function sendWelcome(toEmail, username, userId, verifyUrl) {
+    return send({ to: toEmail, userId, template: 'welcome', data: { username, verifyUrl } });
+}
+
+async function sendVerificationEmail(toEmail, username, token, userId) {
+    const verificationUrl = `${BASE_URL}/?verify=${encodeURIComponent(token)}`;
+    return send({
         to: toEmail,
-        subject: `${username}, come back to Matrix Spins and claim your bonus! 🎰`,
-        text: `Hi ${username},
-
-We miss you! It's been ${daysSinceLogin} ${daysStr} since your last visit to Matrix Spins.
-
-${newGamesMsg}
-
-Come back and claim 50 free bonus coins — no deposit required!
-
-Play now: https://royal-slots-casino.vercel.app
-
-Matrix Spins`,
-        html: `<!DOCTYPE html>
-<html>
-<head><meta charset="utf-8"></head>
-<body style="font-family:Arial,sans-serif;background:#0d0d1a;color:#fff;padding:40px;margin:0">
-  <div style="max-width:520px;margin:0 auto;background:linear-gradient(135deg,#1a1a2e,#16213e);border:1px solid rgba(255,215,0,0.3);border-radius:12px;overflow:hidden">
-    <div style="background:linear-gradient(135deg,#ffd700,#ff8c00);padding:28px;text-align:center">
-      <h1 style="margin:0;color:#0d0d1a;font-size:26px">&#127920; Matrix Spins</h1>
-      <p style="margin:6px 0 0;color:#0d0d1a;font-size:14px;font-weight:bold;">We miss you!</p>
-    </div>
-    <div style="padding:32px;text-align:center">
-      <h2 style="color:#ffd700;margin-top:0;font-size:22px">Welcome back, ${username}!</h2>
-      <p style="color:#ccc;line-height:1.7;margin:0 0 16px;">It's been <strong style="color:#ffd700">${daysSinceLogin} ${daysStr}</strong> since your last spin. We hope you're doing well!</p>
-
-      <p style="color:#e2e8f0;margin:0 0 24px;line-height:1.7;">${newGamesMsg}</p>
-
-      <div style="background:linear-gradient(135deg,rgba(16,185,129,0.2),rgba(16,185,129,0.1));border:2px solid rgba(16,185,129,0.5);border-radius:12px;padding:24px;margin:0 0 24px;">
-        <div style="font-size:3rem;margin-bottom:8px;">🎁</div>
-        <div style="color:#10b981;font-size:28px;font-weight:900;letter-spacing:-1px;">50 FREE BONUS COINS</div>
-        <div style="color:#fff;font-size:14px;margin:8px 0 0;">Waiting for your return!</div>
-      </div>
-
-      <a href="https://royal-slots-casino.vercel.app" style="display:inline-block;background:linear-gradient(135deg,#ffd700,#ff8c00);color:#0d0d1a;text-decoration:none;padding:16px 40px;border-radius:10px;font-weight:900;font-size:18px;letter-spacing:0.5px;">Claim My Bonus &amp; Play &#8594;</a>
-
-      <hr style="border:none;border-top:1px solid rgba(255,255,255,0.1);margin:28px 0 20px">
-      <p style="color:#475569;font-size:12px;margin:0;">Matrix Spins — Play responsibly. 18+ only. <a href="https://royal-slots-casino.vercel.app/unsubscribe" style="color:#888;text-decoration:none;">Unsubscribe</a></p>
-    </div>
-  </div>
-</body>
-</html>`,
+        userId: userId || null,
+        template: 'emailVerification',
+        data: { username, verificationUrl, expiryHours: 24 },
     });
-    return true;
+}
+
+async function sendPasswordReset(toEmail, resetUrl, expiryHours, userId) {
+    return send({
+        to: toEmail,
+        userId: userId || null,
+        template: 'passwordReset',
+        data: { resetUrl, expiryHours: expiryHours || 1, username: '' },
+    });
+}
+
+async function sendDepositConfirmation(toEmail, userId, data) {
+    return send({ to: toEmail, userId, template: 'depositConfirmation', data });
+}
+
+async function sendWithdrawalRequested(toEmail, userId, data) {
+    return send({ to: toEmail, userId, template: 'withdrawalRequested', data });
+}
+
+async function sendWithdrawalApproved(toEmail, userId, data) {
+    return send({ to: toEmail, userId, template: 'withdrawalApproved', data });
+}
+
+async function sendWithdrawalRejected(toEmail, userId, data) {
+    return send({ to: toEmail, userId, template: 'withdrawalRejected', data });
+}
+
+async function sendSelfExclusionConfirmation(toEmail, userId, data) {
+    return send({ to: toEmail, userId, template: 'selfExclusionConfirmation', data });
+}
+
+async function sendVipTierEmail(toEmail, username, tier, userId) {
+    return send({
+        to: toEmail,
+        userId: userId || null,
+        template: 'vipTierUpgrade',
+        data: {
+            username,
+            tierName: tier && tier.tierName,
+            emoji: tier && tier.emoji,
+            benefits: tier && tier.benefits ? tier.benefits : (tier && tier.benefit ? [tier.benefit] : []),
+        },
+    });
+}
+
+async function sendJackpotWin(toEmail, userId, data) {
+    return send({ to: toEmail, userId, template: 'jackpotWin', data });
+}
+
+async function sendWeeklyActivitySummary(toEmail, userId, data) {
+    return send({ to: toEmail, userId, template: 'weeklyActivitySummary', data });
+}
+
+async function sendWithdrawalOtp(toEmail, username, otpCode, amount, currency, expiryMinutes, userId) {
+    return send({
+        to: toEmail,
+        userId: userId || null,
+        template: 'withdrawalOtp',
+        data: { username, otpCode, amount, expiryMinutes: expiryMinutes || 15 },
+    });
+}
+
+async function sendTransactionReceipt(toEmail, userId, data) {
+    return send({ to: toEmail, userId, template: 'transactionReceipt', data });
+}
+
+// Legacy helpers — kept for back-compat with reengagement/scheduler code.
+async function sendReengagementEmail(toEmail, username, daysSinceLogin, userId) {
+    return send({
+        to: toEmail,
+        userId: userId || null,
+        template: 'broadcast',
+        data: {
+            subject: `${username}, claim your bonus`,
+            headline: 'We miss you',
+            body: `It's been ${daysSinceLogin} day${daysSinceLogin !== 1 ? 's' : ''} since your last visit. Come back and claim 50 free bonus coins — no deposit required.`,
+            ctaLabel: 'Claim my bonus',
+            ctaUrl: BASE_URL,
+        },
+    });
+}
+
+async function sendDepositNudgeEmail(toEmail, username, userId) {
+    return send({
+        to: toEmail,
+        userId: userId || null,
+        template: 'broadcast',
+        data: {
+            subject: `${username}, claim your welcome bonus`,
+            headline: 'Your welcome bonus is waiting',
+            body: `You haven't made your first deposit yet. We'll match your first deposit 100% up to $500 — that's $1,000 to play with for a $500 deposit.\n\nWelcome bonus expires in 7 days.`,
+            ctaLabel: 'Claim my bonus',
+            ctaUrl: BASE_URL,
+        },
+    });
 }
 
 async function sendWeeklyReport(toEmail, stats) {
+    // Admin reporting — sends regardless of preferences (REPORTING category)
     const transporter = getTransporter();
     if (!transporter) {
-        console.warn('[Scheduler] Weekly P&L:', JSON.stringify(stats));
-        return false;
+        console.warn('[Scheduler] Weekly P&L (no SMTP):', JSON.stringify(stats));
+        return { queued: false, sent: false };
     }
     const profit   = Number(stats && stats.gross_profit   || 0).toFixed(2);
     const wagered  = Number(stats && stats.total_wagered  || 0).toFixed(2);
     const players  = stats && stats.active_players || 0;
     const spins    = stats && stats.total_spins    || 0;
     const deposits = Number(stats && stats.deposits_this_week || 0).toFixed(2);
-
-    await transporter.sendMail({
-        from: config.SMTP_FROM,
-        to: toEmail,
-        subject: `Matrix Spins Weekly P&L — ${profit} profit`,
-        text: `Weekly Report
-
-Gross Profit: ${profit}
-Total Wagered: ${wagered}
-Active Players: ${players}
-Total Spins: ${spins}
-Deposits: ${deposits}`,
-        html: `<!DOCTYPE html><html><body style="background:#0d0d1a;font-family:sans-serif;padding:24px;">
-<div style="max-width:480px;margin:0 auto;background:#1a1a2e;border-radius:12px;padding:24px;color:#f1f5f9;">
-<h2 style="color:#ffd700;margin:0 0 16px;">Weekly P&amp;L Report</h2>
-<table style="width:100%;border-collapse:collapse;">
-  <tr><td style="color:#94a3b8;padding:8px 0;">Gross Profit</td><td style="color:#10b981;font-size:20px;font-weight:700;">${profit}</td></tr>
-  <tr><td style="color:#94a3b8;padding:8px 0;">Total Wagered</td><td style="font-weight:700;">${wagered}</td></tr>
-  <tr><td style="color:#94a3b8;padding:8px 0;">Deposits This Week</td><td style="font-weight:700;">${deposits}</td></tr>
-  <tr><td style="color:#94a3b8;padding:8px 0;">Active Players</td><td style="font-weight:700;">${players}</td></tr>
-  <tr><td style="color:#94a3b8;padding:8px 0;">Total Spins</td><td style="font-weight:700;">${spins}</td></tr>
-</table>
-</div></body></html>`,
-    });
-    return true;
+    try {
+        await transporter.sendMail({
+            from: config.SMTP_FROM,
+            to: toEmail,
+            subject: `Matrix Spins Weekly P&L — AUD ${profit} profit`,
+            text: `Weekly Report\n\nGross Profit: AUD ${profit}\nTotal Wagered: AUD ${wagered}\nActive Players: ${players}\nTotal Spins: ${spins}\nDeposits: AUD ${deposits}`,
+            html: templates._shell({
+                title: 'Weekly P&L Report',
+                preheader: `Profit AUD ${profit}`,
+                body: `<table cellpadding="0" cellspacing="0" border="0" width="100%">
+                    <tr><td>Gross Profit</td><td style="text-align:right;color:#00ff41;font-weight:700;">AUD ${profit}</td></tr>
+                    <tr><td>Total Wagered</td><td style="text-align:right;">AUD ${wagered}</td></tr>
+                    <tr><td>Deposits This Week</td><td style="text-align:right;">AUD ${deposits}</td></tr>
+                    <tr><td>Active Players</td><td style="text-align:right;">${players}</td></tr>
+                    <tr><td>Total Spins</td><td style="text-align:right;">${spins}</td></tr>
+                </table>`,
+            }),
+        });
+        return { queued: false, sent: true };
+    } catch (err) {
+        console.warn('[Scheduler] weekly report send failed:', err.message);
+        return { queued: false, sent: false, error: err.message };
+    }
 }
 
-/**
- * Send a deposit nudge email to a user who registered but never deposited.
- * Highlights the 100% welcome bonus to drive first-time deposits.
- */
-async function sendDepositNudgeEmail(toEmail, username) {
-    const transporter = getTransporter();
-    if (!transporter) return false;
-
-    await transporter.sendMail({
-        from: config.SMTP_FROM,
-        to: toEmail,
-        subject: `${username}, claim your welcome bonus at Matrix Spins 🎰`,
-        text: `Hi ${username},
-
-You registered at Matrix Spins but haven't made your first deposit yet.
-
-Don't miss out — we'll match your first deposit 100% up to $500!
-
-That means if you deposit $100, you'll play with $200. Welcome bonus expires in 7 days.
-
-Claim your bonus now: https://matrixspins.com
-
-Matrix Spins`,
-        html: `<!DOCTYPE html>
-<html>
-<head><meta charset="utf-8"></head>
-<body style="font-family:Arial,sans-serif;background:#0d0d1a;color:#fff;padding:40px;margin:0">
-  <div style="max-width:520px;margin:0 auto;background:linear-gradient(135deg,#1a1a2e,#16213e);border:1px solid rgba(255,215,0,0.3);border-radius:12px;overflow:hidden">
-    <div style="background:linear-gradient(135deg,#ffd700,#ff8c00);padding:24px;text-align:center">
-      <h1 style="margin:0;color:#0d0d1a;font-size:26px">&#127920; Matrix Spins</h1>
-      <p style="margin:6px 0 0;color:#0d0d1a;font-size:14px;font-weight:bold;">Your welcome bonus is waiting</p>
-    </div>
-    <div style="padding:32px;text-align:center">
-      <h2 style="color:#ffd700;margin-top:0;font-size:22px">Hi ${username}!</h2>
-      <p style="color:#ccc;line-height:1.7;margin:0 0 20px;">You're just one step away from unlocking the full Matrix Spins experience. Make your first deposit and we'll <strong style="color:#ffd700">double it instantly</strong>.</p>
-
-      <div style="background:linear-gradient(135deg,rgba(255,215,0,0.15),rgba(255,140,0,0.1));border:2px solid rgba(255,215,0,0.5);border-radius:12px;padding:24px;margin:0 0 24px;">
-        <div style="font-size:42px;margin-bottom:8px;">&#127775;</div>
-        <div style="color:#ffd700;font-size:32px;font-weight:900;letter-spacing:-1px;">100% MATCH BONUS</div>
-        <div style="color:#fff;font-size:16px;margin:6px 0 4px;">on your first deposit up to</div>
-        <div style="color:#10b981;font-size:36px;font-weight:900;">$500</div>
-      </div>
-
-      <p style="color:#94a3b8;font-size:14px;margin:0 0 8px;">Deposit $100 &rarr; Play with $200</p>
-      <p style="color:#94a3b8;font-size:14px;margin:0 0 24px;">Deposit $500 &rarr; Play with $1,000</p>
-
-      <a href="https://matrixspins.com" style="display:inline-block;background:linear-gradient(135deg,#ffd700,#ff8c00);color:#0d0d1a;text-decoration:none;padding:16px 40px;border-radius:10px;font-weight:900;font-size:18px;letter-spacing:0.5px;">Claim My Bonus &#8594;</a>
-
-      <div style="margin:24px 0 0;padding:12px;background:rgba(239,68,68,0.15);border:1px solid rgba(239,68,68,0.4);border-radius:8px;">
-        <p style="color:#fca5a5;font-size:13px;margin:0;">&#9201; Welcome bonus expires in <strong>7 days</strong> — don't let it go to waste!</p>
-      </div>
-
-      <hr style="border:none;border-top:1px solid rgba(255,255,255,0.1);margin:28px 0 20px">
-      <p style="color:#475569;font-size:12px;margin:0;">Matrix Spins — Play responsibly. 18+ only. Terms apply.</p>
-    </div>
-  </div>
-</body>
-</html>`,
-    });
-    return true;
-}
+// ─────────────────────────────────────────────────────────────
+// ADMIN BROADCAST
+// ─────────────────────────────────────────────────────────────
 
 /**
- * Send an email verification link.
- * @param {string} toEmail - User's email address
- * @param {string} username - Username for personalization
- * @param {string} token - Verification token
- * @returns {boolean} true if sent, false if SMTP not configured
+ * Enqueue a broadcast to the recipients matching `segment`.
+ * Returns { broadcastId, recipientsCount }.
  */
-async function sendVerificationEmail(toEmail, username, token) {
-    const transporter = getTransporter();
-    if (!transporter) {
-        console.warn('[Email] SMTP not configured — verification email not sent for', username);
-        return false;
+async function createBroadcast({ adminId, segment, subject, headline, body, ctaLabel, ctaUrl }) {
+    await ensureSchema();
+    if (!subject || !body) throw new Error('subject and body are required');
+
+    // Resolve segment → user list
+    const recipients = await _resolveSegment(segment || 'all');
+
+    const result = await db.run(
+        `INSERT INTO email_broadcasts (admin_id, segment, subject, headline, body_text, cta_label, cta_url, recipients_count, sent_count, failed_count, status)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, 0, 0, 'sending')`,
+        [adminId || 0, segment || 'all', subject, headline || subject, body, ctaLabel || null, ctaUrl || null, recipients.length]
+    );
+    const broadcastId = result && (result.lastID || result.insertId || result.id);
+
+    // Enqueue each recipient (respecting opt-outs)
+    let queued = 0, skipped = 0;
+    for (const r of recipients) {
+        const allowed = await isAllowed(r.id, CATEGORY.PROMOTIONAL);
+        if (!allowed) { skipped++; continue; }
+        try {
+            await send({
+                to: r.email,
+                userId: r.id,
+                template: 'broadcast',
+                data: { subject, headline, body, ctaLabel, ctaUrl },
+            });
+            queued++;
+        } catch (err) {
+            console.warn('[Email broadcast]', r.email, '→', err.message);
+        }
     }
 
-    const baseUrl = config.BASE_URL || 'https://royal-slots-casino.vercel.app';
-    const verificationUrl = `${baseUrl}/?verify=${token}`;
+    await db.run(
+        `UPDATE email_broadcasts SET sent_count=?, failed_count=?, status='queued',
+         completed_at=${_isPg() ? 'NOW()' : "datetime('now')"} WHERE id=?`,
+        [queued, skipped, broadcastId]
+    );
 
-    await transporter.sendMail({
-        from: config.SMTP_FROM,
-        to: toEmail,
-        subject: 'Verify your Matrix Spins email address',
-        text: [
-            `Hi ${username},`,
-            '',
-            'Welcome to Matrix Spins! Please verify your email address to get started.',
-            '',
-            'Click the link below to confirm your email:',
-            '',
-            verificationUrl,
-            '',
-            'This link expires in 24 hours.',
-            '',
-            'If you did not create this account, please ignore this email.',
-            '',
-            'Matrix Spins',
-        ].join('\n'),
-        html: `<!DOCTYPE html>
-<html>
-<head><meta charset="utf-8"></head>
-<body style="font-family:Arial,sans-serif;background:#0d0d1a;color:#fff;padding:40px;margin:0">
-  <div style="max-width:520px;margin:0 auto;background:linear-gradient(135deg,#1a1a2e,#16213e);border:1px solid rgba(255,215,0,0.3);border-radius:12px;overflow:hidden">
-    <div style="background:linear-gradient(135deg,#ffd700,#ff8c00);padding:20px;text-align:center">
-      <h1 style="margin:0;color:#0d0d1a;font-size:24px">&#127920; Matrix Spins</h1>
-    </div>
-    <div style="padding:32px">
-      <h2 style="color:#ffd700;margin-top:0">Verify Your Email</h2>
-      <p style="color:#ccc;line-height:1.6">Hi ${username},</p>
-      <p style="color:#ccc;line-height:1.6">Welcome to Matrix Spins! Please verify your email address to complete your registration and start playing.</p>
-      <div style="text-align:center;margin:32px 0">
-        <a href="${verificationUrl}" style="background:linear-gradient(135deg,#ffd700,#ff8c00);color:#0d0d1a;text-decoration:none;padding:14px 32px;border-radius:8px;font-weight:bold;font-size:16px;display:inline-block">Verify My Email</a>
-      </div>
-      <p style="color:#888;font-size:13px">If the button doesn&rsquo;t work, copy and paste this link:</p>
-      <p style="color:#aaa;font-size:12px;word-break:break-all">${verificationUrl}</p>
-      <hr style="border:none;border-top:1px solid rgba(255,255,255,0.1);margin:24px 0">
-      <p style="color:#666;font-size:12px">This link expires in <strong>24 hours</strong>. If you did not create this account, please ignore this email.</p>
-    </div>
-  </div>
-</body>
-</html>`,
-    });
-
-    return true;
+    return { broadcastId, recipientsCount: recipients.length, queued, skipped };
 }
 
 /**
- * Send a VIP tier-up congratulation email.
- * @param {string} toEmail
- * @param {string} username
- * @param {{ tierName: string, emoji: string, benefit: string }} tier
+ * Resolve a segment key to {id, email}[]. Segments:
+ *   all                  → all non-banned, non-self-excluded users with email
+ *   active_7d            → spun in last 7 days
+ *   inactive_30d         → no login in 30 days
+ *   vip:silver|gold|...  → users with given vip_tier
+ *   high_value           → balance + bonus >= 100 OR deposits_total >= 500
+ *   never_deposited      → users with no completed deposits
  */
-async function sendVipTierEmail(toEmail, username, tier) {
-    const transporter = getTransporter();
-    if (!transporter) return false;
+async function _resolveSegment(segment) {
+    const isPg = _isPg();
+    const tsNow = isPg ? 'NOW()' : "datetime('now')";
+    const dateSub = (days) => isPg ? `NOW() - INTERVAL '${days} days'` : `datetime('now', '-${days} days')`;
 
-    const tierColors = {
-        Silver:   { bg: '#c0c0c0', text: '#1a1a2e', glow: 'rgba(192,192,192,0.4)' },
-        Gold:     { bg: '#ffd700', text: '#0d0d1a', glow: 'rgba(255,215,0,0.4)'   },
-        Platinum: { bg: '#e5e4e2', text: '#1a1a2e', glow: 'rgba(229,228,226,0.4)' },
-        Diamond:  { bg: '#b9f2ff', text: '#0d0d1a', glow: 'rgba(185,242,255,0.5)' },
-    };
-    const colors = tierColors[tier.tierName] || tierColors.Gold;
+    const base = `FROM users u WHERE u.email IS NOT NULL AND u.email <> '' AND COALESCE(u.is_banned, 0) = 0`;
 
-    await transporter.sendMail({
-        from: config.SMTP_FROM,
-        to: toEmail,
-        subject: `${tier.emoji} Congratulations ${username} — You've reached ${tier.tierName} VIP!`,
-        text: `Congratulations ${username}!
+    // Self-exclusion check (best-effort — table may not exist on fresh DBs)
+    let exclusionFilter = '';
+    try {
+        const has = await db.get(isPg
+            ? `SELECT 1 FROM information_schema.tables WHERE table_name='self_exclusions' LIMIT 1`
+            : `SELECT 1 FROM sqlite_master WHERE type='table' AND name='self_exclusions' LIMIT 1`);
+        if (has) {
+            exclusionFilter = ` AND u.id NOT IN (
+                SELECT user_id FROM self_exclusions
+                WHERE active = 1 AND (expires_at IS NULL OR expires_at > ${tsNow})
+            )`;
+        }
+    } catch (_) { /* no table → no filter */ }
 
-You've reached ${tier.tierName} VIP status at Matrix Spins!
-
-Your new benefit: ${tier.benefit}
-
-Keep playing to unlock even more rewards.
-
-Play now: https://matrixspins.com
-
-Matrix Spins`,
-        html: `<!DOCTYPE html>
-<html>
-<head><meta charset="utf-8"></head>
-<body style="font-family:Arial,sans-serif;background:#0d0d1a;color:#fff;padding:40px;margin:0">
-  <div style="max-width:520px;margin:0 auto;background:linear-gradient(135deg,#1a1a2e,#16213e);border:1px solid ${colors.glow};border-radius:12px;overflow:hidden;box-shadow:0 0 30px ${colors.glow}">
-    <div style="background:linear-gradient(135deg,${colors.bg},${colors.bg}cc);padding:28px;text-align:center">
-      <div style="font-size:52px;line-height:1;">${tier.emoji}</div>
-      <h1 style="margin:8px 0 4px;color:${colors.text};font-size:22px;">&#127920; Matrix Spins</h1>
-      <p style="margin:0;color:${colors.text};font-size:14px;opacity:0.8;">VIP Status Upgrade</p>
-    </div>
-    <div style="padding:32px;text-align:center">
-      <h2 style="color:#ffd700;margin-top:0;font-size:20px;">Congratulations, ${username}!</h2>
-      <p style="color:#ccc;line-height:1.7;margin:0 0 24px;">Your dedication has paid off. You've officially reached <strong style="color:${colors.bg}">${tier.tierName} VIP</strong> status — one of our most valued players!</p>
-
-      <div style="background:linear-gradient(135deg,rgba(255,215,0,0.1),rgba(255,140,0,0.05));border:2px solid ${colors.glow};border-radius:14px;padding:28px;margin:0 0 24px;">
-        <div style="font-size:60px;margin-bottom:12px;">${tier.emoji}</div>
-        <div style="color:${colors.bg};font-size:28px;font-weight:900;letter-spacing:2px;text-transform:uppercase;">${tier.tierName} VIP</div>
-        <div style="width:60px;height:3px;background:${colors.bg};margin:12px auto;border-radius:2px;"></div>
-        <div style="color:#e2e8f0;font-size:15px;line-height:1.6;">&#10003; <strong>${tier.benefit}</strong></div>
-      </div>
-
-      <p style="color:#94a3b8;font-size:14px;margin:0 0 24px;">Your new perks are active immediately. Keep playing to unlock the next tier and even greater rewards!</p>
-
-      <a href="https://matrixspins.com" style="display:inline-block;background:linear-gradient(135deg,${colors.bg},${colors.bg}cc);color:${colors.text};text-decoration:none;padding:16px 40px;border-radius:10px;font-weight:900;font-size:17px;">Play as ${tier.tierName} VIP &#8594;</a>
-
-      <hr style="border:none;border-top:1px solid rgba(255,255,255,0.1);margin:28px 0 20px">
-      <p style="color:#475569;font-size:12px;margin:0;">Matrix Spins — Play responsibly. 18+ only.</p>
-    </div>
-  </div>
-</body>
-</html>`,
-    });
-    return true;
-}
-
-/**
- * Send a 6-digit OTP for high-value withdrawal confirmation.
- * Returns true on success, false if SMTP is not configured.
- */
-async function sendWithdrawalOtp(toEmail, username, otpCode, amount, currency, expiryMinutes) {
-    const transporter = getTransporter();
-    if (!transporter) {
-        console.warn('[Email] SMTP not configured — withdrawal OTP email not sent');
-        return false;
+    let sql;
+    if (segment === 'active_7d') {
+        sql = `SELECT DISTINCT u.id, u.email FROM users u
+               INNER JOIN spins s ON s.user_id = u.id AND s.created_at >= ${dateSub(7)}
+               WHERE u.email IS NOT NULL AND COALESCE(u.is_banned, 0) = 0${exclusionFilter}`;
+    } else if (segment === 'inactive_30d') {
+        sql = `SELECT u.id, u.email ${base}${exclusionFilter}
+               AND u.id NOT IN (SELECT DISTINCT user_id FROM spins WHERE created_at >= ${dateSub(30)})`;
+    } else if (segment === 'high_value') {
+        sql = `SELECT u.id, u.email ${base}${exclusionFilter}
+               AND (COALESCE(u.balance, 0) + COALESCE(u.bonus_balance, 0)) >= 100`;
+    } else if (segment === 'never_deposited') {
+        sql = `SELECT u.id, u.email ${base}${exclusionFilter}
+               AND u.id NOT IN (SELECT DISTINCT user_id FROM deposits WHERE status = 'completed')`;
+    } else if (segment && segment.startsWith('vip:')) {
+        const tier = segment.slice(4);
+        sql = `SELECT u.id, u.email ${base}${exclusionFilter} AND LOWER(COALESCE(u.vip_tier, '')) = LOWER(?)`;
+        return await db.all(sql, [tier]);
+    } else {
+        // default: all
+        sql = `SELECT u.id, u.email ${base}${exclusionFilter}`;
     }
+    try {
+        return await db.all(sql);
+    } catch (err) {
+        console.warn('[Email] segment query failed for', segment, '→', err.message);
+        // Fall back to a minimal safe query
+        return await db.all(`SELECT id, email FROM users WHERE email IS NOT NULL AND COALESCE(is_banned, 0) = 0`);
+    }
+}
 
-    const amtStr = `${currency || 'AUD'} ${Number(amount).toFixed(2)}`;
-    const expStr = `${expiryMinutes} minute${expiryMinutes !== 1 ? 's' : ''}`;
+async function listBroadcasts(limit) {
+    await ensureSchema();
+    return await db.all(
+        `SELECT id, admin_id, segment, subject, recipients_count, sent_count, failed_count, status, created_at, completed_at
+         FROM email_broadcasts ORDER BY id DESC LIMIT ?`,
+        [Math.max(1, Math.min(200, limit || 50))]
+    );
+}
 
-    await transporter.sendMail({
-        from: config.SMTP_FROM,
-        to: toEmail,
-        subject: `Matrix Spins — Withdrawal verification code: ${otpCode}`,
-        text: [
-            `Hi ${username || 'player'},`,
-            '',
-            `You requested a withdrawal of ${amtStr} from Matrix Spins.`,
-            '',
-            `Your verification code is: ${otpCode}`,
-            `(expires in ${expStr})`,
-            '',
-            'If you did NOT request this withdrawal, do not share this code. Change your password immediately and contact support.',
-            '',
-            'Matrix Spins',
-        ].join('\n'),
-        html: `<!DOCTYPE html>
-<html>
-<head><meta charset="utf-8"></head>
-<body style="font-family:Arial,sans-serif;background:#0d0d1a;color:#fff;padding:40px;margin:0">
-  <div style="max-width:520px;margin:0 auto;background:linear-gradient(135deg,#1a1a2e,#16213e);border:1px solid rgba(255,215,0,0.3);border-radius:12px;overflow:hidden">
-    <div style="background:linear-gradient(135deg,#ffd700,#ff8c00);padding:20px;text-align:center">
-      <h1 style="margin:0;color:#0d0d1a;font-size:24px">Matrix Spins</h1>
-    </div>
-    <div style="padding:32px">
-      <h2 style="color:#ffd700;margin-top:0">Withdrawal verification</h2>
-      <p style="color:#ccc;line-height:1.6">Hi ${username ? String(username).replace(/[<>]/g, '') : 'player'}, you requested a withdrawal of <strong style="color:#ffd700">${amtStr}</strong>. To confirm it, enter this code in the app within <strong>${expStr}</strong>:</p>
-      <div style="margin:32px 0;text-align:center">
-        <div style="display:inline-block;background:#0d0d1a;border:2px solid #ffd700;padding:20px 36px;border-radius:10px;font-family:'SF Mono',Menlo,Consolas,monospace;font-size:34px;letter-spacing:12px;font-weight:bold;color:#ffd700">${otpCode}</div>
-      </div>
-      <p style="color:#999;font-size:13px;line-height:1.6">If you did not request this withdrawal, do NOT share the code. Change your password immediately and contact support.</p>
-    </div>
-    <div style="background:rgba(0,0,0,0.3);padding:16px;text-align:center;color:#666;font-size:12px">Matrix Spins — royal-slots-casino.vercel.app</div>
-  </div>
-</body>
-</html>`,
-    });
-    return true;
+async function getQueueStats() {
+    await ensureSchema();
+    const rows = await db.all(`SELECT status, COUNT(*) as c FROM email_queue GROUP BY status`);
+    const stats = { pending: 0, sent: 0, failed: 0 };
+    for (const r of rows) stats[r.status] = Number(r.c) || 0;
+    return stats;
 }
 
 module.exports = {
-    sendPasswordReset,
+    // primary API
+    send,
+    isAvailable,
+    processQueue,
+    startWorker,
+    stopWorker,
+    getQueueStats,
+
+    // preferences
+    getPreferences,
+    setPreferences,
+    isAllowed,
+    makeUnsubscribeToken,
+    verifyUnsubscribeToken,
+    unsubscribeUrl,
+    CATEGORY,
+
+    // broadcast
+    createBroadcast,
+    listBroadcasts,
+
+    // template-specific (back-compat + clean trigger API)
+    sendWelcome,
     sendVerificationEmail,
-    sendReengagementEmail,
-    sendWeeklyReport,
-    sendDepositNudgeEmail,
+    sendPasswordReset,
+    sendDepositConfirmation,
+    sendWithdrawalRequested,
+    sendWithdrawalApproved,
+    sendWithdrawalRejected,
+    sendSelfExclusionConfirmation,
     sendVipTierEmail,
+    sendJackpotWin,
+    sendWeeklyActivitySummary,
     sendWithdrawalOtp,
+    sendTransactionReceipt,
+
+    // legacy helpers (still used by scheduler / re-engagement)
+    sendReengagementEmail,
+    sendDepositNudgeEmail,
+    sendWeeklyReport,
 };

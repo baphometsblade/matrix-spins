@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Email Preferences — Matrix Spins</title>
+<meta name="robots" content="noindex">
+<link rel="canonical" href="https://msaart.online/email-preferences.html">
+<style>
+*{box-sizing:border-box}
+body{margin:0;background:#0a0e0a;color:#d6f5d6;font-family:'Segoe UI',Roboto,Helvetica,Arial,sans-serif;min-height:100vh;padding:32px 16px;}
+.wrap{max-width:600px;margin:0 auto;}
+.brand{font-family:'Courier New',monospace;font-size:12px;color:#008f23;letter-spacing:3px;text-align:center;margin-bottom:18px;}
+.card{background:linear-gradient(135deg,#0d1f0d,#051005);border:1px solid rgba(0,255,65,0.3);border-radius:14px;padding:32px;box-shadow:0 0 40px rgba(0,255,65,0.08);}
+h1{margin:0 0 8px;color:#00ff41;font-family:'Courier New',monospace;font-size:22px;letter-spacing:1px;text-shadow:0 0 12px rgba(0,255,65,0.3);}
+.lead{color:#6a8a6a;margin:0 0 28px;font-size:14px;}
+.toggle{display:flex;align-items:flex-start;gap:14px;padding:18px;background:rgba(0,0,0,0.3);border:1px solid rgba(0,255,65,0.2);border-radius:10px;margin-bottom:14px;cursor:pointer;transition:border-color .15s,background .15s;}
+.toggle:hover{border-color:rgba(0,255,65,0.5);background:rgba(0,255,65,0.04);}
+.toggle.on{border-color:rgba(0,255,65,0.6);background:rgba(0,255,65,0.06);}
+.toggle .meta{flex:1;}
+.toggle h3{margin:0 0 4px;color:#d6f5d6;font-size:15px;font-weight:600;}
+.toggle p{margin:0;color:#6a8a6a;font-size:13px;line-height:1.5;}
+.switch{flex-shrink:0;width:48px;height:26px;background:#1a2a1a;border:1px solid rgba(0,255,65,0.3);border-radius:13px;position:relative;transition:background .15s;}
+.toggle.on .switch{background:#00ff41;}
+.switch::after{content:'';position:absolute;top:2px;left:2px;width:20px;height:20px;background:#0a0e0a;border-radius:50%;transition:left .15s;}
+.toggle.on .switch::after{left:24px;}
+.toggle.disabled{opacity:0.5;cursor:not-allowed;}
+.actions{display:flex;gap:12px;margin-top:24px;}
+button{background:linear-gradient(135deg,#00ff41,#008f23);color:#0a0e0a;border:none;padding:14px 32px;border-radius:8px;font-weight:700;letter-spacing:1px;text-transform:uppercase;cursor:pointer;font-size:14px;flex:1;transition:transform .1s;}
+button:hover{transform:translateY(-1px);}
+button:active{transform:translateY(0);}
+button:disabled{opacity:.5;cursor:not-allowed;transform:none;}
+button.danger{background:linear-gradient(135deg,#ff3860,#a02030);color:#fff;}
+.note{margin-top:24px;padding:14px;background:rgba(255,215,0,0.06);border-left:3px solid #ffd700;border-radius:6px;color:#bfa040;font-size:13px;line-height:1.55;}
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#00ff41;color:#0a0e0a;padding:12px 24px;border-radius:8px;font-weight:700;box-shadow:0 4px 20px rgba(0,255,65,0.3);opacity:0;transition:opacity .2s;pointer-events:none;}
+.toast.show{opacity:1;}
+.toast.err{background:#ff3860;color:#fff;}
+.foot{text-align:center;margin-top:20px;font-size:12px;color:#6a8a6a;}
+.foot a{color:#008f23;text-decoration:none;}
+.signin-prompt{text-align:center;padding:40px 20px;color:#bfa040;}
+.signin-prompt a{color:#00ff41;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="brand">[ MATRIX_SPINS // EMAIL_PREFERENCES ]</div>
+  <div class="card">
+    <h1>Email Preferences</h1>
+    <p class="lead">Choose which emails you'd like to receive from Matrix Spins.</p>
+
+    <div id="signin" class="signin-prompt" style="display:none;">
+      Please <a href="/login.html">sign in</a> to manage your email preferences.
+    </div>
+
+    <div id="prefs" style="display:none;">
+      <div class="toggle" data-pref="promotional">
+        <div class="meta">
+          <h3>Promotions &amp; offers</h3>
+          <p>Welcome bonuses, deposit matches, free spins, jackpot announcements.</p>
+        </div>
+        <div class="switch"></div>
+      </div>
+      <div class="toggle" data-pref="reengagement">
+        <div class="meta">
+          <h3>Activity &amp; re-engagement</h3>
+          <p>Weekly summaries, comeback offers, "we miss you" reminders.</p>
+        </div>
+        <div class="switch"></div>
+      </div>
+      <div class="toggle" data-pref="account">
+        <div class="meta">
+          <h3>Account &amp; VIP updates</h3>
+          <p>VIP tier upgrades, big-win confirmations, milestone unlocks.</p>
+        </div>
+        <div class="switch"></div>
+      </div>
+      <div class="toggle disabled">
+        <div class="meta">
+          <h3>Transactional &amp; security</h3>
+          <p>Deposits, withdrawals, password resets, OTP codes. Cannot be disabled — required for account safety.</p>
+        </div>
+        <div class="switch on"></div>
+      </div>
+
+      <div class="actions">
+        <button id="saveBtn">Save preferences</button>
+        <button id="unsubBtn" class="danger">Unsubscribe from all</button>
+      </div>
+
+      <div class="note">
+        Even when unsubscribed, you'll continue to receive transactional and security emails (deposit confirmations, withdrawal updates, password resets, login OTPs). These are required by law and account safety policy.
+      </div>
+    </div>
+
+    <p class="foot"><a href="/account.html">Back to my account</a> &middot; <a href="/">Matrix Spins</a></p>
+  </div>
+</div>
+<div id="toast" class="toast"></div>
+
+<script defer src="js/error-handler.js"></script>
+<script>
+(function(){
+  'use strict';
+  var TOKEN = localStorage.getItem('msaart_token') || localStorage.getItem('token') || localStorage.getItem('authToken');
+  if (!TOKEN) {
+    document.getElementById('signin').style.display = 'block';
+    return;
+  }
+  document.getElementById('prefs').style.display = 'block';
+
+  var headers = { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + TOKEN };
+  var current = { promotional: 1, reengagement: 1, account: 1, unsubscribed_all: 0 };
+
+  function showToast(msg, isError) {
+    var t = document.getElementById('toast');
+    t.textContent = msg;
+    t.className = 'toast show' + (isError ? ' err' : '');
+    setTimeout(function(){ t.className = 'toast' + (isError ? ' err' : ''); }, 2400);
+  }
+
+  function applyToggles() {
+    document.querySelectorAll('.toggle[data-pref]').forEach(function(el){
+      var key = el.getAttribute('data-pref');
+      el.classList.toggle('on', !!current[key] && !current.unsubscribed_all);
+    });
+  }
+
+  function loadPrefs() {
+    fetch('/api/email/preferences', { headers: headers, credentials: 'include' })
+      .then(function(r){ return r.json(); })
+      .then(function(data){
+        if (data.success && data.preferences) {
+          current = data.preferences;
+          applyToggles();
+        }
+      })
+      .catch(function(){ showToast('Failed to load preferences', true); });
+  }
+
+  document.querySelectorAll('.toggle[data-pref]').forEach(function(el){
+    el.addEventListener('click', function(){
+      var key = el.getAttribute('data-pref');
+      current[key] = current[key] ? 0 : 1;
+      // Toggling any individual pref re-enables overall delivery
+      if (current[key]) current.unsubscribed_all = 0;
+      applyToggles();
+    });
+  });
+
+  document.getElementById('saveBtn').addEventListener('click', function(){
+    this.disabled = true;
+    var self = this;
+    fetch('/api/email/preferences', {
+      method: 'PUT', headers: headers, credentials: 'include',
+      body: JSON.stringify(current)
+    })
+      .then(function(r){ return r.json(); })
+      .then(function(data){
+        if (data.success) {
+          current = data.preferences;
+          applyToggles();
+          showToast('Preferences saved');
+        } else {
+          showToast(data.error || 'Save failed', true);
+        }
+      })
+      .catch(function(){ showToast('Network error', true); })
+      .finally(function(){ self.disabled = false; });
+  });
+
+  document.getElementById('unsubBtn').addEventListener('click', function(){
+    if (!confirm('Unsubscribe from ALL non-essential emails? You will still receive deposit/withdrawal/security notifications.')) return;
+    this.disabled = true;
+    var self = this;
+    current = { promotional: 0, reengagement: 0, account: 0, unsubscribed_all: 0 };
+    fetch('/api/email/preferences', {
+      method: 'PUT', headers: headers, credentials: 'include',
+      body: JSON.stringify(current)
+    })
+      .then(function(r){ return r.json(); })
+      .then(function(data){
+        if (data.success) {
+          current = data.preferences;
+          applyToggles();
+          showToast('Unsubscribed');
+        } else {
+          showToast(data.error || 'Failed', true);
+        }
+      })
+      .catch(function(){ showToast('Network error', true); })
+      .finally(function(){ self.disabled = false; });
+  });
+
+  loadPrefs();
+})();
+</script>
+</body>
+</html>

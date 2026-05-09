@@ -106,13 +106,16 @@ router.post('/payment/create-checkout', authenticate, async (req, res) => {
 
 // POST /api/payment/webhook — Stripe webhook for completed payments
 router.post('/payment/webhook', express.raw({ type: 'application/json' }), async (req, res) => {
+    const stripeAudit = require('../services/stripe-audit.service');
     if (!config.STRIPE_SECRET_KEY || !config.STRIPE_WEBHOOK_SECRET) {
+        await stripeAudit.logEvent({ eventType: 'unknown', verified: false, errorMessage: 'webhooks not configured' });
         return res.status(503).json({ error: 'Webhooks not configured' });
     }
     const stripe = require('stripe')(config.STRIPE_SECRET_KEY);
     // ROUND 30: Validate signature header presence before calling constructEvent
     const sig = req.headers['stripe-signature'];
     if (!sig) {
+        await stripeAudit.logEvent({ eventType: 'unknown', verified: false, errorMessage: 'missing signature' });
         return res.status(400).json({ error: 'Missing signature' });
     }
     let event;
@@ -120,8 +123,20 @@ router.post('/payment/webhook', express.raw({ type: 'application/json' }), async
         event = stripe.webhooks.constructEvent(req.body, sig, config.STRIPE_WEBHOOK_SECRET);
     } catch (err) {
         console.error('[Stripe] Webhook signature verification failed:', err.message);
+        await stripeAudit.logEvent({ eventType: 'unknown', verified: false, errorMessage: 'sig verify: ' + err.message });
         return res.status(400).json({ error: 'Invalid signature' });
     }
+    // Successful verification — log a baseline entry. Specific handlers below
+    // will append outcome/processed/duplicate to this same event_id.
+    await stripeAudit.logEvent({
+        eventId: event.id,
+        eventType: event.type,
+        verified: true,
+        processed: false,
+        objectId: event.data && event.data.object && event.data.object.id,
+        amount: (event.data && event.data.object &&
+                 (event.data.object.amount_total || event.data.object.amount || event.data.object.amount_refunded || 0) / 100) || null,
+    });
 
     if (event.type === 'checkout.session.completed') {
         const session = event.data.object;
@@ -306,6 +321,23 @@ router.post('/payment/webhook', express.raw({ type: 'application/json' }), async
             aml.analyseDeposit(playerId, amount, session.id).catch(function(e) {
                 console.warn('[AML] analyseDeposit error:', e.message);
             });
+
+            // Deposit confirmation email (fire-and-forget)
+            try {
+                const userRow = await db.get('SELECT username, email, balance FROM users WHERE id = ?', [playerId]);
+                if (userRow && userRow.email) {
+                    const emailService = require('../services/email.service');
+                    emailService.sendDepositConfirmation(userRow.email, playerId, {
+                        username: userRow.username,
+                        amount: amount,
+                        currency: config.CURRENCY || 'AUD',
+                        reference: session.id,
+                        paymentType: 'Card (Stripe)',
+                        balance: Number(userRow.balance) || 0,
+                        bonusAwarded: typeof depositBonus === 'number' && depositBonus > 0 ? depositBonus : null,
+                    }).catch(e => console.warn('[Stripe] deposit email failed:', e.message));
+                }
+            } catch (e) { /* non-fatal */ }
         } catch (dbErr) {
             console.error('[Stripe] NFT mint/credit error:', dbErr.message);
             // CRITICAL: Must return 5xx so Stripe retries. If we return 2xx here,

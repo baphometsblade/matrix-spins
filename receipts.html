@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Transaction Receipts — Matrix Spins</title>
+<style>
+  *{box-sizing:border-box;}
+  body{margin:0;background:#0a0e0a;color:#d6f5d6;font-family:'Segoe UI',Roboto,Helvetica,Arial,sans-serif;min-height:100vh;}
+  header{display:flex;justify-content:space-between;align-items:center;padding:18px 26px;border-bottom:1px solid rgba(0,255,65,0.25);background:linear-gradient(180deg,#0d1f0d,#0a0e0a);}
+  header h1{margin:0;font-size:20px;color:#00ff41;letter-spacing:3px;font-family:'Courier New',monospace;}
+  header a{color:#9ec79e;text-decoration:none;font-size:13px;letter-spacing:1px;}
+  header a:hover{color:#00ff41;}
+  main{max-width:980px;margin:0 auto;padding:32px 18px 60px;}
+  .tabs{display:flex;gap:8px;margin-bottom:20px;border-bottom:1px solid rgba(0,255,65,0.2);}
+  .tab{padding:11px 22px;background:transparent;border:none;color:#9ec79e;font-family:'Courier New',monospace;letter-spacing:2px;font-size:13px;cursor:pointer;border-bottom:2px solid transparent;text-transform:uppercase;}
+  .tab:hover{color:#00ff41;}
+  .tab.active{color:#00ff41;border-bottom-color:#00ff41;}
+  .filters{display:flex;flex-wrap:wrap;gap:12px;align-items:flex-end;margin-bottom:18px;background:linear-gradient(135deg,#0d1f0d,#051005);border:1px solid rgba(0,255,65,0.3);border-radius:10px;padding:16px;}
+  .filters label{display:flex;flex-direction:column;font-size:11px;color:#7fbf7f;letter-spacing:2px;text-transform:uppercase;gap:4px;}
+  .filters input{background:#000;border:1px solid rgba(0,255,65,0.3);color:#d6f5d6;padding:8px 10px;border-radius:6px;font-family:inherit;font-size:13px;}
+  .filters input:focus{outline:none;border-color:#00ff41;}
+  .btn{background:#00ff41;color:#0a0e0a;border:none;padding:9px 18px;font-family:inherit;font-weight:700;letter-spacing:2px;border-radius:6px;cursor:pointer;text-transform:uppercase;font-size:12px;}
+  .btn:hover{filter:brightness(1.15);}
+  .btn.secondary{background:transparent;color:#00ff41;border:1px solid rgba(0,255,65,0.5);}
+  table{width:100%;border-collapse:collapse;background:linear-gradient(135deg,#0d1f0d,#051005);border:1px solid rgba(0,255,65,0.3);border-radius:10px;overflow:hidden;}
+  th, td{padding:12px 14px;text-align:left;font-size:13px;border-bottom:1px solid rgba(0,255,65,0.12);}
+  th{background:rgba(0,255,65,0.06);color:#7fbf7f;font-family:'Courier New',monospace;letter-spacing:2px;text-transform:uppercase;font-size:11px;font-weight:600;}
+  tr:last-child td{border-bottom:none;}
+  tr.row{cursor:pointer;transition:background .12s;}
+  tr.row:hover{background:rgba(0,255,65,0.05);}
+  td.amt{font-family:'Courier New',monospace;color:#00ff41;font-weight:600;}
+  .pill{display:inline-block;padding:3px 10px;border-radius:10px;font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;}
+  .pill.completed,.pill.approved{color:#00ff41;border:1px solid #00ff41;}
+  .pill.pending{color:#ffd166;border:1px solid #ffd166;}
+  .pill.rejected,.pill.failed{color:#ff3860;border:1px solid #ff3860;}
+  .pill.unknown{color:#9ec79e;border:1px solid rgba(0,255,65,0.3);}
+  .empty{text-align:center;padding:40px 20px;color:#7fbf7f;font-style:italic;}
+  .err{color:#ff3860;font-size:13px;padding:12px;text-align:center;}
+  .toolbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;flex-wrap:wrap;gap:12px;}
+  .count{color:#7fbf7f;font-size:12px;letter-spacing:1px;}
+  td.ref{font-family:'Courier New',monospace;font-size:12px;color:#9ec79e;word-break:break-all;}
+</style>
+</head>
+<body>
+<header>
+  <h1>MATRIX // RECEIPTS</h1>
+  <a href="/account.html">&larr; Back to Account</a>
+</header>
+
+<main>
+  <div class="tabs" id="tabs">
+    <button class="tab active" data-type="deposit">Deposits</button>
+    <button class="tab" data-type="withdrawal">Withdrawals</button>
+  </div>
+
+  <div class="filters">
+    <label>From
+      <input type="date" id="dateFrom">
+    </label>
+    <label>To
+      <input type="date" id="dateTo">
+    </label>
+    <button class="btn" id="applyBtn">Apply</button>
+    <button class="btn secondary" id="clearBtn">Clear</button>
+  </div>
+
+  <div class="toolbar">
+    <span class="count" id="count">—</span>
+    <button class="btn secondary" id="refreshBtn">Refresh</button>
+  </div>
+
+  <div id="tableWrap">
+    <div class="empty">Loading…</div>
+  </div>
+</main>
+
+<script>
+(function(){
+  'use strict';
+
+  function getToken(){
+    return localStorage.getItem('msaart_token') || localStorage.getItem('token') || localStorage.getItem('authToken') || '';
+  }
+  function authHeaders(){
+    var t = getToken();
+    var h = { 'Content-Type': 'application/json' };
+    if (t) h['Authorization'] = 'Bearer ' + t;
+    return h;
+  }
+
+  var state = { type: 'deposit', rows: [], from: null, to: null };
+
+  function fmtAud(n){
+    var num = Number(n);
+    if (!isFinite(num)) return 'AUD 0.00';
+    return 'AUD ' + num.toLocaleString('en-AU', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  }
+
+  function fmtDate(s){
+    if (!s) return '—';
+    try {
+      var d = new Date(s);
+      if (isNaN(d.getTime())) return String(s);
+      return d.toLocaleString('en-AU', { year:'numeric', month:'short', day:'2-digit', hour:'2-digit', minute:'2-digit' });
+    } catch(_){ return String(s); }
+  }
+
+  function statusClass(s){
+    var v = String(s || 'unknown').toLowerCase();
+    if (v === 'completed' || v === 'approved') return 'completed';
+    if (v === 'pending') return 'pending';
+    if (v === 'rejected' || v === 'failed') return 'rejected';
+    return 'unknown';
+  }
+
+  function inDateRange(row){
+    if (!row.created_at) return true;
+    var t = new Date(row.created_at).getTime();
+    if (state.from){
+      var fromT = new Date(state.from + 'T00:00:00').getTime();
+      if (t < fromT) return false;
+    }
+    if (state.to){
+      var toT = new Date(state.to + 'T23:59:59').getTime();
+      if (t > toT) return false;
+    }
+    return true;
+  }
+
+  function render(){
+    var wrap = document.getElementById('tableWrap');
+    wrap.textContent = '';
+
+    var filtered = state.rows.filter(inDateRange);
+    document.getElementById('count').textContent = filtered.length + ' transaction' + (filtered.length === 1 ? '' : 's');
+
+    if (!filtered.length){
+      var em = document.createElement('div');
+      em.className = 'empty';
+      em.textContent = 'No ' + state.type + 's found for this period.';
+      wrap.appendChild(em);
+      return;
+    }
+
+    var table = document.createElement('table');
+    var thead = document.createElement('thead');
+    var trh = document.createElement('tr');
+    ['Date', 'Reference', 'Method', 'Amount', 'Status', ''].forEach(function(h){
+      var th = document.createElement('th');
+      th.textContent = h;
+      trh.appendChild(th);
+    });
+    thead.appendChild(trh);
+    table.appendChild(thead);
+
+    var tbody = document.createElement('tbody');
+    filtered.forEach(function(r){
+      var tr = document.createElement('tr');
+      tr.className = 'row';
+      tr.title = 'Click to view receipt';
+
+      var tdDate = document.createElement('td'); tdDate.textContent = fmtDate(r.created_at);
+      var tdRef = document.createElement('td'); tdRef.className = 'ref'; tdRef.textContent = r.reference || '—';
+      var tdMethod = document.createElement('td'); tdMethod.textContent = r.payment_type || '—';
+      var tdAmt = document.createElement('td'); tdAmt.className = 'amt'; tdAmt.textContent = fmtAud(r.amount);
+
+      var tdStatus = document.createElement('td');
+      var pill = document.createElement('span');
+      pill.className = 'pill ' + statusClass(r.status);
+      pill.textContent = String(r.status || 'unknown');
+      tdStatus.appendChild(pill);
+
+      var tdAct = document.createElement('td');
+      var view = document.createElement('button');
+      view.className = 'btn secondary';
+      view.style.padding = '5px 12px';
+      view.style.fontSize = '11px';
+      view.textContent = 'View';
+      view.addEventListener('click', function(ev){
+        ev.stopPropagation();
+        openReceipt(state.type, r.reference);
+      });
+      tdAct.appendChild(view);
+
+      tr.addEventListener('click', function(){
+        openReceipt(state.type, r.reference);
+      });
+
+      tr.appendChild(tdDate);
+      tr.appendChild(tdRef);
+      tr.appendChild(tdMethod);
+      tr.appendChild(tdAmt);
+      tr.appendChild(tdStatus);
+      tr.appendChild(tdAct);
+      tbody.appendChild(tr);
+    });
+    table.appendChild(tbody);
+    wrap.appendChild(table);
+  }
+
+  function openReceipt(type, reference){
+    if (!reference) return;
+    // Ask the server for the printable receipt and open it in a new tab.
+    // We use a blob URL because the download endpoint returns the full HTML
+    // body and we need to attach the auth header.
+    var url = '/api/receipts/' + encodeURIComponent(type) + '/' + encodeURIComponent(reference) + '/download';
+    fetch(url, { headers: authHeaders() })
+      .then(function(r){
+        if (!r.ok) throw new Error('HTTP ' + r.status);
+        return r.text();
+      }).then(function(html){
+        var blob = new Blob([html], { type: 'text/html' });
+        var blobUrl = URL.createObjectURL(blob);
+        var win = window.open(blobUrl, '_blank');
+        // Revoke after a delay so the new window has time to load
+        setTimeout(function(){ URL.revokeObjectURL(blobUrl); }, 60 * 1000);
+        if (!win){
+          // Pop-up blocked — fall back to a hidden anchor
+          var a = document.createElement('a');
+          a.href = blobUrl;
+          a.target = '_blank';
+          a.rel = 'noopener';
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+        }
+      }).catch(function(){
+        alert('Failed to open receipt.');
+      });
+  }
+
+  function load(){
+    var wrap = document.getElementById('tableWrap');
+    wrap.textContent = '';
+    var em = document.createElement('div');
+    em.className = 'empty';
+    em.textContent = 'Loading…';
+    wrap.appendChild(em);
+
+    fetch('/api/receipts/list?type=' + encodeURIComponent(state.type) + '&limit=200', { headers: authHeaders() })
+      .then(function(r){ return r.json().then(function(d){ return { ok: r.ok, data: d }; }); })
+      .then(function(res){
+        if (!res.ok){
+          wrap.textContent = '';
+          var er = document.createElement('div');
+          er.className = 'err';
+          er.textContent = (res.data && res.data.error) || 'Failed to load transactions.';
+          wrap.appendChild(er);
+          return;
+        }
+        state.rows = (res.data && res.data.transactions) || [];
+        render();
+      }).catch(function(){
+        wrap.textContent = '';
+        var er = document.createElement('div');
+        er.className = 'err';
+        er.textContent = 'Network error.';
+        wrap.appendChild(er);
+      });
+  }
+
+  // ── Tabs ────────────────────────────────────────────
+  document.getElementById('tabs').addEventListener('click', function(e){
+    var t = e.target;
+    if (!t || !t.classList.contains('tab')) return;
+    var type = t.getAttribute('data-type');
+    if (!type || type === state.type) return;
+    state.type = type;
+    Array.prototype.forEach.call(this.querySelectorAll('.tab'), function(tab){
+      tab.classList.toggle('active', tab.getAttribute('data-type') === type);
+    });
+    load();
+  });
+
+  // ── Filters ─────────────────────────────────────────
+  document.getElementById('applyBtn').addEventListener('click', function(){
+    state.from = document.getElementById('dateFrom').value || null;
+    state.to = document.getElementById('dateTo').value || null;
+    render();
+  });
+  document.getElementById('clearBtn').addEventListener('click', function(){
+    document.getElementById('dateFrom').value = '';
+    document.getElementById('dateTo').value = '';
+    state.from = null;
+    state.to = null;
+    render();
+  });
+  document.getElementById('refreshBtn').addEventListener('click', load);
+
+  // ── If arrived via /receipt.html?ref=…&type=… style URL, redirect ──
+  // Some links may target this page with ?ref=&type= — auto-open if present.
+  (function(){
+    var qs = new URLSearchParams(window.location.search);
+    var ref = qs.get('ref');
+    var type = qs.get('type');
+    if (ref && type && (type === 'deposit' || type === 'withdrawal')){
+      openReceipt(type, ref);
+    }
+  })();
+
+  // ── Boot ───────────────────────────────────────────
+  load();
+})();
+</script>
+</body>
+</html>

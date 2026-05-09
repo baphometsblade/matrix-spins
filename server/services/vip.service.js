@@ -162,6 +162,26 @@ async function _logTierUp(userId, oldTier, newTier) {
             await ach.grant(userId, achId);
         }
     } catch (_) {}
+    // VIP tier-up email (fire-and-forget)
+    try {
+        var u = await db.get('SELECT username, email FROM users WHERE id = ?', [userId]);
+        if (u && u.email) {
+            var emailService = require('./email.service');
+            var TIER_BENEFITS = {
+                Bronze:   ['1% cashback on monthly losses'],
+                Silver:   ['3% cashback', 'Priority support', '+5% on free spin wins'],
+                Gold:     ['5% cashback', 'Birthday bonus', 'Exclusive Gold tournaments'],
+                Platinum: ['8% cashback', 'Personal account manager', 'Custom withdrawal limits'],
+                Diamond:  ['12% cashback', 'Hosted events', 'Priority withdrawals (same-day)'],
+            };
+            var EMOJI = { Bronze:'🥉', Silver:'🥈', Gold:'🥇', Platinum:'💎', Diamond:'💠' };
+            emailService.sendVipTierEmail(u.email, u.username, {
+                tierName: newTier,
+                emoji: EMOJI[newTier] || '★',
+                benefits: TIER_BENEFITS[newTier] || [],
+            }, userId).catch(function(e) { console.warn('[VIP] tier email failed:', e.message); });
+        }
+    } catch (_) {}
 }
 
 /**

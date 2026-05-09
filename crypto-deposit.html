@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Crypto Deposit — Matrix Spins</title>
+<style>
+  *{box-sizing:border-box;}
+  body{margin:0;background:#0a0e0a;color:#d6f5d6;font-family:'Segoe UI',Roboto,Helvetica,Arial,sans-serif;min-height:100vh;}
+  header{display:flex;justify-content:space-between;align-items:center;padding:18px 26px;border-bottom:1px solid rgba(0,255,65,0.25);background:linear-gradient(180deg,#0d1f0d,#0a0e0a);}
+  header h1{margin:0;font-size:20px;color:#00ff41;letter-spacing:3px;font-family:'Courier New',monospace;}
+  header a{color:#9ec79e;text-decoration:none;font-size:13px;letter-spacing:1px;}
+  header a:hover{color:#00ff41;}
+  main{max-width:880px;margin:0 auto;padding:32px 18px 60px;}
+  h2{color:#00ff41;font-family:'Courier New',monospace;letter-spacing:2px;font-size:18px;margin:0 0 14px;}
+  .card{background:linear-gradient(135deg,#0d1f0d,#051005);border:1px solid rgba(0,255,65,0.3);border-radius:12px;padding:22px;margin-bottom:22px;box-shadow:0 0 24px rgba(0,255,65,0.06);}
+  .pill-row{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:18px;}
+  .pill{padding:8px 14px;border-radius:24px;border:1px solid rgba(0,255,65,0.4);background:transparent;color:#9ec79e;cursor:pointer;font-family:inherit;font-size:13px;letter-spacing:1px;transition:all .15s;}
+  .pill:hover{color:#00ff41;border-color:#00ff41;}
+  .pill.active{background:#00ff41;color:#0a0e0a;border-color:#00ff41;font-weight:700;}
+  .rate-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;margin-bottom:8px;}
+  .rate-cell{padding:14px;border:1px dashed rgba(0,255,65,0.25);border-radius:8px;text-align:center;}
+  .rate-cell .ccy{font-size:11px;color:#7fbf7f;letter-spacing:2px;margin-bottom:6px;}
+  .rate-cell .price{font-size:18px;color:#00ff41;font-family:'Courier New',monospace;}
+  .rate-meta{font-size:11px;color:#7fbf7f;text-align:right;}
+  .addr-box{background:#000;border:1px solid rgba(0,255,65,0.4);border-radius:8px;padding:18px;margin:14px 0;}
+  .addr-mono{font-family:'Courier New',monospace;font-size:14px;color:#00ff41;word-break:break-all;letter-spacing:1px;line-height:1.5;}
+  .addr-meta{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;font-size:12px;color:#7fbf7f;letter-spacing:1px;text-transform:uppercase;}
+  .qr-box{background:#000;border:2px solid #00ff41;border-radius:8px;padding:24px;text-align:center;margin:16px 0;font-family:'Courier New',monospace;color:#00ff41;font-size:11px;line-height:1.4;letter-spacing:1px;word-break:break-all;}
+  .qr-label{display:block;font-size:10px;color:#7fbf7f;margin-bottom:10px;letter-spacing:2px;}
+  .btn{background:#00ff41;color:#0a0e0a;border:none;padding:11px 22px;font-family:inherit;font-weight:700;letter-spacing:2px;border-radius:6px;cursor:pointer;text-transform:uppercase;font-size:12px;transition:filter .12s;}
+  .btn:hover{filter:brightness(1.15);}
+  .btn.secondary{background:transparent;color:#00ff41;border:1px solid rgba(0,255,65,0.5);}
+  .btn:disabled{opacity:0.5;cursor:not-allowed;}
+  .form-row{margin-bottom:14px;}
+  .form-row label{display:block;font-size:12px;color:#7fbf7f;text-transform:uppercase;letter-spacing:2px;margin-bottom:6px;}
+  .form-row input{width:100%;background:#000;border:1px solid rgba(0,255,65,0.3);color:#d6f5d6;padding:11px 12px;border-radius:6px;font-family:inherit;font-size:14px;}
+  .form-row input:focus{outline:none;border-color:#00ff41;box-shadow:0 0 0 2px rgba(0,255,65,0.15);}
+  .pending-list{list-style:none;padding:0;margin:0;}
+  .pending-list li{padding:12px 0;border-bottom:1px dashed rgba(0,255,65,0.2);display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px;font-size:13px;}
+  .pending-list li:last-child{border-bottom:none;}
+  .pending-list .amt{color:#00ff41;font-family:'Courier New',monospace;}
+  .empty{color:#7fbf7f;text-align:center;padding:24px 0;font-style:italic;font-size:13px;}
+  .toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#0d1f0d;border:1px solid #00ff41;color:#00ff41;padding:12px 22px;border-radius:8px;font-size:13px;letter-spacing:1px;box-shadow:0 0 30px rgba(0,255,65,0.3);opacity:0;transition:opacity .25s;pointer-events:none;z-index:1000;}
+  .toast.show{opacity:1;}
+  .err{color:#ff3860;font-size:13px;margin-top:8px;}
+  .conv{color:#7fbf7f;font-size:12px;margin-top:6px;letter-spacing:1px;min-height:18px;}
+  .net{color:#9ec79e;font-size:12px;letter-spacing:1px;}
+</style>
+</head>
+<body>
+<header>
+  <h1>MATRIX // CRYPTO DEPOSIT</h1>
+  <a href="/account.html">&larr; Back to Account</a>
+</header>
+
+<main>
+  <div class="card">
+    <h2>Live AUD Rates</h2>
+    <div class="rate-grid" id="rateGrid">
+      <div class="rate-cell"><div class="ccy">BTC</div><div class="price">—</div></div>
+      <div class="rate-cell"><div class="ccy">ETH</div><div class="price">—</div></div>
+      <div class="rate-cell"><div class="ccy">USDT</div><div class="price">—</div></div>
+    </div>
+    <div class="rate-meta" id="rateMeta">Loading…</div>
+  </div>
+
+  <div class="card">
+    <h2>1. Choose Currency</h2>
+    <div class="pill-row" id="ccyRow">
+      <button class="pill active" data-ccy="BTC">BTC</button>
+      <button class="pill" data-ccy="ETH">ETH</button>
+      <button class="pill" data-ccy="USDT_TRC20">USDT (TRC-20)</button>
+      <button class="pill" data-ccy="USDT_ERC20">USDT (ERC-20)</button>
+    </div>
+    <div class="net" id="netLabel">Network: Bitcoin</div>
+  </div>
+
+  <div class="card">
+    <h2>2. Send To Address</h2>
+    <div id="addrSection">
+      <div class="empty">Loading address…</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>3. Confirm Your Transfer</h2>
+    <p style="color:#9ec79e;font-size:13px;margin-top:0;">After sending, enter the amount and (optionally) the transaction hash so we can match the incoming transfer.</p>
+    <form id="confirmForm">
+      <div class="form-row">
+        <label for="amountCrypto">Amount Sent (in selected currency)</label>
+        <input type="number" id="amountCrypto" step="0.00000001" min="0" placeholder="0.00" required>
+        <div class="conv" id="conv"></div>
+      </div>
+      <div class="form-row">
+        <label for="txHash">Transaction Hash (optional)</label>
+        <input type="text" id="txHash" placeholder="0x… or BTC tx id" maxlength="128">
+      </div>
+      <button class="btn" type="submit" id="submitBtn">Submit Deposit</button>
+      <div class="err" id="formErr"></div>
+    </form>
+  </div>
+
+  <div class="card">
+    <h2>Pending Crypto Deposits</h2>
+    <ul class="pending-list" id="pendingList">
+      <li class="empty">No pending crypto deposits.</li>
+    </ul>
+  </div>
+</main>
+
+<div class="toast" id="toast"></div>
+
+<script>
+(function(){
+  'use strict';
+
+  function getToken(){
+    return localStorage.getItem('msaart_token') || localStorage.getItem('token') || localStorage.getItem('authToken') || '';
+  }
+
+  function authHeaders(){
+    var t = getToken();
+    var h = { 'Content-Type': 'application/json' };
+    if (t) h['Authorization'] = 'Bearer ' + t;
+    return h;
+  }
+
+  function showToast(msg){
+    var el = document.getElementById('toast');
+    el.textContent = msg;
+    el.classList.add('show');
+    setTimeout(function(){ el.classList.remove('show'); }, 2500);
+  }
+
+  var state = {
+    currency: 'BTC',
+    rates: null,
+    address: null,
+    network: '',
+  };
+
+  var NETWORK_LABELS = {
+    BTC: 'Bitcoin',
+    ETH: 'Ethereum (ERC-20)',
+    USDT_TRC20: 'Tron (TRC-20)',
+    USDT_ERC20: 'Ethereum (ERC-20)',
+  };
+
+  function baseCcy(c){
+    if (c === 'USDT_TRC20' || c === 'USDT_ERC20') return 'USDT';
+    return c;
+  }
+
+  function fmtAud(n){
+    var num = Number(n);
+    if (!isFinite(num)) return 'AUD 0.00';
+    return 'AUD ' + num.toLocaleString('en-AU', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  }
+
+  // ── Rates ───────────────────────────────────────────────
+  function renderRates(){
+    var grid = document.getElementById('rateGrid');
+    grid.textContent = '';
+    var order = ['BTC','ETH','USDT'];
+    order.forEach(function(c){
+      var cell = document.createElement('div');
+      cell.className = 'rate-cell';
+      var ccy = document.createElement('div');
+      ccy.className = 'ccy';
+      ccy.textContent = c;
+      var price = document.createElement('div');
+      price.className = 'price';
+      var v = state.rates && state.rates[c];
+      price.textContent = v ? fmtAud(v) : '—';
+      cell.appendChild(ccy);
+      cell.appendChild(price);
+      grid.appendChild(cell);
+    });
+  }
+
+  function loadRates(){
+    fetch('/api/crypto-deposit/rates').then(function(r){ return r.json(); }).then(function(data){
+      if (data && data.rates){
+        state.rates = data.rates;
+        renderRates();
+        var meta = document.getElementById('rateMeta');
+        meta.textContent = 'Source: ' + (data.source || '—') + ' · updated ' + new Date(data.fetchedAt).toLocaleTimeString();
+        updateConversion();
+      }
+    }).catch(function(){
+      var meta = document.getElementById('rateMeta');
+      meta.textContent = 'Rate fetch failed.';
+    });
+  }
+
+  // ── Address ─────────────────────────────────────────────
+  function renderAddress(){
+    var section = document.getElementById('addrSection');
+    section.textContent = '';
+    if (!state.address){
+      var em = document.createElement('div');
+      em.className = 'empty';
+      em.textContent = 'No address loaded.';
+      section.appendChild(em);
+      return;
+    }
+
+    var meta = document.createElement('div');
+    meta.className = 'addr-meta';
+    var label = document.createElement('span');
+    label.textContent = state.currency + ' DEPOSIT ADDRESS';
+    var copyBtn = document.createElement('button');
+    copyBtn.className = 'btn secondary';
+    copyBtn.style.padding = '5px 12px';
+    copyBtn.style.fontSize = '11px';
+    copyBtn.textContent = 'Copy';
+    copyBtn.addEventListener('click', function(){
+      try {
+        navigator.clipboard.writeText(state.address);
+        showToast('Address copied');
+      } catch(e){
+        showToast('Copy failed — select manually');
+      }
+    });
+    meta.appendChild(label);
+    meta.appendChild(copyBtn);
+
+    var box = document.createElement('div');
+    box.className = 'addr-box';
+    var mono = document.createElement('div');
+    mono.className = 'addr-mono';
+    mono.textContent = state.address;
+    box.appendChild(mono);
+
+    var qr = document.createElement('div');
+    qr.className = 'qr-box';
+    var qrLabel = document.createElement('span');
+    qrLabel.className = 'qr-label';
+    qrLabel.textContent = '[ scan-to-pay ]';
+    qr.appendChild(qrLabel);
+    var qrText = document.createElement('span');
+    qrText.textContent = state.address;
+    qr.appendChild(qrText);
+
+    section.appendChild(meta);
+    section.appendChild(box);
+    section.appendChild(qr);
+  }
+
+  function loadAddress(){
+    var section = document.getElementById('addrSection');
+    section.textContent = '';
+    var em = document.createElement('div');
+    em.className = 'empty';
+    em.textContent = 'Loading ' + state.currency + ' address…';
+    section.appendChild(em);
+
+    fetch('/api/crypto-deposit/address?currency=' + encodeURIComponent(state.currency), {
+      headers: authHeaders()
+    }).then(function(r){ return r.json().then(function(d){ return { ok: r.ok, data: d }; }); })
+      .then(function(res){
+        if (!res.ok){
+          section.textContent = '';
+          var er = document.createElement('div');
+          er.className = 'err';
+          er.textContent = (res.data && res.data.error) || 'Failed to load address.';
+          section.appendChild(er);
+          return;
+        }
+        state.address = res.data.address;
+        state.network = res.data.network || NETWORK_LABELS[state.currency] || '';
+        document.getElementById('netLabel').textContent = 'Network: ' + state.network;
+        renderAddress();
+      }).catch(function(){
+        section.textContent = '';
+        var er = document.createElement('div');
+        er.className = 'err';
+        er.textContent = 'Network error loading address.';
+        section.appendChild(er);
+      });
+  }
+
+  // ── Currency selector ──────────────────────────────────
+  document.getElementById('ccyRow').addEventListener('click', function(e){
+    var t = e.target;
+    if (!t || !t.classList.contains('pill')) return;
+    var ccy = t.getAttribute('data-ccy');
+    if (!ccy || ccy === state.currency) return;
+    state.currency = ccy;
+    Array.prototype.forEach.call(this.querySelectorAll('.pill'), function(p){
+      p.classList.toggle('active', p.getAttribute('data-ccy') === ccy);
+    });
+    document.getElementById('netLabel').textContent = 'Network: ' + (NETWORK_LABELS[ccy] || '');
+    state.address = null;
+    loadAddress();
+    updateConversion();
+  });
+
+  // ── Conversion preview ─────────────────────────────────
+  function updateConversion(){
+    var amt = parseFloat(document.getElementById('amountCrypto').value);
+    var convEl = document.getElementById('conv');
+    if (!isFinite(amt) || amt <= 0 || !state.rates){
+      convEl.textContent = '';
+      return;
+    }
+    var rate = state.rates[baseCcy(state.currency)];
+    if (!rate){ convEl.textContent = ''; return; }
+    var aud = Math.round(amt * rate * 100) / 100;
+    convEl.textContent = '≈ ' + fmtAud(aud) + '  (1 ' + baseCcy(state.currency) + ' = ' + fmtAud(rate) + ')';
+  }
+  document.getElementById('amountCrypto').addEventListener('input', updateConversion);
+
+  // ── Submit ─────────────────────────────────────────────
+  document.getElementById('confirmForm').addEventListener('submit', function(e){
+    e.preventDefault();
+    var errEl = document.getElementById('formErr');
+    errEl.textContent = '';
+
+    var amt = parseFloat(document.getElementById('amountCrypto').value);
+    if (!isFinite(amt) || amt <= 0){
+      errEl.textContent = 'Enter a valid amount.';
+      return;
+    }
+    var tx = document.getElementById('txHash').value.trim() || null;
+
+    var btn = document.getElementById('submitBtn');
+    btn.disabled = true;
+    btn.textContent = 'Submitting…';
+
+    fetch('/api/crypto-deposit/create-deposit', {
+      method: 'POST',
+      headers: authHeaders(),
+      body: JSON.stringify({ currency: state.currency, amountCrypto: amt, txHash: tx })
+    }).then(function(r){ return r.json().then(function(d){ return { ok: r.ok, data: d }; }); })
+      .then(function(res){
+        if (!res.ok){
+          errEl.textContent = (res.data && res.data.error) || 'Submission failed.';
+          return;
+        }
+        showToast('Deposit recorded. Awaiting on-chain confirmation.');
+        document.getElementById('amountCrypto').value = '';
+        document.getElementById('txHash').value = '';
+        updateConversion();
+        loadPending();
+      }).catch(function(){
+        errEl.textContent = 'Network error — try again.';
+      }).finally(function(){
+        btn.disabled = false;
+        btn.textContent = 'Submit Deposit';
+      });
+  });
+
+  // ── Pending list ───────────────────────────────────────
+  function loadPending(){
+    fetch('/api/crypto-deposit/pending', { headers: authHeaders() })
+      .then(function(r){ return r.json(); })
+      .then(function(data){
+        var list = document.getElementById('pendingList');
+        list.textContent = '';
+        var rows = (data && data.deposits) || [];
+        if (!rows.length){
+          var em = document.createElement('li');
+          em.className = 'empty';
+          em.textContent = 'No pending crypto deposits.';
+          list.appendChild(em);
+          return;
+        }
+        rows.forEach(function(r){
+          var li = document.createElement('li');
+          var left = document.createElement('span');
+          left.textContent = (r.payment_type || '').replace('crypto_','').toUpperCase() + '  ·  ref ' + (r.reference || '—');
+          var right = document.createElement('span');
+          right.className = 'amt';
+          right.textContent = fmtAud(r.amount);
+          li.appendChild(left);
+          li.appendChild(right);
+          list.appendChild(li);
+        });
+      }).catch(function(){});
+  }
+
+  // ── Boot ──────────────────────────────────────────────
+  loadRates();
+  loadAddress();
+  loadPending();
+  setInterval(loadRates, 60 * 1000);
+  setInterval(loadPending, 30 * 1000);
+})();
+</script>
+</body>
+</html>

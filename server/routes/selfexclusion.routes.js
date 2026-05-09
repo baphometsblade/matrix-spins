@@ -146,6 +146,25 @@ router.post('/activate', authenticate, async (req, res) => {
             ).catch(function(err) { console.error('[SelfExclusion] CRITICAL: Failed to set is_banned flag for user ' + req.user.id + ':', err.message); });
         }
 
+        // Self-exclusion confirmation email (transactional, fire-and-forget)
+        try {
+            const u = await db.get('SELECT username, email FROM users WHERE id = ?', [req.user.id]);
+            if (u && u.email) {
+                const emailService = require('../services/email.service');
+                const durationLabel = ({
+                    cooldown_24h: '24 hours',
+                    cooldown_7d:  '7 days',
+                    cooldown_30d: '30 days',
+                    permanent:    'Permanent (account closed)',
+                })[type] || type;
+                emailService.sendSelfExclusionConfirmation(u.email, req.user.id, {
+                    username: u.username,
+                    durationLabel,
+                    expiresAt: type === 'permanent' ? null : endsAt,
+                }).catch(e => console.warn('[SelfExclusion] email failed:', e.message));
+            }
+        } catch (_) {}
+
         res.json({
             activated: true,
             exclusionId: result.lastID,

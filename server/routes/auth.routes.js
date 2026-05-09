@@ -339,11 +339,17 @@ router.post('/register', async (req, res) => {
             [userId, hashToken(verificationToken), verificationExpiresAt]
         );
 
-        // Send verification email (non-blocking) — plaintext only in the email URL
+        // Send verification + welcome emails (non-blocking) — plaintext only in the email URL
         try {
-            await emailService.sendVerificationEmail(email, username, verificationToken);
+            await emailService.sendVerificationEmail(email, username, verificationToken, userId);
         } catch (emailErr) {
             console.warn('[Auth] Verification email failed:', emailErr.message);
+        }
+        try {
+            const baseUrl = process.env.PUBLIC_URL || 'https://msaart.online';
+            await emailService.sendWelcome(email, username, userId, `${baseUrl}/?verify=${encodeURIComponent(verificationToken)}`);
+        } catch (emailErr) {
+            console.warn('[Auth] Welcome email failed:', emailErr.message);
         }
 
         const token = jwt.sign({ userId }, config.JWT_SECRET, { expiresIn: config.JWT_EXPIRES_IN });

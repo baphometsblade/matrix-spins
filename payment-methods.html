@@ -1,0 +1,618 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Payment Methods — Matrix Spins Casino</title>
+<meta name="description" content="Manage your saved payment methods at Matrix Spins Casino — add cards, bank accounts, and crypto wallets, set defaults, and remove old methods.">
+<meta name="robots" content="noindex,nofollow">
+<link rel="canonical" href="https://royal-slots-casino.vercel.app/payment-methods.html">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@700;800&display=swap" rel="stylesheet">
+<script defer src="js/error-handler.js"></script>
+<style>
+  :root {
+    --bg: #0a0e0a;
+    --bg-card: linear-gradient(135deg, #0d1f0d, #051005);
+    --accent: #00ff41;
+    --accent-dim: rgba(0, 255, 65, 0.55);
+    --border: rgba(0, 255, 65, 0.3);
+    --border-soft: rgba(0, 255, 65, 0.15);
+    --text: #d6f5d6;
+    --text-mute: #6a8a6a;
+    --danger: #ff3860;
+    --warning: #f7b500;
+    --shadow: 0 0 40px rgba(0, 255, 65, 0.08);
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Inter', 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    min-height: 100vh;
+    line-height: 1.5;
+  }
+  .topbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 14px 22px;
+    background: #07120a;
+    border-bottom: 1px solid var(--border-soft);
+  }
+  .brand {
+    color: var(--accent);
+    font-family: 'Courier New', monospace;
+    font-weight: 700;
+    font-size: 18px;
+    letter-spacing: 1.5px;
+    text-decoration: none;
+  }
+  .actions { display: flex; gap: 10px; align-items: center; }
+  .btn {
+    background: transparent;
+    color: var(--text);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 8px 14px;
+    cursor: pointer;
+    font-size: 14px;
+    font-family: inherit;
+    transition: background .15s, border-color .15s, color .15s;
+  }
+  .btn:hover { border-color: var(--accent); color: var(--accent); }
+  .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+  .btn.primary {
+    background: var(--accent);
+    color: #001500;
+    border-color: var(--accent);
+    font-weight: 600;
+  }
+  .btn.primary:hover { background: #00cc34; color: #001500; }
+  .btn.danger { color: var(--danger); border-color: rgba(255, 56, 96, 0.4); }
+  .btn.danger:hover { background: rgba(255, 56, 96, 0.1); border-color: var(--danger); }
+  .btn.small { padding: 5px 10px; font-size: 12px; }
+  .shell {
+    max-width: 980px;
+    margin: 0 auto;
+    padding: 28px 22px 60px;
+  }
+  h1 {
+    color: var(--accent);
+    font-family: 'Plus Jakarta Sans', 'Inter', sans-serif;
+    font-size: 28px;
+    margin: 0 0 6px;
+    letter-spacing: 0.3px;
+  }
+  .subtitle { color: var(--text-mute); margin: 0 0 28px; font-size: 14px; }
+  .card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 24px;
+    margin-bottom: 22px;
+    box-shadow: var(--shadow);
+  }
+  .card h2 {
+    margin: 0 0 16px;
+    font-size: 17px;
+    color: var(--accent);
+    font-family: 'Courier New', monospace;
+    letter-spacing: 1px;
+  }
+  .limits-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 14px;
+  }
+  .limit-tile {
+    background: rgba(0, 255, 65, 0.04);
+    border: 1px solid var(--border-soft);
+    border-radius: 10px;
+    padding: 12px 14px;
+  }
+  .limit-tile .lbl { color: var(--text-mute); font-size: 11px; text-transform: uppercase; letter-spacing: 1px; }
+  .limit-tile .val { color: var(--accent); font-weight: 600; font-size: 18px; margin-top: 4px; }
+  .methods-list { display: flex; flex-direction: column; gap: 12px; }
+  .method-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 14px;
+    padding: 14px 16px;
+    background: rgba(0, 0, 0, 0.25);
+    border: 1px solid var(--border-soft);
+    border-radius: 10px;
+    flex-wrap: wrap;
+  }
+  .method-row.is-default { border-color: var(--accent-dim); }
+  .method-info { flex: 1; min-width: 180px; }
+  .method-label { font-weight: 600; color: var(--text); font-size: 15px; }
+  .method-meta { color: var(--text-mute); font-size: 12px; margin-top: 3px; }
+  .method-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+  .badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 999px;
+    font-size: 11px;
+    font-weight: 600;
+    margin-left: 8px;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+  }
+  .badge.default { background: var(--accent); color: #001500; }
+  .badge.verified { background: rgba(0, 255, 65, 0.15); color: var(--accent); border: 1px solid var(--border); }
+  .empty {
+    text-align: center;
+    padding: 28px 16px;
+    color: var(--text-mute);
+    font-style: italic;
+  }
+  form .row { display: flex; flex-direction: column; gap: 6px; margin-bottom: 14px; }
+  form .row.inline { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  form label {
+    color: var(--text-mute);
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+  form input, form select {
+    background: #07120a;
+    color: var(--text);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 10px 12px;
+    font-size: 14px;
+    font-family: inherit;
+    outline: none;
+    transition: border-color .15s, box-shadow .15s;
+  }
+  form input:focus, form select:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 2px rgba(0, 255, 65, 0.18);
+  }
+  .toast {
+    position: fixed;
+    top: 18px;
+    right: 18px;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--accent);
+    color: var(--text);
+    padding: 12px 16px;
+    border-radius: 10px;
+    z-index: 1000;
+    box-shadow: var(--shadow);
+    font-size: 14px;
+    max-width: 320px;
+    opacity: 0;
+    transform: translateY(-8px);
+    transition: opacity .2s, transform .2s;
+    pointer-events: none;
+  }
+  .toast.show { opacity: 1; transform: translateY(0); }
+  .toast.error { border-left-color: var(--danger); }
+  .group { display: none; }
+  .group.active { display: block; }
+  .signin-link { color: var(--accent); text-decoration: underline; }
+  @media (max-width: 600px) {
+    form .row.inline { grid-template-columns: 1fr; }
+    .method-row { flex-direction: column; align-items: stretch; }
+    .method-actions { justify-content: flex-end; }
+  }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <a class="brand" href="index.html">Matrix Spins</a>
+  <div class="actions">
+    <a href="wallet.html" class="btn">Wallet</a>
+    <a href="account.html" class="btn">Account</a>
+  </div>
+</div>
+
+<main class="shell">
+  <h1>Payment Methods</h1>
+  <p class="subtitle">Add and manage cards, bank accounts, and crypto wallets used for deposits and withdrawals.</p>
+
+  <section class="card" id="limitsCard">
+    <h2>Deposit &amp; Withdrawal Limits</h2>
+    <div class="limits-grid" id="limitsGrid"></div>
+  </section>
+
+  <section class="card">
+    <h2>Saved Methods</h2>
+    <div class="methods-list" id="methodsList"></div>
+  </section>
+
+  <section class="card">
+    <h2>Add a New Method</h2>
+    <form id="addForm" autocomplete="off" novalidate>
+      <div class="row">
+        <label for="typeSel">Method type</label>
+        <select id="typeSel" name="type" required>
+          <option value="visa">Visa (card)</option>
+          <option value="mastercard">Mastercard (card)</option>
+          <option value="payid">PayID</option>
+          <option value="bank_transfer">Bank Transfer</option>
+          <option value="crypto_btc">Bitcoin (BTC)</option>
+          <option value="crypto_eth">Ethereum (ETH)</option>
+          <option value="crypto_usdt">Tether (USDT)</option>
+        </select>
+      </div>
+
+      <div class="row">
+        <label for="labelInput">Label (optional)</label>
+        <input id="labelInput" name="label" type="text" maxlength="60" placeholder="e.g. Personal Visa" />
+      </div>
+
+      <div class="group" id="grp-card">
+        <div class="row">
+          <label for="cardNumber">Card number</label>
+          <input id="cardNumber" name="cardNumber" type="text" inputmode="numeric" maxlength="23" placeholder="1234 5678 9012 3456" autocomplete="off" />
+        </div>
+        <div class="row inline">
+          <div>
+            <label for="expMonth">Exp. month</label>
+            <input id="expMonth" name="expMonth" type="text" inputmode="numeric" maxlength="2" placeholder="MM" />
+          </div>
+          <div>
+            <label for="expYear">Exp. year</label>
+            <input id="expYear" name="expYear" type="text" inputmode="numeric" maxlength="4" placeholder="YYYY" />
+          </div>
+        </div>
+        <p class="subtitle" style="margin:0;font-size:12px;">We never store your full card number or CVV. Only the last 4 digits are kept for display.</p>
+      </div>
+
+      <div class="group" id="grp-bank">
+        <div class="row inline">
+          <div>
+            <label for="bsb">BSB (optional)</label>
+            <input id="bsb" name="bsb" type="text" inputmode="numeric" maxlength="7" placeholder="123-456" />
+          </div>
+          <div>
+            <label for="accountNumber">Account number</label>
+            <input id="accountNumber" name="accountNumber" type="text" inputmode="numeric" maxlength="20" placeholder="Account number" />
+          </div>
+        </div>
+        <p class="subtitle" style="margin:0;font-size:12px;">Only the last 4 digits of your account are stored.</p>
+      </div>
+
+      <div class="group" id="grp-crypto">
+        <div class="row">
+          <label for="walletAddress">Wallet address</label>
+          <input id="walletAddress" name="walletAddress" type="text" maxlength="120" placeholder="Public wallet address" />
+        </div>
+        <div class="row">
+          <label for="network">Network</label>
+          <select id="network" name="network">
+            <option value="">Default</option>
+            <option value="btc">BTC</option>
+            <option value="eth">ETH (mainnet)</option>
+            <option value="erc20">ERC-20</option>
+            <option value="trc20">TRC-20</option>
+            <option value="bsc">BSC</option>
+            <option value="polygon">Polygon</option>
+          </select>
+        </div>
+      </div>
+
+      <button type="submit" class="btn primary" id="addBtn">Add Method</button>
+    </form>
+  </section>
+</main>
+
+<div id="toast" class="toast"></div>
+
+<script>
+(function () {
+  'use strict';
+
+  var API = '/api/payment-methods';
+  var TOKEN_KEYS = ['msaart_token', 'token', 'jwt'];
+
+  function getToken() {
+    for (var i = 0; i < TOKEN_KEYS.length; i++) {
+      try {
+        var v = localStorage.getItem(TOKEN_KEYS[i]);
+        if (v) return v;
+      } catch (_e) {}
+    }
+    return null;
+  }
+
+  function authHeaders() {
+    var h = { 'Content-Type': 'application/json', 'Accept': 'application/json' };
+    var t = getToken();
+    if (t) h.Authorization = 'Bearer ' + t;
+    return h;
+  }
+
+  function el(tag, attrs, children) {
+    var e = document.createElement(tag);
+    if (attrs) {
+      for (var k in attrs) {
+        if (k === 'class') e.className = attrs[k];
+        else if (k === 'text') e.textContent = attrs[k];
+        else if (k === 'data') {
+          for (var dk in attrs[k]) e.setAttribute('data-' + dk, attrs[k][dk]);
+        } else e.setAttribute(k, attrs[k]);
+      }
+    }
+    if (children) {
+      for (var i = 0; i < children.length; i++) {
+        var c = children[i];
+        if (c == null) continue;
+        e.appendChild(typeof c === 'string' ? document.createTextNode(c) : c);
+      }
+    }
+    return e;
+  }
+
+  function clear(node) { while (node.firstChild) node.removeChild(node.firstChild); }
+
+  var toastEl = document.getElementById('toast');
+  var toastTimer = null;
+  function toast(msg, isError) {
+    if (!toastEl) return;
+    toastEl.textContent = msg;
+    toastEl.classList.toggle('error', !!isError);
+    toastEl.classList.add('show');
+    if (toastTimer) clearTimeout(toastTimer);
+    toastTimer = setTimeout(function () { toastEl.classList.remove('show'); }, 3500);
+  }
+
+  function fmtMoney(n) {
+    var v = Number(n);
+    if (!isFinite(v)) return '—';
+    return '$' + v.toLocaleString('en-AU', { minimumFractionDigits: 0, maximumFractionDigits: 2 });
+  }
+
+  function fmtDate(s) {
+    if (!s) return '';
+    var d = new Date(s);
+    if (isNaN(d.getTime())) return '';
+    return d.toLocaleDateString('en-AU', { year: 'numeric', month: 'short', day: 'numeric' });
+  }
+
+  function typeLabel(t) {
+    return ({
+      visa: 'Visa Card',
+      mastercard: 'Mastercard',
+      payid: 'PayID',
+      bank_transfer: 'Bank Transfer',
+      crypto_btc: 'Bitcoin (BTC)',
+      crypto_eth: 'Ethereum (ETH)',
+      crypto_usdt: 'Tether (USDT)'
+    })[t] || t;
+  }
+
+  // ─── Limits ─────────────────────────────────────────
+
+  function renderLimits(l) {
+    var grid = document.getElementById('limitsGrid');
+    clear(grid);
+    var tiles = [
+      { lbl: 'Min Deposit', val: fmtMoney(l.minDeposit) },
+      { lbl: 'Max Deposit', val: fmtMoney(l.maxDeposit) },
+      { lbl: 'Min Withdrawal', val: fmtMoney(l.minWithdrawal) },
+      { lbl: 'Max Withdrawal', val: fmtMoney(l.maxWithdrawal) },
+      { lbl: 'Currency', val: l.currency || 'AUD' }
+    ];
+    tiles.forEach(function (t) {
+      grid.appendChild(
+        el('div', { 'class': 'limit-tile' }, [
+          el('div', { 'class': 'lbl', text: t.lbl }),
+          el('div', { 'class': 'val', text: t.val })
+        ])
+      );
+    });
+  }
+
+  function renderLimitsMessage(msg) {
+    var grid = document.getElementById('limitsGrid');
+    clear(grid);
+    grid.appendChild(
+      el('div', { 'class': 'limit-tile' }, [
+        el('div', { 'class': 'lbl', text: 'Limits' }),
+        el('div', { 'class': 'val', text: msg })
+      ])
+    );
+  }
+
+  function loadLimits() {
+    return fetch(API + '/limits', { credentials: 'include', headers: authHeaders() })
+      .then(function (r) { return r.json().then(function (j) { return { ok: r.ok, j: j }; }); })
+      .then(function (res) {
+        if (!res.ok) { renderLimitsMessage('Sign in to view'); return; }
+        renderLimits(res.j);
+      })
+      .catch(function () { renderLimitsMessage('Could not load'); });
+  }
+
+  // ─── List / render ─────────────────────────────────
+
+  function renderEmpty(node, msg, withSignin) {
+    clear(node);
+    var box = el('div', { 'class': 'empty' });
+    box.appendChild(document.createTextNode(msg));
+    if (withSignin) {
+      box.appendChild(document.createTextNode(' '));
+      var a = el('a', { href: 'login.html', 'class': 'signin-link', text: 'Sign in' });
+      box.appendChild(a);
+      box.appendChild(document.createTextNode(' to manage your payment methods.'));
+    }
+    node.appendChild(box);
+  }
+
+  function renderMethods(methods) {
+    var list = document.getElementById('methodsList');
+    clear(list);
+    if (!methods || methods.length === 0) {
+      renderEmpty(list, 'No saved methods yet. Add one below to start.');
+      return;
+    }
+    methods.forEach(function (m) {
+      var label = el('div', { 'class': 'method-label' });
+      label.appendChild(document.createTextNode(String(m.label || '')));
+      if (m.is_default) label.appendChild(el('span', { 'class': 'badge default', text: 'Default' }));
+      if (m.is_verified) label.appendChild(el('span', { 'class': 'badge verified', text: 'Verified' }));
+
+      var metaText = typeLabel(m.type);
+      if (m.last4) metaText += ' · ending ' + m.last4;
+      if (m.created_at) metaText += ' · added ' + fmtDate(m.created_at);
+
+      var actions = el('div', { 'class': 'method-actions' });
+      if (!m.is_default) {
+        actions.appendChild(el('button', {
+          'class': 'btn small', type: 'button',
+          data: { action: 'default', id: String(m.id) },
+          text: 'Make default'
+        }));
+      }
+      actions.appendChild(el('button', {
+        'class': 'btn small danger', type: 'button',
+        data: { action: 'delete', id: String(m.id) },
+        text: 'Remove'
+      }));
+
+      var row = el('div', { 'class': 'method-row' + (m.is_default ? ' is-default' : '') }, [
+        el('div', { 'class': 'method-info' }, [
+          label,
+          el('div', { 'class': 'method-meta', text: metaText })
+        ]),
+        actions
+      ]);
+      list.appendChild(row);
+    });
+  }
+
+  function loadList() {
+    var list = document.getElementById('methodsList');
+    renderEmpty(list, 'Loading saved methods...');
+    return fetch(API + '/list', { credentials: 'include', headers: authHeaders() })
+      .then(function (r) { return r.json().then(function (j) { return { ok: r.ok, status: r.status, j: j }; }); })
+      .then(function (res) {
+        if (!res.ok) {
+          if (res.status === 401) { renderEmpty(list, 'Please', true); return; }
+          throw new Error((res.j && res.j.error) || 'Failed to load methods');
+        }
+        renderMethods(res.j.methods || []);
+      })
+      .catch(function (err) {
+        renderEmpty(list, 'Could not load methods: ' + err.message);
+      });
+  }
+
+  // ─── Action handlers ────────────────────────────────
+
+  document.getElementById('methodsList').addEventListener('click', function (ev) {
+    var btn = ev.target.closest('button[data-action]');
+    if (!btn) return;
+    var id = btn.getAttribute('data-id');
+    var action = btn.getAttribute('data-action');
+    if (!id) return;
+    btn.disabled = true;
+
+    if (action === 'default') {
+      fetch(API + '/' + encodeURIComponent(id) + '/default', {
+        method: 'PUT', credentials: 'include', headers: authHeaders()
+      })
+        .then(function (r) { return r.json().then(function (j) { return { ok: r.ok, j: j }; }); })
+        .then(function (res) {
+          if (!res.ok) throw new Error((res.j && res.j.error) || 'Failed');
+          toast('Default method updated');
+          return loadList();
+        })
+        .catch(function (e) { toast(e.message, true); btn.disabled = false; });
+    } else if (action === 'delete') {
+      if (!confirm('Remove this payment method?')) { btn.disabled = false; return; }
+      fetch(API + '/' + encodeURIComponent(id), {
+        method: 'DELETE', credentials: 'include', headers: authHeaders()
+      })
+        .then(function (r) { return r.json().then(function (j) { return { ok: r.ok, j: j }; }); })
+        .then(function (res) {
+          if (!res.ok) throw new Error((res.j && res.j.error) || 'Failed');
+          toast('Payment method removed');
+          return loadList();
+        })
+        .catch(function (e) { toast(e.message, true); btn.disabled = false; });
+    }
+  });
+
+  // ─── Add form ──────────────────────────────────────
+
+  var typeSel = document.getElementById('typeSel');
+  function syncGroups() {
+    var t = typeSel.value;
+    var grp = (t === 'visa' || t === 'mastercard') ? 'card'
+            : (t === 'payid' || t === 'bank_transfer') ? 'bank'
+            : 'crypto';
+    document.querySelectorAll('.group').forEach(function (e) { e.classList.remove('active'); });
+    var active = document.getElementById('grp-' + grp);
+    if (active) active.classList.add('active');
+  }
+  typeSel.addEventListener('change', syncGroups);
+  syncGroups();
+
+  document.getElementById('addForm').addEventListener('submit', function (ev) {
+    ev.preventDefault();
+    var type = typeSel.value;
+    var label = document.getElementById('labelInput').value.trim();
+    var details = {};
+
+    if (type === 'visa' || type === 'mastercard') {
+      var raw = document.getElementById('cardNumber').value.replace(/\D/g, '');
+      var em = document.getElementById('expMonth').value.trim();
+      var ey = document.getElementById('expYear').value.trim();
+      if (raw.length < 12) return toast('Please enter a valid card number', true);
+      if (!em || !ey) return toast('Please enter card expiry', true);
+      details = { cardNumber: raw, expMonth: em, expYear: ey };
+    } else if (type === 'payid' || type === 'bank_transfer') {
+      var bsb = document.getElementById('bsb').value.trim();
+      var acct = document.getElementById('accountNumber').value.trim();
+      if (!acct) return toast('Please enter an account number', true);
+      details = { bsb: bsb, accountNumber: acct };
+    } else {
+      var addr = document.getElementById('walletAddress').value.trim();
+      var net = document.getElementById('network').value;
+      if (!addr) return toast('Please enter a wallet address', true);
+      details = { walletAddress: addr, network: net };
+    }
+
+    var btn = document.getElementById('addBtn');
+    btn.disabled = true;
+    btn.textContent = 'Saving...';
+
+    fetch(API + '/add', {
+      method: 'POST',
+      credentials: 'include',
+      headers: authHeaders(),
+      body: JSON.stringify({ type: type, label: label, details: details })
+    })
+      .then(function (r) { return r.json().then(function (j) { return { ok: r.ok, j: j }; }); })
+      .then(function (res) {
+        if (!res.ok) throw new Error((res.j && res.j.error) || 'Failed to add');
+        toast('Payment method added');
+        document.getElementById('addForm').reset();
+        syncGroups();
+        return loadList();
+      })
+      .catch(function (e) { toast(e.message, true); })
+      .then(function () {
+        btn.disabled = false;
+        btn.textContent = 'Add Method';
+      });
+  });
+
+  // ─── Init ──────────────────────────────────────────
+
+  loadLimits();
+  loadList();
+})();
+</script>
+
+</body>
+</html>

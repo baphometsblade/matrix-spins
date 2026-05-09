@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Withdrawal Queue — Matrix Spins Admin</title>
+<meta name="robots" content="noindex, nofollow">
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background:#0d0d1a; color:#e0e0e0; min-height:100vh; padding:24px; }
+.container { max-width:1400px; margin:0 auto; }
+header { display:flex; justify-content:space-between; align-items:center; padding:18px 24px; background:linear-gradient(135deg,#1a1a2e,#16213e); border:1px solid rgba(255,215,0,0.3); border-radius:12px; margin-bottom:24px; }
+header h1 { background:linear-gradient(135deg,#ffd700,#ff8c00); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; font-size:22px; }
+header a { color:#ffd700; text-decoration:none; font-size:13px; }
+.stats-row { display:grid; grid-template-columns:repeat(4,1fr); gap:14px; margin-bottom:20px; }
+.stat-card { background:linear-gradient(135deg,#1a1a2e,#16213e); border:1px solid rgba(255,215,0,0.2); border-radius:10px; padding:18px; }
+.stat-card .label { color:#888; font-size:12px; text-transform:uppercase; letter-spacing:1px; }
+.stat-card .value { color:#ffd700; font-size:24px; font-weight:700; margin-top:6px; font-family:'Courier New',monospace; }
+.stat-card.urgent .value { color:#ff3860; }
+.stat-card.ok .value { color:#10b981; }
+.panel { background:linear-gradient(135deg,#1a1a2e,#16213e); border:1px solid rgba(255,215,0,0.2); border-radius:12px; padding:24px; margin-bottom:20px; }
+.panel h2 { color:#ffd700; font-size:18px; margin-bottom:18px; display:flex; justify-content:space-between; align-items:center; }
+.controls { display:flex; gap:10px; flex-wrap:wrap; align-items:center; margin-bottom:14px; }
+.controls input, .controls select { background:#0d0d1a; border:1px solid rgba(255,215,0,0.2); color:#e0e0e0; padding:8px 12px; border-radius:6px; font-size:13px; }
+.btn { background:linear-gradient(135deg,#ffd700,#ff8c00); color:#0d0d1a; border:none; padding:8px 16px; border-radius:6px; font-weight:700; cursor:pointer; font-size:13px; }
+.btn:disabled { opacity:.5; cursor:not-allowed; }
+.btn.danger { background:linear-gradient(135deg,#ff3860,#a02030); color:#fff; }
+.btn.green { background:linear-gradient(135deg,#10b981,#0a7e5b); color:#fff; }
+.btn.secondary { background:transparent; border:1px solid rgba(255,215,0,0.3); color:#ffd700; }
+table { width:100%; border-collapse:collapse; font-size:13px; }
+th, td { padding:10px 8px; text-align:left; border-bottom:1px solid rgba(255,255,255,0.05); }
+th { color:#888; font-weight:600; font-size:11px; text-transform:uppercase; letter-spacing:1px; background:rgba(0,0,0,0.3); }
+tbody tr:hover { background:rgba(255,215,0,0.04); }
+td.amount { font-family:'Courier New',monospace; color:#ffd700; font-weight:700; }
+.flag { display:inline-block; padding:2px 8px; background:rgba(255,56,96,0.2); color:#ff3860; border:1px solid rgba(255,56,96,0.4); border-radius:4px; font-size:10px; font-weight:700; text-transform:uppercase; margin-right:4px; }
+.cool { display:inline-block; padding:2px 8px; background:rgba(255,165,0,0.2); color:#ffa500; border:1px solid rgba(255,165,0,0.4); border-radius:4px; font-size:10px; font-weight:700; }
+.ok-pill { display:inline-block; padding:2px 8px; background:rgba(16,185,129,0.2); color:#10b981; border:1px solid rgba(16,185,129,0.4); border-radius:4px; font-size:10px; font-weight:700; }
+.toast { position:fixed; bottom:24px; left:50%; transform:translateX(-50%); background:#10b981; color:#0d0d1a; padding:12px 24px; border-radius:8px; font-weight:700; box-shadow:0 4px 20px rgba(16,185,129,0.3); opacity:0; transition:opacity .2s; pointer-events:none; }
+.toast.show { opacity:1; }
+.toast.err { background:#ff3860; color:#fff; }
+.empty { text-align:center; padding:40px; color:#666; }
+</style>
+</head>
+<body>
+<div class="container">
+  <header>
+    <h1>💰 Withdrawal Queue</h1>
+    <a href="index.html">&larr; Back to admin</a>
+  </header>
+
+  <div class="stats-row" id="stats">
+    <div class="stat-card"><div class="label">Pending count</div><div class="value" id="sPending">—</div></div>
+    <div class="stat-card urgent"><div class="label">Queue value (AUD)</div><div class="value" id="sQueueValue">—</div></div>
+    <div class="stat-card"><div class="label">Today's withdrawals</div><div class="value" id="sToday">—</div></div>
+    <div class="stat-card ok"><div class="label">7-day withdrawn</div><div class="value" id="sWeek">—</div></div>
+  </div>
+
+  <div class="panel">
+    <h2>
+      Pending Queue
+      <button class="btn secondary" id="refreshBtn">↻ Refresh</button>
+    </h2>
+    <div class="controls">
+      <label>Min amount: <input id="filterAmount" type="number" step="0.01" min="0" value="0" style="width:100px"></label>
+      <label>Method: <select id="filterMethod">
+        <option value="">Any</option>
+        <option>visa</option><option>mastercard</option><option>payid</option>
+        <option>bank_transfer</option>
+        <option>crypto_btc</option><option>crypto_eth</option><option>crypto_usdt</option>
+      </select></label>
+      <button class="btn green" id="bulkBtn" disabled>Bulk approve selected</button>
+      <span style="color:#888;font-size:12px;" id="selCount"></span>
+    </div>
+    <div style="overflow-x:auto;">
+      <table id="queue">
+        <thead><tr>
+          <th><input type="checkbox" id="selAll"></th>
+          <th>ID</th><th>User</th><th>Amount</th><th>Method</th><th>Reference</th>
+          <th>OTP</th><th>Cooling-off</th><th>Risk flags</th><th>Created</th><th>Actions</th>
+        </tr></thead>
+        <tbody id="queueBody"><tr><td colspan="11" class="empty">Loading…</td></tr></tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="panel">
+    <h2>Stripe Webhook Audit (last 100)</h2>
+    <div style="overflow-x:auto;">
+      <table id="auditTable">
+        <thead><tr>
+          <th>Event ID</th><th>Type</th><th>Verified</th><th>Processed</th><th>Duplicate</th>
+          <th>Outcome</th><th>Object</th><th>Amount</th><th>Received</th>
+        </tr></thead>
+        <tbody id="auditBody"><tr><td colspan="9" class="empty">Loading…</td></tr></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+<div id="toast" class="toast"></div>
+
+<script>
+(function(){
+  'use strict';
+  var ADMIN_TOKEN = localStorage.getItem('admin_token') || prompt('Admin password (X-Admin-Token):') || '';
+  if (ADMIN_TOKEN) localStorage.setItem('admin_token', ADMIN_TOKEN);
+  var JWT = localStorage.getItem('msaart_token') || localStorage.getItem('token') || '';
+
+  var headers = { 'Content-Type': 'application/json', 'X-Admin-Token': ADMIN_TOKEN };
+  if (JWT) headers['Authorization'] = 'Bearer ' + JWT;
+
+  function $(id) { return document.getElementById(id); }
+  function clear(el) { while (el.firstChild) el.removeChild(el.firstChild); }
+
+  function fmtAud(n) {
+    n = Number(n) || 0;
+    return 'AUD ' + n.toLocaleString('en-AU', { minimumFractionDigits:2, maximumFractionDigits:2 });
+  }
+
+  function showToast(msg, err) {
+    var t = $('toast');
+    t.textContent = msg;
+    t.className = 'toast show' + (err ? ' err' : '');
+    setTimeout(function(){ t.className = 'toast' + (err ? ' err' : ''); }, 2400);
+  }
+
+  function loadStats() {
+    fetch('/api/admin-withdrawals/stats', { headers: headers, credentials: 'include' })
+      .then(function(r){ return r.json(); })
+      .then(function(data){
+        if (!data.success) return;
+        var pending = (data.byStatus.find(function(x){ return x.status === 'pending'; }) || { c: 0 }).c;
+        var otpV = (data.byStatus.find(function(x){ return x.status === 'otp_verified'; }) || { c: 0 }).c;
+        $('sPending').textContent = (Number(pending) + Number(otpV));
+        $('sQueueValue').textContent = fmtAud(data.queueValue);
+        $('sToday').textContent = (data.today ? data.today.c : 0) + ' (' + fmtAud(data.today ? data.today.sum : 0) + ')';
+        $('sWeek').textContent = fmtAud(data.week ? data.week.sum : 0);
+      })
+      .catch(function(){ /* silent */ });
+  }
+
+  function getSelected() {
+    return Array.from(document.querySelectorAll('input.row-sel:checked')).map(function(cb){ return cb.value; });
+  }
+  function updateSelCount() {
+    var n = getSelected().length;
+    $('selCount').textContent = n ? (n + ' selected') : '';
+    $('bulkBtn').disabled = n === 0;
+  }
+
+  function renderQueue(rows) {
+    var body = $('queueBody');
+    clear(body);
+    if (!rows || !rows.length) {
+      var tr = document.createElement('tr');
+      var td = document.createElement('td');
+      td.colSpan = 11; td.className = 'empty'; td.textContent = 'Queue is empty.';
+      tr.appendChild(td); body.appendChild(tr);
+      return;
+    }
+    rows.forEach(function(r){
+      var tr = document.createElement('tr');
+      // Checkbox
+      var tdSel = document.createElement('td');
+      var cb = document.createElement('input');
+      cb.type = 'checkbox'; cb.className = 'row-sel'; cb.value = r.id;
+      cb.disabled = !r.approvable;
+      cb.addEventListener('change', updateSelCount);
+      tdSel.appendChild(cb);
+      tr.appendChild(tdSel);
+      // ID
+      var tdId = document.createElement('td'); tdId.textContent = '#' + r.id; tr.appendChild(tdId);
+      // User
+      var tdU = document.createElement('td');
+      tdU.textContent = (r.username || '—') + (r.email ? ' (' + r.email + ')' : '');
+      tr.appendChild(tdU);
+      // Amount
+      var tdA = document.createElement('td'); tdA.className = 'amount'; tdA.textContent = fmtAud(r.amount); tr.appendChild(tdA);
+      // Method
+      var tdM = document.createElement('td'); tdM.textContent = r.payment_type || '—'; tr.appendChild(tdM);
+      // Reference
+      var tdR = document.createElement('td'); tdR.style.fontFamily = 'monospace'; tdR.style.fontSize = '11px'; tdR.textContent = r.reference || '—'; tr.appendChild(tdR);
+      // OTP
+      var tdO = document.createElement('td');
+      var otpSpan = document.createElement('span');
+      if (r.otp_status === 'verified') { otpSpan.className = 'ok-pill'; otpSpan.textContent = 'verified'; }
+      else if (r.otp_status === 'pending') { otpSpan.className = 'flag'; otpSpan.textContent = 'pending'; }
+      else { otpSpan.style.color = '#666'; otpSpan.textContent = 'n/a'; }
+      tdO.appendChild(otpSpan); tr.appendChild(tdO);
+      // Cooling-off
+      var tdC = document.createElement('td');
+      if (r.cooling_off_active) {
+        var s = document.createElement('span'); s.className = 'cool';
+        s.textContent = r.cooling_off_hours_remaining + 'h left';
+        tdC.appendChild(s);
+      } else {
+        var ok = document.createElement('span'); ok.className = 'ok-pill'; ok.textContent = 'ready'; tdC.appendChild(ok);
+      }
+      tr.appendChild(tdC);
+      // Risk flags
+      var tdF = document.createElement('td');
+      (r.risk_flags || []).forEach(function(f){
+        var s = document.createElement('span'); s.className = 'flag'; s.textContent = f.replace(/_/g, ' ');
+        tdF.appendChild(s);
+      });
+      tr.appendChild(tdF);
+      // Created
+      var tdT = document.createElement('td'); tdT.style.color = '#888'; tdT.style.fontSize = '11px';
+      tdT.textContent = r.created_at ? new Date(r.created_at).toLocaleString('en-AU') : '—';
+      tr.appendChild(tdT);
+      // Actions
+      var tdAct = document.createElement('td');
+      var apr = document.createElement('button');
+      apr.className = 'btn green'; apr.textContent = 'Approve';
+      apr.disabled = !r.approvable;
+      apr.addEventListener('click', function(){ approveOne(r.id, r.amount); });
+      var rej = document.createElement('button');
+      rej.className = 'btn danger'; rej.textContent = 'Reject'; rej.style.marginLeft = '6px';
+      rej.addEventListener('click', function(){ rejectOne(r.id); });
+      tdAct.appendChild(apr); tdAct.appendChild(rej);
+      tr.appendChild(tdAct);
+      body.appendChild(tr);
+    });
+    updateSelCount();
+  }
+
+  function loadQueue() {
+    var qs = '?minAmount=' + encodeURIComponent($('filterAmount').value || 0);
+    var pm = $('filterMethod').value;
+    if (pm) qs += '&paymentType=' + encodeURIComponent(pm);
+    fetch('/api/admin-withdrawals/queue' + qs, { headers: headers, credentials: 'include' })
+      .then(function(r){ return r.json(); })
+      .then(function(data){
+        if (!data.success) { showToast(data.error || 'Failed', true); return; }
+        renderQueue(data.queue);
+      })
+      .catch(function(err){ showToast(err.message, true); });
+  }
+
+  function approveOne(id, amt) {
+    if (!confirm('Approve withdrawal #' + id + ' (' + fmtAud(amt) + ')?')) return;
+    fetch('/api/admin/approve-withdrawal', {
+      method: 'POST', headers: headers, credentials: 'include',
+      body: JSON.stringify({ withdrawalId: id }),
+    })
+      .then(function(r){ return r.json(); })
+      .then(function(data){
+        if (data.message) { showToast('Approved #' + id); loadQueue(); loadStats(); }
+        else showToast(data.error || 'Failed', true);
+      })
+      .catch(function(err){ showToast(err.message, true); });
+  }
+
+  function rejectOne(id) {
+    var reason = prompt('Rejection reason (sent to player):');
+    if (!reason) return;
+    fetch('/api/admin/reject-withdrawal', {
+      method: 'POST', headers: headers, credentials: 'include',
+      body: JSON.stringify({ withdrawalId: id, reason: reason }),
+    })
+      .then(function(r){ return r.json(); })
+      .then(function(data){
+        if (data.message) { showToast('Rejected #' + id); loadQueue(); loadStats(); }
+        else showToast(data.error || 'Failed', true);
+      })
+      .catch(function(err){ showToast(err.message, true); });
+  }
+
+  $('bulkBtn').addEventListener('click', function(){
+    var ids = getSelected();
+    if (!ids.length) return;
+    if (!confirm('Bulk approve ' + ids.length + ' withdrawal(s)?')) return;
+    this.disabled = true;
+    var self = this;
+    fetch('/api/admin-withdrawals/bulk-approve', {
+      method: 'POST', headers: headers, credentials: 'include',
+      body: JSON.stringify({ ids: ids }),
+    })
+      .then(function(r){ return r.json(); })
+      .then(function(data){
+        showToast('Approved ' + (data.approved || 0) + ' / failed ' + (data.failed || 0));
+        loadQueue(); loadStats();
+      })
+      .catch(function(err){ showToast(err.message, true); })
+      .finally(function(){ self.disabled = false; });
+  });
+
+  $('selAll').addEventListener('change', function(){
+    var on = this.checked;
+    document.querySelectorAll('input.row-sel:not(:disabled)').forEach(function(cb){ cb.checked = on; });
+    updateSelCount();
+  });
+
+  $('filterAmount').addEventListener('change', loadQueue);
+  $('filterMethod').addEventListener('change', loadQueue);
+  $('refreshBtn').addEventListener('click', function(){ loadQueue(); loadStats(); });
+
+  function loadAudit() {
+    fetch('/api/admin-withdrawals/stripe-audit/recent?limit=100', { headers: headers, credentials: 'include' })
+      .then(function(r){ return r.json(); })
+      .then(function(data){
+        var body = $('auditBody');
+        clear(body);
+        if (!data.success || !data.events || !data.events.length) {
+          var tr = document.createElement('tr');
+          var td = document.createElement('td'); td.colSpan = 9; td.className = 'empty'; td.textContent = 'No webhook events recorded yet.';
+          tr.appendChild(td); body.appendChild(tr);
+          return;
+        }
+        data.events.forEach(function(e){
+          var tr = document.createElement('tr');
+          ['event_id','event_type','verified','processed','duplicate','outcome','stripe_object_id','amount','received_at'].forEach(function(k){
+            var td = document.createElement('td');
+            var v = e[k];
+            if (k === 'amount') v = v != null ? fmtAud(v) : '—';
+            else if (k === 'verified' || k === 'processed' || k === 'duplicate') v = v ? '✓' : '';
+            else if (k === 'received_at' && v) v = new Date(v).toLocaleString('en-AU');
+            else if (k === 'event_id' && v) { td.style.fontFamily = 'monospace'; td.style.fontSize = '11px'; v = v.slice(0, 18); }
+            td.textContent = v != null ? String(v) : '—';
+            tr.appendChild(td);
+          });
+          body.appendChild(tr);
+        });
+      })
+      .catch(function(){ /* silent */ });
+  }
+
+  loadStats(); loadQueue(); loadAudit();
+  setInterval(function(){ loadStats(); loadQueue(); }, 20000);
+  setInterval(loadAudit, 30000);
+})();
+</script>
+</body>
+</html>

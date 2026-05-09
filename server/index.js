@@ -420,6 +420,20 @@ mount('/api/health',     './routes/health.routes',     'health');
 mount('/api/newsletter', './routes/newsletter.routes', 'newsletter');
 mount('/api/bundles',    './routes/bundles.routes',    'bundles (stub — 501 until Stripe wired)');
 
+// Email (preferences + admin broadcast)
+mount('/api/email',         './routes/email.routes',        'email-preferences');
+mount('/api/admin-email',   './routes/admin-email.routes',  'admin-email-broadcast');
+
+// Crypto deposit (multi-currency BTC/ETH/USDT)
+mount('/api/crypto-deposit', './routes/crypto-deposit.routes', 'crypto-deposit (BTC/ETH/USDT)');
+
+// Payment methods + receipts
+mount('/api/payment-methods', './routes/payment-methods.routes', 'payment-methods');
+mount('/api/receipts',        './routes/receipts.routes',        'transaction-receipts');
+
+// Withdrawal admin queue
+mount('/api/admin-withdrawals', './routes/admin-withdrawals.routes', 'admin-withdrawal-queue');
+
   // close mountAllRoutes()
 }
 
@@ -670,6 +684,16 @@ async function start() {
     if (typeof scheduler.start === 'function') scheduler.start();
   } catch (err) {
     logger.warn('scheduler failed', { error: err.message });
+  }
+
+  // Email queue worker (retries failed sends with exponential backoff)
+  try {
+    const emailService = require('./services/email.service');
+    if (typeof emailService.startWorker === 'function') {
+      emailService.startWorker(60_000); // process queue every 60s
+    }
+  } catch (err) {
+    console.warn('[SERVER] email worker failed:', err.message);
   }
 
   const httpServer = http.createServer(app);

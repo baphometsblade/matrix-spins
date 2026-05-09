@@ -726,6 +726,22 @@ router.post('/withdraw', authenticate, async (req, res) => {
             }).catch(function(){});
         }
 
+        // Withdrawal requested email (always — transactional, fire-and-forget)
+        try {
+            const userRow = await db.get('SELECT username, email FROM users WHERE id = ?', [req.user.id]);
+            if (userRow && userRow.email) {
+                const emailService = require('../services/email.service');
+                emailService.sendWithdrawalRequested(userRow.email, req.user.id, {
+                    username: userRow.username,
+                    amount: withdrawal,
+                    currency: config.CURRENCY,
+                    reference,
+                    paymentType,
+                    etaDays: (config.WITHDRAWAL_PROCESSING_DAYS || 3),
+                }).catch(e => console.warn('[Payment] withdrawal email failed:', e.message));
+            }
+        } catch (_) { /* non-fatal */ }
+
         res.json({
             message: otpRequired
                 ? `Withdrawal of $${withdrawal.toFixed(2)} submitted. Check your email for a verification code to confirm it, then admin review (${config.WITHDRAWAL_PROCESSING_DAYS + 1} days).`

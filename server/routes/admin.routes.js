@@ -860,7 +860,7 @@ router.post('/approve-withdrawal', async (req, res) => {
         if (!withdrawalId) return res.status(400).json({ error: 'withdrawalId is required' });
         const config = require('../config');
 
-        const wd = await db.get('SELECT id, user_id, amount, status, created_at, account_created_at FROM withdrawals WHERE id = ?', [withdrawalId]);
+        const wd = await db.get('SELECT id, user_id, amount, currency, payment_type, reference, status, created_at, account_created_at FROM withdrawals WHERE id = ?', [withdrawalId]);
         if (!wd) return res.status(404).json({ error: 'Withdrawal not found' });
         if (wd.status !== 'pending' && wd.status !== 'otp_verified') {
             return res.status(400).json({ error: `Withdrawal is already ${wd.status}` });
@@ -914,6 +914,22 @@ router.post('/approve-withdrawal', async (req, res) => {
         ).catch(function(_) { /* audit table may not exist in older envs */ });
 
         if (_notify) _notify.withdrawalProcessed(wd.user_id, wd.amount, 'approved').catch(function(){});
+
+        // Approval email (transactional, fire-and-forget)
+        try {
+            const u = await db.get('SELECT username, email FROM users WHERE id = ?', [wd.user_id]);
+            if (u && u.email) {
+                const emailService = require('../services/email.service');
+                emailService.sendWithdrawalApproved(u.email, wd.user_id, {
+                    username: u.username,
+                    amount: wd.amount,
+                    currency: wd.currency || 'AUD',
+                    reference: wd.reference,
+                    paymentType: wd.payment_type,
+                }).catch(e => console.warn('[Admin] approval email failed:', e.message));
+            }
+        } catch (_) {}
+
         res.json({ message: 'Withdrawal approved and ready for payout', withdrawalId, amount: wd.amount });
     } catch (err) {
         console.warn('[Admin] Approve withdrawal error:', err.message);
@@ -941,7 +957,7 @@ router.post('/reject-withdrawal', async (req, res) => {
         }
 
         // Safe to refund — the claim guarantees single-processing.
-        const wd = await db.get('SELECT id, user_id, amount FROM withdrawals WHERE id = ?', [withdrawalId]);
+        const wd = await db.get('SELECT id, user_id, amount, reference, payment_type, currency FROM withdrawals WHERE id = ?', [withdrawalId]);
         if (!wd) return res.status(404).json({ error: 'Withdrawal not found after claim' });
 
         const userBefore = await db.get('SELECT balance FROM users WHERE id = ?', [wd.user_id]);
@@ -961,6 +977,21 @@ router.post('/reject-withdrawal', async (req, res) => {
         ).catch(() => {});
 
         if (_notify) _notify.withdrawalProcessed(wd.user_id, wd.amount, 'rejected').catch(function(){});
+
+        // Rejection email (transactional, fire-and-forget)
+        try {
+            const u = await db.get('SELECT username, email FROM users WHERE id = ?', [wd.user_id]);
+            if (u && u.email) {
+                const emailService = require('../services/email.service');
+                emailService.sendWithdrawalRejected(u.email, wd.user_id, {
+                    username: u.username,
+                    amount: wd.amount,
+                    reference: wd.reference,
+                    reason: admin_note,
+                }).catch(e => console.warn('[Admin] reject email failed:', e.message));
+            }
+        } catch (_) {}
+
         res.json({ message: 'Withdrawal rejected and refunded', withdrawalId, amount: wd.amount, newBalance: balanceAfter });
     } catch (err) {
         console.warn('[Admin] Reject withdrawal error:', err.message);
