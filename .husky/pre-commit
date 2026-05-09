@@ -1,0 +1,20 @@
+# Lint changed JavaScript files only — full-tree lint runs in CI.
+CHANGED=$(git diff --cached --name-only --diff-filter=ACM | grep -E '^(server|scripts|api|shared|blockchain)/.*\.js$' || true)
+if [ -n "$CHANGED" ]; then
+    echo "[pre-commit] Linting:" $CHANGED
+    npx --no-install eslint $CHANGED || {
+        echo "[pre-commit] eslint failed — fix errors or run 'npm run lint:fix'"
+        exit 1
+    }
+fi
+
+# Quick test pass — unit tests only (full suite runs in CI)
+if [ -d tests/unit ]; then
+    echo "[pre-commit] Running unit tests…"
+    npx --no-install jest --runInBand --forceExit tests/unit --bail --silent || {
+        echo "[pre-commit] unit tests failed"
+        exit 1
+    }
+fi
+
+exit 0

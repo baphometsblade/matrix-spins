@@ -1,5 +1,11 @@
 node_modules/
 .env
+.env.local
+.env.development
+.env.production
+coverage/
+.eslintcache
+.husky/_/
 *.log
 *.log.gz
 logs/

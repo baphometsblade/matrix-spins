@@ -1,0 +1,65 @@
+name: Deploy
+
+on:
+  push:
+    branches: [master]
+  workflow_dispatch:
+
+# Only one deploy at a time, but never cancel an in-flight one
+concurrency:
+  group: deploy-master
+  cancel-in-progress: false
+
+jobs:
+  render:
+    name: Trigger Render deploy
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
+    steps:
+      - name: Hit Render deploy hook
+        env:
+          RENDER_DEPLOY_HOOK: ${{ secrets.RENDER_DEPLOY_HOOK }}
+        run: |
+          if [ -z "$RENDER_DEPLOY_HOOK" ]; then
+            echo "::warning::RENDER_DEPLOY_HOOK secret not set — skipping (Render auto-deploy via render.yaml will still run)."
+            exit 0
+          fi
+          echo "Triggering Render deploy hook…"
+          status=$(curl -fsS -o /tmp/resp.json -w "%{http_code}" -X POST "$RENDER_DEPLOY_HOOK" || echo "fail")
+          echo "Render response: $status"
+          cat /tmp/resp.json || true
+          if [ "$status" != "200" ] && [ "$status" != "201" ] && [ "$status" != "202" ]; then
+            exit 1
+          fi
+
+  smoke:
+    name: Post-deploy smoke
+    runs-on: ubuntu-latest
+    needs: render
+    if: always() && needs.render.result != 'failure'
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Wait for deploy to roll
+        run: sleep 60
+
+      - name: Probe production health
+        env:
+          MONITOR_TARGET_URL: ${{ vars.MONITOR_TARGET_URL || 'https://msaart.online' }}
+        run: |
+          set +e
+          for i in 1 2 3 4 5; do
+            echo "[probe] attempt $i for $MONITOR_TARGET_URL/api/health/ping"
+            code=$(curl -fsS -o /dev/null -w "%{http_code}" "$MONITOR_TARGET_URL/api/health/ping" || echo "000")
+            echo "[probe] http=$code"
+            if [ "$code" = "200" ]; then exit 0; fi
+            sleep 30
+          done
+          echo "::error::production health failed to return 200 after 5 attempts"
+          exit 1

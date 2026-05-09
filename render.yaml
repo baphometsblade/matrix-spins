@@ -1,27 +1,44 @@
+# ─────────────────────────────────────────────────────────────────────
+# Render.com deployment manifest
+# Docs: https://render.com/docs/blueprint-spec
+#
+# Auto-deploys on push to master. Health check uses the lightweight
+# /api/health/ping endpoint (no DB hit) so cold-start PG warmups don't
+# fail the deploy. Heavy readiness probe is /api/health/ready.
+# ─────────────────────────────────────────────────────────────────────
 services:
   - type: web
     name: matrix-spins
     runtime: node
     plan: free
+    region: oregon
+    branch: master
+    autoDeploy: true
     nodeVersion: "20"
-    buildCommand: npm install --omit=dev
+    buildCommand: npm ci --omit=dev --no-audit --no-fund && npm run build
     startCommand: node server/index.js
-    healthCheckPath: /api/health
+    healthCheckPath: /api/health/ping
     envVars:
       - key: NODE_ENV
         value: production
+      - key: PORT
+        value: "10000"
+      - key: LOG_LEVEL
+        value: info
 
       # ── Security (auto-generated unique values per deploy) ──
       - key: JWT_SECRET
         generateValue: true
       - key: ADMIN_PASSWORD
         generateValue: true
+      - key: ADMIN_API_KEY
+        generateValue: true
       - key: WEBHOOK_SECRET
         generateValue: true
 
       # ── Site origin (Cloudflare handles www → bare domain) ──
       - key: ALLOWED_ORIGIN
-        value: https://msaart.online
+        value: https://msaart.online,https://royal-slots-casino.vercel.app
 
       # ── Geo compliance (REQUIRED for real-money operation) ──
       # Whitelist of ISO country codes allowed to play. Without this,
@@ -48,25 +65,25 @@ services:
       # Set this manually in the Render dashboard with a real connection string:
       #   postgresql://user:pass@host:5432/dbname?sslmode=require
       # - key: DATABASE_URL
-      #   value: postgresql://...
+      #   sync: false
 
       # ── Stripe (REQUIRED for card deposits — set manually in dashboard) ──
       # - key: STRIPE_SECRET_KEY
-      #   value: sk_live_...
+      #   sync: false
       # - key: STRIPE_PUBLISHABLE_KEY
-      #   value: pk_live_...
+      #   sync: false
       # - key: STRIPE_WEBHOOK_SECRET
-      #   value: whsec_...
+      #   sync: false
 
       # ── Email / SMTP (recommended — enables password reset + transactional) ──
       # - key: SMTP_HOST
-      #   value: smtp.example.com
+      #   sync: false
       # - key: SMTP_PORT
       #   value: "587"
       # - key: SMTP_USER
-      #   value: noreply@msaart.online
+      #   sync: false
       # - key: SMTP_PASS
-      #   value: ...
+      #   sync: false
       # - key: ADMIN_EMAIL
       #   value: admin@msaart.online
 
@@ -74,6 +91,28 @@ services:
       - key: WITHDRAWAL_OTP_THRESHOLD
         value: "500"
 
+      # ── Rate limits (per minute) ──
+      - key: RL_AUTH
+        value: "5"
+      - key: RL_API
+        value: "100"
+      - key: RL_SPIN
+        value: "60"
+      - key: RL_ADMIN
+        value: "30"
+
+      # ── Performance / observability tuning ──
+      - key: SLOW_REQUEST_MS
+        value: "1500"
+      - key: SLOW_QUERY_MS
+        value: "500"
+      - key: HEAP_WATCH_INTERVAL_MS
+        value: "300000"
+      - key: HEAP_WATCH_GROWTH_MB
+        value: "50"
+
       # ── Optional: Sentry error monitoring ──
       # - key: SENTRY_DSN
-      #   value: https://...@sentry.io/...
+      #   sync: false
+      # - key: ALERT_WEBHOOK_URL
+      #   sync: false

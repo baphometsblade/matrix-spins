@@ -1,0 +1,66 @@
+# Version control
+.git
+.gitignore
+.gitattributes
+
+# Local env / secrets — NEVER bake into image
+.env
+.env.*
+!.env.example
+
+# Node
+node_modules
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.npm
+
+# Editors
+.vscode
+.idea
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+
+# Test artifacts
+coverage
+.nyc_output
+output
+*.test.js.snap
+
+# Local databases & runtime data (image starts fresh)
+casino.db
+casino.db-journal
+*.sqlite
+*.sqlite3
+data
+logs
+*.log
+
+# Build / cache
+.cache
+.parcel-cache
+.next
+.turbo
+
+# CI / docs that don't ship in the runtime image
+.github
+.husky
+docs
+*.md
+!README.md
+
+# Worktrees / Claude artifacts
+.claude
+.claude-*
+
+# OS / temp
+tmp
+temp
+*.tmp
+
+# Generated screenshots / videos
+*.png.tmp
+playwright-report
+test-results

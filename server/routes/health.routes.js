@@ -34,6 +34,64 @@ const BUILD_INFO = (() => {
 })();
 
 /**
+ * GET /api/health/ping — Lightweight liveness probe (no auth, no DB hit)
+ *
+ * Returns 200 immediately if the process is up. Used by:
+ *   - Render healthCheckPath
+ *   - Docker HEALTHCHECK
+ *   - Uptime monitors / load balancers
+ *
+ * Must NEVER touch the database or any I/O — a slow response here
+ * causes the load balancer to mark the instance unhealthy.
+ */
+router.get('/ping', (req, res) => {
+    res.json({
+        status: 'ok',
+        uptime: Math.floor(process.uptime()),
+        timestamp: new Date().toISOString(),
+    });
+});
+
+/**
+ * GET /api/health/ready — Readiness probe
+ *
+ * Verifies the server can actually serve traffic — checks DB, configured
+ * external services, and degraded-mode flag. Returns 503 when any
+ * critical dependency is unavailable so orchestrators can pull this
+ * instance out of rotation without killing it.
+ */
+router.get('/ready', async (req, res) => {
+    const checks = { db: 'unknown', degraded: false, stripe: 'not_configured', smtp: 'not_configured' };
+    let httpStatus = 200;
+    try {
+        const db = require('../database');
+        const t = Date.now();
+        const timeoutPromise = new Promise((_, reject) =>
+            setTimeout(() => reject(new Error('db ping timeout')), 3000));
+        await Promise.race([db.get('SELECT 1'), timeoutPromise]);
+        checks.db = { ok: true, responseMs: Date.now() - t };
+        checks.degraded = !!(db.isDegraded && db.isDegraded());
+        if (checks.degraded) {
+            checks.db.note = 'PG unreachable — running on SQLite fallback';
+            httpStatus = 503;
+        }
+    } catch (err) {
+        checks.db = { ok: false, error: err.message };
+        httpStatus = 503;
+    }
+
+    if (process.env.STRIPE_SECRET_KEY) checks.stripe = 'configured';
+    if (process.env.SMTP_HOST) checks.smtp = 'configured';
+
+    res.status(httpStatus).json({
+        status: httpStatus === 200 ? 'ready' : 'not_ready',
+        uptime: Math.floor(process.uptime()),
+        timestamp: new Date().toISOString(),
+        checks,
+    });
+});
+
+/**
  * GET /api/health â€” Public health check
  * Returns basic server status, uptime, and version
  */

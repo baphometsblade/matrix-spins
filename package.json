@@ -6,14 +6,23 @@
   "scripts": {
     "start": "node server/index.js",
     "dev": "node server/index.js",
-    "build": "echo 'No build step needed'",
+    "build": "node scripts/bundle-js.js || echo no-bundle-step",
+    "migrate": "node scripts/migrate.js",
+    "seed": "node scripts/seed.js",
+    "monitor": "node scripts/monitor.js",
+    "monitor:once": "node scripts/monitor.js --once",
+    "lint": "eslint --ext .js server/ scripts/ api/ shared/ blockchain/ --cache --no-error-on-unmatched-pattern",
+    "lint:fix": "eslint --ext .js server/ scripts/ api/ shared/ blockchain/ --fix --no-error-on-unmatched-pattern",
+    "lint:strict": "eslint --ext .js server/middleware/metrics.js server/utils/heap-watch.js server/utils/slow-query.js scripts/migrate.js scripts/seed.js scripts/monitor.js --max-warnings=0",
     "qa:regression": "node scripts/qa_regression.js",
     "qa:smoke": "node scripts/smoke-money-flow.js",
     "qa:rtp": "node scripts/verify-rtp.js",
     "test": "jest --runInBand --forceExit",
     "test:unit": "jest --runInBand --forceExit tests/unit",
     "test:integration": "jest --runInBand --forceExit tests/integration",
-    "test:watch": "jest --watch"
+    "test:coverage": "jest --runInBand --forceExit --coverage",
+    "test:watch": "jest --watch",
+    "prepare": "husky || echo husky-skipped"
   },
   "jest": {
     "testEnvironment": "node",
@@ -22,7 +31,20 @@
     ],
     "testTimeout": 30000,
     "verbose": true,
-    "clearMocks": true
+    "clearMocks": true,
+    "coverageDirectory": "coverage",
+    "coverageReporters": [
+      "text-summary",
+      "lcov",
+      "html"
+    ],
+    "collectCoverageFrom": [
+      "server/**/*.js",
+      "shared/**/*.js",
+      "blockchain/**/*.js",
+      "!server/index.js",
+      "!**/node_modules/**"
+    ]
   },
   "keywords": [
     "casino",
@@ -46,6 +68,7 @@
     "node-cron": "^3.0.3",
     "nodemailer": "^6.9.15",
     "pg": "^8.13.1",
+    "prom-client": "^15.1.3",
     "qrcode": "^1.5.4",
     "socket.io": "^4.8.3",
     "speakeasy": "^2.0.0",
@@ -63,6 +86,8 @@
   },
   "devDependencies": {
     "clean-css": "^5.3.3",
+    "eslint": "^8.57.0",
+    "husky": "^9.1.7",
     "jest": "^29.7.0",
     "supertest": "^7.0.0",
     "terser": "^5.46.2"

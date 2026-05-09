@@ -1,0 +1,62 @@
+{
+    "root": true,
+    "env": {
+        "node": true,
+        "es2022": true,
+        "jest": true,
+        "browser": false
+    },
+    "parserOptions": {
+        "ecmaVersion": 2022,
+        "sourceType": "script"
+    },
+    "extends": ["eslint:recommended"],
+    "ignorePatterns": [
+        "node_modules/",
+        "dist/",
+        "coverage/",
+        "output/",
+        "tools/",
+        "games/",
+        "blog/",
+        "categories/",
+        "admin/",
+        "*.min.js",
+        "sw.js",
+        "css/",
+        "img/",
+        "images/",
+        "assets/",
+        "tests/fixtures/"
+    ],
+    "rules": {
+        "no-unused-vars": ["warn", { "argsIgnorePattern": "^_", "varsIgnorePattern": "^_", "caughtErrorsIgnorePattern": "^_" }],
+        "no-empty": ["warn", { "allowEmptyCatch": true }],
+        "no-console": "off",
+        "no-prototype-builtins": "off",
+        "no-useless-escape": "warn",
+        "no-control-regex": "off",
+        "no-async-promise-executor": "warn",
+        "no-inner-declarations": "off",
+        "no-case-declarations": "off",
+        "no-redeclare": "warn",
+        "no-regex-spaces": "warn",
+        "no-undef": "warn",
+        "no-constant-condition": ["warn", { "checkLoops": false }]
+    },
+    "overrides": [
+        {
+            "files": ["js/**/*.js", "*.js"],
+            "excludedFiles": ["server/**", "scripts/**", "api/**", "shared/**", "blockchain/**", "tests/**"],
+            "env": { "browser": true, "node": false }
+        },
+        {
+            "files": ["scripts/**/*.js"],
+            "rules": { "no-process-exit": "off" }
+        },
+        {
+            "files": ["tests/**/*.js"],
+            "env": { "jest": true }
+        }
+    ]
+}
