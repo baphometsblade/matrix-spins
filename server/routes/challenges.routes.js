@@ -8,8 +8,8 @@ const db = require('../database');
 
 const router = express.Router();
 
-// Bootstrap claimed column (silently ignore if already exists)
-db.run("ALTER TABLE daily_challenges ADD COLUMN claimed INTEGER DEFAULT 0").catch(function(e) { if (e && !String(e.message || e).match(/already exists|duplicate column/i)) console.warn('[challenges] ALTER failed:', e.message || e); });
+// Bootstrap claimed column (silently ignore if already exists or table not yet created — service.init creates it lazily)
+db.run("ALTER TABLE daily_challenges ADD COLUMN claimed INTEGER DEFAULT 0").catch(function(e) { if (e && !String(e.message || e).match(/already exists|duplicate column|no such table/i)) console.warn('[challenges] ALTER failed:', e.message || e); });
 
 // GET /api/challenges — auth required, returns today's challenges + streak
 router.get('/', authenticate, async (req, res) => {

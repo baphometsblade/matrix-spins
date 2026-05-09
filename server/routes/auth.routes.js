@@ -15,6 +15,20 @@ function _authIsPg() { return typeof db.isPg === 'function' && db.isPg(); }
 function _authIdDef() { return _authIsPg() ? 'SERIAL PRIMARY KEY' : 'INTEGER PRIMARY KEY AUTOINCREMENT'; }
 function _authTsDef() { return _authIsPg() ? 'TIMESTAMPTZ DEFAULT NOW()' : "TEXT DEFAULT (datetime('now'))"; }
 
+// Idempotent migrations for stale DB files where the users table predates
+// columns referenced in newer queries. Each ALTER swallows duplicate-column
+// errors. Without these, login on an old casino.db throws "no such column".
+['role TEXT DEFAULT \'user\'',
+ 'referral_code TEXT',
+ 'email_verified INTEGER DEFAULT 0',
+ 'banned_at TEXT'].forEach(function(colDef) {
+    db.run('ALTER TABLE users ADD COLUMN ' + colDef).catch(function(e) {
+        if (e && !String(e.message || e).match(/duplicate column|already exists|no such table/i)) {
+            console.warn('[auth] users ALTER failed:', e.message || e);
+        }
+    });
+});
+
 // Dummy hash for constant-time auth when user not found (prevents timing attacks)
 const DUMMY_HASH = bcrypt.hashSync('dummy-password-never-matches', 13);
 

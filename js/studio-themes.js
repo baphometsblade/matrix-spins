@@ -18,7 +18,7 @@ const STUDIO_THEMES = {
   'golden-reels': {
     name: 'Golden Reels Studio',
     specialty: 'Fruit classics, retro',
-    logo: 'assets/studios/golden-reels-logo.png',
+    logo: 'assets/studio-logos/golden-reels.svg',
     googleFonts: "@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Lora:wght@400;600&family=Oswald:wght@400;700&display=swap');",
     colors: {
       primary: '#D4AF37',        // Gold
@@ -55,7 +55,7 @@ const STUDIO_THEMES = {
   'nebula-gaming': {
     name: 'Nebula Gaming',
     specialty: 'Space, sci-fi',
-    logo: 'assets/studios/nebula-gaming-logo.png',
+    logo: 'assets/studio-logos/nebula-gaming.svg',
     googleFonts: "@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Space+Mono:wght@400;700&display=swap');",
     colors: {
       primary: '#00F0FF',        // Neon cyan
@@ -92,7 +92,7 @@ const STUDIO_THEMES = {
   'mythic-forge': {
     name: 'Mythic Forge',
     specialty: 'Egypt, mythology, fantasy',
-    logo: 'assets/studios/mythic-forge-logo.png',
+    logo: 'assets/studio-logos/mythic-forge.svg',
     googleFonts: "@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Crimson+Text:wght@400;600&display=swap');",
     colors: {
       primary: '#50C878',        // Emerald green
@@ -129,7 +129,7 @@ const STUDIO_THEMES = {
   'wild-frontier': {
     name: 'Wild Frontier Games',
     specialty: 'Animals, wildlife, outback',
-    logo: 'assets/studios/wild-frontier-logo.png',
+    logo: 'assets/studio-logos/wild-frontier.svg',
     googleFonts: "@import url('https://fonts.googleapis.com/css2?family=Righteous:wght@400&family=Black+Ops+One:wght@400&family=Fredoka+One:wght@400&display=swap');",
     colors: {
       primary: '#D2691E',        // Chocolate orange
@@ -166,7 +166,7 @@ const STUDIO_THEMES = {
   'shadow-works': {
     name: 'Shadow Works',
     specialty: 'Horror, dark themes',
-    logo: 'assets/studios/shadow-works-logo.png',
+    logo: 'assets/studio-logos/shadow-works.svg',
     googleFonts: "@import url('https://fonts.googleapis.com/css2?family=Black+Ops+One:wght@400&family=Caveat:wght@700&display=swap');",
     colors: {
       primary: '#8B0000',        // Dark red
@@ -203,7 +203,7 @@ const STUDIO_THEMES = {
   'dragon-pearl': {
     name: 'Dragon Pearl Studios',
     specialty: 'Asian, luck, prosperity',
-    logo: 'assets/studios/dragon-pearl-logo.png',
+    logo: 'assets/studio-logos/dragon-pearl.svg',
     googleFonts: "@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Caveat:wght@400;700&display=swap');",
     colors: {
       primary: '#CC0000',        // Lucky red
@@ -240,7 +240,7 @@ const STUDIO_THEMES = {
   'ironclad-entertainment': {
     name: 'Ironclad Entertainment',
     specialty: 'Pirate, steampunk, western',
-    logo: 'assets/studios/ironclad-entertainment-logo.png',
+    logo: 'assets/studio-logos/ironclad.svg',
     googleFonts: "@import url('https://fonts.googleapis.com/css2?family=Righteous:wght@400&family=Fredoka+One:wght@400&display=swap');",
     colors: {
       primary: '#B5A642',        // Brass
@@ -277,7 +277,7 @@ const STUDIO_THEMES = {
   'cascade-labs': {
     name: 'Cascade Labs',
     specialty: 'Wildcard, experimental',
-    logo: 'assets/studios/cascade-labs-logo.png',
+    logo: 'assets/studio-logos/cascade-labs.svg',
     googleFonts: "@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap');",
     colors: {
       primary: '#9D4EDD',        // Purple
