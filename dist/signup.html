@@ -80,16 +80,28 @@
     alertEl.classList.add('visible');
   }
 
+  // Server requires `username` matching ^[a-zA-Z0-9_]+$ and 3-20 chars.
+  // The signup form collects firstName/lastName instead, so derive a unique
+  // username from the email local-part with a random suffix for collision avoidance.
+  function deriveUsername(email) {
+    const local = String(email || '').split('@')[0].toLowerCase().replace(/[^a-z0-9_]/g, '');
+    const suffix = Math.random().toString(36).slice(2, 6).replace(/[^a-z0-9]/g, '').padEnd(4, '0');
+    const base = (local || 'user').slice(0, 15);
+    return (base.length >= 3 ? base : 'user') + '_' + suffix;
+  }
+
   document.getElementById('f').addEventListener('submit', async (e) => {
     e.preventDefault();
     alertEl.classList.remove('visible');
     const submit = document.getElementById('submit');
     submit.disabled = true;
     try {
+      const email = document.getElementById('email').value.trim();
       await api.register({
+        username:  deriveUsername(email),
         firstName: document.getElementById('firstName').value.trim(),
         lastName:  document.getElementById('lastName').value.trim(),
-        email:     document.getElementById('email').value.trim(),
+        email:     email,
         password:  document.getElementById('password').value,
         dateOfBirth: document.getElementById('dob').value,
         countryCode: document.getElementById('country').value,
