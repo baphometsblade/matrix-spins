@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Two-Factor Authentication — Matrix Spins Casino</title>
+<meta name="description" content="Protect your account with TOTP-based two-factor authentication.">
+<link rel="canonical" href="https://msaart.online/2fa-settings.html">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="unified-ux.css">
+<style>
+  :root { --m-green:#00FF41; --m-bg:#04080a; --m-panel:#0c1318; --m-border:#1a2a31; --m-muted:#7da098; --m-danger:#ff4055; }
+  body { background:var(--m-bg); color:#e8f4ee; font-family:Inter,sans-serif; margin:0; padding:0; }
+  .topbar { display:flex; justify-content:space-between; align-items:center; padding:14px 24px; border-bottom:1px solid var(--m-border); background:#06100d; }
+  .topbar a.brand { color:var(--m-green); font-weight:800; font-size:18px; text-decoration:none; letter-spacing:0.5px; }
+  .topbar .actions a { color:#cfe7d7; margin-left:14px; text-decoration:none; font-size:14px; }
+  .wrap { max-width:680px; margin:48px auto; padding:0 20px; }
+  h1 { font-size:28px; margin:0 0 8px; }
+  .sub { color:var(--m-muted); margin:0 0 28px; }
+  .card { background:var(--m-panel); border:1px solid var(--m-border); border-radius:14px; padding:24px; margin-bottom:18px; }
+  .status-row { display:flex; align-items:center; gap:12px; }
+  .pill { padding:4px 12px; border-radius:999px; font-size:12px; font-weight:600; letter-spacing:0.4px; }
+  .pill.on { background:rgba(0,255,65,0.15); color:var(--m-green); border:1px solid rgba(0,255,65,0.3); }
+  .pill.off { background:rgba(255,64,85,0.15); color:#ff8896; border:1px solid rgba(255,64,85,0.3); }
+  .btn { background:var(--m-green); color:#04080a; border:0; border-radius:10px; padding:11px 18px; font-weight:700; cursor:pointer; font-size:14px; }
+  .btn.secondary { background:transparent; color:#cfe7d7; border:1px solid var(--m-border); }
+  .btn.danger { background:var(--m-danger); color:#fff; }
+  .btn:disabled { opacity:0.5; cursor:not-allowed; }
+  input[type=text] { background:#06100d; color:#fff; border:1px solid var(--m-border); border-radius:8px; padding:10px 12px; font-size:16px; width:160px; letter-spacing:3px; text-align:center; }
+  .qr { display:flex; justify-content:center; padding:16px; background:#fff; border-radius:12px; margin:14px 0; }
+  .qr img { max-width:240px; }
+  .secret { font-family:monospace; background:#06100d; padding:8px 12px; border-radius:8px; border:1px solid var(--m-border); display:inline-block; word-break:break-all; }
+  .codes { display:grid; grid-template-columns:repeat(2,1fr); gap:8px; margin:12px 0; font-family:monospace; }
+  .codes div { background:#06100d; padding:10px; border:1px solid var(--m-border); border-radius:6px; text-align:center; letter-spacing:1px; }
+  .alert { padding:12px 14px; border-radius:8px; margin:12px 0; font-size:14px; }
+  .alert.error { background:rgba(255,64,85,0.1); color:#ff8896; border:1px solid rgba(255,64,85,0.3); }
+  .alert.success { background:rgba(0,255,65,0.1); color:var(--m-green); border:1px solid rgba(0,255,65,0.3); }
+  .row { display:flex; gap:12px; align-items:center; flex-wrap:wrap; margin-top:14px; }
+  h3 { font-size:16px; margin:0 0 10px; }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <a class="brand" href="index.html">Matrix Spins</a>
+  <div class="actions">
+    <a href="account.html">Account</a>
+    <a href="profile.html">Profile</a>
+    <a href="index.html">Lobby</a>
+  </div>
+</div>
+
+<div class="wrap">
+  <h1>Two-Factor Authentication</h1>
+  <p class="sub">Add an extra layer of protection. Use Google Authenticator, Authy, 1Password, or any TOTP app.</p>
+
+  <div id="needAuth" class="card" style="display:none;">
+    <h3>Sign in required</h3>
+    <p class="sub">You need to be signed in to manage 2FA. <a href="login.html" style="color:var(--m-green);">Go to login</a>.</p>
+  </div>
+
+  <div id="statusCard" class="card" style="display:none;">
+    <div class="status-row">
+      <h3 style="margin:0;">2FA Status</h3>
+      <span id="statusPill" class="pill off">DISABLED</span>
+    </div>
+    <p class="sub" id="enrolledLine" style="margin:10px 0 0;"></p>
+    <div id="enabledControls" style="display:none;">
+      <p class="sub">Backup codes remaining: <span id="backupRemaining">0</span></p>
+      <div class="row">
+        <button id="regenerateBtn" class="btn secondary">Regenerate Backup Codes</button>
+        <button id="disableBtn" class="btn danger">Disable 2FA</button>
+      </div>
+    </div>
+    <div id="disabledControls" style="display:none;">
+      <div class="row">
+        <button id="setupBtn" class="btn">Enable 2FA</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="setupCard" class="card" style="display:none;">
+    <h3>Step 1 — Scan the QR code</h3>
+    <p class="sub">Open your authenticator app and scan this code, or enter the secret manually.</p>
+    <div class="qr"><img id="qrImg" alt="2FA QR code"></div>
+    <p>Manual secret: <span class="secret" id="secretText"></span></p>
+    <h3 style="margin-top:18px;">Step 2 — Enter the 6-digit code</h3>
+    <div class="row">
+      <input id="verifyCode" type="text" inputmode="numeric" maxlength="6" placeholder="000000">
+      <button id="verifyBtn" class="btn">Verify &amp; Enable</button>
+      <button id="cancelSetupBtn" class="btn secondary">Cancel</button>
+    </div>
+    <div id="setupAlert"></div>
+  </div>
+
+  <div id="backupCard" class="card" style="display:none;">
+    <h3>Save your backup codes</h3>
+    <p class="sub">Each code works once. Store them somewhere safe — they're your only way back in if you lose your authenticator.</p>
+    <div class="codes" id="backupCodes"></div>
+    <div class="row">
+      <button id="copyCodesBtn" class="btn secondary">Copy all</button>
+      <button id="acknowledgeBtn" class="btn">I've saved them</button>
+    </div>
+  </div>
+
+  <div id="disableCard" class="card" style="display:none;">
+    <h3>Disable 2FA</h3>
+    <p class="sub">Enter a fresh 6-digit code (or a backup code) to confirm.</p>
+    <div class="row">
+      <input id="disableCode" type="text" inputmode="text" maxlength="11" placeholder="123456 or BACKUP-CODE">
+      <button id="confirmDisableBtn" class="btn danger">Confirm Disable</button>
+      <button id="cancelDisableBtn" class="btn secondary">Cancel</button>
+    </div>
+    <div id="disableAlert"></div>
+  </div>
+
+  <div id="regenCard" class="card" style="display:none;">
+    <h3>Regenerate Backup Codes</h3>
+    <p class="sub">Old codes are invalidated immediately. Enter a current 6-digit code to confirm.</p>
+    <div class="row">
+      <input id="regenCode" type="text" inputmode="numeric" maxlength="6" placeholder="000000">
+      <button id="confirmRegenBtn" class="btn">Generate New Codes</button>
+      <button id="cancelRegenBtn" class="btn secondary">Cancel</button>
+    </div>
+    <div id="regenAlert"></div>
+  </div>
+</div>
+
+<script>
+  const token = localStorage.getItem('token');
+  const $ = (id) => document.getElementById(id);
+  function show(id, on) { $(id).style.display = on ? 'block' : 'none'; }
+  function alertMsg(elId, msg, kind) {
+    const host = $(elId);
+    host.textContent = '';
+    const div = document.createElement('div');
+    div.className = 'alert ' + kind;
+    div.textContent = msg;
+    host.appendChild(div);
+  }
+  async function api(path, opts) {
+    opts = opts || {};
+    opts.headers = Object.assign({ 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' }, opts.headers || {});
+    const r = await fetch(path, opts);
+    let body = null;
+    try { body = await r.json(); } catch (_) {}
+    if (!r.ok) throw new Error((body && body.error) || ('HTTP ' + r.status));
+    return body;
+  }
+
+  if (!token) {
+    show('needAuth', true);
+  } else {
+    refreshStatus();
+  }
+
+  async function refreshStatus() {
+    try {
+      const s = await api('/api/2fa/status');
+      show('statusCard', true);
+      const pill = $('statusPill');
+      if (s.enabled) {
+        pill.textContent = 'ENABLED';
+        pill.className = 'pill on';
+        $('enrolledLine').textContent = 'Enrolled: ' + (s.enrolledAt || '—');
+        $('backupRemaining').textContent = s.backupCodesRemaining || 0;
+        show('enabledControls', true);
+        show('disabledControls', false);
+      } else {
+        pill.textContent = 'DISABLED';
+        pill.className = 'pill off';
+        $('enrolledLine').textContent = '';
+        show('enabledControls', false);
+        show('disabledControls', true);
+      }
+    } catch (e) {
+      if (String(e.message).match(/auth/i)) {
+        show('needAuth', true);
+        show('statusCard', false);
+      } else {
+        alert('Failed to load: ' + e.message);
+      }
+    }
+  }
+
+  function renderBackupCodes(codes) {
+    const list = $('backupCodes');
+    list.textContent = '';
+    codes.forEach(c => {
+      const d = document.createElement('div');
+      d.textContent = c;
+      list.appendChild(d);
+    });
+  }
+
+  $('setupBtn').onclick = async () => {
+    try {
+      const r = await api('/api/2fa/setup', { method: 'POST' });
+      $('qrImg').src = r.qrDataUrl;
+      $('secretText').textContent = r.secret;
+      $('verifyCode').value = '';
+      show('setupCard', true);
+      $('setupAlert').textContent = '';
+    } catch (e) {
+      alert('Setup failed: ' + e.message);
+    }
+  };
+
+  $('cancelSetupBtn').onclick = () => show('setupCard', false);
+
+  $('verifyBtn').onclick = async () => {
+    const code = $('verifyCode').value.trim();
+    if (!/^\d{6}$/.test(code)) {
+      alertMsg('setupAlert', 'Enter a 6-digit code', 'error');
+      return;
+    }
+    try {
+      const r = await api('/api/2fa/verify', { method: 'POST', body: JSON.stringify({ code }) });
+      show('setupCard', false);
+      renderBackupCodes(r.backupCodes);
+      show('backupCard', true);
+      window._lastBackupCodes = r.backupCodes;
+    } catch (e) {
+      alertMsg('setupAlert', e.message, 'error');
+    }
+  };
+
+  $('copyCodesBtn').onclick = () => {
+    if (window._lastBackupCodes) {
+      navigator.clipboard.writeText(window._lastBackupCodes.join('\n')).then(() => {
+        $('copyCodesBtn').textContent = 'Copied!';
+        setTimeout(() => $('copyCodesBtn').textContent = 'Copy all', 1500);
+      });
+    }
+  };
+
+  $('acknowledgeBtn').onclick = () => {
+    show('backupCard', false);
+    refreshStatus();
+  };
+
+  $('disableBtn').onclick = () => {
+    $('disableCode').value = '';
+    $('disableAlert').textContent = '';
+    show('disableCard', true);
+  };
+  $('cancelDisableBtn').onclick = () => show('disableCard', false);
+
+  $('confirmDisableBtn').onclick = async () => {
+    const v = $('disableCode').value.trim();
+    if (!v) return alertMsg('disableAlert', 'Enter a code', 'error');
+    const body = /^\d{6}$/.test(v) ? { code: v } : { backupCode: v };
+    try {
+      await api('/api/2fa/disable', { method: 'POST', body: JSON.stringify(body) });
+      show('disableCard', false);
+      alertMsg('disableAlert', '2FA disabled', 'success');
+      refreshStatus();
+    } catch (e) {
+      alertMsg('disableAlert', e.message, 'error');
+    }
+  };
+
+  $('regenerateBtn').onclick = () => {
+    $('regenCode').value = '';
+    $('regenAlert').textContent = '';
+    show('regenCard', true);
+  };
+  $('cancelRegenBtn').onclick = () => show('regenCard', false);
+
+  $('confirmRegenBtn').onclick = async () => {
+    const code = $('regenCode').value.trim();
+    if (!/^\d{6}$/.test(code)) return alertMsg('regenAlert', 'Enter a 6-digit code', 'error');
+    try {
+      const r = await api('/api/2fa/regenerate-backup-codes', { method: 'POST', body: JSON.stringify({ code }) });
+      show('regenCard', false);
+      renderBackupCodes(r.backupCodes);
+      show('backupCard', true);
+      window._lastBackupCodes = r.backupCodes;
+    } catch (e) {
+      alertMsg('regenAlert', e.message, 'error');
+    }
+  };
+</script>
+</body>
+</html>

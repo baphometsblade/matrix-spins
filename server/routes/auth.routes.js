@@ -374,7 +374,7 @@ router.post('/login', async (req, res) => {
             return res.status(400).json({ error: 'Username and password are required' });
         }
 
-        const user = await db.get('SELECT id, username, email, password_hash, is_banned, email_verified, banned_at, role, balance, is_admin, referral_code FROM users WHERE username = ? OR email = ?', [username, username]);
+        const user = await db.get('SELECT id, username, email, password_hash, is_banned, email_verified, banned_at, role, balance, is_admin, referral_code, totp_enabled FROM users WHERE username = ? OR email = ?', [username, username]);
 
         // Check account lockout BEFORE bcrypt (saves CPU and prevents timing leaks)
         if (user) {
@@ -427,6 +427,26 @@ router.post('/login', async (req, res) => {
         // Reset idle-timeout state — clears any 'idleRejected' flag so the
         // fresh token can make requests without tripping the idle guard.
         try { require('../middleware/idle-timeout')._reset(user.id); } catch (_) {}
+
+        // ─── 2FA gate ────────────────────────────────────────────
+        // If TOTP is enrolled, do NOT issue the session JWT yet.
+        // Hand back a short-lived twofaToken; client must POST it to
+        // /api/2fa/login-verify with the 6-digit code (or backup code).
+        if (user.totp_enabled) {
+            try {
+                const twofa = require('./twofa.routes');
+                const twofaToken = await twofa.issuePendingToken(user.id);
+                audit('auth.login.2fa_pending', { userId: user.id, ip: req.ip, requestId: req.id }).catch(() => {});
+                return res.json({
+                    needs2FA: true,
+                    twofaToken,
+                    expiresIn: 300,
+                });
+            } catch (twofaErr) {
+                logger.error('2FA pending issue failed — falling back to denying login', { error: twofaErr.message });
+                return res.status(500).json({ error: '2FA verification temporarily unavailable. Try again.' });
+            }
+        }
 
         const token = jwt.sign({ userId: user.id }, config.JWT_SECRET, { expiresIn: config.JWT_EXPIRES_IN });
 

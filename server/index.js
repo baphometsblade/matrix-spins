@@ -264,6 +264,34 @@ app.use('/api/balance',          degradedModeGuard);
 app.use('/api/crypto',           degradedModeGuard);
 app.use('/api/withdrawal-enhance', degradedModeGuard);
 
+// ── KYC enforcement on money endpoints ─────────────────────
+// Lazy-resolves so kyc.routes module loads after DB init (its migrations
+// would no-op otherwise and the column wouldn't be created).
+const _kycCache = {};
+function _kycMw(name) {
+  return function(req, res, next) {
+    if (!_kycCache.loaded) {
+      try {
+        _kycCache.mod = require('./routes/kyc.routes');
+        _kycCache.loaded = true;
+      } catch (err) {
+        logger.warn('KYC enforcement load failed — passing through', { error: err.message });
+        _kycCache.loaded = true;
+        _kycCache.mod = null;
+      }
+    }
+    if (!_kycCache.mod || typeof _kycCache.mod[name] !== 'function') return next();
+    return _kycCache.mod[name](req, res, next);
+  };
+}
+// Withdrawals: BLOCKED unless KYC tier allows (basic+)
+app.use('/api/payment/withdraw',   _kycMw('enforceWithdrawalKyc'));
+app.use('/api/withdrawal-enhance', _kycMw('enforceWithdrawalKyc'));
+app.use('/api/crypto/withdraw',    _kycMw('enforceWithdrawalKyc'));
+// Deposits: cap by tier (unverified $500, basic $5k, full unlimited)
+app.use('/api/payment/deposit',         _kycMw('enforceDepositCap'));
+app.use('/api/payment/create-checkout', _kycMw('enforceDepositCap'));
+
 // ── Safe Route Loader (deferred — runs after initDatabase) ─
 // Routes' fire-and-forget table bootstraps need a live DB connection.
 // Mounting them at module-load time produces noisy errors and broken tables.
@@ -369,6 +397,15 @@ mount('/api/rakeback',      './routes/rakeback.routes',      'rakeback');
 mount('/api/subscription',  './routes/subscription.routes',  'subscription');
 mount('/api/battle-pass',   './routes/battle-pass.routes',   'battle-pass');
 mount('/api/battlepass',    './routes/battle-pass.routes',   'battlepass-alias');
+
+// Identity / 2FA / KYC / Social
+mount('/api/2fa',            './routes/twofa.routes',         '2fa (TOTP)');
+mount('/api/kyc',            './routes/kyc.routes',           'kyc');
+mount('/api/admin/kyc',      './routes/admin-kyc.routes',     'admin-kyc');
+mount('/api/profile',        './routes/profile.routes',       'profile');
+mount('/api/friends',        './routes/friends.routes',       'friends');
+mount('/api/activity-feed',  './routes/activity-feed.routes', 'activity-feed');
+mount('/api/user-search',    './routes/user-search.routes',   'user-search');
 
 // Engagement systems
 mount('/api/vip',           './routes/vip.routes',           'vip-loyalty');

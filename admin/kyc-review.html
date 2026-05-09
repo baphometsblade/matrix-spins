@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>KYC Review — Admin</title>
+<meta name="robots" content="noindex,nofollow">
+<style>
+  :root { --m-green:#00FF41; --m-bg:#04080a; --m-panel:#0c1318; --m-border:#1a2a31; --m-muted:#7da098; --m-danger:#ff4055; --m-amber:#FFB000; }
+  body { background:var(--m-bg); color:#e8f4ee; font-family:system-ui,sans-serif; margin:0; padding:0; }
+  .topbar { display:flex; justify-content:space-between; align-items:center; padding:14px 24px; border-bottom:1px solid var(--m-border); background:#06100d; }
+  .topbar a.brand { color:var(--m-green); font-weight:800; font-size:18px; text-decoration:none; }
+  .wrap { max-width:1200px; margin:24px auto; padding:0 20px; }
+  h1 { font-size:24px; margin:0 0 8px; }
+  .sub { color:var(--m-muted); margin:0 0 18px; }
+  .layout { display:grid; grid-template-columns:340px 1fr; gap:18px; }
+  .card { background:var(--m-panel); border:1px solid var(--m-border); border-radius:12px; padding:18px; }
+  table { width:100%; border-collapse:collapse; }
+  th, td { text-align:left; padding:10px 8px; border-bottom:1px solid var(--m-border); font-size:13px; }
+  th { color:var(--m-muted); font-size:11px; text-transform:uppercase; letter-spacing:0.5px; }
+  tr.queue-row { cursor:pointer; }
+  tr.queue-row:hover { background:#0f1a20; }
+  tr.queue-row.active { background:#103024; }
+  .pill { padding:3px 8px; border-radius:999px; font-size:10px; font-weight:600; letter-spacing:0.5px; text-transform:uppercase; }
+  .pill.pending { background:rgba(255,176,0,0.15); color:var(--m-amber); }
+  .pill.approved { background:rgba(0,255,65,0.15); color:var(--m-green); }
+  .pill.rejected { background:rgba(255,64,85,0.15); color:#ff8896; }
+  .btn { background:var(--m-green); color:#04080a; border:0; border-radius:8px; padding:8px 12px; font-weight:700; cursor:pointer; font-size:13px; text-decoration:none; display:inline-block; }
+  .btn.danger { background:var(--m-danger); color:#fff; }
+  .btn.secondary { background:transparent; color:#cfe7d7; border:1px solid var(--m-border); }
+  .btn:disabled { opacity:0.5; cursor:not-allowed; }
+  textarea { background:#06100d; color:#fff; border:1px solid var(--m-border); border-radius:8px; padding:8px 10px; width:100%; box-sizing:border-box; font-family:inherit; font-size:13px; min-height:60px; resize:vertical; }
+  .doc-card { border:1px solid var(--m-border); border-radius:10px; padding:12px; margin-bottom:10px; }
+  .row { display:flex; gap:8px; align-items:center; flex-wrap:wrap; margin-top:8px; }
+  .empty { color:var(--m-muted); padding:20px; text-align:center; }
+  @media (max-width: 900px) { .layout { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <a class="brand" href="/admin/">Admin</a>
+  <div><a href="/admin.html" style="color:#cfe7d7;text-decoration:none;font-size:14px;">Dashboard</a></div>
+</div>
+
+<div class="wrap">
+  <h1>KYC Review</h1>
+  <p class="sub">Pending verification submissions. Click a row to inspect documents.</p>
+
+  <div id="needAuth" class="card" style="display:none;">
+    <p>Admin sign-in required. <a href="/login.html" style="color:var(--m-green);">Log in</a> as an admin to review KYC.</p>
+  </div>
+
+  <div class="layout" id="layoutBox" style="display:none;">
+    <div class="card">
+      <h3 style="margin:0 0 10px;font-size:14px;">Queue</h3>
+      <table>
+        <thead><tr><th>User</th><th>Docs</th><th>Submitted</th></tr></thead>
+        <tbody id="queueBody"></tbody>
+      </table>
+      <p id="queueEmpty" class="empty" style="display:none;">No pending submissions.</p>
+    </div>
+    <div class="card" id="detailCard">
+      <p class="empty">Select a user from the queue to review.</p>
+    </div>
+  </div>
+</div>
+
+<script>
+  const token = localStorage.getItem('token');
+  const $ = (id) => document.getElementById(id);
+
+  async function api(path, opts) {
+    opts = opts || {};
+    opts.headers = Object.assign({ 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' }, opts.headers || {});
+    const r = await fetch(path, opts);
+    let body = null;
+    try { body = await r.json(); } catch (_) {}
+    if (!r.ok) throw new Error((body && body.error) || ('HTTP ' + r.status));
+    return body;
+  }
+
+  function el(tag, opts) {
+    const e = document.createElement(tag);
+    if (opts) {
+      if (opts.text != null) e.textContent = opts.text;
+      if (opts.cls) e.className = opts.cls;
+      if (opts.href) e.href = opts.href;
+      if (opts.target) e.target = opts.target;
+      if (opts.style) Object.assign(e.style, opts.style);
+    }
+    return e;
+  }
+
+  if (!token) { $('needAuth').style.display = 'block'; }
+  else { $('layoutBox').style.display = 'grid'; loadQueue(); }
+
+  async function loadQueue() {
+    try {
+      const r = await api('/api/admin/kyc/queue');
+      const list = r.queue || [];
+      const body = $('queueBody');
+      body.textContent = '';
+      if (!list.length) { $('queueEmpty').style.display = 'block'; return; }
+      $('queueEmpty').style.display = 'none';
+      list.forEach(u => {
+        const tr = document.createElement('tr');
+        tr.className = 'queue-row';
+        tr.dataset.userId = u.user_id;
+
+        const tdUser = document.createElement('td');
+        const strong = el('strong', { text: u.username });
+        tdUser.appendChild(strong);
+        tdUser.appendChild(document.createElement('br'));
+        const sm = el('span', { text: u.email || '', style: { color: 'var(--m-muted)', fontSize: '11px' } });
+        tdUser.appendChild(sm);
+        tr.appendChild(tdUser);
+
+        tr.appendChild(el('td', { text: String(u.doc_count) }));
+        tr.appendChild(el('td', { text: u.kyc_submitted_at ? String(u.kyc_submitted_at).slice(0, 16) : '—' }));
+        tr.onclick = () => loadDetail(u.user_id, tr);
+        body.appendChild(tr);
+      });
+    } catch (e) {
+      if (String(e.message).match(/Admin|forbidden|auth/i)) { $('needAuth').style.display = 'block'; $('layoutBox').style.display = 'none'; }
+      else alert('Queue failed: ' + e.message);
+    }
+  }
+
+  async function loadDetail(userId, rowEl) {
+    document.querySelectorAll('.queue-row').forEach(r => r.classList.remove('active'));
+    if (rowEl) rowEl.classList.add('active');
+    try {
+      const data = await api('/api/admin/kyc/user/' + userId);
+      const u = data.user;
+      const docs = data.documents || [];
+      const c = $('detailCard');
+      c.textContent = '';
+
+      const h = document.createElement('h3');
+      h.style.margin = '0 0 6px';
+      h.appendChild(document.createTextNode(u.username + ' '));
+      const stPill = el('span', { cls: 'pill ' + (u.kyc_status || 'pending'), text: u.kyc_status || 'pending' });
+      h.appendChild(stPill);
+      c.appendChild(h);
+
+      const meta1 = el('p', { cls: 'sub', text: 'Email: ' + (u.email || '—') + ' · Country: ' + (u.country || '—') + ' · DOB: ' + (u.date_of_birth || '—'), style: { margin: '0 0 8px' } });
+      const meta2 = el('p', { cls: 'sub', text: 'Email verified: ' + (u.email_verified ? '✓' : '✗') + ' · Phone verified: ' + (u.phone_verified ? '✓' : '✗'), style: { margin: '0 0 8px' } });
+      c.appendChild(meta1);
+      c.appendChild(meta2);
+
+      const docList = document.createElement('div');
+      docs.forEach(d => {
+        const card = el('div', { cls: 'doc-card' });
+
+        const titleStrong = el('strong', { text: d.doc_type.replace(/_/g, ' ') });
+        card.appendChild(titleStrong);
+        card.appendChild(document.createTextNode(' '));
+        card.appendChild(el('span', { cls: 'pill ' + d.status, text: d.status }));
+        card.appendChild(document.createElement('br'));
+
+        const meta = el('span', { cls: 'sub', style: { fontSize: '12px' },
+          text: (d.file_name || '—') + ' · ' + (d.mime_type || '') + ' · ' + ((d.file_size || 0) / 1024).toFixed(1) + ' KB · sha256:' + (d.sha256 || '').slice(0, 12) + '…' });
+        card.appendChild(meta);
+
+        const row = el('div', { cls: 'row' });
+        const openLink = el('a', { cls: 'btn secondary', text: 'Open file', href: '/api/admin/kyc/document/' + d.id + '/file', target: '_blank' });
+        openLink.rel = 'noreferrer';
+        row.appendChild(openLink);
+
+        if (d.status === 'pending') {
+          const ap = document.createElement('button');
+          ap.className = 'btn'; ap.textContent = 'Approve doc';
+          ap.onclick = () => docDecide('approve', d.id, userId);
+          const rj = document.createElement('button');
+          rj.className = 'btn danger'; rj.textContent = 'Reject doc';
+          rj.onclick = () => docDecide('reject', d.id, userId);
+          row.appendChild(ap);
+          row.appendChild(rj);
+        }
+        card.appendChild(row);
+
+        if (d.admin_notes) {
+          const note = el('p', { cls: 'sub', text: 'Note: ' + d.admin_notes, style: { marginTop: '6px', fontSize: '12px' } });
+          card.appendChild(note);
+        }
+
+        docList.appendChild(card);
+      });
+      c.appendChild(docList);
+
+      const decisionBox = document.createElement('div');
+      decisionBox.style.marginTop = '14px';
+      decisionBox.style.borderTop = '1px solid var(--m-border)';
+      decisionBox.style.paddingTop = '14px';
+      const dh = el('h4', { text: 'User-level decision', style: { margin: '0 0 6px', fontSize: '13px' } });
+      decisionBox.appendChild(dh);
+      const ta = document.createElement('textarea');
+      ta.id = 'userNotes';
+      ta.placeholder = 'Optional admin note (visible to user)...';
+      decisionBox.appendChild(ta);
+      const drow = el('div', { cls: 'row' });
+      const apAll = document.createElement('button');
+      apAll.className = 'btn'; apAll.textContent = 'Approve all + mark FULL';
+      apAll.onclick = () => userDecide('approve', userId);
+      const rjAll = document.createElement('button');
+      rjAll.className = 'btn danger'; rjAll.textContent = 'Reject all';
+      rjAll.onclick = () => userDecide('reject', userId);
+      drow.appendChild(apAll);
+      drow.appendChild(rjAll);
+      decisionBox.appendChild(drow);
+      c.appendChild(decisionBox);
+    } catch (e) {
+      alert('Load failed: ' + e.message);
+    }
+  }
+
+  async function docDecide(action, id, userId) {
+    const notes = prompt('Optional note:') || '';
+    try {
+      await api('/api/admin/kyc/document/' + id + '/' + action, { method: 'POST', body: JSON.stringify({ notes }) });
+      loadDetail(userId);
+    } catch (e) { alert(e.message); }
+  }
+
+  async function userDecide(action, userId) {
+    const notes = ($('userNotes') && $('userNotes').value) || '';
+    if (!confirm('Confirm ' + action + ' for this user?')) return;
+    try {
+      await api('/api/admin/kyc/user/' + userId + '/' + action, { method: 'POST', body: JSON.stringify({ notes }) });
+      loadQueue();
+      const c = $('detailCard');
+      c.textContent = '';
+      c.appendChild(el('p', { cls: 'empty', text: 'Decision recorded. Select another user.' }));
+    } catch (e) { alert(e.message); }
+  }
+</script>
+</body>
+</html>

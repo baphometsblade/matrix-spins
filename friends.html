@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Friends — Matrix Spins Casino</title>
+<meta name="description" content="Find players, send friend requests, and see your friends' activity.">
+<link rel="canonical" href="https://msaart.online/friends.html">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="unified-ux.css">
+<style>
+  :root { --m-green:#00FF41; --m-bg:#04080a; --m-panel:#0c1318; --m-border:#1a2a31; --m-muted:#7da098; --m-danger:#ff4055; }
+  body { background:var(--m-bg); color:#e8f4ee; font-family:Inter,sans-serif; margin:0; padding:0; }
+  .topbar { display:flex; justify-content:space-between; align-items:center; padding:14px 24px; border-bottom:1px solid var(--m-border); background:#06100d; }
+  .topbar a.brand { color:var(--m-green); font-weight:800; font-size:18px; text-decoration:none; }
+  .topbar .actions a { color:#cfe7d7; margin-left:14px; text-decoration:none; font-size:14px; }
+  .wrap { max-width:920px; margin:36px auto; padding:0 20px; }
+  h1 { font-size:28px; margin:0 0 8px; }
+  .sub { color:var(--m-muted); margin:0 0 22px; }
+  .card { background:var(--m-panel); border:1px solid var(--m-border); border-radius:14px; padding:22px; margin-bottom:18px; }
+  h3 { font-size:16px; margin:0 0 12px; }
+  .row { display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
+  input[type=text] { background:#06100d; color:#fff; border:1px solid var(--m-border); border-radius:8px; padding:10px 12px; font-size:14px; flex:1; min-width:220px; }
+  .btn { background:var(--m-green); color:#04080a; border:0; border-radius:10px; padding:9px 14px; font-weight:700; cursor:pointer; font-size:13px; text-decoration:none; display:inline-block; }
+  .btn.secondary { background:transparent; color:#cfe7d7; border:1px solid var(--m-border); }
+  .btn.danger { background:var(--m-danger); color:#fff; }
+  .friend-row { display:flex; align-items:center; gap:12px; padding:10px 0; border-bottom:1px solid var(--m-border); }
+  .friend-row:last-child { border-bottom:0; }
+  .av { width:42px; height:42px; border-radius:50%; background:#06100d; border:1px solid var(--m-border); display:flex; align-items:center; justify-content:center; font-size:22px; flex-shrink:0; }
+  .info { flex:1; min-width:0; }
+  .info .name { font-weight:600; font-size:15px; }
+  .info .uname { color:var(--m-muted); font-size:12px; }
+  .actions-r { display:flex; gap:6px; flex-shrink:0; flex-wrap:wrap; }
+  .empty { color:var(--m-muted); padding:14px 0; }
+  .tabs { display:flex; gap:6px; margin-bottom:14px; }
+  .tab { background:#06100d; color:#cfe7d7; border:1px solid var(--m-border); border-radius:10px; padding:8px 14px; cursor:pointer; font-size:13px; }
+  .tab.active { background:var(--m-green); color:#04080a; border-color:var(--m-green); }
+  .alert { padding:12px 14px; border-radius:8px; margin:12px 0; font-size:14px; }
+  .alert.error { background:rgba(255,64,85,0.1); color:#ff8896; border:1px solid rgba(255,64,85,0.3); }
+  .alert.success { background:rgba(0,255,65,0.1); color:var(--m-green); border:1px solid rgba(0,255,65,0.3); }
+  .pill-vip { background:rgba(255,176,0,0.15); color:#FFB000; border:1px solid rgba(255,176,0,0.3); padding:2px 8px; border-radius:999px; font-size:10px; margin-left:6px; }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <a class="brand" href="index.html">Matrix Spins</a>
+  <div class="actions">
+    <a href="account.html">Account</a>
+    <a href="profile.html">Profile</a>
+    <a href="leaderboard.html">Leaderboard</a>
+  </div>
+</div>
+
+<div class="wrap">
+  <h1>Friends</h1>
+  <p class="sub">Find other players, send requests, and follow your friends' activity.</p>
+
+  <div id="needAuth" class="card" style="display:none;">
+    <h3>Sign in required</h3>
+    <p class="sub">Sign in to use friends. <a href="login.html" style="color:var(--m-green);">Go to login</a>.</p>
+  </div>
+
+  <div id="searchCard" class="card" style="display:none;">
+    <h3>Find Players</h3>
+    <div class="row">
+      <input type="text" id="searchInput" placeholder="Search by username (≥ 2 chars)…" maxlength="30">
+      <button id="searchBtn" class="btn">Search</button>
+    </div>
+    <div id="searchResults" style="margin-top:12px;"></div>
+  </div>
+
+  <div id="tabsCard" class="card" style="display:none;">
+    <div class="tabs">
+      <button class="tab active" data-tab="friends">Friends</button>
+      <button class="tab" data-tab="incoming">Requests <span id="reqCountIn"></span></button>
+      <button class="tab" data-tab="outgoing">Sent</button>
+    </div>
+    <div id="panelFriends"></div>
+    <div id="panelIncoming" style="display:none;"></div>
+    <div id="panelOutgoing" style="display:none;"></div>
+  </div>
+
+  <div id="alertBox"></div>
+</div>
+
+<script>
+  const token = localStorage.getItem('token');
+  const $ = (id) => document.getElementById(id);
+  function show(id, on) { $(id).style.display = on ? 'block' : 'none'; }
+  function alertMsg(msg, kind) {
+    const host = $('alertBox');
+    host.textContent = '';
+    const div = document.createElement('div');
+    div.className = 'alert ' + kind;
+    div.textContent = msg;
+    host.appendChild(div);
+    setTimeout(() => { host.textContent = ''; }, 4000);
+  }
+  async function api(path, opts) {
+    opts = opts || {};
+    opts.headers = Object.assign({ 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' }, opts.headers || {});
+    const r = await fetch(path, opts);
+    let body = null;
+    try { body = await r.json(); } catch (_) {}
+    if (!r.ok) throw new Error((body && body.error) || ('HTTP ' + r.status));
+    return body;
+  }
+
+  let _avatarMap = {};
+  fetch('/api/profile/avatars').then(r => r.json()).then(d => {
+    (d.avatars || []).forEach(a => _avatarMap[a.id] = a);
+  });
+
+  function avatarEl(avatarId) {
+    const div = document.createElement('div');
+    div.className = 'av';
+    const a = _avatarMap[avatarId];
+    if (a) {
+      div.style.background = a.color + '22';
+      div.style.borderColor = a.color + '66';
+      div.textContent = a.emoji;
+    } else {
+      div.textContent = '?';
+    }
+    return div;
+  }
+
+  function nameEl(displayName, username, isVip) {
+    const info = document.createElement('div');
+    info.className = 'info';
+    const n = document.createElement('div');
+    n.className = 'name';
+    n.textContent = displayName || username;
+    if (isVip) {
+      const vip = document.createElement('span');
+      vip.className = 'pill-vip';
+      vip.textContent = 'VIP';
+      n.appendChild(vip);
+    }
+    const u = document.createElement('div');
+    u.className = 'uname';
+    u.textContent = '@' + username;
+    info.appendChild(n);
+    info.appendChild(u);
+    return info;
+  }
+
+  function actionsEl(buttons) {
+    const a = document.createElement('div');
+    a.className = 'actions-r';
+    buttons.forEach(b => a.appendChild(b));
+    return a;
+  }
+
+  function makeBtn(label, cls, onClick) {
+    const b = document.createElement('button');
+    b.className = 'btn ' + (cls || '');
+    b.textContent = label;
+    b.onclick = onClick;
+    return b;
+  }
+  function makeLink(label, href, cls) {
+    const a = document.createElement('a');
+    a.className = 'btn ' + (cls || '');
+    a.href = href;
+    a.textContent = label;
+    return a;
+  }
+
+  if (!token) { show('needAuth', true); } else { show('searchCard', true); show('tabsCard', true); loadAll(); }
+
+  async function loadAll() { await Promise.all([loadFriends(), loadRequests()]); }
+
+  async function loadFriends() {
+    try {
+      const r = await api('/api/friends');
+      const list = r.friends || [];
+      const p = $('panelFriends');
+      p.textContent = '';
+      if (!list.length) {
+        const e = document.createElement('div');
+        e.className = 'empty';
+        e.textContent = 'No friends yet — search above to add some.';
+        p.appendChild(e);
+        return;
+      }
+      list.forEach(f => {
+        const row = document.createElement('div');
+        row.className = 'friend-row';
+        row.appendChild(avatarEl(f.profile_avatar_id));
+        row.appendChild(nameEl(f.display_name, f.username, f.subscription_active));
+        row.appendChild(actionsEl([
+          makeLink('View', 'profile-view.html?u=' + encodeURIComponent(f.username), 'secondary'),
+          makeBtn('Remove', 'danger', async () => {
+            if (!confirm('Remove this friend?')) return;
+            try { await api('/api/friends/' + f.friend_id, { method: 'DELETE' }); loadFriends(); }
+            catch (e) { alertMsg('Failed: ' + e.message, 'error'); }
+          }),
+        ]));
+        p.appendChild(row);
+      });
+    } catch (_) {
+      const p = $('panelFriends');
+      p.textContent = '';
+      const e = document.createElement('div');
+      e.className = 'empty';
+      e.textContent = 'Failed to load friends';
+      p.appendChild(e);
+    }
+  }
+
+  async function loadRequests() {
+    try {
+      const r = await api('/api/friends/requests');
+      const inc = r.incoming || [];
+      const out = r.outgoing || [];
+      $('reqCountIn').textContent = inc.length ? '(' + inc.length + ')' : '';
+
+      const pIn = $('panelIncoming');
+      pIn.textContent = '';
+      if (!inc.length) {
+        const e = document.createElement('div'); e.className = 'empty'; e.textContent = 'No incoming requests.';
+        pIn.appendChild(e);
+      } else {
+        inc.forEach(req => {
+          const row = document.createElement('div');
+          row.className = 'friend-row';
+          row.appendChild(avatarEl(req.profile_avatar_id));
+          row.appendChild(nameEl(req.display_name, req.username, false));
+          row.appendChild(actionsEl([
+            makeBtn('Accept', '', () => act('accept', req.id)),
+            makeBtn('Decline', 'secondary', () => act('decline', req.id)),
+          ]));
+          pIn.appendChild(row);
+        });
+      }
+
+      const pOut = $('panelOutgoing');
+      pOut.textContent = '';
+      if (!out.length) {
+        const e = document.createElement('div'); e.className = 'empty'; e.textContent = 'No pending sent requests.';
+        pOut.appendChild(e);
+      } else {
+        out.forEach(req => {
+          const row = document.createElement('div');
+          row.className = 'friend-row';
+          row.appendChild(avatarEl(req.profile_avatar_id));
+          row.appendChild(nameEl(req.display_name, req.username, false));
+          row.appendChild(actionsEl([
+            makeBtn('Cancel', 'secondary', () => act('cancel', req.id)),
+          ]));
+          pOut.appendChild(row);
+        });
+      }
+    } catch (_) { /* leave defaults */ }
+  }
+
+  async function act(kind, id) {
+    try {
+      await api('/api/friends/' + kind, { method: 'POST', body: JSON.stringify({ requestId: parseInt(id, 10) }) });
+      loadAll();
+    } catch (e) { alertMsg(e.message, 'error'); }
+  }
+
+  $('searchBtn').onclick = doSearch;
+  $('searchInput').addEventListener('keydown', e => { if (e.key === 'Enter') doSearch(); });
+
+  async function doSearch() {
+    const q = $('searchInput').value.trim();
+    if (q.length < 2) return alertMsg('Enter at least 2 characters', 'error');
+    try {
+      const r = await api('/api/user-search?q=' + encodeURIComponent(q));
+      const list = r.results || [];
+      const out = $('searchResults');
+      out.textContent = '';
+      if (!list.length) {
+        const e = document.createElement('div'); e.className = 'empty'; e.textContent = 'No matches';
+        out.appendChild(e);
+        return;
+      }
+      list.forEach(u => {
+        const row = document.createElement('div');
+        row.className = 'friend-row';
+        row.appendChild(avatarEl(u.avatarId));
+        row.appendChild(nameEl(u.displayName, u.username, u.isVip));
+        row.appendChild(actionsEl([
+          makeLink('View', 'profile-view.html?u=' + encodeURIComponent(u.username), 'secondary'),
+          makeBtn('Add Friend', '', async () => {
+            try {
+              await api('/api/friends/request', { method: 'POST', body: JSON.stringify({ username: u.username }) });
+              alertMsg('Friend request sent to ' + u.username, 'success');
+              loadRequests();
+            } catch (e) { alertMsg(e.message, 'error'); }
+          }),
+        ]));
+        out.appendChild(row);
+      });
+    } catch (e) { alertMsg(e.message, 'error'); }
+  }
+
+  document.querySelectorAll('.tab').forEach(t => {
+    t.onclick = () => {
+      document.querySelectorAll('.tab').forEach(x => x.classList.remove('active'));
+      t.classList.add('active');
+      const k = t.dataset.tab;
+      show('panelFriends', k === 'friends');
+      show('panelIncoming', k === 'incoming');
+      show('panelOutgoing', k === 'outgoing');
+    };
+  });
+</script>
+</body>
+</html>

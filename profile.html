@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>My Profile — Matrix Spins Casino</title>
+<meta name="description" content="Customize your public profile, avatar, and privacy settings.">
+<link rel="canonical" href="https://msaart.online/profile.html">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="unified-ux.css">
+<style>
+  :root { --m-green:#00FF41; --m-bg:#04080a; --m-panel:#0c1318; --m-border:#1a2a31; --m-muted:#7da098; --m-amber:#FFB000; }
+  body { background:var(--m-bg); color:#e8f4ee; font-family:Inter,sans-serif; margin:0; padding:0; }
+  .topbar { display:flex; justify-content:space-between; align-items:center; padding:14px 24px; border-bottom:1px solid var(--m-border); background:#06100d; }
+  .topbar a.brand { color:var(--m-green); font-weight:800; font-size:18px; text-decoration:none; }
+  .topbar .actions a { color:#cfe7d7; margin-left:14px; text-decoration:none; font-size:14px; }
+  .wrap { max-width:880px; margin:36px auto; padding:0 20px; }
+  h1 { font-size:32px; margin:0 0 8px; }
+  .sub { color:var(--m-muted); margin:0 0 24px; }
+  .card { background:var(--m-panel); border:1px solid var(--m-border); border-radius:14px; padding:22px; margin-bottom:18px; }
+  .hero { display:flex; gap:18px; align-items:center; }
+  .avatar-big { width:96px; height:96px; border-radius:50%; background:linear-gradient(135deg,#0a3a1f,#062014); display:flex; align-items:center; justify-content:center; font-size:48px; border:2px solid var(--m-border); flex-shrink:0; }
+  .name-block h1 { margin-bottom:2px; }
+  .pill { padding:4px 10px; border-radius:999px; font-size:11px; font-weight:600; letter-spacing:0.5px; text-transform:uppercase; display:inline-block; margin-right:6px; }
+  .pill.vip { background:rgba(255,176,0,0.15); color:var(--m-amber); border:1px solid rgba(255,176,0,0.3); }
+  .stats { display:grid; grid-template-columns:repeat(auto-fit,minmax(140px,1fr)); gap:10px; margin-top:14px; }
+  .stat { background:#06100d; border:1px solid var(--m-border); border-radius:10px; padding:14px; }
+  .stat .v { color:var(--m-green); font-size:22px; font-weight:700; }
+  .stat .l { color:var(--m-muted); font-size:12px; text-transform:uppercase; letter-spacing:0.5px; }
+  .btn { background:var(--m-green); color:#04080a; border:0; border-radius:10px; padding:11px 18px; font-weight:700; cursor:pointer; font-size:14px; }
+  .btn.secondary { background:transparent; color:#cfe7d7; border:1px solid var(--m-border); }
+  input[type=text], textarea, select { background:#06100d; color:#fff; border:1px solid var(--m-border); border-radius:8px; padding:10px 12px; font-size:14px; width:100%; box-sizing:border-box; font-family:inherit; }
+  textarea { resize:vertical; min-height:70px; }
+  label { color:var(--m-muted); font-size:13px; display:block; margin:10px 0 4px; }
+  .avatar-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(72px,1fr)); gap:8px; margin-top:10px; }
+  .av-pick { background:#06100d; border:2px solid transparent; border-radius:50%; padding:0; cursor:pointer; display:flex; flex-direction:column; align-items:center; justify-content:center; aspect-ratio:1/1; transition:.15s; }
+  .av-pick:hover { border-color:var(--m-border); }
+  .av-pick.sel { border-color:var(--m-green); box-shadow:0 0 0 2px rgba(0,255,65,0.2); }
+  .av-pick .em { font-size:30px; line-height:1; }
+  .av-pick .nm { font-size:9px; color:var(--m-muted); margin-top:2px; }
+  .row { display:flex; gap:12px; align-items:center; flex-wrap:wrap; margin-top:12px; }
+  .alert { padding:12px 14px; border-radius:8px; margin:12px 0; font-size:14px; }
+  .alert.success { background:rgba(0,255,65,0.1); color:var(--m-green); border:1px solid rgba(0,255,65,0.3); }
+  .alert.error { background:rgba(255,64,85,0.1); color:#ff8896; border:1px solid rgba(255,64,85,0.3); }
+  h3 { font-size:16px; margin:0 0 10px; }
+  .toggle { display:flex; align-items:center; gap:10px; padding:8px 0; }
+  .achievements { display:grid; grid-template-columns:repeat(auto-fill,minmax(110px,1fr)); gap:8px; margin-top:10px; }
+  .ach { background:#06100d; border:1px solid var(--m-border); border-radius:10px; padding:10px; text-align:center; font-size:12px; }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <a class="brand" href="index.html">Matrix Spins</a>
+  <div class="actions">
+    <a href="account.html">Account</a>
+    <a href="friends.html">Friends</a>
+    <a href="leaderboard.html">Leaderboard</a>
+    <a href="2fa-settings.html">2FA</a>
+  </div>
+</div>
+
+<div class="wrap">
+  <div id="needAuth" class="card" style="display:none;">
+    <h3>Sign in required</h3>
+    <p class="sub">You need to be signed in to view your profile. <a href="login.html" style="color:var(--m-green);">Go to login</a>.</p>
+  </div>
+
+  <div id="profileCard" class="card" style="display:none;">
+    <div class="hero">
+      <div class="avatar-big" id="heroAvatar">?</div>
+      <div class="name-block">
+        <h1 id="heroName">Player</h1>
+        <p class="sub" id="heroBio" style="margin:0;"></p>
+        <div style="margin-top:6px;">
+          <span class="pill vip" id="vipPill" style="display:none;">VIP</span>
+          <span class="sub" id="joinedLine"></span>
+        </div>
+      </div>
+    </div>
+
+    <div class="stats" id="statsBlock"></div>
+  </div>
+
+  <div id="achCard" class="card" style="display:none;">
+    <h3>Achievements</h3>
+    <div class="achievements" id="achList"></div>
+  </div>
+
+  <div id="editCard" class="card" style="display:none;">
+    <h3>Edit Profile</h3>
+
+    <label for="displayName">Display name (max 30 chars)</label>
+    <input id="displayName" type="text" maxlength="30" placeholder="Player name shown publicly">
+
+    <label for="bio">Bio (max 280 chars)</label>
+    <textarea id="bio" maxlength="280" placeholder="Tell other players about yourself..."></textarea>
+
+    <label>Avatar</label>
+    <div id="avatarGrid" class="avatar-grid"></div>
+
+    <h3 style="margin-top:18px;">Privacy</h3>
+    <label for="visibility">Profile visibility</label>
+    <select id="visibility">
+      <option value="public">Public — anyone can see</option>
+      <option value="friends">Friends only</option>
+      <option value="private">Private — only me</option>
+    </select>
+
+    <div class="toggle">
+      <input type="checkbox" id="showLb"> <label for="showLb" style="margin:0;">Show me on leaderboards</label>
+    </div>
+    <div class="toggle">
+      <input type="checkbox" id="showAct"> <label for="showAct" style="margin:0;">Publish my big wins to the activity feed</label>
+    </div>
+
+    <div class="row">
+      <button id="saveBtn" class="btn">Save Changes</button>
+    </div>
+    <div id="saveAlert"></div>
+  </div>
+</div>
+
+<script>
+  const token = localStorage.getItem('token');
+  const $ = (id) => document.getElementById(id);
+  function show(id, on) { $(id).style.display = on ? 'block' : 'none'; }
+  // Build a styled alert via DOM (no innerHTML with untrusted strings)
+  function alertMsg(elId, msg, kind) {
+    const host = $(elId);
+    host.textContent = '';
+    const div = document.createElement('div');
+    div.className = 'alert ' + kind;
+    div.textContent = msg;
+    host.appendChild(div);
+  }
+  async function api(path, opts) {
+    opts = opts || {};
+    opts.headers = Object.assign({ 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' }, opts.headers || {});
+    const r = await fetch(path, opts);
+    let body = null;
+    try { body = await r.json(); } catch (_) {}
+    if (!r.ok) throw new Error((body && body.error) || ('HTTP ' + r.status));
+    return body;
+  }
+
+  let _avatars = [];
+  let _selectedAvatar = null;
+
+  if (!token) { show('needAuth', true); } else { init(); }
+
+  async function init() {
+    try {
+      const av = await fetch('/api/profile/avatars').then(r => r.json());
+      _avatars = av.avatars || [];
+
+      const me = await api('/api/profile/me');
+      show('profileCard', true);
+      show('editCard', true);
+      const p = me.profile;
+      $('heroName').textContent = p.displayName;
+      $('heroBio').textContent = p.bio || '';
+      $('joinedLine').textContent = p.joinedAt ? 'Member since ' + String(p.joinedAt).slice(0, 10) : '';
+      if (p.isVip) $('vipPill').style.display = 'inline-block';
+      const av0 = p.avatar;
+      if (av0) {
+        $('heroAvatar').textContent = av0.emoji;
+        $('heroAvatar').style.background = 'linear-gradient(135deg,' + av0.color + '33,' + av0.color + '11)';
+        $('heroAvatar').style.borderColor = av0.color + '66';
+      }
+      // Stats — values are numeric so safe; render with DOM.
+      const s = me.stats;
+      const grid = $('statsBlock');
+      grid.textContent = '';
+      const stats = [
+        { l: 'Total Spins', v: (s.totalSpins || 0).toLocaleString() },
+        { l: 'Total Wagered', v: '$' + (s.totalWagered || 0).toFixed(2) },
+        { l: 'Biggest Win', v: '$' + (s.biggestWin || 0).toFixed(2) },
+        { l: 'Highest Multiplier', v: (s.biggestMultiplier || 0).toFixed(1) + 'x' },
+      ];
+      stats.forEach(st => {
+        const d = document.createElement('div');
+        d.className = 'stat';
+        const v = document.createElement('div'); v.className = 'v'; v.textContent = st.v;
+        const l = document.createElement('div'); l.className = 'l'; l.textContent = st.l;
+        d.appendChild(v); d.appendChild(l);
+        grid.appendChild(d);
+      });
+
+      // Achievements
+      if (me.achievements && me.achievements.length) {
+        show('achCard', true);
+        const list = $('achList');
+        list.textContent = '';
+        me.achievements.forEach(a => {
+          const d = document.createElement('div');
+          d.className = 'ach';
+          d.textContent = a.achievement_id;
+          list.appendChild(d);
+        });
+      }
+
+      // Edit form
+      $('displayName').value = p.displayName === p.username ? '' : (p.displayName || '');
+      $('bio').value = p.bio || '';
+      $('visibility').value = me.privacy.visibility || 'public';
+      $('showLb').checked = !!me.privacy.showOnLeaderboard;
+      $('showAct').checked = !!me.privacy.showActivityFeed;
+      _selectedAvatar = p.avatarId || null;
+      renderAvatarGrid();
+    } catch (e) {
+      if (String(e.message).match(/auth/i)) show('needAuth', true);
+      else alert('Failed to load: ' + e.message);
+    }
+  }
+
+  function renderAvatarGrid() {
+    const g = $('avatarGrid');
+    g.textContent = '';
+    _avatars.forEach(a => {
+      const b = document.createElement('button');
+      b.className = 'av-pick' + (a.id === _selectedAvatar ? ' sel' : '');
+      b.style.background = a.color + '15';
+      const em = document.createElement('span'); em.className = 'em'; em.textContent = a.emoji;
+      const nm = document.createElement('span'); nm.className = 'nm'; nm.textContent = a.name;
+      b.appendChild(em); b.appendChild(nm);
+      b.onclick = (e) => { e.preventDefault(); _selectedAvatar = a.id; renderAvatarGrid(); };
+      g.appendChild(b);
+    });
+  }
+
+  $('saveBtn').onclick = async () => {
+    try {
+      await api('/api/profile/me', {
+        method: 'PUT',
+        body: JSON.stringify({
+          displayName: $('displayName').value || null,
+          bio: $('bio').value || null,
+          avatarId: _selectedAvatar || null,
+          profileVisibility: $('visibility').value,
+          showOnLeaderboard: $('showLb').checked,
+          showActivityFeed: $('showAct').checked,
+        }),
+      });
+      alertMsg('saveAlert', 'Profile saved', 'success');
+      init();
+    } catch (e) {
+      alertMsg('saveAlert', e.message, 'error');
+    }
+  };
+</script>
+</body>
+</html>

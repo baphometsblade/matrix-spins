@@ -5,7 +5,12 @@ const db = require('../database');
 // GET /api/leaderboard — returns available leaderboard endpoints
 router.get('/', (req, res) => {
     res.json({
-        endpoints: ['/api/leaderboard/bigwins', '/api/leaderboard/weekly', '/api/leaderboard/richlist', '/api/leaderboard/recent-wins', '/api/leaderboard/top']
+        endpoints: [
+            '/api/leaderboard/bigwins', '/api/leaderboard/weekly', '/api/leaderboard/richlist',
+            '/api/leaderboard/recent-wins', '/api/leaderboard/top',
+            '/api/leaderboard/daily', '/api/leaderboard/monthly', '/api/leaderboard/all-time',
+            '/api/leaderboard/biggest-multiplier'
+        ]
     });
 });
 
@@ -13,6 +18,131 @@ function maskUsername(username) {
     if (!username || username.length <= 3) return username.slice(0, 1) + '***';
     return username.slice(0, 2) + '***' + username.slice(-1);
 }
+
+// Public-name picker — respects show_on_leaderboard + display_name; falls back to mask.
+function publicName(row) {
+    if (row.show_on_leaderboard === 0) return null;
+    return row.display_name || maskUsername(row.username);
+}
+
+// Period bounds — UTC, ISO datetime string for SQL comparison.
+function periodStart(period) {
+    const now = new Date();
+    let d = new Date(now);
+    if (period === 'daily') {
+        d.setUTCHours(0, 0, 0, 0);
+    } else if (period === 'weekly') {
+        const dayOfWeek = now.getUTCDay();
+        const daysToMonday = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
+        d.setUTCDate(d.getUTCDate() - daysToMonday);
+        d.setUTCHours(0, 0, 0, 0);
+    } else if (period === 'monthly') {
+        d = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1));
+    } else {
+        return null; // all-time
+    }
+    return d.toISOString().slice(0, 19).replace('T', ' ');
+}
+
+const VALID_METRICS = new Set(['biggest_win', 'most_wagered', 'highest_multiplier']);
+
+async function fetchLeaderboard(period, metric, limit) {
+    const start = periodStart(period);
+    const params = [];
+    let where = `u.is_banned = 0 AND COALESCE(u.show_on_leaderboard, 1) = 1
+                 AND COALESCE(u.profile_visibility, 'public') != 'private'`;
+    if (start) {
+        where += ' AND s.created_at >= ?';
+        params.push(start);
+    }
+
+    let select, orderBy;
+    if (metric === 'biggest_win') {
+        select = `s.user_id, u.username, u.display_name, u.show_on_leaderboard,
+                  s.bet_amount, s.win_amount, s.game_id, s.created_at,
+                  CAST(CASE WHEN s.bet_amount > 0 THEN s.win_amount / s.bet_amount ELSE 0 END AS REAL) as multiplier`;
+        orderBy = 's.win_amount DESC';
+    } else if (metric === 'highest_multiplier') {
+        select = `s.user_id, u.username, u.display_name, u.show_on_leaderboard,
+                  s.bet_amount, s.win_amount, s.game_id, s.created_at,
+                  CAST(CASE WHEN s.bet_amount > 0 THEN s.win_amount / s.bet_amount ELSE 0 END AS REAL) as multiplier`;
+        orderBy = 'multiplier DESC';
+        where += ' AND s.bet_amount > 0 AND s.win_amount > 0';
+    } else {
+        // most_wagered → aggregated
+        const aggParams = params.slice();
+        const sql = `SELECT s.user_id, u.username, u.display_name, u.show_on_leaderboard,
+                            SUM(s.bet_amount) as total_wagered,
+                            COUNT(*) as spin_count,
+                            MAX(s.win_amount) as biggest_win
+                     FROM spins s JOIN users u ON u.id = s.user_id
+                     WHERE ${where}
+                     GROUP BY s.user_id, u.username, u.display_name, u.show_on_leaderboard
+                     ORDER BY total_wagered DESC
+                     LIMIT ?`;
+        aggParams.push(limit);
+        const rows = await db.all(sql, aggParams);
+        return rows.map((r, i) => ({
+            rank: i + 1,
+            displayName: publicName(r),
+            totalWagered: Number(r.total_wagered) || 0,
+            spinCount: Number(r.spin_count) || 0,
+            biggestWin: Number(r.biggest_win) || 0,
+        })).filter(e => e.displayName);
+    }
+
+    params.push(limit);
+    const rows = await db.all(
+        `SELECT ${select}
+         FROM spins s JOIN users u ON u.id = s.user_id
+         WHERE ${where}
+         ORDER BY ${orderBy}
+         LIMIT ?`,
+        params
+    );
+    return rows.map((r, i) => ({
+        rank: i + 1,
+        displayName: publicName(r),
+        gameId: r.game_id,
+        betAmount: Number(r.bet_amount) || 0,
+        winAmount: Number(r.win_amount) || 0,
+        multiplier: Number(r.multiplier) || 0,
+        date: r.created_at ? String(r.created_at).slice(0, 10) : '',
+    })).filter(e => e.displayName);
+}
+
+// GET /api/leaderboard/daily?metric=biggest_win|most_wagered|highest_multiplier
+function periodHandler(period) {
+    return async (req, res) => {
+        try {
+            const metric = String(req.query.metric || 'biggest_win').toLowerCase();
+            if (!VALID_METRICS.has(metric)) return res.status(400).json({ error: 'Invalid metric' });
+            const limit = Math.min(parseInt(req.query.limit, 10) || 25, 100);
+            const entries = await fetchLeaderboard(period, metric, limit);
+            res.json({ period, metric, entries });
+        } catch (err) {
+            res.status(500).json({ error: 'Failed to load leaderboard' });
+        }
+    };
+}
+
+router.get('/daily',    periodHandler('daily'));
+router.get('/monthly',  periodHandler('monthly'));
+router.get('/all-time', periodHandler('all_time'));
+
+// GET /api/leaderboard/biggest-multiplier — alias for highest_multiplier all-time
+router.get('/biggest-multiplier', async (req, res) => {
+    try {
+        const period = String(req.query.period || 'all_time').toLowerCase();
+        const limit = Math.min(parseInt(req.query.limit, 10) || 25, 100);
+        const validPeriods = new Set(['daily', 'weekly', 'monthly', 'all_time']);
+        if (!validPeriods.has(period)) return res.status(400).json({ error: 'Invalid period' });
+        const entries = await fetchLeaderboard(period, 'highest_multiplier', limit);
+        res.json({ period, metric: 'highest_multiplier', entries });
+    } catch (err) {
+        res.status(500).json({ error: 'Failed to load leaderboard' });
+    }
+});
 
 // GET /api/leaderboard/bigwins — top 20 all-time biggest wins by win_amount
 router.get('/bigwins', async (req, res) => {

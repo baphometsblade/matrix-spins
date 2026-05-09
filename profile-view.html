@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Player Profile — Matrix Spins Casino</title>
+<meta name="robots" content="noindex,nofollow">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="unified-ux.css">
+<style>
+  :root { --m-green:#00FF41; --m-bg:#04080a; --m-panel:#0c1318; --m-border:#1a2a31; --m-muted:#7da098; --m-amber:#FFB000; }
+  body { background:var(--m-bg); color:#e8f4ee; font-family:Inter,sans-serif; margin:0; padding:0; }
+  .topbar { display:flex; justify-content:space-between; align-items:center; padding:14px 24px; border-bottom:1px solid var(--m-border); background:#06100d; }
+  .topbar a.brand { color:var(--m-green); font-weight:800; font-size:18px; text-decoration:none; }
+  .topbar .actions a { color:#cfe7d7; margin-left:14px; text-decoration:none; font-size:14px; }
+  .wrap { max-width:780px; margin:36px auto; padding:0 20px; }
+  .card { background:var(--m-panel); border:1px solid var(--m-border); border-radius:14px; padding:22px; margin-bottom:18px; }
+  .hero { display:flex; gap:18px; align-items:center; }
+  .avatar-big { width:96px; height:96px; border-radius:50%; background:linear-gradient(135deg,#0a3a1f,#062014); display:flex; align-items:center; justify-content:center; font-size:48px; border:2px solid var(--m-border); flex-shrink:0; }
+  h1 { font-size:28px; margin:0 0 4px; }
+  .sub { color:var(--m-muted); margin:0; }
+  .pill-vip { background:rgba(255,176,0,0.15); color:var(--m-amber); border:1px solid rgba(255,176,0,0.3); padding:2px 10px; border-radius:999px; font-size:11px; font-weight:600; }
+  .stats { display:grid; grid-template-columns:repeat(auto-fit,minmax(140px,1fr)); gap:10px; margin-top:14px; }
+  .stat { background:#06100d; border:1px solid var(--m-border); border-radius:10px; padding:14px; }
+  .stat .v { color:var(--m-green); font-size:22px; font-weight:700; }
+  .stat .l { color:var(--m-muted); font-size:12px; text-transform:uppercase; letter-spacing:0.5px; }
+  .btn { background:var(--m-green); color:#04080a; border:0; border-radius:10px; padding:11px 18px; font-weight:700; cursor:pointer; font-size:14px; text-decoration:none; display:inline-block; }
+  .btn.secondary { background:transparent; color:#cfe7d7; border:1px solid var(--m-border); }
+  .row { display:flex; gap:8px; margin-top:14px; flex-wrap:wrap; }
+  .err { color:#ff8896; }
+  h3 { font-size:16px; margin:0 0 10px; }
+  .achievements { display:grid; grid-template-columns:repeat(auto-fill,minmax(110px,1fr)); gap:8px; margin-top:10px; }
+  .ach { background:#06100d; border:1px solid var(--m-border); border-radius:10px; padding:10px; text-align:center; font-size:12px; }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <a class="brand" href="index.html">Matrix Spins</a>
+  <div class="actions">
+    <a href="friends.html">Friends</a>
+    <a href="leaderboard.html">Leaderboard</a>
+  </div>
+</div>
+
+<div class="wrap">
+  <div id="loadingCard" class="card">Loading…</div>
+  <div id="errorCard" class="card" style="display:none;">
+    <h3>Profile Unavailable</h3>
+    <p id="errorMsg" class="err sub"></p>
+  </div>
+  <div id="profileCard" class="card" style="display:none;">
+    <div class="hero">
+      <div class="avatar-big" id="heroAvatar">?</div>
+      <div>
+        <h1 id="heroName">Player</h1>
+        <p class="sub" id="heroBio"></p>
+        <div style="margin-top:6px;">
+          <span class="pill-vip" id="vipPill" style="display:none;">VIP</span>
+          <span class="sub" id="joinedLine" style="margin-left:6px;"></span>
+        </div>
+      </div>
+    </div>
+    <div class="stats" id="statsBlock"></div>
+    <div class="row" id="actionRow"></div>
+  </div>
+  <div id="achCard" class="card" style="display:none;">
+    <h3>Achievements</h3>
+    <div class="achievements" id="achList"></div>
+  </div>
+</div>
+
+<script>
+  const token = localStorage.getItem('token');
+  const $ = (id) => document.getElementById(id);
+  function show(id, on) { $(id).style.display = on ? 'block' : 'none'; }
+  const params = new URLSearchParams(location.search);
+  const username = params.get('u');
+
+  async function api(path, opts) {
+    opts = opts || {};
+    opts.headers = Object.assign({}, opts.headers || {});
+    if (token) opts.headers['Authorization'] = 'Bearer ' + token;
+    if (opts.body) opts.headers['Content-Type'] = 'application/json';
+    const r = await fetch(path, opts);
+    let body = null;
+    try { body = await r.json(); } catch (_) {}
+    if (!r.ok) throw new Error((body && body.error) || ('HTTP ' + r.status));
+    return body;
+  }
+
+  if (!username) {
+    show('loadingCard', false);
+    show('errorCard', true);
+    $('errorMsg').textContent = 'No username specified.';
+  } else {
+    load();
+  }
+
+  async function load() {
+    try {
+      const data = await api('/api/profile/' + encodeURIComponent(username));
+      show('loadingCard', false);
+      show('profileCard', true);
+      const p = data.profile;
+      $('heroName').textContent = p.displayName;
+      $('heroBio').textContent = p.bio || '';
+      $('joinedLine').textContent = p.joinedAt ? 'Member since ' + String(p.joinedAt).slice(0, 10) : '';
+      if (p.isVip) $('vipPill').style.display = 'inline-block';
+      if (p.avatar) {
+        $('heroAvatar').textContent = p.avatar.emoji;
+        $('heroAvatar').style.background = 'linear-gradient(135deg,' + p.avatar.color + '33,' + p.avatar.color + '11)';
+        $('heroAvatar').style.borderColor = p.avatar.color + '66';
+      }
+      const s = data.stats || {};
+      const grid = $('statsBlock');
+      grid.textContent = '';
+      [
+        { l: 'Total Spins', v: (s.totalSpins || 0).toLocaleString() },
+        { l: 'Total Wagered', v: '$' + (s.totalWagered || 0).toFixed(2) },
+        { l: 'Biggest Win', v: '$' + (s.biggestWin || 0).toFixed(2) },
+        { l: 'Highest Multiplier', v: (s.biggestMultiplier || 0).toFixed(1) + 'x' },
+      ].forEach(st => {
+        const d = document.createElement('div');
+        d.className = 'stat';
+        const v = document.createElement('div'); v.className = 'v'; v.textContent = st.v;
+        const l = document.createElement('div'); l.className = 'l'; l.textContent = st.l;
+        d.appendChild(v); d.appendChild(l);
+        grid.appendChild(d);
+      });
+      if (data.achievements && data.achievements.length) {
+        show('achCard', true);
+        const list = $('achList');
+        list.textContent = '';
+        data.achievements.forEach(a => {
+          const d = document.createElement('div');
+          d.className = 'ach';
+          d.textContent = a.achievement_id;
+          list.appendChild(d);
+        });
+      }
+      const row = $('actionRow');
+      row.textContent = '';
+      if (data.isSelf) {
+        const a = document.createElement('a');
+        a.className = 'btn'; a.href = 'profile.html'; a.textContent = 'Edit My Profile';
+        row.appendChild(a);
+      } else if (token) {
+        const b = document.createElement('button');
+        b.className = 'btn'; b.textContent = 'Add Friend';
+        b.onclick = async () => {
+          try {
+            await api('/api/friends/request', { method: 'POST', body: JSON.stringify({ username: p.username }) });
+            b.textContent = 'Request Sent';
+            b.disabled = true;
+          } catch (e) { alert(e.message); }
+        };
+        row.appendChild(b);
+      }
+    } catch (e) {
+      show('loadingCard', false);
+      show('errorCard', true);
+      $('errorMsg').textContent = e.message || 'Profile not found';
+    }
+  }
+</script>
+</body>
+</html>

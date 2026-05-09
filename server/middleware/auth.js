@@ -58,7 +58,7 @@ async function authenticate(req, res, next) {
 
     try {
         const payload = jwt.verify(token, config.JWT_SECRET, { algorithms: ['HS256'] });
-        const user = await db.get('SELECT id, username, email, balance, is_admin, is_banned, password_changed_at FROM users WHERE id = ?', [payload.userId]);
+        const user = await db.get('SELECT id, username, email, balance, is_admin, is_banned, password_changed_at, totp_enabled FROM users WHERE id = ?', [payload.userId]);
         if (!user) {
             return res.status(401).json({ error: 'User not found' });
         }
@@ -97,7 +97,7 @@ async function optionalAuth(req, res, next) {
     }
     try {
         const payload = jwt.verify(token, config.JWT_SECRET, { algorithms: ['HS256'] });
-        const user = await db.get('SELECT id, username, email, balance, is_admin, is_banned, password_changed_at FROM users WHERE id = ?', [payload.userId]);
+        const user = await db.get('SELECT id, username, email, balance, is_admin, is_banned, password_changed_at, totp_enabled FROM users WHERE id = ?', [payload.userId]);
         if (user && !user.is_banned) {
             if (!user.password_changed_at || !payload.iat || payload.iat >= user.password_changed_at) {
                 req.user = user;
@@ -118,4 +118,16 @@ function requireAdmin(req, res, next) {
     next();
 }
 
-module.exports = { authenticate, optionalAuth, requireAdmin, blacklistToken, isBlacklisted };
+// Force admins to enroll 2FA — applied AFTER requireAdmin on privileged routes.
+// Allow-listed paths let admins reach the 2FA setup screen without being locked out.
+function requireAdmin2FA(req, res, next) {
+    if (!req.user) return res.status(401).json({ error: 'Authentication required' });
+    if (!req.user.is_admin) return next(); // not admin — no extra requirement
+    if (req.user.totp_enabled) return next();
+    return res.status(403).json({
+        error: 'Admin accounts must enable 2FA before performing this action.',
+        setup2FARequired: true,
+    });
+}
+
+module.exports = { authenticate, optionalAuth, requireAdmin, requireAdmin2FA, blacklistToken, isBlacklisted };
