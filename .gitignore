@@ -25,3 +25,6 @@ casino.db
 # Runtime state (created by admin dashboard maintenance toggle)
 server/data/maintenance.json
 .claude/worktrees/
+
+# Serena MCP server's local cache + project config
+.serena/
