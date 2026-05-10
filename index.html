@@ -8,7 +8,7 @@
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <title>Matrix Spins Casino — Premium Online Slots | 100 Games from 8 Studios</title>
-    <meta name="description" content="Play 100 premium slot games from 8 world-class studios. 100% first deposit match up to $500. Provably fair, instant payouts, no download.">
+    <meta name="description" content="Play 100 premium slot games from 8 world-class studios. 100% first deposit match up to $500 (45× wagering). Provably fair, 2FA-protected withdrawals, no download.">
     <meta name="theme-color" content="#D4A853">
     <meta property="og:title" content="Matrix Spins Casino — Premium Online Slots">
     <meta property="og:description" content="100 premium slot games from 8 studios. 100% first deposit match up to $500. Play now.">
@@ -1137,7 +1137,7 @@
                         <span id="livePlayerCount">4,382 Playing Now</span>
                     </div>
                     <h1>Play <span class="gold-text">100 Premium</span> Slot Games</h1>
-                    <p>From 8 world-class studios. Provably fair, instant payouts, no download required.</p>
+                    <p>From 8 world-class studios. Provably fair, fast 2FA-protected withdrawals, no download required.</p>
                     <div class="hero-ctas">
                         <button class="btn-primary-cta" id="heroSignupBtn">Get Started</button>
                         <button class="btn-secondary-cta" id="exploreBtn">Explore Games</button>
@@ -1196,7 +1196,7 @@
             🎰 Welcome! Claim Your 100% First Deposit Match — Up to $500
           </div>
           <div style="color:#c9b85a;font-size:0.95rem;margin-bottom:1rem;">
-            Make your first deposit and we'll match it 100% in bonus credits. 35x wagering. One time only.
+            Make your first deposit and we'll match it 100% in bonus credits. 45× wagering on the bonus before withdrawal. One time only.
           </div>
           <div style="display:flex;gap:0.75rem;justify-content:center;flex-wrap:wrap;">
             <a href="wallet.html" style="padding:0.85rem 2rem;background:linear-gradient(135deg,#FFD700,#FFA500);
@@ -1816,7 +1816,7 @@
                 const initial = name.charAt(0).toUpperCase();
                 const amount = parseFloat(event.winAmount || 0).toFixed(2);
                 let gameName = (event.gameId || 'Slots').replace(/_/g, ' ')
-                    .replace(/\w/g, c => c.toUpperCase());
+                    .replace(/\w/g, c => c.toUpperCase());
                 const multBadge = (event.multiplier && event.multiplier >= 25)
                     ? ' <span style="color:#FFD700">🔥 ' + event.multiplier + 'x!</span>' : '';
                 let timeAgo = '';
