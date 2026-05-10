@@ -142,6 +142,13 @@
             background-clip: text;
             white-space: nowrap;
             flex-shrink: 0;
+            text-decoration: none;
+            cursor: pointer;
+        }
+
+        .header-logo .logo-crown {
+            -webkit-text-fill-color: var(--accent-gold);
+            color: var(--accent-gold);
         }
 
         .logo-crown {
@@ -1062,12 +1069,12 @@
 <body>
     <!-- HEADER -->
     <header class="header">
-        <div class="header-logo">
+        <a href="/" class="header-logo" aria-label="Matrix Spins home">
             <svg class="logo-crown" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                 <path d="M12 2L15 8H21L16 12L18 18L12 14L6 18L8 12L3 8H9L12 2Z" fill="currentColor"/>
             </svg>
             Matrix Spins
-        </div>
+        </a>
 
         <div class="header-trust">
             <div class="trust-item">
