@@ -1758,28 +1758,72 @@
 
             const firstNames = ['Alex','Sarah','Mike','Emma','Chris','David','Maria','James','Lisa','Kevin',
                 'Nicole','Ryan','Amy','Daniel','Sophie','Jake','Anna','Tom','Laura','Ben'];
-            const wins = [];
 
-            for (let i = 0; i < 20; i++) {
+            function makeSimulatedItem(i) {
                 const game = allGames[Math.floor(Math.random() * allGames.length)];
                 const name = firstNames[i % firstNames.length];
                 const initial = name.charAt(0);
                 const amount = (Math.random() * 5000 + 50).toFixed(2);
                 const ago = Math.floor(Math.random() * 59 + 1);
-                wins.push(
-                    '<div class="win-item">' +
+                return '<div class="win-item">' +
                     '<div class="win-avatar">' + initial + '</div>' +
                     '<div class="win-details">' +
                     '<span>' + name + ' won </span>' +
                     '<span class="win-amount">$' + Number(amount).toLocaleString('en-US', {minimumFractionDigits:2}) + '</span>' +
                     '<span class="win-game"> on ' + game.name + '</span>' +
                     '<span style="color:var(--text-muted)"> · ' + ago + 'm ago</span>' +
-                    '</div></div>'
-                );
+                    '</div></div>';
             }
 
-            // Duplicate for seamless scroll
-            track.innerHTML = wins.join('') + wins.join('');
+            function makeRealItem(event) {
+                const name = event.displayName || event.username || 'Player';
+                const initial = name.charAt(0).toUpperCase();
+                const amount = parseFloat(event.winAmount || 0).toFixed(2);
+                let gameName = (event.gameId || 'Slots').replace(/_/g, ' ')
+                    .replace(/\w/g, c => c.toUpperCase());
+                const multBadge = (event.multiplier && event.multiplier >= 25)
+                    ? ' <span style="color:#FFD700">🔥 ' + event.multiplier + 'x!</span>' : '';
+                let timeAgo = '';
+                if (event.createdAt) {
+                    const diffMs = Date.now() - new Date(event.createdAt).getTime();
+                    const diffMin = Math.floor(diffMs / 60000);
+                    timeAgo = diffMin < 60 ? diffMin + 'm ago' : Math.floor(diffMin / 60) + 'h ago';
+                } else {
+                    timeAgo = Math.floor(Math.random() * 59 + 1) + 'm ago';
+                }
+                return '<div class="win-item">' +
+                    '<div class="win-avatar">' + initial + '</div>' +
+                    '<div class="win-details">' +
+                    '<span>' + name + ' won </span>' +
+                    '<span class="win-amount">$' + Number(amount).toLocaleString('en-US', {minimumFractionDigits:2}) + '</span>' +
+                    '<span class="win-game"> on ' + gameName + '</span>' + multBadge +
+                    '<span style="color:var(--text-muted)"> · ' + timeAgo + '</span>' +
+                    '</div></div>';
+            }
+
+            async function loadFeed() {
+                let wins = [];
+                try {
+                    const resp = await fetch('/api/activity-feed?limit=20');
+                    if (resp.ok) {
+                        const data = await resp.json();
+                        const events = Array.isArray(data) ? data : (data.events || data.feed || []);
+                        if (events.length >= 5) {
+                            wins = events.map(makeRealItem);
+                        }
+                    }
+                } catch (e) { /* fall through to simulated */ }
+
+                const needed = 20 - wins.length;
+                for (let i = 0; i < needed; i++) {
+                    wins.push(makeSimulatedItem(wins.length + i));
+                }
+
+                // Duplicate for seamless scroll
+                track.innerHTML = wins.join('') + wins.join('');
+            }
+
+            loadFeed();
         }
 
         // ── STUDIOS GRID — studio cards from config ────────────
@@ -1868,11 +1912,48 @@
             const el = document.getElementById('livePlayerCount');
             if (!el) return;
             let count = 4382;
-            setInterval(() => {
-                count += Math.round(Math.random() * 20 - 8);
-                count = Math.max(3500, Math.min(6000, count));
+
+            function startDrift() {
+                setInterval(() => {
+                    count += Math.round(Math.random() * 20 - 8);
+                    count = Math.max(3500, Math.min(6000, count));
+                    el.textContent = count.toLocaleString() + ' Playing Now';
+                }, 5000);
+            }
+
+            // Fetch real online count + jackpot pool from API
+            (async function() {
+                try {
+                    const resp = await fetch('/api/socialproof');
+                    if (resp.ok) {
+                        const data = await resp.json();
+                        if (data.onlineNow && data.onlineNow > 0) {
+                            count = data.onlineNow;
+                        }
+                    }
+                } catch (e) { /* keep simulated base */ }
                 el.textContent = count.toLocaleString() + ' Playing Now';
-            }, 5000);
+                startDrift();
+
+                // Update jackpot stat from /api/jackpot/status
+                try {
+                    const jResp = await fetch('/api/jackpot/status');
+                    if (jResp.ok) {
+                        const jData = await jResp.json();
+                        const pools = jData.pools || [];
+                        if (pools.length > 0) {
+                            // pools[].amount is in cents
+                            const totalDollars = Math.round(
+                                pools.reduce((s, p) => s + (Number(p.amount) || 0), 0) / 100
+                            );
+                            const jackpotEl = document.querySelector('[data-count="2847392"]');
+                            if (jackpotEl && totalDollars > 10000) {
+                                jackpotEl.dataset.count = String(totalDollars);
+                            }
+                        }
+                    }
+                } catch (e) { /* leave jackpot element untouched */ }
+            })();
         })();
 
         // ── SIGNUP MODAL ───────────────────────────────────────
