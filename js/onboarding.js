@@ -493,9 +493,22 @@
 
     var tourDone = lsGet(LS.TOUR_DONE, null);
 
+    function safeLaunchTour() {
+      // Don't stack on top of age-gate, cookie consent, or other overlays
+      if (document.body.classList.contains('age-gate-active') ||
+          document.querySelector('.mcc-banner.mcc-visible') ||
+          document.querySelector('.mcc-overlay:not(.mcc-hidden)') ||
+          document.querySelector('.ms-ec-overlay.ms-ec-visible')) {
+        // Re-check in 2s — wait for blocking overlays to clear
+        setTimeout(safeLaunchTour, 2000);
+        return;
+      }
+      launchTour();
+    }
+
     if (!tourDone) {
-      // First-time visitor: launch tour after 3s
-      setTimeout(launchTour, 3000);
+      // First-time visitor: launch tour after 4s (gives age-gate time to dismiss)
+      setTimeout(safeLaunchTour, 4000);
     } else {
       // Returning visitor: show progress bar (first 5 visits only)
       showProgressBar();

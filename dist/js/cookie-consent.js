@@ -72,7 +72,7 @@
         </div>
       </div>
 
-      <div id="mcc-overlay" class="mcc-overlay" aria-hidden="true">
+      <div id="mcc-overlay" class="mcc-overlay mcc-hidden" aria-hidden="true">
         <div class="mcc-panel" role="dialog" aria-label="Cookie preferences">
           <div class="mcc-panel-header">
             <h2 class="mcc-panel-title">Cookie Preferences</h2>

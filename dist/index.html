@@ -904,7 +904,17 @@
             }
 
             .header-trust {
-                display: none;
+                gap: 12px;
+            }
+
+            .trust-item {
+                font-size: 11px;
+                gap: 5px;
+            }
+
+            .trust-icon {
+                width: 13px;
+                height: 13px;
             }
 
             .games-grid {
@@ -1005,6 +1015,10 @@
         }
 
         @media (max-width: 480px) {
+            .header-trust {
+                display: none;
+            }
+
             .games-grid {
                 grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
             }
@@ -1044,7 +1058,7 @@
     </style>
 
 
-    <link rel="stylesheet" href="styles.80b7d607.min.css">
+    <link rel="stylesheet" href="styles.793c8590.min.css">
 </head>
 <body>
     <!-- HEADER -->
@@ -1085,6 +1099,22 @@
                     <div class="balance-label">Balance</div>
                     <div class="balance-amount" id="balance">$0.00</div>
                 </div>
+            </div>
+            <div id="wageringBarWrap" style="display:none;flex:0 0 auto;max-width:160px;min-width:110px;">
+                <div style="font-size:0.65rem;color:rgba(212,168,83,0.7);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:3px;" id="wageringBarLabel">Bonus wagering</div>
+                <div style="height:5px;border-radius:3px;background:rgba(255,255,255,0.1);overflow:hidden;">
+                    <div id="wageringBarFill" style="height:100%;border-radius:3px;background:linear-gradient(90deg,#d4a853,#f0c060);transition:width 0.6s ease;width:0%"></div>
+                </div>
+            </div>
+            <div id="vipMiniWidget" style="display:none;align-items:center;gap:6px;cursor:pointer;"
+                 onclick="window.location.href='vip.html'" title="View VIP Status">
+              <span id="vipTierIcon" style="font-size:1.1rem;">🥉</span>
+              <div style="display:flex;flex-direction:column;gap:2px;">
+                <span id="vipTierLabel" style="font-size:0.7rem;font-weight:700;color:#FFD700;line-height:1;">BRONZE</span>
+                <div style="width:48px;height:4px;background:rgba(255,255,255,0.1);border-radius:2px;overflow:hidden;">
+                  <div id="vipXpBar" style="height:100%;width:0%;background:linear-gradient(90deg,#FFD700,#FFA500);border-radius:2px;transition:width 0.6s ease;"></div>
+                </div>
+              </div>
             </div>
             <button class="btn-deposit" id="depositBtn">Deposit</button>
             <button class="btn-deposit" id="headerSignupBtn" style="background:transparent;border:1px solid rgba(212,168,83,0.4);color:var(--accent-gold-bright)">Sign Up</button>
@@ -1154,9 +1184,32 @@
                 <div class="stat-label">Jackpot Pool</div>
             </div>
             <div class="stat-item">
-                <div class="stat-number" data-count="98" data-suffix="%">0%</div>
+                <div class="stat-number" data-count="96" data-suffix="%">0%</div>
                 <div class="stat-label">Avg. RTP</div>
             </div>
+        </div>
+
+        <!-- ── First-Deposit Incentive Banner (shown by JS to eligible users only) ── -->
+        <div id="firstDepositBanner" style="display:none;background:linear-gradient(135deg,#1c1400,#2d2000);
+             border:2px solid #FFD700;border-radius:14px;padding:1.5rem 2rem;margin:1.5rem auto 0;
+             max-width:900px;text-align:center;">
+          <div style="font-size:1.4rem;font-weight:800;color:#FFD700;margin-bottom:0.4rem;">
+            🎰 Welcome! Claim Your 100% First Deposit Match — Up to $500
+          </div>
+          <div style="color:#c9b85a;font-size:0.95rem;margin-bottom:1rem;">
+            Make your first deposit and we'll match it 100% in bonus credits. 35x wagering. One time only.
+          </div>
+          <div style="display:flex;gap:0.75rem;justify-content:center;flex-wrap:wrap;">
+            <a href="wallet.html" style="padding:0.85rem 2rem;background:linear-gradient(135deg,#FFD700,#FFA500);
+               color:#000;border-radius:10px;font-weight:800;font-size:1rem;text-decoration:none;">
+              Deposit Now — Claim Bonus
+            </a>
+            <button onclick="document.getElementById('firstDepositBanner').style.display='none';sessionStorage.setItem('firstDepBannerDismissed','1')"
+                    style="padding:0.85rem 1.5rem;background:rgba(255,255,255,0.06);color:#aaa;
+                           border:1px solid rgba(255,255,255,0.1);border-radius:10px;font-size:0.9rem;cursor:pointer;">
+              Maybe Later
+            </button>
+          </div>
         </div>
 
         <div class="section-divider"></div>
@@ -1344,6 +1397,9 @@
             </a>
         </div>
     </nav>
+
+    <!-- Capture ?ref= referral code before any redirect — runs synchronously -->
+    <script>(function(){try{var p=new URLSearchParams(window.location.search);var ref=p.get('ref')||p.get('referral')||p.get('r');if(ref&&ref.trim())localStorage.setItem('pendingRefCode',ref.trim().toUpperCase());}catch(e){}}());</script>
 
     <!-- SCRIPTS — deferred for faster first paint -->
     
@@ -1582,21 +1638,30 @@
             });
         }
 
-        // Session timer
+        // Session timer — real elapsed time from sessionStorage
         function startSessionTimer() {
             const timerEl = document.getElementById('sessionTimer');
-            let seconds = 3599;
+            if (!timerEl) return;
 
-            setInterval(() => {
-                seconds--;
-                const mins = Math.floor(seconds / 60);
-                const secs = seconds % 60;
-                timerEl.textContent = `Session: ${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+            // Persist session start across page navigations within the tab group
+            if (!sessionStorage.getItem('sessionStart')) {
+                sessionStorage.setItem('sessionStart', Date.now().toString());
+            }
 
-                if (seconds <= 0) {
-                    seconds = 3599;
+            function tick() {
+                const elapsed = Math.floor((Date.now() - parseInt(sessionStorage.getItem('sessionStart') || Date.now())) / 1000);
+                const mins = Math.floor(elapsed / 60) % 60;
+                const hrs = Math.floor(elapsed / 3600);
+                const secs = elapsed % 60;
+                if (hrs > 0) {
+                    timerEl.textContent = `Session: ${String(hrs).padStart(2, '0')}:${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+                } else {
+                    timerEl.textContent = `Session: ${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
                 }
-            }, 1000);
+            }
+
+            tick();
+            setInterval(tick, 1000);
         }
 
         // Event listeners
@@ -1730,28 +1795,72 @@
 
             const firstNames = ['Alex','Sarah','Mike','Emma','Chris','David','Maria','James','Lisa','Kevin',
                 'Nicole','Ryan','Amy','Daniel','Sophie','Jake','Anna','Tom','Laura','Ben'];
-            const wins = [];
 
-            for (let i = 0; i < 20; i++) {
+            function makeSimulatedItem(i) {
                 const game = allGames[Math.floor(Math.random() * allGames.length)];
                 const name = firstNames[i % firstNames.length];
                 const initial = name.charAt(0);
                 const amount = (Math.random() * 5000 + 50).toFixed(2);
                 const ago = Math.floor(Math.random() * 59 + 1);
-                wins.push(
-                    '<div class="win-item">' +
+                return '<div class="win-item">' +
                     '<div class="win-avatar">' + initial + '</div>' +
                     '<div class="win-details">' +
                     '<span>' + name + ' won </span>' +
                     '<span class="win-amount">$' + Number(amount).toLocaleString('en-US', {minimumFractionDigits:2}) + '</span>' +
                     '<span class="win-game"> on ' + game.name + '</span>' +
                     '<span style="color:var(--text-muted)"> · ' + ago + 'm ago</span>' +
-                    '</div></div>'
-                );
+                    '</div></div>';
             }
 
-            // Duplicate for seamless scroll
-            track.innerHTML = wins.join('') + wins.join('');
+            function makeRealItem(event) {
+                const name = event.displayName || event.username || 'Player';
+                const initial = name.charAt(0).toUpperCase();
+                const amount = parseFloat(event.winAmount || 0).toFixed(2);
+                let gameName = (event.gameId || 'Slots').replace(/_/g, ' ')
+                    .replace(/\w/g, c => c.toUpperCase());
+                const multBadge = (event.multiplier && event.multiplier >= 25)
+                    ? ' <span style="color:#FFD700">🔥 ' + event.multiplier + 'x!</span>' : '';
+                let timeAgo = '';
+                if (event.createdAt) {
+                    const diffMs = Date.now() - new Date(event.createdAt).getTime();
+                    const diffMin = Math.floor(diffMs / 60000);
+                    timeAgo = diffMin < 60 ? diffMin + 'm ago' : Math.floor(diffMin / 60) + 'h ago';
+                } else {
+                    timeAgo = Math.floor(Math.random() * 59 + 1) + 'm ago';
+                }
+                return '<div class="win-item">' +
+                    '<div class="win-avatar">' + initial + '</div>' +
+                    '<div class="win-details">' +
+                    '<span>' + name + ' won </span>' +
+                    '<span class="win-amount">$' + Number(amount).toLocaleString('en-US', {minimumFractionDigits:2}) + '</span>' +
+                    '<span class="win-game"> on ' + gameName + '</span>' + multBadge +
+                    '<span style="color:var(--text-muted)"> · ' + timeAgo + '</span>' +
+                    '</div></div>';
+            }
+
+            async function loadFeed() {
+                let wins = [];
+                try {
+                    const resp = await fetch('/api/activity-feed?limit=20');
+                    if (resp.ok) {
+                        const data = await resp.json();
+                        const events = Array.isArray(data) ? data : (data.events || data.feed || []);
+                        if (events.length >= 5) {
+                            wins = events.map(makeRealItem);
+                        }
+                    }
+                } catch (e) { /* fall through to simulated */ }
+
+                const needed = 20 - wins.length;
+                for (let i = 0; i < needed; i++) {
+                    wins.push(makeSimulatedItem(wins.length + i));
+                }
+
+                // Duplicate for seamless scroll
+                track.innerHTML = wins.join('') + wins.join('');
+            }
+
+            loadFeed();
         }
 
         // ── STUDIOS GRID — studio cards from config ────────────
@@ -1840,11 +1949,48 @@
             const el = document.getElementById('livePlayerCount');
             if (!el) return;
             let count = 4382;
-            setInterval(() => {
-                count += Math.round(Math.random() * 20 - 8);
-                count = Math.max(3500, Math.min(6000, count));
+
+            function startDrift() {
+                setInterval(() => {
+                    count += Math.round(Math.random() * 20 - 8);
+                    count = Math.max(3500, Math.min(6000, count));
+                    el.textContent = count.toLocaleString() + ' Playing Now';
+                }, 5000);
+            }
+
+            // Fetch real online count + jackpot pool from API
+            (async function() {
+                try {
+                    const resp = await fetch('/api/socialproof');
+                    if (resp.ok) {
+                        const data = await resp.json();
+                        if (data.onlineNow && data.onlineNow > 0) {
+                            count = data.onlineNow;
+                        }
+                    }
+                } catch (e) { /* keep simulated base */ }
                 el.textContent = count.toLocaleString() + ' Playing Now';
-            }, 5000);
+                startDrift();
+
+                // Update jackpot stat from /api/jackpot/status
+                try {
+                    const jResp = await fetch('/api/jackpot/status');
+                    if (jResp.ok) {
+                        const jData = await jResp.json();
+                        const pools = jData.pools || [];
+                        if (pools.length > 0) {
+                            // pools[].amount is in cents
+                            const totalDollars = Math.round(
+                                pools.reduce((s, p) => s + (Number(p.amount) || 0), 0) / 100
+                            );
+                            const jackpotEl = document.querySelector('[data-count="2847392"]');
+                            if (jackpotEl && totalDollars > 10000) {
+                                jackpotEl.dataset.count = String(totalDollars);
+                            }
+                        }
+                    }
+                } catch (e) { /* leave jackpot element untouched */ }
+            })();
         })();
 
         // ── SIGNUP MODAL ───────────────────────────────────────
@@ -1973,11 +2119,61 @@
             }
         }
     </script>
+    <!-- VIP Mini Badge — fetch tier after login and populate widget -->
+    <script>
+    // ── VIP Mini Badge ────────────────────────────────────────────
+    (function() {
+      var token = localStorage.getItem('casinoToken') || localStorage.getItem('token');
+      if (!token) return; // Only show for logged-in users
+
+      fetch('/api/vip/status', {
+        headers: { 'Authorization': 'Bearer ' + token },
+        credentials: 'include'
+      }).then(function(r) {
+        if (!r.ok) return;
+        return r.json();
+      }).then(function(data) {
+        if (!data) return;
+        var widget = document.getElementById('vipMiniWidget');
+        var icon   = document.getElementById('vipTierIcon');
+        var label  = document.getElementById('vipTierLabel');
+        var bar    = document.getElementById('vipXpBar');
+        if (!widget) return;
+        if (icon)  icon.textContent  = data.tierIcon  || '🥉';
+        if (label) label.textContent = (data.tier || 'Bronze').toUpperCase();
+        if (label) label.style.color = data.tierColor || '#CD7F32';
+        if (bar)   bar.style.width   = Math.round((data.xpProgress || 0) * 100) + '%';
+        if (bar && data.tierColor) bar.style.background = 'linear-gradient(90deg,' + data.tierColor + ',#FFD700)';
+        widget.style.display = 'flex';
+      }).catch(function() { /* non-fatal */ });
+    })();
+    </script>
+    <!-- First-Deposit Incentive Banner — reveal to eligible logged-in users -->
+    <script>
+    // ── First-Deposit Incentive Banner ────────────────────────────
+    (function() {
+      var token = localStorage.getItem('casinoToken') || localStorage.getItem('token');
+      if (!token) return; // Only show to logged-in users
+      if (sessionStorage.getItem('firstDepBannerDismissed')) return;
+
+      fetch('/api/user/profile', {
+        headers: { 'Authorization': 'Bearer ' + token },
+        credentials: 'include'
+      }).then(function(r) { return r.ok ? r.json() : null; })
+      .then(function(profile) {
+        if (!profile) return;
+        var dc = profile.depositCount != null ? profile.depositCount : profile.deposit_count;
+        if (dc !== 0 && dc !== '0') return; // Already deposited
+        var banner = document.getElementById('firstDepositBanner');
+        if (banner) banner.style.display = 'block';
+      }).catch(function() {});
+    })();
+    </script>
     <!-- PWA: SW registration + install prompt + update banner -->
     
     <!-- Site-wide jackpot win celebration + real-time pool ticker (socket.io) -->
     <script src="js/confetti.min.js?v=2b59dbb8" defer></script>
     <script src="js/jackpot-celebration.js?v=48be09d7" defer></script>
-    <script src="bundle.6c2ddabb.min.js"></script>
+    <script src="bundle.6c1a1a17.min.js"></script>
 </body>
 </html>

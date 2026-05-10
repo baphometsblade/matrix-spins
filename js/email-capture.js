@@ -62,6 +62,12 @@
     var user = getStorage('ms_user') || getStorage('user_session');
     if (user && user.hasDeposited) return true;
 
+    // Don't stack on top of other overlays — wait until they clear
+    if (document.body.classList.contains('age-gate-active')) return true;
+    if (document.querySelector('.mx-tour-overlay')) return true;
+    if (document.querySelector('.mcc-overlay:not(.mcc-hidden)')) return true;
+    if (document.querySelector('.mcc-banner.mcc-visible')) return true;
+
     return false;
   }
 
@@ -198,6 +204,16 @@
     overlay.classList.add('ms-ec-visible');
   }
 
+  function showWithRetry() {
+    // Re-check suppress at firing time (overlays may have appeared after init)
+    if (shouldSuppress()) {
+      // Wait for blocking overlays to clear, then try again later
+      setTimeout(showWithRetry, 5000);
+      return;
+    }
+    show();
+  }
+
   function close() {
     if (!overlay) return;
     overlay.classList.remove('ms-ec-visible');
@@ -221,12 +237,12 @@
     document.addEventListener('mouseleave', function onLeave(e) {
       if (e.clientY <= 0) {
         document.removeEventListener('mouseleave', onLeave);
-        show();
+        showWithRetry();
       }
     });
 
     // Timer trigger
-    setTimeout(function () { show(); }, TIMER_DELAY_MS);
+    setTimeout(function () { showWithRetry(); }, TIMER_DELAY_MS);
 
     // Scroll depth trigger
     var scrollFired = false;
@@ -236,7 +252,7 @@
       if (scrolled >= SCROLL_THRESHOLD) {
         scrollFired = true;
         window.removeEventListener('scroll', onScroll);
-        show();
+        showWithRetry();
       }
     }, { passive: true });
   }
