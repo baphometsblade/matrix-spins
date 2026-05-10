@@ -105,6 +105,22 @@
     <p class="muted" style="margin-top:0.6rem;font-size:.78rem;">Withdrawals are reviewed manually and typically pay within 1–3 business days.</p>
   </div>
 
+  <!-- ── Wagering Progress Bar ─────────────────────────────── -->
+  <div id="wageringSection" style="display:none;background:#13151c;border:1px solid rgba(212,175,55,0.25);border-radius:14px;padding:18px 20px;margin-bottom:20px;">
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">
+      <span style="font-size:16px;">🎯</span>
+      <span style="font-size:14px;font-weight:600;color:#ffd700;letter-spacing:.02em;">Bonus Wagering Progress</span>
+    </div>
+    <div style="display:flex;justify-content:space-between;font-size:13px;color:#9ca3af;margin-bottom:8px;">
+      <span>Remaining wagering: <strong id="wagerRemaining" style="color:#f0f0f5;">$0.00</strong></span>
+      <span>Bonus locked: <strong id="wagerBonus" style="color:#ffd700;">$0.00</strong></span>
+    </div>
+    <div style="background:rgba(255,255,255,0.07);border-radius:8px;height:10px;overflow:hidden;">
+      <div id="wagerBar" style="height:100%;background:linear-gradient(90deg,#ffd700,#d4a853);border-radius:8px;transition:width 0.6s ease;width:0%;"></div>
+    </div>
+    <div id="wagerNote" style="font-size:12px;color:#6b7280;margin-top:8px;"></div>
+  </div>
+
   <!-- ── Transaction History (Tabbed) ──────────────────────── -->
   <div class="rs-card">
     <div class="wallet-tabs">
@@ -214,6 +230,7 @@
 
   // ── Logout ───────────────────────────────────────────────
   document.getElementById('logout').addEventListener('click', async () => {
+    sessionStorage.removeItem('sessionStart');
     await api.logout();
     window.location.href = 'index.html';
   });
@@ -307,6 +324,29 @@
       document.getElementById('totalBal').textContent = fmt(total);
       document.getElementById('lockedBal').textContent = fmt(locked);
       document.getElementById('balanceChip').textContent = fmt(avail);
+
+      // Wagering progress bar — uses /api/user/wagering which returns bonus+progress data
+      try {
+        const wagerRes = await api.fetch('/user/wagering');
+        const wageringSection = document.getElementById('wageringSection');
+        // bonusBalance and wageringRemaining are in dollars (not cents); convert for fmt()
+        const bonusDollars = wagerRes.bonusBalance || 0;
+        const remainingDollars = wagerRes.wageringRemaining || 0;
+        const pct = wagerRes.percentComplete || 0;
+        if (bonusDollars > 0) {
+          wageringSection.style.display = 'block';
+          document.getElementById('wagerRemaining').textContent = '$' + remainingDollars.toFixed(2);
+          document.getElementById('wagerBonus').textContent = '$' + bonusDollars.toFixed(2);
+          document.getElementById('wagerBar').style.width = pct.toFixed(1) + '%';
+          if (wagerRes.complete) {
+            document.getElementById('wagerNote').textContent = 'Wagering complete! Your bonus balance is now unlocked.';
+          } else {
+            document.getElementById('wagerNote').textContent = pct + '% complete — keep playing to unlock your bonus.';
+          }
+        } else {
+          wageringSection.style.display = 'none';
+        }
+      } catch (_) { /* non-critical — silently skip wagering section */ }
 
       // Today's P/L calculation from transactions
       const today = new Date().toISOString().split('T')[0];
@@ -572,16 +612,22 @@
         if (paymentLink) {
           window.location.href = paymentLink;
         } else {
-          // For custom amounts, find nearest payment link
-          const amounts = Object.keys(STRIPE_PAYMENT_LINKS).map(Number).sort((a, b) => a - b);
-          const nearest = amounts.reduce((prev, curr) =>
-            Math.abs(curr - selectedAmount) < Math.abs(prev - selectedAmount) ? curr : prev
-          );
-          alertEl.className = 'alert visible';
-          alertEl.textContent = 'Please select a preset amount ($10, $25, $50, $100, or $250) for instant checkout. We recommend $25 for the best experience.';
-          btn.classList.remove('loading');
-          btn.disabled = false;
-          return;
+          // For custom amounts not matching a preset, retry backend checkout directly.
+          // The backend accepts any valid amount (≥$10) and creates a dynamic Stripe session.
+          try {
+            const out2 = await api.depositCheckout(selectedAmount);
+            if (out2.checkoutUrl) {
+              window.location.href = out2.checkoutUrl;
+              redirected = true;
+            }
+          } catch (e2) {
+            // Backend unavailable — fall back to nearest preset payment link
+            const amounts = Object.keys(STRIPE_PAYMENT_LINKS).map(Number).sort((a, b) => a - b);
+            const nearest = amounts.reduce((prev, curr) =>
+              Math.abs(curr - selectedAmount) < Math.abs(prev - selectedAmount) ? curr : prev
+            );
+            window.location.href = STRIPE_PAYMENT_LINKS[nearest];
+          }
         }
       }
     } catch (err) {

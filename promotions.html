@@ -300,6 +300,124 @@
     });
   }, 1000);
 
+  // ── Toast notification helper ──────────────────────────────
+  function showToast(msg, type) {
+    let toast = document.getElementById('promoToast');
+    if (!toast) {
+      toast = document.createElement('div');
+      toast.id = 'promoToast';
+      toast.style.cssText = 'position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#1a1d27;border:1px solid rgba(255,255,255,.12);border-radius:10px;padding:12px 20px;font-size:14px;color:#f0f0f5;z-index:9999;box-shadow:0 8px 32px rgba(0,0,0,.5);transition:opacity 0.3s;max-width:90vw;text-align:center;';
+      document.body.appendChild(toast);
+    }
+    toast.style.borderColor = type === 'success' ? '#4ade80' : type === 'error' ? '#ef4444' : 'rgba(255,255,255,.12)';
+    toast.textContent = msg;
+    toast.style.opacity = '1';
+    clearTimeout(toast._hideTimer);
+    toast._hideTimer = setTimeout(() => { toast.style.opacity = '0'; }, 4000);
+  }
+
+  // ── API claim map ──────────────────────────────────────────
+  // Maps promo ID → async claim function
+  async function claimPromo(promoId, btn) {
+    if (!user) {
+      showToast('Please log in to claim bonuses — redirecting to login…', 'error');
+      setTimeout(() => { window.location.href = 'login.html?next=promotions.html'; }, 1500);
+      return;
+    }
+
+    const token = localStorage.getItem('token') || localStorage.getItem('authToken') || localStorage.getItem('adminToken');
+    if (!token) {
+      showToast('Session expired. Please log in again.', 'error');
+      setTimeout(() => { window.location.href = 'login.html?next=promotions.html'; }, 1500);
+      return;
+    }
+
+    const headers = { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token };
+
+    btn.disabled = true;
+    btn.textContent = 'Claiming…';
+
+    try {
+      let endpoint = null;
+      let method = 'POST';
+      let isReferral = false;
+
+      if (promoId === 'welcome-bonus') {
+        endpoint = '/api/welcome-bonus/claim';
+      } else if (promoId === 'daily-spin') {
+        endpoint = '/api/dailywheel/spin';
+      } else if (promoId === 'weekly-cashback') {
+        endpoint = '/api/cashback/claim';
+      } else if (promoId === 'reload-bonus') {
+        endpoint = '/api/reloadbonus/claim';
+      } else if (promoId === 'refer-friend') {
+        isReferral = true;
+      } else if (promoId === 'mega-tournament') {
+        // Tournament entry is automatic — just direct to the leaderboard
+        showToast('You are automatically entered! Check the leaderboard for your rank.', 'success');
+        window.open('leaderboard.html', '_blank');
+        btn.disabled = false;
+        btn.textContent = 'View Leaderboard';
+        return;
+      }
+
+      if (isReferral) {
+        // Referral: fetch and display their code instead of claiming
+        const res = await fetch('/api/referral/code', { headers });
+        const data = await res.json();
+        if (res.ok && data.code) {
+          const shareUrl = 'https://msaart.online/?ref=' + data.code;
+          try { await navigator.clipboard.writeText(shareUrl); showToast('Referral link copied to clipboard: ' + shareUrl, 'success'); }
+          catch (_) { showToast('Your referral link: ' + shareUrl, 'success'); }
+          btn.disabled = false;
+          btn.textContent = 'Copy Link';
+        } else if (res.status === 401) {
+          showToast('Please log in to access your referral link.', 'error');
+          btn.disabled = false;
+          btn.textContent = 'Claim Now';
+        } else {
+          showToast(data.error || data.message || 'Could not load referral link.', 'error');
+          btn.disabled = false;
+          btn.textContent = 'Claim Now';
+        }
+        return;
+      }
+
+      const res = await fetch(endpoint, { method, headers, body: JSON.stringify({}) });
+      const data = await res.json();
+
+      if (res.ok) {
+        const promo = PROMOS.find(p => p.id === promoId);
+        if (promo) promo.claimed = true;
+        btn.classList.add('claimed');
+        btn.disabled = true;
+        btn.textContent = '✓ Claimed';
+        btn.style.transition = 'transform 0.3s ease';
+        btn.style.transform = 'scale(1.05)';
+        setTimeout(() => { btn.style.transform = 'scale(1)'; }, 300);
+        const bonusMsg = data.amount ? ' +$' + (data.amount / 100).toFixed(2) + ' bonus added!' : '';
+        showToast('Bonus claimed! Check your wallet.' + bonusMsg, 'success');
+        // Refresh balance display
+        try { const b = await api.getBalance(); $('balanceChip').textContent = api.formatCents(b.availableCents); } catch (_) {}
+      } else if (res.status === 401) {
+        showToast('Please log in to claim bonuses.', 'error');
+        btn.disabled = false;
+        btn.textContent = 'Claim Now';
+        setTimeout(() => { window.location.href = 'login.html?next=promotions.html'; }, 1500);
+      } else {
+        const errMsg = data.error || data.message || 'Something went wrong. Try again.';
+        showToast(errMsg, 'error');
+        btn.disabled = false;
+        btn.textContent = 'Claim Now';
+      }
+    } catch (err) {
+      console.error('[Promotions] claim error:', err);
+      showToast('Network error — please try again.', 'error');
+      btn.disabled = false;
+      btn.textContent = 'Claim Now';
+    }
+  }
+
   // ── Event Listeners ────────────────────────────────────────
   function attachListeners() {
     // Claim buttons
@@ -308,21 +426,7 @@
         const promoId = btn.dataset.claim;
         const promo = PROMOS.find(p => p.id === promoId);
         if (!promo || promo.claimed) return;
-
-        if (!user) {
-          window.location.href = 'login.html?next=promotions.html';
-          return;
-        }
-
-        promo.claimed = true;
-        btn.classList.add('claimed');
-        btn.disabled = true;
-        btn.textContent = '✓ Claimed';
-
-        // Show success feedback
-        btn.style.transition = 'transform 0.3s ease';
-        btn.style.transform = 'scale(1.05)';
-        setTimeout(() => { btn.style.transform = 'scale(1)'; }, 300);
+        claimPromo(promoId, btn);
       });
     });
 

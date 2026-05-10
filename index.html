@@ -904,7 +904,17 @@
             }
 
             .header-trust {
-                display: none;
+                gap: 12px;
+            }
+
+            .trust-item {
+                font-size: 11px;
+                gap: 5px;
+            }
+
+            .trust-icon {
+                width: 13px;
+                height: 13px;
             }
 
             .games-grid {
@@ -1005,6 +1015,10 @@
         }
 
         @media (max-width: 480px) {
+            .header-trust {
+                display: none;
+            }
+
             .games-grid {
                 grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
             }
@@ -1159,7 +1173,7 @@
                 <div class="stat-label">Jackpot Pool</div>
             </div>
             <div class="stat-item">
-                <div class="stat-number" data-count="98" data-suffix="%">0%</div>
+                <div class="stat-number" data-count="96" data-suffix="%">0%</div>
                 <div class="stat-label">Avg. RTP</div>
             </div>
         </div>
@@ -1587,21 +1601,30 @@
             });
         }
 
-        // Session timer
+        // Session timer — real elapsed time from sessionStorage
         function startSessionTimer() {
             const timerEl = document.getElementById('sessionTimer');
-            let seconds = 3599;
+            if (!timerEl) return;
 
-            setInterval(() => {
-                seconds--;
-                const mins = Math.floor(seconds / 60);
-                const secs = seconds % 60;
-                timerEl.textContent = `Session: ${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+            // Persist session start across page navigations within the tab group
+            if (!sessionStorage.getItem('sessionStart')) {
+                sessionStorage.setItem('sessionStart', Date.now().toString());
+            }
 
-                if (seconds <= 0) {
-                    seconds = 3599;
+            function tick() {
+                const elapsed = Math.floor((Date.now() - parseInt(sessionStorage.getItem('sessionStart') || Date.now())) / 1000);
+                const mins = Math.floor(elapsed / 60) % 60;
+                const hrs = Math.floor(elapsed / 3600);
+                const secs = elapsed % 60;
+                if (hrs > 0) {
+                    timerEl.textContent = `Session: ${String(hrs).padStart(2, '0')}:${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+                } else {
+                    timerEl.textContent = `Session: ${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
                 }
-            }, 1000);
+            }
+
+            tick();
+            setInterval(tick, 1000);
         }
 
         // Event listeners
