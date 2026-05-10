@@ -703,7 +703,8 @@ router.post('/withdraw', authenticate, async (req, res) => {
                         otpCode,
                         withdrawal,
                         config.CURRENCY,
-                        config.WITHDRAWAL_OTP_EXPIRY_MINUTES || 15
+                        config.WITHDRAWAL_OTP_EXPIRY_MINUTES || 15,
+                        req.user.id
                     ).catch(function(e) {
                         console.warn('[Payment] OTP email send failed:', e.message);
                     });

@@ -47,9 +47,9 @@ router.get('/check', authenticate, async (req, res) => {
         const minWithdrawal = 20;
         const withdrawalFee = 0.05; // 5%
 
-        // Get VIP tier (if available) to determine max withdrawal
-        // For now, default to 5000 if not stored
-        const maxWithdrawal = 5000;
+        // Max withdrawal from config (set MAX_WITHDRAWAL env var to override)
+        const _wdConfig = require('../config');
+        const maxWithdrawal = _wdConfig.MAX_WITHDRAWAL || 5000;
 
         // Calculate total wagered (sum of bet_amount from spins)
         const wageredRow = await db.get(

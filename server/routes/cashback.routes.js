@@ -5,6 +5,8 @@ const router = express.Router();
 const { authenticate } = require('../middleware/auth');
 const { bonusGuard } = require('../middleware/bonus-guard');
 const db = require('../database');
+const emailService = require('../services/email.service');
+const config = require('../config');
 
 // ════════════════════════════════════════════════════════════════════════════
 // AUTOMATIC CASHBACK REWARDS ROUTES
@@ -174,6 +176,27 @@ router.post('/claim', authenticate, bonusGuard, async (req, res) => {
             );
 
             await db.commit();
+
+            // Fire-and-forget bonus notification email
+            if (config.SMTP_HOST) {
+                db.get('SELECT email, username FROM users WHERE id = ?', [userId]).then(function(emailRow) {
+                    if (emailRow && emailRow.email) {
+                        var wageringRequired = (cashbackAmount * 10).toFixed(2);
+                        emailService.send({
+                            to: emailRow.email,
+                            userId: userId,
+                            template: 'broadcast',
+                            data: {
+                                subject: 'Your cashback bonus has arrived — Matrix Spins',
+                                headline: 'Cashback credited!',
+                                body: 'Hi ' + emailRow.username + ', your cashback reward of $' + cashbackAmount.toFixed(2) + ' has been added to your bonus balance! Wager $' + wageringRequired + ' (10x) to unlock it for withdrawal. Come back and play now!',
+                                ctaLabel: 'Claim your cashback',
+                                ctaUrl: 'https://msaart.online'
+                            }
+                        }).catch(function(err) { console.error('[email] cashback bonus notification failed:', err.message); });
+                    }
+                }).catch(function(err) { console.error('[email] cashback user lookup failed:', err.message); });
+            }
 
             var user = await db.get('SELECT balance FROM users WHERE id = ?', [userId]);
 

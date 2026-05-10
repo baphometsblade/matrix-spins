@@ -865,7 +865,11 @@ const DEFERRED_INDEXES = [
     `CREATE INDEX IF NOT EXISTS idx_transactions_created_at ON transactions(created_at DESC)`,
     `CREATE INDEX IF NOT EXISTS idx_spins_created_at ON spins(created_at DESC)`,
     `CREATE INDEX IF NOT EXISTS idx_notifications_user_created ON notifications(user_id, created_at DESC)`,
-    `CREATE INDEX IF NOT EXISTS idx_users_created_at ON users(created_at DESC)`
+    `CREATE INDEX IF NOT EXISTS idx_users_created_at ON users(created_at DESC)`,
+
+    // Audit fix: targeted transaction lookup indexes (user+type filter, user+time sort)
+    `CREATE INDEX IF NOT EXISTS idx_transactions_user_type ON transactions(user_id, type)`,
+    `CREATE INDEX IF NOT EXISTS idx_transactions_user_created ON transactions(user_id, created_at DESC)`
 ];
 
 

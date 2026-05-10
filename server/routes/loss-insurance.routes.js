@@ -4,6 +4,8 @@ const router = require('express').Router();
 const db = require('../database');
 const { authenticate } = require('../middleware/auth');
 const { bonusGuard } = require('../middleware/bonus-guard');
+const emailService = require('../services/email.service');
+const config = require('../config');
 
 // Bootstrap table creation at module load
 (async () => {
@@ -241,6 +243,27 @@ router.post('/claim', authenticate, bonusGuard, async (req, res) => {
     } catch (txErr) {
       try { await db.rollback(); } catch (_rbErr) { console.warn('[LossInsurance] rollback error:', _rbErr.message); }
       throw txErr;
+    }
+
+    // Fire-and-forget bonus notification email (only if claim was paid out)
+    if (claimAmount > 0 && config.SMTP_HOST) {
+      db.get('SELECT email, username FROM users WHERE id = ?', [userId]).then(function(emailRow) {
+        if (emailRow && emailRow.email) {
+          var wageringRequired = (claimAmount * 15).toFixed(2);
+          emailService.send({
+            to: emailRow.email,
+            userId: userId,
+            template: 'broadcast',
+            data: {
+              subject: 'Your loss insurance payout has arrived — Matrix Spins',
+              headline: 'Insurance bonus credited!',
+              body: 'Hi ' + emailRow.username + ', your ' + policy.tier + ' loss insurance payout of $' + claimAmount.toFixed(2) + ' has been added to your bonus balance! Wager $' + wageringRequired + ' (15x) to unlock it for withdrawal. Come back and play now!',
+              ctaLabel: 'Play now',
+              ctaUrl: 'https://msaart.online'
+            }
+          }).catch(function(err) { console.error('[email] loss insurance bonus notification failed:', err.message); });
+        }
+      }).catch(function(err) { console.error('[email] loss insurance user lookup failed:', err.message); });
     }
 
     res.json({

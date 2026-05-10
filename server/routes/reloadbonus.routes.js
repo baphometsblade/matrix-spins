@@ -4,6 +4,8 @@ const express = require('express');
 const db = require('../database');
 const { authenticate } = require('../middleware/auth');
 const { bonusGuard } = require('../middleware/bonus-guard');
+const emailService = require('../services/email.service');
+const config = require('../config');
 
 const router = express.Router();
 
@@ -185,6 +187,26 @@ router.post('/claim', authenticate, bonusGuard, withSchema, async (req, res) => 
        VALUES (?, 'bonus', ?, 'Weekly reload bonus (25% match) → bonus balance', datetime('now'))`,
       [userId, bonus]
     );
+
+    // Fire-and-forget bonus notification email
+    if (config.SMTP_HOST) {
+      db.get('SELECT email, username FROM users WHERE id = ?', [userId]).then(function(emailRow) {
+        if (emailRow && emailRow.email) {
+          emailService.send({
+            to: emailRow.email,
+            userId: userId,
+            template: 'broadcast',
+            data: {
+              subject: 'Your reload bonus has arrived — Matrix Spins',
+              headline: 'Reload bonus credited!',
+              body: 'Hi ' + emailRow.username + ', your weekly reload bonus of $' + bonus.toFixed(2) + ' has been added to your bonus balance! Wager $' + wagerReq.toFixed(2) + ' (' + WAGERING_MULTIPLIER + 'x) to unlock it for withdrawal. Get back and play now!',
+              ctaLabel: 'Play now',
+              ctaUrl: 'https://msaart.online'
+            }
+          }).catch(function(err) { console.error('[email] reload bonus notification failed:', err.message); });
+        }
+      }).catch(function(err) { console.error('[email] reload bonus user lookup failed:', err.message); });
+    }
 
     const updatedUser = await db.get('SELECT balance, bonus_balance FROM users WHERE id = ?', [userId]);
 

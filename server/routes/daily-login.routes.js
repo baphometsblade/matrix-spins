@@ -4,6 +4,8 @@ const router = require('express').Router();
 const { authenticate } = require('../middleware/auth');
 const { bonusGuard } = require('../middleware/bonus-guard');
 const db = require('../database');
+const emailService = require('../services/email.service');
+const config = require('../config');
 let _notify;
 try { _notify = require('../services/notification.service'); } catch (_) { _notify = null; }
 
@@ -308,6 +310,27 @@ router.post('/claim', authenticate, bonusGuard, async function(req, res) {
         }
 
         if (_notify) _notify.bonusAwarded(userId, bonusAmount, 'daily login (Day ' + newStreak + ')').catch(function(){});
+
+        // Fire-and-forget bonus notification email
+        if (config.SMTP_HOST) {
+            db.get('SELECT email, username FROM users WHERE id = ?', [userId]).then(function(emailRow) {
+                if (emailRow && emailRow.email) {
+                    emailService.send({
+                        to: emailRow.email,
+                        userId: userId,
+                        template: 'broadcast',
+                        data: {
+                            subject: 'Your daily login bonus has arrived — Matrix Spins',
+                            headline: 'Daily bonus credited!',
+                            body: 'Hi ' + emailRow.username + ', your day ' + newStreak + ' login bonus of ' + bonusAmount + ' gems has been credited! Log in and keep your streak going.',
+                            ctaLabel: 'Play now',
+                            ctaUrl: 'https://msaart.online'
+                        }
+                    }).catch(function(err) { console.error('[email] daily login bonus notification failed:', err.message); });
+                }
+            }).catch(function(err) { console.error('[email] daily login user lookup failed:', err.message); });
+        }
+
         res.json({
             success: true,
             claimedAmount: bonusAmount,

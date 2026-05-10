@@ -840,7 +840,11 @@ const INDEXES = [
     `CREATE INDEX IF NOT EXISTS idx_audit_log_user ON audit_log(user_id, created_at DESC)`,
     `CREATE INDEX IF NOT EXISTS idx_audit_log_event ON audit_log(event_type, created_at DESC)`,
     `CREATE INDEX IF NOT EXISTS idx_users_created_at ON users(created_at DESC)`,
-    `CREATE INDEX IF NOT EXISTS idx_users_last_login ON users(last_login DESC) WHERE last_login IS NOT NULL`
+    `CREATE INDEX IF NOT EXISTS idx_users_last_login ON users(last_login DESC) WHERE last_login IS NOT NULL`,
+
+    // Audit fix: targeted transaction lookup indexes (user+type filter, user+time sort)
+    `CREATE INDEX IF NOT EXISTS idx_transactions_user_type ON transactions(user_id, type)`,
+    `CREATE INDEX IF NOT EXISTS idx_transactions_user_created ON transactions(user_id, created_at DESC)`
 ];
 
 
