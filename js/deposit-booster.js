@@ -299,7 +299,12 @@
           /* Offer box */
           '<div id="ms-booster-offer" role="region" aria-label="Current offer">',
             '<div id="ms-booster-offer-title">100% Match on First Deposit</div>',
-            '<div id="ms-booster-offer-detail">Deposit $100 &rarr; Play with $200</div>',
+            '<div id="ms-booster-offer-detail">Deposit $100 &rarr; Play with $200 (bonus credit)</div>',
+            '<div id="ms-booster-offer-fineprint" style="margin-top:6px;font-size:11px;color:#9AA0B2;letter-spacing:0.3px;">' +
+              'Bonus credited automatically on first deposit. ' +
+              '45&times; wagering on the bonus before withdrawal. ' +
+              'Max bonus $500.' +
+            '</div>',
           '</div>',
 
           /* Countdown */
@@ -324,7 +329,7 @@
           '</div>',
 
           /* CTA */
-          '<a id="ms-booster-cta" href="wallet.html?amount=100&promo=booster100" role="button" aria-label="Claim 100% bonus now with $100 deposit">',
+          '<a id="ms-booster-cta" href="wallet.html?amount=100" role="button" aria-label="Claim 100% bonus now with $100 deposit">',
             '&rarr; CLAIM MY BONUS NOW',
           '</a>',
 
@@ -453,7 +458,12 @@
     function updateCTA() {
       var play = (selectedAmount * BONUS_MULTIPLIER).toFixed(2);
       playAmt.textContent = '$' + play;
-      ctaLink.href = WALLET_URL + '?amount=' + selectedAmount + '&promo=' + PROMO_CODE;
+      // The first-deposit bonus is credited automatically by the Stripe
+      // webhook handler (server/services/stripe.service.js — FIRST_DEPOSIT_BONUS_PCT
+      // / MAX), so no promo code is needed. Earlier the URL appended
+      // `?promo=booster100` which implied a code was required;
+      // the server doesn't read that query param. Stripped.
+      ctaLink.href = WALLET_URL + '?amount=' + selectedAmount;
       ctaLink.setAttribute('aria-label', 'Claim 100% bonus now with $' + selectedAmount + ' deposit');
     }
 
