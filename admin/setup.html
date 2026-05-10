@@ -1,0 +1,796 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Matrix Spins — Revenue Setup</title>
+<meta name="robots" content="noindex, nofollow">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: #0d0d1a;
+    color: #e0e0e0;
+    min-height: 100vh;
+    padding: 24px;
+  }
+  .container { max-width: 1100px; margin: 0 auto; }
+
+  header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 18px 24px;
+    background: linear-gradient(135deg, #1a1a2e, #16213e);
+    border: 1px solid rgba(255,215,0,0.3);
+    border-radius: 12px;
+    margin-bottom: 24px;
+  }
+  header h1 {
+    background: linear-gradient(135deg, #ffd700, #ff8c00);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    font-size: 22px;
+    font-weight: 700;
+  }
+  .header-right { display: flex; align-items: center; gap: 12px; }
+  .btn {
+    padding: 8px 18px;
+    border-radius: 8px;
+    border: none;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 600;
+    transition: opacity .15s;
+  }
+  .btn:hover { opacity: .85; }
+  .btn-ghost {
+    background: transparent;
+    border: 1px solid rgba(255,215,0,0.35);
+    color: #ffd700;
+  }
+  .btn-primary {
+    background: linear-gradient(135deg, #ffd700, #ff8c00);
+    color: #000;
+  }
+  .btn-sm { padding: 5px 12px; font-size: 13px; }
+
+  /* ── Status cards ── */
+  .cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap: 16px; margin-bottom: 28px; }
+  .card {
+    padding: 18px 20px;
+    border-radius: 10px;
+    background: #12122a;
+    border: 1px solid rgba(255,255,255,0.07);
+    position: relative;
+    overflow: hidden;
+  }
+  .card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+  }
+  .card.ok::before   { background: #22c55e; }
+  .card.warn::before { background: #f59e0b; }
+  .card.bad::before  { background: #ef4444; }
+  .card.loading::before { background: #555; }
+  .card-icon { font-size: 26px; margin-bottom: 8px; }
+  .card-label { font-size: 12px; color: #888; text-transform: uppercase; letter-spacing: .05em; margin-bottom: 4px; }
+  .card-value { font-size: 16px; font-weight: 700; }
+  .card.ok   .card-value { color: #22c55e; }
+  .card.warn .card-value { color: #f59e0b; }
+  .card.bad  .card-value { color: #ef4444; }
+  .card.loading .card-value { color: #555; }
+
+  /* ── Revenue alert banner ── */
+  .alert {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 14px 18px;
+    border-radius: 10px;
+    margin-bottom: 24px;
+    font-size: 14px;
+    line-height: 1.5;
+  }
+  .alert-danger { background: rgba(239,68,68,0.12); border: 1px solid rgba(239,68,68,0.35); color: #fca5a5; }
+  .alert-success { background: rgba(34,197,94,0.1); border: 1px solid rgba(34,197,94,0.3); color: #86efac; }
+  .alert-icon { font-size: 20px; flex-shrink: 0; margin-top: 1px; }
+  .alert strong { color: inherit; }
+  .alert ul { margin: 6px 0 0 16px; }
+
+  /* ── Wizard accordion ── */
+  .wizard { display: flex; flex-direction: column; gap: 12px; margin-bottom: 28px; }
+  .wiz-section {
+    background: #12122a;
+    border: 1px solid rgba(255,255,255,0.07);
+    border-radius: 10px;
+    overflow: hidden;
+  }
+  .wiz-section.open { border-color: rgba(255,215,0,0.25); }
+  .wiz-head {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 16px 20px;
+    cursor: pointer;
+    user-select: none;
+  }
+  .wiz-head:hover { background: rgba(255,255,255,0.03); }
+  .wiz-icon { font-size: 20px; }
+  .wiz-title { flex: 1; font-weight: 600; font-size: 15px; }
+  .wiz-badge {
+    font-size: 12px;
+    padding: 3px 10px;
+    border-radius: 20px;
+    font-weight: 600;
+  }
+  .wiz-badge.ok   { background: rgba(34,197,94,0.15);  color: #22c55e; }
+  .wiz-badge.bad  { background: rgba(239,68,68,0.15);  color: #ef4444; }
+  .wiz-badge.warn { background: rgba(245,158,11,0.15); color: #f59e0b; }
+  .wiz-chevron { color: #555; font-size: 14px; transition: transform .2s; }
+  .wiz-section.open .wiz-chevron { transform: rotate(90deg); color: #ffd700; }
+  .wiz-body { display: none; padding: 0 20px 20px; border-top: 1px solid rgba(255,255,255,0.06); }
+  .wiz-section.open .wiz-body { display: block; }
+
+  .step {
+    display: flex;
+    gap: 14px;
+    margin-top: 16px;
+    align-items: flex-start;
+  }
+  .step-num {
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    background: rgba(255,215,0,0.15);
+    color: #ffd700;
+    font-size: 12px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    margin-top: 1px;
+  }
+  .step-content { flex: 1; font-size: 14px; line-height: 1.6; color: #ccc; }
+  .step-content strong { color: #e0e0e0; }
+  .step-content a { color: #60a5fa; text-decoration: none; }
+  .step-content a:hover { text-decoration: underline; }
+  .code-pill {
+    display: inline-block;
+    background: #0d1220;
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 4px;
+    padding: 1px 7px;
+    font-family: 'Menlo','Consolas',monospace;
+    font-size: 12px;
+    color: #f0c040;
+    margin: 0 2px;
+    cursor: pointer;
+    transition: background .1s;
+  }
+  .code-pill:hover { background: #141e30; }
+  .code-pill.copied { color: #22c55e; border-color: rgba(34,197,94,0.4); }
+
+  .var-grid {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 6px 12px;
+    margin: 10px 0;
+    font-size: 13px;
+  }
+  .var-name { font-family: monospace; color: #f0c040; }
+  .var-desc { color: #999; }
+
+  /* ── Quick actions ── */
+  .actions-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 12px;
+    margin-bottom: 28px;
+  }
+  .action-card {
+    padding: 16px 18px;
+    background: #12122a;
+    border: 1px solid rgba(255,255,255,0.07);
+    border-radius: 10px;
+    cursor: pointer;
+    transition: border-color .15s, background .15s;
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    color: #e0e0e0;
+  }
+  .action-card:hover { border-color: rgba(255,215,0,0.4); background: #16162e; }
+  .action-card .ac-icon { font-size: 22px; }
+  .action-card .ac-label { font-size: 13px; font-weight: 600; }
+  .action-card .ac-sub { font-size: 11px; color: #666; }
+
+  /* ── Section label ── */
+  .section-label {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: .08em;
+    color: #555;
+    font-weight: 700;
+    margin-bottom: 12px;
+  }
+
+  /* ── Pending deposits inside setup ── */
+  .deposit-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 0;
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+    font-size: 13px;
+  }
+  .deposit-row:last-child { border-bottom: none; }
+  .deposit-amount { font-weight: 700; color: #ffd700; min-width: 70px; }
+  .deposit-user { flex: 1; color: #aaa; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .deposit-cur { color: #888; font-size: 11px; min-width: 50px; }
+  .deposit-actions { display: flex; gap: 6px; }
+  .btn-approve { background: rgba(34,197,94,0.15); border: 1px solid rgba(34,197,94,0.4); color: #22c55e; padding: 4px 10px; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: 600; }
+  .btn-approve:hover { background: rgba(34,197,94,0.25); }
+  .btn-reject  { background: rgba(239,68,68,0.12); border: 1px solid rgba(239,68,68,0.3); color: #ef4444; padding: 4px 10px; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: 600; }
+  .btn-reject:hover { background: rgba(239,68,68,0.22); }
+
+  /* ── Toast ── */
+  #toast {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    padding: 12px 20px;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    z-index: 9999;
+    opacity: 0;
+    transform: translateY(10px);
+    transition: opacity .2s, transform .2s;
+    pointer-events: none;
+  }
+  #toast.show { opacity: 1; transform: translateY(0); }
+  #toast.ok  { background: rgba(34,197,94,0.9);  color: #000; }
+  #toast.err { background: rgba(239,68,68,0.9);  color: #fff; }
+  #toast.info { background: rgba(59,130,246,0.9); color: #fff; }
+
+  /* ── Spinner ── */
+  .spinner {
+    display: inline-block;
+    width: 16px; height: 16px;
+    border: 2px solid rgba(255,255,255,0.15);
+    border-top-color: #ffd700;
+    border-radius: 50%;
+    animation: spin .7s linear infinite;
+    vertical-align: middle;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .dim { color: #555; font-style: italic; font-size: 13px; }
+</style>
+</head>
+<body>
+<div class="container">
+
+  <header>
+    <h1>🛠️ Revenue Setup — Matrix Spins</h1>
+    <div class="header-right">
+      <button class="btn btn-ghost btn-sm" onclick="refresh()">↻ Refresh Status</button>
+      <a href="/admin" class="btn btn-ghost btn-sm">← Admin Console</a>
+    </div>
+  </header>
+
+  <!-- Revenue status banner -->
+  <div id="banner"></div>
+
+  <!-- Status cards -->
+  <p class="section-label">Revenue Configuration</p>
+  <div class="cards" id="cards">
+    <div class="card loading"><div class="card-icon">💳</div><div class="card-label">Card Deposits</div><div class="card-value"><span class="spinner"></span></div></div>
+    <div class="card loading"><div class="card-icon">🗄️</div><div class="card-label">Database</div><div class="card-value"><span class="spinner"></span></div></div>
+    <div class="card loading"><div class="card-icon">📧</div><div class="card-label">Email (SMTP)</div><div class="card-value"><span class="spinner"></span></div></div>
+    <div class="card loading"><div class="card-icon">🔐</div><div class="card-label">Auth (JWT)</div><div class="card-value"><span class="spinner"></span></div></div>
+    <div class="card loading"><div class="card-icon">🛡️</div><div class="card-label">Admin Key</div><div class="card-value"><span class="spinner"></span></div></div>
+    <div class="card loading"><div class="card-icon">🌍</div><div class="card-label">Geo Compliance</div><div class="card-value"><span class="spinner"></span></div></div>
+  </div>
+
+  <!-- Pending deposits needing approval -->
+  <p class="section-label">Pending Deposits (Approve to Credit Players)</p>
+  <div id="pending-deposits" style="background:#12122a;border:1px solid rgba(255,255,255,0.07);border-radius:10px;padding:16px 20px;margin-bottom:28px;">
+    <span class="dim"><span class="spinner"></span> Loading pending deposits…</span>
+  </div>
+
+  <!-- Setup wizard -->
+  <p class="section-label">Setup Wizard</p>
+  <div class="wizard" id="wizard">
+
+    <!-- Stripe -->
+    <div class="wiz-section" id="wiz-stripe">
+      <div class="wiz-head" onclick="toggleWiz('wiz-stripe')">
+        <span class="wiz-icon">💳</span>
+        <span class="wiz-title">Stripe — Card Deposits</span>
+        <span class="wiz-badge bad" id="badge-stripe">Checking…</span>
+        <span class="wiz-chevron">▶</span>
+      </div>
+      <div class="wiz-body">
+        <div class="step"><div class="step-num">1</div><div class="step-content">
+          Create a free Stripe account at <a href="https://stripe.com" target="_blank" rel="noopener">stripe.com</a> — takes 5 minutes.
+          Use a real bank account for payouts. Australia, UK, EU, Canada, NZ are all supported.
+        </div></div>
+        <div class="step"><div class="step-num">2</div><div class="step-content">
+          Go to <strong>Dashboard → Developers → API keys</strong>.<br>
+          Copy your <strong>Secret key</strong> <span class="code-pill" onclick="copyText('STRIPE_SECRET_KEY', this)">STRIPE_SECRET_KEY</span> (starts with <code style="color:#aaa">sk_live_</code>)<br>
+          and <strong>Publishable key</strong> <span class="code-pill" onclick="copyText('STRIPE_PUBLISHABLE_KEY', this)">STRIPE_PUBLISHABLE_KEY</span> (starts with <code style="color:#aaa">pk_live_</code>).
+        </div></div>
+        <div class="step"><div class="step-num">3</div><div class="step-content">
+          Go to <strong>Dashboard → Developers → Webhooks → Add endpoint</strong>.<br>
+          Endpoint URL: <span class="code-pill" id="webhook-url" onclick="copyEl('webhook-url', this)">https://royal-slots-casino.vercel.app/api/payment/stripe/webhook</span><br>
+          Select events: <code style="color:#aaa">payment_intent.succeeded</code>, <code style="color:#aaa">checkout.session.completed</code><br>
+          Copy the <strong>Webhook signing secret</strong> → <span class="code-pill" onclick="copyText('STRIPE_WEBHOOK_SECRET', this)">STRIPE_WEBHOOK_SECRET</span> (starts with <code style="color:#aaa">whsec_</code>).
+        </div></div>
+        <div class="step"><div class="step-num">4</div><div class="step-content">
+          In <a href="https://vercel.com/dashboard" target="_blank" rel="noopener">Vercel Dashboard</a>: open your project →
+          <strong>Settings → Environment Variables</strong>. Add these three variables:
+          <div class="var-grid" style="margin-top:10px;">
+            <span class="var-name">STRIPE_SECRET_KEY</span><span class="var-desc">Your secret key (sk_live_…)</span>
+            <span class="var-name">STRIPE_PUBLISHABLE_KEY</span><span class="var-desc">Your publishable key (pk_live_…)</span>
+            <span class="var-name">STRIPE_WEBHOOK_SECRET</span><span class="var-desc">Webhook signing secret (whsec_…)</span>
+          </div>
+        </div></div>
+        <div class="step"><div class="step-num">5</div><div class="step-content">
+          <strong>Trigger a redeployment</strong> in Vercel (Deployments → ⋯ → Redeploy).<br>
+          Card deposits will activate immediately — no code changes needed.
+        </div></div>
+      </div>
+    </div>
+
+    <!-- Database -->
+    <div class="wiz-section" id="wiz-db">
+      <div class="wiz-head" onclick="toggleWiz('wiz-db')">
+        <span class="wiz-icon">🗄️</span>
+        <span class="wiz-title">PostgreSQL Database</span>
+        <span class="wiz-badge warn" id="badge-db">Checking…</span>
+        <span class="wiz-chevron">▶</span>
+      </div>
+      <div class="wiz-body">
+        <div style="background:rgba(245,158,11,0.1);border:1px solid rgba(245,158,11,0.3);border-radius:8px;padding:12px 14px;margin-bottom:12px;font-size:13px;color:#fcd34d;">
+          ⚠️ Without <strong>DATABASE_URL</strong>, the server uses SQLite — which is <strong>wiped on every redeploy</strong>.
+          All user accounts and balances will be lost. Set up PostgreSQL before taking real money.
+        </div>
+        <div class="step"><div class="step-num">1</div><div class="step-content">
+          Create a free PostgreSQL database at <a href="https://neon.tech" target="_blank" rel="noopener">neon.tech</a>
+          (or <a href="https://supabase.com" target="_blank" rel="noopener">supabase.com</a>). Both have generous free tiers.
+        </div></div>
+        <div class="step"><div class="step-num">2</div><div class="step-content">
+          Copy the connection string. It looks like:<br>
+          <code style="color:#aaa;font-size:12px;">postgresql://user:pass@host/dbname?sslmode=require</code>
+        </div></div>
+        <div class="step"><div class="step-num">3</div><div class="step-content">
+          In Vercel → Settings → Environment Variables, add:
+          <div class="var-grid" style="margin-top:8px;">
+            <span class="var-name">DATABASE_URL</span><span class="var-desc">Your full PostgreSQL connection string</span>
+          </div>
+        </div></div>
+        <div class="step"><div class="step-num">4</div><div class="step-content">
+          Redeploy on Vercel. The server automatically creates all tables on first boot.
+        </div></div>
+      </div>
+    </div>
+
+    <!-- DNS / Custom domain -->
+    <div class="wiz-section" id="wiz-dns">
+      <div class="wiz-head" onclick="toggleWiz('wiz-dns')">
+        <span class="wiz-icon">🌐</span>
+        <span class="wiz-title">Custom Domain — msaart.online</span>
+        <span class="wiz-badge warn" id="badge-dns">Action needed</span>
+        <span class="wiz-chevron">▶</span>
+      </div>
+      <div class="wiz-body">
+        <div style="background:rgba(245,158,11,0.1);border:1px solid rgba(245,158,11,0.3);border-radius:8px;padding:12px 14px;margin-bottom:12px;font-size:13px;color:#fcd34d;">
+          ⚠️ <strong>msaart.online</strong> currently points to a suspended Render instance.
+          Players visiting the domain will get an error. Update DNS to point at Vercel now.
+        </div>
+        <div class="step"><div class="step-num">1</div><div class="step-content">
+          In <a href="https://vercel.com/dashboard" target="_blank" rel="noopener">Vercel Dashboard</a>: your project →
+          <strong>Settings → Domains → Add domain</strong>. Type <code>msaart.online</code>.
+        </div></div>
+        <div class="step"><div class="step-num">2</div><div class="step-content">
+          In your domain registrar (Cloudflare / Namecheap / GoDaddy), update the CNAME record:<br>
+          <div class="var-grid" style="margin-top:8px;">
+            <span class="var-name">Type</span><span class="var-desc">CNAME</span>
+            <span class="var-name">Name</span><span class="var-desc">@ (or www)</span>
+            <span class="var-name">Value</span><span class="var-desc"><span class="code-pill" onclick="copyText('cname.vercel-dns.com', this)">cname.vercel-dns.com</span></span>
+          </div>
+        </div></div>
+        <div class="step"><div class="step-num">3</div><div class="step-content">
+          DNS propagation takes up to 30 minutes. Vercel will auto-provision an SSL certificate.
+          Your site will be live at <strong>msaart.online</strong> with HTTPS.
+        </div></div>
+      </div>
+    </div>
+
+    <!-- Email -->
+    <div class="wiz-section" id="wiz-email">
+      <div class="wiz-head" onclick="toggleWiz('wiz-email')">
+        <span class="wiz-icon">📧</span>
+        <span class="wiz-title">Email (SMTP) — Optional but recommended</span>
+        <span class="wiz-badge warn" id="badge-email">Checking…</span>
+        <span class="wiz-chevron">▶</span>
+      </div>
+      <div class="wiz-body">
+        <p style="font-size:13px;color:#aaa;margin-bottom:12px;">Without email, password-reset, deposit confirmations, and re-engagement campaigns won't send.</p>
+        <div class="step"><div class="step-num">1</div><div class="step-content">
+          Sign up at <a href="https://sendgrid.com" target="_blank" rel="noopener">sendgrid.com</a> (free 100/day)
+          or <a href="https://mailgun.com" target="_blank" rel="noopener">mailgun.com</a>.
+        </div></div>
+        <div class="step"><div class="step-num">2</div><div class="step-content">
+          Add in Vercel Environment Variables:
+          <div class="var-grid" style="margin-top:8px;">
+            <span class="var-name">SMTP_HOST</span><span class="var-desc">e.g. smtp.sendgrid.net</span>
+            <span class="var-name">SMTP_PORT</span><span class="var-desc">587</span>
+            <span class="var-name">SMTP_USER</span><span class="var-desc">apikey (for SendGrid)</span>
+            <span class="var-name">SMTP_PASS</span><span class="var-desc">Your API key / password</span>
+            <span class="var-name">ADMIN_EMAIL</span><span class="var-desc">admin@msaart.online</span>
+          </div>
+        </div></div>
+      </div>
+    </div>
+
+    <!-- Crypto -->
+    <div class="wiz-section" id="wiz-crypto">
+      <div class="wiz-head" onclick="toggleWiz('wiz-crypto')">
+        <span class="wiz-icon">₿</span>
+        <span class="wiz-title">Crypto Deposits — BTC / ETH (Already configured)</span>
+        <span class="wiz-badge ok" id="badge-crypto">Active</span>
+        <span class="wiz-chevron">▶</span>
+      </div>
+      <div class="wiz-body">
+        <div style="background:rgba(34,197,94,0.08);border:1px solid rgba(34,197,94,0.25);border-radius:8px;padding:12px 14px;margin-bottom:12px;font-size:13px;color:#86efac;">
+          ✅ Wallet addresses are already configured. Players can send BTC and ETH deposits right now.
+          Use the <strong>Pending Deposits</strong> panel above to manually approve incoming crypto transactions.
+        </div>
+        <div class="step"><div class="step-num">1</div><div class="step-content">
+          When a player makes a crypto deposit, they send funds to the displayed wallet address.
+        </div></div>
+        <div class="step"><div class="step-num">2</div><div class="step-content">
+          Verify the transaction on <a href="https://blockchain.com/explorer" target="_blank" rel="noopener">blockchain.com</a>
+          or <a href="https://etherscan.io" target="_blank" rel="noopener">etherscan.io</a>.
+        </div></div>
+        <div class="step"><div class="step-num">3</div><div class="step-content">
+          Approve the deposit in the <strong>Pending Deposits</strong> panel or the main
+          <a href="/admin">Admin Console → Deposits tab</a>. This credits the player balance and gives the first-deposit bonus.
+        </div></div>
+      </div>
+    </div>
+
+  </div><!-- /wizard -->
+
+  <!-- Quick action links -->
+  <p class="section-label">Quick Actions</p>
+  <div class="actions-grid">
+    <a class="action-card" href="https://vercel.com/dashboard" target="_blank" rel="noopener">
+      <span class="ac-icon">▲</span>
+      <div><div class="ac-label">Vercel Dashboard</div><div class="ac-sub">Env vars · Deployments</div></div>
+    </a>
+    <a class="action-card" href="https://dashboard.stripe.com" target="_blank" rel="noopener">
+      <span class="ac-icon">💳</span>
+      <div><div class="ac-label">Stripe Dashboard</div><div class="ac-sub">API keys · Webhooks</div></div>
+    </a>
+    <a class="action-card" href="https://neon.tech" target="_blank" rel="noopener">
+      <span class="ac-icon">🗄️</span>
+      <div><div class="ac-label">Neon Postgres</div><div class="ac-sub">Free serverless DB</div></div>
+    </a>
+    <a class="action-card" href="/api/health" target="_blank" rel="noopener">
+      <span class="ac-icon">❤️</span>
+      <div><div class="ac-label">Health Check</div><div class="ac-sub">Live API status</div></div>
+    </a>
+    <a class="action-card" href="/api/health/ready" target="_blank" rel="noopener">
+      <span class="ac-icon">✅</span>
+      <div><div class="ac-label">Readiness Probe</div><div class="ac-sub">DB + Stripe status</div></div>
+    </a>
+    <a class="action-card" href="/admin" >
+      <span class="ac-icon">⚙️</span>
+      <div><div class="ac-label">Admin Console</div><div class="ac-sub">Players · Withdrawals · KYC</div></div>
+    </a>
+  </div>
+
+</div><!-- /container -->
+
+<div id="toast"></div>
+
+<script>
+'use strict';
+
+// ── Auth ─────────────────────────────────────────────────────────────────
+const TOKEN_KEYS = ['adminToken', 'token', 'authToken'];
+function getToken() {
+  for (const k of TOKEN_KEYS) {
+    const t = localStorage.getItem(k);
+    if (t) return t;
+  }
+  return null;
+}
+
+async function api(path, opts = {}) {
+  const token = getToken();
+  const res = await fetch(path, {
+    ...opts,
+    headers: {
+      'Content-Type': 'application/json',
+      ...(token ? { Authorization: 'Bearer ' + token } : {}),
+      ...(opts.headers || {}),
+    },
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) throw Object.assign(new Error(data.error || res.statusText), { status: res.status, data });
+  return data;
+}
+
+// ── Toast ─────────────────────────────────────────────────────────────────
+let _toastTimer = null;
+function toast(msg, type = 'ok', ms = 3500) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.className = 'show ' + type;
+  clearTimeout(_toastTimer);
+  _toastTimer = setTimeout(() => { el.className = ''; }, ms);
+}
+
+// ── Accordion ──────────────────────────────────────────────────────────────
+function toggleWiz(id) {
+  const sec = document.getElementById(id);
+  sec.classList.toggle('open');
+}
+
+// ── Copy helpers ───────────────────────────────────────────────────────────
+function copyText(text, el) {
+  navigator.clipboard.writeText(text).then(() => {
+    const orig = el.textContent;
+    el.textContent = '✓ Copied!';
+    el.classList.add('copied');
+    setTimeout(() => { el.textContent = orig; el.classList.remove('copied'); }, 1800);
+  }).catch(() => toast('Copy failed — select and copy manually', 'err'));
+}
+function copyEl(id, triggerEl) {
+  const target = document.getElementById(id);
+  copyText(target.textContent.trim(), triggerEl);
+}
+
+// ── Status cards renderer ────────────────────────────────────────────────
+function renderCards(s) {
+  const stripeOk = s.stripe && s.stripe.configured;
+  const dbOk     = s.database && s.database.configured && !s.database.degraded;
+  const dbPg     = s.database && s.database.isPg;
+  const emailOk  = s.smtp && s.smtp.configured;
+  const jwtOk    = s.jwt && s.jwt.configured;
+  const adminOk  = s.adminApiKey && s.adminApiKey.configured;
+  const geoOk    = s.geoBlock && s.geoBlock.configured;
+
+  document.getElementById('cards').innerHTML = `
+    <div class="card ${stripeOk ? 'ok' : 'bad'}">
+      <div class="card-icon">💳</div>
+      <div class="card-label">Card Deposits</div>
+      <div class="card-value">${stripeOk ? '✅ Ready' : '❌ Blocked'}</div>
+    </div>
+    <div class="card ${dbOk && dbPg ? 'ok' : dbOk ? 'warn' : 'bad'}">
+      <div class="card-icon">🗄️</div>
+      <div class="card-label">Database</div>
+      <div class="card-value">${dbOk ? (dbPg ? '✅ PostgreSQL' : '⚠️ SQLite') : '❌ Unreachable'}</div>
+    </div>
+    <div class="card ${emailOk ? 'ok' : 'warn'}">
+      <div class="card-icon">📧</div>
+      <div class="card-label">Email (SMTP)</div>
+      <div class="card-value">${emailOk ? '✅ Configured' : '⚠️ Not set'}</div>
+    </div>
+    <div class="card ${jwtOk ? 'ok' : 'bad'}">
+      <div class="card-icon">🔐</div>
+      <div class="card-label">Auth (JWT)</div>
+      <div class="card-value">${jwtOk ? '✅ Secure' : '❌ Missing'}</div>
+    </div>
+    <div class="card ${adminOk ? 'ok' : 'warn'}">
+      <div class="card-icon">🛡️</div>
+      <div class="card-label">Admin Key</div>
+      <div class="card-value">${adminOk ? '✅ Set' : '⚠️ Not set'}</div>
+    </div>
+    <div class="card ${geoOk ? 'ok' : 'warn'}">
+      <div class="card-icon">🌍</div>
+      <div class="card-label">Geo Compliance</div>
+      <div class="card-value">${geoOk ? '✅ Active' : '⚠️ Disabled'}</div>
+    </div>
+  `;
+}
+
+// ── Badge helpers ─────────────────────────────────────────────────────────
+function setBadge(id, text, cls) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.textContent = text;
+  el.className = 'wiz-badge ' + cls;
+}
+
+// ── Revenue banner ─────────────────────────────────────────────────────────
+function renderBanner(s) {
+  const el = document.getElementById('banner');
+  if (!s.overallReady) {
+    const blocked = (s.revenueBlocked || []).join(', ');
+    el.innerHTML = `<div class="alert alert-danger">
+      <span class="alert-icon">🚨</span>
+      <div><strong>Revenue is partially blocked.</strong> Missing configuration: <strong>${blocked}</strong>.
+      Follow the setup wizard below to unlock card deposits and full revenue flow.</div>
+    </div>`;
+  } else {
+    el.innerHTML = `<div class="alert alert-success">
+      <span class="alert-icon">🎉</span>
+      <div><strong>All revenue systems are operational.</strong> Card deposits, database, and auth are fully configured.</div>
+    </div>`;
+  }
+}
+
+// ── Update wizard badges ──────────────────────────────────────────────────
+function updateWizardBadges(s) {
+  // Stripe
+  if (s.stripe) {
+    if (s.stripe.configured) {
+      setBadge('badge-stripe', '✅ Configured', 'ok');
+    } else {
+      setBadge('badge-stripe', '❌ Missing — Blocks Deposits', 'bad');
+      document.getElementById('wiz-stripe').classList.add('open');
+    }
+  }
+  // DB
+  if (s.database) {
+    if (s.database.configured && s.database.isPg) {
+      setBadge('badge-db', '✅ PostgreSQL Connected', 'ok');
+    } else if (s.database.configured && !s.database.isPg) {
+      setBadge('badge-db', '⚠️ SQLite — Data lost on redeploy', 'warn');
+      document.getElementById('wiz-db').classList.add('open');
+    } else {
+      setBadge('badge-db', '❌ Unreachable', 'bad');
+      document.getElementById('wiz-db').classList.add('open');
+    }
+  }
+  // Email
+  if (s.smtp) {
+    setBadge('badge-email', s.smtp.configured ? '✅ Configured' : '⚠️ Not set', s.smtp.configured ? 'ok' : 'warn');
+  }
+  // DNS — always warn (can't auto-detect from server)
+  setBadge('badge-dns', '⚠️ Check DNS', 'warn');
+}
+
+// ── Pending deposits ───────────────────────────────────────────────────────
+async function loadPendingDeposits() {
+  const el = document.getElementById('pending-deposits');
+  try {
+    const data = await api('/api/admin/pending-deposits');
+    const deposits = data.deposits || data.pendingDeposits || [];
+    if (deposits.length === 0) {
+      el.innerHTML = '<span class="dim">No pending deposits — all clear ✅</span>';
+      return;
+    }
+    el.innerHTML = deposits.map(d => `
+      <div class="deposit-row" id="drow-${d.id}">
+        <span class="deposit-amount">$${parseFloat(d.amount || 0).toFixed(2)}</span>
+        <span class="deposit-cur">${d.currency || 'USD'}</span>
+        <span class="deposit-user">${d.email || d.username || 'User #' + d.user_id}</span>
+        <span style="color:#555;font-size:11px;margin-left:auto;padding-right:10px;">${d.reference || ''}</span>
+        <div class="deposit-actions">
+          <button class="btn-approve" onclick="approveDeposit(${d.id}, this)">✅ Approve</button>
+          <button class="btn-reject"  onclick="rejectDeposit(${d.id}, this)">❌ Reject</button>
+        </div>
+      </div>
+    `).join('');
+  } catch (err) {
+    if (err.status === 401 || err.status === 403) {
+      el.innerHTML = '<span class="dim">Log in via Admin Console to see pending deposits.</span>';
+    } else {
+      el.innerHTML = '<span class="dim">Could not load deposits: ' + (err.message || 'unknown error') + '</span>';
+    }
+  }
+}
+
+async function approveDeposit(id, btn) {
+  btn.disabled = true;
+  btn.textContent = '…';
+  try {
+    const res = await api('/api/admin/approve-deposit', {
+      method: 'POST',
+      body: JSON.stringify({ depositId: id }),
+    });
+    toast('✅ Deposit approved' + (res.bonus ? ` + $${res.bonus.toFixed(2)} bonus` : ''), 'ok');
+    const row = document.getElementById('drow-' + id);
+    if (row) row.remove();
+    if (!document.querySelector('.deposit-row')) {
+      document.getElementById('pending-deposits').innerHTML = '<span class="dim">No pending deposits — all clear ✅</span>';
+    }
+  } catch (err) {
+    toast('❌ ' + (err.message || 'Approve failed'), 'err');
+    btn.disabled = false;
+    btn.textContent = '✅ Approve';
+  }
+}
+
+async function rejectDeposit(id, btn) {
+  if (!confirm('Reject this deposit? The player will not be credited.')) return;
+  btn.disabled = true;
+  btn.textContent = '…';
+  try {
+    await api('/api/admin/reject-deposit', {
+      method: 'POST',
+      body: JSON.stringify({ depositId: id, reason: 'admin-rejected' }),
+    });
+    toast('Deposit rejected', 'info');
+    const row = document.getElementById('drow-' + id);
+    if (row) row.remove();
+    if (!document.querySelector('.deposit-row')) {
+      document.getElementById('pending-deposits').innerHTML = '<span class="dim">No pending deposits — all clear ✅</span>';
+    }
+  } catch (err) {
+    toast('❌ ' + (err.message || 'Reject failed'), 'err');
+    btn.disabled = false;
+    btn.textContent = '❌ Reject';
+  }
+}
+
+// ── Load setup status ──────────────────────────────────────────────────────
+async function loadSetupStatus() {
+  try {
+    const s = await api('/api/admin/setup-status');
+    renderCards(s);
+    renderBanner(s);
+    updateWizardBadges(s);
+  } catch (err) {
+    if (err.status === 401 || err.status === 403) {
+      // Not logged in — redirect to admin for login
+      window.location.href = '/admin?next=' + encodeURIComponent(window.location.pathname);
+      return;
+    }
+    if (err.status === 404) {
+      // Endpoint not deployed yet — show static fallback
+      document.getElementById('cards').innerHTML = `
+        <div class="card warn"><div class="card-icon">⚠️</div><div class="card-label">Status API</div><div class="card-value">Not available</div></div>
+      `;
+      document.getElementById('banner').innerHTML = `<div class="alert alert-danger">
+        <span class="alert-icon">⚠️</span>
+        <div>Setup status API not available yet. Redeploy the server to activate it.</div>
+      </div>`;
+    } else {
+      document.getElementById('banner').innerHTML = `<div class="alert alert-danger">
+        <span class="alert-icon">❌</span><div>${err.message || 'Failed to load status'}</div>
+      </div>`;
+    }
+  }
+}
+
+function refresh() {
+  // Reset cards to loading
+  document.getElementById('cards').innerHTML = `
+    <div class="card loading"><div class="card-icon">💳</div><div class="card-label">Card Deposits</div><div class="card-value"><span class="spinner"></span></div></div>
+    <div class="card loading"><div class="card-icon">🗄️</div><div class="card-label">Database</div><div class="card-value"><span class="spinner"></span></div></div>
+    <div class="card loading"><div class="card-icon">📧</div><div class="card-label">Email</div><div class="card-value"><span class="spinner"></span></div></div>
+    <div class="card loading"><div class="card-icon">🔐</div><div class="card-label">Auth</div><div class="card-value"><span class="spinner"></span></div></div>
+    <div class="card loading"><div class="card-icon">🛡️</div><div class="card-label">Admin Key</div><div class="card-value"><span class="spinner"></span></div></div>
+    <div class="card loading"><div class="card-icon">🌍</div><div class="card-label">Geo</div><div class="card-value"><span class="spinner"></span></div></div>
+  `;
+  document.getElementById('banner').innerHTML = '';
+  Promise.all([loadSetupStatus(), loadPendingDeposits()]);
+}
+
+// ── Boot ──────────────────────────────────────────────────────────────────
+(function init() {
+  // Open stripe section by default (most critical for revenue)
+  // Will be overridden by updateWizardBadges if status loads
+  document.getElementById('wiz-stripe').classList.add('open');
+
+  Promise.all([loadSetupStatus(), loadPendingDeposits()]);
+
+  // Auto-refresh deposits every 60s
+  setInterval(loadPendingDeposits, 60_000);
+})();
+</script>
+</body>
+</html>

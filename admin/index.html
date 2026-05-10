@@ -245,7 +245,9 @@
         <button class="tab active" data-tab="withdrawals">Pending withdrawals</button>
         <button class="tab" data-tab="kyc">Pending KYC</button>
         <button class="tab" data-tab="aml">AML review</button>
+        <button class="tab" data-tab="deposits">Deposits 💰</button>
         <button class="tab" data-tab="users">User lookup</button>
+        <button class="tab" data-tab="setup">Setup Guide 🔧</button>
     </div>
 
     <div id="panel-withdrawals" class="panel active">
@@ -270,6 +272,16 @@
             <button type="submit" class="btn btn-neutral">Look up</button>
         </form>
         <div id="user-result"></div>
+    </div>
+
+    <div id="panel-deposits" class="panel">
+        <h2>Pending deposit requests <span class="count" id="count-deposits">0</span></h2>
+        <div id="deposits-list"><div class="empty">Loading…</div></div>
+    </div>
+
+    <div id="panel-setup" class="panel">
+        <h2>Revenue Configuration Status</h2>
+        <div id="setup-list"><div class="empty">Loading…</div></div>
     </div>
 </div>
 
@@ -388,13 +400,17 @@ function showLogin() {
 
 // ── Tabs ─────────────────────────────────────────────────────────────
 function showTab(name) {
-    ['withdrawals', 'kyc', 'aml', 'users'].forEach(t => {
+    ['withdrawals', 'kyc', 'aml', 'deposits', 'users', 'setup'].forEach(t => {
         const tab = document.querySelector('[data-tab="' + t + '"]');
         if (tab) tab.classList.toggle('active', t === name);
         document.getElementById('panel-' + t).classList.toggle('active', t === name);
     });
     // Lazy-load AML when its tab is opened
     if (name === 'aml') loadAML().catch(() => {});
+    // Lazy-load Deposits when its tab is opened
+    if (name === 'deposits') loadDeposits().catch(() => {});
+    // Lazy-load Setup Guide when its tab is opened
+    if (name === 'setup') loadSetupStatus().catch(() => {});
 }
 
 // ── KPIs ─────────────────────────────────────────────────────────────
@@ -721,6 +737,210 @@ async function reviewAml(id, btn) {
     }
 }
 
+// ── Deposits ─────────────────────────────────────────────────────────
+let _depositsPollTimer = null;
+
+async function loadDeposits() {
+    const listEl = clear('deposits-list');
+    const countEl = document.getElementById('count-deposits');
+    listEl.appendChild(el('div', { class: 'empty', text: 'Loading…' }));
+    try {
+        const data = await api('/api/admin/pending-deposits');
+        const rows = data.deposits || data.pendingDeposits || [];
+        countEl.textContent = String(rows.length);
+        clear(listEl);
+        if (!rows.length) {
+            listEl.appendChild(el('div', { class: 'empty', text: 'No pending deposits — all clear ✅' }));
+            return;
+        }
+        const table = el('table', null,
+            el('thead', null, el('tr', null,
+                el('th', { text: 'ID' }),
+                el('th', { text: 'User' }),
+                el('th', { text: 'Amount (USD)' }),
+                el('th', { text: 'Currency' }),
+                el('th', { text: 'Reference' }),
+                el('th', { text: 'Created' }),
+                el('th', null)
+            ))
+        );
+        const tbody = el('tbody');
+        rows.forEach(d => tbody.appendChild(renderDepositRow(d)));
+        table.appendChild(tbody);
+        listEl.appendChild(table);
+    } catch (e) {
+        clear(listEl);
+        listEl.appendChild(el('div', { class: 'error-banner', text: 'Failed to load: ' + e.message }));
+    }
+}
+
+function renderDepositRow(d) {
+    const amt = Number(d.amount || d.amount_usd || 0);
+    const moneyCell = el('td', { class: 'money' + (amt >= 1000 ? ' big' : ''), text: money(amt) });
+    const userCell = el('td', null,
+        el('b', { text: d.username || d.email || '—' }),
+        el('br'),
+        el('span', { class: 'muted mono', text: d.email || '' })
+    );
+    const actionsCell = el('td');
+    const approveBtn = el('button', {
+        class: 'btn btn-approve',
+        text: '✅ Approve',
+        onclick: () => approveDeposit(d.id, approveBtn)
+    });
+    const rejectBtn = el('button', {
+        class: 'btn btn-deny',
+        text: '❌ Reject',
+        onclick: () => rejectDeposit(d.id, rejectBtn)
+    });
+    actionsCell.appendChild(approveBtn);
+    actionsCell.appendChild(rejectBtn);
+    return el('tr', { dataset: { id: String(d.id) } },
+        el('td', { class: 'mono', text: '#' + d.id }),
+        userCell,
+        moneyCell,
+        el('td', { text: d.currency || 'USD' }),
+        el('td', { class: 'muted mono', text: (d.reference || d.stripe_payment_intent_id || '—').slice(0, 40) }),
+        el('td', { class: 'muted mono', text: formatDate(d.created_at) }),
+        actionsCell
+    );
+}
+
+async function approveDeposit(id, btn) {
+    disableRow(btn);
+    try {
+        await api('/api/admin/approve-deposit', {
+            method: 'POST',
+            body: JSON.stringify({ depositId: id })
+        });
+        showToast('Deposit #' + id + ' approved ✅');
+        await loadDeposits();
+        await loadKPIs();
+    } catch (e) {
+        alert('Approve failed: ' + e.message);
+        enableRow(btn);
+    }
+}
+
+async function rejectDeposit(id, btn) {
+    disableRow(btn);
+    try {
+        await api('/api/admin/reject-deposit', {
+            method: 'POST',
+            body: JSON.stringify({ depositId: id, reason: 'admin rejection' })
+        });
+        showToast('Deposit #' + id + ' rejected ❌');
+        await loadDeposits();
+        await loadKPIs();
+    } catch (e) {
+        alert('Reject failed: ' + e.message);
+        enableRow(btn);
+    }
+}
+
+// ── Setup Status ──────────────────────────────────────────────────────
+async function loadSetupStatus() {
+    const listEl = clear('setup-list');
+    listEl.appendChild(el('div', { class: 'empty', text: 'Loading configuration status…' }));
+    let data = null;
+    try {
+        data = await api('/api/admin/setup-status');
+    } catch (e) {
+        if (e.message && (e.message.includes('404') || e.message.includes('HTTP 404'))) {
+            clear(listEl);
+            listEl.appendChild(el('div', { class: 'empty', text: 'Setup status endpoint not yet available on this deployment.' }));
+            return;
+        }
+        clear(listEl);
+        listEl.appendChild(el('div', { class: 'error-banner', text: 'Failed to load setup status: ' + e.message }));
+        return;
+    }
+    clear(listEl);
+
+    function statusRow(label, ok, okLabel, failLabel) {
+        const icon = ok ? '✅' : '❌';
+        const statusText = ok ? (okLabel || 'Configured') : (failLabel || 'Missing');
+        const row = el('div', {
+            style: {
+                display: 'flex',
+                alignItems: 'center',
+                gap: '12px',
+                padding: '12px 16px',
+                borderBottom: '1px solid rgba(255,255,255,0.05)',
+                fontSize: '14px'
+            }
+        },
+            el('span', { style: { fontSize: '16px', minWidth: '24px' }, text: icon }),
+            el('span', { style: { minWidth: '220px', fontWeight: '600', color: '#e0e0e0' }, text: label + ':' }),
+            el('span', { style: { color: ok ? '#4ade80' : '#ef4444' }, text: statusText })
+        );
+        return row;
+    }
+
+    const stripeOk = !!(data.stripe && data.stripe.configured);
+    const dbOk = !!(data.database && data.database.connected && data.database.type === 'postgresql');
+    const jwtOk = !!(data.jwt && data.jwt.set);
+    const smtpOk = !!(data.smtp && data.smtp.configured);
+    const adminKeyOk = !!(data.adminApiKey && data.adminApiKey.set);
+
+    const container = el('div', {
+        style: {
+            background: 'rgba(0,0,0,0.3)',
+            border: '1px solid rgba(255,215,0,0.15)',
+            borderRadius: '8px',
+            overflow: 'hidden',
+            marginBottom: '20px'
+        }
+    },
+        el('div', {
+            style: {
+                padding: '14px 16px',
+                borderBottom: '1px solid rgba(255,215,0,0.15)',
+                fontSize: '13px',
+                textTransform: 'uppercase',
+                letterSpacing: '0.08em',
+                color: '#888'
+            },
+            text: 'Revenue Configuration Status'
+        }),
+        statusRow('Stripe', stripeOk, 'CONFIGURED — Card deposits enabled', 'MISSING — Card deposits blocked'),
+        statusRow('Database (PostgreSQL)', dbOk,
+            'CONNECTED',
+            data.database && data.database.type === 'sqlite' ? 'USING SQLITE FALLBACK' : 'NOT CONNECTED'),
+        statusRow('JWT Secret', jwtOk, 'SET', 'NOT SET — Auth will fail'),
+        statusRow('SMTP Email', smtpOk, 'CONFIGURED — Email features enabled', 'NOT SET — Email features disabled'),
+        statusRow('Admin API Key', adminKeyOk, 'SET', 'NOT SET')
+    );
+    listEl.appendChild(container);
+
+    if (!stripeOk) {
+        const callout = el('div', {
+            style: {
+                background: 'rgba(251,191,36,0.12)',
+                border: '1px solid rgba(251,191,36,0.4)',
+                borderRadius: '8px',
+                padding: '20px 24px',
+                color: '#fbbf24',
+                fontSize: '14px',
+                lineHeight: '1.7'
+            }
+        },
+            el('div', { style: { fontWeight: '700', fontSize: '15px', marginBottom: '12px' }, text: 'To enable card deposits:' }),
+            el('ol', { style: { paddingLeft: '20px' } },
+                el('li', { text: 'Go to https://stripe.com → Dashboard → Developers → API keys' }),
+                el('li', { text: 'Copy your Secret key (sk_live_...) and Publishable key (pk_live_...)' }),
+                el('li', null,
+                    document.createTextNode('In Vercel: Project → Settings → Environment Variables'),
+                    el('br'),
+                    el('span', { class: 'mono', style: { fontSize: '13px', color: '#e0e0e0' }, text: 'Set: STRIPE_SECRET_KEY, STRIPE_PUBLISHABLE_KEY, STRIPE_WEBHOOK_SECRET' })
+                ),
+                el('li', { text: 'Redeploy. Card deposits will activate immediately.' })
+            )
+        );
+        listEl.appendChild(callout);
+    }
+}
+
 // ── User lookup ──────────────────────────────────────────────────────
 async function lookupUser(ev) {
     ev.preventDefault();
@@ -809,6 +1029,10 @@ setInterval(() => {
         loadWithdrawals().catch(() => {});
         loadKYC().catch(() => {});
         loadKPIs().catch(() => {});
+        // Also refresh deposits if that tab is active
+        if (document.getElementById('panel-deposits').classList.contains('active')) {
+            loadDeposits().catch(() => {});
+        }
     }
 }, 30_000);
 </script>

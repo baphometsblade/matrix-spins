@@ -402,7 +402,8 @@ mount('/api/battlepass',    './routes/battle-pass.routes',   'battlepass-alias')
 // Identity / 2FA / KYC / Social
 mount('/api/2fa',            './routes/twofa.routes',         '2fa (TOTP)');
 mount('/api/kyc',            './routes/kyc.routes',           'kyc');
-mount('/api/admin/kyc',      './routes/admin-kyc.routes',     'admin-kyc');
+mount('/api/admin/kyc',          './routes/admin-kyc.routes',          'admin-kyc');
+mount('/api/admin/setup-status', './routes/setup-status.routes',      'admin-setup-status');
 mount('/api/profile',        './routes/profile.routes',       'profile');
 mount('/api/friends',        './routes/friends.routes',       'friends');
 mount('/api/activity-feed',  './routes/activity-feed.routes', 'activity-feed');
