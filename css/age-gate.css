@@ -201,3 +201,31 @@ body.age-gate-active {
     animation: none;
   }
 }
+
+
+/* ─────────────────────────────────────────────────────────────────────
+   PRODUCTION HARDENING — DO NOT REMOVE
+   The bundled styles.<hash>.min.css used to ship two dead .age-gate-overlay
+   rules with `background: rgba(0,0,0,.95)` left over from earlier age-gate
+   UIs. They loaded after this file, lost source-order, and flattened the
+   gradient above into a near-pure-black panel that was visually
+   indistinguishable from the .age-gate-card behind it (which uses
+   rgba(20,22,30,.85)). Net effect: page loads, screen goes black, no
+   apparent way forward unless the user happened to tap the "I am 18+"
+   button's exact pixel rect (worse on browsers that don't paint
+   `backdrop-filter: blur(20px)`).
+   This block uses !important to make the gradient + the card's solid
+   surface immune to later-rule overrides regardless of bundle order.
+   ─────────────────────────────────────────────────────────────────── */
+.age-gate-overlay {
+  background: radial-gradient(
+    ellipse at 50% 40%,
+    rgba(212, 175, 55, 0.08) 0%,
+    rgba(30, 20, 60, 0.97) 45%,
+    rgba(13, 15, 20, 0.99) 100%
+  ) !important;
+}
+.age-gate-card {
+  background: #14161e !important;
+  border: 1px solid rgba(212, 175, 55, 0.35) !important;
+}
