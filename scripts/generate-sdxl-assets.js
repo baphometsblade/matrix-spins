@@ -2,208 +2,215 @@
 'use strict';
 
 /**
- * SDXL HD Asset Generator via local Fooocus API.
+ * Premium Thumbnail + Background Generator — Fooocus API.
  *
- * Generates real AI artwork (SDXL / juggernautXL) for every game in the
- * catalog:
- *   - 1 thumbnail  (1152×896 → downscaled to 400×300 WebP)
- *   - 1 background (1408×704 → downscaled to 1920×1080 WebP)
+ * Per game:
+ *   assets/thumbnails/<id>.webp          400×300  (lobby card)
+ *   assets/backgrounds/slots/<id>_bg.webp  1920×1080  (slot game backdrop)
+ *
+ * Every prompt is built from the game's individual artDirection + colorNote
+ * in shared/game-art-direction.js — no two games share the same brief.
  *
  * Usage:
- *   node scripts/generate-sdxl-assets.js                 # all games, thumb+bg
- *   node scripts/generate-sdxl-assets.js --thumbs        # only thumbnails
- *   node scripts/generate-sdxl-assets.js --backgrounds   # only backgrounds
+ *   node scripts/generate-sdxl-assets.js                 # thumbs + backgrounds
+ *   node scripts/generate-sdxl-assets.js --thumbs        # thumbnails only
+ *   node scripts/generate-sdxl-assets.js --backgrounds   # backgrounds only
  *   node scripts/generate-sdxl-assets.js --only=sugar_rush,wolf_gold
- *   node scripts/generate-sdxl-assets.js --force         # regenerate existing
- *   node scripts/generate-sdxl-assets.js --perf=Speed    # Lightning|Speed|Quality
- *
- * Requires Fooocus-API running locally on http://localhost:7865.
- * Skips any game whose target file already exists unless --force.
+ *   node scripts/generate-sdxl-assets.js --force         # regenerate all
+ *   node scripts/generate-sdxl-assets.js --perf=Quality  # Lightning|Speed|Quality
  */
 
-const fs = require('fs');
-const path = require('path');
+const fs    = require('fs');
+const path  = require('path');
 const sharp = require('sharp');
-const games = require('../shared/game-definitions');
 
-const API_URL = process.env.FOOOCUS_API || 'http://localhost:7865';
+const games = require('../shared/game-definitions');
+const { ART_DIRECTION } = require('../shared/game-art-direction');
+
+const API_URL  = process.env.FOOOCUS_API || 'http://localhost:7865';
 const REPO_ROOT = path.join(__dirname, '..');
 const THUMB_DIR = path.join(REPO_ROOT, 'assets', 'thumbnails');
 const BG_DIR    = path.join(REPO_ROOT, 'assets', 'backgrounds', 'slots');
 
-// Args
-const args = process.argv.slice(2);
+// ── CLI args ─────────────────────────────────────────────────────────────────
+const args    = process.argv.slice(2);
 const onlyArg = args.find(a => a.startsWith('--only='));
 const onlyIds = onlyArg ? new Set(onlyArg.slice(7).split(',')) : null;
 const perfArg = args.find(a => a.startsWith('--perf='));
-const perf = perfArg ? perfArg.slice(7) : 'Speed'; // Lightning | Speed | Quality
-const FORCE = args.includes('--force');
+const perf    = perfArg ? perfArg.slice(7) : 'Speed';
+const FORCE   = args.includes('--force');
 const DO_THUMBS = !args.includes('--backgrounds') || args.includes('--thumbs');
-const DO_BACKGROUNDS = !args.includes('--thumbs')  || args.includes('--backgrounds');
+const DO_BGS    = !args.includes('--thumbs')      || args.includes('--backgrounds');
 
 if (!fs.existsSync(THUMB_DIR)) fs.mkdirSync(THUMB_DIR, { recursive: true });
 if (!fs.existsSync(BG_DIR))    fs.mkdirSync(BG_DIR,    { recursive: true });
 
-// ───────────────────────── Theme keywords ─────────────────────────
-const THEME_KEYWORDS = {
-    egypt:      'ancient Egyptian, golden treasures, pyramids, hieroglyphs, pharaoh, sand desert, warm gold tones',
-    fruit:      'vibrant fresh fruit, glossy cherries, oranges, grapes, watermelons, sweet treats, bright colorful',
-    space:      'cosmic nebula, starfield, space stations, galaxies, cyan and purple glow, sci-fi futurist',
-    fantasy:    'magical enchanted realm, mystical crystals, sparkles, fairy tale, purple magic aura, ethereal glow',
-    animals:    'wild jungle animals, predatory gaze, lush jungle, safari, National Geographic photography',
-    asian:      'oriental dragon, asian temple, cherry blossoms, red gold tones, martial arts elegance',
-    horror:     'gothic horror, haunted, dark moody, blood red, eerie moonlight, mysterious fog',
-    australian: 'australian outback, kangaroo, aboriginal art, red dust, golden sunset, eucalyptus',
-    wildcard:   'generic casino luxury, premium glamour, gold and neon accents',
-    halloween:  'halloween spooky, pumpkins, bats, witches, orange purple, haunted graveyard',
-};
+// ── Negative prompt ──────────────────────────────────────────────────────────
+const NEGATIVE = [
+  'text, letters, words, numbers, watermark, signature, logo,',
+  'low quality, blurry, deformed, ugly, amateur, flat, 2d,',
+  'oversaturated, washed out, noisy, jpeg artefact, duplicate',
+].join(' ');
 
-// ───────────────────────── Prompt builders ─────────────────────────
-function themeKW(game) {
-    return THEME_KEYWORDS[game.themeCategory] || THEME_KEYWORDS[game.theme] || THEME_KEYWORDS.wildcard;
+// ── Style presets ─────────────────────────────────────────────────────────────
+// Thumbnails: cinematic, saturated, premium marketing art
+const THUMB_STYLES = ['Fooocus V2', 'MRE Cinematic Dynamic', 'Fooocus Masterpiece', 'SAI Enhance'];
+// Backgrounds: atmospheric, wide, non-distracting centre
+const BG_STYLES    = ['Fooocus V2', 'MRE Cinematic Dynamic', 'Fooocus Enhance'];
+
+// ── Prompt builders ───────────────────────────────────────────────────────────
+function getArt(game) {
+  const ad = ART_DIRECTION[game.id] || {};
+  return {
+    art: ad.artDirection || `premium ${game.themeCategory} themed casino slot`,
+    col: ad.colorNote    || game.accentColor || 'vibrant colors',
+  };
 }
 
 function thumbnailPrompt(game) {
-    const kw = themeKW(game);
-    // Fooocus handles promotional art style well for slot games.
-    return `masterpiece, ${game.name} casino slot machine promotional key art, ` +
-           `${kw}, centered hero composition, glowing rim lighting, ` +
-           `ornate golden frame, rich vibrant colors, ultra-detailed, 8k, ` +
-           `dramatic cinematic lighting, no text, no words, no letters, no signature`;
+  const { art, col } = getArt(game);
+  return [
+    `masterpiece, ${game.name} casino slot machine promotional key art,`,
+    art,
+    `${col} color scheme,`,
+    'premium casino aesthetic, centered hero composition, strong depth of field,',
+    'ornate golden frame border, volumetric cinematic lighting, rich saturation,',
+    'hyper-realistic ultra-detailed 8k, no text, no letters, no watermark',
+  ].join(' ');
 }
 
 function backgroundPrompt(game) {
-    const kw = themeKW(game);
-    // Backgrounds sit behind the reels — dark edges, negative-space center.
-    return `cinematic ${game.name} ambient background landscape, ${kw}, ` +
-           `wide panoramic view, dark vignette edges, empty blurred center ` +
-           `for game reels to sit on top, atmospheric depth of field, ` +
-           `moody lighting, rich colors, no text, no words, no letters`;
+  const { art, col } = getArt(game);
+  return [
+    `cinematic ${game.name} slot game ambient background,`,
+    art,
+    `${col} color palette,`,
+    'wide panoramic landscape, dark vignette at all edges,',
+    'large empty blurred negative-space centre for game reels to overlay,',
+    'atmospheric depth of field, moody dramatic lighting,',
+    'no text, no letters, no watermark, no UI elements',
+  ].join(' ');
 }
 
-const NEGATIVE_PROMPT = 'text, letters, words, numbers, watermark, signature, logo, low quality, blurry, deformed, ugly, amateur, nsfw, nudity';
-
-// ───────────────────────── API ─────────────────────────
+// ── Fooocus API ───────────────────────────────────────────────────────────────
 async function postJson(urlPath, body) {
-    const res = await fetch(API_URL + urlPath, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
-        body: JSON.stringify(body),
-    });
-    if (!res.ok) {
-        const txt = await res.text();
-        throw new Error(`API ${res.status}: ${txt.slice(0, 200)}`);
-    }
-    return res.json();
+  const res = await fetch(API_URL + urlPath, {
+    method:  'POST',
+    headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+    body:    JSON.stringify(body),
+  });
+  if (!res.ok) throw new Error(`API ${res.status}: ${(await res.text()).slice(0, 200)}`);
+  return res.json();
 }
 
 async function fetchBuffer(url) {
-    const res = await fetch(url);
-    if (!res.ok) throw new Error(`fetch ${url}: ${res.status}`);
-    const ab = await res.arrayBuffer();
-    return Buffer.from(ab);
+  const res = await fetch(url);
+  if (!res.ok) throw new Error(`fetch ${url}: ${res.status}`);
+  return Buffer.from(await res.arrayBuffer());
 }
 
-async function generate(prompt, aspect) {
-    const body = {
-        prompt,
-        negative_prompt: NEGATIVE_PROMPT,
-        aspect_ratios_selection: aspect,
-        performance_selection: perf,
-        image_number: 1,
-        async_process: false,
-        style_selections: ['Fooocus V2', 'Fooocus Enhance', 'Fooocus Sharp', 'SAI Enhance'],
-    };
-    const results = await postJson('/v1/generation/text-to-image', body);
-    if (!Array.isArray(results) || results.length === 0) {
-        throw new Error('no images returned');
-    }
-    const r = results[0];
-    if (r.url) return fetchBuffer(r.url);
-    if (r.base64) return Buffer.from(r.base64, 'base64');
-    throw new Error('no url/base64 in result');
+async function generate(prompt, aspect, styles) {
+  const results = await postJson('/v1/generation/text-to-image', {
+    prompt,
+    negative_prompt:         NEGATIVE,
+    aspect_ratios_selection: aspect,
+    performance_selection:   perf,
+    image_number:            1,
+    async_process:           false,
+    style_selections:        styles,
+  });
+  if (!results.length) throw new Error('no images returned');
+  const r = results[0];
+  if (r.url)    return fetchBuffer(r.url);
+  if (r.base64) return Buffer.from(r.base64, 'base64');
+  throw new Error('no url/base64 in result');
 }
 
-// ───────────────────────── Pipeline ─────────────────────────
+// ── Asset pipeline ────────────────────────────────────────────────────────────
 async function genThumbnail(game) {
-    const outPath = path.join(THUMB_DIR, game.id + '.webp');
-    if (!FORCE && fs.existsSync(outPath) && fs.statSync(outPath).size > 30000) {
-        return { skipped: true };  // skip if looks HD (>30KB)
-    }
-    const png = await generate(thumbnailPrompt(game), '1152*896');
-    await sharp(png).resize(400, 300, { fit: 'cover' }).webp({ quality: 88 }).toFile(outPath);
-    return { ok: true, size: fs.statSync(outPath).size };
+  const outPath = path.join(THUMB_DIR, game.id + '.webp');
+  if (!FORCE && fs.existsSync(outPath) && fs.statSync(outPath).size > 30_000) {
+    return { skipped: true };
+  }
+  // 1344×768 source → 400×300 output (keeps premium detail before downsample)
+  const png = await generate(thumbnailPrompt(game), '1344*768', THUMB_STYLES);
+  await sharp(png)
+    .resize(400, 300, { fit: 'cover', position: 'centre' })
+    .webp({ quality: 90 })
+    .toFile(outPath);
+  return { ok: true, size: fs.statSync(outPath).size };
 }
 
 async function genBackground(game) {
-    const outPath = path.join(BG_DIR, game.id + '_bg.webp');
-    if (!FORCE && fs.existsSync(outPath) && fs.statSync(outPath).size > 100000) {
-        return { skipped: true };
-    }
-    const png = await generate(backgroundPrompt(game), '1408*704');
-    await sharp(png).resize(1920, 1080, { fit: 'cover' }).webp({ quality: 82 }).toFile(outPath);
-    return { ok: true, size: fs.statSync(outPath).size };
+  const outPath = path.join(BG_DIR, game.id + '_bg.webp');
+  if (!FORCE && fs.existsSync(outPath) && fs.statSync(outPath).size > 100_000) {
+    return { skipped: true };
+  }
+  // 1536×640 source → 1920×1080 stretched (letterbox fill)
+  const png = await generate(backgroundPrompt(game), '1536*640', BG_STYLES);
+  await sharp(png)
+    .resize(1920, 1080, { fit: 'cover', position: 'centre' })
+    .webp({ quality: 84 })
+    .toFile(outPath);
+  return { ok: true, size: fs.statSync(outPath).size };
 }
 
 async function ping() {
-    try {
-        const res = await fetch(API_URL + '/ping');
-        if (res.ok) return true;
-    } catch (_) { /* unreachable */ }
-    return false;
+  try { const r = await fetch(API_URL + '/ping'); return r.ok; } catch { return false; }
 }
 
+// ── Main ──────────────────────────────────────────────────────────────────────
 async function main() {
-    console.log(`SDXL Asset Generator — perf=${perf}, force=${FORCE}, api=${API_URL}`);
-    if (!(await ping())) {
-        console.error('FATAL: Fooocus API not reachable at ' + API_URL);
-        console.error('Start it first: cd C:/Users/markm/FooocusApp && python main.py');
-        process.exit(1);
-    }
-    console.log('API is up.');
+  console.log(`Asset Generator — perf=${perf}  force=${FORCE}  api=${API_URL}`);
+  console.log(`Mode: ${DO_THUMBS ? 'thumbnails ' : ''}${DO_BGS ? 'backgrounds' : ''}`);
 
-    const targetGames = onlyIds ? games.filter(g => onlyIds.has(g.id)) : games;
-    console.log(`Target: ${targetGames.length} games × ${(DO_THUMBS ? 1 : 0) + (DO_BACKGROUNDS ? 1 : 0)} asset(s)`);
+  if (!(await ping())) {
+    console.error(`\nFATAL: Fooocus API not reachable at ${API_URL}`);
+    console.error('Start it: cd C:/Users/markm/FooocusApp && python launch_api.py --listen');
+    process.exit(1);
+  }
+  console.log('Fooocus API: OK\n');
 
-    const summary = { thumbOk: 0, thumbSkip: 0, thumbFail: 0, bgOk: 0, bgSkip: 0, bgFail: 0 };
-    const startTime = Date.now();
+  const target = onlyIds ? games.filter(g => onlyIds.has(g.id)) : games;
+  console.log(`Target: ${target.length} games`);
 
-    for (let i = 0; i < targetGames.length; i++) {
-        const game = targetGames[i];
-        const prefix = `[${i+1}/${targetGames.length}] ${game.id.padEnd(24)}`;
+  const s = { tOk: 0, tSkip: 0, tFail: 0, bOk: 0, bSkip: 0, bFail: 0 };
+  const t0 = Date.now();
 
-        if (DO_THUMBS) {
-            try {
-                const r = await genThumbnail(game);
-                if (r.skipped) { summary.thumbSkip++; process.stdout.write(`${prefix} thumb: skip `); }
-                else { summary.thumbOk++; process.stdout.write(`${prefix} thumb: ok (${(r.size/1024).toFixed(0)}KB) `); }
-            } catch (e) {
-                summary.thumbFail++;
-                console.warn(`\n${prefix} thumb: FAIL — ${e.message}`);
-            }
-        }
-        if (DO_BACKGROUNDS) {
-            try {
-                const r = await genBackground(game);
-                if (r.skipped) { summary.bgSkip++; process.stdout.write(`| bg: skip\n`); }
-                else { summary.bgOk++; process.stdout.write(`| bg: ok (${(r.size/1024).toFixed(0)}KB)\n`); }
-            } catch (e) {
-                summary.bgFail++;
-                console.warn(`\n${prefix} bg: FAIL — ${e.message}`);
-            }
-        } else {
-            process.stdout.write('\n');
-        }
+  for (let i = 0; i < target.length; i++) {
+    const game   = target[i];
+    const prefix = `[${i + 1}/${target.length}] ${game.id.padEnd(26)}`;
+
+    if (DO_THUMBS) {
+      try {
+        const r = await genThumbnail(game);
+        if (r.skipped) { s.tSkip++; process.stdout.write(`${prefix} thumb:skip  `); }
+        else           { s.tOk++;   process.stdout.write(`${prefix} thumb:ok(${(r.size/1024).toFixed(0)}KB)  `); }
+      } catch (e) {
+        s.tFail++;
+        console.warn(`\n${prefix} thumb:FAIL — ${e.message}`);
+      }
     }
 
-    const elapsed = Math.round((Date.now() - startTime) / 1000);
-    console.log('\n===== SUMMARY =====');
-    if (DO_THUMBS)      console.log(`Thumbnails:  ${summary.thumbOk} new, ${summary.thumbSkip} skipped, ${summary.thumbFail} failed`);
-    if (DO_BACKGROUNDS) console.log(`Backgrounds: ${summary.bgOk} new, ${summary.bgSkip} skipped, ${summary.bgFail} failed`);
-    console.log(`Elapsed: ${Math.floor(elapsed/60)}m ${elapsed%60}s`);
+    if (DO_BGS) {
+      try {
+        const r = await genBackground(game);
+        if (r.skipped) { s.bSkip++; process.stdout.write(`bg:skip\n`); }
+        else           { s.bOk++;   process.stdout.write(`bg:ok(${(r.size/1024).toFixed(0)}KB)\n`); }
+      } catch (e) {
+        s.bFail++;
+        console.warn(`\n${prefix} bg:FAIL — ${e.message}`);
+      }
+    } else {
+      process.stdout.write('\n');
+    }
+  }
+
+  const elapsed = Math.round((Date.now() - t0) / 1000);
+  console.log('\n═══ SUMMARY ═══');
+  if (DO_THUMBS) console.log(`Thumbnails : ok=${s.tOk}  skip=${s.tSkip}  fail=${s.tFail}`);
+  if (DO_BGS)    console.log(`Backgrounds: ok=${s.bOk}  skip=${s.bSkip}  fail=${s.bFail}`);
+  console.log(`Elapsed: ${Math.floor(elapsed / 60)}m ${elapsed % 60}s`);
 }
 
-main().catch(err => {
-    console.error('Fatal:', err);
-    process.exit(1);
-});
+main().catch(err => { console.error('Fatal:', err.message); process.exit(1); });
