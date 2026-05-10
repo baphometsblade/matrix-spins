@@ -6,7 +6,7 @@
   "functions": {
     "api/index.js": {
       "maxDuration": 30,
-      "includeFiles": "{server/**,shared/**,blockchain/**}"
+      "includeFiles": "{server/**,shared/**,blockchain/**,admin/**,dist/**,assets/**,js/**,games/**}"
     }
   },
   "rewrites": [

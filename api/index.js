@@ -24,6 +24,20 @@ function loadApp() {
 }
 
 module.exports = async (req, res) => {
+  // ── Ultra-fast liveness probe — no Express, no DB, always 200 ──────────
+  // Bypasses the full stack so load-balancers and uptime monitors get an
+  // instant response even during cold starts or DB reconnection.
+  const url = req.url || '';
+  if (url === '/api/health/ping' || url.startsWith('/api/health/ping?')) {
+    res.setHeader('Content-Type', 'application/json');
+    res.setHeader('Cache-Control', 'no-store');
+    return res.end(JSON.stringify({
+      status: 'ok',
+      uptime: Math.floor(process.uptime()),
+      timestamp: new Date().toISOString(),
+    }));
+  }
+
   loadApp();
 
   if (loadError) {
