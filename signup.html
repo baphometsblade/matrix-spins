@@ -18,37 +18,21 @@
   <div class="rs-brand">Matrix Spins</div>
   <div class="rs-card">
     <h1>Create your account</h1>
-    <p class="muted" style="margin-bottom:1.2rem;">Must be of legal gambling age in your jurisdiction.</p>
+    <p class="muted" style="margin-bottom:1.2rem;">Join in seconds — just email &amp; password to start playing.</p>
     <div id="alert" class="alert"></div>
     <form id="f">
-      <div class="row">
-        <div class="field"><label>First name</label><input id="firstName" required maxlength="100"></div>
-        <div class="field"><label>Last name</label><input id="lastName" required maxlength="100"></div>
-      </div>
-      <div class="field"><label>Email</label><input id="email" type="email" required autocomplete="email"></div>
-      <div class="row">
-        <div class="field"><label>Date of birth</label><input id="dob" type="date" required></div>
-        <div class="field">
-          <label>Country</label>
-          <select id="country" required>
-            <option value="">Select…</option>
-          </select>
-        </div>
-      </div>
+      <div class="field"><label>Email address</label><input id="email" type="email" required autocomplete="email" placeholder="you@example.com"></div>
+      <div class="field"><label>Date of birth <span style="font-size:.75em;color:rgba(255,255,255,0.4)">(must be 18+)</span></label><input id="dob" type="date" required></div>
       <div class="field">
         <label>Password</label>
-        <input id="password" type="password" required autocomplete="new-password" minlength="10">
-        <p class="muted" style="font-size:.78rem;margin-top:.3rem;">10+ chars, with uppercase, lowercase, a number, and a special character (e.g. !@#$).</p>
-      </div>
-      <div class="field checkbox">
-        <input id="acceptAge" type="checkbox" required>
-        <label for="acceptAge">I confirm I am of legal gambling age in my country of residence.</label>
+        <input id="password" type="password" required autocomplete="new-password" minlength="10" placeholder="10+ characters">
+        <p class="muted" style="font-size:.78rem;margin-top:.3rem;">Must include uppercase, lowercase, number and special character.</p>
       </div>
       <div class="field checkbox">
         <input id="acceptTerms" type="checkbox" required>
-        <label for="acceptTerms">I accept the <a href="terms.html" target="_blank">terms</a> and <a href="responsible-gambling.html" target="_blank">responsible gambling</a> policies.</label>
+        <label for="acceptTerms">I am 18+ and accept the <a href="terms.html" target="_blank">terms</a> &amp; <a href="responsible-gambling.html" target="_blank">responsible gambling</a> policies.</label>
       </div>
-      <button id="submit" class="btn">Create account</button>
+      <button id="submit" class="btn" style="width:100%;margin-top:0.5rem">Create account &amp; claim bonus →</button>
     </form>
     <div class="links">
       <a href="login.html">Already have an account?</a>
@@ -67,16 +51,13 @@
   // If already signed in, redirect to lobby
   try { const u = await api.loadSession(); if (u) { window.location.href = 'index.html'; return; } } catch {}
 
-  const cfg = await api.publicConfig().catch(() => ({ blockedCountries: [] }));
-  const blocked = new Set(cfg.blockedCountries || []);
-  const countrySelect = document.getElementById('country');
-  (window.RS_COUNTRIES || []).forEach((c) => {
-    if (blocked.has(c.code)) return;
-    const opt = document.createElement('option');
-    opt.value = c.code;
-    opt.textContent = c.name;
-    countrySelect.appendChild(opt);
-  });
+  // Set max date for DOB to 18 years ago
+  var dobInput = document.getElementById('dob');
+  if (dobInput) {
+    var maxDob = new Date();
+    maxDob.setFullYear(maxDob.getFullYear() - 18);
+    dobInput.max = maxDob.toISOString().split('T')[0];
+  }
 
   function showError(msg) {
     alertEl.classList.remove('success');
@@ -102,14 +83,10 @@
     try {
       const email = document.getElementById('email').value.trim();
       await api.register({
-        username:  deriveUsername(email),
-        firstName: document.getElementById('firstName').value.trim(),
-        lastName:  document.getElementById('lastName').value.trim(),
-        email:     email,
-        password:  document.getElementById('password').value,
+        username:    deriveUsername(email),
+        email:       email,
+        password:    document.getElementById('password').value,
         dateOfBirth: document.getElementById('dob').value,
-        countryCode: document.getElementById('country').value,
-        acceptAge: document.getElementById('acceptAge').checked,
         acceptTerms: document.getElementById('acceptTerms').checked,
       });
       window.location.href = 'index.html';
