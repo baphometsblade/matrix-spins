@@ -32,11 +32,14 @@ async function _checkSelfExclusion(userId) {
 
 router.get('/', async function (req, res) {
     try {
-        var rows = await tournamentService.getActive();
-        res.json({ tournaments: rows });
+        var [active, upcoming] = await Promise.all([
+            tournamentService.getActive(),
+            tournamentService.getUpcoming(),
+        ]);
+        res.json({ active, upcoming, tournaments: active });
     } catch (err) {
         console.warn('[Tournament] / error:', err.message);
-        res.json({ tournaments: [] });
+        res.json({ active: [], upcoming: [], tournaments: [] });
     }
 });
 

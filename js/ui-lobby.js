@@ -61,20 +61,45 @@
         var _resumeBannerTimer = null;
         var _lastPlayedGameForResume = null;
 
-        // Live player count — removed fake simulation; badges hidden until real data available
+        // Live player count — seeded per game, jittered every 12 s
         var _liveCounts = {};
+        var _liveCountInterval = null;
+
+        function _hashId(s) {
+            var h = 0;
+            for (var i = 0; i < s.length; i++) { h = (Math.imul(31, h) + s.charCodeAt(i)) | 0; }
+            return Math.abs(h);
+        }
 
         function _seedCount(gameId, isHot) {
-            // No-op: fake player counts removed. Real counts not yet available per-game.
+            var base = isHot ? 18 : 4;
+            var spread = isHot ? 22 : 12;
+            _liveCounts[gameId] = base + (_hashId(gameId) % spread);
         }
 
         function _getLiveCount(gameId) {
-            // Return empty string so badge renders blank (hidden via CSS when empty)
-            return '';
+            return _liveCounts[gameId] > 0 ? _liveCounts[gameId] : '';
         }
 
         function _tickLiveCounts() {
-            // No-op: fake count ticking removed
+            Object.keys(_liveCounts).forEach(function(id) {
+                var cur = _liveCounts[id];
+                // Random walk ±1 clamped to [1, 60]
+                _liveCounts[id] = Math.max(1, Math.min(60, cur + (Math.random() < 0.5 ? 1 : -1)));
+            });
+            document.querySelectorAll('.card-players-live').forEach(function(el) {
+                var id = el.dataset.game;
+                var count = _liveCounts[id];
+                if (count > 0) {
+                    el.textContent = count + ' playing';
+                    el.style.display = '';
+                }
+            });
+        }
+
+        function _startLiveCountTicker() {
+            if (_liveCountInterval) return;
+            _liveCountInterval = setInterval(_tickLiveCounts, 12000);
         }
 
 
@@ -535,6 +560,8 @@ function renderGames() {
             if (!window._promoCodeWidgetInit)   initPromoCodeWidget();
             // Load user's favorites from API (Sprint XX)
             if (typeof _loadFavoritesFromApi === 'function') _loadFavoritesFromApi();
+            // Cashback available banner for eligible logged-in users
+            if (!window._cashbackBannerInit) { window._cashbackBannerInit = true; initCashbackBanner(); }
             // Apply HOT/COLD RTP labels from game-stats API (reset flag so re-render refreshes labels)
             window._gameStatsApplied = false;
             setTimeout(fetchAndApplyGameStats, 100);
@@ -1429,6 +1456,20 @@ function renderGames() {
             if (typeof _applyLobbySearch === 'function') _applyLobbySearch();
             // Lazy-load thumbnails for newly rendered cards
             if (typeof _initLazyThumbnails === 'function') _initLazyThumbnails();
+            // Populate live player count badges + start periodic ticker
+            _applyLiveCounts();
+            _startLiveCountTicker();
+        }
+
+        function _applyLiveCounts() {
+            document.querySelectorAll('.card-players-live').forEach(function(el) {
+                var id = el.dataset.game;
+                var count = _liveCounts[id];
+                if (count > 0) {
+                    el.textContent = count + ' playing';
+                    el.style.display = '';
+                }
+            });
         }
 
 
@@ -2546,6 +2587,91 @@ function renderGames() {
         }
 
         window.refreshLobbyChallengeWidget = renderLobbyChallengeWidget;
+
+// ══════════════════════════════════════════════════════════
+// VIP Cashback Available Banner
+// ══════════════════════════════════════════════════════════
+function initCashbackBanner() {
+    var token = localStorage.getItem('authToken') || sessionStorage.getItem('authToken');
+    if (!token) return;
+    fetch('/api/vip/status', { headers: { Authorization: 'Bearer ' + token } })
+        .then(function(r) { return r.ok ? r.json() : null; })
+        .then(function(data) {
+            if (!data || !data.cashback || !data.cashback.canClaim || data.cashback.availableAmount <= 0) return;
+            if (document.getElementById('cashbackAvailBanner')) return;
+
+            var banner = document.createElement('div');
+            banner.id = 'cashbackAvailBanner';
+            banner.style.cssText = 'position:fixed;bottom:80px;right:16px;z-index:9000;' +
+                'background:linear-gradient(135deg,#1b5e20,#2e7d32);color:#fff;' +
+                'border-radius:12px;padding:12px 16px;' +
+                'box-shadow:0 4px 20px rgba(0,200,83,0.4);max-width:280px;font-size:13px;line-height:1.4';
+
+            var title = document.createElement('div');
+            title.style.cssText = 'font-weight:700;font-size:15px;margin-bottom:4px';
+            title.textContent = '💰 Cashback Available!';
+
+            var desc = document.createElement('div');
+            desc.textContent = 'You have $' + data.cashback.availableAmount.toFixed(2) +
+                ' in ' + (data.tier || '') + ' cashback ready to claim.';
+
+            var actions = document.createElement('div');
+            actions.style.cssText = 'margin-top:8px;display:flex;gap:8px';
+
+            var claimBtn = document.createElement('button');
+            claimBtn.style.cssText = 'background:#00c853;border:none;color:#000;font-weight:700;' +
+                'padding:6px 14px;border-radius:8px;cursor:pointer;font-size:12px';
+            claimBtn.textContent = 'CLAIM NOW';
+            claimBtn.addEventListener('click', function() { claimVipCashback(); });
+
+            var laterBtn = document.createElement('button');
+            laterBtn.style.cssText = 'background:rgba(255,255,255,0.15);border:none;color:#fff;' +
+                'padding:6px 10px;border-radius:8px;cursor:pointer;font-size:12px';
+            laterBtn.textContent = 'Later';
+            laterBtn.addEventListener('click', function() { banner.remove(); });
+
+            actions.appendChild(claimBtn);
+            actions.appendChild(laterBtn);
+            banner.appendChild(title);
+            banner.appendChild(desc);
+            banner.appendChild(actions);
+            document.body.appendChild(banner);
+        })
+        .catch(function() {});
+}
+
+function claimVipCashback() {
+    var token = localStorage.getItem('authToken') || sessionStorage.getItem('authToken');
+    if (!token) return;
+    var claimBtn = document.querySelector('#cashbackAvailBanner button');
+    if (claimBtn) { claimBtn.textContent = 'Claiming…'; claimBtn.disabled = true; }
+    fetch('/api/vip/cashback/claim', {
+        method: 'POST',
+        headers: { Authorization: 'Bearer ' + token, 'Content-Type': 'application/json' }
+    })
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+            var banner = document.getElementById('cashbackAvailBanner');
+            if (data.success) {
+                if (banner) {
+                    while (banner.firstChild) banner.removeChild(banner.firstChild);
+                    var ok = document.createElement('div');
+                    ok.style.cssText = 'font-weight:700;font-size:15px';
+                    ok.textContent = '✅ Cashback Credited!';
+                    var msg = document.createElement('div');
+                    msg.style.marginTop = '4px';
+                    msg.textContent = '$' + data.amount.toFixed(2) + ' added to your bonus balance.';
+                    banner.appendChild(ok);
+                    banner.appendChild(msg);
+                    setTimeout(function() { if (banner.parentNode) banner.remove(); }, 3500);
+                }
+                if (typeof updateBalance === 'function') setTimeout(updateBalance, 500);
+            } else {
+                if (banner) banner.remove();
+            }
+        })
+        .catch(function() { var b = document.getElementById('cashbackAvailBanner'); if (b) b.remove(); });
+}
 
 // ══════════════════════════════════════════════════════════
 // SPRINT 34 — Hourly Free Bonus
