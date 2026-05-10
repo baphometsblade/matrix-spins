@@ -22,17 +22,24 @@ const COUNTRY_CODE_REGEX = /^[A-Z]{2}$/;
 // GET /api/user/profile — get full user profile
 router.get('/profile', authenticate, async (req, res) => {
     try {
-        const user = await db.get(
-            `SELECT id, username, email, balance, display_name, avatar_url, phone,
-                    date_of_birth, country, currency, email_verified, phone_verified,
-                    kyc_status, is_admin, created_at, updated_at
-             FROM users WHERE id = ?`,
-            [req.user.id]
-        );
+        const [user, depStats] = await Promise.all([
+            db.get(
+                `SELECT id, username, email, balance, display_name, avatar_url, phone,
+                        date_of_birth, country, currency, email_verified, phone_verified,
+                        kyc_status, is_admin, created_at, updated_at
+                 FROM users WHERE id = ?`,
+                [req.user.id]
+            ),
+            db.get(
+                `SELECT COUNT(*) AS deposit_count FROM deposits WHERE user_id = ? AND status = 'completed'`,
+                [req.user.id]
+            ).catch(() => ({ deposit_count: 0 })),
+        ]);
         if (!user) {
             return res.status(404).json({ error: 'User not found' });
         }
 
+        user.deposit_count = Number((depStats && depStats.deposit_count) || 0);
         res.json({ user });
     } catch (err) {
         console.warn('[User] Profile fetch error:', err);
