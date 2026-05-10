@@ -74,6 +74,10 @@
     var overlay = createOverlay();
     document.body.appendChild(overlay);
     document.body.classList.add('age-gate-active');
+    // Force reflow then add visible class — overlay starts at display:none
+    // so it never flashes uncontrolled fullscreen black before JS finishes wiring.
+    overlay.offsetHeight; // eslint-disable-line no-unused-expressions
+    overlay.classList.add('age-gate-visible');
 
     var confirmBtn = document.getElementById('age-gate-confirm');
     var denyLink = document.getElementById('age-gate-deny');

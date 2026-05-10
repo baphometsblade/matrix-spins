@@ -156,10 +156,12 @@
       });
     }
     overlay.classList.remove('mcc-hidden');
+    overlay.classList.add('mcc-visible');
     overlay.setAttribute('aria-hidden', 'false');
   }
 
   function closePanel(overlay) {
+    overlay.classList.remove('mcc-visible');
     overlay.classList.add('mcc-hidden');
     overlay.setAttribute('aria-hidden', 'true');
   }

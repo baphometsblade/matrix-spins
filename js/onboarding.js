@@ -58,8 +58,8 @@
     style.id = 'mx-onboarding-css';
     style.textContent = [
       /* ---- Tour Overlay ---- */
-      '.mx-tour-overlay{position:fixed;inset:0;z-index:' + Z_TOUR + ';background:' + OVERLAY_BG + ';display:flex;align-items:center;justify-content:center;opacity:0;transition:opacity .4s ease;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif}',
-      '.mx-tour-overlay.mx-show{opacity:1}',
+      '.mx-tour-overlay{position:fixed;top:0;left:0;width:100vw;height:100vh;z-index:' + Z_TOUR + ';background:' + OVERLAY_BG + ';display:none;align-items:center;justify-content:center;opacity:0;transition:opacity .4s ease;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif}',
+      '.mx-tour-overlay.mx-show{display:flex;opacity:1}',
       '.mx-tour-card{position:relative;width:92vw;max-width:520px;background:' + GLASS + ';border:1.5px solid ' + GLASS_BORDER + ';border-radius:16px;overflow:hidden;box-shadow:0 24px 80px rgba(0,0,0,.6),0 0 40px ' + GOLD_DIM + '}',
       '.mx-tour-inner{position:relative;overflow:hidden}',
       '.mx-tour-slides{display:flex;transition:transform .45s cubic-bezier(.4,0,.2,1)}',

@@ -467,20 +467,15 @@
 /* ──────────────────────────────────────────────────────────
    Page transitions
    ────────────────────────────────────────────────────────── */
-.ms-page-fade {
-  animation: ms-fadein 280ms var(--ms-ease) both;
-}
-@keyframes ms-fadein {
-  /* IMPORTANT: do NOT animate transform on body. Even an identity transform on body
-     creates a containing block for position:fixed descendants, which anchors fixed
-     overlays (age-gate, modals) to the document height instead of the viewport,
-     pushing them off-screen on long pages. Opacity only is safe. */
-  from { opacity: 0; }
-  to   { opacity: 1; }
-}
-@media (prefers-reduced-motion: reduce) {
-  .ms-page-fade { animation: none; }
-}
+/* Body fade-in REMOVED. Previously animated body opacity 0→1 with translateY transform.
+   Two failure modes seen in production:
+   1. Body stayed at opacity:0 if animation never started (e.g. tab backgrounded
+      during page load), making the entire site appear black.
+   2. Even an identity `transform` on body creates a containing block for
+      position:fixed descendants, anchoring fixed overlays (age-gate, modals)
+      to document scrollHeight instead of viewport — pushing them off-screen.
+   Body now stays at its natural opacity:1; no animation, no transform. */
+.ms-page-fade { opacity: 1 !important; transform: none !important; animation: none !important; }
 
 /* ──────────────────────────────────────────────────────────
    Micro-animations: card lift, button press

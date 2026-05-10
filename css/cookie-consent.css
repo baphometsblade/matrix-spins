@@ -111,14 +111,22 @@
   inset: 0;
   z-index: 100000;
   background: rgba(0, 0, 0, 0.6);
-  display: flex;
+  /* Default: hidden. The customize panel only appears when user clicks
+     "Customize" on the bottom banner. Starting at display:none guarantees
+     no fullscreen black flash before JS adds mcc-hidden. */
+  display: none;
   align-items: flex-end;
   justify-content: center;
   opacity: 1;
   transition: opacity 0.3s ease;
 }
 
+.mcc-overlay.mcc-visible {
+  display: flex;
+}
+
 .mcc-overlay.mcc-hidden {
+  display: none;
   opacity: 0;
   pointer-events: none;
 }

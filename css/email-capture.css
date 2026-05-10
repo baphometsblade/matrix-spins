@@ -7,21 +7,25 @@
 
 .ms-ec-overlay {
   position: fixed;
-  inset: 0;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
   z-index: 99999;
-  display: flex;
+  /* Default: hidden. Only shown after triggers fire AND no other overlay is up.
+     display:none guarantees no fullscreen black flash on append. */
+  display: none;
   align-items: center;
   justify-content: center;
   background: rgba(0, 0, 0, 0.75);
   opacity: 0;
-  visibility: hidden;
-  transition: opacity 0.3s ease, visibility 0.3s ease;
+  transition: opacity 0.3s ease;
   padding: 16px;
 }
 
 .ms-ec-overlay.ms-ec-visible {
+  display: flex;
   opacity: 1;
-  visibility: visible;
 }
 
 /* ── Card ────────────────────────────────────────────────── */
