@@ -1105,6 +1105,16 @@
                     <div id="wageringBarFill" style="height:100%;border-radius:3px;background:linear-gradient(90deg,#d4a853,#f0c060);transition:width 0.6s ease;width:0%"></div>
                 </div>
             </div>
+            <div id="vipMiniWidget" style="display:none;align-items:center;gap:6px;cursor:pointer;"
+                 onclick="window.location.href='vip.html'" title="View VIP Status">
+              <span id="vipTierIcon" style="font-size:1.1rem;">🥉</span>
+              <div style="display:flex;flex-direction:column;gap:2px;">
+                <span id="vipTierLabel" style="font-size:0.7rem;font-weight:700;color:#FFD700;line-height:1;">BRONZE</span>
+                <div style="width:48px;height:4px;background:rgba(255,255,255,0.1);border-radius:2px;overflow:hidden;">
+                  <div id="vipXpBar" style="height:100%;width:0%;background:linear-gradient(90deg,#FFD700,#FFA500);border-radius:2px;transition:width 0.6s ease;"></div>
+                </div>
+              </div>
+            </div>
             <button class="btn-deposit" id="depositBtn">Deposit</button>
             <button class="btn-deposit" id="headerSignupBtn" style="background:transparent;border:1px solid rgba(212,168,83,0.4);color:var(--accent-gold-bright)">Sign Up</button>
             <div class="avatar"></div>
@@ -1176,6 +1186,29 @@
                 <div class="stat-number" data-count="96" data-suffix="%">0%</div>
                 <div class="stat-label">Avg. RTP</div>
             </div>
+        </div>
+
+        <!-- ── First-Deposit Incentive Banner (shown by JS to eligible users only) ── -->
+        <div id="firstDepositBanner" style="display:none;background:linear-gradient(135deg,#1c1400,#2d2000);
+             border:2px solid #FFD700;border-radius:14px;padding:1.5rem 2rem;margin:1.5rem auto 0;
+             max-width:900px;text-align:center;">
+          <div style="font-size:1.4rem;font-weight:800;color:#FFD700;margin-bottom:0.4rem;">
+            🎰 Welcome! Claim Your 100% First Deposit Match — Up to $500
+          </div>
+          <div style="color:#c9b85a;font-size:0.95rem;margin-bottom:1rem;">
+            Make your first deposit and we'll match it 100% in bonus credits. 35x wagering. One time only.
+          </div>
+          <div style="display:flex;gap:0.75rem;justify-content:center;flex-wrap:wrap;">
+            <a href="wallet.html" style="padding:0.85rem 2rem;background:linear-gradient(135deg,#FFD700,#FFA500);
+               color:#000;border-radius:10px;font-weight:800;font-size:1rem;text-decoration:none;">
+              Deposit Now — Claim Bonus
+            </a>
+            <button onclick="document.getElementById('firstDepositBanner').style.display='none';sessionStorage.setItem('firstDepBannerDismissed','1')"
+                    style="padding:0.85rem 1.5rem;background:rgba(255,255,255,0.06);color:#aaa;
+                           border:1px solid rgba(255,255,255,0.1);border-radius:10px;font-size:0.9rem;cursor:pointer;">
+              Maybe Later
+            </button>
+          </div>
         </div>
 
         <div class="section-divider"></div>
@@ -2081,6 +2114,56 @@
                 };
             }
         }
+    </script>
+    <!-- VIP Mini Badge — fetch tier after login and populate widget -->
+    <script>
+    // ── VIP Mini Badge ────────────────────────────────────────────
+    (function() {
+      var token = localStorage.getItem('casinoToken') || localStorage.getItem('token');
+      if (!token) return; // Only show for logged-in users
+
+      fetch('/api/vip/status', {
+        headers: { 'Authorization': 'Bearer ' + token },
+        credentials: 'include'
+      }).then(function(r) {
+        if (!r.ok) return;
+        return r.json();
+      }).then(function(data) {
+        if (!data) return;
+        var widget = document.getElementById('vipMiniWidget');
+        var icon   = document.getElementById('vipTierIcon');
+        var label  = document.getElementById('vipTierLabel');
+        var bar    = document.getElementById('vipXpBar');
+        if (!widget) return;
+        if (icon)  icon.textContent  = data.tierIcon  || '🥉';
+        if (label) label.textContent = (data.tier || 'Bronze').toUpperCase();
+        if (label) label.style.color = data.tierColor || '#CD7F32';
+        if (bar)   bar.style.width   = Math.round((data.xpProgress || 0) * 100) + '%';
+        if (bar && data.tierColor) bar.style.background = 'linear-gradient(90deg,' + data.tierColor + ',#FFD700)';
+        widget.style.display = 'flex';
+      }).catch(function() { /* non-fatal */ });
+    })();
+    </script>
+    <!-- First-Deposit Incentive Banner — reveal to eligible logged-in users -->
+    <script>
+    // ── First-Deposit Incentive Banner ────────────────────────────
+    (function() {
+      var token = localStorage.getItem('casinoToken') || localStorage.getItem('token');
+      if (!token) return; // Only show to logged-in users
+      if (sessionStorage.getItem('firstDepBannerDismissed')) return;
+
+      fetch('/api/user/profile', {
+        headers: { 'Authorization': 'Bearer ' + token },
+        credentials: 'include'
+      }).then(function(r) { return r.ok ? r.json() : null; })
+      .then(function(profile) {
+        if (!profile) return;
+        var dc = profile.depositCount != null ? profile.depositCount : profile.deposit_count;
+        if (dc !== 0 && dc !== '0') return; // Already deposited
+        var banner = document.getElementById('firstDepositBanner');
+        if (banner) banner.style.display = 'block';
+      }).catch(function() {});
+    })();
     </script>
     <!-- PWA: SW registration + install prompt + update banner -->
     <script src="js/pwa-install.js" defer></script>

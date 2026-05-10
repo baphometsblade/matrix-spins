@@ -55,6 +55,25 @@
     </div>
   </div>
 
+  <!-- ── Welcome Bonus Claim Banner ──────────────────────────── -->
+  <div id="welcomeBonusBanner" style="display:none;background:linear-gradient(135deg,#1a2f1a,#0f1f0f);
+       border:2px solid #4ade80;border-radius:14px;padding:1.25rem 1.5rem;
+       margin-bottom:1.5rem;align-items:center;gap:1rem;flex-wrap:wrap;">
+    <div style="font-size:2rem;">🎁</div>
+    <div style="flex:1;min-width:200px;">
+      <div style="font-size:1.05rem;font-weight:800;color:#4ade80;">100% Match Bonus Available!</div>
+      <div style="font-size:0.9rem;color:#a0c4a0;margin-top:2px;">
+        Claim <strong id="wbMatchAmount">$0.00</strong> in bonus credits (35x wagering). One-time offer.
+      </div>
+    </div>
+    <button id="claimWelcomeBonusBtn"
+      style="padding:0.75rem 1.5rem;background:linear-gradient(135deg,#4ade80,#16a34a);color:#000;
+             border:none;border-radius:10px;font-weight:800;font-size:1rem;cursor:pointer;
+             white-space:nowrap;min-width:120px;">
+      Claim Now
+    </button>
+  </div>
+
   <!-- ── Quick Actions ─────────────────────────────────────── -->
   <div class="quick-actions">
     <button class="quick-action-btn primary" id="openDeposit">
@@ -703,6 +722,57 @@
       btn.textContent = 'Request withdrawal';
     }
   });
+
+  // ── Welcome Bonus Banner ───────────────────────────────────────
+  async function loadWelcomeBonusBanner() {
+    const token = localStorage.getItem('casinoToken') || localStorage.getItem('token') || localStorage.getItem('authToken');
+    if (!token) return;
+    try {
+      const res = await fetch('/api/welcome-bonus/status', {
+        headers: { 'Authorization': 'Bearer ' + token }, credentials: 'include'
+      });
+      if (!res.ok) return;
+      const data = await res.json();
+      if (!data.eligible) return;
+      const banner = document.getElementById('welcomeBonusBanner');
+      const amountEl = document.getElementById('wbMatchAmount');
+      if (!banner) return;
+      if (amountEl && data.projectedBonus > 0) {
+        amountEl.textContent = '$' + data.projectedBonus.toFixed(2);
+      }
+      banner.style.display = 'flex';
+
+      document.getElementById('claimWelcomeBonusBtn').addEventListener('click', async function() {
+        const btn = this;
+        btn.disabled = true; btn.textContent = 'Claiming...';
+        try {
+          const r = await fetch('/api/welcome-bonus/claim', {
+            method: 'POST',
+            headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' },
+            credentials: 'include',
+            body: JSON.stringify({})
+          });
+          const d = await r.json();
+          if (r.ok && d.success) {
+            // Replace banner contents using DOM (no innerHTML with untrusted data)
+            while (banner.firstChild) banner.removeChild(banner.firstChild);
+            const successMsg = document.createElement('div');
+            successMsg.style.cssText = 'color:#4ade80;font-weight:700;padding:0.5rem 0;';
+            successMsg.textContent = '✅ Bonus of $' + (d.bonusAmount || 0).toFixed(2) + ' credited to your account!';
+            banner.appendChild(successMsg);
+            // Refresh balance display
+            if (typeof loadBalances === 'function') loadBalances();
+            else if (typeof loadBalance === 'function') loadBalance();
+            else refreshData();
+          } else {
+            btn.disabled = false; btn.textContent = 'Claim Now';
+            alert(d.error || 'Could not claim bonus. Please try again.');
+          }
+        } catch(e) { btn.disabled = false; btn.textContent = 'Claim Now'; }
+      });
+    } catch(e) { /* non-fatal */ }
+  }
+  loadWelcomeBonusBanner();
 
   // ── Auto-refresh every 30s ───────────────────────────────
   setInterval(refreshData, 30000);
