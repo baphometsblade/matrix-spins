@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Matrix Spins — Admin Console</title>
 <meta name="robots" content="noindex, nofollow">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
@@ -205,6 +206,101 @@
         font-size: 14px;
         margin-right: 8px;
     }
+    .kpi-grid-revenue {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+        gap: 14px;
+        margin-bottom: 20px;
+    }
+    .kpi-revenue {
+        background: rgba(0, 0, 0, 0.35);
+        border: 1px solid rgba(255, 215, 0, 0.15);
+        border-radius: 8px;
+        padding: 16px;
+        position: relative;
+    }
+    .kpi-revenue .kpi-label { font-size: 11px; text-transform: uppercase; color: #888; letter-spacing: 0.05em; }
+    .kpi-revenue .kpi-value { font-size: 22px; font-weight: 700; color: #ffd700; margin-top: 4px; }
+    .kpi-revenue .kpi-value.positive { color: #4ade80; }
+    .kpi-revenue .kpi-value.negative { color: #ef4444; }
+    .kpi-revenue .kpi-value.warning { color: #fbbf24; }
+    .revenue-section { margin-bottom: 32px; }
+    .revenue-section h3 {
+        color: #ffd700;
+        font-size: 15px;
+        font-weight: 700;
+        margin-bottom: 14px;
+        padding-bottom: 8px;
+        border-bottom: 1px solid rgba(255, 215, 0, 0.15);
+    }
+    .chart-container {
+        background: rgba(0, 0, 0, 0.3);
+        border: 1px solid rgba(255, 255, 255, 0.07);
+        border-radius: 10px;
+        padding: 20px;
+        margin-bottom: 24px;
+    }
+    .chart-container canvas { max-height: 300px; }
+    .top-games-table tr:nth-child(even) td { background: rgba(255, 255, 255, 0.02); }
+    .bonus-breakdown {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 12px;
+        margin-top: 12px;
+    }
+    .bonus-card {
+        background: rgba(0, 0, 0, 0.3);
+        border: 1px solid rgba(255, 255, 255, 0.07);
+        border-radius: 8px;
+        padding: 14px 16px;
+    }
+    .bonus-card .bc-label { font-size: 11px; text-transform: uppercase; color: #888; letter-spacing: 0.05em; }
+    .bonus-card .bc-value { font-size: 20px; font-weight: 700; color: #fbbf24; margin-top: 4px; }
+    .fraud-section { margin-bottom: 28px; }
+    .fraud-section h3 {
+        color: #ef4444;
+        font-size: 14px;
+        font-weight: 700;
+        margin-bottom: 12px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+    .fraud-section h3::before { content: '🚨'; }
+    .player-profile {
+        background: rgba(0, 0, 0, 0.3);
+        border: 1px solid rgba(255, 215, 0, 0.15);
+        border-radius: 10px;
+        padding: 20px;
+        margin-top: 20px;
+    }
+    .player-profile h3 {
+        color: #ffd700;
+        font-size: 15px;
+        font-weight: 700;
+        margin-bottom: 16px;
+        padding-bottom: 10px;
+        border-bottom: 1px solid rgba(255, 215, 0, 0.15);
+    }
+    .profile-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+        gap: 12px;
+        margin-bottom: 20px;
+    }
+    .profile-stat {
+        background: rgba(0, 0, 0, 0.25);
+        border: 1px solid rgba(255, 255, 255, 0.07);
+        border-radius: 8px;
+        padding: 12px 14px;
+    }
+    .profile-stat .ps-label { font-size: 11px; text-transform: uppercase; color: #888; letter-spacing: 0.04em; }
+    .profile-stat .ps-value { font-size: 18px; font-weight: 700; color: #e0e0e0; margin-top: 4px; }
+    .profile-stat .ps-value.green { color: #4ade80; }
+    .profile-stat .ps-value.gold { color: #ffd700; }
+    .profile-stat .ps-value.red { color: #ef4444; }
+    .txn-table th { font-size: 11px; }
+    .txn-table td { font-size: 13px; padding: 10px 12px; }
 </style>
 </head>
 <body>
@@ -241,6 +337,15 @@
         <div class="kpi"><div class="kpi-label">Active users (24h)</div><div class="kpi-value" id="kpi-active">—</div></div>
     </div>
 
+    <div class="kpi-grid-revenue">
+        <div class="kpi-revenue"><div class="kpi-label">GGR Today</div><div class="kpi-value" id="kpi-ggr">—</div></div>
+        <div class="kpi-revenue"><div class="kpi-label">House Edge</div><div class="kpi-value" id="kpi-house-edge">—</div></div>
+        <div class="kpi-revenue"><div class="kpi-label">Total Wagered 24h</div><div class="kpi-value" id="kpi-wagered">—</div></div>
+        <div class="kpi-revenue"><div class="kpi-label">New Players 24h</div><div class="kpi-value" id="kpi-new-players">—</div></div>
+        <div class="kpi-revenue"><div class="kpi-label">Bonus Cost 24h</div><div class="kpi-value warning" id="kpi-bonus-cost">—</div></div>
+        <div class="kpi-revenue"><div class="kpi-label">Withdrawal Queue $</div><div class="kpi-value" id="kpi-wd-queue">—</div></div>
+    </div>
+
     <div class="tabs">
         <button class="tab active" data-tab="withdrawals">Pending withdrawals</button>
         <button class="tab" data-tab="kyc">Pending KYC</button>
@@ -248,6 +353,8 @@
         <button class="tab" data-tab="deposits">Deposits 💰</button>
         <button class="tab" data-tab="users">User lookup</button>
         <button class="tab" data-tab="setup">Setup Guide 🔧</button>
+        <button class="tab" data-tab="revenue">Revenue 📈</button>
+        <button class="tab" data-tab="fraud">Fraud 🚨</button>
     </div>
 
     <div id="panel-withdrawals" class="panel active">
@@ -282,6 +389,32 @@
     <div id="panel-setup" class="panel">
         <h2>Revenue Configuration Status</h2>
         <div id="setup-list"><div class="empty">Loading…</div></div>
+    </div>
+
+    <div id="panel-revenue" class="panel">
+        <h2>Revenue Intelligence 📈</h2>
+
+        <div class="revenue-section">
+            <h3>30-Day Revenue Trend</h3>
+            <div class="chart-container">
+                <canvas id="revenue-chart"></canvas>
+            </div>
+        </div>
+
+        <div class="revenue-section">
+            <h3>Top Games by Revenue</h3>
+            <div id="top-games-list"><div class="empty">Loading…</div></div>
+        </div>
+
+        <div class="revenue-section">
+            <h3>Bonus Cost Breakdown</h3>
+            <div id="bonus-breakdown-list"><div class="empty">Loading…</div></div>
+        </div>
+    </div>
+
+    <div id="panel-fraud" class="panel">
+        <h2>Fraud Alerts 🚨</h2>
+        <div id="fraud-content"><div class="empty">Loading…</div></div>
     </div>
 </div>
 
@@ -337,6 +470,10 @@ function formatDate(iso) {
 }
 
 function money(n) { return '$' + Number(n || 0).toFixed(2); }
+function moneyFmt(n) {
+    const v = Number(n || 0);
+    return '$' + v.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
 
 // ── Auth ─────────────────────────────────────────────────────────────
 async function doLogin(ev) {
@@ -399,11 +536,14 @@ function showLogin() {
 }
 
 // ── Tabs ─────────────────────────────────────────────────────────────
+const ALL_TABS = ['withdrawals', 'kyc', 'aml', 'deposits', 'users', 'setup', 'revenue', 'fraud'];
+
 function showTab(name) {
-    ['withdrawals', 'kyc', 'aml', 'deposits', 'users', 'setup'].forEach(t => {
+    ALL_TABS.forEach(t => {
         const tab = document.querySelector('[data-tab="' + t + '"]');
         if (tab) tab.classList.toggle('active', t === name);
-        document.getElementById('panel-' + t).classList.toggle('active', t === name);
+        const panel = document.getElementById('panel-' + t);
+        if (panel) panel.classList.toggle('active', t === name);
     });
     // Lazy-load AML when its tab is opened
     if (name === 'aml') loadAML().catch(() => {});
@@ -411,6 +551,10 @@ function showTab(name) {
     if (name === 'deposits') loadDeposits().catch(() => {});
     // Lazy-load Setup Guide when its tab is opened
     if (name === 'setup') loadSetupStatus().catch(() => {});
+    // Lazy-load Revenue when its tab is opened
+    if (name === 'revenue') loadRevenueTab().catch(() => {});
+    // Lazy-load Fraud when its tab is opened
+    if (name === 'fraud') loadFraudAlerts().catch(() => {});
 }
 
 // ── KPIs ─────────────────────────────────────────────────────────────
@@ -433,6 +577,51 @@ async function loadKPIs() {
         document.getElementById('kpi-deposits').textContent = '—';
         document.getElementById('kpi-active').textContent = '—';
     }
+    // Load revenue KPI row
+    loadRevenueKPIs().catch(() => {});
+}
+
+async function loadRevenueKPIs() {
+    try {
+        const [overview, wdStats] = await Promise.all([
+            api('/api/admin-metrics/overview').catch(() => null),
+            api('/api/admin-withdrawals/stats').catch(() => null),
+        ]);
+
+        if (overview) {
+            const ggr = Number(overview.ggr || overview.profit || overview.revenue || 0);
+            const wagered = Number(overview.wagered || overview.totalWagered || 0);
+            const won = Number(overview.won || overview.totalWon || 0);
+            const newPlayers = Number(overview.newRegistrations || overview.new_registrations || overview.newPlayers || 0);
+            const bonusCost = Number(overview.depositBonusGiven || 0) + Number(overview.cashbackGiven || 0) + Number(overview.referralGiven || 0);
+            const houseEdge = wagered > 0 ? (ggr / wagered * 100) : 0;
+
+            const ggrEl = document.getElementById('kpi-ggr');
+            ggrEl.textContent = moneyFmt(ggr);
+            ggrEl.className = 'kpi-value ' + (ggr >= 0 ? 'positive' : 'negative');
+
+            const edgeEl = document.getElementById('kpi-house-edge');
+            edgeEl.textContent = houseEdge.toFixed(2) + '%';
+            edgeEl.className = 'kpi-value ' + (houseEdge >= 0 ? 'positive' : 'negative');
+
+            document.getElementById('kpi-wagered').textContent = moneyFmt(wagered);
+            document.getElementById('kpi-new-players').textContent = newPlayers.toLocaleString();
+
+            const bonusEl = document.getElementById('kpi-bonus-cost');
+            bonusEl.textContent = moneyFmt(bonusCost);
+            bonusEl.className = 'kpi-value warning';
+        }
+
+        if (wdStats) {
+            const pendingTotal = Number(
+                wdStats.pending_total || wdStats.pendingTotal ||
+                (wdStats.byStatus && (wdStats.byStatus.pending || 0)) || 0
+            );
+            const wdEl = document.getElementById('kpi-wd-queue');
+            wdEl.textContent = moneyFmt(pendingTotal);
+            wdEl.className = 'kpi-value ' + (pendingTotal > 10000 ? 'negative' : pendingTotal > 0 ? 'warning' : 'positive');
+        }
+    } catch (_) { /* silent — KPI row degrades gracefully */ }
 }
 
 // ── Withdrawals ──────────────────────────────────────────────────────
@@ -989,10 +1178,477 @@ async function lookupUser(ev) {
         });
         table.appendChild(tbody);
         resultEl.appendChild(table);
+
+        // If exactly one user found, also load full profile
+        if (users.length === 1 && users[0].id) {
+            loadPlayerProfile(users[0].id, resultEl).catch(() => {});
+        }
     } catch (e) {
         clear(resultEl);
         resultEl.appendChild(el('div', { class: 'error-banner', text: 'Lookup failed: ' + e.message }));
     }
+}
+
+async function loadPlayerProfile(userId, container) {
+    const profileEl = el('div', { class: 'player-profile' },
+        el('h3', { text: 'Player Profile — Full Detail' }),
+        el('div', { class: 'empty', text: 'Loading player data…' })
+    );
+    container.appendChild(profileEl);
+
+    try {
+        const profile = await api('/api/admin/user/' + userId);
+        clear(profileEl);
+        profileEl.appendChild(el('h3', { text: 'Player Profile — Full Detail' }));
+
+        const lifetimeDeposits = Number(profile.lifetimeDeposits || profile.lifetime_deposits || profile.total_deposits || 0);
+        const lifetimeWithdrawals = Number(profile.lifetimeWithdrawals || profile.lifetime_withdrawals || profile.total_withdrawals || 0);
+        const totalWagered = Number(profile.totalWagered || profile.total_wagered || 0);
+        const totalWon = Number(profile.totalWon || profile.total_won || 0);
+        const profitGenerated = lifetimeDeposits - lifetimeWithdrawals;
+        const spinCount = Number(profile.spinCount || profile.spin_count || profile.spins || 0);
+        const ltvScore = profile.ltvScore || profile.ltv_score || profile.ltv || null;
+
+        const statsGrid = el('div', { class: 'profile-grid' },
+            el('div', { class: 'profile-stat' },
+                el('div', { class: 'ps-label', text: 'Lifetime Deposits' }),
+                el('div', { class: 'ps-value green', text: moneyFmt(lifetimeDeposits) })
+            ),
+            el('div', { class: 'profile-stat' },
+                el('div', { class: 'ps-label', text: 'Lifetime Withdrawals' }),
+                el('div', { class: 'ps-value', text: moneyFmt(lifetimeWithdrawals) })
+            ),
+            el('div', { class: 'profile-stat' },
+                el('div', { class: 'ps-label', text: 'Total Wagered' }),
+                el('div', { class: 'ps-value gold', text: moneyFmt(totalWagered) })
+            ),
+            el('div', { class: 'profile-stat' },
+                el('div', { class: 'ps-label', text: 'Total Won' }),
+                el('div', { class: 'ps-value', text: moneyFmt(totalWon) })
+            ),
+            el('div', { class: 'profile-stat' },
+                el('div', { class: 'ps-label', text: 'Profit Generated' }),
+                el('div', { class: 'ps-value ' + (profitGenerated >= 0 ? 'green' : 'red'), text: moneyFmt(profitGenerated) })
+            ),
+            el('div', { class: 'profile-stat' },
+                el('div', { class: 'ps-label', text: 'Total Spins' }),
+                el('div', { class: 'ps-value', text: spinCount.toLocaleString() })
+            )
+        );
+        if (ltvScore !== null) {
+            statsGrid.appendChild(el('div', { class: 'profile-stat' },
+                el('div', { class: 'ps-label', text: 'LTV Score' }),
+                el('div', { class: 'ps-value gold', text: String(ltvScore) })
+            ));
+        }
+        profileEl.appendChild(statsGrid);
+
+        // Last 5 transactions
+        const txns = profile.recentTransactions || profile.recent_transactions || profile.transactions || [];
+        const last5 = txns.slice(0, 5);
+        if (last5.length) {
+            profileEl.appendChild(el('div', { style: { fontWeight: '700', fontSize: '13px', color: '#ffd700', marginBottom: '10px', textTransform: 'uppercase', letterSpacing: '0.05em' }, text: 'Last 5 Transactions' }));
+            const txnTable = el('table', { class: 'txn-table' },
+                el('thead', null, el('tr', null,
+                    el('th', { text: 'Type' }),
+                    el('th', { text: 'Amount' }),
+                    el('th', { text: 'Date' })
+                ))
+            );
+            const txnBody = el('tbody');
+            last5.forEach(function(t) {
+                const amt = Number(t.amount || 0);
+                const txType = t.type || t.transaction_type || '—';
+                const amtCell = el('td', { class: amt >= 0 ? 'money' : 'money big', text: moneyFmt(Math.abs(amt)) });
+                txnBody.appendChild(el('tr', null,
+                    el('td', { text: txType }),
+                    amtCell,
+                    el('td', { class: 'muted mono', text: formatDate(t.created_at || t.date) })
+                ));
+            });
+            txnTable.appendChild(txnBody);
+            profileEl.appendChild(txnTable);
+        } else {
+            profileEl.appendChild(el('div', { class: 'muted', style: { fontSize: '13px', marginTop: '8px' }, text: 'No transaction history available.' }));
+        }
+    } catch (_) {
+        clear(profileEl);
+        profileEl.appendChild(el('h3', { text: 'Player Profile — Full Detail' }));
+        profileEl.appendChild(el('div', { class: 'muted', style: { fontSize: '13px' }, text: 'Full profile data unavailable for this player.' }));
+    }
+}
+
+// ── Revenue Tab ───────────────────────────────────────────────────────
+let _revenueChart = null;
+
+async function loadRevenueTab() {
+    await Promise.all([
+        loadRevenueTrendChart(),
+        loadTopGames(),
+        loadBonusBreakdown(),
+    ]);
+}
+
+async function loadRevenueTrendChart() {
+    const container = document.querySelector('#panel-revenue .chart-container');
+    try {
+        const data = await api('/api/admin-metrics/trends');
+        const days = data.days || data.trends || data.data || [];
+        if (!days.length) {
+            if (container) { clear(container); container.appendChild(el('div', { class: 'empty', text: 'No trend data available.' })); }
+            return;
+        }
+
+        const labels = days.map(d => {
+            const dt = new Date(d.date || d.day);
+            return isNaN(dt.getTime()) ? (d.date || d.day) : dt.toLocaleDateString('en-AU', { month: 'short', day: 'numeric' });
+        });
+        const revenueData = days.map(d => Number(d.revenue || d.ggr || d.profit || 0));
+        const depositsData = days.map(d => Number(d.deposits || d.total_deposits || 0));
+        const withdrawalsData = days.map(d => Number(d.withdrawals || d.total_withdrawals || 0));
+
+        const canvas = document.getElementById('revenue-chart');
+        if (!canvas) return;
+
+        if (_revenueChart) { _revenueChart.destroy(); _revenueChart = null; }
+
+        _revenueChart = new Chart(canvas, {
+            type: 'line',
+            data: {
+                labels,
+                datasets: [
+                    {
+                        label: 'Revenue (GGR)',
+                        data: revenueData,
+                        borderColor: '#ffd700',
+                        backgroundColor: 'rgba(255, 215, 0, 0.08)',
+                        borderWidth: 2,
+                        pointRadius: 3,
+                        tension: 0.3,
+                        fill: true,
+                    },
+                    {
+                        label: 'Deposits',
+                        data: depositsData,
+                        borderColor: '#60a5fa',
+                        backgroundColor: 'rgba(96, 165, 250, 0.06)',
+                        borderWidth: 2,
+                        pointRadius: 3,
+                        tension: 0.3,
+                        fill: false,
+                    },
+                    {
+                        label: 'Withdrawals',
+                        data: withdrawalsData,
+                        borderColor: '#ef4444',
+                        backgroundColor: 'rgba(239, 68, 68, 0.06)',
+                        borderWidth: 2,
+                        pointRadius: 3,
+                        tension: 0.3,
+                        fill: false,
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: true,
+                interaction: { mode: 'index', intersect: false },
+                plugins: {
+                    legend: {
+                        position: 'top',
+                        labels: { color: '#aaa', boxWidth: 16, padding: 16, font: { size: 12 } }
+                    },
+                    tooltip: {
+                        backgroundColor: '#1a1a2e',
+                        borderColor: 'rgba(255,215,0,0.3)',
+                        borderWidth: 1,
+                        titleColor: '#ffd700',
+                        bodyColor: '#e0e0e0',
+                        callbacks: {
+                            label: function(ctx) { return ' ' + ctx.dataset.label + ': ' + moneyFmt(ctx.parsed.y); }
+                        }
+                    }
+                },
+                scales: {
+                    x: {
+                        ticks: { color: '#888', font: { size: 11 }, maxTicksLimit: 10 },
+                        grid: { color: 'rgba(255, 215, 0, 0.05)' }
+                    },
+                    y: {
+                        ticks: {
+                            color: '#888',
+                            font: { size: 11 },
+                            callback: function(v) { return '$' + Number(v).toLocaleString(); }
+                        },
+                        grid: { color: 'rgba(255, 215, 0, 0.07)' }
+                    }
+                }
+            }
+        });
+    } catch (e) {
+        if (container) {
+            clear(container);
+            container.appendChild(el('div', { class: 'error-banner', text: 'Trend chart unavailable: ' + e.message }));
+        }
+    }
+}
+
+async function loadTopGames() {
+    const listEl = clear('top-games-list');
+    try {
+        const data = await api('/api/admin-metrics/top-games');
+        const games = data.games || data.topGames || data.data || [];
+        if (!games.length) {
+            listEl.appendChild(el('div', { class: 'empty', text: 'No game data available.' }));
+            return;
+        }
+        games.sort(function(a, b) { return Number(b.revenue || b.ggr || b.profit || 0) - Number(a.revenue || a.ggr || a.profit || 0); });
+
+        const table = el('table', { class: 'top-games-table' },
+            el('thead', null, el('tr', null,
+                el('th', { text: '#' }),
+                el('th', { text: 'Game Name' }),
+                el('th', { text: 'Spins' }),
+                el('th', { text: 'Total Wagered' }),
+                el('th', { text: 'Revenue (GGR)' }),
+                el('th', { text: 'Actual RTP %' })
+            ))
+        );
+        const tbody = el('tbody');
+        games.forEach(function(g, i) {
+            const rev = Number(g.revenue || g.ggr || g.profit || 0);
+            const wagered = Number(g.wagered || g.total_wagered || g.totalWagered || 0);
+            const rtp = Number(g.rtp || g.actual_rtp || (wagered > 0 ? ((wagered - rev) / wagered * 100) : 0));
+            const rtpStr = rtp.toFixed(2) + '%';
+            const rtpColor = rtp >= 96 ? '#ef4444' : rtp >= 90 ? '#fbbf24' : '#4ade80';
+            tbody.appendChild(el('tr', null,
+                el('td', { class: 'mono muted', text: String(i + 1) }),
+                el('td', null, el('b', { text: g.name || g.game_name || g.gameId || '—' })),
+                el('td', { class: 'mono', text: Number(g.spins || g.spin_count || 0).toLocaleString() }),
+                el('td', { class: 'money', text: moneyFmt(wagered) }),
+                el('td', { class: 'money', text: moneyFmt(rev) }),
+                el('td', null, el('span', { style: { color: rtpColor, fontWeight: '600' }, text: rtpStr }))
+            ));
+        });
+        table.appendChild(tbody);
+        listEl.appendChild(table);
+    } catch (e) {
+        listEl.appendChild(el('div', { class: 'error-banner', text: 'Top games unavailable: ' + e.message }));
+    }
+}
+
+async function loadBonusBreakdown() {
+    const listEl = clear('bonus-breakdown-list');
+    try {
+        const data = await api('/api/admin/analytics/overview');
+        const depositBonus = Number(data.depositBonusGiven || data.deposit_bonus_given || 0);
+        const cashback = Number(data.cashbackGiven || data.cashback_given || 0);
+        const referral = Number(data.referralGiven || data.referral_given || 0);
+        const wagered = Number(data.wagered || 0);
+        const won = Number(data.won || 0);
+        const ggr = wagered - won;
+        const totalBonus = depositBonus + cashback + referral;
+        const bonusPct = ggr > 0 ? (totalBonus / ggr * 100).toFixed(1) + '% of GGR' : '—';
+
+        const breakdown = el('div', { class: 'bonus-breakdown' },
+            el('div', { class: 'bonus-card' },
+                el('div', { class: 'bc-label', text: 'Deposit Bonuses Issued' }),
+                el('div', { class: 'bc-value', text: moneyFmt(depositBonus) })
+            ),
+            el('div', { class: 'bonus-card' },
+                el('div', { class: 'bc-label', text: 'Cashback Issued' }),
+                el('div', { class: 'bc-value', text: moneyFmt(cashback) })
+            ),
+            el('div', { class: 'bonus-card' },
+                el('div', { class: 'bc-label', text: 'Referral Bonuses Issued' }),
+                el('div', { class: 'bc-value', text: moneyFmt(referral) })
+            ),
+            el('div', { class: 'bonus-card' },
+                el('div', { class: 'bc-label', text: 'Total Bonus Cost' }),
+                el('div', { class: 'bc-value', text: moneyFmt(totalBonus) }),
+                el('div', { style: { fontSize: '12px', color: '#888', marginTop: '4px' }, text: bonusPct })
+            ),
+            el('div', { class: 'bonus-card' },
+                el('div', { class: 'bc-label', text: 'Total Wagered' }),
+                el('div', { class: 'bc-value', style: { color: '#60a5fa' }, text: moneyFmt(wagered) })
+            ),
+            el('div', { class: 'bonus-card' },
+                el('div', { class: 'bc-label', text: 'GGR (Profit)' }),
+                el('div', { class: 'bc-value', style: { color: ggr >= 0 ? '#4ade80' : '#ef4444' }, text: moneyFmt(ggr) })
+            )
+        );
+        listEl.appendChild(breakdown);
+    } catch (e) {
+        listEl.appendChild(el('div', { class: 'error-banner', text: 'Bonus breakdown unavailable: ' + e.message }));
+    }
+}
+
+// ── Fraud Alerts Tab ──────────────────────────────────────────────────
+async function loadFraudAlerts() {
+    const contentEl = clear('fraud-content');
+    contentEl.appendChild(el('div', { class: 'empty', text: 'Loading fraud alerts…' }));
+    try {
+        const data = await api('/api/admin/fraud-alerts');
+        clear(contentEl);
+
+        const wdAbusers = data.withdrawalRatioAbusers || data.withdrawal_ratio_abusers || [];
+        const rapidDep = data.rapidDepositors || data.rapid_depositors || [];
+        const highRtp = data.highWinRate || data.high_win_rate || data.highRtpExploiters || [];
+
+        // Section 1: Withdrawal ratio abusers
+        const sec1 = el('div', { class: 'fraud-section' });
+        const sec1h = el('h3', { text: 'Withdrawal Ratio Abusers' });
+        sec1.appendChild(sec1h);
+        if (!wdAbusers.length) {
+            sec1.appendChild(el('div', { class: 'empty', text: 'No abusers detected.' }));
+        } else {
+            const t = el('table', null,
+                el('thead', null, el('tr', null,
+                    el('th', { text: 'Username' }),
+                    el('th', { text: 'WD/Deposit Ratio' }),
+                    el('th', { text: 'Total Withdrawals' }),
+                    el('th', null)
+                ))
+            );
+            const tb = el('tbody');
+            wdAbusers.forEach(function(u) {
+                const ratio = Number(u.ratio || u.withdrawal_ratio || 0);
+                const ratioCell = el('td', { style: { fontWeight: '600' }, text: ratio.toFixed(2) + 'x' });
+                ratioCell.style.color = ratio > 1.5 ? '#ef4444' : '#fbbf24';
+                const uid = u.user_id || u.userId || u.id;
+                const uname = u.username;
+                tb.appendChild(el('tr', null,
+                    el('td', null, el('b', { text: uname || '—' })),
+                    ratioCell,
+                    el('td', { class: 'money', text: moneyFmt(u.total_withdrawals || u.totalWithdrawals || 0) }),
+                    el('td', null, el('button', { class: 'btn btn-neutral', text: 'View Player', onclick: function() { viewPlayer(uid, uname); } }))
+                ));
+            });
+            t.appendChild(tb);
+            sec1.appendChild(t);
+        }
+        contentEl.appendChild(sec1);
+
+        // Section 2: Rapid depositors
+        const sec2 = el('div', { class: 'fraud-section' });
+        sec2.appendChild(el('h3', { text: 'Rapid Depositors' }));
+        if (!rapidDep.length) {
+            sec2.appendChild(el('div', { class: 'empty', text: 'No rapid depositors detected.' }));
+        } else {
+            const t = el('table', null,
+                el('thead', null, el('tr', null,
+                    el('th', { text: 'Username' }),
+                    el('th', { text: 'Deposits in 24h' }),
+                    el('th', { text: 'Total Amount' }),
+                    el('th', null)
+                ))
+            );
+            const tb = el('tbody');
+            rapidDep.forEach(function(u) {
+                const uid = u.user_id || u.userId || u.id;
+                const uname = u.username;
+                const countCell = el('td', { text: String(u.deposit_count || u.depositCount || u.deposits || 0), style: { fontWeight: '600', color: '#fbbf24' } });
+                tb.appendChild(el('tr', null,
+                    el('td', null, el('b', { text: uname || '—' })),
+                    countCell,
+                    el('td', { class: 'money big', text: moneyFmt(u.total_amount || u.totalAmount || 0) }),
+                    el('td', null, el('button', { class: 'btn btn-neutral', text: 'View Player', onclick: function() { viewPlayer(uid, uname); } }))
+                ));
+            });
+            t.appendChild(tb);
+            sec2.appendChild(t);
+        }
+        contentEl.appendChild(sec2);
+
+        // Section 3: High RTP exploiters
+        const sec3 = el('div', { class: 'fraud-section' });
+        sec3.appendChild(el('h3', { text: 'High RTP Exploiters' }));
+        if (!highRtp.length) {
+            sec3.appendChild(el('div', { class: 'empty', text: 'No high-RTP exploiters detected.' }));
+        } else {
+            const t = el('table', null,
+                el('thead', null, el('tr', null,
+                    el('th', { text: 'Username' }),
+                    el('th', { text: 'Win Rate %' }),
+                    el('th', { text: 'Total Won' }),
+                    el('th', null)
+                ))
+            );
+            const tb = el('tbody');
+            highRtp.forEach(function(u) {
+                const wr = Number(u.win_rate || u.winRate || u.rtp || 0);
+                const uid = u.user_id || u.userId || u.id;
+                const uname = u.username;
+                const wrCell = el('td', { text: wr.toFixed(2) + '%', style: { fontWeight: '600', color: wr > 99 ? '#ef4444' : '#fbbf24' } });
+                tb.appendChild(el('tr', null,
+                    el('td', null, el('b', { text: uname || '—' })),
+                    wrCell,
+                    el('td', { class: 'money big', text: moneyFmt(u.total_won || u.totalWon || u.won || 0) }),
+                    el('td', null, el('button', { class: 'btn btn-neutral', text: 'View Player', onclick: function() { viewPlayer(uid, uname); } }))
+                ));
+            });
+            t.appendChild(tb);
+            sec3.appendChild(t);
+        }
+        contentEl.appendChild(sec3);
+
+    } catch (e) {
+        clear(contentEl);
+        contentEl.appendChild(el('div', { class: 'error-banner', text: 'Fraud alerts unavailable: ' + e.message }));
+    }
+}
+
+function viewPlayer(userId, username) {
+    showTab('users');
+    const q = userId ? String(userId) : (username || '');
+    const input = document.getElementById('user-query');
+    if (input) input.value = q;
+    if (q) {
+        lookupUser({ preventDefault: function() {} }).catch(function() {});
+    }
+}
+
+// ── Revenue KPI refresh ───────────────────────────────────────────────
+async function loadRevenueKPIs() {
+    try {
+        const [overview, wdStats] = await Promise.all([
+            api('/api/admin-metrics/overview').catch(function() { return null; }),
+            api('/api/admin-withdrawals/stats').catch(function() { return null; }),
+        ]);
+
+        if (overview) {
+            const ggr = Number(overview.ggr || overview.profit || overview.revenue || 0);
+            const wagered = Number(overview.wagered || overview.totalWagered || 0);
+            const newPlayers = Number(overview.newRegistrations || overview.new_registrations || overview.newPlayers || 0);
+            const bonusCost = Number(overview.depositBonusGiven || 0) + Number(overview.cashbackGiven || 0) + Number(overview.referralGiven || 0);
+            const houseEdge = wagered > 0 ? (ggr / wagered * 100) : 0;
+
+            const ggrEl = document.getElementById('kpi-ggr');
+            ggrEl.textContent = moneyFmt(ggr);
+            ggrEl.className = 'kpi-value ' + (ggr >= 0 ? 'positive' : 'negative');
+
+            const edgeEl = document.getElementById('kpi-house-edge');
+            edgeEl.textContent = houseEdge.toFixed(2) + '%';
+            edgeEl.className = 'kpi-value ' + (houseEdge >= 0 ? 'positive' : 'negative');
+
+            document.getElementById('kpi-wagered').textContent = moneyFmt(wagered);
+            document.getElementById('kpi-new-players').textContent = newPlayers.toLocaleString();
+
+            const bonusEl = document.getElementById('kpi-bonus-cost');
+            bonusEl.textContent = moneyFmt(bonusCost);
+            bonusEl.className = 'kpi-value warning';
+        }
+
+        if (wdStats) {
+            const pendingTotal = Number(
+                wdStats.pending_total || wdStats.pendingTotal ||
+                (wdStats.byStatus && (wdStats.byStatus.pending || 0)) || 0
+            );
+            const wdEl = document.getElementById('kpi-wd-queue');
+            wdEl.textContent = moneyFmt(pendingTotal);
+            wdEl.className = 'kpi-value ' + (pendingTotal > 10000 ? 'negative' : pendingTotal > 0 ? 'warning' : 'positive');
+        }
+    } catch (_) { /* graceful degrade */ }
 }
 
 // ── Helpers ──────────────────────────────────────────────────────────
@@ -1035,6 +1691,13 @@ setInterval(() => {
         }
     }
 }, 30_000);
+
+// Refresh revenue KPIs every 5 minutes
+setInterval(() => {
+    if (TOKEN && document.getElementById('app-view').style.display !== 'none') {
+        loadRevenueKPIs().catch(() => {});
+    }
+}, 300_000);
 </script>
 </body>
 </html>
