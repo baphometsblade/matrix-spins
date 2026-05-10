@@ -18,7 +18,7 @@ try { _notify = require('../services/notification.service'); } catch (_) { _noti
   title TEXT NOT NULL,
   body TEXT NOT NULL,
   link_action TEXT,
-  read INTEGER DEFAULT 0,
+  "read" INTEGER DEFAULT 0,
   created_at ${_tsType} DEFAULT ${_tsDefault}
 )`).catch(function(e) { if (e && !String(e.message || e).match(/already exists/i)) console.warn('[Notifications] Table create failed:', e.message || e); });
 }
@@ -28,7 +28,7 @@ router.get('/', authenticate, async function(req, res) {
   try {
     var userId = req.user.id;
     var rows = await db.all(
-      'SELECT id, type, title, body, link_action, read, created_at FROM notifications WHERE user_id = ? ORDER BY created_at DESC LIMIT 20',
+      'SELECT id, type, title, body, link_action, "read", created_at FROM notifications WHERE user_id = ? ORDER BY created_at DESC LIMIT 20',
       [userId]
     );
     var unreadCount = 0;
@@ -42,7 +42,7 @@ router.get('/', authenticate, async function(req, res) {
 // POST /api/notifications/read-all
 router.post('/read-all', authenticate, async function(req, res) {
   try {
-    await db.run('UPDATE notifications SET read = 1 WHERE user_id = ?', [req.user.id]);
+    await db.run('UPDATE notifications SET "read" = 1 WHERE user_id = ?', [req.user.id]);
     return res.json({ success: true });
   } catch(err) {
     return res.status(500).json({ error: 'Internal server error' });
@@ -55,7 +55,7 @@ router.post('/read/:id', authenticate, async function(req, res) {
     var notifId = parseInt(req.params.id, 10);
     if (!Number.isFinite(notifId)) return res.status(400).json({ error: 'Invalid notification ID' });
     await db.run(
-      'UPDATE notifications SET read = 1 WHERE id = ? AND user_id = ?',
+      'UPDATE notifications SET "read" = 1 WHERE id = ? AND user_id = ?',
       [notifId, req.user.id]
     );
     return res.json({ success: true });

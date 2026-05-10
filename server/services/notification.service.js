@@ -48,10 +48,10 @@ async function ensureTable() {
       title TEXT NOT NULL,
       body TEXT NOT NULL,
       link_action TEXT,
-      read INTEGER DEFAULT 0,
+      "read" INTEGER DEFAULT 0,
       created_at ${tsType} DEFAULT ${tsDefault}
     )`);
-    await db.run('CREATE INDEX IF NOT EXISTS idx_notifications_user ON notifications(user_id, read)').catch(() => {});
+    await db.run('CREATE INDEX IF NOT EXISTS idx_notifications_user ON notifications(user_id, "read")').catch(() => {});
     _tableReady = true;
   } catch (err) {
     console.warn('[NotificationService] Table create failed:', err.message);
@@ -90,7 +90,7 @@ async function notify(opts) {
       [userId, type, title, body, linkAction]
     );
     row = await db.get(
-      'SELECT id, type, title, body, link_action, read, created_at FROM notifications WHERE user_id = ? ORDER BY id DESC LIMIT 1',
+      'SELECT id, type, title, body, link_action, "read", created_at FROM notifications WHERE user_id = ? ORDER BY id DESC LIMIT 1',
       [userId]
     );
   } catch (err) {
