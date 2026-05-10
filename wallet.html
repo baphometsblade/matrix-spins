@@ -511,9 +511,9 @@
       // Strategy 1: Try backend Stripe Checkout session
       let redirected = false;
       try {
-        const out = await api.depositCheckout(selectedAmount);
-        if (out.checkoutUrl) {
-          window.location.href = out.checkoutUrl;
+        const out = await api.depositCheckout(selectedAmount / 100);
+        if (out.url || out.checkoutUrl) {
+          window.location.href = out.url || out.checkoutUrl;
           redirected = true;
         } else if (out.clientSecret && stripe) {
           const { error } = await stripe.confirmCardPayment(out.clientSecret, {

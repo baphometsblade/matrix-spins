@@ -243,14 +243,17 @@ router.get('/fraud-alerts', async (req, res) => {
     }
 });
 
-// GET /api/admin/users — User list
+// GET /api/admin/users — User list (includes bonus_balance and wagering for liability tracking)
 router.get('/users', async (req, res) => {
     try {
         const limit = Math.min(Math.max(parseInt(req.query.limit, 10) || 50, 1), 500);
         const offset = Math.max(parseInt(req.query.offset, 10) || 0, 0);
 
         const users = await db.all(
-            'SELECT id, username, email, balance, is_admin, is_banned, created_at FROM users ORDER BY id DESC LIMIT ? OFFSET ?',
+            'SELECT id, username, email, balance, COALESCE(bonus_balance, 0) as bonus_balance, ' +
+            'COALESCE(wagering_requirement, 0) as wagering_requirement, COALESCE(wagering_progress, 0) as wagering_progress, ' +
+            'COALESCE(kyc_status, \'unverified\') as kyc_status, is_admin, is_banned, created_at, last_login ' +
+            'FROM users ORDER BY id DESC LIMIT ? OFFSET ?',
             [limit, offset]
         );
         const total = await db.get('SELECT COUNT(*) as count FROM users');
@@ -2506,6 +2509,126 @@ router.get('/realtime', async (req, res) => {
     } catch (err) {
         console.warn('[Admin] realtime error:', err.message);
         res.status(500).json({ error: 'Failed to load realtime stats' });
+    }
+});
+
+// ═══════════════════════════════════════════════════════════════════════
+//  REVENUE SUMMARY — single endpoint with all KPIs the owner needs at a glance
+//  GET /api/admin/revenue-summary
+//  Returns: totalDeposits, totalWithdrawals, totalWagered, houseProfit,
+//           bonusLiability (sum of all bonus_balance), activeUsers24h, newUsersToday
+// ═══════════════════════════════════════════════════════════════════════
+router.get('/revenue-summary', async (req, res) => {
+    try {
+        const [
+            depositsRow,
+            withdrawalsRow,
+            spinsRow,
+            bonusLiabilityRow,
+            active24hRow,
+            newTodayRow,
+        ] = await Promise.all([
+            db.get(
+                "SELECT COALESCE(SUM(amount), 0) as total FROM deposits WHERE status = 'completed'"
+            ).catch(() => ({ total: 0 })),
+            db.get(
+                "SELECT COALESCE(SUM(amount), 0) as total FROM withdrawals WHERE status = 'completed'"
+            ).catch(() => ({ total: 0 })),
+            db.get(
+                "SELECT COALESCE(SUM(bet_amount), 0) as wagered, COALESCE(SUM(win_amount), 0) as paid FROM spins"
+            ).catch(() => ({ wagered: 0, paid: 0 })),
+            db.get(
+                "SELECT COALESCE(SUM(bonus_balance), 0) as total FROM users WHERE COALESCE(is_banned, 0) = 0"
+            ).catch(() => ({ total: 0 })),
+            db.get(
+                "SELECT COUNT(DISTINCT user_id) as count FROM spins WHERE created_at >= datetime('now', '-1 day')"
+            ).catch(() => ({ count: 0 })),
+            db.get(
+                "SELECT COUNT(*) as count FROM users WHERE COALESCE(is_admin, 0) = 0 AND created_at >= datetime('now', 'start of day')"
+            ).catch(() => ({ count: 0 })),
+        ]);
+
+        const totalDeposits   = Number((depositsRow && depositsRow.total) || 0);
+        const totalWithdrawals = Number((withdrawalsRow && withdrawalsRow.total) || 0);
+        const totalWagered    = Number((spinsRow && spinsRow.wagered) || 0);
+        const totalPaid       = Number((spinsRow && spinsRow.paid) || 0);
+
+        res.json({
+            totalDeposits:   parseFloat(totalDeposits.toFixed(2)),
+            totalWithdrawals: parseFloat(totalWithdrawals.toFixed(2)),
+            totalWagered:    parseFloat(totalWagered.toFixed(2)),
+            houseProfit:     parseFloat((totalWagered - totalPaid).toFixed(2)),
+            bonusLiability:  parseFloat(Number((bonusLiabilityRow && bonusLiabilityRow.total) || 0).toFixed(2)),
+            activeUsers24h:  Number((active24hRow && active24hRow.count) || 0),
+            newUsersToday:   Number((newTodayRow && newTodayRow.count) || 0),
+        });
+    } catch (err) {
+        console.warn('[Admin] revenue-summary error:', err.message);
+        res.status(500).json({ error: 'Failed to load revenue summary' });
+    }
+});
+
+// ═══════════════════════════════════════════════════════════════════════
+//  VIP SELF-EXCLUSION OVERRIDE
+//  POST /api/admin/user/:id/lift-self-exclusion
+//  Allows an admin to lift a self-exclusion for VIP player management.
+//  Requires adminApiKey middleware (second layer beyond authenticate+requireAdmin).
+//  All overrides are written to admin_audit_log for compliance.
+// ═══════════════════════════════════════════════════════════════════════
+const { adminApiKey } = require('../middleware/admin-api-key');
+
+router.post('/user/:id/lift-self-exclusion', adminApiKey, async (req, res) => {
+    try {
+        const userId = parseInt(req.params.id, 10);
+        if (!Number.isFinite(userId) || userId <= 0) {
+            return res.status(400).json({ error: 'Invalid userId' });
+        }
+        const reason = String(req.body.reason || '').trim();
+        if (reason.length < 10) {
+            return res.status(400).json({ error: 'A reason of at least 10 characters is required for compliance' });
+        }
+
+        const user = await db.get('SELECT id, username FROM users WHERE id = ?', [userId]);
+        if (!user) return res.status(404).json({ error: 'User not found' });
+
+        // Lift all active self-exclusions in both tables
+        let lifted = 0;
+        try {
+            const r1 = await db.run(
+                "UPDATE self_exclusions SET is_active = 0, ends_at = datetime('now') WHERE user_id = ? AND is_active = 1",
+                [userId]
+            );
+            if (r1 && r1.changes) lifted += r1.changes;
+        } catch (e) {
+            if (!e.message || !e.message.includes('no such table')) throw e;
+        }
+        try {
+            const r2 = await db.run(
+                "UPDATE user_limits SET self_excluded_until = NULL, cooling_off_until = NULL WHERE user_id = ?",
+                [userId]
+            );
+            if (r2 && r2.changes) lifted += r2.changes;
+        } catch (e) {
+            if (!e.message || !e.message.includes('no such table')) throw e;
+        }
+
+        // Audit trail — mandatory for compliance
+        await db.run(
+            "INSERT INTO admin_audit_log (admin_id, action, target_user_id, details, created_at) VALUES (?, 'lift_self_exclusion', ?, ?, datetime('now'))",
+            [req.user.id, userId, JSON.stringify({ reason, rowsAffected: lifted })]
+        ).catch(e => console.warn('[Admin] lift_self_exclusion audit log failed:', e.message));
+
+        console.warn(`[AUDIT][COMPLIANCE] Self-exclusion LIFTED for user ${userId} (${user.username}) by admin ${req.user.id}. Reason: ${reason}`);
+
+        res.json({
+            message: 'Self-exclusion lifted. Player may now log in and play.',
+            userId,
+            username: user.username,
+            reason,
+        });
+    } catch (err) {
+        console.warn('[Admin] lift-self-exclusion error:', err.message);
+        res.status(500).json({ error: 'Failed to lift self-exclusion' });
     }
 });
 

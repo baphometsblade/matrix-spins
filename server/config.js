@@ -36,7 +36,7 @@ module.exports = {
     DEMO_BALANCE: 1000,          // Demo/guest mode balance
 
     // House edge — guaranteed profit
-    TARGET_RTP: 86,              // 86% payout = 14% house edge
+    TARGET_RTP: 0.86,            // 86% payout = 14% house edge (decimal ratio — house-edge.js compares against 0-1 RTP)
     RTP_ADJUSTMENT_THRESHOLD: 0.02,
     MAX_WIN_MULTIPLIER: 200,       // No single spin can win more than 200x bet
     PROFIT_FLOOR: -500,            // Emergency mode if house is down $500+

@@ -1215,10 +1215,10 @@
                     </div>
                     <div class="signup-field">
                         <label for="signupDob">Date of Birth</label>
-                        <input type="date" id="signupDob" max="2005-01-01" required>
+                        <input type="date" id="signupDob" max="2008-01-01" required>
                     </div>
                     <div class="signup-field signup-terms">
-                        <label><input type="checkbox" id="signupTerms" required> I am 21+ and agree to the <a href="terms.html" target="_blank" style="color:var(--accent-gold,#D4A853)">Terms</a> &amp; <a href="responsible-gambling.html" target="_blank" style="color:var(--accent-gold,#D4A853)">Responsible Gambling</a> policy</label>
+                        <label><input type="checkbox" id="signupTerms" required> I am 18+ and agree to the <a href="terms.html" target="_blank" style="color:var(--accent-gold,#D4A853)">Terms</a> &amp; <a href="responsible-gambling.html" target="_blank" style="color:var(--accent-gold,#D4A853)">Responsible Gambling</a> policy</label>
                     </div>
                     <button type="submit" class="signup-submit" id="signupSubmitBtn">Create Account</button>
                 </form>
@@ -1369,7 +1369,7 @@
     <script>
         let allGames = [];
         let filteredGames = [];
-        currentFilter = 'all';
+        let currentFilter = 'all';
         let currentStudioFilter = null;
 
         // Initialize App
@@ -1604,22 +1604,31 @@
             const mobileDepositBtn = document.getElementById('mobileDepositBtn');
             const exploreBtn = document.getElementById('exploreBtn');
 
-            if (depositBtn) {
-                depositBtn.onclick = (e) => {
-                    e.preventDefault();
-                    if (typeof window.CasinoDeposit !== 'undefined' && window.CasinoDeposit.show) {
-                        window.CasinoDeposit.show();
+            function handleDepositClick(e) {
+                e.preventDefault();
+                const token = localStorage.getItem('casinoToken');
+                if (!token) {
+                    // Not logged in — show signup modal to capture the lead first
+                    const overlay = document.getElementById('signupOverlay');
+                    if (overlay) {
+                        overlay.classList.add('active');
+                        document.body.style.overflow = 'hidden';
                     }
-                };
+                    return;
+                }
+                if (typeof window.CasinoDeposit !== 'undefined' && window.CasinoDeposit.show) {
+                    window.CasinoDeposit.show();
+                } else {
+                    window.location.href = 'wallet.html';
+                }
+            }
+
+            if (depositBtn) {
+                depositBtn.onclick = handleDepositClick;
             }
 
             if (mobileDepositBtn) {
-                mobileDepositBtn.onclick = (e) => {
-                    e.preventDefault();
-                    if (typeof window.CasinoDeposit !== 'undefined' && window.CasinoDeposit.show) {
-                        window.CasinoDeposit.show();
-                    }
-                };
+                mobileDepositBtn.onclick = handleDepositClick;
             }
 
             if (exploreBtn) {
@@ -1651,14 +1660,42 @@
             });
         }
 
-        // Start app when DOM is ready
-        if (document.readyState === 'loading') {
-            document.addEventListener('DOMContentLoaded', initializeApp);
-        } else {
-            initializeApp();
+        // ── Auth-aware header state ────────────────────────────────
+        function updateHeaderAuthState() {
+            const token = localStorage.getItem('casinoToken');
+            const signupBtn = document.getElementById('headerSignupBtn');
+            const depositBtn = document.getElementById('depositBtn');
+            const avatar = document.querySelector('.avatar');
+
+            if (token) {
+                // Logged in: hide Sign Up, show Account link on avatar
+                if (signupBtn) signupBtn.style.display = 'none';
+                if (avatar) {
+                    avatar.style.cursor = 'pointer';
+                    avatar.title = 'My Account';
+                    avatar.onclick = () => { window.location.href = 'account.html'; };
+                }
+                if (depositBtn) depositBtn.textContent = 'Deposit';
+            } else {
+                // Logged out: show Sign Up, hide balance card
+                if (signupBtn) signupBtn.style.display = '';
+                const balanceCard = document.querySelector('.balance-card');
+                if (balanceCard) balanceCard.style.display = 'none';
+            }
         }
 
-        // Service worker registration handled by /js/pwa-install.js
+        // Start app when DOM is ready
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', () => {
+                initializeApp();
+                updateHeaderAuthState();
+            });
+        } else {
+            initializeApp();
+            updateHeaderAuthState();
+        }
+
+        // Service worker registration handled by js/pwa-install.js
 
         // ── HERO SHOWCASE — 4 featured game cards ──────────────
         function buildHeroShowcase() {
@@ -1827,11 +1864,11 @@
                 document.body.style.overflow = '';
             }
 
-            // Dynamic 21+ age check — override static max fallback
+            // Dynamic 18+ age check — override static max fallback
             const dobInput = document.getElementById('signupDob');
             if (dobInput) {
                 const today = new Date();
-                const minAge = new Date(today.getFullYear() - 21, today.getMonth(), today.getDate());
+                const minAge = new Date(today.getFullYear() - 18, today.getMonth(), today.getDate());
                 dobInput.max = minAge.toISOString().split('T')[0];
             }
 
@@ -1895,6 +1932,13 @@
                             if (typeof updateAuthButton === 'function') updateAuthButton();
                             if (typeof syncServerSession === 'function') syncServerSession();
 
+                            // Flag new user for conversion.js welcome flow (confetti + deposit nudge)
+                            try { sessionStorage.setItem('ms_new_user', '1'); } catch (_) {}
+                            // Dispatch signup event so conversion funnel advances
+                            window.dispatchEvent(new CustomEvent('matrix-signup'));
+                            // Update header to reflect logged-in state
+                            if (typeof updateHeaderAuthState === 'function') updateHeaderAuthState();
+
                             setTimeout(() => {
                                 closeSignup();
                                 // Show onboarding tour if available
@@ -1929,7 +1973,7 @@
         }
     </script>
     <!-- PWA: SW registration + install prompt + update banner -->
-    <script src="/js/pwa-install.js" defer></script>
+    <script src="js/pwa-install.js" defer></script>
     <!-- Site-wide jackpot win celebration + real-time pool ticker (socket.io) -->
     <script src="js/confetti.min.js" defer></script>
     <script src="js/jackpot-celebration.js" defer></script>

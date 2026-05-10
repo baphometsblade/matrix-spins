@@ -564,4 +564,17 @@ router.get('/payment/prices', (req, res) => {
     });
 });
 
+// GET /api/config/public — Public client configuration (no auth required)
+// Returns Stripe publishable key and other non-secret config needed by frontend.
+// Called by api-client.js api.publicConfig() on wallet.html load to init Stripe.js.
+router.get('/config/public', (req, res) => {
+    res.json({
+        stripePublishableKey: config.STRIPE_PUBLISHABLE_KEY || null,
+        stripeAvailable: !!config.STRIPE_PUBLISHABLE_KEY && !!config.STRIPE_SECRET_KEY,
+        currency: config.CURRENCY || 'AUD',
+        minDeposit: config.MIN_DEPOSIT || 5,
+        maxDeposit: config.MAX_DEPOSIT || 10000,
+    });
+});
+
 module.exports = router;

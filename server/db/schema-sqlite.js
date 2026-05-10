@@ -12,12 +12,25 @@ const TABLES = [
         email TEXT UNIQUE NOT NULL,
         password_hash TEXT NOT NULL,
         balance REAL DEFAULT 0,
+        bonus_balance REAL DEFAULT 0,
+        wagering_requirement REAL DEFAULT 0,
+        wagering_progress REAL DEFAULT 0,
         is_admin INTEGER DEFAULT 0,
         is_banned INTEGER DEFAULT 0,
         role TEXT DEFAULT 'user',
         referral_code TEXT,
+        referrer_id INTEGER,
         email_verified INTEGER DEFAULT 0,
         banned_at TEXT,
+        totp_enabled INTEGER DEFAULT 0,
+        totp_secret TEXT,
+        kyc_status TEXT DEFAULT 'pending',
+        vip_level TEXT DEFAULT 'bronze',
+        xp REAL DEFAULT 0,
+        last_login TEXT,
+        last_activity TEXT,
+        self_excluded INTEGER DEFAULT 0,
+        signup_ip TEXT,
         created_at TEXT DEFAULT (datetime('now'))
     )`,
 
@@ -761,6 +774,24 @@ const TABLES = [
         completed INTEGER DEFAULT 0,
         claimed INTEGER DEFAULT 0,
         UNIQUE(user_id, mission_date, slot)
+    )`,
+
+    `CREATE TABLE IF NOT EXISTS audit_log (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        event_type TEXT NOT NULL,
+        user_id INTEGER,
+        ip TEXT,
+        details TEXT,
+        created_at TEXT DEFAULT (datetime('now'))
+    )`,
+
+    `CREATE TABLE IF NOT EXISTS rg_admin_audit (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        admin_id INTEGER NOT NULL,
+        target_user_id INTEGER NOT NULL,
+        action TEXT NOT NULL,
+        reason TEXT,
+        created_at TEXT DEFAULT (datetime('now'))
     )`
 ];
 
