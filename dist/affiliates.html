@@ -982,7 +982,7 @@
             </table>
         </div>
 
-        <p class="commission-note">Commission calculated on net gaming revenue (deposits minus winnings). Paid weekly every Monday via PayPal, bank transfer, or crypto.</p>
+        <p class="commission-note">Commission calculated on net gaming revenue (deposits minus winnings). <strong>Rate and payout schedule confirmed individually during application review</strong> — automated payout tracking is rolling out per-partner. Settled monthly via bank transfer or crypto; PayPal available on request.</p>
     </div>
 </section>
 
@@ -1195,8 +1195,8 @@
         <div class="apply-form">
             <div class="form-success" id="form-success">
                 <div class="success-icon">✓</div>
-                <div class="success-title">Application Received!</div>
-                <p class="success-msg">Thanks for applying. We'll review your details and email you at the address you provided within 48 hours. Keep an eye on your inbox — and spam folder just in case.</p>
+                <div class="success-title">Application opened in your email client</div>
+                <p class="success-msg">Your application should now be open as a pre-filled email to <strong>partners@msaart.online</strong>. Hit send when you're happy with it — we review every application individually and reply within 48 hours. If nothing opened, email partners@msaart.online directly with your site, traffic source, and monthly visitor count.</p>
             </div>
 
             <form id="affiliate-form" novalidate>
@@ -1409,18 +1409,29 @@
             submittedAt: new Date().toISOString()
         };
 
-        try {
-            await fetch('/api/affiliate/apply', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(payload)
-            });
-        } catch (_) {
-            // API may not exist yet — show success regardless
-        }
+        // Open the user's email client with a pre-filled application.
+        // Earlier this form POSTed to /api/affiliate/apply (which doesn't
+        // exist) and showed a success modal regardless of the silent
+        // 404 — applicants believed they had joined the partner program
+        // when nothing had reached us. Until the operator wires a real
+        // application backend, route applications through email so they
+        // actually arrive and get reviewed.
+        const subject = encodeURIComponent('Affiliate program application — ' + payload.fullName);
+        const body = encodeURIComponent(
+            'Full name: '        + payload.fullName        + '\n' +
+            'Email: '            + payload.email           + '\n' +
+            'Website / channel: '+ payload.websiteUrl      + '\n' +
+            'Traffic source: '   + payload.trafficSource   + '\n' +
+            'Monthly visitors: ' + payload.monthlyVisitors + '\n\n' +
+            'Why partner with Matrix Spins:\n' + payload.whyPartner + '\n\n' +
+            '— Submitted from msaart.online/affiliates ' + payload.submittedAt
+        );
+        window.location.href = 'mailto:partners@msaart.online?subject=' + subject + '&body=' + body;
 
-        // Always show success after brief delay for UX
-        await new Promise(r => setTimeout(r, 800));
+        // Brief UX delay so the click feels deliberate, then surface the
+        // success card with "we'll review your application by email"
+        // copy. Submit truly arrives in the partners inbox now.
+        await new Promise(r => setTimeout(r, 400));
 
         form.style.display = 'none';
         formSuccess.classList.add('visible');
