@@ -38,7 +38,7 @@ services:
 
       # ── Site origin (Cloudflare handles www → bare domain) ──
       - key: ALLOWED_ORIGIN
-        value: https://msaart.online,https://royal-slots-casino.vercel.app
+        value: https://msaart.online,https://www.msaart.online
 
       # ── Geo compliance (REQUIRED for real-money operation) ──
       # Whitelist of ISO country codes allowed to play. Without this,

@@ -329,13 +329,13 @@
         </div></div>
         <div class="step"><div class="step-num">3</div><div class="step-content">
           Go to <strong>Dashboard → Developers → Webhooks → Add endpoint</strong>.<br>
-          Endpoint URL: <span class="code-pill" id="webhook-url" onclick="copyEl('webhook-url', this)">https://royal-slots-casino.vercel.app/api/payment/stripe/webhook</span><br>
-          Select events: <code style="color:#aaa">payment_intent.succeeded</code>, <code style="color:#aaa">checkout.session.completed</code><br>
+          Endpoint URL: <span class="code-pill" id="webhook-url" onclick="copyEl('webhook-url', this)">https://msaart.online/api/payment/stripe/webhook</span><br>
+          Select events: <code style="color:#aaa">checkout.session.completed</code>, <code style="color:#aaa">payment_intent.payment_failed</code>, <code style="color:#aaa">charge.dispute.created</code>, <code style="color:#aaa">charge.dispute.funds_withdrawn</code>, <code style="color:#aaa">charge.refunded</code><br>
           Copy the <strong>Webhook signing secret</strong> → <span class="code-pill" onclick="copyText('STRIPE_WEBHOOK_SECRET', this)">STRIPE_WEBHOOK_SECRET</span> (starts with <code style="color:#aaa">whsec_</code>).
         </div></div>
         <div class="step"><div class="step-num">4</div><div class="step-content">
-          In <a href="https://vercel.com/dashboard" target="_blank" rel="noopener">Vercel Dashboard</a>: open your project →
-          <strong>Settings → Environment Variables</strong>. Add these three variables:
+          In <a href="https://dashboard.render.com" target="_blank" rel="noopener">Render Dashboard</a>: open the <strong>matrix-spins</strong> service →
+          <strong>Environment → Environment Variables</strong>. Add these three variables:
           <div class="var-grid" style="margin-top:10px;">
             <span class="var-name">STRIPE_SECRET_KEY</span><span class="var-desc">Your secret key (sk_live_…)</span>
             <span class="var-name">STRIPE_PUBLISHABLE_KEY</span><span class="var-desc">Your publishable key (pk_live_…)</span>
@@ -343,7 +343,7 @@
           </div>
         </div></div>
         <div class="step"><div class="step-num">5</div><div class="step-content">
-          <strong>Trigger a redeployment</strong> in Vercel (Deployments → ⋯ → Redeploy).<br>
+          <strong>Trigger a redeployment</strong> in Render Dashboard (service → Manual Deploy → Deploy latest commit).<br>
           Card deposits will activate immediately — no code changes needed.
         </div></div>
       </div>
@@ -371,13 +371,13 @@
           <code style="color:#aaa;font-size:12px;">postgresql://user:pass@host/dbname?sslmode=require</code>
         </div></div>
         <div class="step"><div class="step-num">3</div><div class="step-content">
-          In Vercel → Settings → Environment Variables, add:
+          In <a href="https://dashboard.render.com" target="_blank" rel="noopener">Render Dashboard</a> → your <strong>matrix-spins</strong> service → <strong>Environment</strong>, add:
           <div class="var-grid" style="margin-top:8px;">
             <span class="var-name">DATABASE_URL</span><span class="var-desc">Your full PostgreSQL connection string</span>
           </div>
         </div></div>
         <div class="step"><div class="step-num">4</div><div class="step-content">
-          Redeploy on Vercel. The server automatically creates all tables on first boot.
+          Trigger a <strong>Manual Deploy</strong> in Render Dashboard. The server automatically creates all tables on first boot.
         </div></div>
       </div>
     </div>
@@ -391,25 +391,25 @@
         <span class="wiz-chevron">▶</span>
       </div>
       <div class="wiz-body">
-        <div style="background:rgba(245,158,11,0.1);border:1px solid rgba(245,158,11,0.3);border-radius:8px;padding:12px 14px;margin-bottom:12px;font-size:13px;color:#fcd34d;">
-          ⚠️ <strong>msaart.online</strong> currently points to a suspended Render instance.
-          Players visiting the domain will get an error. Update DNS to point at Vercel now.
+        <div style="background:rgba(34,197,94,0.08);border:1px solid rgba(34,197,94,0.25);border-radius:8px;padding:12px 14px;margin-bottom:12px;font-size:13px;color:#86efac;">
+          ✅ Your site runs on <strong>Render.com</strong>. Point msaart.online at Render to go live.
         </div>
         <div class="step"><div class="step-num">1</div><div class="step-content">
-          In <a href="https://vercel.com/dashboard" target="_blank" rel="noopener">Vercel Dashboard</a>: your project →
-          <strong>Settings → Domains → Add domain</strong>. Type <code>msaart.online</code>.
+          In <a href="https://dashboard.render.com" target="_blank" rel="noopener">Render Dashboard</a>: open the <strong>matrix-spins</strong> service →
+          <strong>Settings → Custom Domains → Add Custom Domain</strong>. Enter <code>msaart.online</code> and also <code>www.msaart.online</code>.
         </div></div>
         <div class="step"><div class="step-num">2</div><div class="step-content">
           In your domain registrar (Cloudflare / Namecheap / GoDaddy), update the CNAME record:<br>
           <div class="var-grid" style="margin-top:8px;">
             <span class="var-name">Type</span><span class="var-desc">CNAME</span>
-            <span class="var-name">Name</span><span class="var-desc">@ (or www)</span>
-            <span class="var-name">Value</span><span class="var-desc"><span class="code-pill" onclick="copyText('cname.vercel-dns.com', this)">cname.vercel-dns.com</span></span>
+            <span class="var-name">Name</span><span class="var-desc">@ (apex) or www</span>
+            <span class="var-name">Value</span><span class="var-desc"><span class="code-pill" onclick="copyText('matrix-spins.onrender.com', this)">matrix-spins.onrender.com</span></span>
           </div>
+          If your registrar doesn't support CNAME at apex (@), use an ANAME/ALIAS record instead, or use Cloudflare's proxied CNAME.
         </div></div>
         <div class="step"><div class="step-num">3</div><div class="step-content">
-          DNS propagation takes up to 30 minutes. Vercel will auto-provision an SSL certificate.
-          Your site will be live at <strong>msaart.online</strong> with HTTPS.
+          DNS propagation takes up to 30 minutes. Render auto-provisions an SSL certificate.
+          Your site will be live at <strong>https://msaart.online</strong>.
         </div></div>
       </div>
     </div>
@@ -429,7 +429,7 @@
           or <a href="https://mailgun.com" target="_blank" rel="noopener">mailgun.com</a>.
         </div></div>
         <div class="step"><div class="step-num">2</div><div class="step-content">
-          Add in Vercel Environment Variables:
+          In <a href="https://dashboard.render.com" target="_blank" rel="noopener">Render Dashboard</a> → <strong>matrix-spins</strong> → <strong>Environment</strong>, add:
           <div class="var-grid" style="margin-top:8px;">
             <span class="var-name">SMTP_HOST</span><span class="var-desc">e.g. smtp.sendgrid.net</span>
             <span class="var-name">SMTP_PORT</span><span class="var-desc">587</span>
@@ -473,9 +473,9 @@
   <!-- Quick action links -->
   <p class="section-label">Quick Actions</p>
   <div class="actions-grid">
-    <a class="action-card" href="https://vercel.com/dashboard" target="_blank" rel="noopener">
-      <span class="ac-icon">▲</span>
-      <div><div class="ac-label">Vercel Dashboard</div><div class="ac-sub">Env vars · Deployments</div></div>
+    <a class="action-card" href="https://dashboard.render.com" target="_blank" rel="noopener">
+      <span class="ac-icon">🚀</span>
+      <div><div class="ac-label">Render Dashboard</div><div class="ac-sub">Env vars · Deployments</div></div>
     </a>
     <a class="action-card" href="https://dashboard.stripe.com" target="_blank" rel="noopener">
       <span class="ac-icon">💳</span>

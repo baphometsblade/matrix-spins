@@ -61,6 +61,15 @@ if (config.NODE_ENV === 'production') {
   }
 }
 
+// ── Liveness probe — MUST be first, no DB dependency ──────────────
+// Render fires the health check immediately after the process starts,
+// before initDatabase() and mountAllRoutes() complete. If this isn't
+// mounted early it 404s → Render marks the deploy failed → restart loop.
+app.get('/api/health/ping', (req, res) => {
+  res.setHeader('Cache-Control', 'no-store');
+  res.json({ status: 'ok', uptime: Math.floor(process.uptime()), timestamp: new Date().toISOString() });
+});
+
 // ── Request ID (early — used by every downstream middleware) ───
 app.use((req, res, next) => {
   req.id = crypto.randomBytes(4).toString('hex');
@@ -106,7 +115,6 @@ const ALLOWED_ORIGINS = (() => {
 app.use(cors({
   origin(origin, cb) {
     if (!origin || ALLOWED_ORIGINS.includes(origin)) return cb(null, true);
-    if (origin.endsWith('.vercel.app')) return cb(null, true);
     cb(null, false);
   },
   credentials: true,
