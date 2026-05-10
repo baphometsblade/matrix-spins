@@ -190,6 +190,24 @@
             }
         }
 
+        function _refreshWageringDisplay() {
+            var token = localStorage.getItem('authToken') || sessionStorage.getItem('authToken');
+            if (!token) return;
+            fetch('/api/user/profile', { headers: { Authorization: 'Bearer ' + token } })
+                .then(function(r) { return r.ok ? r.json() : null; })
+                .then(function(data) {
+                    if (!data || !data.user) return;
+                    var u = data.user;
+                    var bonus = parseFloat(u.bonus_balance) || 0;
+                    var req = parseFloat(u.wagering_requirement) || 0;
+                    var prog = parseFloat(u.wagering_progress) || 0;
+                    if (bonus <= 0 || req <= 0) { updateWageringDisplay(null); return; }
+                    var pct = Math.min(100, Math.round((prog / req) * 100));
+                    updateWageringDisplay({ active: true, bonusBalance: bonus, requirement: req, progress: prog, pct: pct });
+                })
+                .catch(function() {});
+        }
+
         // ── Balance History Sparkline (Sprint 29) ────────────────────────────────
         var _BALANCE_HIST_KEY = 'matrixBalanceHistory';
         var _BALANCE_HIST_MAX = 100;
@@ -562,6 +580,8 @@ function renderGames() {
             if (typeof _loadFavoritesFromApi === 'function') _loadFavoritesFromApi();
             // Cashback available banner for eligible logged-in users
             if (!window._cashbackBannerInit) { window._cashbackBannerInit = true; initCashbackBanner(); }
+            // Wagering progress bar — fetch once on login and refresh after each spin result
+            _refreshWageringDisplay();
             // Apply HOT/COLD RTP labels from game-stats API (reset flag so re-render refreshes labels)
             window._gameStatsApplied = false;
             setTimeout(fetchAndApplyGameStats, 100);
