@@ -316,8 +316,8 @@ function generateDistIndex(jsInfo, cssInfo, originalHtml) {
     // Write dist/index.html
     ensureDir(DIST_DIR);
     // Fix encoding corruption: Render build env can double-encode UTF-8
-    distHtml = distHtml.replace(/\u00ef\u00bf\u00bd/g, '\u2022');
-    distHtml = distHtml.replace(/\ufffd/g, '\u2022');
+    distHtml = distHtml.replace(/ï¿½/g, '•');
+    distHtml = distHtml.replace(/�/g, '•');
     fs.writeFileSync(path.join(DIST_DIR, 'index.html'), distHtml, 'utf8');
     log('Created dist/index.html');
 
@@ -363,20 +363,32 @@ function copyStaticAssets() {
         }
     });
 
-    // Copy standalone-page scripts (api-client, countries, social-proof, ...)
-    // referenced directly by login.html, signup.html, account.html, etc.
-    STANDALONE_SCRIPTS.forEach(scriptPath => {
-        const src = path.join(ROOT_DIR, scriptPath);
-        const dst = path.join(DIST_DIR, scriptPath);
-        const dir = path.dirname(dst);
-        if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
-        if (fs.existsSync(src)) {
-            fs.copyFileSync(src, dst);
-            log(`Copied ${scriptPath}`);
-        } else {
-            log(`WARN: standalone script missing: ${scriptPath}`);
-        }
-    });
+    // Mirror EVERY js/*.js from root → dist/js/.
+    //
+    // History: this used to only copy STANDALONE_SCRIPTS (a manual whitelist).
+    // The non-whitelisted files were assumed to live only inside the bundled
+    // bundle.<hash>.min.js, so their dist/js/<name>.js copies could stay stale.
+    // But the per-page HTML (promotions, leaderboard, wallet, etc.) loads many
+    // of them with explicit <script src="js/X.js"> tags — bypassing the bundle
+    // entirely. Edits to root js/notifications.js, js/chat-widget.js,
+    // js/analytics.js etc. never reached production for that reason; the live
+    // notification panel kept showing 6 hardcoded DEMO_NOTIFICATIONS (with the
+    // false "$25,000 prize pool" tournament line) because dist/js/notifications.js
+    // was a frozen orphan from a much earlier build.
+    //
+    // Source of truth is now root js/*.js; dist/js/ is a pure mirror.
+    const jsRootDir = path.join(ROOT_DIR, 'js');
+    const jsDistDir = path.join(DIST_DIR, 'js');
+    if (fs.existsSync(jsRootDir)) {
+        if (!fs.existsSync(jsDistDir)) fs.mkdirSync(jsDistDir, { recursive: true });
+        const jsFiles = fs.readdirSync(jsRootDir).filter(f => f.endsWith('.js'));
+        let copied = 0;
+        jsFiles.forEach(file => {
+            fs.copyFileSync(path.join(jsRootDir, file), path.join(jsDistDir, file));
+            copied++;
+        });
+        log(`Mirrored ${copied} files: js/ → dist/js/`);
+    }
 
     // Copy standalone CSS files (search.css, cookie-consent.css, age-gate.css, ...)
     // referenced directly by every HTML page via <link rel="stylesheet" href="css/X.css">
