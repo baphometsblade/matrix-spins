@@ -51,6 +51,15 @@
   // If already signed in, redirect to lobby
   try { const u = await api.loadSession(); if (u) { window.location.href = 'index.html'; return; } } catch {}
 
+  // ── Referral code capture — reads ?ref= from URL, persists in localStorage ──
+  (function() {
+    const params = new URLSearchParams(window.location.search);
+    const ref = params.get('ref') || params.get('referral') || params.get('r');
+    if (ref && ref.trim()) {
+      localStorage.setItem('pendingRefCode', ref.trim().toUpperCase());
+    }
+  })();
+
   // Set max date for DOB to 18 years ago
   var dobInput = document.getElementById('dob');
   if (dobInput) {
@@ -82,13 +91,17 @@
     submit.disabled = true;
     try {
       const email = document.getElementById('email').value.trim();
-      await api.register({
+      const pendingRef = localStorage.getItem('pendingRefCode') || '';
+      const payload = {
         username:    deriveUsername(email),
         email:       email,
         password:    document.getElementById('password').value,
         dateOfBirth: document.getElementById('dob').value,
         acceptTerms: document.getElementById('acceptTerms').checked,
-      });
+      };
+      if (pendingRef) payload.referralCode = pendingRef;
+      await api.register(payload);
+      localStorage.removeItem('pendingRefCode'); // consumed
       window.location.href = 'index.html';
     } catch (err) {
       if (err.details?.issues) {

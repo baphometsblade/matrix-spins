@@ -1397,6 +1397,9 @@
         </div>
     </nav>
 
+    <!-- Capture ?ref= referral code before any redirect — runs synchronously -->
+    <script>(function(){try{var p=new URLSearchParams(window.location.search);var ref=p.get('ref')||p.get('referral')||p.get('r');if(ref&&ref.trim())localStorage.setItem('pendingRefCode',ref.trim().toUpperCase());}catch(e){}}());</script>
+
     <!-- SCRIPTS — deferred for faster first paint -->
     <script src="js/csrf-helper.js" defer></script>
     <script src="js/api-client.js" defer></script>
