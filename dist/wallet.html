@@ -136,15 +136,22 @@
     <button class="modal-close" id="closeDeposit" aria-label="Close">&times;</button>
     <div class="modal-title">Add Funds</div>
 
+    <!-- First-deposit bonus banner — shown only until first deposit made -->
+    <div id="firstDepBonusBanner" class="first-dep-bonus-banner" style="display:none">
+      <div class="fdb-badge">🎁 WELCOME OFFER</div>
+      <div class="fdb-headline">100% Match Bonus</div>
+      <div class="fdb-sub">Deposit &amp; we double it — up to <strong>$500 free</strong></div>
+    </div>
+
     <div id="depAlert" class="alert"></div>
 
-    <label style="display:block;font-size:.78rem;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:0.5rem;">Quick amount</label>
+    <label style="display:block;font-size:.78rem;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:0.5rem;">Choose amount</label>
     <div class="amount-presets">
-      <button class="preset-btn" data-amount="10">$10</button>
-      <button class="preset-btn active" data-amount="25">$25 <span class="preset-popular">Popular</span></button>
-      <button class="preset-btn" data-amount="50">$50</button>
-      <button class="preset-btn" data-amount="100">$100</button>
-      <button class="preset-btn" data-amount="250">$250</button>
+      <button class="preset-btn" data-amount="10">$10<span class="preset-bonus" id="bonus10"></span></button>
+      <button class="preset-btn active" data-amount="25">$25 <span class="preset-popular">Popular</span><span class="preset-bonus" id="bonus25"></span></button>
+      <button class="preset-btn" data-amount="50">$50<span class="preset-bonus" id="bonus50"></span></button>
+      <button class="preset-btn" data-amount="100">$100<span class="preset-bonus" id="bonus100"></span></button>
+      <button class="preset-btn" data-amount="250">$250<span class="preset-bonus" id="bonus250"></span></button>
       <button class="preset-btn" data-amount="custom">Custom</button>
     </div>
 
@@ -174,7 +181,13 @@
 
     <div class="secure-badge">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-      256-bit SSL encrypted &middot; Powered by Stripe
+      256-bit SSL &middot; Powered by Stripe &middot; Instant credit
+    </div>
+    <div class="trust-row">
+      <span class="trust-chip">🔒 Secure</span>
+      <span class="trust-chip">⚡ Instant</span>
+      <span class="trust-chip">18+ Only</span>
+      <span class="trust-chip">🎰 Licensed</span>
     </div>
   </div>
 </div>
@@ -361,9 +374,31 @@
   const depositModal = document.getElementById('depositModal');
   let selectedAmount = 2500; // cents — anchored to $25 (conversion sweet spot)
 
+  // Show bonus amounts on preset buttons for first-time depositors
+  function _applyDepositBonusUI() {
+    var token = localStorage.getItem('authToken') || sessionStorage.getItem('authToken');
+    if (!token) return;
+    fetch('/api/user/profile', { headers: { Authorization: 'Bearer ' + token } })
+      .then(function(r) { return r.ok ? r.json() : null; })
+      .then(function(user) {
+        var isFirst = user && (!user.deposit_count || user.deposit_count === 0);
+        var banner = document.getElementById('firstDepBonusBanner');
+        if (banner) banner.style.display = isFirst ? '' : 'none';
+        if (!isFirst) return;
+        // Show bonus match amounts: 100% match on first deposit
+        var amounts = { bonus10:'+ $10 free', bonus25:'+ $25 free', bonus50:'+ $50 free', bonus100:'+ $100 free', bonus250:'+ $250 free' };
+        Object.keys(amounts).forEach(function(id) {
+          var el = document.getElementById(id);
+          if (el) { el.textContent = amounts[id]; el.style.display = ''; }
+        });
+      })
+      .catch(function() {});
+  }
+
   document.getElementById('openDeposit').addEventListener('click', () => {
     depositModal.classList.add('active');
     document.body.style.overflow = 'hidden';
+    _applyDepositBonusUI();
   });
 
   function closeDepositModal() {
