@@ -53,7 +53,7 @@
     },
     {
       keywords: ['banned', 'account closed', 'suspended', 'locked', 'why is my account disabled'],
-      answer: 'Accounts may be temporarily suspended for security reasons or policy violations. Email support@royal-slots-casino.vercel.app with your username for details and resolution.'
+      answer: 'Accounts may be temporarily suspended for security reasons or policy violations. Email support@msaart.online with your username for details and resolution.'
     },
     {
       keywords: ['vip', 'vip status', 'loyalty', 'tier', 'rewards', 'level'],
@@ -408,7 +408,7 @@
       <div class="support-chat-input-area">
         <input type="text" class="support-chat-input" placeholder="Type your question..." maxlength="500">
         <button class="support-chat-send">Send</button>
-        <a class="support-chat-email-btn" href="mailto:support@royal-slots-casino.vercel.app" title="Email support">Email</a>
+        <a class="support-chat-email-btn" href="mailto:support@msaart.online" title="Email support">Email</a>
       </div>
     `;
 
@@ -445,7 +445,7 @@
         }
       }
     }
-    return 'I\'m not sure how to answer that. Please email support@royal-slots-casino.vercel.app for more help!';
+    return 'I\'m not sure how to answer that. Please email support@msaart.online for more help!';
   }
 
   // Add message to chat
@@ -544,7 +544,7 @@
 
     document.body.appendChild(state.container);
 
-    addMessage('👋 Hi! I\'m an automated FAQ assistant — not a live agent. I can answer common questions about deposits, withdrawals, wagering, RTP, and more. For account issues or anything I can\'t answer, email support@royal-slots-casino.vercel.app.', false);
+    addMessage('👋 Hi! I\'m an automated FAQ assistant — not a live agent. I can answer common questions about deposits, withdrawals, wagering, RTP, and more. For account issues or anything I can\'t answer, email support@msaart.online.', false);
 
     console.log('[SupportChat] Initialized successfully');
   }

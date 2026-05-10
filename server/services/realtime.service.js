@@ -53,7 +53,7 @@ function init(httpServer) {
         if (allowed === true) return cb(null, true);
         if (!origin) return cb(null, true);
         if (Array.isArray(allowed) && allowed.includes(origin)) return cb(null, true);
-        if (origin.endsWith && origin.endsWith('.vercel.app')) return cb(null, true);
+        if (origin.endsWith && origin.endsWith('.msaart.online')) return cb(null, true);
         return cb(null, false);
       },
       credentials: true,

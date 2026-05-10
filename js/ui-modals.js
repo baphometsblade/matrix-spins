@@ -1390,7 +1390,7 @@
                 ['How do free spins work?', 'Free spins are awarded through bonuses, promotions, and in-game scatter symbols. Winnings from free spins are credited to your balance.'],
                 ['Is my account secure?', 'Yes. We use industry-standard encryption, secure JWT authentication, and never store plaintext passwords.'],
                 ['How do I set deposit limits?', 'Go to My Account > Responsible Gambling to set daily, weekly, or monthly deposit limits and self-exclusion periods.'],
-                ['How do I contact support?', 'Email us at support@royal-slots-casino.vercel.app or use the Live Chat feature when logged in.']
+                ['How do I contact support?', 'Email us at support@msaart.online or use the Live Chat feature when logged in.']
             ];
             var html = '<h2 style="margin:0 0 18px;color:#f0a500;font-size:1.3rem;">Frequently Asked Questions</h2>';
             for (var i = 0; i < faqs.length; i++) {

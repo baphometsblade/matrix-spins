@@ -150,7 +150,7 @@ ctx.fillStyle = 'rgba(212, 168, 83, 0.6)';
 ctx.font = '500 18px "Arial", "Helvetica Neue", sans-serif';
 ctx.textAlign = 'center';
 ctx.textBaseline = 'middle';
-ctx.fillText('royal-slots-casino.vercel.app', WIDTH / 2, HEIGHT - 33);
+ctx.fillText('msaart.online', WIDTH / 2, HEIGHT - 33);
 
 // --- Export ---
 const outDir = path.join(__dirname, 'img');

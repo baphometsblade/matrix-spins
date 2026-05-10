@@ -1,6 +1,6 @@
 /**
  * Legal Terms & Conditions Module
- * Matrix Spins Casino - royal-slots-casino.vercel.app
+ * Matrix Spins Casino - msaart.online
  *
  * Thin redirects to canonical HTML pages so the site has a single source of
  * truth for Terms, Privacy, and Responsible Gambling. Previous inline modals
