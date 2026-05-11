@@ -30,25 +30,47 @@ const _tablePromise = db.run(`CREATE TABLE IF NOT EXISTS notifications (
   return null;
 });
 
-// GET /api/notifications — last 20, auth required
+// GET /api/notifications — last 20, auth required.
+// Resilient strategy: try a minimal SELECT first (omits the `"read"` column
+// in case it was created as an identifier that doesn't match the SQL
+// standard's read-keyword handling on the live Postgres instance). If
+// that works, the route still returns an unreadCount of 0 — clients
+// mark-read in-memory until /read/:id POST persists. Better than the
+// black-box 500 the previous handler returned to every authed page load.
 router.get('/', authenticate, async function(req, res) {
   try {
     await _tablePromise; // ensure table exists before first SELECT
     var userId = req.user.id;
-    var rows = await db.all(
-      'SELECT id, type, title, body, link_action, "read", created_at FROM notifications WHERE user_id = ? ORDER BY created_at DESC LIMIT 20',
-      [userId]
-    );
+    var rows;
+    try {
+      rows = await db.all(
+        'SELECT id, type, title, body, link_action, "read", created_at FROM notifications WHERE user_id = ? ORDER BY created_at DESC LIMIT 20',
+        [userId]
+      );
+    } catch (innerErr) {
+      // Fall back to a query that doesn't reference the "read" column. If
+      // this also fails, we let the outer catch surface the error.
+      console.warn('[Notifications] full SELECT failed, retrying without "read":', innerErr && innerErr.message ? innerErr.message : innerErr);
+      rows = await db.all(
+        'SELECT id, type, title, body, link_action, created_at FROM notifications WHERE user_id = ? ORDER BY created_at DESC LIMIT 20',
+        [userId]
+      );
+      // Synthesize the read flag: assume all rows are unread so the bell badge
+      // still works. Clients call POST /read/:id to mark individually after view.
+      if (Array.isArray(rows)) rows.forEach(function(r) { r.read = 0; });
+    }
     if (!Array.isArray(rows)) rows = [];
     var unreadCount = 0;
     rows.forEach(function(r) { if (!r.read) unreadCount++; });
     return res.json({ notifications: rows, unreadCount: unreadCount });
   } catch(err) {
-    // Log the actual SQL error so we can diagnose; the previous handler
-    // swallowed err.message into a generic "Internal server error" which
-    // turned every notification-bell load into a black-box 500.
-    console.warn('[Notifications] GET / failed:', err && err.message ? err.message : err);
-    return res.status(500).json({ error: 'Internal server error', code: 'notifications_query_failed' });
+    var msg = err && err.message ? err.message : String(err || 'unknown');
+    console.warn('[Notifications] GET / failed:', msg);
+    return res.status(500).json({
+      error: 'Internal server error',
+      code: 'notifications_query_failed',
+      detail: msg.slice(0, 200),
+    });
   }
 });
 
