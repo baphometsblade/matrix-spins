@@ -14,12 +14,30 @@ const _isPg  = db.isPg();
 const _idDef = _isPg ? 'SERIAL PRIMARY KEY' : 'INTEGER PRIMARY KEY AUTOINCREMENT';
 const _tsType    = _isPg ? 'TIMESTAMPTZ' : 'TEXT';
 const _tsDefault = _isPg ? 'NOW()' : "(datetime('now'))";
+// Step 1: create table if absent.
+// Step 2: defensively ADD COLUMN for every field we expect — older
+// production schemas were created without `body`, `link_action`, and
+// `"read"` columns (live Postgres returned `column "body" does not exist`
+// against the full SELECT). With CREATE TABLE IF NOT EXISTS those
+// columns would never be backfilled; we have to ALTER TABLE explicitly.
+//
+// Both Postgres and modern SQLite accept the column adds idempotently:
+//   - Postgres ≥9.6: `ADD COLUMN IF NOT EXISTS`
+//   - SQLite ≥3.35:  `ADD COLUMN IF NOT EXISTS` (3.35+) or errors on
+//     duplicate with "duplicate column name" which we catch and swallow.
+function _safeAlter(sql) {
+  return db.run(sql).catch(function(e) {
+    var msg = String(e && e.message || e);
+    if (/already exists|duplicate column/i.test(msg)) return; // benign
+    console.warn('[Notifications] ALTER failed (' + sql.slice(0, 60) + '...):', msg);
+  });
+}
 const _tablePromise = db.run(`CREATE TABLE IF NOT EXISTS notifications (
   id ${_idDef},
   user_id INTEGER NOT NULL,
   type TEXT NOT NULL,
   title TEXT NOT NULL,
-  body TEXT NOT NULL,
+  body TEXT NOT NULL DEFAULT '',
   link_action TEXT,
   "read" INTEGER DEFAULT 0,
   created_at ${_tsType} DEFAULT ${_tsDefault}
@@ -28,6 +46,14 @@ const _tablePromise = db.run(`CREATE TABLE IF NOT EXISTS notifications (
     console.warn('[Notifications] Table create failed:', e.message || e);
   }
   return null;
+}).then(async function() {
+  // Backfill any columns missing from older schemas.
+  await _safeAlter(`ALTER TABLE notifications ADD COLUMN IF NOT EXISTS type TEXT NOT NULL DEFAULT 'info'`);
+  await _safeAlter(`ALTER TABLE notifications ADD COLUMN IF NOT EXISTS title TEXT NOT NULL DEFAULT ''`);
+  await _safeAlter(`ALTER TABLE notifications ADD COLUMN IF NOT EXISTS body TEXT NOT NULL DEFAULT ''`);
+  await _safeAlter(`ALTER TABLE notifications ADD COLUMN IF NOT EXISTS link_action TEXT`);
+  await _safeAlter(`ALTER TABLE notifications ADD COLUMN IF NOT EXISTS "read" INTEGER DEFAULT 0`);
+  await _safeAlter(`ALTER TABLE notifications ADD COLUMN IF NOT EXISTS created_at ${_tsType} DEFAULT ${_tsDefault}`);
 });
 
 // GET /api/notifications — last 20, auth required.
@@ -39,7 +65,7 @@ const _tablePromise = db.run(`CREATE TABLE IF NOT EXISTS notifications (
 // black-box 500 the previous handler returned to every authed page load.
 router.get('/', authenticate, async function(req, res) {
   try {
-    await _tablePromise; // ensure table exists before first SELECT
+    await _tablePromise; // ensure table exists + columns backfilled before first SELECT
     var userId = req.user.id;
     var rows;
     try {
