@@ -65,6 +65,15 @@ if (config.NODE_ENV === 'production') {
 // Render fires the health check immediately after the process starts,
 // before initDatabase() and mountAllRoutes() complete. If this isn't
 // mounted early it 404s → Render marks the deploy failed → restart loop.
+//
+// Helmet is mounted FIRST so even this early health-check response
+// carries the full HSTS / X-Content-Type-Options / Referrer-Policy /
+// Permissions-Policy / X-Frame-Options stack. buildHelmet() is pure —
+// no DB or async deps — so it can run before initDatabase().
+// Previously the health endpoint was registered before helmet, so the
+// JSON response went out with no security headers at all.
+app.use(buildHelmet());
+app.use(permissionsPolicy);
 app.get('/api/health/ping', (req, res) => {
   res.setHeader('Cache-Control', 'no-store');
   res.json({ status: 'ok', uptime: Math.floor(process.uptime()), timestamp: new Date().toISOString() });
@@ -91,9 +100,7 @@ try {
   logger.warn('compression not installed — responses will be uncompressed');
 }
 
-// ── Security Headers (helmet + Permissions-Policy + Vary) ──
-app.use(buildHelmet());
-app.use(permissionsPolicy);
+// ── Vary header (helmet + Permissions-Policy already mounted above) ──
 app.use((req, res, next) => {
   res.setHeader('Vary', 'Accept-Encoding, Origin');
   next();
