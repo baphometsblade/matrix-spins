@@ -146,20 +146,21 @@
     getBalance:      () => apiFetch('/balance/'),
     getTransactions: (params) => apiFetch(`/balance/transactions${qs(params)}`),
 
-    // games — server mounts spin.routes.js at /api/spin
+    // games — server mounts spin.routes.js at /api/spin, fair.routes.js at /api/fair,
+    // gamehistory.routes.js at /api/game-history. The earlier consolidated /api/spin/{seeds,history}
+    // endpoints were split into provably-fair (fair) and history (game-history) routers; api-client
+    // was left calling the old paths and producing site-wide 404s on the account page.
     listGames:    (params) => apiFetch(`/spin/games${qs(params)}`),
     getGame:      (id)     => apiFetch(`/spin/games/${encodeURIComponent(id)}`),
-    getSeeds:     ()       => apiFetch('/spin/seeds/current'),
-    setClientSeed:(seed)   => apiFetch('/spin/seeds/client', { method: 'POST', body: { clientSeed: seed } }),
-    rotateSeed:   ()       => apiFetch('/spin/seeds/rotate', { method: 'POST' }),
+    getSeeds:     ()       => apiFetch('/fair/seed'),
     spin:         (gameId, betCents, opts = {}) =>
       apiFetch('/spin/', {
         method: 'POST',
         body: { gameId, bet: betCents / 100, useFreeSpin: Boolean(opts.useFreeSpin) },
       }),
     getFreeSpins: (gameId) => apiFetch(`/freespins/available?gameId=${encodeURIComponent(gameId)}`),
-    spinHistory:  (params) => apiFetch(`/spin/history${qs(params)}`),
-    spinDetails:  (spinId) => apiFetch(`/spin/history/${encodeURIComponent(spinId)}`),
+    spinHistory:  (params) => apiFetch(`/game-history/${qs(params)}`),
+    spinDetails:  (spinId) => apiFetch(`/game-history/${encodeURIComponent(spinId)}`),
 
     // payments — server mounts payment.routes.js at /api/payment (singular)
     depositCheckout: (amount) =>
@@ -174,8 +175,8 @@
     setLimits:    (b)  => apiFetch('/payment/limits', { method: 'PUT', body: b }),
     selfExclude:  (b)  => apiFetch('/user/self-exclude', { method: 'POST', body: b }),
     endSession:   ()   => apiFetch('/auth/logout', { method: 'POST' }),
-    submitKyc:    (b)  => apiFetch('/user/kyc', { method: 'POST', body: b }),
-    listKyc:      ()   => apiFetch('/user/kyc'),
+    submitKyc:    (b)  => apiFetch('/kyc/upload', { method: 'POST', body: b }),
+    listKyc:      ()   => apiFetch('/kyc/status'),
 
     // public config
     publicConfig: () => apiFetch('/config/public'),
