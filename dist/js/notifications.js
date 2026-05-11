@@ -1,287 +1,344 @@
 /**
- * Matrix Spins Casino — Notification Center & Toast System
+ * Matrix Spins Casino — Notification Bell + Toast System
  *
- * Features:
- *   • Bell icon with unread badge (injects into .header-right or .actions)
- *   • Dropdown notification panel
- *   • Toast notifications for real-time events
- *   • Auto-generates demo notifications
- *   • Persists read state in sessionStorage
- *
- * Usage:
- *   <link rel="stylesheet" href="css/notifications.css">
- *   <script src="js/notifications.js" defer></script>
- *   <!-- Auto-injects into page -->
+ * Pulls notifications from /api/notifications, renders a bell icon with
+ * unread badge into the page header, and listens for real-time pushes
+ * via socket.io. Falls back to polling when socket.io is unavailable.
  */
 (function () {
   'use strict';
 
-  // ── Demo Notifications ─────────────────────────────────────
-  const DEMO_NOTIFICATIONS = [
-    { id: 'n1', type: 'promo',  icon: '🎁', title: 'New Promotion Available', body: '50% Reload Bonus — deposit $50+ and get up to $250 matched. Use code RELOAD50.', time: Date.now() - 300000, read: false },
-    { id: 'n2', type: 'vip',    icon: '⭐', title: 'VIP Progress Update', body: 'You\'re 1,200 XP away from Silver tier! Keep spinning to unlock weekly bonuses.', time: Date.now() - 1800000, read: false },
-    { id: 'n3', type: 'win',    icon: '🏆', title: 'Jackpot Winner Nearby!', body: 'Alex T. just hit the Mini jackpot for $52.30 on Dragon Pearl Deluxe.', time: Date.now() - 3600000, read: false },
-    { id: 'n4', type: 'system', icon: '🔔', title: 'Weekend Tournament Starts Friday', body: '$25,000 prize pool — all bets count toward the leaderboard. Top 50 win prizes.', time: Date.now() - 7200000, read: true },
-    { id: 'n5', type: 'promo',  icon: '💰', title: 'Weekly Cashback Credited', body: '$23.40 cashback has been added to your balance from last week\'s play.', time: Date.now() - 86400000, read: true },
-    { id: 'n6', type: 'system', icon: '🛡️', title: 'Security Reminder', body: 'Enable stronger passwords and review your responsible gambling limits regularly.', time: Date.now() - 172800000, read: true },
-  ];
+  function getToken() {
+    try {
+      const k = (typeof STORAGE_KEY_TOKEN !== 'undefined') ? STORAGE_KEY_TOKEN : 'casinoToken';
+      return localStorage.getItem(k) || localStorage.getItem('casinoToken') || localStorage.getItem('token') || '';
+    } catch { return ''; }
+  }
 
-  // ── State ──────────────────────────────────────────────────
-  const state = {
-    notifications: [...DEMO_NOTIFICATIONS],
-    open: false,
-    toastQueue: [],
+  async function api(path, opts) {
+    opts = opts || {};
+    const headers = Object.assign({ 'Content-Type': 'application/json' }, opts.headers || {});
+    const token = getToken();
+    if (token) headers.Authorization = 'Bearer ' + token;
+    const res = await fetch(path, Object.assign({}, opts, { headers }));
+    let data = null;
+    try { data = await res.json(); } catch {}
+    if (!res.ok) {
+      const err = new Error((data && data.error) || ('HTTP ' + res.status));
+      err.status = res.status;
+      throw err;
+    }
+    return data || {};
+  }
+
+  function el(tag, cls, attrs) {
+    const e = document.createElement(tag);
+    if (cls) e.className = cls;
+    if (attrs) for (const k in attrs) e.setAttribute(k, attrs[k]);
+    return e;
+  }
+  function svgEl(name, attrs) {
+    const ns = 'http://www.w3.org/2000/svg';
+    const e = document.createElementNS(ns, name);
+    if (attrs) for (const k in attrs) e.setAttribute(k, attrs[k]);
+    return e;
+  }
+
+  function timeAgo(ts) {
+    try {
+      const t = new Date(ts).getTime();
+      const d = (Date.now() - t) / 1000;
+      if (d < 60) return 'just now';
+      if (d < 3600) return Math.floor(d / 60) + 'm ago';
+      if (d < 86400) return Math.floor(d / 3600) + 'h ago';
+      return Math.floor(d / 86400) + 'd ago';
+    } catch { return ''; }
+  }
+
+  const ICONS = {
+    bonus: '🎁', deposit: '💰', withdrawal: '💸', level_up: '⬆️',
+    daily_reward: '🎯', system: '🔔', win: '🏆', promo: '✨',
+    vip: '⭐', support: '💬', info: '🔔',
   };
 
-  // Load read state
-  try {
-    const readIds = JSON.parse(sessionStorage.getItem('ms_notif_read') || '[]');
-    state.notifications.forEach(n => { if (readIds.includes(n.id)) n.read = true; });
-  } catch {}
-
-  function saveReadState() {
-    const readIds = state.notifications.filter(n => n.read).map(n => n.id);
-    try { sessionStorage.setItem('ms_notif_read', JSON.stringify(readIds)); } catch {}
-  }
+  const state = {
+    notifications: [],
+    open: false,
+    isAuthed: !!getToken(),
+    socket: null,
+    pollTimer: null,
+  };
 
   function unreadCount() {
-    return state.notifications.filter(n => !n.read).length;
+    let n = 0;
+    for (const x of state.notifications) if (!x.read) n++;
+    return n;
   }
 
-  // ── Time Formatting ────────────────────────────────────────
-  function timeAgo(ts) {
-    const d = (Date.now() - ts) / 1000;
-    if (d < 60) return 'just now';
-    if (d < 3600) return Math.floor(d / 60) + 'm ago';
-    if (d < 86400) return Math.floor(d / 3600) + 'h ago';
-    return Math.floor(d / 86400) + 'd ago';
+  function locateHeaderHost() {
+    return document.querySelector('.header-right')
+        || document.querySelector('.topbar .actions')
+        || document.querySelector('header .actions')
+        || document.querySelector('header nav')
+        || document.querySelector('.topnav')
+        || document.querySelector('header');
   }
 
-  // ── Inject DOM ─────────────────────────────────────────────
-  function init() {
-    // Find header container
-    const headerRight = document.querySelector('.header-right') || document.querySelector('.topbar .actions');
-    if (!headerRight) return; // No header found
+  function buildBellSvg() {
+    const svg = svgEl('svg', { viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', 'stroke-width': '2', 'stroke-linecap': 'round', 'stroke-linejoin': 'round', width: '22', height: '22' });
+    svg.appendChild(svgEl('path', { d: 'M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9' }));
+    svg.appendChild(svgEl('path', { d: 'M13.73 21a2 2 0 01-3.46 0' }));
+    return svg;
+  }
 
-    // Create bell button
-    const bellWrap = document.createElement('div');
-    bellWrap.style.cssText = 'position:relative;display:inline-flex;';
-    bellWrap.innerHTML = `
-      <button class="notif-bell" id="notifBell" aria-label="Notifications">
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/>
-          <path d="M13.73 21a2 2 0 01-3.46 0"/>
-        </svg>
-        <div class="notif-badge ${unreadCount() > 0 ? '' : 'hidden'}" id="notifBadge">${unreadCount()}</div>
-      </button>
-      <div class="notif-panel" id="notifPanel">
-        <div class="notif-panel-header">
-          <h3>Notifications</h3>
-          <button class="mark-read-btn" id="markAllRead">Mark all read</button>
-        </div>
-        <div class="notif-list" id="notifList"></div>
-      </div>
-    `;
+  function buildBell(host) {
+    if (document.getElementById('msnBell')) return;
+    const wrap = el('div', 'msn-bell-wrap');
 
-    // Insert bell before the first button/link in header
-    const firstBtn = headerRight.querySelector('button, a, .btn');
-    if (firstBtn) {
-      headerRight.insertBefore(bellWrap, firstBtn);
-    } else {
-      headerRight.prepend(bellWrap);
+    const btn = el('button', 'msn-bell', { 'aria-label': 'Notifications', id: 'msnBell', type: 'button' });
+    btn.appendChild(buildBellSvg());
+    const badge = el('span', 'msn-badge', { id: 'msnBadge' });
+    badge.hidden = true; badge.textContent = '0';
+    btn.appendChild(badge);
+    wrap.appendChild(btn);
+
+    const panel = el('div', 'msn-panel', { id: 'msnPanel' });
+    const phead = el('div', 'msn-panel-head');
+    const h3 = el('h3'); h3.textContent = 'Notifications'; phead.appendChild(h3);
+    const mall = el('button', 'msn-mark-all', { id: 'msnMarkAll', type: 'button' });
+    mall.textContent = 'Mark all read'; phead.appendChild(mall);
+    panel.appendChild(phead);
+    const list = el('div', 'msn-list', { id: 'msnList' });
+    panel.appendChild(list);
+    wrap.appendChild(panel);
+
+    const first = host.querySelector('button, a, .btn');
+    if (first) host.insertBefore(wrap, first); else host.prepend(wrap);
+
+    btn.addEventListener('click', (e) => { e.stopPropagation(); togglePanel(); });
+    panel.addEventListener('click', (e) => e.stopPropagation());
+    document.addEventListener('click', () => closePanel());
+    document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closePanel(); });
+    mall.addEventListener('click', markAllRead);
+
+    if (!document.getElementById('msnToasts')) {
+      const t = el('div', 'msn-toasts', { id: 'msnToasts' });
+      document.body.appendChild(t);
     }
-
-    // Toast container
-    let toastContainer = document.getElementById('toastContainer');
-    if (!toastContainer) {
-      toastContainer = document.createElement('div');
-      toastContainer.id = 'toastContainer';
-      toastContainer.className = 'toast-container';
-      document.body.appendChild(toastContainer);
-    }
-
-    renderNotifications();
-
-    // ── Event Listeners ──────────────────────────────────────
-    document.getElementById('notifBell').addEventListener('click', (e) => {
-      e.stopPropagation();
-      state.open = !state.open;
-      document.getElementById('notifPanel').classList.toggle('open', state.open);
-    });
-
-    document.getElementById('markAllRead').addEventListener('click', () => {
-      state.notifications.forEach(n => n.read = true);
-      saveReadState();
-      updateBadge();
-      renderNotifications();
-    });
-
-    // Close on outside click
-    document.addEventListener('click', (e) => {
-      if (state.open && !bellWrap.contains(e.target)) {
-        state.open = false;
-        document.getElementById('notifPanel').classList.remove('open');
-      }
-    });
-
-    // Close on Escape
-    document.addEventListener('keydown', (e) => {
-      if (e.key === 'Escape' && state.open) {
-        state.open = false;
-        document.getElementById('notifPanel').classList.remove('open');
-      }
-    });
-
-    // Auto-generate new notifications periodically
-    scheduleNewNotification();
   }
 
-  function renderNotifications() {
-    const list = document.getElementById('notifList');
+  function togglePanel() {
+    state.open = !state.open;
+    const p = document.getElementById('msnPanel');
+    if (!p) return;
+    p.classList.toggle('open', state.open);
+    if (state.open) renderList();
+  }
+
+  function closePanel() {
+    if (!state.open) return;
+    state.open = false;
+    const p = document.getElementById('msnPanel');
+    if (p) p.classList.remove('open');
+  }
+
+  function renderList() {
+    const list = document.getElementById('msnList');
     if (!list) return;
+    while (list.firstChild) list.removeChild(list.firstChild);
 
-    if (state.notifications.length === 0) {
-      list.innerHTML = '<div class="notif-empty">No notifications yet</div>';
+    if (!state.isAuthed) {
+      const emp = el('div', 'msn-empty');
+      const a = el('a', null, { href: 'login.html' }); a.textContent = 'Log in';
+      emp.appendChild(a);
+      emp.appendChild(document.createTextNode(' to see notifications.'));
+      list.appendChild(emp);
       return;
     }
+    if (!state.notifications.length) {
+      const emp = el('div', 'msn-empty'); emp.textContent = 'No notifications yet'; list.appendChild(emp); return;
+    }
+    state.notifications
+      .slice()
+      .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+      .forEach(n => list.appendChild(buildItem(n)));
+  }
 
-    list.innerHTML = state.notifications
-      .sort((a, b) => b.time - a.time)
-      .map(n => `
-        <div class="notif-item ${n.read ? '' : 'unread'}" data-id="${n.id}">
-          <div class="notif-icon ${n.type}">${n.icon}</div>
-          <div class="notif-content">
-            <div class="title">${n.title}</div>
-            <div class="body">${n.body}</div>
-            <div class="time">${timeAgo(n.time)}</div>
-          </div>
-        </div>
-      `).join('');
+  function buildItem(n) {
+    const item = el('div', 'msn-item' + (n.read ? '' : ' unread'));
+    item.dataset.id = String(n.id);
 
-    // Mark as read on click
-    list.querySelectorAll('.notif-item').forEach(item => {
-      item.addEventListener('click', () => {
-        const notif = state.notifications.find(n => n.id === item.dataset.id);
-        if (notif) {
-          notif.read = true;
-          saveReadState();
-          item.classList.remove('unread');
-          updateBadge();
+    const ic = el('div', 'msn-icon ' + (n.type || 'info'));
+    ic.textContent = n.icon || ICONS[n.type] || '🔔';
+    item.appendChild(ic);
+
+    const c = el('div', 'msn-content');
+    const t = el('div', 'msn-title'); t.textContent = n.title || 'Notification'; c.appendChild(t);
+    const b = el('div', 'msn-body'); b.textContent = n.body || ''; c.appendChild(b);
+    const tm = el('div', 'msn-time'); tm.textContent = timeAgo(n.created_at); c.appendChild(tm);
+    item.appendChild(c);
+
+    item.addEventListener('click', () => {
+      if (!n.read) markRead(n);
+      if (n.link_action) {
+        if (n.link_action === 'support') {
+          if (window.MatrixSupport && window.MatrixSupport.open) window.MatrixSupport.open();
+        } else if (/^https?:\/\//i.test(n.link_action) || /\.html(\?|#|$)/.test(n.link_action) || n.link_action.startsWith('/')) {
+          location.href = n.link_action;
         }
-      });
+      }
     });
+    return item;
   }
 
   function updateBadge() {
-    const badge = document.getElementById('notifBadge');
+    const badge = document.getElementById('msnBadge');
     if (!badge) return;
-    const count = unreadCount();
-    badge.textContent = count;
-    badge.classList.toggle('hidden', count === 0);
+    const c = unreadCount();
+    if (c > 0) {
+      badge.textContent = c > 99 ? '99+' : String(c);
+      badge.hidden = false;
+    } else {
+      badge.hidden = true;
+    }
   }
 
-  // ── Toast System ───────────────────────────────────────────
-  function showToast(notification) {
-    const container = document.getElementById('toastContainer');
-    if (!container) return;
-
-    const toast = document.createElement('div');
-    toast.className = 'toast';
-    toast.innerHTML = `
-      <div class="icon">${notification.icon}</div>
-      <div class="text">
-        <div class="title">${notification.title}</div>
-        <div class="body">${notification.body}</div>
-      </div>
-      <button class="dismiss" aria-label="Dismiss">&times;</button>
-    `;
-
-    container.appendChild(toast);
-
-    // Animate in
-    requestAnimationFrame(() => {
-      toast.classList.add('visible');
-    });
-
-    // Dismiss button
-    toast.querySelector('.dismiss').addEventListener('click', () => dismissToast(toast));
-
-    // Auto-dismiss after 6s
-    setTimeout(() => dismissToast(toast), 6000);
+  async function markRead(n) {
+    n.read = 1;
+    updateBadge();
+    renderList();
+    if (typeof n.id === 'number') {
+      try { await api('/api/notifications/read/' + n.id, { method: 'POST' }); } catch {}
+    }
   }
 
-  function dismissToast(toast) {
-    if (!toast || toast.classList.contains('exiting')) return;
-    toast.classList.add('exiting');
-    toast.classList.remove('visible');
-    setTimeout(() => toast.remove(), 400);
+  async function markAllRead() {
+    state.notifications.forEach(n => n.read = 1);
+    updateBadge();
+    renderList();
+    try { await api('/api/notifications/read-all', { method: 'POST' }); } catch {}
   }
 
-  // ── Auto-generate Notifications ────────────────────────────
-  const AUTO_NOTIFICATIONS = [
-    { type: 'win', icon: '🎰', title: 'Big Win on Neon Blitz!', body: 'Someone just hit a 45x multiplier. Try your luck!' },
-    { type: 'promo', icon: '⏰', title: 'Limited Time Offer', body: 'Double XP weekend is live! All spins earn 2x VIP points.' },
-    { type: 'win', icon: '💎', title: 'Jackpot Pool Growing', body: 'The Mega jackpot just passed $100K. Will you be the winner?' },
-    { type: 'system', icon: '🎮', title: 'New Game Added', body: 'Crystal Caves from Shadow Works is now live. 96.8% RTP with cascading reels.' },
-    { type: 'vip', icon: '🌟', title: 'Daily Login Streak', body: 'Log in tomorrow to keep your 3-day streak and earn bonus XP.' },
-  ];
-
-  let autoIdx = 0;
-
-  function scheduleNewNotification() {
-    const delay = (60 + Math.random() * 120) * 1000; // 1-3 minutes
-    setTimeout(() => {
-      const template = AUTO_NOTIFICATIONS[autoIdx % AUTO_NOTIFICATIONS.length];
-      autoIdx++;
-
-      const notif = {
-        id: 'auto-' + Date.now(),
-        ...template,
-        time: Date.now(),
-        read: false,
-      };
-
-      state.notifications.unshift(notif);
-      if (state.notifications.length > 20) state.notifications.pop();
-
+  async function load() {
+    if (!state.isAuthed) { renderList(); updateBadge(); return; }
+    try {
+      const data = await api('/api/notifications');
+      state.notifications = (data.notifications || []).map(n => Object.assign({}, n, { icon: ICONS[n.type] || '🔔' }));
+      renderList();
       updateBadge();
-      renderNotifications();
-      showToast(notif);
-
-      scheduleNewNotification();
-    }, delay);
+    } catch (err) {
+      if (err.status !== 401) console.warn('[notifications] load failed:', err.message);
+    }
   }
 
-  // ── Public API ─────────────────────────────────────────────
+  function pushNotification(n) {
+    n = Object.assign({ icon: ICONS[n.type] || '🔔', read: 0, created_at: n.created_at || new Date().toISOString() }, n);
+    if (state.notifications.find(x => x.id === n.id)) return;
+    state.notifications.unshift(n);
+    if (state.notifications.length > 30) state.notifications.length = 30;
+    updateBadge();
+    if (state.open) renderList();
+  }
+
+  function showToast(n) {
+    const host = document.getElementById('msnToasts');
+    if (!host) return;
+
+    const t = el('div', 'msn-toast');
+    const ic = el('div', 'msn-toast-icon'); ic.textContent = n.icon || ICONS[n.type] || '🔔'; t.appendChild(ic);
+    const tx = el('div', 'msn-toast-text');
+    const tt = el('div', 'msn-toast-title'); tt.textContent = n.title || 'Notification'; tx.appendChild(tt);
+    const tb = el('div', 'msn-toast-body'); tb.textContent = n.body || ''; tx.appendChild(tb);
+    t.appendChild(tx);
+    const dx = el('button', 'msn-toast-close', { 'aria-label': 'Dismiss', type: 'button' });
+    dx.textContent = '×';
+    t.appendChild(dx);
+
+    host.appendChild(t);
+    requestAnimationFrame(() => t.classList.add('show'));
+
+    const dismiss = () => {
+      if (t.classList.contains('hide')) return;
+      t.classList.add('hide'); t.classList.remove('show');
+      setTimeout(() => t.remove(), 320);
+    };
+    dx.addEventListener('click', dismiss);
+    setTimeout(dismiss, 6500);
+
+    if (n.link_action) {
+      t.style.cursor = 'pointer';
+      t.addEventListener('click', (e) => {
+        if (e.target === dx) return;
+        if (n.link_action === 'support') {
+          if (window.MatrixSupport && window.MatrixSupport.open) window.MatrixSupport.open();
+        } else if (/^https?:\/\//i.test(n.link_action) || /\.html(\?|#|$)/.test(n.link_action) || n.link_action.startsWith('/')) {
+          location.href = n.link_action;
+        }
+      });
+    }
+  }
+
+  function connectSocket() {
+    if (!window.io || !state.isAuthed) return;
+    try {
+      const s = window.io({ auth: { token: getToken() }, transports: ['websocket', 'polling'] });
+      state.socket = s;
+      s.on('notification:new', (n) => {
+        pushNotification(n);
+        if (n.toast !== false) showToast(n);
+      });
+      s.on('notification:broadcast', (n) => {
+        showToast({ type: 'system', title: n.title, body: n.body, link_action: n.linkAction });
+      });
+    } catch {}
+  }
+
+  function ensureSocketIoLoaded(cb) {
+    if (window.io) return cb();
+    if (document.querySelector('script[data-msc-io], script[data-msn-io]')) {
+      const wait = setInterval(() => { if (window.io) { clearInterval(wait); cb(); } }, 100);
+      return;
+    }
+    const s = document.createElement('script');
+    s.src = '/socket.io/socket.io.js'; s.async = true; s.setAttribute('data-msn-io', '1');
+    s.onload = cb;
+    s.onerror = () => { startPolling(); };
+    document.head.appendChild(s);
+  }
+
+  function startPolling() {
+    if (state.pollTimer || !state.isAuthed) return;
+    state.pollTimer = setInterval(load, 60000);
+  }
+
+  function init(retry) {
+    const host = locateHeaderHost();
+    if (!host) {
+      if ((retry || 0) < 10) return setTimeout(() => init((retry || 0) + 1), 250);
+      return;
+    }
+    buildBell(host);
+    load();
+    if (state.isAuthed) {
+      ensureSocketIoLoaded(connectSocket);
+      setInterval(load, 5 * 60 * 1000);
+    }
+  }
+
   window.MatrixNotifications = {
-    /** Push a custom notification */
-    push(notification) {
-      const n = {
-        id: 'custom-' + Date.now(),
-        type: notification.type || 'system',
-        icon: notification.icon || '🔔',
-        title: notification.title || 'Notification',
-        body: notification.body || '',
-        time: Date.now(),
-        read: false,
-      };
-      state.notifications.unshift(n);
-      updateBadge();
-      renderNotifications();
-      if (notification.toast !== false) showToast(n);
+    push(n) {
+      pushNotification(Object.assign({ id: 'local-' + Date.now(), type: 'info' }, n));
+      if (n.toast !== false) showToast(n);
     },
-
-    /** Show a toast only (no persistence) */
-    toast(icon, title, body) {
-      showToast({ icon, title, body });
+    toast(icon, title, body, link) {
+      showToast({ icon, title, body, link_action: link });
     },
+    reload: load,
   };
 
-  // ── Auto-init ──────────────────────────────────────────────
   if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', init);
+    document.addEventListener('DOMContentLoaded', () => init(0));
   } else {
-    // Small delay to ensure header is rendered
-    setTimeout(init, 100);
+    setTimeout(() => init(0), 50);
   }
 })();
