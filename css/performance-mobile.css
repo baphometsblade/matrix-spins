@@ -11,6 +11,16 @@
    • 360px ultra-narrow support
    ═══════════════════════════════════════════════════════════════ */
 
+/* ── CLS PREVENTION: stable scrollbar gutter ─────────────────
+   body.age-gate-active sets overflow:hidden after first paint,
+   which would otherwise remove the vertical scrollbar and reflow
+   the viewport ~15px horizontally (measured CLS ≈ 0.12). Reserving
+   the gutter unconditionally keeps layout identical whether the
+   overlay is open, closed, or never shown. */
+html {
+    scrollbar-gutter: stable;
+}
+
 /* ── FONT DISPLAY OPTIMIZATION ────────────────────────────────
    Prevent FOUT (Flash of Unstyled Text) from shifting layout  */
 @font-face {
