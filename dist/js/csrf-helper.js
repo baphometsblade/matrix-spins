@@ -74,24 +74,45 @@
     }
 
     /**
-     * Wrap window.fetch to add CSRF token to mutation requests
+     * Wrap window.fetch to add CSRF token to mutation requests.
+     * For /api/ mutation calls we AWAIT the token if it's not yet cached —
+     * eliminating the race window between page load (when this script's
+     * setTimeout(init, 100) is scheduled) and the user clicking SPIN/DEPOSIT
+     * a few hundred ms later. On 403 we transparently refetch + retry once.
      */
-    window.fetch = function(url, options) {
+    window.fetch = async function(url, options) {
         options = options || {};
         const method = (options.method || 'GET').toUpperCase();
+        const isMutation = ['POST', 'PUT', 'DELETE', 'PATCH'].includes(method);
+        const isApi = typeof url === 'string' && url.indexOf('/api/') !== -1;
+        const isCsrfEndpoint = typeof url === 'string' && url.indexOf('/api/csrf-token') !== -1;
 
-        // ROUND 66: Include PATCH in the mutation list (was POST/PUT/DELETE).
-        // No PATCH endpoints exist today, but if any are added the client
-        // would have silently bypassed CSRF without this fix.
-        if (['POST', 'PUT', 'DELETE', 'PATCH'].includes(method) && url.includes('/api/')) {
-            // Add CSRF token header if we have one
+        if (isMutation && isApi && !isCsrfEndpoint) {
+            // Ensure we have a token before firing the request.
+            if (!csrfToken && localStorage.getItem('casinoToken')) {
+                try { await getToken(); } catch (_) {}
+            }
             if (csrfToken) {
                 options.headers = options.headers || {};
                 options.headers['X-CSRF-Token'] = csrfToken;
             }
         }
 
-        return originalFetch.apply(this, [url, options]);
+        let res = await originalFetch.apply(this, [url, options]);
+
+        // Stale-token recovery: server says 403, refetch and retry once.
+        if (res.status === 403 && isMutation && isApi && !isCsrfEndpoint && !options.__csrfRetried) {
+            csrfToken = null;
+            lastTokenFetchTime = null;
+            try { await getToken(); } catch (_) {}
+            if (csrfToken) {
+                options.headers = options.headers || {};
+                options.headers['X-CSRF-Token'] = csrfToken;
+                options.__csrfRetried = true;
+                res = await originalFetch.apply(this, [url, options]);
+            }
+        }
+        return res;
     };
 
     // Expose public API

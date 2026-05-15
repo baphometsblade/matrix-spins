@@ -13,9 +13,12 @@
 
   const API_BASE = (typeof window !== 'undefined' && window.RS_API_BASE) || '/api';
   const ACCESS_STORAGE_KEY = 'casinoToken';
+  const MUTATION_METHODS = new Set(['POST', 'PUT', 'DELETE', 'PATCH']);
 
   const state = {
     accessToken: localStorage.getItem(ACCESS_STORAGE_KEY) || null,
+    csrfToken: null,
+    csrfFetchPromise: null,
     user: null,
     listeners: new Set(),
   };
@@ -24,6 +27,8 @@
     state.accessToken = t;
     if (t) localStorage.setItem(ACCESS_STORAGE_KEY, t);
     else localStorage.removeItem(ACCESS_STORAGE_KEY);
+    // Token change invalidates any cached CSRF token (server keys CSRF to session).
+    state.csrfToken = null;
   }
   function setUser(u) {
     state.user = u;
@@ -31,11 +36,41 @@
   }
   function onUser(fn) { state.listeners.add(fn); return () => state.listeners.delete(fn); }
 
+  // ── CSRF token plumbing ─────────────────────────────────────────────
+  // Server requires X-CSRF-Token on every authenticated POST/PUT/DELETE/PATCH.
+  // We fetch lazily on first mutation, cache in memory, and refetch on 403.
+  async function fetchCsrfToken() {
+    if (!state.accessToken) return null;
+    if (state.csrfFetchPromise) return state.csrfFetchPromise;
+    state.csrfFetchPromise = (async () => {
+      try {
+        const res = await fetch(`${API_BASE}/csrf-token`, {
+          headers: { 'Authorization': `Bearer ${state.accessToken}` },
+          credentials: 'include',
+        });
+        if (!res.ok) return null;
+        const data = await res.json();
+        state.csrfToken = data.csrfToken || null;
+        return state.csrfToken;
+      } catch (_) {
+        return null;
+      } finally {
+        state.csrfFetchPromise = null;
+      }
+    })();
+    return state.csrfFetchPromise;
+  }
+
   async function rawFetch(path, opts = {}) {
+    const method = (opts.method || 'GET').toUpperCase();
     const headers = Object.assign({ 'Content-Type': 'application/json' }, opts.headers || {});
     if (state.accessToken) headers.Authorization = `Bearer ${state.accessToken}`;
+    if (MUTATION_METHODS.has(method) && state.accessToken) {
+      if (!state.csrfToken) await fetchCsrfToken();
+      if (state.csrfToken) headers['X-CSRF-Token'] = state.csrfToken;
+    }
     const res = await fetch(`${API_BASE}${path}`, {
-      method: opts.method || 'GET',
+      method,
       credentials: 'include',
       headers,
       body: opts.body ? JSON.stringify(opts.body) : undefined,
@@ -61,6 +96,13 @@
       const refreshed = await tryRefresh();
       if (refreshed) {
         res = await rawFetch(path, Object.assign({}, opts, { _retried: true }));
+      }
+    } else if (res.status === 403 && !opts._csrfRetried) {
+      // Likely a stale or missing CSRF token — refetch once and replay.
+      state.csrfToken = null;
+      await fetchCsrfToken();
+      if (state.csrfToken) {
+        res = await rawFetch(path, Object.assign({}, opts, { _csrfRetried: true }));
       }
     }
     const text = await res.text();

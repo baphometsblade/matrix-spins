@@ -451,6 +451,7 @@ ${payoutsHtml ? `
     <p style="margin-top:8px;">&copy; ${new Date().getFullYear()} Matrix Spins Casino</p>
 </div>
 
+<script src="/js/csrf-helper.js"></script>
 <script>
 // ═══════════════════════════════════════════════════════════════════
 // Game Page Client — Server-Authoritative Spin
