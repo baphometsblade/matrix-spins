@@ -57,6 +57,21 @@
     <!-- Preload critical font to reduce LCP -->
     <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap" onload="this.onload=null;this.rel='stylesheet'">
     <noscript><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap" rel="stylesheet"></noscript>
+    <!-- ── Pre-paint auth-state flag: prevents header CLS ────────────
+         The header has Deposit + Sign Up + balance-card all rendered in
+         the static HTML. After paint, JS hides whichever doesn't match
+         auth state, causing a ~0.11 CLS shift in the hero region.
+         Setting this class synchronously before first paint lets CSS
+         render the correct state immediately. -->
+    <script>(function(){try{var t=localStorage.getItem('casinoToken');document.documentElement.classList.add(t?'auth-loggedin':'auth-anon');}catch(_){document.documentElement.classList.add('auth-anon');}})();</script>
+    <style>
+        /* Hide auth-conditional header elements until the inline script
+           above tags the html element. */
+        html.auth-anon .balance-card,
+        html.auth-anon #wageringBarWrap,
+        html.auth-anon #vipMiniWidget { display: none !important; }
+        html.auth-loggedin #headerSignupBtn { display: none !important; }
+    </style>
     <!-- Performance & Mobile CSS -->
     <link rel="stylesheet" href="css/performance-mobile.css">
     <!-- Landing Page Redesign CSS -->
@@ -1756,15 +1771,20 @@
         }
 
         // ── Auth-aware header state ────────────────────────────────
+        // Visibility is driven by html.auth-loggedin / html.auth-anon classes
+        // (set synchronously pre-paint via inline <script> in <head>). This
+        // function keeps that class in sync if auth state changes mid-session
+        // (login from a modal, logout, token refresh) and wires up dynamic
+        // behaviour on the elements that remain visible.
         function updateHeaderAuthState() {
             const token = localStorage.getItem('casinoToken');
-            const signupBtn = document.getElementById('headerSignupBtn');
+            const root = document.documentElement;
             const depositBtn = document.getElementById('depositBtn');
             const avatar = document.querySelector('.avatar');
 
             if (token) {
-                // Logged in: hide Sign Up, show Account link on avatar
-                if (signupBtn) signupBtn.style.display = 'none';
+                root.classList.remove('auth-anon');
+                root.classList.add('auth-loggedin');
                 if (avatar) {
                     avatar.style.cursor = 'pointer';
                     avatar.title = 'My Account';
@@ -1772,10 +1792,8 @@
                 }
                 if (depositBtn) depositBtn.textContent = 'Deposit';
             } else {
-                // Logged out: show Sign Up, hide balance card
-                if (signupBtn) signupBtn.style.display = '';
-                const balanceCard = document.querySelector('.balance-card');
-                if (balanceCard) balanceCard.style.display = 'none';
+                root.classList.remove('auth-loggedin');
+                root.classList.add('auth-anon');
             }
         }
 
