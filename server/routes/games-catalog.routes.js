@@ -118,7 +118,7 @@ function searchCatalog(query, limit = 20) {
     return results.slice(0, limit).map(r => ({ ...r.game, _score: Math.round(r.score) }));
 }
 
-// ── Public catalog ────────────────────────────────────────────
+// ── Public catalog ────────────────────────────────
 router.get('/', (req, res) => {
     res.set('Cache-Control', 'public, max-age=300');
     res.json({
@@ -128,7 +128,7 @@ router.get('/', (req, res) => {
     });
 });
 
-// ── Search ────────────────────────────────────────────────────
+// ── Search ──────────────────────────────────────
 router.get('/search', optionalAuth, async (req, res) => {
     const q = String(req.query.q || '').trim().slice(0, 80);
     const limit = Math.min(parseInt(req.query.limit, 10) || 12, 50);
@@ -172,7 +172,7 @@ router.post('/search/track', optionalAuth, express.json({ limit: '4kb' }), async
     }
 });
 
-// ── Popular searches (last 7 days) — public ───────────────────
+// ── Popular searches (last 7 days) — public ─────────────────────
 router.get('/popular', async (req, res) => {
     try {
         await ensureTable();
@@ -200,6 +200,94 @@ router.get('/popular', async (req, res) => {
         // Surface an empty list rather than 500ing — search bar must always render.
         res.json({ success: true, popular: [] });
     }
+});
+
+// ── Single-game lookup for the casino engine ──────────────────
+// casino-engine.js _boot() calls window.MatrixSpinsAPI.getGame(id) which fetches
+// this endpoint. Without it the Promise.all() in the engine rejects, the catch
+// triggers _fatal(), and EVERY logged-in user gets "Failed to load game." on
+// every slot page. Returns the engine's expected field shape:
+//   - minBetCents / maxBetCents / betStepCents  (cents, not dollars)
+//   - reels / rows                              (engine names, not gridCols)
+//   - symbols, paytable, payouts                (passed through)
+//   - id, name, rtp, volatility, paylines       (display fields)
+//
+// Two parallel naming conventions exist in the repo:
+//   • /games/*.html files use hyphens (golden-cherry-cascade)
+//   • shared/game-definitions.js uses underscores (sugar_rush)
+// Tries both forms on lookup. If the request id maps to no definition (most
+// hyphenated page ids do not), returns a default 5×3 slot template so the
+// engine at least renders the chrome — server-authoritative spin outcomes
+// stay gated by /api/spin/ separately.
+router.get('/:id', (req, res) => {
+    const raw = String(req.params.id || '').toLowerCase().slice(0, 64);
+    if (!raw) return res.status(400).json({ success: false, error: 'invalid_id' });
+    const candidates = [raw, raw.replace(/-/g, '_'), raw.replace(/_/g, '-')];
+    let g = null;
+    for (const cand of candidates) {
+        g = games.find(x => String(x.id || '').toLowerCase() === cand);
+        if (g) break;
+    }
+    if (!g) {
+        // Synthetic fallback so the engine can render. Real spin attempts
+        // will be rejected by /api/spin/ which validates against the
+        // canonical game registry — no payouts route around server math.
+        g = {
+            id: raw,
+            name: raw.replace(/[-_]/g, ' ').replace(/\b\w/g, c => c.toUpperCase()),
+            provider: 'Matrix Spins',
+            rtp: 96,
+            volatility: 'medium',
+            paylines: 20,
+            symbols: ['s1','s2','s3','s4','s5','wild'],
+            wildSymbol: 'wild',
+            scatterSymbol: 's5',
+            paytable: {},
+            minBet: 0.20,
+            maxBet: 100,
+            betStep: 0.20,
+            gridCols: 5,
+            gridRows: 3,
+        };
+    }
+
+    const minBet = Number(g.minBet) || 0.20;
+    const maxBet = Number(g.maxBet) || 100;
+    const betStep = Number(g.betStep) || 0.20;
+    const reels = Number(g.reels) || Number(g.gridCols) || 5;
+    const rows = Number(g.rows) || Number(g.gridRows) || 3;
+
+    res.set('Cache-Control', 'public, max-age=300');
+    res.json({
+        success: true,
+        game: {
+            id: g.id,
+            name: g.name,
+            provider: g.provider,
+            rtp: Number(g.rtp) || 96,
+            volatility: g.volatility || 'medium',
+            paylines: Number(g.paylines) || 20,
+            reels: reels,
+            rows: rows,
+            symbols: Array.isArray(g.symbols) ? g.symbols : ['s1','s2','s3','s4','s5','wild'],
+            wildSymbol: g.wildSymbol || null,
+            scatterSymbol: g.scatterSymbol || null,
+            paytable: g.paytable || g.payouts || {},
+            payouts: g.payouts || null,
+            bonusType: g.bonusType || null,
+            bonusDesc: g.bonusDesc || null,
+            freeSpinsCount: Number(g.freeSpinsCount) || 0,
+            freeSpinsRetrigger: !!g.freeSpinsRetrigger,
+            minBetCents: Math.round(minBet * 100),
+            maxBetCents: Math.round(maxBet * 100),
+            betStepCents: Math.round(betStep * 100),
+            jackpot: Number(g.jackpot) || 0,
+            jackpots: g.jackpots || null,
+            thumbnail: g.thumbnail || null,
+            studioTheme: g.studioTheme || null,
+            url: `/games/${encodeURIComponent(g.id)}.html`,
+        },
+    });
 });
 
 module.exports = router;

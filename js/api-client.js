@@ -146,12 +146,14 @@
     getBalance:      () => apiFetch('/balance/'),
     getTransactions: (params) => apiFetch(`/balance/transactions${qs(params)}`),
 
-    // games — server mounts spin.routes.js at /api/spin, fair.routes.js at /api/fair,
-    // gamehistory.routes.js at /api/game-history. The earlier consolidated /api/spin/{seeds,history}
-    // endpoints were split into provably-fair (fair) and history (game-history) routers; api-client
-    // was left calling the old paths and producing site-wide 404s on the account page.
-    listGames:    (params) => apiFetch(`/spin/games${qs(params)}`),
-    getGame:      (id)     => apiFetch(`/spin/games/${encodeURIComponent(id)}`),
+    // games — server mounts games-catalog.routes.js at /api/games (GET /, /:id, /search),
+    // fair.routes.js at /api/fair, gamehistory.routes.js at /api/game-history.
+    // The earlier consolidated /api/spin/{games,seeds,history} endpoints were
+    // split into separate routers; api-client was left calling the old paths
+    // and producing site-wide 404s on the account page AND on every game-page
+    // engine boot (Promise.all in casino-engine._boot rejects → fatal error).
+    listGames:    (params) => apiFetch(`/games/${qs(params)}`),
+    getGame:      (id)     => apiFetch(`/games/${encodeURIComponent(id)}`),
     getSeeds:     ()       => apiFetch('/fair/seed'),
     spin:         (gameId, betCents, opts = {}) =>
       apiFetch('/spin/', {
