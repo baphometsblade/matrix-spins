@@ -449,6 +449,27 @@
   .topbar .actions #balanceChip { display: inline-flex; }
   .topbar .actions .ms-sound-toggle,
   .topbar .actions .ms-hamburger { display: inline-flex; }
+
+  /* Belt-and-suspenders: contain runtime-injected widgets so they can
+     never push the .actions row past viewport width. Multiple scripts
+     (notifications.js, session-monitor.js, search.js) call
+     document.querySelector('.topbar .actions').appendChild(...) on load
+     with no class hooks the host page can target, so the only durable
+     defense is to clamp the container itself and explicitly hide the
+     widest known offenders on phone-width viewports. */
+  .topbar .actions {
+    flex-wrap: nowrap;
+    min-width: 0;
+    overflow: hidden;
+    max-width: calc(100vw - 120px);
+    gap: 0.4rem;
+  }
+  .topbar .actions #sessionTimer,
+  .topbar .actions .session-timer-injected,
+  .topbar .actions .ms-search-trigger,
+  .topbar .actions .msn-bell-wrap {
+    display: none !important;
+  }
 }
 
 /* ──────────────────────────────────────────────────────────

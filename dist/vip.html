@@ -48,7 +48,7 @@
 <div class="rs-shell-wide">
 
   <div class="vip-hero">
-    <div class="vip-tier-badge" id="tierBadge">
+    <div class="vip-tier-badge" id="tierBadge" data-tier="bronze" aria-label="VIP tier">
       <span class="icon" id="tierIcon">🥉</span>
       <span id="tierName">Bronze</span>
     </div>
@@ -169,6 +169,7 @@
   const tierIcons = { Bronze: '🥉', Silver: '🥈', Gold: '🥇', Platinum: '💎', Diamond: '👑' };
   const tierClass = (status.tier || 'Bronze').toLowerCase();
   $('tierBadge').className = 'vip-tier-badge ' + tierClass;
+  $('tierBadge').setAttribute('data-tier', tierClass);
   $('tierIcon').textContent = status.tierIcon || tierIcons[status.tier] || '🥉';
   $('tierName').textContent = status.tier;
   const userName = (user.firstName || (user.email || user.username || 'Player').split('@')[0]);

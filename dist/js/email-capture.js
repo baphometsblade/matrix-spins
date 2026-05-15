@@ -20,6 +20,8 @@
   var shown = false;
   var overlay = null;
 
+  // ── Helpers ────────────────────────────────────
+
   function getStorage(key) {
     try { return JSON.parse(localStorage.getItem(key)); } catch (_) { return null; }
   }
@@ -45,21 +47,31 @@
     return /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email);
   }
 
+  // ── Gate checks ──────────────────────────────────
+
   function shouldSuppress() {
     if (getStorage(STORAGE_KEYS.subscribed)) return true;
+
     var dismissed = getStorage(STORAGE_KEYS.dismissed);
     if (dismissed && dismissed.timestamp) {
       var elapsed = Date.now() - dismissed.timestamp;
       if (elapsed < DISMISS_COOLDOWN_DAYS * 86400000) return true;
     }
+
+    // Skip for logged-in depositors (already converted)
     var user = getStorage('ms_user') || getStorage('user_session');
     if (user && user.hasDeposited) return true;
+
+    // Don't stack on top of other overlays — wait until they clear
     if (document.body.classList.contains('age-gate-active')) return true;
     if (document.querySelector('.mx-tour-overlay')) return true;
     if (document.querySelector('.mcc-overlay:not(.mcc-hidden)')) return true;
     if (document.querySelector('.mcc-banner.mcc-visible')) return true;
+
     return false;
   }
+
+  // ── CSS injection ─────────────────────────────────
 
   function injectCSS() {
     if (document.querySelector('link[data-ms-email-css]')) return;
@@ -69,6 +81,8 @@
     link.setAttribute('data-ms-email-css', '');
     document.head.appendChild(link);
   }
+
+  // ── Build DOM ───────────────────────────────────
 
   function buildPopup() {
     overlay = document.createElement('div');
@@ -96,9 +110,12 @@
           '<p class="ms-ec-sub">Your free spins are on the way.</p>' +
         '</div>' +
       '</div>';
+
     document.body.appendChild(overlay);
     bindEvents();
   }
+
+  // ── Events ─────────────────────────────────────
 
   function bindEvents() {
     var card = overlay.querySelector('.ms-ec-card');
@@ -107,41 +124,59 @@
     var errorEl = overlay.querySelector('.ms-ec-error');
     var closeBtn = overlay.querySelector('.ms-ec-close');
     var dismissLink = overlay.querySelector('.ms-ec-dismiss-link');
+
     closeBtn.addEventListener('click', dismiss);
     dismissLink.addEventListener('click', dismiss);
-    overlay.addEventListener('click', function (e) { if (e.target === overlay) dismiss(); });
-    document.addEventListener('keydown', function onEsc(e) {
-      if (e.key === 'Escape' && overlay && overlay.classList.contains('ms-ec-visible')) dismiss();
+
+    overlay.addEventListener('click', function (e) {
+      if (e.target === overlay) dismiss();
     });
+
+    document.addEventListener('keydown', function onEsc(e) {
+      if (e.key === 'Escape' && overlay && overlay.classList.contains('ms-ec-visible')) {
+        dismiss();
+      }
+    });
+
     form.addEventListener('submit', function (e) {
       e.preventDefault();
       var email = input.value.trim();
+
       if (!isValidEmail(email)) {
         errorEl.classList.add('ms-ec-error--show');
         input.classList.add('ms-ec-input--invalid');
         return;
       }
+
       errorEl.classList.remove('ms-ec-error--show');
       input.classList.remove('ms-ec-input--invalid');
       submitEmail(email);
     });
+
     input.addEventListener('input', function () {
       errorEl.classList.remove('ms-ec-error--show');
       input.classList.remove('ms-ec-input--invalid');
     });
   }
 
+  // ── Submit ─────────────────────────────────────
+
   function submitEmail(email) {
     showSuccess();
+
     var payload = { email: email, source: 'popup', utm_params: getUTMParams() };
+
     fetch('/api/newsletter/subscribe', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload)
-    }).then(function (res) {
+    })
+    .then(function (res) {
       if (!res.ok) throw new Error('Server ' + res.status);
       setStorage(STORAGE_KEYS.subscribed, { email: email, timestamp: Date.now() });
-    }).catch(function () {
+    })
+    .catch(function () {
+      // Store for later retry; still show success to user
       var pending = getStorage(STORAGE_KEYS.pending) || [];
       pending.push({ email: email, timestamp: Date.now(), payload: payload });
       setStorage(STORAGE_KEYS.pending, pending);
@@ -157,17 +192,25 @@
     setTimeout(close, SUCCESS_AUTO_CLOSE_MS);
   }
 
+  // ── Show / Hide / Dismiss ──────────────────────────────
+
   function show() {
     if (shown || shouldSuppress()) return;
     shown = true;
     injectCSS();
     buildPopup();
-    overlay.offsetHeight;
+    // Force reflow before adding visible class for animation
+    overlay.offsetHeight; // eslint-disable-line no-unused-expressions
     overlay.classList.add('ms-ec-visible');
   }
 
   function showWithRetry() {
-    if (shouldSuppress()) { setTimeout(showWithRetry, 5000); return; }
+    // Re-check suppress at firing time (overlays may have appeared after init)
+    if (shouldSuppress()) {
+      // Wait for blocking overlays to clear, then try again later
+      setTimeout(showWithRetry, 5000);
+      return;
+    }
     show();
   }
 
@@ -185,15 +228,23 @@
     close();
   }
 
+  // ── Triggers ─────────────────────────────────────
+
   function initTriggers() {
     if (shouldSuppress()) return;
+
+    // Exit intent (desktop only)
     document.addEventListener('mouseleave', function onLeave(e) {
       if (e.clientY <= 0) {
         document.removeEventListener('mouseleave', onLeave);
         showWithRetry();
       }
     });
+
+    // Timer trigger
     setTimeout(function () { showWithRetry(); }, TIMER_DELAY_MS);
+
+    // Scroll depth trigger
     var scrollFired = false;
     window.addEventListener('scroll', function onScroll() {
       if (scrollFired) return;
@@ -206,14 +257,24 @@
     }, { passive: true });
   }
 
+  // ── Public API ────────────────────────────────────
+
   window.MatrixEmailCapture = {
-    show: function () { shown = false; show(); },
-    isSubscribed: function () { return !!getStorage(STORAGE_KEYS.subscribed); }
+    show: function () {
+      shown = false; // reset gate so manual call works
+      show();
+    },
+    isSubscribed: function () {
+      return !!getStorage(STORAGE_KEYS.subscribed);
+    }
   };
+
+  // ── Boot ────────────────────────────────────────
 
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', initTriggers);
   } else {
     initTriggers();
   }
+
 })();

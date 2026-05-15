@@ -7,6 +7,7 @@
 (function () {
   'use strict';
 
+  // ── Only run on index / homepage ───────────────────────────
   var path = window.location.pathname;
   if (path !== '/' && path !== '/index.html' && !path.endsWith('/Casino/') && !path.endsWith('/Casino/index.html') && path.indexOf('index.html') === -1) return;
 
@@ -21,6 +22,8 @@
   var paused = false;
   var toasts = [];
 
+  // ── Data pools ────────────────────────────────────
+
   var adjectives = ['Lucky', 'Golden', 'Neon', 'Shadow', 'Crypto', 'Mystic', 'Blazing', 'Turbo', 'Swift', 'Stealth'];
   var nouns = ['Star', 'Tiger', 'Ace', 'Wolf', 'Phoenix', 'King', 'Rider', 'Dragon', 'Cobra', 'Hawk'];
   var vipPrefixes = ['VIP_', 'Diamond_', 'Platinum_', 'Elite_'];
@@ -34,6 +37,8 @@
     'Ra Sun God Royale', 'Crystal Cavern', 'Silk Road Treasures',
     'Druid Forest Magic', 'Cosmic Raider Mission'
   ];
+
+  // ── Helpers ─────────────────────────────────────
 
   function rand(min, max) { return Math.floor(Math.random() * (max - min + 1)) + min; }
   function pick(arr) { return arr[rand(0, arr.length - 1)]; }
@@ -69,6 +74,8 @@
     }
   }
 
+  // ── CSS injection ──────────────────────────────────
+
   function injectCSS() {
     if (document.querySelector('link[data-ms-activity-css]')) return;
     var link = document.createElement('link');
@@ -77,6 +84,8 @@
     link.setAttribute('data-ms-activity-css', '');
     document.head.appendChild(link);
   }
+
+  // ── DOM ─────────────────────────────────────────
 
   function buildContainer() {
     container = document.createElement('div');
@@ -87,7 +96,9 @@
   function showToast() {
     if (paused || !container) return;
     if (localStorage.getItem(STORAGE_KEY) === '1') return;
+
     while (toasts.length >= MAX_TOASTS) removeToast(toasts[0]);
+
     var data = genActivity();
     var el = document.createElement('div');
     el.className = 'af-toast af-enter';
@@ -95,15 +106,20 @@
       '<div class="af-avatar">' + data.name.charAt(0).toUpperCase() + '</div>' +
       '<div class="af-body"><span class="af-icon">' + data.icon + '</span> ' + data.text + '</div>' +
       '<button class="af-close" aria-label="Dismiss">&times;</button>';
+
     el.querySelector('.af-close').addEventListener('click', function (e) {
       e.stopPropagation();
       removeToast(el);
     });
+
     container.appendChild(el);
     toasts.push(el);
+
+    // trigger reflow then add visible class
     void el.offsetWidth;
     el.classList.remove('af-enter');
     el.classList.add('af-visible');
+
     setTimeout(function () { removeToast(el); }, DISPLAY_TIME);
   }
 
@@ -117,6 +133,8 @@
     }, 400);
   }
 
+  // ── Scheduling ────────────────────────────────────
+
   function scheduleNext() {
     timer = setTimeout(function () {
       showToast();
@@ -128,6 +146,7 @@
     if (localStorage.getItem(STORAGE_KEY) === '1') return;
     injectCSS();
     buildContainer();
+    // Show first toast after short delay
     setTimeout(showToast, rand(3000, 6000));
     scheduleNext();
   }
@@ -148,7 +167,16 @@
     scheduleNext();
   }
 
-  window.MatrixActivityFeed = { pause: pause, resume: resume, hide: hide, show: show };
+  // ── Public API ────────────────────────────────────
+
+  window.MatrixActivityFeed = {
+    pause: pause,
+    resume: resume,
+    hide: hide,
+    show: show
+  };
+
+  // ── Init ────────────────────────────────────────
 
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', start);

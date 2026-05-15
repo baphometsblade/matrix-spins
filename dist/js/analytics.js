@@ -2,7 +2,7 @@
  * Matrix Spins Casino — Analytics & Conversion Tracking
  * Auto-injecting IIFE for GA4 integration, conversion events,
  * UTM handling, Core Web Vitals, and user property management.
- * Domain: royal-slots-casino.vercel.app
+ * Domain: msaart.online
  */
 (function () {
   'use strict';
