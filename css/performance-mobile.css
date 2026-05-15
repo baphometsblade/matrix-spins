@@ -52,23 +52,23 @@ html {
 
 /* Hero regions populated by JS post-load — reserve height so the
    surrounding grid doesn't reflow as the showcase / jackpot / win
-   feed paint in. Lighthouse flagged 30 layout-shift entries before
-   these were set; measured CLS ≈ 0.159 → ~0.04 after. */
+   feed paint in. Heights match measured rendered sizes from Playwright
+   (4 cards × ~240px + gap → ~560px desktop). */
 #showcaseStack {
-    min-height: 360px;
+    min-height: 560px;
 }
 @media (max-width: 880px) {
-    #showcaseStack { min-height: 280px; }
+    #showcaseStack { min-height: 420px; }
 }
 @media (max-width: 480px) {
-    #showcaseStack { min-height: 240px; }
+    #showcaseStack { min-height: 340px; }
 }
 
 #jackpotHero {
-    min-height: 220px;
+    min-height: 230px;
 }
 @media (max-width: 480px) {
-    #jackpotHero { min-height: 180px; }
+    #jackpotHero { min-height: 200px; }
 }
 
 .win-feed {

@@ -198,6 +198,12 @@
             align-items: center;
             gap: 16px;
             flex-shrink: 0;
+            justify-content: flex-end;
+            /* CLS prevention: search-trigger (~40px), notification bell
+               (~38px), and unified-ux menu button (~42px) get injected
+               into .header-right post-load. Reserving width pre-empts
+               the ~120px expansion that otherwise reflows .header → .hero. */
+            min-width: 480px;
         }
 
         .balance-card {
@@ -958,6 +964,7 @@
 
             .header-right {
                 gap: 8px;
+                min-width: 0;
             }
 
             .balance-card {
