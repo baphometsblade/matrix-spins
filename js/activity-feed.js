@@ -7,7 +7,7 @@
 (function () {
   'use strict';
 
-  // ── Only run on index / homepage ───────────────────────────────
+  // ── Only run on index / homepage ───────────────────────────
   var path = window.location.pathname;
   if (path !== '/' && path !== '/index.html' && !path.endsWith('/Casino/') && !path.endsWith('/Casino/index.html') && path.indexOf('index.html') === -1) return;
 
@@ -22,7 +22,7 @@
   var paused = false;
   var toasts = [];
 
-  // ── Data pools ─────────────────────────────────────────────────
+  // ── Data pools ────────────────────────────────────
 
   var adjectives = ['Lucky', 'Golden', 'Neon', 'Shadow', 'Crypto', 'Mystic', 'Blazing', 'Turbo', 'Swift', 'Stealth'];
   var nouns = ['Star', 'Tiger', 'Ace', 'Wolf', 'Phoenix', 'King', 'Rider', 'Dragon', 'Cobra', 'Hawk'];
@@ -38,7 +38,7 @@
     'Druid Forest Magic', 'Cosmic Raider Mission'
   ];
 
-  // ── Helpers ────────────────────────────────────────────────────
+  // ── Helpers ─────────────────────────────────────
 
   function rand(min, max) { return Math.floor(Math.random() * (max - min + 1)) + min; }
   function pick(arr) { return arr[rand(0, arr.length - 1)]; }
@@ -74,18 +74,18 @@
     }
   }
 
-  // ── CSS injection ──────────────────────────────────────────────
+  // ── CSS injection ──────────────────────────────────
 
   function injectCSS() {
     if (document.querySelector('link[data-ms-activity-css]')) return;
     var link = document.createElement('link');
     link.rel = 'stylesheet';
-    link.href = 'css/activity-feed.css';
+    link.href = '/css/activity-feed.css';
     link.setAttribute('data-ms-activity-css', '');
     document.head.appendChild(link);
   }
 
-  // ── DOM ────────────────────────────────────────────────────────
+  // ── DOM ─────────────────────────────────────────
 
   function buildContainer() {
     container = document.createElement('div');
@@ -133,7 +133,7 @@
     }, 400);
   }
 
-  // ── Scheduling ─────────────────────────────────────────────────
+  // ── Scheduling ────────────────────────────────────
 
   function scheduleNext() {
     timer = setTimeout(function () {
@@ -167,7 +167,7 @@
     scheduleNext();
   }
 
-  // ── Public API ─────────────────────────────────────────────────
+  // ── Public API ────────────────────────────────────
 
   window.MatrixActivityFeed = {
     pause: pause,
@@ -176,7 +176,7 @@
     show: show
   };
 
-  // ── Init ───────────────────────────────────────────────────────
+  // ── Init ────────────────────────────────────────
 
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', start);

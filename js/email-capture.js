@@ -20,7 +20,7 @@
   var shown = false;
   var overlay = null;
 
-  // ── Helpers ──────────────────────────────────────────────────
+  // ── Helpers ────────────────────────────────────
 
   function getStorage(key) {
     try { return JSON.parse(localStorage.getItem(key)); } catch (_) { return null; }
@@ -47,7 +47,7 @@
     return /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email);
   }
 
-  // ── Gate checks ──────────────────────────────────────────────
+  // ── Gate checks ──────────────────────────────────
 
   function shouldSuppress() {
     if (getStorage(STORAGE_KEYS.subscribed)) return true;
@@ -71,18 +71,18 @@
     return false;
   }
 
-  // ── CSS injection ────────────────────────────────────────────
+  // ── CSS injection ─────────────────────────────────
 
   function injectCSS() {
     if (document.querySelector('link[data-ms-email-css]')) return;
     var link = document.createElement('link');
     link.rel = 'stylesheet';
-    link.href = 'css/email-capture.css';
+    link.href = '/css/email-capture.css';
     link.setAttribute('data-ms-email-css', '');
     document.head.appendChild(link);
   }
 
-  // ── Build DOM ────────────────────────────────────────────────
+  // ── Build DOM ───────────────────────────────────
 
   function buildPopup() {
     overlay = document.createElement('div');
@@ -115,7 +115,7 @@
     bindEvents();
   }
 
-  // ── Events ───────────────────────────────────────────────────
+  // ── Events ─────────────────────────────────────
 
   function bindEvents() {
     var card = overlay.querySelector('.ms-ec-card');
@@ -159,7 +159,7 @@
     });
   }
 
-  // ── Submit ───────────────────────────────────────────────────
+  // ── Submit ─────────────────────────────────────
 
   function submitEmail(email) {
     showSuccess();
@@ -192,7 +192,7 @@
     setTimeout(close, SUCCESS_AUTO_CLOSE_MS);
   }
 
-  // ── Show / Hide / Dismiss ────────────────────────────────────
+  // ── Show / Hide / Dismiss ──────────────────────────────
 
   function show() {
     if (shown || shouldSuppress()) return;
@@ -228,7 +228,7 @@
     close();
   }
 
-  // ── Triggers ─────────────────────────────────────────────────
+  // ── Triggers ─────────────────────────────────────
 
   function initTriggers() {
     if (shouldSuppress()) return;
@@ -257,7 +257,7 @@
     }, { passive: true });
   }
 
-  // ── Public API ───────────────────────────────────────────────
+  // ── Public API ────────────────────────────────────
 
   window.MatrixEmailCapture = {
     show: function () {
@@ -269,7 +269,7 @@
     }
   };
 
-  // ── Boot ─────────────────────────────────────────────────────
+  // ── Boot ────────────────────────────────────────
 
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', initTriggers);

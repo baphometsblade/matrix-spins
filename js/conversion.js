@@ -16,11 +16,16 @@
   var TOAST_DURATION = 8000;
 
   /* ---------- CSS injection ---------- */
+  // Absolute path so this works from any URL depth: when the script runs on
+  // /games/<id>.html, the previous relative href resolved to
+  // /games/css/conversion.css → 404 + a Chrome MIME-strict console error on
+  // every game page. Absolute /css/conversion.css resolves correctly from
+  // the lobby (/), promotions (/promotions.html), AND game pages alike.
   (function injectCSS() {
     if (document.querySelector('link[data-ms-conversion]')) return;
     var link = document.createElement('link');
     link.rel = 'stylesheet';
-    link.href = 'css/conversion.css';
+    link.href = '/css/conversion.css';
     link.dataset.msConversion = '1';
     document.head.appendChild(link);
   })();
