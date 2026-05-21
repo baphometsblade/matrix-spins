@@ -5,10 +5,81 @@ const config = require('../config');
 const gameEngine = require('../services/game-engine');
 const houseEdge = require('../services/house-edge');
 const games = require('../../shared/game-definitions');
+const path = require('path');
+const fs = require('fs');
 
 // Pre-index game definitions for O(1) lookup
 const gameIndex = new Map();
 (Array.isArray(games) ? games : []).forEach(g => { if (g && g.id) gameIndex.set(g.id, g); });
+
+// ── Load game-registry.js (browser file) for hyphenated-slug game lookup ──
+// The 100 game HTML pages use hyphenated IDs (e.g. 'golden-cherry-cascade')
+// while game-definitions.js uses underscore IDs (e.g. 'sugar_rush').
+// These are entirely different game catalogs so we need both indexed.
+const slugIndex = new Map();
+try {
+    const registryPath = path.resolve(__dirname, '../../js/game-registry.js');
+    const registryCode = fs.readFileSync(registryPath, 'utf8');
+    // Evaluate in a minimal sandbox that provides 'window'
+    const sandbox = { window: { STUDIO_CONFIG: {}, GAME_REGISTRY: [] } };
+    (new Function('window', registryCode)).call(sandbox, sandbox.window);
+    const registry = sandbox.window.GAME_REGISTRY || [];
+    registry.forEach(function(entry) {
+        if (!entry || !entry.id) return;
+        // Build a game-engine-compatible object from registry data.
+        // The game-engine requires: id, symbols, gridCols, gridRows, winType,
+        // wildSymbol, scatterSymbol, rtp, bonusType, freeSpinsCount, payouts, minBet, maxBet, etc.
+        const symbols = Array.isArray(entry.symbols) ? entry.symbols : ['s1','s2','s3','s4','s5','wild'];
+        const wildSymbol = symbols.find(function(s) { return s.includes('wild'); }) || symbols[symbols.length - 1];
+        const scatterSymbol = symbols.find(function(s) { return s.includes('scatter'); }) || symbols[symbols.length - 2];
+        const reels = entry.reels || 5;
+        const rows = entry.rows || 3;
+        // Determine winType: small grids = classic, large grids = cluster, standard = payline
+        let winType = 'payline';
+        if (reels <= 3 && rows <= 3) winType = 'classic';
+        else if (reels >= 6 && rows >= 5) winType = 'cluster';
+        // Build standard payouts based on game structure
+        const payouts = winType === 'classic'
+            ? { triple: 100, double: 10, wildTriple: 150, scatterPay: 5 }
+            : winType === 'cluster'
+            ? { triple: 130, double: 13, wildTriple: 200, scatterPay: 5, cluster5: 5, cluster8: 15, cluster12: 50, cluster15: 140 }
+            : { triple: 100, double: 10, wildTriple: 150, scatterPay: 5, payline3: 10, payline4: 50, payline5: 100 };
+        const gameDef = {
+            id: entry.id,
+            name: entry.name || entry.id,
+            provider: entry.studio || 'Matrix Spins',
+            themeCategory: (entry.theme || '').toLowerCase(),
+            symbols: symbols,
+            gridCols: reels,
+            gridRows: rows,
+            template: reels <= 3 ? 'classic' : reels >= 6 ? 'scatter' : 'standard',
+            winType: winType,
+            clusterMin: winType === 'cluster' ? (reels >= 7 ? 5 : 8) : undefined,
+            wildSymbol: wildSymbol,
+            scatterSymbol: scatterSymbol,
+            rtp: entry.rtp || 90,
+            volatility: entry.volatility || 'medium',
+            bonusType: 'free_spins',
+            freeSpinsCount: 10,
+            freeSpinsRetrigger: true,
+            payouts: payouts,
+            minBet: entry.minBet || 0.20,
+            maxBet: entry.maxBet || 100,
+            paylines: entry.paylines || (reels * rows),
+            hot: false,
+            jackpot: 0
+        };
+        slugIndex.set(entry.id, gameDef);
+    });
+    console.log(`[Spin] Loaded ${slugIndex.size} slug-indexed games from game-registry.js`);
+} catch (err) {
+    console.warn('[Spin] Could not load game-registry.js for slug index:', err.message);
+}
+
+// Unified lookup: checks underscore-ID gameIndex first, then hyphenated-slug slugIndex
+function lookupGame(id) {
+    return gameIndex.get(id) || slugIndex.get(id) || null;
+}
 
 const jackpotService = require('../services/jackpot.service');
 const reengageTriggers = require('../services/reengage-triggers.service');
@@ -160,6 +231,54 @@ function applyWinCapMetadata(spinResult, uncappedWinAmount, cappedWinAmount) {
     }
 }
 
+// ── GET /api/spin/games/:id — fetch game configuration for the slot UI ──
+router.get('/games/:id', async (req, res) => {
+    try {
+        const id = req.params.id;
+        if (!id || typeof id !== 'string' || id.length > 80) {
+            return res.status(400).json({ error: 'Invalid game ID' });
+        }
+        const game = lookupGame(id);
+        if (!game) {
+            return res.status(404).json({ error: 'Game not found' });
+        }
+        // Build response in the format casino-engine.js expects:
+        // game.minBetCents, game.maxBetCents, game.betStepCents, game.name,
+        // game.rtp, game.volatility, game.paylines, game.reels, game.rows
+        const minBetCents = Math.round((game.minBet || 0.20) * 100);
+        const maxBetCents = Math.round((game.maxBet || 100) * 100);
+        const betStepCents = minBetCents; // step = minBet (standard pattern)
+        const reels = game.gridCols || 5;
+        const rows = game.gridRows || 3;
+        // paylines: game-definitions don't always store paylines; estimate from grid
+        const paylines = game.paylines || (reels * rows) || 20;
+        res.json({
+            game: {
+                id: game.id,
+                name: game.name || game.id,
+                rtp: game.rtp || 90,
+                volatility: game.volatility || 'medium',
+                reels: reels,
+                rows: rows,
+                paylines: paylines,
+                minBetCents: minBetCents,
+                maxBetCents: maxBetCents,
+                betStepCents: betStepCents,
+                symbols: game.symbols || [],
+                wildSymbol: game.wildSymbol || null,
+                scatterSymbol: game.scatterSymbol || null,
+                bonusType: game.bonusType || null,
+                bonusDesc: game.bonusDesc || '',
+                provider: game.provider || 'Matrix Spins',
+                jackpot: game.jackpot || 0
+            }
+        });
+    } catch (err) {
+        console.error('[Spin] GET /games/:id error:', err.message);
+        res.status(500).json({ error: 'Failed to load game' });
+    }
+});
+
 // POST /api/spin
 router.post('/', authenticate, async (req, res) => {
     try {
@@ -223,7 +342,7 @@ router.post('/', authenticate, async (req, res) => {
         }
 
         // ── Validate game ──
-        const game = gameIndex.get(gameId);
+        const game = lookupGame(gameId);
         if (!game) {
             activeSpins.delete(userId);
             return res.status(400).json({ error: 'Invalid game ID' });

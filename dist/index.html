@@ -8,7 +8,7 @@
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <title>Matrix Spins Casino — Premium Online Slots | 100 Games from 8 Studios</title>
-    <meta name="description" content="Play 100 premium slot games from 8 world-class studios. 100% first deposit match up to $500 (45× wagering). Provably fair, 2FA-protected withdrawals, no download.">
+    <meta name="description" content="Play 100 premium slot games from 8 world-class studios. 100% first deposit match up to $500. Provably fair, instant payouts, no download.">
     <meta name="theme-color" content="#D4A853">
     <meta property="og:title" content="Matrix Spins Casino — Premium Online Slots">
     <meta property="og:description" content="100 premium slot games from 8 studios. 100% first deposit match up to $500. Play now.">
@@ -57,21 +57,6 @@
     <!-- Preload critical font to reduce LCP -->
     <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap" onload="this.onload=null;this.rel='stylesheet'">
     <noscript><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap" rel="stylesheet"></noscript>
-    <!-- ── Pre-paint auth-state flag: prevents header CLS ────────────
-         The header has Deposit + Sign Up + balance-card all rendered in
-         the static HTML. After paint, JS hides whichever doesn't match
-         auth state, causing a ~0.11 CLS shift in the hero region.
-         Setting this class synchronously before first paint lets CSS
-         render the correct state immediately. -->
-    <script>(function(){try{var t=localStorage.getItem('casinoToken');document.documentElement.classList.add(t?'auth-loggedin':'auth-anon');}catch(_){document.documentElement.classList.add('auth-anon');}})();</script>
-    <style>
-        /* Hide auth-conditional header elements until the inline script
-           above tags the html element. */
-        html.auth-anon .balance-card,
-        html.auth-anon #wageringBarWrap,
-        html.auth-anon #vipMiniWidget { display: none !important; }
-        html.auth-loggedin #headerSignupBtn { display: none !important; }
-    </style>
     <!-- Performance & Mobile CSS -->
     <link rel="stylesheet" href="css/performance-mobile.css">
     <!-- Landing Page Redesign CSS -->
@@ -157,13 +142,6 @@
             background-clip: text;
             white-space: nowrap;
             flex-shrink: 0;
-            text-decoration: none;
-            cursor: pointer;
-        }
-
-        .header-logo .logo-crown {
-            -webkit-text-fill-color: var(--accent-gold);
-            color: var(--accent-gold);
         }
 
         .logo-crown {
@@ -198,12 +176,6 @@
             align-items: center;
             gap: 16px;
             flex-shrink: 0;
-            justify-content: flex-end;
-            /* CLS prevention: search-trigger (~40px), notification bell
-               (~38px), and unified-ux menu button (~42px) get injected
-               into .header-right post-load. Reserving width pre-empts
-               the ~120px expansion that otherwise reflows .header → .hero. */
-            min-width: 480px;
         }
 
         .balance-card {
@@ -964,7 +936,6 @@
 
             .header-right {
                 gap: 8px;
-                min-width: 0;
             }
 
             .balance-card {
@@ -1087,17 +1058,17 @@
     </style>
 
 
-    <link rel="stylesheet" href="styles.932f9a57.min.css">
+    <link rel="stylesheet" href="styles.80b7d607.min.css">
 </head>
 <body>
     <!-- HEADER -->
     <header class="header">
-        <a href="/" class="header-logo" aria-label="Matrix Spins home">
+        <div class="header-logo">
             <svg class="logo-crown" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                 <path d="M12 2L15 8H21L16 12L18 18L12 14L6 18L8 12L3 8H9L12 2Z" fill="currentColor"/>
             </svg>
             Matrix Spins
-        </a>
+        </div>
 
         <div class="header-trust">
             <div class="trust-item">
@@ -1167,7 +1138,7 @@
                         <span id="livePlayerCount">4,382 Playing Now</span>
                     </div>
                     <h1>Play <span class="gold-text">100 Premium</span> Slot Games</h1>
-                    <p>From 8 world-class studios. Provably fair, fast 2FA-protected withdrawals, no download required.</p>
+                    <p>From 8 world-class studios. Provably fair, instant payouts, no download required.</p>
                     <div class="hero-ctas">
                         <button class="btn-primary-cta" id="heroSignupBtn">Get Started</button>
                         <button class="btn-secondary-cta" id="exploreBtn">Explore Games</button>
@@ -1198,26 +1169,6 @@
             </div>
         </div>
 
-        <!-- STATS BAR -->
-        <div class="stats-bar reveal">
-            <div class="stat-item">
-                <div class="stat-number" data-count="100">0</div>
-                <div class="stat-label">Premium Games</div>
-            </div>
-            <div class="stat-item">
-                <div class="stat-number" data-count="8">0</div>
-                <div class="stat-label">Game Studios</div>
-            </div>
-            <div class="stat-item">
-                <div class="stat-number" data-count="2847392" data-prefix="$" data-format="compact">$0</div>
-                <div class="stat-label">Jackpot Pool</div>
-            </div>
-            <div class="stat-item">
-                <div class="stat-number" data-count="96" data-suffix="%">0%</div>
-                <div class="stat-label">Avg. RTP</div>
-            </div>
-        </div>
-
         <!-- ── First-Deposit Incentive Banner (shown by JS to eligible users only) ── -->
         <div id="firstDepositBanner" style="display:none;background:linear-gradient(135deg,#1c1400,#2d2000);
              border:2px solid #FFD700;border-radius:14px;padding:1.5rem 2rem;margin:1.5rem auto 0;
@@ -1226,7 +1177,7 @@
             🎰 Welcome! Claim Your 100% First Deposit Match — Up to $500
           </div>
           <div style="color:#c9b85a;font-size:0.95rem;margin-bottom:1rem;">
-            Make your first deposit and we'll match it 100% in bonus credits. 45× wagering on the bonus before withdrawal. One time only.
+            Make your first deposit and we'll match it 100% in bonus credits. 35x wagering. One time only.
           </div>
           <div style="display:flex;gap:0.75rem;justify-content:center;flex-wrap:wrap;">
             <a href="wallet.html" style="padding:0.85rem 2rem;background:linear-gradient(135deg,#FFD700,#FFA500);
@@ -1240,42 +1191,6 @@
             </button>
           </div>
         </div>
-
-        <div class="section-divider"></div>
-
-        <!-- STUDIOS SHOWCASE -->
-        <section class="studios-section reveal">
-            <h2>Powered by 8 World-Class Studios</h2>
-            <div class="studios-grid" id="studiosGrid">
-                <!-- Populated by JS from STUDIO_CONFIG -->
-            </div>
-        </section>
-
-        <div class="section-divider"></div>
-
-        <!-- HOW IT WORKS -->
-        <section class="how-it-works reveal">
-            <h2>Start Playing in Seconds</h2>
-            <div class="steps-grid">
-                <div class="step-card">
-                    <div class="step-number">1</div>
-                    <h3>Pick a Game</h3>
-                    <p>Browse 100 premium slots from 8 studios. Filter by theme, volatility, or RTP.</p>
-                </div>
-                <div class="step-card">
-                    <div class="step-number">2</div>
-                    <h3>Play Instantly</h3>
-                    <p>No download required. 100 premium games from 8 studios. Sign up and deposit to start winning.</p>
-                </div>
-                <div class="step-card">
-                    <div class="step-number">3</div>
-                    <h3>Go Live</h3>
-                    <p>Create an account to play with real funds. Provably fair with transparent RNG verification.</p>
-                </div>
-            </div>
-        </section>
-
-        <div class="section-divider"></div>
 
         <!-- SIGNUP MODAL -->
         <div class="signup-overlay" id="signupOverlay">
@@ -1347,6 +1262,62 @@
                 <div class="skeleton-card"><div class="skeleton-visual"></div><div class="skeleton-text"><div class="skeleton-line"></div><div class="skeleton-line"></div><div class="skeleton-line"></div></div></div>
                 <div class="skeleton-card"><div class="skeleton-visual"></div><div class="skeleton-text"><div class="skeleton-line"></div><div class="skeleton-line"></div><div class="skeleton-line"></div></div></div>
                 <div class="skeleton-card"><div class="skeleton-visual"></div><div class="skeleton-text"><div class="skeleton-line"></div><div class="skeleton-line"></div><div class="skeleton-line"></div></div></div>
+            </div>
+        </section>
+
+        <div class="section-divider"></div>
+
+        <!-- STATS BAR (below games for better conversion) -->
+        <div class="stats-bar reveal">
+            <div class="stat-item">
+                <div class="stat-number" data-count="100">0</div>
+                <div class="stat-label">Premium Games</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-number" data-count="8">0</div>
+                <div class="stat-label">Game Studios</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-number" data-count="2847392" data-prefix="$" data-format="compact">$0</div>
+                <div class="stat-label">Jackpot Pool</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-number" data-count="96" data-suffix="%">0%</div>
+                <div class="stat-label">Avg. RTP</div>
+            </div>
+        </div>
+
+        <div class="section-divider"></div>
+
+        <!-- STUDIOS SHOWCASE -->
+        <section class="studios-section reveal">
+            <h2>Powered by 8 World-Class Studios</h2>
+            <div class="studios-grid" id="studiosGrid">
+                <!-- Populated by JS from STUDIO_CONFIG -->
+            </div>
+        </section>
+
+        <div class="section-divider"></div>
+
+        <!-- HOW IT WORKS -->
+        <section class="how-it-works reveal">
+            <h2>Start Playing in Seconds</h2>
+            <div class="steps-grid">
+                <div class="step-card">
+                    <div class="step-number">1</div>
+                    <h3>Pick a Game</h3>
+                    <p>Browse 100 premium slots from 8 studios. Filter by theme, volatility, or RTP.</p>
+                </div>
+                <div class="step-card">
+                    <div class="step-number">2</div>
+                    <h3>Play Instantly</h3>
+                    <p>No download required. 100 premium games from 8 studios. Sign up and deposit to start winning.</p>
+                </div>
+                <div class="step-card">
+                    <div class="step-number">3</div>
+                    <h3>Go Live</h3>
+                    <p>Create an account to play with real funds. Provably fair with transparent RNG verification.</p>
+                </div>
             </div>
         </section>
     </div>
@@ -1581,28 +1552,6 @@
             }
         });
 
-        // ── Stable game-thumbnail mapping ────────────────────────
-        // The lobby's 100-game registry (window.GAME_REGISTRY, hyphenated ids
-        // like "golden-cherry-cascade") and the 215 thumbnail images shipped
-        // in /assets/thumbnails/ (underscored names like "ancient_tombs.webp")
-        // were built from different game catalogs — no id maps to a filename
-        // directly. Without intervention, every game card falls through to
-        // the letter-placeholder branch and zero of the .webp files are ever
-        // shown.
-        //
-        // This helper picks one of the 215 thumbnails for each game.id via a
-        // simple deterministic hash, so every card renders real game art and
-        // the same game always gets the same thumbnail across reloads.
-        const GAME_THUMBNAIL_POOL = ['agent_zero.webp','ancient_tombs.webp','arcane_tower.webp','avalon_castle.webp','aztec_ascent.webp','aztec_temple.webp','banshee_wail.webp','berry_bliss.webp','big_bamboo.webp','big_top_bonanza.webp','black_ops_heist.webp','book_dead.webp','boomerang_luck.webp','buffalo_extreme.webp','buffalo_mega.webp','buffalo_stampede.webp','candy_blitz.webp','carnival_crown.webp','cash_vault.webp','castle_siege.webp','celestial_bazaar.webp','cherry_bombs.webp','circus_thrills.webp','cleopatra_gold.webp','cleopatra_moon.webp','comet_rush.webp','cosmic_cash.webp','cosmic_nova.webp','crimson_dynasty.webp','crimson_fang.webp','crocodile_dundee.webp','crocodile_gold.webp','crystal_cavern.webp','crystal_shrine.webp','crystal_veil.webp','cursed_night.webp','dead_alive.webp','deep_dive.webp','desert_dynasty.webp','diamond_falls.webp','diamond_strike.webp','diamond_vault.webp','dog_house_mega.webp','dragon_coins.webp','dragon_gate.webp','dragon_hoard.webp','dragon_megafire.webp','dragon_realm.webp','dragon_temple.webp','dragon_tumble.webp','dragonfire_forge.webp','eagle_summit.webp','eclipse_mystery.webp','eldritch_depths.webp','elvis_frog.webp','emerald_dragon.webp','emerald_kingdom.webp','eternal_romance.webp','extra_chilli.webp','fae_forest.webp','fairy_tales.webp','fire_hole.webp','flamingo_fiesta.webp','fortune_bazaar.webp','fortune_ox.webp','frost_queen.webp','fruit_bonanza.webp','fruit_party.webp','galactic_raiders.webp','galaxy_rush.webp','gates_olympus.webp','gates_valhalla.webp','gemhalla.webp','gems_bonanza.webp','gold_crown_club.webp','gold_rush_frog.webp','golden_cascade.webp','golden_fortune.webp','golden_genie.webp','golden_jaguar.webp','golden_vault.webp','grand_prix_rush.webp','grape_vine.webp','gravity_well.webp','great_barrier.webp','great_rhino.webp','harvest_megaways.webp','haunted_mansion.webp','honey_rush.webp','hot_chillies.webp','immortal_blood.webp','inferno_fiesta.webp','inferno_joker.webp','infinity_mirror.webp','isis_blessing.webp','jade_emperor.webp','jade_fortune.webp','joker_frenzy.webp','jungle_fury.webp','koi_ascension.webp','koi_cascade.webp','kookaburra_cash.webp','legacy_dead.webp','lemon_drop.webp','leopard_prowl.webp','lucky_dragon.webp','lucky_tanuki.webp','lunar_goddess.webp','madame_destiny.webp','mammoth_riches.webp','mega_diamond_rush.webp','mega_safari.webp','melon_feast.webp','midnight_oasis.webp','midnight_phantom.webp','mirror_palace.webp','monaco_million.webp','money_train.webp','moon_madness.webp','moon_rabbit.webp','mystic_grail.webp','mystic_wolf.webp','neon_heist.webp','neon_nebula.webp','neon_viper.webp','neptune_storm.webp','nile_jewels.webp','norse_vaults.webp','olympian_gods.webp','olympus_dream.webp','olympus_thunder.webp','opal_outback.webp','oriental_silk.webp','outback_king.webp','panda_paradise.webp','peach_paradise.webp','phantom_riches.webp','pharaoh_collect.webp','pharaohs_legacy.webp','phoenix_rising.webp','pirate_plunder.webp','plague_doctor.webp','platypus_fortune.webp','platypus_paradise.webp','pots_olympus.webp','power_crown.webp','primal_vault.webp','puppet_master.webp','pyramid_king.webp','pyramid_power.webp','quantum_burst.webp','rainbow_fortune.webp','reactoonz.webp','retro_tapes.webp','rhino_rampage.webp','rise_of_merlin.webp','rockstar_wild.webp','rome_eternal.webp','royal_mint.webp','runeblade.webp','sacred_ibis.webp','sakura_fortune.webp','samurai_blade.webp','samurai_honor.webp','samurai_ways.webp','san_quentin.webp','serpent_spell.webp','shark_reef.webp','solar_eclipse.webp','solar_system.webp','space_odyssey.webp','sphinx_riddle.webp','spice_fortune.webp','starburst_xxl.webp','starlight_princess.webp','steampunk_fortune.webp','stellar_drift.webp','sugar_rush.webp','sugar_supreme.webp','supernova_slots.webp','sweet_bonanza.webp','tangerine_tango.webp','temple_bells.webp','thunder_hero.webp','thunder_jackpot.webp','thunder_reel.webp','thunderstrike.webp','ticket_to_fortune.webp','tiger_strike.webp','tiger_temple.webp','titan_forge.webp','tomb_anubis.webp','tombstone_reload.webp','treasure_cove.webp','twin_dragons.webp','uluru_gold.webp','vault_coins.webp','viking_forge.webp','viking_voyage.webp','volcano_riches.webp','wanted_dead.webp','warp_station.webp','warrior_princess.webp','wild_depths.webp','wild_rooster.webp','wild_stampede.webp','wild_west_bounty.webp','wild_west_rush.webp','witches_brew.webp','wolf_canyon.webp','wolf_gold.webp','wolf_howl.webp','wolf_rise.webp','world_cup_glory.webp','zombie_carnival.webp'];
-        function getGameThumbnail(game) {
-            if (game && game.thumbnail) return game.thumbnail;
-            const id = (game && game.id) || (game && game.name) || '';
-            let hash = 0;
-            for (let i = 0; i < id.length; i++) hash = (hash * 31 + id.charCodeAt(i)) | 0;
-            const idx = Math.abs(hash) % GAME_THUMBNAIL_POOL.length;
-            return 'assets/thumbnails/' + GAME_THUMBNAIL_POOL[idx];
-        }
-
         // Render games
         function renderGames(games) {
             const grid = document.getElementById('gameGrid');
@@ -1639,8 +1588,7 @@
 
                 card.innerHTML = `
                     <div class="game-visual" style="background: ${game.bgGradient || `linear-gradient(135deg, ${studioColor}, ${studioColor}66)`}">
-                        <img class="game-thumb" src="${getGameThumbnail(game)}" alt="${game.name}" loading="lazy" decoding="async" onerror="this.style.display='none'">
-
+                        ${game.thumbnail ? `<img class="game-thumb" src="${game.thumbnail}" alt="${game.name}" loading="lazy" decoding="async" onerror="this.style.display='none'">` : ''}
                         <div class="game-placeholder">${game.name.charAt(0)}</div>
                         <div class="game-studio-badge" style="background: ${studioColor}cc">${game.studio || game.provider || ''}</div>
                         <div class="game-badges">
@@ -1779,20 +1727,15 @@
         }
 
         // ── Auth-aware header state ────────────────────────────────
-        // Visibility is driven by html.auth-loggedin / html.auth-anon classes
-        // (set synchronously pre-paint via inline <script> in <head>). This
-        // function keeps that class in sync if auth state changes mid-session
-        // (login from a modal, logout, token refresh) and wires up dynamic
-        // behaviour on the elements that remain visible.
         function updateHeaderAuthState() {
             const token = localStorage.getItem('casinoToken');
-            const root = document.documentElement;
+            const signupBtn = document.getElementById('headerSignupBtn');
             const depositBtn = document.getElementById('depositBtn');
             const avatar = document.querySelector('.avatar');
 
             if (token) {
-                root.classList.remove('auth-anon');
-                root.classList.add('auth-loggedin');
+                // Logged in: hide Sign Up, show Account link on avatar
+                if (signupBtn) signupBtn.style.display = 'none';
                 if (avatar) {
                     avatar.style.cursor = 'pointer';
                     avatar.title = 'My Account';
@@ -1800,8 +1743,10 @@
                 }
                 if (depositBtn) depositBtn.textContent = 'Deposit';
             } else {
-                root.classList.remove('auth-loggedin');
-                root.classList.add('auth-anon');
+                // Logged out: show Sign Up, hide balance card
+                if (signupBtn) signupBtn.style.display = '';
+                const balanceCard = document.querySelector('.balance-card');
+                if (balanceCard) balanceCard.style.display = 'none';
             }
         }
 
@@ -1830,7 +1775,7 @@
                 const studio = (typeof window.STUDIO_CONFIG !== 'undefined') ? window.STUDIO_CONFIG[g.studioId] : null;
                 const color = studio ? studio.colors.primary : '#D4A853';
                 const showcaseBg = g.bgGradient || ('linear-gradient(135deg,' + color + ',' + color + '66)');
-                const showcaseThumb = getGameThumbnail(g) ? '<img class="game-thumb" src="' + getGameThumbnail(g) + '" alt="' + g.name + '" loading="lazy" decoding="async" onerror="this.style.display=\'none\'">' : '';
+                const showcaseThumb = g.thumbnail ? '<img class="game-thumb" src="' + g.thumbnail + '" alt="' + g.name + '" loading="lazy" decoding="async" onerror="this.style.display=\'none\'">' : '';
                 return '<div class="showcase-card" onclick="navigateToGame(\'' + g.id + '\')">' +
                     '<div class="showcase-card-visual" style="background:' + showcaseBg + '">' +
                     showcaseThumb +
@@ -1872,7 +1817,7 @@
                 const initial = name.charAt(0).toUpperCase();
                 const amount = parseFloat(event.winAmount || 0).toFixed(2);
                 let gameName = (event.gameId || 'Slots').replace(/_/g, ' ')
-                    .replace(/\w/g, c => c.toUpperCase());
+                    .replace(/\w/g, c => c.toUpperCase());
                 const multBadge = (event.multiplier && event.multiplier >= 25)
                     ? ' <span style="color:#FFD700">🔥 ' + event.multiplier + 'x!</span>' : '';
                 let timeAgo = '';
@@ -2227,8 +2172,8 @@
     <!-- PWA: SW registration + install prompt + update banner -->
     
     <!-- Site-wide jackpot win celebration + real-time pool ticker (socket.io) -->
-    <script src="js/confetti.min.js?v=d2726804" defer></script>
-    <script src="js/jackpot-celebration.js?v=c3bc1f43" defer></script>
-    <script src="bundle.e74f069b.min.js"></script>
+    <script src="js/confetti.min.js?v=2b59dbb8" defer></script>
+    <script src="js/jackpot-celebration.js?v=48be09d7" defer></script>
+    <script src="bundle.6c2ddabb.min.js"></script>
 </body>
 </html>
