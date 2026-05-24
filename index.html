@@ -1277,6 +1277,63 @@
             display: none !important;
         }
 
+        /* ── Forced-colors / Windows High Contrast fallback ─────────────
+           In Forced Colors mode the OS substitutes a limited palette
+           (CanvasText, Canvas, Highlight, ButtonText, etc.) for all CSS
+           colors. Gold-on-black gradients, transparent backgrounds, and
+           colored studio dots all collapse to a single system color —
+           breaking the lobby UX for users who rely on this mode (low-
+           vision, photosensitive, or older Windows accessibility setup).
+           We restore the critical visual distinctions using system
+           colors + outlines that the forced-colors palette guarantees
+           to render. */
+        @media (forced-colors: active) {
+            .filter-chip.active,
+            .filter-chip[aria-pressed="true"] {
+                outline: 2px solid LinkText;
+                outline-offset: -2px;
+                background: Highlight;
+                color: HighlightText;
+                forced-color-adjust: none;
+            }
+            .filter-chip {
+                border-color: ButtonBorder;
+            }
+            .studio-dot,
+            .game-card-studio-dot {
+                /* color swatches become invisible in forced-colors —
+                   give them a visible ring so studios stay distinct. */
+                forced-color-adjust: none;
+                outline: 1px solid CanvasText;
+            }
+            .balance-amount,
+            .jackpot-amount,
+            .accent-gold,
+            [class*="gold"] {
+                /* gold gradients collapse to one system color; ensure the
+                   text is rendered with the high-contrast Highlight color. */
+                color: Highlight !important;
+                background: Canvas !important;
+                -webkit-text-fill-color: Highlight !important;
+            }
+            .btn-deposit,
+            .signup-submit,
+            .play-btn {
+                border: 2px solid ButtonText;
+                background: ButtonFace;
+                color: ButtonText;
+                forced-color-adjust: none;
+            }
+            .limits-btn,
+            .avatar {
+                outline: 1px solid ButtonBorder;
+                forced-color-adjust: none;
+            }
+            .games-grid-empty {
+                border-color: CanvasText;
+            }
+        }
+
         /* ── Reduced-motion fallback ────────────────────────────────────
            Many inline keyframes (shimmer, jackpot-shimmer, skeleton-pulse,
            hero pulse-dot) and cascaded keyframes in styles.css /
@@ -2051,7 +2108,24 @@
                 card.className = 'game-card';
                 card.setAttribute('role', 'button');
                 card.setAttribute('tabindex', '0');
-                card.setAttribute('aria-label', `Play ${game.name} - ${game.studio} - RTP ${game.rtp}%`);
+
+                // Richer aria-label so SR users hear the most useful summary
+                // in a single arrow-key sweep — name, studio, volatility,
+                // and RTP without redundant control words like "button" (the
+                // role already announces that).
+                const badgePrefix = [];
+                if (game.badges && game.badges.includes('hot'))      badgePrefix.push('Hot game');
+                if (game.badges && game.badges.includes('new'))      badgePrefix.push('New game');
+                if (game.badges && game.badges.includes('featured')) badgePrefix.push('Featured jackpot game');
+                const studioLabel = game.studio || game.provider || '';
+                const volLabel = (game.volatility || '').toString();
+                const ariaParts = [];
+                if (badgePrefix.length) ariaParts.push(badgePrefix.join(', '));
+                ariaParts.push('Play ' + game.name);
+                if (studioLabel) ariaParts.push('by ' + studioLabel);
+                if (volLabel)    ariaParts.push(volLabel + ' volatility');
+                if (game.rtp != null) ariaParts.push('RTP ' + game.rtp + ' percent');
+                card.setAttribute('aria-label', ariaParts.join(', '));
 
                 const isJackpot = game.badges && game.badges.includes('featured');
                 if (isJackpot) {
@@ -2060,35 +2134,38 @@
 
                 let badgesHtml = '';
                 if (game.badges && game.badges.includes('hot')) {
-                    badgesHtml += '<div class="badge">Hot</div>';
+                    badgesHtml += '<div class="badge" aria-hidden="true">Hot</div>';
                 }
                 if (game.badges && game.badges.includes('new')) {
-                    badgesHtml += '<div class="badge new">New</div>';
+                    badgesHtml += '<div class="badge new" aria-hidden="true">New</div>';
                 }
                 if (game.badges && game.badges.includes('featured')) {
-                    badgesHtml += '<div class="badge featured">Featured</div>';
+                    badgesHtml += '<div class="badge featured" aria-hidden="true">Featured</div>';
                 }
 
                 const studio = typeof window.STUDIO_CONFIG !== 'undefined' ? window.STUDIO_CONFIG[game.studioId] : null;
                 const studioColor = studio ? studio.colors.primary : '#D4A853';
 
+                // Decorative children get aria-hidden so SR users hear the
+                // single rich aria-label on the card itself — not 6 nested
+                // announcements. The visible Play button stays clickable
+                // because the parent card has the click handler too.
                 card.innerHTML = `
                     <div class="game-visual" style="background: ${game.bgGradient || `linear-gradient(135deg, ${studioColor}, ${studioColor}66)`}">
-                        <img class="game-thumb" src="${getGameThumbnail(game)}" alt="${game.name}" loading="lazy" decoding="async" onerror="this.style.display='none'">
-
-                        <div class="game-placeholder">${game.name.charAt(0)}</div>
-                        <div class="game-studio-badge" style="background: ${studioColor}cc">${game.studio || game.provider || ''}</div>
-                        <div class="game-badges">
+                        <img class="game-thumb" src="${getGameThumbnail(game)}" alt="" loading="lazy" decoding="async" aria-hidden="true" onerror="this.style.display='none'">
+                        <div class="game-placeholder" aria-hidden="true">${game.name.charAt(0)}</div>
+                        <div class="game-studio-badge" style="background: ${studioColor}cc" aria-hidden="true">${game.studio || game.provider || ''}</div>
+                        <div class="game-badges" aria-hidden="true">
                             ${badgesHtml}
                         </div>
-                        <div class="game-overlay">
-                            <button class="play-btn">Play</button>
+                        <div class="game-overlay" aria-hidden="true">
+                            <button class="play-btn" type="button" tabindex="-1">Play</button>
                         </div>
                     </div>
                     <div class="game-info">
-                        <div class="game-name">${game.name}</div>
-                        <div class="game-mechanic">${game.mechanic || game.mechanicDesc || 'Slots'}</div>
-                        <div class="game-stats">
+                        <div class="game-name" aria-hidden="true">${game.name}</div>
+                        <div class="game-mechanic" aria-hidden="true">${game.mechanic || game.mechanicDesc || 'Slots'}</div>
+                        <div class="game-stats" aria-hidden="true">
                             <div class="stat-tag rtp-tag" title="Return to Player">${game.rtp}%</div>
                             <div class="stat-tag volatility-tag vol-${game.volatility.toLowerCase()}">${game.volatility}</div>
                             <div class="stat-tag">${game.paylines || '25'} Lines</div>
