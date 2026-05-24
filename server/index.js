@@ -631,7 +631,7 @@ function bindCatchAll() {
 
   // SPA fallback (path-traversal safe)
   const resolvedRoot = path.resolve(FRONTEND_ROOT);
-  app.get('/{*splat}', (req, res) => {
+  app.get('*', (req, res) => {
     if (req.path.startsWith('/api/')) {
       return res.status(404).json({ error: 'API endpoint not found', path: req.path });
     }

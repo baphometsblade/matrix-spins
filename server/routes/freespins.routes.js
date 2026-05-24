@@ -86,6 +86,35 @@ router.get('/status', authenticate, async function(req, res) {
   }
 });
 
+// GET /api/freespins/available — alias for casino-engine.js compatibility
+// casino-engine.js calls getFreeSpins(gameId) which hits this endpoint.
+// Returns { grants: [{ remaining: N }] } shape expected by the engine's
+// _boot() Promise.all (line 101 of casino-engine.js).
+router.get('/available', authenticate, async function(req, res) {
+  try {
+    var userId = req.user.id;
+    var row = await db.get(
+      'SELECT free_spins_count, free_spins_expires FROM users WHERE id = ?',
+      [userId]
+    );
+    if (!row) return res.json({ grants: [] });
+
+    var count = row.free_spins_count || 0;
+    var expiresAt = row.free_spins_expires || null;
+
+    // Check expiry
+    if (expiresAt && new Date(expiresAt).getTime() < Date.now()) {
+      await db.run('UPDATE users SET free_spins_count = 0, free_spins_expires = NULL WHERE id = ?', [userId]);
+      count = 0;
+    }
+
+    if (count <= 0) return res.json({ grants: [] });
+    return res.json({ grants: [{ remaining: count, expiresAt: expiresAt }] });
+  } catch(err) {
+    return res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
 // POST /api/freespins/use — use one free spin
 // Uses atomic UPDATE to prevent race condition double-claim
 router.post('/use', authenticate, bonusGuard, async function(req, res) {
