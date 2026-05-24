@@ -270,6 +270,95 @@
             outline-offset: 2px;
         }
 
+        /* ── Responsible-gambling header button + panel ─────────────────
+           Compliance signal: surface session timer, loss limits, reality
+           check, and quick "manage limits" without the player having to
+           hunt in the footer. Visible only when authenticated. */
+        .limits-btn {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: rgba(74, 222, 128, 0.12);
+            border: 1px solid rgba(74, 222, 128, 0.35);
+            color: var(--accent-green, #4ADE80);
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            padding: 0;
+            appearance: none;
+            -webkit-appearance: none;
+            transition: background 180ms ease, transform 180ms ease;
+        }
+        .limits-btn:hover { background: rgba(74, 222, 128, 0.22); transform: scale(1.05); }
+        .limits-btn:focus-visible { outline: 2px solid var(--accent-gold-bright); outline-offset: 2px; }
+        .limits-btn svg { width: 18px; height: 18px; }
+        .auth-anon .limits-btn { display: none; }
+
+        .limits-overlay {
+            position: fixed; inset: 0; z-index: 10000;
+            background: rgba(0,0,0,0.55);
+            display: none;
+            align-items: flex-start;
+            justify-content: center;
+            padding-top: 76px;
+        }
+        .limits-overlay[data-open="true"] { display: flex; }
+        .limits-panel {
+            width: min(360px, calc(100vw - 32px));
+            background: linear-gradient(180deg, #14181F, #0F1218);
+            border: 1px solid rgba(74, 222, 128, 0.25);
+            border-radius: 14px;
+            box-shadow: 0 24px 60px rgba(0,0,0,0.55);
+            color: var(--text-primary, #F0F0F5);
+            padding: 20px 22px;
+        }
+        .limits-panel-header {
+            display: flex; align-items: center; gap: 10px;
+            margin: 0 0 14px;
+        }
+        .limits-panel-header h3 {
+            margin: 0; font-size: 1.05rem; color: var(--accent-green, #4ADE80); flex: 1;
+        }
+        .limits-close {
+            background: transparent; border: 0; color: var(--text-muted, #8B95A8);
+            font-size: 20px; line-height: 1; cursor: pointer; padding: 4px 8px;
+        }
+        .limits-close:hover { color: var(--text-primary, #F0F0F5); }
+        .limits-row {
+            display: flex; justify-content: space-between; align-items: baseline;
+            padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.06);
+            font-size: 0.9rem;
+        }
+        .limits-row:last-of-type { border-bottom: 0; }
+        .limits-row-label { color: var(--text-secondary, #9CA3AF); }
+        .limits-row-value { color: var(--text-primary, #F0F0F5); font-weight: 600; font-variant-numeric: tabular-nums; }
+        .limits-row-value.none { color: var(--text-muted, #8B95A8); font-weight: 500; }
+        .limits-actions {
+            display: flex; gap: 10px; margin-top: 14px;
+        }
+        .limits-actions a {
+            flex: 1; text-align: center;
+            padding: 10px 12px; border-radius: 8px;
+            text-decoration: none; font-size: 0.85rem; font-weight: 600;
+            background: rgba(74, 222, 128, 0.12);
+            border: 1px solid rgba(74, 222, 128, 0.3);
+            color: var(--accent-green, #4ADE80);
+            transition: background 160ms ease;
+        }
+        .limits-actions a.secondary {
+            background: transparent;
+            border-color: rgba(255,255,255,0.12);
+            color: var(--text-secondary, #9CA3AF);
+        }
+        .limits-actions a:hover { background: rgba(74, 222, 128, 0.22); }
+        .limits-actions a.secondary:hover { background: rgba(255,255,255,0.06); color: var(--text-primary, #F0F0F5); }
+        .limits-foot {
+            margin-top: 12px; font-size: 0.72rem; color: var(--text-muted, #8B95A8);
+            text-align: center; line-height: 1.4;
+        }
+
         .avatar:hover {
             transform: scale(1.05);
         }
@@ -1155,9 +1244,140 @@
             </div>
             <button class="btn-deposit" id="depositBtn">Deposit</button>
             <button class="btn-deposit" id="headerSignupBtn" style="background:transparent;border:1px solid rgba(212,168,83,0.4);color:var(--accent-gold-bright)">Sign Up</button>
+            <button type="button" class="limits-btn" id="limitsBtn" aria-label="Responsible gambling limits" aria-haspopup="dialog" aria-controls="limitsOverlay" aria-expanded="false">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+                    <path d="M12 8v4l3 2"/>
+                </svg>
+            </button>
             <button type="button" class="avatar" aria-label="My account"></button>
         </div>
     </header>
+
+    <!-- Responsible-gambling panel — populated by inline script below.
+         Visible only when authenticated (CSS gates via .auth-anon). -->
+    <div class="limits-overlay" id="limitsOverlay" role="dialog" aria-modal="true" aria-labelledby="limitsPanelTitle" data-open="false">
+        <div class="limits-panel" id="limitsPanel" role="document">
+            <div class="limits-panel-header">
+                <h3 id="limitsPanelTitle">Play responsibly</h3>
+                <button type="button" class="limits-close" id="limitsClose" aria-label="Close limits panel">&times;</button>
+            </div>
+            <div class="limits-row">
+                <span class="limits-row-label">Session time</span>
+                <span class="limits-row-value" id="limitsSession" data-empty-class="none">—</span>
+            </div>
+            <div class="limits-row">
+                <span class="limits-row-label">Daily loss limit</span>
+                <span class="limits-row-value" id="limitsDaily" data-empty-class="none">—</span>
+            </div>
+            <div class="limits-row">
+                <span class="limits-row-label">Weekly loss limit</span>
+                <span class="limits-row-value" id="limitsWeekly" data-empty-class="none">—</span>
+            </div>
+            <div class="limits-row">
+                <span class="limits-row-label">Monthly loss limit</span>
+                <span class="limits-row-value" id="limitsMonthly" data-empty-class="none">—</span>
+            </div>
+            <div class="limits-row">
+                <span class="limits-row-label">Reality check</span>
+                <span class="limits-row-value" id="limitsRealityCheck" data-empty-class="none">—</span>
+            </div>
+            <div class="limits-actions">
+                <a href="responsible-gambling.html">Manage limits</a>
+                <a href="responsible-gambling.html#self-exclusion" class="secondary">Take a break</a>
+            </div>
+            <p class="limits-foot">Lowering a limit is instant. Raising one needs a 24h cooling-off.</p>
+        </div>
+    </div>
+    <script>
+    (function() {
+        // RG panel controller — talks to /api/session/status and /api/loss-limits
+        // to render the current player's limits + session timer. Closes on
+        // outside click, Escape key, or × button. Re-fetches each open so
+        // values are fresh (cheap; both endpoints are cached and lightweight).
+        var btn = document.getElementById('limitsBtn');
+        var overlay = document.getElementById('limitsOverlay');
+        var panel = document.getElementById('limitsPanel');
+        var closeBtn = document.getElementById('limitsClose');
+        if (!btn || !overlay || !panel || !closeBtn) return;
+
+        function fmtMoney(n) {
+            if (n == null || !Number.isFinite(+n) || +n <= 0) return null;
+            return '$' + (+n).toFixed(2);
+        }
+        function fmtSession(elapsedMin, remainingMin) {
+            if (elapsedMin == null) return null;
+            var h = Math.floor(elapsedMin / 60), m = elapsedMin % 60;
+            var s = (h > 0 ? h + 'h ' : '') + m + 'm';
+            if (remainingMin != null) s += ' / ' + remainingMin + 'm left';
+            return s;
+        }
+        function setRow(id, value) {
+            var el = document.getElementById(id);
+            if (!el) return;
+            if (value == null) {
+                el.textContent = 'Not set';
+                el.classList.add('none');
+            } else {
+                el.textContent = value;
+                el.classList.remove('none');
+            }
+        }
+
+        function authHeader() {
+            var t = localStorage.getItem('casinoToken');
+            return t ? { 'Authorization': 'Bearer ' + t } : null;
+        }
+
+        function fetchAndRender() {
+            var headers = authHeader();
+            if (!headers) return; // logged out
+            // Parallel fetches — fail-soft so a single endpoint outage still
+            // shows the rest. Per-fetch try/catch keeps each independent.
+            var sessionP = fetch('/api/session/status', { headers: headers })
+                .then(function(r) { return r.ok ? r.json() : null; })
+                .catch(function() { return null; });
+            var limitsP = fetch('/api/loss-limits', { headers: headers })
+                .then(function(r) { return r.ok ? r.json() : null; })
+                .catch(function() { return null; });
+
+            Promise.all([sessionP, limitsP]).then(function(out) {
+                var sess = out[0] || {};
+                var lim  = out[1] || {};
+                setRow('limitsSession', fmtSession(sess.elapsed, sess.remaining));
+                setRow('limitsDaily',   fmtMoney(lim.daily_loss_limit));
+                setRow('limitsWeekly',  fmtMoney(lim.weekly_loss_limit));
+                setRow('limitsMonthly', fmtMoney(lim.monthly_loss_limit));
+                var rc = lim.reality_check_interval;
+                setRow('limitsRealityCheck', (rc && +rc > 0) ? (rc + ' min') : null);
+            });
+        }
+
+        function open() {
+            overlay.setAttribute('data-open', 'true');
+            btn.setAttribute('aria-expanded', 'true');
+            fetchAndRender();
+            closeBtn.focus();
+        }
+        function close() {
+            overlay.setAttribute('data-open', 'false');
+            btn.setAttribute('aria-expanded', 'false');
+            btn.focus();
+        }
+
+        btn.addEventListener('click', function(e) {
+            e.preventDefault();
+            overlay.getAttribute('data-open') === 'true' ? close() : open();
+        });
+        closeBtn.addEventListener('click', close);
+        overlay.addEventListener('click', function(e) {
+            if (e.target === overlay) close();
+        });
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape' && overlay.getAttribute('data-open') === 'true') close();
+        });
+    })();
+    </script>
 
     <!-- JACKPOT BAR — real-time progressive jackpot ticker -->
     <div class="jackpot-bar" id="jackpotBar">

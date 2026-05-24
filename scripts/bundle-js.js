@@ -52,7 +52,14 @@ const STANDALONE_CSS = [
     'css/age-gate.css'
 ];
 
-// CSS files to bundle (in specificity order — premium overrides MUST be last)
+// CSS files to bundle (in specificity order — premium overrides MUST be last).
+// `css/*` files were previously left as standalone <link> tags in
+// dist/index.html (12 extra HTTP requests on cold load). They're inserted
+// at the component-level position so the existing premium-override
+// cascade is preserved. age-gate.css and search.css are also referenced
+// directly by login.html and other non-index pages — those keep working
+// because both files remain in STANDALONE_CSS above and are still
+// copied verbatim to dist/.
 const CSS_FILES = [
     'design-tokens.css',
     'styles.css',
@@ -63,6 +70,19 @@ const CSS_FILES = [
     'visual-overhaul.css',
     'bonus-games.css',
     'mobile-fixes.css',
+    // Page-level CSS that index.html used to load as separate <link>s.
+    // Placed before component theming so they can be overridden.
+    'css/performance-mobile.css',
+    'css/landing-redesign.css',
+    'css/jackpot.css',
+    'css/chat-widget.css',
+    'css/notifications.css',
+    'css/age-gate.css',
+    'css/skeleton.css',
+    'css/search.css',
+    'css/favorites.css',
+    'css/session-monitor.css',
+    'css/conversion.css',
     'provider-chrome.css',
     'studio-chrome.css',
     'promo-styles.css',
