@@ -15624,7 +15624,7 @@ function _logBetForExport(winAmount, betAmount) {
     });
 }
 function _exportBetHistory() {
-    if (_betHistory240.length === 0) { alert('No spin history to export yet.'); return; }
+    if (_betHistory240.length === 0) { if (typeof showToast === 'function') showToast('No spin history to export yet.', 'info'); else alert('No spin history to export yet.'); return; }
     var csv = 'Time,Game,Bet,Win,Net,Balance\n';
     _betHistory240.forEach(function(row) {
         csv += row.time + ',' + row.game + ',' + row.bet + ',' + row.win + ',' + row.net + ',' + row.balance + '\n';
@@ -16414,14 +16414,14 @@ function _processDeposit() {
     var input = document.getElementById('depositAmount');
     if (!input) return;
     var amount = parseFloat(input.value);
-    if (isNaN(amount) || amount < 10) { alert('Minimum deposit is $10'); return; }
+    if (isNaN(amount) || amount < 10) { if (typeof showToast === 'function') showToast('Minimum deposit is $10', 'error'); else alert('Minimum deposit is $10'); return; }
     // Production: All deposits must go through the server payment system.
     // No client-side balance manipulation allowed.
     var token = typeof localStorage !== 'undefined' ? localStorage.getItem('casinoAuthToken') : null;
     if (token && !token.startsWith('local_')) {
-        alert('Please use the payment system to make a deposit.');
+        if (typeof showToast === 'function') showToast('Please use the payment system to make a deposit.', 'info'); else alert('Please use the payment system to make a deposit.');
     } else {
-        alert('Please register or log in to make a deposit.');
+        if (typeof showToast === 'function') showToast('Please register or log in to make a deposit.', 'warning'); else alert('Please register or log in to make a deposit.');
     }
     _closeCashier();
 }
@@ -16429,14 +16429,14 @@ function _processWithdrawal() {
     var input = document.getElementById('withdrawAmount');
     if (!input) return;
     var amount = parseFloat(input.value);
-    if (isNaN(amount) || amount < 20) { alert('Minimum withdrawal is $20'); return; }
+    if (isNaN(amount) || amount < 20) { if (typeof showToast === 'function') showToast('Minimum withdrawal is $20', 'error'); else alert('Minimum withdrawal is $20'); return; }
     // Production: All withdrawals must go through the server.
     // No client-side balance manipulation allowed.
     var token = typeof localStorage !== 'undefined' ? localStorage.getItem('casinoAuthToken') : null;
     if (token && !token.startsWith('local_')) {
-        alert('Please use the withdrawal system in your account to request a withdrawal.');
+        if (typeof showToast === 'function') showToast('Please use the withdrawal system in your account to request a withdrawal.', 'info'); else alert('Please use the withdrawal system in your account to request a withdrawal.');
     } else {
-        alert('Please register or log in to request a withdrawal.');
+        if (typeof showToast === 'function') showToast('Please register or log in to request a withdrawal.', 'warning'); else alert('Please register or log in to request a withdrawal.');
     }
     _closeCashier();
 }
@@ -16507,10 +16507,10 @@ function _updateCashbackBadge() {
     el.style.display = '';
 }
 function _claimCashback() {
-    if (_cashback270.accumulated < 5) { alert('Minimum cashback claim is $5'); return; }
+    if (_cashback270.accumulated < 5) { if (typeof showToast === 'function') showToast('Minimum cashback claim is $5', 'error'); else alert('Minimum cashback claim is $5'); return; }
     // Production: Cashback is processed server-side.
     // No client-side balance manipulation allowed.
-    alert('Cashback is processed automatically by the server. Please log in to claim.');
+    if (typeof showToast === 'function') showToast('Cashback is processed automatically by the server. Please log in to claim.', 'info'); else alert('Cashback is processed automatically by the server. Please log in to claim.');
 }
 
 // Sprint 271 — Tournament/leaderboard system
@@ -16581,12 +16581,12 @@ function _initBonusWheel() {
 }
 function _spinBonusWheel() {
     var dayMs = 86400000;
-    if ((Date.now() - _bonusWheel272.lastSpin) < dayMs) { alert('Come back tomorrow for another free spin!'); return; }
+    if ((Date.now() - _bonusWheel272.lastSpin) < dayMs) { if (typeof showToast === 'function') showToast('Come back tomorrow for another free spin!', 'info'); else alert('Come back tomorrow for another free spin!'); return; }
     _bonusWheel272.lastSpin = Date.now();
     try { localStorage.setItem('matrixSpins_bonusWheel', JSON.stringify({ lastSpin: _bonusWheel272.lastSpin })); } catch(e) {}
     // Production: Bonus wheel prizes must be server-validated.
     // No client-side balance manipulation allowed.
-    alert('Spin recorded! Log in to claim your bonus wheel prize.');
+    if (typeof showToast === 'function') showToast('Spin recorded! Log in to claim your bonus wheel prize.', 'success'); else alert('Spin recorded! Log in to claim your bonus wheel prize.');
     var btn = document.getElementById('bonusWheelBtn');
     if (btn) btn.style.display = 'none';
 }
@@ -16629,14 +16629,14 @@ function _submitEmailOptIn() {
     var input = document.getElementById('emailOptInInput');
     if (!input) return;
     var email = input.value.trim();
-    if (!email || !email.match(/^[^@]+@[^@]+\.[^@]+$/)) { alert('Please enter a valid email address'); return; }
+    if (!email || !email.match(/^[^@]+@[^@]+\.[^@]+$/)) { if (typeof showToast === 'function') showToast('Please enter a valid email address', 'error'); else alert('Please enter a valid email address'); return; }
     try { localStorage.setItem('matrixSpins_emailOptIn', 'done'); } catch(e) {}
     try { localStorage.setItem('matrixSpins_userEmail', email); } catch(e) {}
     var overlay = document.getElementById('emailOptInOverlay');
     if (overlay) overlay.style.display = 'none';
     // Production: Email opt-in bonus is handled server-side via API.
     // No client-side balance manipulation allowed.
-    alert('Thanks for subscribing! Register or log in to receive your bonus.');
+    if (typeof showToast === 'function') showToast('Thanks for subscribing! Register or log in to receive your bonus.', 'success'); else alert('Thanks for subscribing! Register or log in to receive your bonus.');
 }
 function _dismissEmailOptIn() {
     try { localStorage.setItem('matrixSpins_emailOptIn', 'done'); } catch(e) {}
@@ -16881,7 +16881,7 @@ function _logAuditEvent(eventType, details) {
     console.log('[Audit] ' + eventType, details || '');
 }
 function _exportAuditLog() {
-    if (_auditLog282.length === 0) { alert('No audit events to export.'); return; }
+    if (_auditLog282.length === 0) { if (typeof showToast === 'function') showToast('No audit events to export.', 'info'); else alert('No audit events to export.'); return; }
     var csv = 'Timestamp,Event,Session,Details\n';
     _auditLog282.forEach(function(e) {
         csv += new Date(e.time).toISOString() + ',' + e.type + ',' + e.session + ',"' + JSON.stringify(e.details).replace(/"/g, "'") + '"\n';
@@ -16907,7 +16907,7 @@ function _getBonusBuyCost() {
 function _buyBonus() {
     var cost = _getBonusBuyCost();
     if (typeof balance !== 'undefined' && balance < cost) {
-        alert('Insufficient balance. Bonus buy costs $' + cost.toLocaleString());
+        if (typeof showToast === 'function') showToast('Insufficient balance. Bonus buy costs $' + cost.toLocaleString(), 'error'); else alert('Insufficient balance. Bonus buy costs $' + cost.toLocaleString());
         return;
     }
     if (!confirm('Buy bonus round for $' + cost.toLocaleString() + '?\n\nThis guarantees entry to the free spins bonus.')) return;
@@ -18259,12 +18259,12 @@ function _openDepositLimits() {
     if (limit !== null) {
         if (limit === 'none' || limit === '') {
             localStorage.removeItem('ms_deposit_limit');
-            alert('Deposit limit removed.');
+            if (typeof showToast === 'function') showToast('Deposit limit removed.', 'success'); else alert('Deposit limit removed.');
         } else {
             var val = parseFloat(limit);
             if (!isNaN(val) && val > 0) {
                 localStorage.setItem('ms_deposit_limit', val.toString());
-                alert('Daily deposit limit set to $' + val.toFixed(2));
+                if (typeof showToast === 'function') showToast('Daily deposit limit set to $' + val.toFixed(2), 'success'); else alert('Daily deposit limit set to $' + val.toFixed(2));
             }
         }
     }
@@ -18481,12 +18481,12 @@ function _openDepositLimits() {
     if (limit !== null) {
         if (limit === 'none' || limit === '') {
             localStorage.removeItem('ms_deposit_limit');
-            alert('Deposit limit removed.');
+            if (typeof showToast === 'function') showToast('Deposit limit removed.', 'success'); else alert('Deposit limit removed.');
         } else {
             var val = parseFloat(limit);
             if (!isNaN(val) && val > 0) {
                 localStorage.setItem('ms_deposit_limit', val.toString());
-                alert('Daily deposit limit set to $' + val.toFixed(2));
+                if (typeof showToast === 'function') showToast('Daily deposit limit set to $' + val.toFixed(2), 'success'); else alert('Daily deposit limit set to $' + val.toFixed(2));
             }
         }
     }
@@ -18790,10 +18790,10 @@ function _adminSearchPlayer() {
             var p = data.players[0];
             alert('Player: ' + (p.email || p.id) + '\nBalance: $' + (p.balance || 0).toFixed(2) + '\nTotal Wagered: $' + (p.totalWagered || 0).toFixed(2) + '\nJoined: ' + (p.createdAt || 'N/A'));
         } else {
-            alert('No player found for: ' + query);
+            if (typeof showToast === 'function') showToast('No player found for: ' + query, 'warning'); else alert('No player found for: ' + query);
         }
     })
-    .catch(function(e) { alert('Search error: ' + e.message); });
+    .catch(function(e) { if (typeof showToast === 'function') showToast('Search error: ' + e.message, 'error'); else alert('Search error: ' + e.message); });
 }
 
 
@@ -18808,8 +18808,8 @@ function _adminBroadcast() {
         body: JSON.stringify({ message: msg, type: type })
     })
     .then(function(r) { return r.json(); })
-    .then(function(d) { alert('Broadcast sent to ' + (d.recipients || 0) + ' players.'); })
-    .catch(function(e) { alert('Broadcast error: ' + e.message); });
+    .then(function(d) { if (typeof showToast === 'function') showToast('Broadcast sent to ' + (d.recipients || 0) + ' players.', 'success'); else alert('Broadcast sent to ' + (d.recipients || 0) + ' players.'); })
+    .catch(function(e) { if (typeof showToast === 'function') showToast('Broadcast error: ' + e.message, 'error'); else alert('Broadcast error: ' + e.message); });
     _showBroadcastBanner(msg, type);
 }
 function _showBroadcastBanner(msg, type) {
@@ -19023,8 +19023,8 @@ function _joinTournament() {
         headers: { 'Authorization': 'Bearer ' + (typeof authToken !== 'undefined' ? authToken : '') }
     })
     .then(function(r) { return r.json(); })
-    .then(function(d) { alert(d.message || 'Joined tournament!'); })
-    .catch(function(e) { alert('Could not join: ' + e.message); });
+    .then(function(d) { if (typeof showToast === 'function') showToast(d.message || 'Joined tournament!', 'success'); else alert(d.message || 'Joined tournament!'); })
+    .catch(function(e) { if (typeof showToast === 'function') showToast('Could not join: ' + e.message, 'error'); else alert('Could not join: ' + e.message); });
 }
 
 
@@ -19072,10 +19072,10 @@ function _verifyLastSpin() {
         if (data.verified) {
             alert('Verified: Spin #' + _fairSeeds.nonce + ' — server seed hash matches. Result computed via HMAC-SHA256.');
         } else {
-            alert('Verification result: ' + (data.message || data.error || 'Unable to verify'));
+            if (typeof showToast === 'function') showToast('Verification result: ' + (data.message || data.error || 'Unable to verify'), 'warning'); else alert('Verification result: ' + (data.message || data.error || 'Unable to verify'));
         }
     }).catch(function() {
-        alert('Verification unavailable — please try again.');
+        if (typeof showToast === 'function') showToast('Verification unavailable — please try again.', 'error'); else alert('Verification unavailable — please try again.');
     });
 }
 
@@ -19114,7 +19114,7 @@ function _handleKYCUpload(input, docType) {
 function _submitKYC() {
     _kycStatus = 'pending';
     localStorage.setItem('ms_kyc_status', 'pending');
-    alert('Documents submitted for review. Verification usually takes 24-48 hours.');
+    if (typeof showToast === 'function') showToast('Documents submitted for review. Verification usually takes 24-48 hours.', 'success'); else alert('Documents submitted for review. Verification usually takes 24-48 hours.');
     var panel = document.getElementById('kycPanel363');
     if (panel) panel.style.display = 'none';
 }
@@ -19160,10 +19160,10 @@ function _show2FASetup() {
 }
 function _verify2FA() {
     var code = document.getElementById('twoFACode365');
-    if (!code || code.value.length !== 6) { alert('Please enter a valid 6-digit code.'); return; }
+    if (!code || code.value.length !== 6) { if (typeof showToast === 'function') showToast('Please enter a valid 6-digit code.', 'error'); else alert('Please enter a valid 6-digit code.'); return; }
     _2faEnabled = true;
     localStorage.setItem('ms_2fa_enabled', 'true');
-    alert('Two-Factor Authentication enabled successfully!');
+    if (typeof showToast === 'function') showToast('Two-Factor Authentication enabled successfully!', 'success'); else alert('Two-Factor Authentication enabled successfully!');
     document.getElementById('twoFAPanel365').remove();
 }
 function _disable2FA() {
@@ -19245,7 +19245,7 @@ function _exportGDPRData() {
     a.href = URL.createObjectURL(blob);
     a.download = 'matrix-spins-data-export.json';
     a.click();
-    alert('Your data has been exported.');
+    if (typeof showToast === 'function') showToast('Your data has been exported.', 'success'); else alert('Your data has been exported.');
 }
 function _requestDataDeletion() {
     if (confirm('WARNING: This will permanently delete all your data including account, balance, and play history. This action cannot be undone.\n\nAre you absolutely sure?')) {
@@ -19623,7 +19623,7 @@ function _selectRating(val) {
 function _submitRating() {
     localStorage.setItem('ms_app_rated', 'true');
     localStorage.setItem('ms_app_rating', _selectedRating.toString());
-    alert('Thanks for rating us ' + _selectedRating + ' stars!');
+    if (typeof showToast === 'function') showToast('Thanks for rating us ' + _selectedRating + ' stars!', 'success'); else alert('Thanks for rating us ' + _selectedRating + ' stars!');
     document.getElementById('ratingModal378').remove();
 }
 
@@ -19673,8 +19673,8 @@ function _showDepositModal() {
     document.body.appendChild(modal);
 }
 function _processDeposit(amount) {
-    if (!amount || amount < 1) { alert('Minimum deposit is $1'); return; }
-    if (amount > 10000) { alert('Maximum deposit is $10,000'); return; }
+    if (!amount || amount < 1) { if (typeof showToast === 'function') showToast('Minimum deposit is $1', 'error'); else alert('Minimum deposit is $1'); return; }
+    if (amount > 10000) { if (typeof showToast === 'function') showToast('Maximum deposit is $10,000', 'error'); else alert('Maximum deposit is $10,000'); return; }
     document.getElementById('depositModal379').style.display = 'none';
     _showDepositConfirmation(amount);
 }
@@ -19710,11 +19710,11 @@ function _confirmDeposit(amount) {
         if (data.url) {
             window.location.href = data.url;
         } else {
-            alert('Payment error. Please try again.');
+            if (typeof showToast === 'function') showToast('Payment error. Please try again.', 'error'); else alert('Payment error. Please try again.');
         }
     })
     .catch(function(e) {
-        alert('Connection error: ' + e.message);
+        if (typeof showToast === 'function') showToast('Connection error: ' + e.message, 'error'); else alert('Connection error: ' + e.message);
     });
 }
 /* Legacy stubs for backward compat */
@@ -19853,12 +19853,12 @@ function _showCashier() {
 }
 function _requestWithdrawal() {
     var balance = typeof credits !== 'undefined' ? credits : 0;
-    if (balance < 20) { alert('Minimum withdrawal is $20.'); return; }
+    if (balance < 20) { if (typeof showToast === 'function') showToast('Minimum withdrawal is $20.', 'error'); else alert('Minimum withdrawal is $20.'); return; }
     var amount = prompt('Enter withdrawal amount (max $' + balance.toFixed(2) + '):');
     if (!amount) return;
     var val = parseFloat(amount);
-    if (isNaN(val) || val < 20 || val > balance) { alert('Invalid amount.'); return; }
-    alert('Withdrawal of $' + val.toFixed(2) + ' submitted. Processing: 24-48 hours.');
+    if (isNaN(val) || val < 20 || val > balance) { if (typeof showToast === 'function') showToast('Invalid amount.', 'error'); else alert('Invalid amount.'); return; }
+    if (typeof showToast === 'function') showToast('Withdrawal of $' + val.toFixed(2) + ' submitted. Processing: 24-48 hours.', 'success'); else alert('Withdrawal of $' + val.toFixed(2) + ' submitted. Processing: 24-48 hours.');
 }
 
 
@@ -19920,9 +19920,9 @@ function _trackCashback(betAmount, winAmount) {
 function _claimCashback() {
     var cashbackPct = _currentVipTier.cashback / 100;
     var cashback = _dailyLosses * cashbackPct;
-    if (cashback < 0.01) { alert('No cashback available yet. Play more to accumulate losses eligible for cashback.'); return; }
+    if (cashback < 0.01) { if (typeof showToast === 'function') showToast('No cashback available yet. Play more to accumulate losses eligible for cashback.', 'info'); else alert('No cashback available yet. Play more to accumulate losses eligible for cashback.'); return; }
     if (typeof credits !== 'undefined') credits += cashback;
-    alert('Cashback claimed: $' + cashback.toFixed(2) + ' (' + _currentVipTier.cashback + '% of $' + _dailyLosses.toFixed(2) + ' losses)');
+    if (typeof showToast === 'function') showToast('Cashback claimed: $' + cashback.toFixed(2) + ' (' + _currentVipTier.cashback + '% of $' + _dailyLosses.toFixed(2) + ' losses)', 'success'); else alert('Cashback claimed: $' + cashback.toFixed(2) + ' (' + _currentVipTier.cashback + '% of $' + _dailyLosses.toFixed(2) + ' losses)');
     _dailyLosses = 0;
 }
 
@@ -20478,7 +20478,7 @@ function _checkEmailCapture() {
 }
 function _submitEmailCapture() {
     var email = document.getElementById('captureEmail408').value.trim();
-    if (!email || !email.includes('@')) { alert('Please enter a valid email.'); return; }
+    if (!email || !email.includes('@')) { if (typeof showToast === 'function') showToast('Please enter a valid email.', 'error'); else alert('Please enter a valid email.'); return; }
     localStorage.setItem('ms_email_captured', 'true');
     localStorage.setItem('ms_player_email', email);
     document.getElementById('emailCapture408').remove();
@@ -21091,8 +21091,8 @@ function _openGiftPanel() {
 }
 function _sendGift(amount) {
     var recipient = document.getElementById('giftRecipient');
-    if (!recipient || !recipient.value.trim()) { alert('Enter a username'); return; }
-    if (typeof balance !== 'undefined' && balance < amount) { alert('Insufficient balance'); return; }
+    if (!recipient || !recipient.value.trim()) { if (typeof showToast === 'function') showToast('Enter a username', 'error'); else alert('Enter a username'); return; }
+    if (typeof balance !== 'undefined' && balance < amount) { if (typeof showToast === 'function') showToast('Insufficient balance', 'error'); else alert('Insufficient balance'); return; }
 
     var toUsername = recipient.value.trim();
     var token = (typeof getAuthToken === 'function') ? getAuthToken() : (localStorage.getItem('casinoToken') || '');
@@ -21431,7 +21431,7 @@ function _initWithdrawalQueue() {
     try { var saved = localStorage.getItem('ms_withdrawals'); if (saved) _withdrawalQueue = JSON.parse(saved); } catch(e) {}
 }
 function _requestWithdrawal(amount, method) {
-    if (typeof balance !== 'undefined' && balance < amount) { alert('Insufficient balance'); return; }
+    if (typeof balance !== 'undefined' && balance < amount) { if (typeof showToast === 'function') showToast('Insufficient balance', 'error'); else alert('Insufficient balance'); return; }
     var req = { id: Date.now(), amount: amount, method: method || 'bank', status: 'pending', created: new Date().toISOString() };
     _withdrawalQueue.push(req);
     if (typeof balance !== 'undefined') balance -= amount;
@@ -21473,9 +21473,9 @@ function _openBanPanel() {
         '<button onclick="document.getElementById(&quot;banPanelOverlay&quot;).style.display=&quot;none&quot;" class="ban-close">Close</button></div>';
     el.style.display = 'flex';
 }
-function _banPlayer() { var u = document.getElementById('banPlayerInput'); if (u && u.value) alert('Player ' + u.value + ' banned'); }
-function _mutePlayer() { var u = document.getElementById('banPlayerInput'); if (u && u.value) alert('Player ' + u.value + ' muted for 24h'); }
-function _warnPlayer() { var u = document.getElementById('banPlayerInput'); if (u && u.value) alert('Warning sent to ' + u.value); }
+function _banPlayer() { var u = document.getElementById('banPlayerInput'); if (u && u.value) if (typeof showToast === 'function') showToast('Player ' + u.value + ' banned', 'success'); else alert('Player ' + u.value + ' banned'); }
+function _mutePlayer() { var u = document.getElementById('banPlayerInput'); if (u && u.value) if (typeof showToast === 'function') showToast('Player ' + u.value + ' muted for 24h', 'success'); else alert('Player ' + u.value + ' muted for 24h'); }
+function _warnPlayer() { var u = document.getElementById('banPlayerInput'); if (u && u.value) if (typeof showToast === 'function') showToast('Warning sent to ' + u.value, 'success'); else alert('Warning sent to ' + u.value); }
 
 
 // --- Sprint 434 — Revenue Ticker ---
@@ -21991,7 +21991,7 @@ function _initPlayHistoryExport() {}
 function _exportPlayHistory() {
     var history = [];
     try { history = JSON.parse(localStorage.getItem('ms_playHistory') || '[]'); } catch(e) {}
-    if (history.length === 0) { alert('No play history available'); return; }
+    if (history.length === 0) { if (typeof showToast === 'function') showToast('No play history available', 'info'); else alert('No play history available'); return; }
     var csv = 'Date,Game,Bet,Win,Net Result\n';
     history.forEach(function(h) {
         csv += h.date + ',' + h.game + ',' + h.bet + ',' + h.win + ',' + (h.win - h.bet) + '\n';
@@ -22578,7 +22578,7 @@ function _showBuyBonusUI() {
 }
 function _purchaseBonus(multiplier, spins) {
     var cost = (typeof currentBet !== 'undefined' ? currentBet : 1) * multiplier;
-    if (typeof balance !== 'undefined' && balance < cost) { alert('Insufficient balance'); return; }
+    if (typeof balance !== 'undefined' && balance < cost) { if (typeof showToast === 'function') showToast('Insufficient balance', 'error'); else alert('Insufficient balance'); return; }
     if (typeof balance !== 'undefined') balance -= cost;
     if (typeof updateBalanceDisplay === 'function') updateBalanceDisplay();
     document.getElementById('buyBonusOverlay').style.display = 'none';
@@ -23254,13 +23254,13 @@ function _initKYCVerification() {
         var dob = document.getElementById('kyc-dob').value;
         var country = document.getElementById('kyc-country').value;
         var idtype = document.getElementById('kyc-idtype').value;
-        if (!name || !dob || !country || !idtype) { alert('Please fill all fields'); return; }
+        if (!name || !dob || !country || !idtype) { if (typeof showToast === 'function') showToast('Please fill all fields', 'error'); else alert('Please fill all fields'); return; }
         var age = Math.floor((Date.now() - new Date(dob).getTime()) / 31557600000);
         if (age < 18) { alert('You must be 18 or older to play.'); return; }
         // Submit to server KYC verification endpoint — admin approval required to
         // reach 'verified' status. This client-side submission just marks 'pending'.
         var token = localStorage.getItem('casinoToken');
-        if (!token) { alert('Please log in first.'); return; }
+        if (!token) { if (typeof showToast === 'function') showToast('Please log in first.', 'warning'); else alert('Please log in first.'); return; }
         fetch('/api/user/verification', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
@@ -23269,13 +23269,13 @@ function _initKYCVerification() {
         .then(function(r) { return r.json().then(function(b) { return { ok: r.ok, body: b }; }); })
         .then(function(resp) {
             if (!resp.ok) {
-                alert('Verification submission failed: ' + ((resp.body && resp.body.error) || 'server error'));
+                if (typeof showToast === 'function') showToast('Verification submission failed: ' + ((resp.body && resp.body.error) || 'server error'), 'error'); else alert('Verification submission failed: ' + ((resp.body && resp.body.error) || 'server error'));
                 return;
             }
             panel.querySelector('.kyc-status').innerHTML = '<span class="kyc-pending">\u23F3 Pending admin review — we\'ll email you when approved.</span>';
             if (typeof _logAuditEvent === 'function') _logAuditEvent('kyc_submitted', { country: country });
         })
-        .catch(function(e) { alert('Network error submitting verification.'); console.warn('[KYC] submit error:', e.message); });
+        .catch(function(e) { if (typeof showToast === 'function') showToast('Network error submitting verification.', 'error'); else alert('Network error submitting verification.'); console.warn('[KYC] submit error:', e.message); });
     });
     console.log('[Sprint 499-506] KYC Verification ready');
 }
@@ -23302,7 +23302,7 @@ function _initAgeGate() {
     document.body.appendChild(overlay);
     document.getElementById('age-gate-confirm').addEventListener('click', function() {
         var dob = document.getElementById('age-gate-dob').value;
-        if (!dob) { alert('Please enter your date of birth'); return; }
+        if (!dob) { if (typeof showToast === 'function') showToast('Please enter your date of birth', 'error'); else alert('Please enter your date of birth'); return; }
         var age = Math.floor((Date.now() - new Date(dob).getTime()) / 31557600000);
         if (age < 18) { alert('You must be 18 or older. Access denied.'); return; }
         localStorage.setItem('ms_age_confirmed', 'true');
@@ -23851,7 +23851,7 @@ function _initWithdrawalFlow() {
         var bal = parseFloat(localStorage.getItem('ms_balance') || '0');
         var kyc = JSON.parse(localStorage.getItem('ms_kyc') || '{}');
         if (!kyc.verified) {
-            alert('Please complete KYC verification before withdrawing.');
+            if (typeof showToast === 'function') showToast('Please complete KYC verification before withdrawing.', 'warning'); else alert('Please complete KYC verification before withdrawing.');
             return;
         }
         var modal = document.createElement('div');
@@ -23869,8 +23869,8 @@ function _initWithdrawalFlow() {
         document.body.appendChild(modal);
         document.getElementById('wd-submit').addEventListener('click', function() {
             var amount = parseFloat(document.getElementById('wd-amount').value);
-            if (!amount || amount < 20) { alert('Minimum withdrawal is $20'); return; }
-            if (amount > bal) { alert('Insufficient balance'); return; }
+            if (!amount || amount < 20) { if (typeof showToast === 'function') showToast('Minimum withdrawal is $20', 'error'); else alert('Minimum withdrawal is $20'); return; }
+            if (amount > bal) { if (typeof showToast === 'function') showToast('Insufficient balance', 'error'); else alert('Insufficient balance'); return; }
             bal -= amount;
             localStorage.setItem('ms_balance', bal.toFixed(2));
             if (typeof updateBalanceDisplay === 'function') updateBalanceDisplay();
@@ -23925,7 +23925,7 @@ function _initPaymentMethods() {
         var type = document.getElementById('pm-type').value;
         var name = document.getElementById('pm-name').value;
         var details = document.getElementById('pm-details').value;
-        if (!name || !details) { alert('Please fill all fields'); return; }
+        if (!name || !details) { if (typeof showToast === 'function') showToast('Please fill all fields', 'error'); else alert('Please fill all fields'); return; }
         methods.push({ type: type, name: name, details: details, added: Date.now() });
         localStorage.setItem('ms_payment_methods', JSON.stringify(methods));
         renderMethods();
@@ -24812,11 +24812,11 @@ function _approveWithdrawal(id) {
         body: JSON.stringify({ adminNotes: notes })
     }).then(function(r) { return r.json(); }).then(function(data) {
         if (data.success) {
-            alert('Withdrawal ' + id + ' approved! Stripe payout: ' + (data.withdrawal.stripePayoutId || 'manual'));
+            if (typeof showToast === 'function') showToast('Withdrawal ' + id + ' approved! Stripe payout: ' + (data.withdrawal.stripePayoutId || 'manual'), 'success'); else alert('Withdrawal ' + id + ' approved! Stripe payout: ' + (data.withdrawal.stripePayoutId || 'manual'));
             _loadWithdrawals('pending');
             _loadWithdrawalStats();
         } else {
-            alert('Error: ' + (data.error || 'Unknown'));
+            if (typeof showToast === 'function') showToast('Error: ' + (data.error || 'Unknown'), 'error'); else alert('Error: ' + (data.error || 'Unknown'));
         }
     });
 }
@@ -24831,11 +24831,11 @@ function _denyWithdrawal(id) {
         body: JSON.stringify({ adminNotes: notes })
     }).then(function(r) { return r.json(); }).then(function(data) {
         if (data.success) {
-            alert('Withdrawal ' + id + ' denied. Balance refunded to user.');
+            if (typeof showToast === 'function') showToast('Withdrawal ' + id + ' denied. Balance refunded to user.', 'success'); else alert('Withdrawal ' + id + ' denied. Balance refunded to user.');
             _loadWithdrawals('pending');
             _loadWithdrawalStats();
         } else {
-            alert('Error: ' + (data.error || 'Unknown'));
+            if (typeof showToast === 'function') showToast('Error: ' + (data.error || 'Unknown'), 'error'); else alert('Error: ' + (data.error || 'Unknown'));
         }
     });
 }

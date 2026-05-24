@@ -653,6 +653,58 @@
             gap: 16px;
         }
 
+        /* Empty state shown when no games match the current filter. Lives
+           inside .games-grid so it inherits the section's vertical rhythm
+           but is itself a single full-width cell. */
+        .games-grid-empty {
+            grid-column: 1 / -1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding: 48px 24px;
+            border: 1px dashed var(--border-subtle, rgba(255,255,255,0.08));
+            border-radius: 14px;
+            background: rgba(255,255,255,0.02);
+            color: var(--text-secondary, #9CA3AF);
+        }
+        .games-grid-empty svg {
+            width: 44px; height: 44px;
+            color: var(--text-muted, #8B95A8);
+            margin-bottom: 16px;
+            opacity: 0.85;
+        }
+        .games-grid-empty h3 {
+            margin: 0 0 6px;
+            font-size: 1.05rem;
+            color: var(--text-primary, #F0F0F5);
+        }
+        .games-grid-empty p {
+            margin: 0 0 18px;
+            font-size: 0.9rem;
+            max-width: 360px;
+        }
+        .games-grid-empty button {
+            padding: 10px 18px;
+            border-radius: 8px;
+            border: 1px solid rgba(212,168,83,0.4);
+            background: linear-gradient(135deg, rgba(212,168,83,0.18), rgba(212,168,83,0.06));
+            color: var(--accent-gold-bright, #F0C66E);
+            font-size: 0.88rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 160ms ease, transform 160ms ease;
+        }
+        .games-grid-empty button:hover {
+            background: linear-gradient(135deg, rgba(212,168,83,0.28), rgba(212,168,83,0.12));
+            transform: translateY(-1px);
+        }
+        .games-grid-empty button:focus-visible {
+            outline: 2px solid var(--accent-gold-bright, #F0C66E);
+            outline-offset: 2px;
+        }
+
         .game-card {
             background: var(--bg-card);
             border: 1px solid var(--border-subtle);
@@ -1011,6 +1063,17 @@
             font-weight: 600;
             text-transform: uppercase;
             letter-spacing: 0.04em;
+            /* button reset — non-link nav items are real <button>s for a11y. */
+            background: transparent;
+            border: 0;
+            font-family: inherit;
+            appearance: none;
+            -webkit-appearance: none;
+        }
+        .mobile-nav-item:focus-visible {
+            outline: 2px solid var(--accent-gold-bright);
+            outline-offset: -4px;
+            border-radius: 4px;
         }
 
         .mobile-nav-item.active {
@@ -1191,7 +1254,7 @@
     <!-- HEADER -->
     <header class="header">
         <a href="/" class="header-logo" aria-label="Matrix Spins home">
-            <svg class="logo-crown" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <svg class="logo-crown" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
                 <path d="M12 2L15 8H21L16 12L18 18L12 14L6 18L8 12L3 8H9L12 2Z" fill="currentColor"/>
             </svg>
             Matrix Spins
@@ -1199,20 +1262,20 @@
 
         <div class="header-trust">
             <div class="trust-item">
-                <svg class="trust-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <svg class="trust-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
                     <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
                     <path d="M10 14l2 2 4-4"/>
                 </svg>
                 SSL Secured
             </div>
             <div class="trust-item">
-                <svg class="trust-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <svg class="trust-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
                     <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm3.5-9c.83 0 1.5-.67 1.5-1.5S16.33 8 15.5 8 14 8.67 14 9.5s.67 1.5 1.5 1.5zm-7 0c.83 0 1.5-.67 1.5-1.5S9.33 8 8.5 8 7 8.67 7 9.5 7.67 11 8.5 11zm3.5 6.5c2.33 0 4.31-1.46 5.11-3.5H6.89c.8 2.04 2.78 3.5 5.11 3.5z"/>
                 </svg>
                 Provably Fair
             </div>
             <div class="trust-item">
-                <svg class="trust-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <svg class="trust-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
                     <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20M4 5A2 2 0 0 1 6 3h12a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V5z"/>
                     <path d="M8 10h8"/>
                 </svg>
@@ -1224,7 +1287,7 @@
             <div class="balance-card">
                 <div>
                     <div class="balance-label">Balance</div>
-                    <div class="balance-amount" id="balance">$0.00</div>
+                    <div class="balance-amount" id="balance" aria-live="polite" aria-atomic="true">$0.00</div>
                 </div>
             </div>
             <div id="wageringBarWrap" style="display:none;flex:0 0 auto;max-width:160px;min-width:110px;">
@@ -1492,11 +1555,11 @@
         <!-- SEARCH -->
         <div class="search-container">
             <div class="search-bar">
-                <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
                     <circle cx="11" cy="11" r="8"/>
                     <path d="m21 21-4.35-4.35"/>
                 </svg>
-                <input class="search-input" id="searchInput" type="text" placeholder="Search 100 games by name, theme, or studio...">
+                <input class="search-input" id="searchInput" type="search" aria-label="Search games" placeholder="Search 100 games by name, theme, or studio...">
             </div>
         </div>
 
@@ -1623,36 +1686,36 @@
     <!-- MOBILE NAV -->
     <nav class="mobile-nav">
         <div class="mobile-nav-items">
-            <a href="#" class="mobile-nav-item active" data-nav="home">
-                <svg class="mobile-nav-icon" viewBox="0 0 24 24" fill="currentColor">
+            <button type="button" class="mobile-nav-item active" data-nav="home" aria-current="page">
+                <svg class="mobile-nav-icon" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
                     <path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/>
                 </svg>
                 Home
-            </a>
-            <a href="#" class="mobile-nav-item" data-nav="games">
-                <svg class="mobile-nav-icon" viewBox="0 0 24 24" fill="currentColor">
+            </button>
+            <button type="button" class="mobile-nav-item" data-nav="games">
+                <svg class="mobile-nav-icon" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
                     <path d="M3 3h8v8H3V3zm10 0h8v8h-8V3zM3 13h8v8H3v-8zm10 0h8v8h-8v-8z"/>
                 </svg>
                 Games
-            </a>
-            <a href="#" class="mobile-nav-item" data-nav="deposit" id="mobileDepositBtn">
-                <svg class="mobile-nav-icon" viewBox="0 0 24 24" fill="currentColor">
+            </button>
+            <button type="button" class="mobile-nav-item" data-nav="deposit" id="mobileDepositBtn">
+                <svg class="mobile-nav-icon" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
                     <path d="M11 2h2v9h-2V2zm5.5 11.5c1.93 0 3.5 1.57 3.5 3.5S18.43 20.5 16.5 20.5 13 18.93 13 17s1.57-3.5 3.5-3.5zm-8-1C7.12 12.5 6 13.62 6 15s1.12 2.5 2.5 2.5S11 16.38 11 15s-1.12-2.5-2.5-2.5z"/>
                 </svg>
                 Deposit
-            </a>
+            </button>
             <a href="promotions.html" class="mobile-nav-item" data-nav="bonuses">
-                <svg class="mobile-nav-icon" viewBox="0 0 24 24" fill="currentColor">
+                <svg class="mobile-nav-icon" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
                     <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm5 11h-4v4h-2v-4H7v-2h4V7h2v4h4v2z"/>
                 </svg>
                 Promos
             </a>
-            <a href="#" class="mobile-nav-item" data-nav="account">
-                <svg class="mobile-nav-icon" viewBox="0 0 24 24" fill="currentColor">
+            <button type="button" class="mobile-nav-item" data-nav="account">
+                <svg class="mobile-nav-icon" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
                     <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
                 </svg>
                 Account
-            </a>
+            </button>
         </div>
     </nav>
 
@@ -1840,6 +1903,51 @@
             grid.innerHTML = '';
             count.textContent = `${currentFilter === 'all' ? 'All Games' : currentFilter.charAt(0).toUpperCase() + currentFilter.slice(1)} (${games.length})`;
 
+            // Empty state — render a designed panel instead of a blank grid
+            // so a player who narrowed too far has an obvious recovery path.
+            // Built via DOM APIs (createElement/textContent only) so no XSS surface.
+            if (!games || games.length === 0) {
+                const empty = document.createElement('div');
+                empty.className = 'games-grid-empty';
+                empty.setAttribute('role', 'status');
+                empty.setAttribute('aria-live', 'polite');
+
+                const icon = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+                icon.setAttribute('viewBox', '0 0 24 24');
+                icon.setAttribute('fill', 'none');
+                icon.setAttribute('stroke', 'currentColor');
+                icon.setAttribute('stroke-width', '1.6');
+                icon.setAttribute('stroke-linecap', 'round');
+                icon.setAttribute('stroke-linejoin', 'round');
+                icon.setAttribute('aria-hidden', 'true');
+                ['M11 19a8 8 0 1 0 0-16 8 8 0 0 0 0 16z', 'M21 21l-4.35-4.35'].forEach(d => {
+                    const p = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+                    p.setAttribute('d', d);
+                    icon.appendChild(p);
+                });
+
+                const heading = document.createElement('h3');
+                heading.textContent = 'No games match this filter';
+
+                const desc = document.createElement('p');
+                desc.textContent = 'Try a different studio, clear the active filter, or browse all 100 games.';
+
+                const btn = document.createElement('button');
+                btn.type = 'button';
+                btn.textContent = 'Show all games';
+                btn.addEventListener('click', () => {
+                    const allChip = document.querySelector('.filter-chip');
+                    if (allChip) setFilter('all', allChip);
+                });
+
+                empty.appendChild(icon);
+                empty.appendChild(heading);
+                empty.appendChild(desc);
+                empty.appendChild(btn);
+                grid.appendChild(empty);
+                return;
+            }
+
             games.forEach(game => {
                 const card = document.createElement('div');
                 card.className = 'game-card';
@@ -1987,8 +2095,12 @@
             document.querySelectorAll('.mobile-nav-item').forEach(item => {
                 item.onclick = (e) => {
                     e.preventDefault();
-                    document.querySelectorAll('.mobile-nav-item').forEach(i => i.classList.remove('active'));
+                    document.querySelectorAll('.mobile-nav-item').forEach(i => {
+                        i.classList.remove('active');
+                        i.removeAttribute('aria-current');
+                    });
                     item.classList.add('active');
+                    item.setAttribute('aria-current', 'page');
 
                     const nav = item.getAttribute('data-nav');
                     if (nav === 'home') {
