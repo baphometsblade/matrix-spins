@@ -6,10 +6,19 @@ const { authenticate } = require('../middleware/auth');
 const { bonusGuard } = require('../middleware/bonus-guard');
 const db = require('../database');
 
-// Bootstrap columns
-db.run("ALTER TABLE users ADD COLUMN deposit_streak INTEGER DEFAULT 0").catch(function(e) { console.warn('[DepositStreak] fire-and-forget error:', e.message); });
-db.run("ALTER TABLE users ADD COLUMN deposit_streak_last TEXT").catch(function(e) { console.warn('[DepositStreak] fire-and-forget error:', e.message); });
-db.run("ALTER TABLE users ADD COLUMN deposit_streak_max INTEGER DEFAULT 0").catch(function(e) { console.warn('[DepositStreak] fire-and-forget error:', e.message); });
+// Bootstrap columns. ALTER TABLE ADD COLUMN is idempotent in effect but not
+// syntactically (neither SQLite nor older PG accept IF NOT EXISTS here), so
+// we swallow the benign "duplicate column"/"already exists" error.
+function _addCol(sql) {
+    db.run(sql).catch(function(e) {
+        var msg = String(e && e.message || e);
+        if (/duplicate column|already exists/i.test(msg)) return;
+        console.warn('[DepositStreak] schema bootstrap failed:', msg);
+    });
+}
+_addCol("ALTER TABLE users ADD COLUMN deposit_streak INTEGER DEFAULT 0");
+_addCol("ALTER TABLE users ADD COLUMN deposit_streak_last TEXT");
+_addCol("ALTER TABLE users ADD COLUMN deposit_streak_max INTEGER DEFAULT 0");
 
 // Streak milestones: day → { gems, credits, label }
 var STREAK_REWARDS = {

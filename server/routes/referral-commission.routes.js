@@ -15,6 +15,7 @@ const express = require('express');
 const router = express.Router();
 const db = require('../database');
 const { authenticate } = require('../middleware/auth');
+const { bonusGuard } = require('../middleware/bonus-guard');
 const commissionService = require('../services/referral-commission.service');
 
 router.get('/stats', authenticate, async (req, res) => {
@@ -106,7 +107,10 @@ router.get('/leaderboard', async (req, res) => {
     }
 });
 
-router.post('/claim', authenticate, async (req, res) => {
+// bonusGuard enforces self-exclusion + daily-bonus-cap across all bonus
+// claim routes. Service layer also checks self-exclusion, but without the
+// guard a user could stack commission claims past the central daily cap.
+router.post('/claim', authenticate, bonusGuard, async (req, res) => {
     try {
         const result = await commissionService.claimPendingCommissions(req.user.id);
         res.json({

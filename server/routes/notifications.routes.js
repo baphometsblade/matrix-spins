@@ -21,11 +21,12 @@ const _tsDefault = _isPg ? 'NOW()' : "(datetime('now'))";
 // against the full SELECT). With CREATE TABLE IF NOT EXISTS those
 // columns would never be backfilled; we have to ALTER TABLE explicitly.
 //
-// Both Postgres and modern SQLite accept the column adds idempotently:
-//   - Postgres ≥9.6: `ADD COLUMN IF NOT EXISTS`
-//   - SQLite ≥3.35:  `ADD COLUMN IF NOT EXISTS` (3.35+) or errors on
-//     duplicate with "duplicate column name" which we catch and swallow.
+// Postgres ≥9.6 accepts `ADD COLUMN IF NOT EXISTS` directly.
+// SQLite does NOT support `IF NOT EXISTS` on ALTER TABLE at any version
+// (it's only valid on CREATE TABLE/INDEX/VIEW etc.), so on SQLite we strip
+// the clause and rely on the "duplicate column name" error catch below.
 function _safeAlter(sql) {
+  if (!_isPg) sql = sql.replace(/\s+IF NOT EXISTS\b/i, '');
   return db.run(sql).catch(function(e) {
     var msg = String(e && e.message || e);
     if (/already exists|duplicate column/i.test(msg)) return; // benign

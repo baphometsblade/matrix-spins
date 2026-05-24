@@ -10,21 +10,22 @@
  *   GET  /api/admin-email/broadcasts   — list past broadcasts
  *   GET  /api/admin-email/segments/:s/preview — count + sample for a segment
  *
- * Auth: requires authenticate + role=admin (or X-Admin-Token = ADMIN_PASSWORD).
+ * Auth: requires authenticate + role=admin.
  */
 
 const express = require('express');
 const router = express.Router();
 const { authenticate } = require('../middleware/auth');
 const emailService = require('../services/email.service');
-const config = require('../config');
 const db = require('../database');
 
 // ── Admin guard ─────────────────────────────────────────────
+// Pure role check. Previously also accepted X-Admin-Token = ADMIN_PASSWORD,
+// which let any user holding a valid JWT escalate to broadcast email if the
+// ADMIN_PASSWORD leaked. Removed for defense-in-depth: the only path to
+// admin email routes is now a JWT whose subject is flagged is_admin.
 function adminOnly(req, res, next) {
-    const tokenOk = config.ADMIN_PASSWORD && req.headers['x-admin-token'] === config.ADMIN_PASSWORD;
-    const roleOk = req.user && (req.user.role === 'admin' || req.user.is_admin);
-    if (tokenOk || roleOk) return next();
+    if (req.user && (req.user.role === 'admin' || req.user.is_admin)) return next();
     return res.status(403).json({ error: 'Admin only' });
 }
 

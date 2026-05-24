@@ -100,19 +100,21 @@ async function _ensureWinnersTable() {
  *   { success: true }
  *
  * Notes:
- *   - No authentication required (fire-and-forget from frontend)
- *   - Silently ignores invalid requests
+ *   - Auth required — userId is derived from the JWT, not the body, to
+ *     prevent unauthenticated assignment-table poisoning that would skew
+ *     A/B test results and downstream business decisions.
+ *   - Silently ignores invalid bodies (fire-and-forget semantics).
  */
-router.post('/assign', async function(req, res) {
+router.post('/assign', authenticate, async function(req, res) {
   try {
     await _ensureExperimentsTable();
 
     const testName = String(req.body.testName || '').trim();
     const variant = String(req.body.variant || '').trim();
-    const userId = req.body.userId ? parseInt(req.body.userId, 10) : null;
+    const userId = req.user && req.user.id;
 
     // Basic validation
-    if (!testName || !variant || !userId || isNaN(userId)) {
+    if (!testName || !variant || !userId) {
       // Silently fail (fire-and-forget semantics)
       return res.status(200).json({ success: true });
     }
@@ -151,7 +153,7 @@ router.post('/assign', async function(req, res) {
  *   - Fire-and-forget from frontend
  *   - Revenue amount is optional and in currency units
  */
-router.post('/convert', async function(req, res) {
+router.post('/convert', authenticate, async function(req, res) {
   try {
     await _ensureConversionsTable();
 
@@ -159,7 +161,7 @@ router.post('/convert', async function(req, res) {
     const variant = String(req.body.variant || '').trim();
     const conversionType = String(req.body.conversionType || 'generic').trim();
     const revenueAmount = req.body.revenueAmount ? parseFloat(req.body.revenueAmount) : null;
-    const userId = req.body.userId ? parseInt(req.body.userId, 10) : null;
+    const userId = req.user && req.user.id;
 
     // Basic validation
     if (!testName || !variant) {
@@ -196,14 +198,14 @@ router.post('/convert', async function(req, res) {
  * Response:
  *   { success: true }
  */
-router.post('/revenue', async function(req, res) {
+router.post('/revenue', authenticate, async function(req, res) {
   try {
     await _ensureConversionsTable();
 
     const testName = String(req.body.testName || '').trim();
     const variant = String(req.body.variant || '').trim();
     const amount = req.body.amount ? parseFloat(req.body.amount) : null;
-    const userId = req.body.userId ? parseInt(req.body.userId, 10) : null;
+    const userId = req.user && req.user.id;
 
     // Basic validation
     if (!testName || !variant || amount === null || !Number.isFinite(amount)) {

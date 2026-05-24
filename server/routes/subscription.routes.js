@@ -6,11 +6,20 @@ const { authenticate } = require('../middleware/auth');
 const { bonusGuard } = require('../middleware/bonus-guard');
 const db = require('../database');
 
-// Bootstrap: add subscription columns (silently ignore if already exist)
-db.run("ALTER TABLE users ADD COLUMN subscription_active INTEGER DEFAULT 0").catch(function(e) { console.warn('[Subscription] fire-and-forget error:', e.message); });
-db.run("ALTER TABLE users ADD COLUMN subscription_tier TEXT").catch(function(e) { console.warn('[Subscription] fire-and-forget error:', e.message); });
-db.run("ALTER TABLE users ADD COLUMN subscription_expires TEXT").catch(function(e) { console.warn('[Subscription] fire-and-forget error:', e.message); });
-db.run("ALTER TABLE users ADD COLUMN subscription_daily_claimed TEXT").catch(function(e) { console.warn('[Subscription] fire-and-forget error:', e.message); });
+// Bootstrap: add subscription columns. ALTER TABLE ADD COLUMN is idempotent
+// in effect but neither SQLite nor older PG accept IF NOT EXISTS here, so
+// we swallow the benign "duplicate column"/"already exists" error.
+function _addCol(sql) {
+    db.run(sql).catch(function(e) {
+        var msg = String(e && e.message || e);
+        if (/duplicate column|already exists/i.test(msg)) return;
+        console.warn('[Subscription] schema bootstrap failed:', msg);
+    });
+}
+_addCol("ALTER TABLE users ADD COLUMN subscription_active INTEGER DEFAULT 0");
+_addCol("ALTER TABLE users ADD COLUMN subscription_tier TEXT");
+_addCol("ALTER TABLE users ADD COLUMN subscription_expires TEXT");
+_addCol("ALTER TABLE users ADD COLUMN subscription_daily_claimed TEXT");
 
 var PASS_CONFIG = {
     basic: {
