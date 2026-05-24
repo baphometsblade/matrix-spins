@@ -338,8 +338,12 @@
     },
 
     processDeposit(amount) {
-      if (amount < 5 || amount > 10000) {
-        alert('Deposit must be between $5 and $10,000.');
+      const _toast = (msg, sev) => {
+        if (typeof showToast === 'function') showToast(msg, sev);
+      };
+
+      if (!Number.isFinite(amount) || amount < 5 || amount > 10000) {
+        _toast('Deposit must be between $5 and $10,000.', 'error');
         return;
       }
 
@@ -349,8 +353,43 @@
         return;
       }
 
+      // Keep modal visible with a loading state so the player gets
+      // unambiguous feedback while we negotiate the Stripe checkout URL.
+      // Built via DOM APIs (no innerHTML) — safe even though amount is
+      // validated, no string interpolation into HTML.
       const modal = document.getElementById('deposit-modal');
-      if (modal) modal.remove();
+      const inner = modal && modal.querySelector(':scope > div');
+      const originalChildren = inner ? Array.from(inner.childNodes) : null;
+      if (inner) {
+        while (inner.firstChild) inner.removeChild(inner.firstChild);
+        const wrap = document.createElement('div');
+        wrap.style.cssText = 'text-align:center;padding:32px 8px;';
+        const spinner = document.createElement('div');
+        spinner.style.cssText = 'width:48px;height:48px;margin:0 auto 20px;border:4px solid #333;border-top-color:#DAA520;border-radius:50%;animation:retentionSpin 0.8s linear infinite;';
+        const heading = document.createElement('h2');
+        heading.style.cssText = 'color:#DAA520;font-size:22px;margin:0 0 8px;';
+        heading.textContent = 'Redirecting to Stripe…';
+        const sub = document.createElement('p');
+        sub.style.cssText = 'color:#999;margin:0;font-size:14px;';
+        sub.textContent = 'Securing your $' + amount.toFixed(2) + ' deposit. Do not close this window.';
+        wrap.appendChild(spinner);
+        wrap.appendChild(heading);
+        wrap.appendChild(sub);
+        inner.appendChild(wrap);
+
+        if (!document.getElementById('retention-spin-keyframes')) {
+          const style = document.createElement('style');
+          style.id = 'retention-spin-keyframes';
+          style.textContent = '@keyframes retentionSpin{to{transform:rotate(360deg)}}';
+          document.head.appendChild(style);
+        }
+      }
+
+      const _restore = () => {
+        if (!inner || !originalChildren) return;
+        while (inner.firstChild) inner.removeChild(inner.firstChild);
+        originalChildren.forEach((n) => inner.appendChild(n));
+      };
 
       fetch('/api/payment/create-checkout', {
         method: 'POST',
@@ -362,11 +401,13 @@
         if (data.url) {
           window.location.href = data.url;
         } else {
-          alert('Payment error. Please try again.');
+          _restore();
+          _toast(data.error || 'Payment error. Please try again.', 'error');
         }
       })
       .catch(e => {
-        alert('Connection error: ' + e.message);
+        _restore();
+        _toast('Connection error: ' + e.message, 'error');
       });
     },
 
@@ -432,12 +473,15 @@
     },
 
     processWithdraw() {
+      const _toast = (msg, sev) => {
+        if (typeof showToast === 'function') showToast(msg, sev);
+      };
       const amountInput = document.getElementById('withdraw-amount');
       const amount = parseFloat(amountInput?.value || 0);
       const balance = parseFloat(localStorage.getItem(STORAGE_PREFIX + 'balance') || '1000');
 
-      if (amount < 10) { alert('Minimum withdrawal is $10.'); return; }
-      if (amount > balance) { alert('Insufficient balance.'); return; }
+      if (!Number.isFinite(amount) || amount < 10) { _toast('Minimum withdrawal is $10.', 'error'); return; }
+      if (amount > balance) { _toast('Insufficient balance.', 'error'); return; }
 
       const newBalance = balance - amount;
       localStorage.setItem(STORAGE_PREFIX + 'balance', newBalance.toFixed(2));
