@@ -1025,7 +1025,7 @@ function renderGames() {
             const studioAccent = _getProviderAccent(game.provider);
             return `
                 <div class="game-card${isHot ? ' game-card-hot' : ''}${isJackpot ? ' game-card-jackpot is-jackpot' : ''}${gameDayCardClass}" role="button" tabindex="0" aria-label="${escapeHtml(game.name)}" onclick="try{if(typeof _compareMode!=='undefined'&&_compareMode){_addToCompare('${game.id}');this.classList.toggle('compare-selected',typeof _compareGames!=='undefined'&&_compareGames.indexOf('${game.id}')>=0);}else{(window.openSlot||openSlot)('${game.id}');}}catch(e){console.warn('Game click error:',e.message);}" style="position:relative" data-game-name="${(game.name || game.id || '').toLowerCase()}" data-game-id="${(game.id || '').toLowerCase()}">
-                    <button class="fav-btn${favored ? ' fav-active' : ''}" data-game-id="${game.id}" title="${favored ? 'Remove from favourites' : 'Add to favourites'}" onclick="event.stopPropagation(); (function(btn){var nowFav=toggleFavorite('${game.id}'); btn.textContent=nowFav?'\u2764\uFE0F':'\u2661'; btn.title=nowFav?'Remove from favourites':'Add to favourites'; btn.classList.add('fav-active'); setTimeout(function(){btn.classList.remove('fav-active');},350); updateFavTabBadge();})(this)">${favIcon}</button>
+                    <button type="button" class="fav-btn${favored ? ' fav-active' : ''}" data-game-id="${game.id}" aria-pressed="${favored ? 'true' : 'false'}" aria-label="${favored ? 'Remove ' + escapeHtml(game.name) + ' from favourites' : 'Add ' + escapeHtml(game.name) + ' to favourites'}" title="${favored ? 'Remove from favourites' : 'Add to favourites'}" onclick="event.stopPropagation(); (function(btn){var nowFav=toggleFavorite('${game.id}'); btn.textContent=nowFav?'\u2764\uFE0F':'\u2661'; btn.title=nowFav?'Remove from favourites':'Add to favourites'; btn.setAttribute('aria-pressed', nowFav?'true':'false'); btn.setAttribute('aria-label', (nowFav?'Remove ':'Add ')+${JSON.stringify(game.name)}+(nowFav?' from favourites':' to favourites')); btn.classList.add('fav-active'); setTimeout(function(){btn.classList.remove('fav-active');},350); updateFavTabBadge();})(this)">${favIcon}</button>
                     <div class="game-card-art" style="${thumbStyle}"${thumbDataBg}>
                         ${hasThumbnail ? '<img src="' + game.thumbnail + '" loading="lazy" decoding="async" alt="' + escapeHtml(game.name) + '" onerror="this.style.display=\'none\'">' : (!game.thumbnail && game.asset ? (assetTemplates[game.asset] || '') : '')}
                         <div class="card-anim-preview" style="background-image:url('assets/backgrounds/slots/${game.id}_bg.webp')">
@@ -1035,7 +1035,7 @@ function renderGames() {
                         ${jackpotBadge}
                         <div class="card-players-live" data-game="${game.id}" style="display:none"></div>
                         ${(function() { try { var _v = parseFloat(localStorage.getItem('personalBest_' + game.id) || '0'); if (_v > 0) { var _disp = _v >= 1000 ? ('$' + (_v/1000).toFixed(1) + 'K') : ('$' + Math.round(_v)); return '<div class="card-personal-best">\u{1F3C6} PB ' + _disp + '</div>'; } } catch(e) {} return ''; })()}
-                        <div class="game-vol-badge ${volClass}" title="Volatility: ${vol}">
+                        <div class="game-vol-badge ${volClass}" role="img" aria-label="Volatility: ${vol}" title="Volatility: ${vol}">
                             ${dotsHtml}
                         </div>
                         <div class="game-card-overlay">

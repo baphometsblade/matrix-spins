@@ -1137,8 +1137,30 @@
                 min-width: 0;
             }
 
+            /* Real-money rule: balance MUST stay visible at all times.
+               Previous design hid it on mobile; we keep it but shrink to
+               a compact pill so it fits next to Deposit + avatar. */
             .balance-card {
-                display: none;
+                padding: 4px 10px;
+                gap: 6px;
+                border-radius: 999px;
+                flex: 0 0 auto;
+                min-width: 0;
+            }
+            .balance-card > div {
+                display: flex;
+                flex-direction: column;
+                line-height: 1;
+                min-width: 0;
+            }
+            .balance-label {
+                font-size: 9px;
+                letter-spacing: 0.04em;
+                margin-bottom: 2px;
+            }
+            .balance-amount {
+                font-size: 13px;
+                white-space: nowrap;
             }
 
             .hero {
@@ -1253,6 +1275,35 @@
         /* UTILITIES */
         .hidden {
             display: none !important;
+        }
+
+        /* ── Reduced-motion fallback ────────────────────────────────────
+           Many inline keyframes (shimmer, jackpot-shimmer, skeleton-pulse,
+           hero pulse-dot) and cascaded keyframes in styles.css /
+           landing-redesign.css / unified-ux.css don't currently honor the
+           user's prefers-reduced-motion: reduce preference. This universal
+           override is the audit's recommended belt-and-suspenders fix —
+           it forces all animations/transitions to ~0 duration when the
+           user opts out of motion. Component-level overrides win when
+           they're more specific; this is just the safety net. */
+        @media (prefers-reduced-motion: reduce) {
+            *, *::before, *::after {
+                animation-duration: 0.01ms !important;
+                animation-iteration-count: 1 !important;
+                transition-duration: 0.01ms !important;
+                scroll-behavior: auto !important;
+            }
+            .jackpot-hero::before,
+            .game-card.jackpot-eligible,
+            .skeleton,
+            .pulse-dot,
+            .signup-overlay,
+            .signup-modal,
+            .ms-pulse, .ms-spin-pulse, .ms-win-glow,
+            [class*="ms-toast"],
+            .notification-item {
+                animation: none !important;
+            }
         }
     </style>
 <link rel="stylesheet" href="unified-ux.css">
