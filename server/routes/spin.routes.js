@@ -1305,7 +1305,24 @@ router.post('/', authenticate, async (req, res) => {
             eventBonus,
             lossStatus: lossCheck ? { dailyLoss: lossCheck.dailyLoss, limit: lossCheck.limit, remaining: lossCheck.remaining } : null,
             boostWinBonus: _boostWinBonus || 0,
-            spinIntegrity: require('crypto').createHmac('sha256', config.JWT_SECRET).update(JSON.stringify({ g: spinResult.grid, w: spinResult.winAmount, b: finalBalance })).digest('hex').slice(0, 16),
+            // spinIntegrity HMAC: signed proof that the server resolved
+            // this spin. Use SPIN_INTEGRITY_SECRET if set; otherwise derive
+            // a separate key from JWT_SECRET so the truncated 64-bit MAC
+            // returned to the client doesn't leak an oracle against the
+            // raw JWT_SECRET (millions of signature samples per active
+            // player would let an attacker recover bits of the signing key
+            // over time). The derived key uses HMAC-SHA256("spin-integrity-v1")
+            // — a one-way transform of JWT_SECRET that cannot be reversed.
+            spinIntegrity: require('crypto')
+                .createHmac('sha256',
+                    process.env.SPIN_INTEGRITY_SECRET ||
+                    require('crypto').createHmac('sha256', config.JWT_SECRET || 'fallback')
+                        .update('spin-integrity-v1')
+                        .digest()
+                )
+                .update(JSON.stringify({ g: spinResult.grid, w: spinResult.winAmount, b: finalBalance }))
+                .digest('hex')
+                .slice(0, 16),
         });
 
     } catch (err) {

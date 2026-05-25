@@ -135,8 +135,13 @@ async function accrueCommission(userId, betAmount, winAmount) {
 
         const chain = await getReferrerChain(userId);
 
-        // Tier 1
-        if (chain.tier1) {
+        // Tier 1 — never pay a referrer commission on their own loss.
+        // Without this guard, a user who registers a second account using
+        // their own referral code would earn tier-1 commission on every
+        // loss they incur — funded by the casino's own house edge. The
+        // tier-2 path already checks `chain.tier2 !== userId`; this just
+        // brings tier 1 to the same standard.
+        if (chain.tier1 && chain.tier1 !== userId) {
             const t1Commission = Math.round(netLoss * TIER_1_RATE * 100) / 100;
             if (t1Commission > 0) {
                 await db.run(

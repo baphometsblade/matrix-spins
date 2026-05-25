@@ -260,11 +260,32 @@ router.post('/register', async (req, res) => {
 
         const userId = result.lastInsertRowid;
 
-        // Check for multi-account fraud (fire-and-forget)
-        fraudDetection.checkMultiAccountRegistration(clientIp, userId).catch(function(err) { console.warn('[Auth] Fraud check error:', err.message); });
+        // Multi-account fraud check — AWAITED so we can act on the result
+        // before issuing the welcome bonus. Previously this was fire-and-
+        // forget which let an attacker register N accounts from the same
+        // IP and pocket N signup bonuses (a real money loop, since the
+        // bonus_balance + wagering still gives ~bonus/wageringMult net EV
+        // to the player). When flagged, we keep the account (legitimate
+        // households may share an IP) but zero out the welcome bonus —
+        // a flagged user has to clear admin review before they get
+        // promotional credit.
+        var fraudResult = await fraudDetection.checkMultiAccountRegistration(clientIp, userId)
+            .catch(function(err) { console.warn('[Auth] Fraud check error:', err.message); return { flagged: false }; });
 
-        // Log initial bonus_balance transaction if > 0
-        if (startBalance > 0) {
+        if (fraudResult && fraudResult.flagged && startBalance > 0) {
+            // Roll back the welcome bonus that was inserted above. The
+            // user row already exists with the bonus credited; reverse it
+            // atomically. Wagering_requirement also resets to 0 so the
+            // user isn't stuck unable to withdraw their own deposits later.
+            await db.run(
+                'UPDATE users SET bonus_balance = 0, wagering_requirement = 0 WHERE id = ?',
+                [userId]
+            ).catch(function(e) { console.warn('[Auth] Fraud-flag bonus rollback failed:', e.message); });
+            console.warn('[Auth] Suppressed welcome bonus for fraud-flagged user', userId, 'reason:', fraudResult.reason);
+            // Don't insert the audit-log transaction either — the bonus
+            // was rolled back, so logging it would misrepresent state.
+        } else if (startBalance > 0) {
+            // Log initial bonus_balance transaction
             await db.run(
                 'INSERT INTO transactions (user_id, type, amount, balance_before, balance_after, reference) VALUES (?, ?, ?, ?, ?, ?)',
                 [userId, 'bonus', startBalance, 0, startBalance, 'Welcome bonus (bonus credits, ' + SIGNUP_WAGERING_MULT + 'x wagering)']
