@@ -660,9 +660,13 @@ router.post('/house-edge/config', async (req, res) => {
             const adminId = req.user ? req.user.id : 'unknown';
             console.warn(`[AUDIT] House edge config changed by admin ${adminId}: ${changes.join(', ')}`);
             try {
+                // Canonical transactions schema — the previous INSERT into
+                // a `description` column failed silently because that column
+                // doesn't exist (schema-sqlite.js + schema-pg.js use
+                // `reference` and require balance_before/_after NOT NULL).
                 await db.run(
-                    "INSERT INTO transactions (user_id, type, amount, description) VALUES (?, 'admin_config', 0, ?)",
-                    [adminId, `House edge config: ${changes.join(', ')}`]
+                    'INSERT INTO transactions (user_id, type, amount, balance_before, balance_after, reference) VALUES (?, ?, ?, ?, ?, ?)',
+                    [adminId, 'admin_config', 0, 0, 0, `House edge config: ${changes.join(', ')}`]
                 );
             } catch (_) { /* non-critical audit log */ }
         }

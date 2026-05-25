@@ -121,9 +121,11 @@ router.post('/use', authenticate, bonusGuard, async function(req, res) {
   try {
     var userId = req.user.id;
 
-    // Check for expiry first
+    // Check for expiry first. SELECT includes `balance` because the
+    // transactions INSERT below requires balance_before / balance_after
+    // (both NOT NULL — see server/db/schema-sqlite.js + schema-pg.js).
     var row = await db.get(
-      'SELECT free_spins_count, free_spins_expires FROM users WHERE id = ?',
+      'SELECT free_spins_count, free_spins_expires, balance FROM users WHERE id = ?',
       [userId]
     );
     if (!row) return res.status(404).json({ error: 'User not found' });
@@ -152,15 +154,24 @@ router.post('/use', authenticate, bonusGuard, async function(req, res) {
       [userId]
     );
 
+    // Audit log to transactions. Credit went to bonus_balance, so the
+    // real `balance` is unchanged → balance_before === balance_after.
+    // Use the canonical (user_id, type, amount, balance_before,
+    // balance_after, reference) shape used by admin.routes.js — the
+    // previous insert into a non-existent `description` column silently
+    // 500'd every claim (column doesn't exist in either schema-sqlite
+    // or schema-pg, and balance_before/balance_after are NOT NULL).
+    var currentBalance = parseFloat(row.balance || 0);
     await db.run(
-      "INSERT INTO transactions (user_id, type, amount, description) VALUES (?, 'free_spin', ?, 'Free spin credit')",
-      [userId, FREE_SPIN_VALUE]
+      'INSERT INTO transactions (user_id, type, amount, balance_before, balance_after, reference) VALUES (?, ?, ?, ?, ?, ?)',
+      [userId, 'free_spin', FREE_SPIN_VALUE, currentBalance, currentBalance, 'Free spin credit (bonus_balance + ' + WAGERING_MULTIPLIER + 'x wagering)']
     );
 
     // Fetch updated values for response
     var updated = await db.get('SELECT free_spins_count, balance FROM users WHERE id = ?', [userId]);
     return res.json({ success: true, remaining: updated.free_spins_count || 0, newBalance: parseFloat(updated.balance || 0) });
   } catch(err) {
+    console.error('[FreeSpins/use] failed:', err && err.message);
     return res.status(500).json({ error: 'Internal server error' });
   }
 });
