@@ -1184,6 +1184,27 @@ router.post('/', authenticate, async (req, res) => {
             }());
         }
 
+        // ── Slot-race spin submission ──
+        // Canonical, server-trusted path. The public POST /api/slot-race/
+        // record-spin endpoint that accepted client-supplied winAmount has
+        // been disabled (410 Gone) because lucky_strike races compute score
+        // from the raw winAmount — a fake $999k win there would have stolen
+        // the prize_pool. We always submit the server-computed winAmount
+        // here on every real spin.
+        if (!usedFreeSpin && bet > 0) {
+            (async function () {
+                try {
+                    const slotRace = require('../routes/slot-race.routes');
+                    if (typeof slotRace.recordSpinInternal === 'function') {
+                        await slotRace.recordSpinInternal(userId, {
+                            betAmount: bet,
+                            winAmount: spinResult.winAmount || 0,
+                        });
+                    }
+                } catch (e) { console.warn('[SlotRace] recordSpinInternal error:', e.message); }
+            }());
+        }
+
         // ── Gems from wins (engagement incentive, fire-and-forget) ──────
         if (!usedFreeSpin && spinResult.winAmount >= 5) {
             const _gemsFromWin = Math.floor(spinResult.winAmount / 5);

@@ -138,17 +138,20 @@ router.post('/:id(\\d+)/enter', authenticate, async function (req, res) {
     }
 });
 
-router.post('/:id(\\d+)/record-spin', authenticate, async function (req, res) {
-    try {
-        var id = parseInt(req.params.id, 10);
-        var winAmount = Number(req.body && req.body.winAmount) || 0;
-        var betAmount = Number(req.body && req.body.betAmount) || 0;
-        await tournamentService.submitSpin(req.user.id, winAmount, betAmount);
-        var entry = await tournamentService.getMyEntry(id, req.user.id);
-        res.json({ recorded: true, score: entry.score, rank: entry.rank });
-    } catch (err) {
-        res.status(500).json({ error: 'Failed to record spin' });
-    }
+// SECURITY: the legacy POST /:id/record-spin endpoint that accepted
+// client-supplied { winAmount, betAmount } has been REMOVED. It let any
+// player submit a fake $1,000,000 win for tournament ranking and steal
+// the prize pool. /api/spin already calls tournamentService.submitSpin
+// with the server-computed winAmount on every real spin
+// (spin.routes.js:~1182), so this endpoint was both redundant and a
+// CRITICAL money-loss exploit. We return 410 Gone here so any cached
+// client that still calls it sees a clear deprecation, not a silent
+// no-op or a continued vulnerability.
+router.post('/:id(\\d+)/record-spin', authenticate, function (req, res) {
+    res.status(410).json({
+        error: 'This endpoint has been removed for security reasons. ' +
+               'Tournament scoring is now recorded automatically by /api/spin.'
+    });
 });
 
 module.exports = router;

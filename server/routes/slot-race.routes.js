@@ -429,29 +429,31 @@ router.post('/join', authenticate, async (req, res) => {
 
 /**
  * POST /api/slot-race/record-spin
- * Record a spin for the current race
- * Body: { betAmount, winAmount }
+ *
+ * SECURITY: this endpoint previously accepted { betAmount, winAmount }
+ * from the client and fed them straight into the leaderboard score —
+ * including the `lucky_strike` race type where score = max win.
+ * A player could POST { betAmount: 1, winAmount: 999999 } and steal
+ * the race's prize_pool by topping the leaderboard with a fake spin.
+ *
+ * Now the canonical hook lives in /api/spin: that route calls
+ * `recordSpinInternal` (exported below) with the SERVER-computed
+ * winAmount on every real spin. This public endpoint stays as a
+ * 410-Gone marker so any cached/stale client gets a clear signal
+ * rather than continuing to upload spoofed wins.
  */
-router.post('/record-spin', authenticate, async (req, res) => {
-    try {
-        const { betAmount, winAmount } = req.body;
-
-        if (typeof betAmount !== 'number' || typeof winAmount !== 'number') {
-            return res.status(400).json({ error: 'Invalid spin data' });
-        }
-
-        const race = await _recordSpin(req.user.id, { betAmount, winAmount });
-
-        if (!race) {
-            return res.status(400).json({ error: 'No active race or not joined' });
-        }
-
-        res.json({ success: true, race_id: race.id });
-    } catch (e) {
-        console.warn('[SlotRace] POST /record-spin error:', e.message);
-        res.status(500).json({ error: 'Failed to record spin' });
-    }
+router.post('/record-spin', authenticate, (req, res) => {
+    res.status(410).json({
+        error: 'This endpoint has been removed for security reasons. ' +
+               'Slot-race scoring is now recorded automatically by /api/spin.'
+    });
 });
+
+// Internal hook for spin.routes.js — accepts only server-computed values.
+// Returns the active race or null if no race is running / user not entered.
+async function recordSpinInternal(userId, spinData) {
+    return _recordSpin(userId, spinData);
+}
 
 /**
  * GET /api/slot-race/results/:id
@@ -525,4 +527,7 @@ router.get('/history', authenticate, async (req, res) => {
     }
 });
 
+// Export the Router for app.use(), plus the internal scoring hook that
+// /api/spin uses to submit trusted, server-computed spin data.
 module.exports = router;
+module.exports.recordSpinInternal = recordSpinInternal;
