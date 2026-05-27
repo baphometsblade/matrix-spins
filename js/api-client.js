@@ -197,6 +197,14 @@
     listGames:    (params) => apiFetch(`/games/${qs(params)}`),
     getGame:      (id)     => apiFetch(`/games/${encodeURIComponent(id)}`),
     getSeeds:     ()       => apiFetch('/fair/seed'),
+    // Server doesn't persist seeds per-session — each /fair/seed call returns
+    // a fresh random pair. So "rotating" is functionally equivalent to
+    // re-fetching the seed; the server doesn't surface a previous-seed
+    // history. Account-page UI still treats this as a rotation event for
+    // the player's mental model.
+    rotateSeed:   ()       => apiFetch('/fair/seed').then(s => Object.assign({
+        previousServerSeed: '(historical seeds are revealed via the /fair/verify endpoint after each completed spin)',
+    }, s)),
     spin:         (gameId, betCents, opts = {}) =>
       apiFetch('/spin/', {
         method: 'POST',

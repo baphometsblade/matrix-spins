@@ -215,10 +215,12 @@
       btn.addEventListener('click', async () => {
         const type = btn.getAttribute('data-exclude');
         const labels = {
-          cooldown_24h: '24 hours',
-          cooldown_7d: '7 days',
-          cooldown_30d: '30 days',
-          permanent: 'PERMANENTLY (cannot be undone without compliance review)'
+          cooldown_24h:  '24 hours',
+          cooldown_7d:   '7 days',
+          cooldown_30d:  '30 days',
+          cooldown_6mo:  '6 months',
+          cooldown_12mo: '12 months',
+          permanent:     'PERMANENTLY (cannot be undone without compliance review)'
         };
         const ok = window.confirm('Self-exclude for ' + labels[type] + '? This cannot be reversed early.');
         if (!ok) return;
@@ -231,6 +233,23 @@
           });
           setMsg($('excludeMsg'), 'Self-exclusion activated. You will be logged out.', true);
           if (r.isPermanent) {
+            // CRITICAL: clear the local auth token before redirecting,
+            // otherwise an excluded user who has the page open in another
+            // tab (or who just opens the site again) is silently still
+            // signed in. The server-side `is_active=1` flag in
+            // self_exclusions does block fresh /api/* calls, but the
+            // /login redirect we want to force only fires if there's no
+            // stored token. Call api.logout() so the server-side session
+            // is also revoked, then fall back to direct removal.
+            try {
+              if (window.MatrixSpinsAPI && typeof window.MatrixSpinsAPI.logout === 'function') {
+                window.MatrixSpinsAPI.logout().catch(function() { /* network — keep going */ });
+              }
+            } catch (_e) {}
+            try { localStorage.removeItem('casinoToken'); } catch (_e) {}
+            try { localStorage.removeItem('casinoUser'); } catch (_e) {}
+            try { localStorage.removeItem('casinoBalanceCents'); } catch (_e) {}
+            try { sessionStorage.clear(); } catch (_e) {}
             setTimeout(() => { window.location.href = 'index.html'; }, 1500);
           } else {
             loadExclusionStatus();

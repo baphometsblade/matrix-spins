@@ -117,7 +117,9 @@
   'use strict';
 
   function getToken(){
-    return localStorage.getItem('msaart_token') || localStorage.getItem('token') || localStorage.getItem('authToken') || '';
+    // `casinoToken` is the canonical key set by js/api-client.js. Older
+    // builds wrote to the other keys; we keep them as fallbacks.
+    return localStorage.getItem('casinoToken') || localStorage.getItem('msaart_token') || localStorage.getItem('token') || localStorage.getItem('authToken') || '';
   }
 
   function authHeaders(){

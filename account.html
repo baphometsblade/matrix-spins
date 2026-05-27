@@ -555,22 +555,21 @@
     }
   } catch {}
 
-  $('submitKycBtn').addEventListener('click', async () => {
-    const alert = $('kycUploadAlert');
-    alert.classList.remove('visible');
+  $('submitKycBtn').addEventListener('click', () => {
+    // KYC requires an actual document IMAGE upload (regulatory) — server
+    // route /api/kyc/upload uses multer multipart/form-data with a `file`
+    // field. Previously this button POSTed JSON `{documentType, documentNumber}`
+    // and the route returned 400 "No file uploaded". The full file-upload
+    // UI lives at kyc.html. Send the player there so they can actually
+    // complete verification, preserving their docType + docNumber in the
+    // query string as a hint.
     const docType = $('kycDocType').value;
     const docNumber = $('kycDocNumber').value.trim();
-    if (!docNumber) {
-      alert.className = 'alert visible'; alert.textContent = 'Document number is required.'; return;
-    }
-    try {
-      await api.submitKyc({ documentType: docType, documentNumber: docNumber });
-      alert.className = 'alert success visible';
-      alert.textContent = 'Document submitted for review.';
-      renderKycStatus('pending');
-    } catch (err) {
-      alert.className = 'alert visible'; alert.textContent = err.message;
-    }
+    const qsParts = [];
+    if (docType) qsParts.push('type=' + encodeURIComponent(docType));
+    if (docNumber) qsParts.push('number=' + encodeURIComponent(docNumber));
+    const query = qsParts.length ? '?' + qsParts.join('&') : '';
+    window.location.href = 'kyc.html' + query;
   });
 })();
 </script>

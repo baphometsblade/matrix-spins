@@ -129,7 +129,10 @@
 </div>
 
 <script>
-  const token = localStorage.getItem('token');
+  // Canonical token key is `casinoToken` (set by js/api-client.js). Older
+  // builds wrote to `token` / `msaart_token`; we read all of them for
+  // backward compat with active sessions that pre-date the unification.
+  const token = localStorage.getItem('casinoToken') || localStorage.getItem('token') || localStorage.getItem('msaart_token');
   const $ = (id) => document.getElementById(id);
   function show(id, on) { $(id).style.display = on ? 'block' : 'none'; }
   function alertMsg(elId, msg, kind) {

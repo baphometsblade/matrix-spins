@@ -341,6 +341,9 @@ mount('/api/admin',    './routes/admin.routes',     'admin');
 mount('/api/admin/analytics', './routes/admin-analytics.routes', 'admin-analytics');
 mount('/api/admin-metrics', './routes/adminmetrics.routes', 'admin-metrics');
 
+// Compliance audit logs
+mount('/api/age-deny', './routes/age-deny.routes', 'age-deny-audit');
+
 // Money / withdrawals
 mount('/api/withdrawal-enhance', './routes/withdrawal-enhance.routes', 'withdrawal-enhance');
 mount('/api/crypto',             './routes/crypto.routes',             'crypto');

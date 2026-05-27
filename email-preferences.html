@@ -102,7 +102,9 @@ button.danger{background:linear-gradient(135deg,#ff3860,#a02030);color:#fff;}
 <script>
 (function(){
   'use strict';
-  var TOKEN = localStorage.getItem('msaart_token') || localStorage.getItem('token') || localStorage.getItem('authToken');
+  // `casinoToken` is the canonical key set by js/api-client.js. Older
+  // builds wrote to the other keys; we keep them as fallbacks.
+  var TOKEN = localStorage.getItem('casinoToken') || localStorage.getItem('msaart_token') || localStorage.getItem('token') || localStorage.getItem('authToken');
   if (!TOKEN) {
     document.getElementById('signin').style.display = 'block';
     return;

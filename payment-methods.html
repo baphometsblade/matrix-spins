@@ -312,7 +312,10 @@
   'use strict';
 
   var API = '/api/payment-methods';
-  var TOKEN_KEYS = ['msaart_token', 'token', 'jwt'];
+  // `casinoToken` is the canonical key set by js/api-client.js. Older
+  // builds wrote to the other keys; we keep them as fallbacks so any
+  // pre-unification active session still authenticates.
+  var TOKEN_KEYS = ['casinoToken', 'msaart_token', 'token', 'jwt'];
 
   function getToken() {
     for (var i = 0; i < TOKEN_KEYS.length; i++) {

@@ -133,7 +133,7 @@
           '<button id="smContinue" class="sm-btn sm-btn-continue" aria-label="Continue playing">Continue Playing</button>' +
           '<button id="smBreak" class="sm-btn sm-btn-break" aria-label="Take a break">Take a Break</button>' +
         '</div>' +
-        '<a href="account.html#responsible" class="sm-limits-link">Set Limits</a>' +
+        '<a href="responsible-gambling.html" class="sm-limits-link">Set Limits</a>' +
       '</div>';
 
     trapFocus(overlay.querySelector('.sm-card'));
@@ -143,6 +143,15 @@
       scheduleRealityCheck();
     });
     document.getElementById('smBreak').addEventListener('click', function () {
+      // End the server-side session before navigating away so the timer
+      // doesn't keep counting and so the player's spin-rate / wagered
+      // total are flushed for the audit log. fire-and-forget — even if
+      // the call fails we still want to send the player to the RG page.
+      try {
+        if (window.MatrixSpinsAPI && typeof window.MatrixSpinsAPI.fetch === 'function') {
+          window.MatrixSpinsAPI.fetch('/session/end', { method: 'POST', body: {} }).catch(function () {});
+        }
+      } catch (_) {}
       window.location.href = 'responsible-gambling.html';
     });
   }

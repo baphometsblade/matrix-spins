@@ -202,18 +202,51 @@
   };
 
   // ── Topbar session/balance/logout ──────────────────────────
+  // Canonical storage is `localStorage.casinoToken` + `localStorage.casinoUser`
+  // (set by js/api-client.js). The original script read sessionStorage which
+  // is never populated, so the logout button was always hidden and the
+  // balance chip stayed at "—" for every signed-in player. Read the
+  // canonical localStorage keys; preserve sessionStorage fallback only for
+  // pre-unification active sessions.
+  var token = localStorage.getItem('casinoToken') || sessionStorage.getItem('token');
   var user = null;
-  try { user = JSON.parse(sessionStorage.getItem('user')); } catch (e) {}
+  try {
+    var rawUser = localStorage.getItem('casinoUser') || sessionStorage.getItem('user');
+    if (rawUser) user = JSON.parse(rawUser);
+  } catch (e) {}
 
-  if (user) {
+  if (token) {
     $('logout').style.display = 'inline-block';
-    var balCents = sessionStorage.getItem('balanceCents');
-    if (balCents) $('balanceChip').textContent = '$' + (parseInt(balCents, 10) / 100).toFixed(2);
+    // Hydrate balance from the canonical key; fall back to sessionStorage.
+    var balCents = localStorage.getItem('casinoBalanceCents') || sessionStorage.getItem('balanceCents');
+    if (balCents) {
+      $('balanceChip').textContent = '$' + (parseInt(balCents, 10) / 100).toFixed(2);
+    } else if (window.MatrixSpinsAPI && typeof window.MatrixSpinsAPI.getBalance === 'function') {
+      // No cached balance — fetch live.
+      window.MatrixSpinsAPI.getBalance()
+        .then(function(b) {
+          if (b && b.availableCents != null) {
+            $('balanceChip').textContent = '$' + (b.availableCents / 100).toFixed(2);
+          }
+        })
+        .catch(function() { /* leave the chip as "—" */ });
+    }
   } else {
     $('logout').style.display = 'none';
   }
 
   $('logout').addEventListener('click', function() {
+    // Use the api-client logout so the server-side token is also invalidated.
+    if (window.MatrixSpinsAPI && typeof window.MatrixSpinsAPI.logout === 'function') {
+      window.MatrixSpinsAPI.logout().finally(function() {
+        window.location.href = 'index.html';
+      });
+      return;
+    }
+    // Fallback: best-effort local clear.
+    localStorage.removeItem('casinoToken');
+    localStorage.removeItem('casinoUser');
+    localStorage.removeItem('casinoBalanceCents');
     sessionStorage.removeItem('user');
     sessionStorage.removeItem('token');
     sessionStorage.removeItem('balanceCents');

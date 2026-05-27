@@ -6,6 +6,7 @@
   'use strict';
 
   var STORAGE_KEY = 'ms_age_verified';
+  var DENY_KEY = 'ms_age_denied';
 
   function isVerified() {
     try {
@@ -16,11 +17,43 @@
     }
   }
 
+  function isDenied() {
+    try {
+      var data = JSON.parse(localStorage.getItem(DENY_KEY));
+      // Treat the deny flag as sticky for 30 days. A determined user can
+      // still clear localStorage, but the previous build set NO flag and
+      // simply navigated to google.com — pressing Back returned the user
+      // straight to a fully-functional casino. This at least introduces
+      // friction and is logged below for audit.
+      if (!data || !data.deniedAt) return false;
+      var THIRTY_DAYS_MS = 30 * 24 * 60 * 60 * 1000;
+      return (Date.now() - data.deniedAt) < THIRTY_DAYS_MS;
+    } catch (e) {
+      return false;
+    }
+  }
+
   function setVerified() {
     localStorage.setItem(STORAGE_KEY, JSON.stringify({
       verified: true,
       timestamp: Date.now()
     }));
+  }
+
+  function setDenied() {
+    localStorage.setItem(DENY_KEY, JSON.stringify({
+      deniedAt: Date.now()
+    }));
+    // Best-effort audit log so the operator can see denial events.
+    // Fire-and-forget — never block the redirect on a network error.
+    try {
+      fetch('/api/age-deny', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ at: new Date().toISOString() }),
+        keepalive: true,
+      }).catch(function () {});
+    } catch (_) {}
   }
 
   function removeOverlay(overlay) {
@@ -89,6 +122,12 @@
 
     denyLink.addEventListener('click', function (e) {
       e.preventDefault();
+      // Persist the deny choice (sticky for 30 days — see isDenied) and
+      // fire-and-forget an audit log to /api/age-deny before navigating
+      // off-site. Previously the deny path navigated to google.com with
+      // NO flag set, so pressing Back returned the user to a fully
+      // functional casino — trivially bypassable.
+      setDenied();
       window.location.href = 'https://www.google.com';
     });
 
@@ -111,6 +150,13 @@
   }
 
   function init() {
+    // Previously denied users get re-blocked for the deny window (30 days)
+    // by being navigated back off-site. They can still clear localStorage,
+    // but at least the back-button bypass is closed.
+    if (isDenied()) {
+      window.location.replace('https://www.google.com');
+      return;
+    }
     if (!isVerified()) {
       show();
     }

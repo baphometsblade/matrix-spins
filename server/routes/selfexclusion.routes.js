@@ -28,8 +28,16 @@ db.run("ALTER TABLE users ADD COLUMN is_banned INTEGER DEFAULT 0").catch(functio
 
 /**
  * Helper: Calculate end timestamp based on exclusion type
- * @param {string} type - 'cooldown_24h', 'cooldown_7d', 'cooldown_30d', 'permanent'
+ * @param {string} type - 'cooldown_24h', 'cooldown_7d', 'cooldown_30d',
+ *   'cooldown_6mo', 'cooldown_12mo', 'permanent'
  * @returns {string|null} - ISO timestamp or null for permanent
+ *
+ * 6mo and 12mo were added to close a regulatory gap: UK Gambling
+ * Commission and the AU Interactive Gambling Act both require operators
+ * to offer multi-month self-exclusion periods alongside short cool-offs.
+ * Months are approximated as 30-day blocks rather than calendar months
+ * because that's the cleaner consumer expectation (and matches what
+ * Pragmatic, Evolution etc. do).
  */
 function calculateEndsAt(type) {
     const now = new Date();
@@ -40,6 +48,10 @@ function calculateEndsAt(type) {
         ms = 7 * 24 * 60 * 60 * 1000;
     } else if (type === 'cooldown_30d') {
         ms = 30 * 24 * 60 * 60 * 1000;
+    } else if (type === 'cooldown_6mo') {
+        ms = 180 * 24 * 60 * 60 * 1000;
+    } else if (type === 'cooldown_12mo') {
+        ms = 365 * 24 * 60 * 60 * 1000;
     } else {
         // permanent: return null
         return null;
@@ -114,8 +126,9 @@ router.post('/activate', authenticate, async (req, res) => {
     try {
         const { type, reason } = req.body;
 
-        // Validate type
-        const validTypes = ['cooldown_24h', 'cooldown_7d', 'cooldown_30d', 'permanent'];
+        // Validate type. 6mo + 12mo added 2026-05-28 to close UK/AU
+        // regulatory gap requiring multi-month exclusion durations.
+        const validTypes = ['cooldown_24h', 'cooldown_7d', 'cooldown_30d', 'cooldown_6mo', 'cooldown_12mo', 'permanent'];
         if (!type || !validTypes.includes(type)) {
             return res.status(400).json({ error: 'Invalid exclusion type' });
         }
@@ -152,10 +165,12 @@ router.post('/activate', authenticate, async (req, res) => {
             if (u && u.email) {
                 const emailService = require('../services/email.service');
                 const durationLabel = ({
-                    cooldown_24h: '24 hours',
-                    cooldown_7d:  '7 days',
-                    cooldown_30d: '30 days',
-                    permanent:    'Permanent (account closed)',
+                    cooldown_24h:  '24 hours',
+                    cooldown_7d:   '7 days',
+                    cooldown_30d:  '30 days',
+                    cooldown_6mo:  '6 months',
+                    cooldown_12mo: '12 months',
+                    permanent:     'Permanent (account closed)',
                 })[type] || type;
                 emailService.sendSelfExclusionConfirmation(u.email, req.user.id, {
                     username: u.username,

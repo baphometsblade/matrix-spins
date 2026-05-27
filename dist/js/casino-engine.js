@@ -348,6 +348,10 @@
             .ce-btn.primary { min-height: 64px; font-size: 1.15rem; padding: 1rem 1.4rem; flex: 1 1 100%; order: 99; }
             .ce-btn-stepper { min-height: 48px; min-width: 48px; }
             .ce-btn-maxbet { min-height: 48px; }
+            /* WCAG 2.5.5 — info + auto were 36px circular which is below the
+               44px touch-target recommendation. Bump on mobile so they're
+               equally reachable as the bet steppers. */
+            .ce-btn-info, .ce-btn-auto { min-height: 48px; min-width: 48px; }
           }
           /* Reduced-motion honour — cells just snap, no landing/winglow loop. */
           @media (prefers-reduced-motion: reduce) {
@@ -766,11 +770,17 @@
 
     _startAutoplay(count) {
       // Begin the autoplay run. Guard against starting on top of an
-      // already-running run (the AUTO button is hidden during autoplay,
-      // but a programmatic call could collide).
+      // already-running run (a programmatic call could collide).
       if (this.state.autoplay) return;
       const n = Math.max(1, Math.min(500, parseInt(count, 10) || 0));
       this.state.autoplay = { remaining: n, startCount: n };
+      // Disable the AUTO button during the run so the player can't open
+      // the picker mid-flight. SPIN morphs into STOP (see
+      // _updateSpinBtnLabel) which is the correct in-run control.
+      if (this.autoBtn) {
+        this.autoBtn.disabled = true;
+        this.autoBtn.style.opacity = '0.5';
+      }
       this._updateSpinBtnLabel();
       // Kick off the first spin. _spin will schedule the next one.
       this._spin(false);
@@ -779,6 +789,11 @@
     _stopAutoplay() {
       if (!this.state.autoplay) return;
       this.state.autoplay = null;
+      // Re-enable the AUTO button so the player can start a new run.
+      if (this.autoBtn) {
+        this.autoBtn.disabled = false;
+        this.autoBtn.style.opacity = '1';
+      }
       this._updateSpinBtnLabel();
     }
 

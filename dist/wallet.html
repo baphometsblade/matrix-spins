@@ -435,7 +435,10 @@
 
   // Show bonus amounts on preset buttons for first-time depositors
   function _applyDepositBonusUI() {
-    var token = localStorage.getItem('authToken') || sessionStorage.getItem('authToken');
+    // `casinoToken` is the canonical key (js/api-client.js). Older builds
+    // wrote to `authToken`/`token` — keep them as fallbacks so any active
+    // session pre-unification still hydrates the first-deposit banner.
+    var token = localStorage.getItem('casinoToken') || localStorage.getItem('authToken') || localStorage.getItem('token') || sessionStorage.getItem('authToken');
     if (!token) return;
     fetch('/api/user/profile', { headers: { Authorization: 'Bearer ' + token } })
       .then(function(r) { return r.ok ? r.json() : null; })
@@ -500,14 +503,19 @@
     });
   }
 
-  // ── Stripe Payment Links (instant checkout, no backend needed) ──
-  const STRIPE_PAYMENT_LINKS = {
-    1000:  'https://buy.stripe.com/3cI4gzaUZ4Nbeercm26kg0y',   // $10
-    2500:  'https://buy.stripe.com/5kQfZhaUZ1AZc6j2Ls6kg0z',   // $25
-    5000:  'https://buy.stripe.com/eVqfZh2otgvTb2f4TA6kg0A',   // $50
-    10000: 'https://buy.stripe.com/eVq7sL9QVbbz5HV4TA6kg0B',   // $100
-    25000: 'https://buy.stripe.com/fZudR96EJ6Vj8U7dq66kg0C',   // $250
-  };
+  // Previously this file shipped a `STRIPE_PAYMENT_LINKS` map of hardcoded
+  // Stripe Checkout URLs as a fallback when /api/payment/create-checkout
+  // failed. That pattern is dangerous for two reasons:
+  //   1. If the Stripe account that owns those payment-link IDs is revoked
+  //      or rotated, deposits silently redirect to a Stripe 404 page that
+  //      LOOKS like a legitimate checkout — the player would assume their
+  //      money was processed when it wasn't.
+  //   2. Worse: if those links originally pointed at a different (e.g.
+  //      developer/demo) Stripe account, deposits would credit the wrong
+  //      account entirely.
+  // The backend route /api/payment/create-checkout is the only authoritative
+  // path. If it errors, we surface a real error to the player rather than
+  // silently redirecting. CLAUDE.md Rule #9 (no stub fallbacks).
 
   // ── Stripe Elements Setup ────────────────────────────────
   // Try to load Stripe — falls back to redirect checkout if unavailable
@@ -625,29 +633,14 @@
         }
       } catch (_) {}
 
-      // Strategy 2: Direct Stripe Payment Link (works without backend)
+      // No hardcoded payment-link fallback (see comment block where
+      // STRIPE_PAYMENT_LINKS used to live). If the backend Checkout call
+      // failed AND the Stripe Elements path didn't run, surface a real
+      // error to the player so they can retry — never silently redirect
+      // them to an external URL whose account we may no longer control.
       if (!redirected) {
-        const paymentLink = STRIPE_PAYMENT_LINKS[selectedAmount];
-        if (paymentLink) {
-          window.location.href = paymentLink;
-        } else {
-          // For custom amounts not matching a preset, retry backend checkout directly.
-          // The backend accepts any valid amount (≥$10) and creates a dynamic Stripe session.
-          try {
-            const out2 = await api.depositCheckout(selectedAmount);
-            if (out2.checkoutUrl) {
-              window.location.href = out2.checkoutUrl;
-              redirected = true;
-            }
-          } catch (e2) {
-            // Backend unavailable — fall back to nearest preset payment link
-            const amounts = Object.keys(STRIPE_PAYMENT_LINKS).map(Number).sort((a, b) => a - b);
-            const nearest = amounts.reduce((prev, curr) =>
-              Math.abs(curr - selectedAmount) < Math.abs(prev - selectedAmount) ? curr : prev
-            );
-            window.location.href = STRIPE_PAYMENT_LINKS[nearest];
-          }
-        }
+        alertEl.className = 'alert visible';
+        alertEl.textContent = 'Card checkout is temporarily unavailable. Please try again in a moment, or contact support.';
       }
     } catch (err) {
       alertEl.className = 'alert visible';
@@ -704,10 +697,20 @@
     btn.textContent = 'Processing...';
 
     try {
+      // Server payload contract (server/routes/payment.routes.js:420):
+      //   { amount: <dollars>, paymentType: <method string>, paymentMethodId: <optional saved id> }
+      // Previously the client sent {amountCents, method, destination} which
+      // failed the `if (!paymentType)` check (line 433) → every withdrawal
+      // returned 400 "Payment type is required" / "Invalid withdrawal amount".
+      // The destination text is sent as a notes line; the server currently
+      // ignores it (admins follow up via support if needed). A future
+      // schema migration should add a `destination_notes` column to the
+      // `withdrawals` table.
       await api.requestWithdrawal({
-        amountCents: Math.round(amtRaw * 100),
-        method: selectedMethod,
-        destination: { notes: dest },
+        amount: amtRaw,
+        paymentType: selectedMethod,
+        paymentMethodId: null,
+        destinationNotes: dest,
       });
       alertEl.className = 'alert success visible';
       alertEl.textContent = 'Withdrawal requested successfully. Pending review.';
@@ -746,14 +749,11 @@
         const btn = this;
         btn.disabled = true; btn.textContent = 'Claiming...';
         try {
-          const r = await fetch('/api/welcome-bonus/claim', {
-            method: 'POST',
-            headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' },
-            credentials: 'include',
-            body: JSON.stringify({})
-          });
-          const d = await r.json();
-          if (r.ok && d.success) {
+          // Route through `api.fetch` so the api-client adds the
+          // X-CSRF-Token header. Raw fetch() here used to return 403
+          // because csrf-helper.js doesn't wrap claim endpoints by name.
+          const d = await api.fetch('/welcome-bonus/claim', { method: 'POST', body: {} });
+          if (d && d.success) {
             // Replace banner contents using DOM (no innerHTML with untrusted data)
             while (banner.firstChild) banner.removeChild(banner.firstChild);
             const successMsg = document.createElement('div');
@@ -766,9 +766,13 @@
             else refreshData();
           } else {
             btn.disabled = false; btn.textContent = 'Claim Now';
-            alert(d.error || 'Could not claim bonus. Please try again.');
+            alert((d && d.error) || 'Could not claim bonus. Please try again.');
           }
-        } catch(e) { btn.disabled = false; btn.textContent = 'Claim Now'; }
+        } catch(e) {
+          btn.disabled = false; btn.textContent = 'Claim Now';
+          // api.fetch throws on non-2xx; surface the message.
+          alert((e && e.message) || 'Could not claim bonus. Please try again.');
+        }
       });
     } catch(e) { /* non-fatal */ }
   }

@@ -2365,7 +2365,27 @@
 
             document.querySelectorAll('.mobile-nav-item').forEach(item => {
                 item.onclick = (e) => {
-                    e.preventDefault();
+                    const nav = item.getAttribute('data-nav');
+                    // The "bonuses" tab is an <a href="promotions.html">.
+                    // We want to OPEN the daily-bonus popup when available
+                    // (snappier UX than a full page navigation), but if
+                    // retention.js failed to load we MUST fall through to
+                    // the anchor's href — otherwise the link is dead for
+                    // screen readers and keyboard users. Previously this
+                    // called preventDefault unconditionally → silently
+                    // swallowed the click when CasinoDailyBonus was absent.
+                    if (nav === 'bonuses') {
+                        if (typeof window.CasinoDailyBonus !== 'undefined' && window.CasinoDailyBonus.checkAndShow) {
+                            e.preventDefault();
+                            // fall through to update tab state
+                        } else {
+                            // Let the anchor navigate naturally — no preventDefault.
+                            return;
+                        }
+                    } else {
+                        e.preventDefault();
+                    }
+
                     document.querySelectorAll('.mobile-nav-item').forEach(i => {
                         i.classList.remove('active');
                         i.removeAttribute('aria-current');
@@ -2373,16 +2393,13 @@
                     item.classList.add('active');
                     item.setAttribute('aria-current', 'page');
 
-                    const nav = item.getAttribute('data-nav');
                     if (nav === 'home') {
                         window.scrollTo({ top: 0, behavior: 'smooth' });
                     } else if (nav === 'games') {
                         const el = document.querySelector('.filters') || document.querySelector('.games-section');
                         if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
                     } else if (nav === 'bonuses') {
-                        if (typeof window.CasinoDailyBonus !== 'undefined' && window.CasinoDailyBonus.checkAndShow) {
-                            window.CasinoDailyBonus.checkAndShow();
-                        }
+                        window.CasinoDailyBonus.checkAndShow();
                     } else if (nav === 'account') {
                         window.location.href = 'account.html';
                     }
@@ -2414,6 +2431,17 @@
             } else {
                 root.classList.remove('auth-loggedin');
                 root.classList.add('auth-anon');
+                // Wire the avatar to login for logged-out users. Previously
+                // logged-out users saw a clickable circle with no handler
+                // (a real button audit flagged it as orphan) — clicking
+                // did nothing. Send them to sign-in.
+                if (avatar) {
+                    avatar.style.cursor = 'pointer';
+                    avatar.title = 'Sign in';
+                    avatar.setAttribute('role', 'button');
+                    avatar.setAttribute('aria-label', 'Sign in');
+                    avatar.onclick = () => { window.location.href = 'login.html'; };
+                }
             }
         }
 
@@ -2882,6 +2910,6 @@
     <!-- Site-wide jackpot win celebration + real-time pool ticker (socket.io) -->
     <script src="js/confetti.min.js?v=2b59dbb8" defer></script>
     <script src="js/jackpot-celebration.js?v=48be09d7" defer></script>
-    <script src="bundle.6d9fa739.min.js"></script>
+    <script src="bundle.80182c3e.min.js"></script>
 </body>
 </html>
