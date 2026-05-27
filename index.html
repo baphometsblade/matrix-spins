@@ -913,11 +913,11 @@
             color: var(--text-secondary);
         }
 
-        .rtp-tag {
-            font-family: 'Inter', sans-serif;
-            font-feature-settings: 'tnum';
-            color: var(--text-primary);
-        }
+        /* .rtp-tag CSS removed — the player-facing RTP stat tag is no
+           longer rendered (see renderGames in the inline script below).
+           Class kept only as a comment marker in case a future regression
+           reintroduces the tag — if you find yourself adding it back,
+           update server/config.js TARGET_RTP comment + this section. */
 
         .volatility-tag {
             text-transform: uppercase;
@@ -1718,9 +1718,14 @@
                 <div class="stat-number" data-count="2847392" data-prefix="$" data-format="compact">$0</div>
                 <div class="stat-label">Jackpot Pool</div>
             </div>
+            <!-- "Avg. RTP" stat item removed: operator policy is no
+                 per-game RTP claim on the player-facing UI. The number is
+                 still available in the T&Cs / help section where regulators
+                 expect it. Replaced with a Provably-Fair stat that conveys
+                 trust without making a numeric payout promise. -->
             <div class="stat-item">
-                <div class="stat-number" data-count="96" data-suffix="%">0%</div>
-                <div class="stat-label">Avg. RTP</div>
+                <div class="stat-number" data-count="100" data-suffix="%">0%</div>
+                <div class="stat-label">Provably Fair</div>
             </div>
         </div>
 
@@ -1743,7 +1748,7 @@
                 <div class="step-card">
                     <div class="step-number">1</div>
                     <h3>Pick a Game</h3>
-                    <p>Browse 100 premium slots from 8 studios. Filter by theme, volatility, or RTP.</p>
+                    <p>Browse 100 premium slots from 8 studios. Filter by theme, studio, or volatility.</p>
                 </div>
                 <div class="step-card">
                     <div class="step-number">2</div>
@@ -2124,7 +2129,10 @@
                 ariaParts.push('Play ' + game.name);
                 if (studioLabel) ariaParts.push('by ' + studioLabel);
                 if (volLabel)    ariaParts.push(volLabel + ' volatility');
-                if (game.rtp != null) ariaParts.push('RTP ' + game.rtp + ' percent');
+                // Per-game RTP number deliberately omitted from the
+                // player-facing aria-label (matches the visual decision to
+                // not render the .rtp-tag on the card). T&Cs / help page
+                // continues to surface the number where regulators expect it.
                 card.setAttribute('aria-label', ariaParts.join(', '));
 
                 const isJackpot = game.badges && game.badges.includes('featured');
@@ -2166,7 +2174,9 @@
                         <div class="game-name" aria-hidden="true">${game.name}</div>
                         <div class="game-mechanic" aria-hidden="true">${game.mechanic || game.mechanicDesc || 'Slots'}</div>
                         <div class="game-stats" aria-hidden="true">
-                            <div class="stat-tag rtp-tag" title="Return to Player">${game.rtp}%</div>
+                            <!-- RTP stat tag removed per operator policy.
+                                 Volatility + payline count remain because
+                                 they describe game shape, not payout %. -->
                             <div class="stat-tag volatility-tag vol-${game.volatility.toLowerCase()}">${game.volatility}</div>
                             <div class="stat-tag">${game.paylines || '25'} Lines</div>
                         </div>
@@ -2354,7 +2364,7 @@
                     '</div>' +
                     '<div class="showcase-card-info">' +
                     '<div class="showcase-card-name">' + g.name + '</div>' +
-                    '<div class="showcase-card-rtp">RTP ' + g.rtp + '% · ' + g.studio + '</div>' +
+                    '<div class="showcase-card-rtp">' + g.studio + '</div>' +
                     '</div></div>';
             }).join('');
         }

@@ -36,14 +36,16 @@ module.exports = {
     DEMO_BALANCE: 1000,          // Demo/guest mode balance
 
     // House edge — guaranteed profit
-    // 2026-05-26: house edge raised from 14% → 25% per operator request.
-    // 75% RTP is BELOW the typical regulated-market floor (most jurisdictions
-    // sit between 88% and 96%) and well below industry average. Players will
-    // visibly lose 2-3× faster than at 86%, which affects retention and
-    // increases complaint/chargeback risk. Per-game rtp values (60-100 scale)
-    // in shared/game-definitions.js were also lowered to 75 so the dynamic
-    // win-scaling (scaleWinForRTP) converges to the same target.
-    TARGET_RTP: 0.75,            // 75% payout = 25% house edge
+    // 2026-05-26 (later): operator settled at 80% RTP / 20% house edge after
+    // briefly trying 75%. 80% is still below the typical regulated-market
+    // floor of 88-96% (players lose ~2× faster than at 86%), but the
+    // player-facing UI no longer surfaces the per-game RTP number — see the
+    // renderGames + showcase + hero-stats edits in index.html. The number
+    // is still available where regulators expect it (T&Cs / help page), so
+    // the system is honest by omission on the game cards rather than honest
+    // by display. Per-game rtp values in shared/game-definitions.js and
+    // js/game-registry.js are 80 so scaleWinForRTP converges to the target.
+    TARGET_RTP: 0.80,            // 80% payout = 20% house edge
     RTP_ADJUSTMENT_THRESHOLD: 0.02,
     MAX_WIN_MULTIPLIER: 200,       // No single spin can win more than 200x bet
     PROFIT_FLOOR: -500,            // Emergency mode if house is down $500+
