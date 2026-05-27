@@ -7122,57 +7122,24 @@
 
 
         // -----------------------------------------------------------
-        // BUY BONUS
-        // -----------------------------------------------------------
-
-        function buyBonus() {
-            if (!currentGame) return;
-            const spinsCount = currentGame.freeSpinsCount || 0;
-            if (spinsCount <= 0) {
-                showMessage('No bonus feature available for this game', 'lose');
-                return;
-            }
-            const multiplier = 100;
-            const cost = currentBet * multiplier;
-            document.getElementById('buyBonusGameName').textContent = currentGame.name;
-            document.getElementById('buyBonusSpins').textContent = `${spinsCount} FREE SPINS`;
-            document.getElementById('buyBonusDesc').textContent = 'Instantly triggers the bonus round!';
-            document.getElementById('buyBonusCostValue').textContent = `$${cost.toLocaleString()}`;
-            document.getElementById('buyBonusOverlay').style.display = 'flex';
-        }
-
-
-        function confirmBuyBonus() {
-            if (!currentGame) return;
-            const cost = currentBet * 100;
-            if (balance < cost) {
-                showMessage('Insufficient balance to buy bonus!', 'lose');
-                closeBuyBonus();
-                return;
-            }
-            balance -= cost;
-            updateBalance();
-            closeBuyBonus();
-            triggerFreeSpins(currentGame, currentGame.freeSpinsCount || 10);
-            showMessage(`? BONUS BOUGHT! ${currentGame.freeSpinsCount || 10} FREE SPINS TRIGGERED!`, 'win');
-        }
-
-
-        function closeBuyBonus() {
-            document.getElementById('buyBonusOverlay').style.display = 'none';
-        }
-
-
-        // Show/hide buy bonus button when a game is loaded
-        function updateBuyBonusBtn() {
-            const btn = document.getElementById('buyBonusBtn');
-            if (!btn) return;
-            const hasFreeSpins = currentGame && (currentGame.freeSpinsCount || 0) > 0;
-            btn.style.display = hasFreeSpins ? 'flex' : 'none';
-            if (hasFreeSpins) {
-                document.getElementById('buyBonusCost').textContent = `${100}x`;
-            }
-        }
+        // BUY BONUS — legacy stub. The earlier `buyBonus`/`confirmBuyBonus`/
+        // `closeBuyBonus`/`updateBuyBonusBtn` functions referenced DOM IDs
+        // (`buyBonusOverlay`, `buyBonusGameName`, `buyBonusSpins`,
+        // `buyBonusDesc`, `buyBonusCostValue`, `buyBonusBtn`, `buyBonusCost`)
+        // that no HTML file ever declared, so the functions were unreachable
+        // landmines. CRITICAL: they did `balance -= cost` client-side with
+        // no server call, which violates CLAUDE.md Rule #4 (atomic balance
+        // ops via the server). If a future change had bound a button to
+        // `buyBonus()` they would have allowed players to give themselves
+        // free bonuses by setting `balance` in devtools.
+        //
+        // The production buy-feature path is `_ensureBuyFeatureButton()`
+        // below — it calls POST /api/buy-feature server-side, the server
+        // debits balance + grants free spins atomically + responds with
+        // the new authoritative balance.
+        //
+        // `updateBuyBonusBtn` had one type-guarded caller (line ~1993); the
+        // guard handles its absence so we can drop it entirely.
 
 
         // -- Autoplay stop conditions: CSS + HTML injection ----------
@@ -8673,10 +8640,33 @@
         // (default 100×). Instantly triggers free spins.
         // -----------------------------------------------------------
 
+        // Cache the server's BUY_FEATURE_ENABLED kill-switch per-session so we
+        // don't fetch on every openSlot. Returns a Promise<boolean>.
+        var _buyFeatureEnabledCache = null;
+        function _isBuyFeatureEnabledServer() {
+            if (_buyFeatureEnabledCache !== null) return Promise.resolve(_buyFeatureEnabledCache);
+            return fetch('/api/buy-feature/status')
+                .then(function(r) { return r.ok ? r.json() : { enabled: true }; })
+                .then(function(j) { _buyFeatureEnabledCache = !!j.enabled; return _buyFeatureEnabledCache; })
+                .catch(function() { _buyFeatureEnabledCache = true; return true; }); // fail-open on network so existing players see no regression
+        }
+
         function _ensureBuyFeatureButton(game) {
             var existing = document.getElementById('buyFeatureBtn');
             if (existing) { existing.parentNode && existing.parentNode.removeChild(existing); }
             if (!game || !game.freeSpinsCount || game.buyFeature === false) return;
+            // Skip rendering when the operator has disabled buy-feature server-side
+            // (regulatory kill-switch). The server will 503 anyway; this just hides
+            // the button so players don't click a dead option.
+            _isBuyFeatureEnabledServer().then(function(enabled) {
+                if (!enabled) return;
+                _buildBuyFeatureButton(game);
+            });
+        }
+
+        function _buildBuyFeatureButton(game) {
+            if (!game || !game.freeSpinsCount || game.buyFeature === false) return;
+            if (document.getElementById('buyFeatureBtn')) return;
             var costMult = game.buyMultiplier || 100;
             var btn = document.createElement('button');
             btn.id = 'buyFeatureBtn';
@@ -8732,25 +8722,17 @@
                         }
                     }, 600);
                 }).catch(function() {
-                    // Fallback: local deduction if server unreachable
-                    balance -= cost;
-                    updateBalance();
-                    saveBalance();
-                    if (typeof playSound === 'function') playSound('buy_feature');
-                    showBonusEffect('BONUS FEATURE PURCHASED!', '#ff6d00');
-                    setTimeout(function() {
-                        if (game.bonusType === 'chamber_spins' && typeof triggerChamberSpins === 'function') {
-                            triggerChamberSpins(game);
-                        } else if (game.bonusType === 'sticky_wilds' && typeof triggerStickyWildsFreeSpins === 'function') {
-                            triggerStickyWildsFreeSpins(game, 0);
-                        } else if (game.bonusType === 'walking_wilds' && typeof triggerWalkingWildsFreeSpins === 'function') {
-                            triggerWalkingWildsFreeSpins(game, 0);
-                        } else if (game.bonusType === 'prize_wheel' && typeof triggerPrizeWheel === 'function') {
-                            triggerPrizeWheel(game);
-                        } else {
-                            triggerFreeSpins(game, game.freeSpinsCount);
-                        }
-                    }, 600);
+                    // FAIL-CLOSED — if the server call fails (network drop,
+                    // 5xx, CORS), do NOT grant the bonus locally. The
+                    // original code did `balance -= cost` + triggered free
+                    // spins client-side here, which gave players the bonus
+                    // for free at the server level (server had no record
+                    // of the debit, so next page-load restored the
+                    // un-debited balance). Now we re-enable the button
+                    // and surface the error so the player can retry.
+                    btn.disabled = false;
+                    btn.style.opacity = '1';
+                    showMessage('Buy Feature unavailable — please try again', 'lose');
                 });
             };
             document.body.appendChild(btn);
@@ -16898,37 +16880,15 @@ function _exportAuditLog() {
 // ═══════════════════════════ Sprint 283-290 ═══════════════════════════
 // Advanced Game Mechanics & Retention
 
-// Sprint 283 — Bonus buy feature
-var _bonusBuy283 = { cost: 0, multiplier: 80 }; // Cost = bet * multiplier
-function _getBonusBuyCost() {
-    var bet = (typeof currentBet !== 'undefined') ? currentBet : 1;
-    return bet * _bonusBuy283.multiplier;
-}
-function _buyBonus() {
-    var cost = _getBonusBuyCost();
-    if (typeof balance !== 'undefined' && balance < cost) {
-        if (typeof showToast === 'function') showToast('Insufficient balance. Bonus buy costs $' + cost.toLocaleString(), 'error'); else alert('Insufficient balance. Bonus buy costs $' + cost.toLocaleString());
-        return;
-    }
-    if (!confirm('Buy bonus round for $' + cost.toLocaleString() + '?\n\nThis guarantees entry to the free spins bonus.')) return;
-    if (typeof balance !== 'undefined') balance -= cost;
-    var betDisplay = document.getElementById('balanceAmount');
-    if (betDisplay) betDisplay.textContent = balance;
-    // Trigger free spins
-    if (typeof freeSpinsActive !== 'undefined') freeSpinsActive = true;
-    if (typeof freeSpinsRemaining !== 'undefined') freeSpinsRemaining = 10;
-    _logAuditEvent('bonus_buy', { cost: cost });
-    var el = document.getElementById('bonusBuyBadge');
-    if (el) { el.textContent = 'BONUS ACTIVE!'; el.className = 'bonus-buy-badge bb-active'; el.style.display = ''; }
-}
-function _updateBonusBuyBadge() {
-    var el = document.getElementById('bonusBuyBadge');
-    if (!el) return;
-    var cost = _getBonusBuyCost();
-    el.textContent = 'Buy Bonus: $' + cost.toLocaleString();
-    el.className = 'bonus-buy-badge bb-available';
-    el.style.display = '';
-}
+// Sprint 283 — Bonus buy feature [DISABLED]
+// The original _buyBonus did `balance -= cost` client-side with no server
+// call (CLAUDE.md Rule #4 violation — client-authoritative balance op).
+// The badge DOM element `bonusBuyBadge` is never declared in any HTML, so
+// _updateBonusBuyBadge has always been a no-op when called from the 7 hot
+// spin-handler sites — we keep the empty stub so those callers remain
+// safe without modification. Production buy-feature lives at
+// `_ensureBuyFeatureButton` (line ~8676) → POST /api/buy-feature.
+function _updateBonusBuyBadge() { /* legacy no-op — see comment above */ }
 
 // Sprint 284 — Gamble/double-up mini-game
 var _gamble284 = { active: false, amount: 0, history: [] };
@@ -22556,46 +22516,16 @@ function _showClusterEffect(sym, count) {
 }
 
 
-// --- Sprint 472 — Buy-Bonus Feature ---
-function _initBuyBonus() {}
-function _showBuyBonusUI() {
-    var bet = (typeof currentBet !== 'undefined') ? currentBet : 1;
-    var costs = [
-        { name: 'Free Spins (10)', multiplier: 50, spins: 10 },
-        { name: 'Free Spins (20)', multiplier: 80, spins: 20 },
-        { name: 'Mega Bonus Round', multiplier: 100, spins: 0 }
-    ];
-    var el = document.getElementById('buyBonusOverlay');
-    if (!el) { el = document.createElement('div'); el.id = 'buyBonusOverlay'; el.className = 'buy-bonus-overlay'; document.body.appendChild(el); }
-    var html = '<div class="bb-card"><h3>BUY BONUS</h3><p>Skip ahead to the bonus features!</p>';
-    costs.forEach(function(c) {
-        var cost = (bet * c.multiplier).toFixed(2);
-        html += '<div class="bb-option"><span>' + c.name + '</span><button onclick="_purchaseBonus(&quot; + c.multiplier + &quot;,&quot; + c.spins + &quot;)" class="bb-buy-btn">$' + cost + '</button></div>';
-    });
-    html += '<button onclick="document.getElementById(&quot;buyBonusOverlay&quot;).style.display=&quot;none&quot;" class="bb-close">Cancel</button></div>';
-    el.innerHTML = html;
-    el.style.display = 'flex';
-}
-function _purchaseBonus(multiplier, spins) {
-    var cost = (typeof currentBet !== 'undefined' ? currentBet : 1) * multiplier;
-    if (typeof balance !== 'undefined' && balance < cost) { if (typeof showToast === 'function') showToast('Insufficient balance', 'error'); else alert('Insufficient balance'); return; }
-    if (typeof balance !== 'undefined') balance -= cost;
-    if (typeof updateBalanceDisplay === 'function') updateBalanceDisplay();
-    document.getElementById('buyBonusOverlay').style.display = 'none';
-    if (spins > 0) {
-        if (typeof _addFreeSpins === 'function') _addFreeSpins(spins);
-        else { _showBonusPurchased('Free Spins x' + spins); }
-    } else {
-        _triggerBonusRound(typeof currentBet !== 'undefined' ? currentBet : 1);
-    }
-}
-function _showBonusPurchased(name) {
-    var el = document.getElementById('bonusPurchasedToast');
-    if (!el) { el = document.createElement('div'); el.id = 'bonusPurchasedToast'; el.className = 'bonus-purchased-toast'; document.body.appendChild(el); }
-    el.textContent = name + ' activated!';
-    el.style.display = 'block';
-    setTimeout(function() { el.style.display = 'none'; }, 3000);
-}
+// --- Sprint 472 — Buy-Bonus Feature [DISABLED] ---
+// Original _showBuyBonusUI / _purchaseBonus also did client-side
+// `balance -= cost` and had a string-escape bug in the inline onclick
+// (`&quot;` mixed with `"`) so the button would not have bound even if
+// the overlay were ever shown. Removed to prevent any future revival
+// of the client-authoritative balance pattern. _initBuyBonus kept as
+// an empty no-op because it's invoked from the boot sequence at the
+// top of the file (line ~2793). Production path: see
+// `_ensureBuyFeatureButton` (line ~8676).
+function _initBuyBonus() { /* legacy no-op — see comment above */ }
 
 
 // --- Sprint 473 — Volatility Selector ---

@@ -84,6 +84,10 @@
       };
 
       this._buildShell();
+      // Inject the live-jackpot pill in the top-right corner. Public
+      // endpoint (no auth), 30s poll. See _initJackpotPill for shape
+      // resilience to server response variants.
+      try { this._initJackpotPill(); } catch (_) { /* jackpot ticker is optional polish — never block game boot */ }
       this._boot();
     }
 
@@ -326,6 +330,18 @@
           @keyframes ceWinGlow { from { transform: scale(1); filter: brightness(1); } to { transform: scale(1.10); filter: brightness(1.45) saturate(1.3); } }
           @keyframes ceCelebrateFade { 0% { opacity: 0; } 10% { opacity: 1; } 80% { opacity: 1; } 100% { opacity: 0; } }
           @keyframes ceCelebratePop { 0% { transform: scale(0.4) rotate(-3deg); opacity: 0; } 70% { transform: scale(1.08) rotate(0.5deg); opacity: 1; } 100% { transform: scale(1) rotate(0); opacity: 1; } }
+          /* Jackpot celebration — longer, more dramatic than ceCelebrateFade.
+             Rainbow border sweep + extended fade window (5s vs 1.8s) so the
+             moment lands. Used by _celebrateJackpot. */
+          @keyframes ceJackpotFade { 0% { opacity: 0; } 4% { opacity: 1; } 90% { opacity: 1; } 100% { opacity: 0; } }
+          @keyframes ceJackpotPulse { 0%, 100% { transform: scale(1); filter: brightness(1); } 50% { transform: scale(1.06); filter: brightness(1.3); } }
+          @keyframes ceJackpotShimmer { 0% { background-position: 0% 50%; } 100% { background-position: 200% 50%; } }
+          /* Jackpot ticker pill in the game-page corner. */
+          .ce-jackpot-pill { position: fixed; top: 12px; right: 12px; z-index: 10300; background: linear-gradient(120deg, #1a1205 0%, #3e2a08 100%); border: 1px solid #F0C66E; border-radius: 999px; padding: 6px 14px 6px 12px; color: #FFD700; font-size: 0.78rem; font-weight: 700; letter-spacing: 0.04em; box-shadow: 0 0 18px rgba(240,198,110,0.35); display: flex; align-items: center; gap: 8px; font-family: "Plus Jakarta Sans", Inter, sans-serif; }
+          .ce-jackpot-pill .ce-jp-dot { width: 8px; height: 8px; border-radius: 50%; background: #FFD700; box-shadow: 0 0 8px #FFD700; animation: ceJackpotPulse 1.4s ease-in-out infinite; }
+          .ce-jackpot-pill .ce-jp-label { opacity: 0.85; font-weight: 600; font-size: 0.7rem; text-transform: uppercase; }
+          @media (max-width: 640px) { .ce-jackpot-pill { top: 8px; right: 8px; padding: 4px 10px 4px 8px; font-size: 0.72rem; } }
+          @media (prefers-reduced-motion: reduce) { .ce-jackpot-pill .ce-jp-dot { animation: none; } }
           /* Mobile touch targets — industry-standard 64px high spin button.
              Buttons stack vertically when the control bar overflows. */
           @media (max-width: 640px) {
@@ -482,6 +498,183 @@
       document.body.appendChild(overlay);
       // Self-clean
       setTimeout(() => overlay.remove(), 2000);
+    }
+
+    _celebrateJackpot(amountCents, tier) {
+      // Distinct jackpot celebration — separate path from _celebrateWin so
+      // a jackpot doesn't look like a regular MEGA win. Five-second window
+      // (vs 2s for regular wins), tier-themed border + dot color, and
+      // confetti if window.confetti is available (js/confetti.min.js is
+      // self-hosted per MEMORY.md).
+      //
+      // Tier colors mirror the four-tier jackpot pool:
+      //   mini  → silver
+      //   minor → bronze
+      //   major → gold
+      //   grand → rainbow (animated shimmer)
+      const TIER_THEMES = {
+        mini:  { label: 'MINI JACKPOT',  color: '#C0C0C0', glow: '192,192,192' },
+        minor: { label: 'MINOR JACKPOT', color: '#CD7F32', glow: '205,127,50'  },
+        major: { label: 'MAJOR JACKPOT', color: '#F0C66E', glow: '240,198,110' },
+        grand: { label: 'GRAND JACKPOT', color: '#FFD700', glow: '255,215,0'   },
+      };
+      const theme = TIER_THEMES[String(tier || 'grand').toLowerCase()] || TIER_THEMES.grand;
+      const isGrand = String(tier || 'grand').toLowerCase() === 'grand';
+
+      this._fx('jackpot');
+
+      const overlay = document.createElement('div');
+      overlay.setAttribute('role', 'status');
+      overlay.setAttribute('aria-live', 'assertive');
+      overlay.setAttribute('aria-label', theme.label + ' won — ' + fmt(amountCents));
+      overlay.style.cssText =
+        'position:fixed;inset:0;z-index:10600;display:flex;flex-direction:column;' +
+        'align-items:center;justify-content:center;pointer-events:none;' +
+        'background:radial-gradient(circle at center,rgba(0,0,0,0.78) 0%,rgba(0,0,0,0.2) 75%);' +
+        'animation:ceJackpotFade 5s ease-out forwards;';
+
+      const label = document.createElement('div');
+      label.textContent = theme.label;
+      if (isGrand) {
+        // Rainbow shimmer for the top tier.
+        label.style.cssText =
+          'font-family:"Plus Jakarta Sans",Inter,sans-serif;font-weight:900;' +
+          'letter-spacing:.4rem;font-size:4.6rem;color:transparent;' +
+          'background:linear-gradient(90deg,#FF1744,#FFD700,#00E676,#00B0FF,#D500F9,#FF1744);' +
+          'background-size:200% auto;-webkit-background-clip:text;background-clip:text;' +
+          '-webkit-text-fill-color:transparent;' +
+          'animation:ceCelebratePop 600ms cubic-bezier(.2,.9,.4,1.2) both,' +
+          'ceJackpotShimmer 2.4s linear infinite;' +
+          'filter:drop-shadow(0 0 18px rgba(255,215,0,0.7));';
+      } else {
+        label.style.cssText =
+          'font-family:"Plus Jakarta Sans",Inter,sans-serif;font-weight:900;' +
+          'letter-spacing:.35rem;font-size:4.0rem;color:' + theme.color + ';' +
+          'text-shadow:0 0 32px rgba(' + theme.glow + ',0.9),0 0 12px ' + theme.color + ';' +
+          'animation:ceCelebratePop 600ms cubic-bezier(.2,.9,.4,1.2) both;';
+      }
+
+      const amount = document.createElement('div');
+      amount.textContent = fmt(0);
+      amount.style.cssText =
+        'margin-top:1.4rem;font-size:3.2rem;font-weight:800;color:#fff;' +
+        'text-shadow:0 2px 16px rgba(0,0,0,0.8),0 0 24px rgba(' + theme.glow + ',0.5);' +
+        'animation:ceCelebratePop 700ms 120ms cubic-bezier(.2,.9,.4,1.2) both;';
+
+      overlay.appendChild(label);
+      overlay.appendChild(amount);
+      document.body.appendChild(overlay);
+
+      // Animate the won amount from 0 → final using the same easing as the
+      // balance chip. Industry-standard premium move — the player watches
+      // the number climb instead of seeing it pop in.
+      this._countUp(amount, 0, amountCents, 1800);
+
+      // Confetti burst — three staggered bursts so it doesn't feel like
+      // a single flat poof. Skip under reduced-motion. The 100 game pages
+      // don't preload confetti.min.js (saves ~8KB on the 99% of sessions
+      // that never hit a jackpot), so we lazy-load it on demand here. If
+      // the script tag fails or is blocked, the overlay still works — we
+      // just skip the particle effect.
+      const reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      if (!reduce) {
+        const fireBursts = () => {
+          if (typeof window.confetti !== 'function') return;
+          const baseOpts = { particleCount: isGrand ? 180 : 110, spread: 75, startVelocity: 50, ticks: 280, scalar: 1.1 };
+          const fire = (origin, delayMs) => setTimeout(() => {
+            try { window.confetti(Object.assign({}, baseOpts, { origin })); } catch (_) { /* silent */ }
+          }, delayMs);
+          fire({ x: 0.5, y: 0.55 }, 0);
+          fire({ x: 0.2, y: 0.65 }, 350);
+          fire({ x: 0.8, y: 0.65 }, 700);
+          if (isGrand) fire({ x: 0.5, y: 0.4 }, 1100);
+        };
+        if (typeof window.confetti === 'function') {
+          fireBursts();
+        } else {
+          // Lazy-inject. Path is computed relative to the page — game pages
+          // sit at /games/<slug>.html so they need ../js/, the lobby sits
+          // at / so it'd use js/. Try the games/ path first, fall back.
+          const tryLoad = (src, onError) => {
+            const tag = document.createElement('script');
+            tag.src = src;
+            tag.async = true;
+            tag.onload = () => fireBursts();
+            tag.onerror = onError;
+            document.head.appendChild(tag);
+          };
+          tryLoad('../js/confetti.min.js', () => tryLoad('js/confetti.min.js', () => { /* both failed — skip particles silently */ }));
+        }
+      }
+
+      // Self-clean — 5s to match the keyframe fade-out.
+      setTimeout(() => overlay.remove(), 5000);
+    }
+
+    _initJackpotPill() {
+      // Inject the small live-jackpot pill in the top-right corner of the
+      // game page. Polls /api/jackpot/status every 30s. The pill shows the
+      // grand-tier pool amount (the most aspirational number) by default,
+      // falling back to the largest available tier if `grand` is missing.
+      //
+      // No DOM change needed on the 100 game pages — the engine boots
+      // them all via games/<slug>.html → casino-engine.js init, so this
+      // single injection covers every game.
+      if (document.querySelector('.ce-jackpot-pill')) return;
+      const pill = document.createElement('div');
+      pill.className = 'ce-jackpot-pill';
+      pill.setAttribute('role', 'status');
+      pill.setAttribute('aria-live', 'off'); // changes are visual; don't spam screen readers
+      const dot = document.createElement('span');
+      dot.className = 'ce-jp-dot';
+      const lab = document.createElement('span');
+      lab.className = 'ce-jp-label';
+      lab.textContent = 'Jackpot';
+      const amt = document.createElement('span');
+      amt.className = 'ce-jp-amt';
+      amt.textContent = '—';
+      pill.appendChild(dot);
+      pill.appendChild(lab);
+      pill.appendChild(amt);
+      document.body.appendChild(pill);
+
+      const refresh = () => {
+        fetch('/api/jackpot/status', { credentials: 'same-origin' })
+          .then(r => r.ok ? r.json() : null)
+          .then(j => {
+            if (!j || !Array.isArray(j.pools)) return;
+            // Server shape: { pools: [{ tier, currentAmount, lastWinner }, ...] }
+            // currentAmount is dollars (not cents). Pick the largest-tier
+            // available — grand first, falling through to lower tiers if
+            // the table hasn't been seeded yet.
+            const order = ['grand', 'major', 'minor', 'mini'];
+            const map = {};
+            for (const p of j.pools) {
+              if (p && p.tier) map[p.tier] = p;
+            }
+            let chosen = null;
+            for (const k of order) {
+              if (map[k] && map[k].currentAmount > 0) { chosen = map[k]; break; }
+            }
+            if (!chosen) { amt.textContent = '—'; return; }
+            const cents = Math.round(chosen.currentAmount * 100);
+            const prev = parseInt(amt.dataset.cents || '0', 10);
+            amt.dataset.cents = String(cents);
+            // Reflect tier in the label so the player knows which pool is
+            // visible (matters when the grand row hasn't seeded yet).
+            lab.textContent = (chosen.tier.charAt(0).toUpperCase() + chosen.tier.slice(1)) + ' Jackpot';
+            if (prev > 0 && prev !== cents) {
+              this._countUp(amt, prev, cents, 800);
+            } else {
+              amt.textContent = fmt(cents);
+            }
+          })
+          .catch(() => { /* silent — pill stays at last known value */ });
+      };
+      refresh();
+      // Poll cadence chosen to match the lobby widget (30s in ui-lobby.js)
+      // for a consistent live feel without server load.
+      this._jackpotPollId = setInterval(refresh, 30000);
     }
 
     _changeBet(dir) {
@@ -917,7 +1110,21 @@
 
       const bet = this.state.betCents;
       const win = result.payoutCents || 0;
-      if (win > 0) {
+      // Jackpot branch — server-side jackpot service may flag a spin as a
+      // jackpot winner. Surface a distinct celebration BEFORE the regular
+      // win path so a jackpot doesn't look like a normal MEGA win.
+      // The flag shape may be either `result.jackpotWon = { tier, amount }`
+      // (preferred) or a top-level `result.jackpot = { tier, amount }` —
+      // accept both for resilience to future server tweaks.
+      const jackpotInfo = result.jackpotWon || result.jackpot || null;
+      if (jackpotInfo && (jackpotInfo.amount > 0 || jackpotInfo.amountCents > 0)) {
+        const jpCents = jackpotInfo.amountCents != null
+          ? jackpotInfo.amountCents
+          : Math.round((jackpotInfo.amount || 0) * 100);
+        const jpTier = jackpotInfo.tier || 'grand';
+        this.winStrip.textContent = `${String(jpTier).toUpperCase()} JACKPOT! ${fmt(jpCents)}`;
+        this._celebrateJackpot(jpCents, jpTier);
+      } else if (win > 0) {
         this.winStrip.textContent = `Win ${fmt(win)}${result.multiplier !== 1 ? `  ×${result.multiplier}` : ''}`;
         // Win tier: small win sound + light haptic. Big/Mega/Epic are
         // handled by _celebrateWin which plays the bigger sound + the

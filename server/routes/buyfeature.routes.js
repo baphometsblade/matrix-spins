@@ -14,6 +14,25 @@ const rateLimit = require('express-rate-limit');
 const buyFeatureLimiter = rateLimit({ windowMs: 60 * 1000, max: 30, message: { error: 'Too many buy-feature requests. Please slow down.' } });
 router.use(buyFeatureLimiter);
 
+// ── Operator kill-switch ──
+// Buy-feature (a.k.a. "Bonus Buy") is prohibited or restricted in several
+// licensed markets: UK (banned outright Sept 2025), Netherlands, Belgium,
+// Germany, Italy, Australia (Vic/NSW). If a regulatory letter arrives or
+// the operator wants to disable it for a deployment, set
+//   BUY_FEATURE_ENABLED=false
+// in the environment and the route immediately returns 503 + the /status
+// endpoint returns {enabled:false} so the client hides the button.
+// Default is ENABLED (matches current production behaviour).
+function isBuyFeatureEnabled() {
+    return String(process.env.BUY_FEATURE_ENABLED || 'true').toLowerCase() !== 'false';
+}
+
+// Public endpoint so the client can hide the BUY BONUS button before the
+// player even sees it (instead of showing it, getting clicked, then 503'ing).
+router.get('/status', (req, res) => {
+    res.json({ enabled: isBuyFeatureEnabled() });
+});
+
 // Session win cap duration — mirrors spin.routes.js
 const SESSION_CAP_DURATION_HOURS = 24;
 
@@ -81,6 +100,9 @@ function applyWinCapMetadata(spinResult, uncappedWinAmount, cappedWinAmount) {
 
 // ─── GET /price/:gameId ─── Get buy-feature price for a game ───
 router.get('/price/:gameId', authenticate, async (req, res) => {
+    if (!isBuyFeatureEnabled()) {
+        return res.status(503).json({ error: 'Buy Feature is not available in your region.' });
+    }
     try {
         const { gameId } = req.params;
 
@@ -112,6 +134,10 @@ router.get('/price/:gameId', authenticate, async (req, res) => {
 
 // ─── POST / ─── Buy free spins and resolve the initial trigger spin ───
 router.post('/', authenticate, async (req, res) => {
+    if (!isBuyFeatureEnabled()) {
+        return res.status(503).json({ error: 'Buy Feature is not available in your region.' });
+    }
+
     const userId = req.user && req.user.id;
 
     // ── Acquire per-user mutex (shared with /api/spin) ──

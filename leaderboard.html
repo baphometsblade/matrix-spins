@@ -42,15 +42,17 @@
 
 <div class="rs-shell-wide">
 
-  <!-- ── Tournament Hero ─────────────────────────────────────── -->
-  <div class="tourney-hero">
+  <!-- ── Tournament Hero ──────────────────────────────────────
+       Bound to the currently-active tournament from /api/tournaments.
+       Falls back to an empty-state when there are no active tournaments. -->
+  <div class="tourney-hero" id="tourneyHero" data-state="loading">
     <div class="trophy">🏆</div>
-    <h1><span class="purple">Weekend</span> <span class="gold">Mega Tournament</span></h1>
-    <div class="prize-amount">$25,000</div>
-    <p class="sub">Spin to climb the ranks — top 50 players share the prize pool</p>
+    <h1 id="tourneyName">Loading tournament…</h1>
+    <div class="prize-amount" id="prizeAmount">—</div>
+    <p class="sub" id="tourneySub">Pulling live tournament data…</p>
 
     <div style="margin-top:1rem;">
-      <span class="tourney-status live"><span class="dot"></span> Live Now</span>
+      <span class="tourney-status live" id="tourneyStatus" style="display:none;"><span class="dot"></span> Live Now</span>
     </div>
 
     <div class="tourney-countdown" id="countdown">
@@ -73,37 +75,40 @@
     </div>
   </div>
 
-  <!-- ── Prize Distribution ──────────────────────────────────── -->
-  <div class="prize-grid">
+  <!-- ── Prize Distribution ──────────────────────────────────
+       Top 3 use the active tournament's actual prize_pool with the
+       50/30/20 split applied server-side in tournament.service.js.
+       Lower tiers are operator-discretion consolation amounts. -->
+  <div class="prize-grid" id="prizeGrid" aria-live="polite">
     <div class="prize-card first">
       <div class="medal">🥇</div>
       <div class="place">1st Place</div>
-      <div class="amount">$10,000</div>
+      <div class="amount" id="prize1st">—</div>
     </div>
     <div class="prize-card second">
       <div class="medal">🥈</div>
       <div class="place">2nd Place</div>
-      <div class="amount">$5,000</div>
+      <div class="amount" id="prize2nd">—</div>
     </div>
     <div class="prize-card third">
       <div class="medal">🥉</div>
       <div class="place">3rd Place</div>
-      <div class="amount">$2,500</div>
+      <div class="amount" id="prize3rd">—</div>
     </div>
     <div class="prize-card">
       <div class="medal">🎖️</div>
       <div class="place">4th — 10th</div>
-      <div class="amount">$500</div>
+      <div class="amount">Bonus credits</div>
     </div>
     <div class="prize-card">
       <div class="medal">🎯</div>
       <div class="place">11th — 25th</div>
-      <div class="amount">$100</div>
+      <div class="amount">Bonus credits</div>
     </div>
     <div class="prize-card">
       <div class="medal">⭐</div>
       <div class="place">26th — 50th</div>
-      <div class="amount">$25</div>
+      <div class="amount">Bonus credits</div>
     </div>
   </div>
 
@@ -142,52 +147,12 @@
     </table>
   </div>
 
-  <!-- ── Past Tournaments ────────────────────────────────────── -->
+  <!-- ── Past Tournaments ──────────────────────────────────────
+       Bound to /api/tournaments/history (top-3 with winners). -->
   <div class="lb-card" style="padding:1.2rem 1.5rem;">
     <h2 style="font-family:'Plus Jakarta Sans',sans-serif;font-size:1.1rem;margin:0 0 1rem;">Past Tournaments</h2>
-    <div class="past-tourney">
-      <div class="icon">🏆</div>
-      <div class="info">
-        <div class="title">Spring Jackpot Showdown</div>
-        <div class="meta">Apr 13 — Apr 19, 2026 &middot; 312 players</div>
-      </div>
-      <div class="winner">
-        <div class="name">AceX_High</div>
-        <div class="prize">Won $10,000</div>
-      </div>
-    </div>
-    <div class="past-tourney">
-      <div class="icon">🎰</div>
-      <div class="info">
-        <div class="title">Midnight Spin Madness</div>
-        <div class="meta">Apr 6 — Apr 12, 2026 &middot; 278 players</div>
-      </div>
-      <div class="winner">
-        <div class="name">NeonRider99</div>
-        <div class="prize">Won $8,000</div>
-      </div>
-    </div>
-    <div class="past-tourney">
-      <div class="icon">💎</div>
-      <div class="info">
-        <div class="title">Diamond Rush Weekend</div>
-        <div class="meta">Mar 30 — Apr 5, 2026 &middot; 345 players</div>
-      </div>
-      <div class="winner">
-        <div class="name">CryptoWhale42</div>
-        <div class="prize">Won $15,000</div>
-      </div>
-    </div>
-    <div class="past-tourney">
-      <div class="icon">🔥</div>
-      <div class="info">
-        <div class="title">Inferno High Roller</div>
-        <div class="meta">Mar 23 — Mar 29, 2026 &middot; 198 players</div>
-      </div>
-      <div class="winner">
-        <div class="name">QueenJackpot</div>
-        <div class="prize">Won $12,000</div>
-      </div>
+    <div id="pastList" aria-live="polite">
+      <p style="color:#aaa;text-align:center;padding:1.5rem;margin:0;">Loading past tournaments…</p>
     </div>
   </div>
 
@@ -209,22 +174,41 @@
 (function() {
   'use strict';
 
-  var $ = function(id) { return document.getElementById(id); };
+  // Previously this script contained:
+  //   - hardcoded $25,000 prize callout
+  //   - hardcoded countdown to "next Sunday midnight UTC" not tied to any
+  //     real tournament
+  //   - a "Refresh" button that just flashed its own label without fetching
+  //   - 4 mock past-tournament cards
+  //   - references to DOM IDs (`userAvatar`, `userName`) that don't exist
+  //     in the markup, which threw `Cannot set property 'textContent' of
+  //     null` for any logged-in user
+  // All real tournament data exists in the server (server/routes/
+  // tournament.routes.js + tournament.service.js auto-creates daily/weekly
+  // tournaments with prize_pool, entry_count, end_date, ms_remaining).
+  // This script now drives the page from those endpoints.
 
-  // ── Session / Balance / Logout ──────────────────────────────
+  var $ = function(id) { return document.getElementById(id); };
+  var fmt$ = function(amt) {
+    if (amt == null || isNaN(amt)) return '—';
+    return '$' + Number(amt).toLocaleString('en-US', { maximumFractionDigits: 0 });
+  };
+  var esc = function(s) {
+    // createElement + textContent should be preferred — this is only used
+    // for class-name tokens and similar safe contexts.
+    return String(s == null ? '' : s).replace(/[<>&"]/g, function(c) {
+      return ({ '<': '&lt;', '>': '&gt;', '&': '&amp;', '"': '&quot;' })[c];
+    });
+  };
+
+  // ── Topbar session/balance/logout ──────────────────────────
   var user = null;
-  try { user = JSON.parse(sessionStorage.getItem('user')); } catch(e) {}
+  try { user = JSON.parse(sessionStorage.getItem('user')); } catch (e) {}
 
   if (user) {
     $('logout').style.display = 'inline-block';
-    var bal = sessionStorage.getItem('balanceCents');
-    if (bal) {
-      $('balanceChip').textContent = '$' + (parseInt(bal, 10) / 100).toFixed(2);
-    }
-    var displayName = user.firstName || user.username || user.email.split('@')[0];
-    var initials = displayName.substring(0, 2).toUpperCase();
-    $('userAvatar').textContent = initials;
-    $('userName').textContent = displayName;
+    var balCents = sessionStorage.getItem('balanceCents');
+    if (balCents) $('balanceChip').textContent = '$' + (parseInt(balCents, 10) / 100).toFixed(2);
   } else {
     $('logout').style.display = 'none';
   }
@@ -236,55 +220,238 @@
     window.location.href = 'index.html';
   });
 
-  // ── Countdown Timer (to next Sunday midnight UTC) ───────────
-  function getNextSunday() {
-    var now = new Date();
-    var day = now.getUTCDay();
-    var daysUntilSunday = (7 - day) % 7;
-    if (daysUntilSunday === 0) daysUntilSunday = 7;
-    var target = new Date(Date.UTC(
-      now.getUTCFullYear(),
-      now.getUTCMonth(),
-      now.getUTCDate() + daysUntilSunday,
-      0, 0, 0, 0
-    ));
-    return target;
+  // ── Tournament state ───────────────────────────────────────
+  // Allow deep-linking to a specific tournament via ?id=N (e.g. lobby
+  // tournament card links here with the active id). If no id is given,
+  // pick the active tournament with the largest prize_pool.
+  var qsId = new URLSearchParams(location.search).get('id');
+  var activeTourneyId = qsId ? parseInt(qsId, 10) : null;
+  var countdownEnd = null; // Date — server-derived from tournament.end_date
+  var countdownTimer = null;
+
+  function setCountdown(endDate) {
+    countdownEnd = endDate;
+    if (countdownTimer) clearInterval(countdownTimer);
+    function tick() {
+      if (!countdownEnd) {
+        $('cdDays').textContent = '0';
+        $('cdHours').textContent = '00';
+        $('cdMins').textContent = '00';
+        $('cdSecs').textContent = '00';
+        return;
+      }
+      var diff = Math.max(0, countdownEnd.getTime() - Date.now());
+      var secs = Math.floor(diff / 1000);
+      var mins = Math.floor(secs / 60);
+      var hours = Math.floor(mins / 60);
+      var days = Math.floor(hours / 24);
+      $('cdDays').textContent = String(days);
+      $('cdHours').textContent = String(hours % 24).padStart(2, '0');
+      $('cdMins').textContent = String(mins % 60).padStart(2, '0');
+      $('cdSecs').textContent = String(secs % 60).padStart(2, '0');
+      if (diff === 0 && countdownTimer) {
+        clearInterval(countdownTimer);
+        countdownTimer = null;
+      }
+    }
+    tick();
+    countdownTimer = setInterval(tick, 1000);
   }
 
-  function updateCountdown() {
-    var target = getNextSunday();
-    var now = Date.now();
-    var diff = Math.max(0, target.getTime() - now);
+  function renderHero(t) {
+    var hero = $('tourneyHero');
+    if (!t) {
+      hero.dataset.state = 'empty';
+      $('tourneyName').textContent = 'No active tournaments right now';
+      $('prizeAmount').textContent = '—';
+      $('tourneySub').textContent = 'Check back soon — daily and weekly events are auto-created.';
+      $('tourneyStatus').style.display = 'none';
+      setCountdown(null);
+      return;
+    }
+    hero.dataset.state = 'live';
+    $('tourneyName').textContent = t.name || 'Live Tournament';
+    $('prizeAmount').textContent = fmt$(t.prize_pool);
+    var entries = (t.entry_count != null) ? t.entry_count : 0;
+    $('tourneySub').textContent = entries + ' player' + (entries === 1 ? '' : 's') + ' competing — top 3 share the prize pool';
+    $('tourneyStatus').style.display = 'inline-flex';
+    if (t.end_date) setCountdown(new Date(t.end_date));
+    else if (typeof t.ms_remaining === 'number') setCountdown(new Date(Date.now() + t.ms_remaining));
+    else setCountdown(null);
 
-    var secs = Math.floor(diff / 1000);
-    var mins = Math.floor(secs / 60);
-    var hours = Math.floor(mins / 60);
-    var days = Math.floor(hours / 24);
-
-    $('cdDays').textContent = days;
-    $('cdHours').textContent = String(hours % 24).padStart(2, '0');
-    $('cdMins').textContent = String(mins % 60).padStart(2, '0');
-    $('cdSecs').textContent = String(secs % 60).padStart(2, '0');
+    // Top-3 split: 50/30/20 (matches tournament.service.js).
+    var pool = Number(t.prize_pool) || 0;
+    $('prize1st').textContent = fmt$(pool * 0.5);
+    $('prize2nd').textContent = fmt$(pool * 0.3);
+    $('prize3rd').textContent = fmt$(pool * 0.2);
   }
 
-  updateCountdown();
-  setInterval(updateCountdown, 1000);
+  function renderRankings(rows) {
+    var body = $('lbBody');
+    body.textContent = ''; // clear safely
+    if (!rows || rows.length === 0) {
+      var tr = document.createElement('tr');
+      var td = document.createElement('td');
+      td.colSpan = 4;
+      td.style.cssText = 'text-align:center;color:#aaa;padding:2rem;';
+      td.textContent = 'No entries yet — be the first to spin and claim a spot.';
+      tr.appendChild(td);
+      body.appendChild(tr);
+      return;
+    }
+    rows.slice(0, 50).forEach(function(row, i) {
+      var rank = (row.rank != null) ? row.rank : (i + 1);
+      var tr = document.createElement('tr');
 
-  // ── Refresh Button ──────────────────────────────────────────
+      var tdRank = document.createElement('td');
+      tdRank.textContent = '#' + rank;
+      if (rank === 1) tdRank.style.color = '#FFD700';
+      else if (rank === 2) tdRank.style.color = '#C0C0C0';
+      else if (rank === 3) tdRank.style.color = '#CD7F32';
+      tr.appendChild(tdRank);
+
+      var tdName = document.createElement('td');
+      tdName.textContent = row.username || 'Anonymous';
+      tr.appendChild(tdName);
+
+      var tdTier = document.createElement('td');
+      tdTier.textContent = row.biggest_win != null ? ('Best: ' + fmt$(row.biggest_win)) : '—';
+      tdTier.style.color = '#aaa';
+      tdTier.style.fontSize = '0.9rem';
+      tr.appendChild(tdTier);
+
+      var tdScore = document.createElement('td');
+      tdScore.style.textAlign = 'right';
+      tdScore.style.fontWeight = '700';
+      tdScore.textContent = row.score != null ? Number(row.score).toLocaleString('en-US') : '—';
+      tr.appendChild(tdScore);
+
+      body.appendChild(tr);
+    });
+  }
+
+  function renderPast(items) {
+    var box = $('pastList');
+    box.textContent = '';
+    if (!items || items.length === 0) {
+      var p = document.createElement('p');
+      p.style.cssText = 'color:#aaa;text-align:center;padding:1.5rem;margin:0;';
+      p.textContent = 'No past tournaments yet.';
+      box.appendChild(p);
+      return;
+    }
+    var iconRotation = ['🏆', '🎰', '💎', '🔥', '⭐', '🎯'];
+    items.slice(0, 8).forEach(function(t, i) {
+      var row = document.createElement('div');
+      row.className = 'past-tourney';
+
+      var ic = document.createElement('div');
+      ic.className = 'icon';
+      ic.textContent = iconRotation[i % iconRotation.length];
+      row.appendChild(ic);
+
+      var info = document.createElement('div');
+      info.className = 'info';
+      var title = document.createElement('div');
+      title.className = 'title';
+      title.textContent = t.name || 'Tournament';
+      info.appendChild(title);
+      var meta = document.createElement('div');
+      meta.className = 'meta';
+      var dateStr = '';
+      if (t.start_date && t.end_date) {
+        try {
+          var s = new Date(t.start_date), e = new Date(t.end_date);
+          dateStr = s.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+            + ' — '
+            + e.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+        } catch (_) { /* leave blank */ }
+      }
+      var entries = (t.entry_count != null) ? t.entry_count : 0;
+      meta.textContent = dateStr + (dateStr ? ' · ' : '') + entries + ' player' + (entries === 1 ? '' : 's');
+      info.appendChild(meta);
+      row.appendChild(info);
+
+      var winnerBox = document.createElement('div');
+      winnerBox.className = 'winner';
+      var topWinner = (t.winners && t.winners[0]) || null;
+      var nm = document.createElement('div');
+      nm.className = 'name';
+      nm.textContent = topWinner && topWinner.username ? topWinner.username : 'TBD';
+      winnerBox.appendChild(nm);
+      var prz = document.createElement('div');
+      prz.className = 'prize';
+      var prizeAmt = topWinner && topWinner.prize_amount != null
+        ? topWinner.prize_amount
+        : (t.prize_pool ? t.prize_pool * 0.5 : null);
+      prz.textContent = prizeAmt != null ? ('Won ' + fmt$(prizeAmt)) : '';
+      winnerBox.appendChild(prz);
+      row.appendChild(winnerBox);
+
+      box.appendChild(row);
+    });
+  }
+
+  // ── API calls ───────────────────────────────────────────────
+  function pickActive(tournaments) {
+    if (!Array.isArray(tournaments) || tournaments.length === 0) return null;
+    if (activeTourneyId) {
+      var byId = tournaments.find(function(t) { return t.id === activeTourneyId; });
+      if (byId) return byId;
+    }
+    // Pick the largest prize_pool among active. Tied? Earliest end_date wins.
+    return tournaments.slice().sort(function(a, b) {
+      var ap = Number(a.prize_pool) || 0, bp = Number(b.prize_pool) || 0;
+      if (bp !== ap) return bp - ap;
+      var ae = a.end_date ? new Date(a.end_date).getTime() : Infinity;
+      var be = b.end_date ? new Date(b.end_date).getTime() : Infinity;
+      return ae - be;
+    })[0];
+  }
+
+  function loadAll() {
+    return Promise.all([
+      fetch('/api/tournaments/active', { credentials: 'same-origin' }).then(function(r) { return r.ok ? r.json() : []; }).catch(function() { return []; }),
+      fetch('/api/tournaments/history', { credentials: 'same-origin' }).then(function(r) { return r.ok ? r.json() : []; }).catch(function() { return []; }),
+    ]).then(function(results) {
+      var active = Array.isArray(results[0]) ? results[0] : (results[0] && results[0].active) || [];
+      var history = Array.isArray(results[1]) ? results[1] : (results[1] && results[1].tournaments) || [];
+
+      var chosen = pickActive(active);
+      renderHero(chosen);
+      renderPast(history);
+
+      if (!chosen) {
+        renderRankings([]);
+        return;
+      }
+      activeTourneyId = chosen.id;
+      return fetch('/api/tournaments/' + chosen.id + '/leaderboard', { credentials: 'same-origin' })
+        .then(function(r) { return r.ok ? r.json() : { leaderboard: [] }; })
+        .then(function(j) {
+          // Endpoint returns { leaderboard: [...] } or bare array depending on server version
+          var rows = Array.isArray(j) ? j : (j.leaderboard || j.entries || []);
+          renderRankings(rows);
+        })
+        .catch(function() { renderRankings([]); });
+    });
+  }
+
+  // ── Refresh + auto-refresh ─────────────────────────────────
   var refreshBtn = $('refreshBtn');
-  refreshBtn.addEventListener('click', function() {
-    refreshBtn.textContent = '↻ Refreshing...';
+  function doRefresh() {
+    refreshBtn.textContent = '↻ Refreshing…';
     refreshBtn.disabled = true;
-    setTimeout(function() {
+    loadAll().finally(function() {
       refreshBtn.textContent = '↻ Refresh';
       refreshBtn.disabled = false;
-    }, 1200);
-  });
+    });
+  }
+  refreshBtn.addEventListener('click', doRefresh);
 
-  // ── Auto-refresh every 30 seconds ──────────────────────────
-  setInterval(function() {
-    refreshBtn.click();
-  }, 30000);
+  loadAll();
+  // 60s — leaderboards don't change every second, and respects server load.
+  setInterval(loadAll, 60000);
 
 })();
 </script>
