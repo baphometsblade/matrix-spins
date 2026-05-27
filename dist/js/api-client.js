@@ -205,11 +205,25 @@
     rotateSeed:   ()       => apiFetch('/fair/seed').then(s => Object.assign({
         previousServerSeed: '(historical seeds are revealed via the /fair/verify endpoint after each completed spin)',
     }, s)),
+    // Spin with optional client-supplied nonce for idempotent retry.
+    // If `opts.nonce` is provided, the server uses it as an idempotency
+    // key: a retry with the same nonce returns the prior outcome
+    // rather than charging the player again. casino-engine generates
+    // the nonce + persists it via localStorage so a page-reload after
+    // a dropped response can still recover the result.
     spin:         (gameId, betCents, opts = {}) =>
       apiFetch('/spin/', {
         method: 'POST',
-        body: { gameId, bet: betCents / 100, useFreeSpin: Boolean(opts.useFreeSpin) },
+        body: {
+          gameId,
+          bet: betCents / 100,
+          useFreeSpin: Boolean(opts.useFreeSpin),
+          nonce: opts.nonce || undefined,
+        },
       }),
+    // Recovery lookup. Returns the prior spin response if the nonce was
+    // committed server-side, or 404 if the bet was never charged.
+    spinByNonce:  (nonce) => apiFetch(`/spin/by-nonce/${encodeURIComponent(nonce)}`),
     getFreeSpins: (gameId) => apiFetch(`/freespins/available?gameId=${encodeURIComponent(gameId)}`),
     spinHistory:  (params) => apiFetch(`/game-history/${qs(params)}`),
     spinDetails:  (spinId) => apiFetch(`/game-history/${encodeURIComponent(spinId)}`),

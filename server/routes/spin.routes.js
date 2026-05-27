@@ -8,6 +8,32 @@ const games = require('../../shared/game-definitions');
 const path = require('path');
 const fs = require('fs');
 
+// ── Spin idempotency: nonce column + partial unique index ──
+// Bootstrap migration. Lets the client send an `Idempotency-Key`-style
+// nonce on /api/spin so a retry after a dropped connection replays the
+// prior result instead of charging the player twice. Mirrored on the
+// stripe-checkout.routes.js pattern (guarded SELECT + atomic INSERT).
+//
+// SQLite and PG both accept partial unique indexes (WHERE client_nonce
+// IS NOT NULL) so historical rows without a nonce don't conflict.
+function _spinSchemaBootstrap(sql) {
+    db.run(sql).catch(function(e) {
+        var msg = String(e && e.message || e);
+        if (/duplicate column|already exists|no such table/i.test(msg)) return;
+        console.warn('[Spin] schema bootstrap failed:', msg);
+    });
+}
+_spinSchemaBootstrap("ALTER TABLE spins ADD COLUMN client_nonce TEXT");
+_spinSchemaBootstrap(
+    "CREATE UNIQUE INDEX IF NOT EXISTS idx_spins_user_nonce ON spins(user_id, client_nonce) WHERE client_nonce IS NOT NULL"
+);
+
+// Client nonces are required to be 16-64 chars of [a-zA-Z0-9-_]. UUIDs
+// (36 char) and crypto.randomUUID outputs both fit. Anything outside
+// this range is rejected so a buggy client can't spam the table with
+// junk keys.
+const NONCE_RE = /^[a-zA-Z0-9_-]{16,64}$/;
+
 // Pre-index game definitions for O(1) lookup
 const gameIndex = new Map();
 (Array.isArray(games) ? games : []).forEach(g => { if (g && g.id) gameIndex.set(g.id, g); });
@@ -282,8 +308,48 @@ router.get('/games/:id', async (req, res) => {
 // POST /api/spin
 router.post('/', authenticate, async (req, res) => {
     try {
-        const { gameId, betAmount } = req.body;
+        const { gameId, betAmount, nonce } = req.body;
         const userId = req.user.id;
+
+        // ── Nonce replay: if the client supplied a nonce that already
+        // resolved to a stored spin for THIS user, return the prior
+        // outcome instead of running the engine again. Closes the
+        // "client retry after lost response" race that would otherwise
+        // double-charge the player.
+        if (nonce) {
+            if (typeof nonce !== 'string' || !NONCE_RE.test(nonce)) {
+                return res.status(400).json({ error: 'Invalid nonce' });
+            }
+            try {
+                const prior = await db.get(
+                    'SELECT id, bet_amount, win_amount, result_grid FROM spins WHERE user_id = ? AND client_nonce = ?',
+                    [userId, nonce]
+                );
+                if (prior) {
+                    const userRow = await db.get('SELECT balance FROM users WHERE id = ?', [userId]);
+                    let grid = null;
+                    try { grid = JSON.parse(prior.result_grid); } catch (_) { /* legacy bad row */ }
+                    return res.json({
+                        recovered: true,
+                        spinId: prior.id,
+                        grid: grid,
+                        reels: grid, // older engine code expects either name
+                        payoutCents: Math.round((prior.win_amount || 0) * 100),
+                        winAmount: prior.win_amount || 0,
+                        balanceAfterCents: Math.round(((userRow && userRow.balance) || 0) * 100),
+                        balanceAfter: (userRow && userRow.balance) || 0,
+                        freeSpinsAwarded: 0,
+                        multiplier: 1,
+                        message: 'Recovered prior spin',
+                    });
+                }
+            } catch (nErr) {
+                // Lookup failure is non-fatal — fall through to normal
+                // spin path. Worst case we charge once (which is fine —
+                // the original was lost in transit). Log for diagnosis.
+                console.warn('[Spin] nonce lookup failed (proceeding with fresh spin):', nErr.message);
+            }
+        }
 
         // ── Idempotency: reject if this user already has a spin in flight ──
         if (activeSpins.has(userId)) {
@@ -971,9 +1037,13 @@ router.post('/', authenticate, async (req, res) => {
         }
 
         // ── Log spin ──
+        // client_nonce stored so a retry with the same nonce hits the
+        // replay branch at the top of this route. NULL when the client
+        // didn't supply one (older clients or pages that don't enable
+        // recovery) — the partial unique index excludes NULLs.
         await db.run(
-            'INSERT INTO spins (user_id, game_id, bet_amount, result_grid, win_amount, rng_seed) VALUES (?, ?, ?, ?, ?, ?)',
-            [userId, gameId, usedFreeSpin ? 0 : bet, JSON.stringify(spinResult.grid), spinResult.winAmount, spinResult.seed]
+            'INSERT INTO spins (user_id, game_id, bet_amount, result_grid, win_amount, rng_seed, client_nonce) VALUES (?, ?, ?, ?, ?, ?, ?)',
+            [userId, gameId, usedFreeSpin ? 0 : bet, JSON.stringify(spinResult.grid), spinResult.winAmount, spinResult.seed, nonce || null]
         );
 
         // ── Update game stats (house edge tracking) ──
@@ -1527,6 +1597,49 @@ router.post('/gamble/collect', authenticate, async (req, res) => {
     } catch (err) {
         console.warn('[Gamble] collect error:', err.message);
         return res.status(500).json({ error: 'Collect failed' });
+    }
+});
+
+// ─── GET /api/spin/by-nonce/:nonce ────────────────────────────────
+// Recovery endpoint for the client retry-with-backoff flow. When the
+// client exhausted its retry budget without a successful response, it
+// hits this endpoint to ask "did my spin actually complete?". Returns
+// the prior outcome (so the player sees the right balance + win
+// message) or 404 if no record exists (in which case the bet was NOT
+// charged — safe for the client to retry fresh).
+router.get('/by-nonce/:nonce', authenticate, async (req, res) => {
+    const userId = req.user && req.user.id;
+    const nonce = req.params.nonce;
+    if (!nonce || !NONCE_RE.test(nonce)) {
+        return res.status(400).json({ error: 'Invalid nonce' });
+    }
+    try {
+        const prior = await db.get(
+            'SELECT id, bet_amount, win_amount, result_grid FROM spins WHERE user_id = ? AND client_nonce = ?',
+            [userId, nonce]
+        );
+        if (!prior) {
+            return res.status(404).json({ error: 'No spin found for that nonce' });
+        }
+        const userRow = await db.get('SELECT balance FROM users WHERE id = ?', [userId]);
+        let grid = null;
+        try { grid = JSON.parse(prior.result_grid); } catch (_) {}
+        return res.json({
+            recovered: true,
+            spinId: prior.id,
+            grid: grid,
+            reels: grid,
+            payoutCents: Math.round((prior.win_amount || 0) * 100),
+            winAmount: prior.win_amount || 0,
+            balanceAfterCents: Math.round(((userRow && userRow.balance) || 0) * 100),
+            balanceAfter: (userRow && userRow.balance) || 0,
+            freeSpinsAwarded: 0,
+            multiplier: 1,
+            message: 'Recovered prior spin',
+        });
+    } catch (err) {
+        console.warn('[Spin] by-nonce lookup error:', err.message);
+        return res.status(500).json({ error: 'Recovery lookup failed' });
     }
 });
 

@@ -266,6 +266,10 @@
       // endpoint (no auth), 30s poll. See _initJackpotPill for shape
       // resilience to server response variants.
       try { this._initJackpotPill(); } catch (_) { /* jackpot ticker is optional polish — never block game boot */ }
+      // Recover any spin that was in-flight on a previous page-load.
+      // Fire-and-forget — if the server replies with a recovered
+      // outcome, the toast surfaces it; otherwise silent.
+      try { this._reconcilePendingSpin(); } catch (_) {}
       this._boot();
     }
 
@@ -450,6 +454,26 @@
         title: 'Paytable',
         onclick: () => this._showInfoModal(),
       }, 'i');
+      // Turbo speed toggle — cycles normal → fast → turbo. Industry-
+      // standard premium feature. Gates two timing constants in _spin:
+      // the rolling-symbol cadence (80→50→25ms) and the per-reel stop
+      // delay (240→140→70ms). Near-miss anticipation slowdown still
+      // applies on top — turbo affects the BASE speed, not the
+      // tension beat. Persisted in localStorage per-game.
+      const turboBtn = $el('button', {
+        class: 'ce-btn ce-btn-turbo',
+        'aria-label': 'Reel speed',
+        title: 'Reel speed (Normal / Fast / Turbo)',
+        onclick: () => this._cycleSpinSpeed(),
+      }, '⚡');
+      this.turboBtn = turboBtn;
+      // Hydrate from localStorage. Default 0 = normal.
+      try {
+        const stored = parseInt(localStorage.getItem('ceSpinSpeed_' + this.gameId), 10);
+        this.state.spinSpeed = (stored === 1 || stored === 2) ? stored : 0;
+      } catch (_) { this.state.spinSpeed = 0; }
+      this._updateTurboBtnLabel();
+
       // Autoplay button — opens the run-length picker. Hidden when an
       // autoplay run is already active; the SPIN button doubles as STOP
       // in that case. Industry-standard premium feature the audit
@@ -474,7 +498,7 @@
         },
       }, 'SPIN');
 
-      [betMinus, this.betLabel, betPlus, betMax, infoBtn, autoBtn, this.spinBtn].forEach(b => controlBar.appendChild(b));
+      [betMinus, this.betLabel, betPlus, betMax, infoBtn, turboBtn, autoBtn, this.spinBtn].forEach(b => controlBar.appendChild(b));
       this.main.appendChild(controlBar);
 
       this.freeSpinsRow = $el('div', { style: { textAlign: 'center', marginTop: '.8rem', fontSize: '.9rem', opacity: .85 } });
@@ -495,6 +519,7 @@
           .ce-btn-stepper { min-width: 44px; font-size: 1.1rem; }
           .ce-btn-maxbet { background: linear-gradient(135deg, ${primary}22, ${primary}11); border-color: ${primary}88; color: ${primary}; letter-spacing: 1px; font-weight: 800; }
           .ce-btn-info { min-width: 36px; min-height: 36px; padding: .4rem .6rem; font-style: italic; font-weight: 800; font-family: serif; font-size: 1.05rem; border-radius: 50%; }
+          .ce-btn-turbo { min-width: 36px; min-height: 36px; padding: .4rem .6rem; font-size: 1.0rem; font-weight: 800; border-radius: 50%; background: linear-gradient(135deg, ${primary}22, ${primary}11); border-color: ${primary}88; color: ${primary}; }
           .ce-btn-auto { background: linear-gradient(135deg, ${primary}22, ${primary}11); border-color: ${primary}88; color: ${primary}; letter-spacing: 1px; font-weight: 800; }
           .ce-btn-autoplay { background: linear-gradient(180deg, #ef4444, #b91c1c); color: white; box-shadow: 0 4px 14px rgba(239,68,68,0.4); }
           .ce-btn-autoplay:hover:not(:disabled) { box-shadow: 0 6px 22px rgba(239,68,68,0.6); }
@@ -550,10 +575,10 @@
             .ce-btn.primary { min-height: 64px; font-size: 1.15rem; padding: 1rem 1.4rem; flex: 1 1 100%; order: 99; }
             .ce-btn-stepper { min-height: 48px; min-width: 48px; }
             .ce-btn-maxbet { min-height: 48px; }
-            /* WCAG 2.5.5 — info + auto were 36px circular which is below the
-               44px touch-target recommendation. Bump on mobile so they're
-               equally reachable as the bet steppers. */
-            .ce-btn-info, .ce-btn-auto { min-height: 48px; min-width: 48px; }
+            /* WCAG 2.5.5 — info + turbo + auto were 36px circular which is
+               below the 44px touch-target recommendation. Bump on mobile so
+               they're equally reachable as the bet steppers. */
+            .ce-btn-info, .ce-btn-turbo, .ce-btn-auto { min-height: 48px; min-width: 48px; }
           }
           /* Reduced-motion honour — cells just snap, no landing/winglow loop. */
           @media (prefers-reduced-motion: reduce) {
@@ -987,6 +1012,244 @@
       this.autoBtn.style.opacity = enabled ? '1' : '0.5';
     }
 
+    // ──────────────────────────────────────────────────────────────
+    // Spin speed (Normal / Fast / Turbo)
+    // ──────────────────────────────────────────────────────────────
+    // 3 modes — cycled by the ⚡ button. Drives `rollMs` (the per-tick
+    // rolling-symbol cadence) and `reelStopMs` (the per-reel landing
+    // delay) read by _spin(). Near-miss anticipation slowdown is layered
+    // on top — turbo doesn't suppress the tension beat, it just speeds
+    // the base spin.
+    _spinSpeedConfig() {
+      const modes = [
+        { label: '⚡',   title: 'Normal speed',     rollMs: 80, reelStopMs: 240 },
+        { label: '⚡⚡', title: 'Fast speed',       rollMs: 50, reelStopMs: 140 },
+        { label: '⚡⚡⚡', title: 'Turbo speed',      rollMs: 25, reelStopMs:  70 },
+      ];
+      return modes[this.state.spinSpeed || 0] || modes[0];
+    }
+    _cycleSpinSpeed() {
+      this.state.spinSpeed = ((this.state.spinSpeed || 0) + 1) % 3;
+      try { localStorage.setItem('ceSpinSpeed_' + this.gameId, String(this.state.spinSpeed)); } catch (_) {}
+      this._updateTurboBtnLabel();
+      this._fx('stop'); // tactile confirmation
+    }
+    _updateTurboBtnLabel() {
+      if (!this.turboBtn) return;
+      const cfg = this._spinSpeedConfig();
+      this.turboBtn.textContent = cfg.label;
+      this.turboBtn.title = cfg.title;
+      this.turboBtn.setAttribute('aria-label', cfg.title);
+    }
+
+    // ──────────────────────────────────────────────────────────────
+    // Connection-loss recovery
+    // ──────────────────────────────────────────────────────────────
+    // Real-money slot UX requirement: if /api/spin's response is lost
+    // (mobile drops signal, Render proxy returns 503, etc.) the player
+    // should NOT lose $5 to an ambiguous failure. We attach a client-
+    // generated nonce to every spin so the server can replay the prior
+    // result, and we retry-with-backoff before giving up.
+    //
+    // Flow:
+    //   1. Engine generates nonce + persists to localStorage BEFORE fetch
+    //   2. Spin fetch; if it succeeds, clear the nonce and continue
+    //   3. If it fails (network / 5xx / timeout), retry up to 3× with
+    //      exponential backoff (500ms / 1.5s / 4s). The server treats
+    //      a same-nonce retry as a replay — at-most-once semantics.
+    //   4. If all retries fail, hit GET /api/spin/by-nonce/:nonce to
+    //      ask "did my spin actually complete?". If yes (the server
+    //      did process it and only the response was lost), return the
+    //      stored outcome. If 404, the bet was never charged — safe
+    //      to retry fresh.
+    //   5. On engine boot, check localStorage for an orphan nonce from
+    //      a previous session and reconcile via the same /by-nonce call.
+
+    _generateNonce() {
+      // crypto.randomUUID is widely supported (Chrome 92+, Safari 15.4+, FF 95+).
+      // Fallback uses crypto.getRandomValues for older browsers + an entropy
+      // string. Never falls back to Math.random — that violates CLAUDE.md
+      // Rule #7 (no Math.random anywhere a security primitive belongs).
+      try {
+        if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+          return crypto.randomUUID();
+        }
+      } catch (_) {}
+      try {
+        if (typeof crypto !== 'undefined' && typeof crypto.getRandomValues === 'function') {
+          const bytes = new Uint8Array(16);
+          crypto.getRandomValues(bytes);
+          // Hex-encode → 32 chars, fits NONCE_RE on the server.
+          return Array.from(bytes, b => b.toString(16).padStart(2, '0')).join('');
+        }
+      } catch (_) {}
+      // Last-resort fallback — combines Date.now() and a counter to stay
+      // unique enough that two spins back-to-back never collide. This
+      // path should be unreachable in any modern browser.
+      this._fallbackNonceCounter = (this._fallbackNonceCounter || 0) + 1;
+      return 'fb_' + Date.now().toString(36) + '_' + this._fallbackNonceCounter.toString(36).padStart(8, '0');
+    }
+
+    _persistPendingNonce(nonce, useFreeSpin) {
+      // Stored per (userId × gameId) so multiple tabs on different
+      // games don't collide. The userId is in the JWT but we don't
+      // unpack it here — gameId scoping is sufficient because a user
+      // can only have one in-flight spin per game (enforced by the
+      // server's `activeSpins` mutex).
+      try {
+        const key = 'ceSpinNonce_' + this.gameId;
+        localStorage.setItem(key, JSON.stringify({
+          nonce: nonce,
+          useFreeSpin: !!useFreeSpin,
+          startedAt: Date.now(),
+        }));
+      } catch (_) { /* private mode — recovery just won't work this session */ }
+    }
+
+    _clearPendingNonce() {
+      try { localStorage.removeItem('ceSpinNonce_' + this.gameId); } catch (_) {}
+    }
+
+    _readPendingNonce() {
+      try {
+        const raw = localStorage.getItem('ceSpinNonce_' + this.gameId);
+        if (!raw) return null;
+        const data = JSON.parse(raw);
+        // Discard records older than 6 hours — very unlikely the server
+        // still has them and a stale "recovered" message would confuse
+        // the player.
+        if (!data || !data.nonce || Date.now() - (data.startedAt || 0) > 6 * 60 * 60 * 1000) {
+          this._clearPendingNonce();
+          return null;
+        }
+        return data;
+      } catch (_) { return null; }
+    }
+
+    async _spinWithRetry(opts) {
+      // 3 retries on transient errors (network, 5xx, timeout). Same
+      // nonce each attempt so the server can dedupe.
+      const BACKOFFS = [0, 500, 1500, 4000];
+      let lastErr = null;
+      for (let attempt = 0; attempt < BACKOFFS.length; attempt++) {
+        if (BACKOFFS[attempt] > 0) {
+          this._showReconnectingBanner(attempt);
+          await new Promise(r => setTimeout(r, BACKOFFS[attempt]));
+        }
+        try {
+          const result = await api.spin(opts.gameId, opts.betCents, { useFreeSpin: opts.useFreeSpin, nonce: opts.nonce });
+          this._hideReconnectingBanner();
+          return result;
+        } catch (err) {
+          lastErr = err;
+          // Don't retry on hard client errors — 4xx (auth, validation,
+          // limit) won't succeed on retry and they aren't safety risks.
+          // The api-client surfaces .status when it parses error bodies.
+          const status = err && (err.status || err.code);
+          if (status && status >= 400 && status < 500 && status !== 408 && status !== 429) {
+            break;
+          }
+          // Continue to next retry.
+        }
+      }
+      // All retries exhausted — ask the server "did my spin commit?"
+      // If yes (recovered: true), surface it as a successful outcome.
+      try {
+        const recovered = await api.spinByNonce(opts.nonce);
+        if (recovered && recovered.recovered) {
+          this._hideReconnectingBanner();
+          this._showRecoveredToast(recovered);
+          return recovered;
+        }
+      } catch (_) { /* 404 or network — fall through to thrown error */ }
+      this._hideReconnectingBanner();
+      throw lastErr || new Error('Spin could not be completed.');
+    }
+
+    _showReconnectingBanner(attempt) {
+      let banner = document.getElementById('ce-reconnect-banner');
+      if (!banner) {
+        banner = document.createElement('div');
+        banner.id = 'ce-reconnect-banner';
+        banner.setAttribute('role', 'status');
+        banner.setAttribute('aria-live', 'polite');
+        banner.style.cssText =
+          'position:fixed;left:50%;top:18px;transform:translateX(-50%);z-index:10580;' +
+          'padding:.6rem 1.1rem;border-radius:999px;color:#1a1205;' +
+          'background:linear-gradient(135deg,#FCD34D 0%,#F0C66E 100%);' +
+          'box-shadow:0 6px 18px rgba(0,0,0,0.4);' +
+          'font-family:"Plus Jakarta Sans",Inter,sans-serif;font-weight:700;font-size:.85rem;' +
+          'display:flex;align-items:center;gap:.6rem;';
+        document.body.appendChild(banner);
+      }
+      while (banner.firstChild) banner.removeChild(banner.firstChild);
+      const dot = document.createElement('span');
+      dot.style.cssText = 'width:.55rem;height:.55rem;border-radius:50%;background:#1a1205;animation:ceJackpotPulse 1s ease-in-out infinite;';
+      banner.appendChild(dot);
+      const txt = document.createElement('span');
+      txt.textContent = 'Reconnecting… recovering your spin (attempt ' + (attempt + 1) + ')';
+      banner.appendChild(txt);
+    }
+
+    _hideReconnectingBanner() {
+      const banner = document.getElementById('ce-reconnect-banner');
+      if (banner) banner.remove();
+    }
+
+    _showRecoveredToast(result) {
+      // Brief toast confirming a prior spin was recovered. Distinct from
+      // the regular win celebration so the player understands what
+      // happened — "your previous spin DID complete, here's the outcome".
+      const toast = document.createElement('div');
+      toast.setAttribute('role', 'status');
+      toast.setAttribute('aria-live', 'assertive');
+      toast.style.cssText =
+        'position:fixed;left:50%;top:30%;transform:translate(-50%,-50%);z-index:10570;' +
+        'padding:1.1rem 1.6rem;border-radius:14px;color:#fff;' +
+        'background:linear-gradient(135deg,#0F172A 0%,#1E40AF 100%);' +
+        'border:1px solid #60A5FA;box-shadow:0 12px 36px rgba(0,0,0,0.55);' +
+        'text-align:center;font-family:"Plus Jakarta Sans",Inter,sans-serif;' +
+        'animation:ceCelebratePop 600ms cubic-bezier(.2,.9,.4,1.2) both;';
+      const lbl = document.createElement('div');
+      lbl.style.cssText = 'font-size:.8rem;letter-spacing:.18em;opacity:.75;margin-bottom:.4rem;text-transform:uppercase;font-weight:700;';
+      lbl.textContent = 'Spin recovered';
+      const amt = document.createElement('div');
+      amt.style.cssText = 'font-size:1.8rem;font-weight:900;color:#FCD34D;';
+      const cents = result.payoutCents || 0;
+      amt.textContent = cents > 0 ? 'Won ' + fmt(cents) : 'No win';
+      const sub = document.createElement('div');
+      sub.style.cssText = 'font-size:.8rem;margin-top:.5rem;opacity:.8;';
+      sub.textContent = 'Your previous spin completed — outcome recovered from the server.';
+      toast.appendChild(lbl); toast.appendChild(amt); toast.appendChild(sub);
+      document.body.appendChild(toast);
+      setTimeout(() => toast.remove(), 4000);
+    }
+
+    async _reconcilePendingSpin() {
+      // Called on engine boot: if there's an orphan nonce from a
+      // previous session (page reload mid-spin, browser crash, etc.),
+      // reconcile it. If the server has the result, surface it. If
+      // not, just clear the stale entry — the bet was never charged.
+      const pending = this._readPendingNonce();
+      if (!pending) return;
+      try {
+        const recovered = await api.spinByNonce(pending.nonce);
+        if (recovered && recovered.recovered) {
+          // Apply the recovered outcome to state so the balance chip
+          // is right + the player sees the message.
+          if (typeof recovered.balanceAfterCents === 'number') {
+            const prev = this.state.balanceCents;
+            this.state.balanceCents = recovered.balanceAfterCents;
+            this._updateBalanceChip(prev);
+          }
+          this._showRecoveredToast(recovered);
+        }
+      } catch (_) {
+        // 404 — no record. Bet wasn't charged. Silent.
+      }
+      this._clearPendingNonce();
+    }
+
     _startAutoplay(count) {
       // Begin the autoplay run. Guard against starting on top of an
       // already-running run (a programmatic call could collide).
@@ -1312,26 +1575,51 @@
       cells.forEach(c => c.classList.remove('highlight'));
       cells.forEach(c => c.classList.remove('just-landed'));
 
+      // Reel-speed config drives the base rolling cadence + per-reel
+      // landing delay. Near-miss anticipation slowdown (below) layers
+      // on top — speed mode affects the BASE pace, not the tension beat.
+      const speedCfg = this._spinSpeedConfig();
       let rollInterval = setInterval(() => {
         cells.forEach((c, i) => {
           const s = symbols[(Math.random() * symbols.length) | 0];
           this._renderCell(c, s, (i / g.rows) | 0, i % g.rows);
         });
-      }, 80);
+      }, speedCfg.rollMs);
+
+      // Generate a per-spin idempotency nonce + persist it BEFORE the
+      // fetch so a hard page-reload after a dropped response can still
+      // recover the result via _reconcilePendingSpin() on next boot.
+      // Server uses the nonce as a replay key — same nonce returns the
+      // prior outcome instead of charging again.
+      const nonce = this._generateNonce();
+      this._persistPendingNonce(nonce, useFreeSpin);
 
       let result;
       try {
-        result = await api.spin(this.gameId, useFreeSpin ? 0 : this.state.betCents, { useFreeSpin });
+        result = await this._spinWithRetry({
+          gameId: this.gameId,
+          betCents: useFreeSpin ? 0 : this.state.betCents,
+          useFreeSpin: useFreeSpin,
+          nonce: nonce,
+        });
       } catch (err) {
         clearInterval(rollInterval);
         this.state.spinning = false;
         this.spinBtn.disabled = false;
         this._fx('error');
         this.winStrip.style.color = '#ffb3b3';
-        this.winStrip.textContent = err.message || 'Spin failed.';
-        setTimeout(() => { this.winStrip.style.color = this._primary; }, 2000);
+        // The retry helper already attempted /by-nonce recovery before
+        // throwing. If we got here, the bet was either NOT charged
+        // (player can retry) or charged with no record (rare). Surface
+        // a clear message so support can investigate if needed.
+        this.winStrip.textContent = err && err.message
+          ? 'Spin failed — please retry. (' + err.message + ')'
+          : 'Spin failed — please retry.';
+        setTimeout(() => { this.winStrip.style.color = this._primary; }, 3000);
         return;
       }
+      // Spin completed (fresh or recovered) — clear the pending nonce.
+      this._clearPendingNonce();
 
       // Reel stop sequence with near-miss anticipation.
       //
@@ -1351,7 +1639,7 @@
       // is the part the player remembers.
       for (let r = 0; r < g.reels; r++) {
         const nearMiss = this._detectNearMiss(r, g, result);
-        const delay = nearMiss ? 1500 : 240;
+        const delay = nearMiss ? 1500 : speedCfg.reelStopMs;
 
         if (nearMiss) {
           // Slow the rolling visual so the eye can register tension.
