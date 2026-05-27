@@ -269,9 +269,9 @@ router.post('/spin', authenticate, bonusGuard, async (req, res) => {
 
       // Record transaction
       await db.run(
-        `INSERT INTO transactions (user_id, type, amount, description)
-         VALUES (?, ?, ?, ?)`,
-        [userId, 'daily_bonus', finalAmount, description]
+        `INSERT INTO transactions (user_id, type, amount, balance_before, balance_after, reference)
+         VALUES (?, ?, ?, COALESCE((SELECT balance FROM users WHERE id = ?), 0), COALESCE((SELECT balance FROM users WHERE id = ?), 0), ?)`,
+        [userId, 'daily_bonus', finalAmount, userId, userId, description]
       );
 
       await db.commit();

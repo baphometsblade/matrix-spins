@@ -141,8 +141,8 @@ router.post('/activate', authenticate, async (req, res) => {
 
             // Insert transaction record
             await db.run(
-                "INSERT INTO transactions (user_id, type, amount, description) VALUES (?, 'subscription', ?, ?)",
-                [req.user.id, -price, 'Casino Pass ' + tier + ' (30 days)']
+                'INSERT INTO transactions (user_id, type, amount, balance_before, balance_after, reference) VALUES (?, ?, ?, COALESCE((SELECT balance FROM users WHERE id = ?), 0), COALESCE((SELECT balance FROM users WHERE id = ?), 0), ?)',
+                [req.user.id, 'subscription', -price, req.user.id, req.user.id, 'Casino Pass ' + tier + ' (30 days)']
             );
 
             await db.commit();
@@ -216,8 +216,8 @@ router.post('/claim-daily', authenticate, bonusGuard, async (req, res) => {
 
         // Always record a transaction for audit trail
         await db.run(
-            "INSERT INTO transactions (user_id, type, amount, description) VALUES (?, 'subscription_daily', ?, ?)",
-            [req.user.id, gemsPerDay, 'Daily gems — Casino Pass ' + tier + ' (' + today + ')']
+            'INSERT INTO transactions (user_id, type, amount, balance_before, balance_after, reference) VALUES (?, ?, ?, COALESCE((SELECT balance FROM users WHERE id = ?), 0), COALESCE((SELECT balance FROM users WHERE id = ?), 0), ?)',
+            [req.user.id, 'subscription_daily', gemsPerDay, req.user.id, req.user.id, 'Daily gems — Casino Pass ' + tier + ' (' + today + ')']
         ).catch(function(e) { console.warn('[Subscription] fire-and-forget error:', e.message); });
 
         res.json({

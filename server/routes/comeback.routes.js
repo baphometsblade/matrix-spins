@@ -162,8 +162,8 @@ router.post('/claim-comeback-bonus', authenticate, bonusGuard, async function (r
 
             // Record transaction
             await db.run(
-                "INSERT INTO transactions (user_id, type, amount, description) VALUES (?, 'bonus', ?, ?)",
-                [req.user.id, bonusAmount, 'Comeback Bonus (' + result.tier + ') — $' + bonusAmount.toFixed(2) + ' cashback on $' + result.netLoss.toFixed(2) + ' session losses']
+                'INSERT INTO transactions (user_id, type, amount, balance_before, balance_after, reference) VALUES (?, ?, ?, COALESCE((SELECT balance FROM users WHERE id = ?), 0), COALESCE((SELECT balance FROM users WHERE id = ?), 0), ?)',
+                [req.user.id, 'bonus', bonusAmount, req.user.id, req.user.id, 'Comeback Bonus (' + result.tier + ') — $' + bonusAmount.toFixed(2) + ' cashback on $' + result.netLoss.toFixed(2) + ' session losses']
             );
 
             await db.commit();

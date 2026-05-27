@@ -112,8 +112,8 @@ router.post('/redeem', authenticate, bonusGuard, async function(req, res) {
       }
       if (row.reward_credits > 0) {
         await db.run('UPDATE users SET bonus_balance = COALESCE(bonus_balance, 0) + ?, wagering_requirement = COALESCE(wagering_requirement, 0) + ? WHERE id = ?', [row.reward_credits, row.reward_credits * 15, userId]);
-        await db.run("INSERT INTO transactions (user_id, type, amount, description) VALUES (?, 'promo', ?, ?)",
-          [userId, row.reward_credits, 'Promo code: ' + row.code + ' (bonus, 15x wagering)']);
+        await db.run('INSERT INTO transactions (user_id, type, amount, balance_before, balance_after, reference) VALUES (?, ?, ?, COALESCE((SELECT balance FROM users WHERE id = ?), 0), COALESCE((SELECT balance FROM users WHERE id = ?), 0), ?)',
+          [userId, 'promo', row.reward_credits, userId, userId, 'Promo code: ' + row.code + ' (bonus, 15x wagering)']);
       }
 
       await db.commit();

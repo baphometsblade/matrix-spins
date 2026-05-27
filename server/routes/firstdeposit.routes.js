@@ -73,8 +73,8 @@ router.post('/claim', authenticate, bonusGuard, async function(req, res) {
     if (!claimResult || claimResult.changes === 0) {
       return res.status(409).json({ error: 'Already claimed (concurrent request)' });
     }
-    await db.run("INSERT INTO transactions (user_id, type, amount, description) VALUES (?, 'bonus', ?, ?)",
-      [userId, BONUS_CREDITS, 'First Deposit Welcome Bonus']);
+    await db.run('INSERT INTO transactions (user_id, type, amount, balance_before, balance_after, reference) VALUES (?, ?, ?, COALESCE((SELECT balance FROM users WHERE id = ?), 0), COALESCE((SELECT balance FROM users WHERE id = ?), 0), ?)',
+      [userId, 'bonus', BONUS_CREDITS, userId, userId, 'First Deposit Welcome Bonus']);
     // Grant first_deposit achievement (idempotent)
     require('../services/achievement.service').grant(userId, 'first_deposit').catch(function(err) { console.warn('[FirstDeposit] Failed to grant first_deposit achievement:', err.message); });
 

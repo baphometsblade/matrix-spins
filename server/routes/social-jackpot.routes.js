@@ -353,8 +353,8 @@ router.post('/check-winner', authenticate, bonusGuard, async function (req, res)
         // Record transaction for audit trail
         try {
           await db.run(
-            "INSERT INTO transactions (user_id, type, amount, description) VALUES (?, 'jackpot', ?, ?)",
-            [userId, winAmount, 'Social Jackpot Win: ' + pool.pool_name + ' — $' + winAmount.toFixed(2)]
+            'INSERT INTO transactions (user_id, type, amount, balance_before, balance_after, reference) VALUES (?, ?, ?, COALESCE((SELECT balance FROM users WHERE id = ?), 0), COALESCE((SELECT balance FROM users WHERE id = ?), 0), ?)',
+            [userId, 'jackpot', winAmount, userId, userId, 'Social Jackpot Win: ' + pool.pool_name + ' — $' + winAmount.toFixed(2)]
           );
         } catch (txLogErr) {
           console.warn('[SocialJackpot] Transaction log failed:', txLogErr.message);

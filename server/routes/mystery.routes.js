@@ -121,14 +121,14 @@ router.post('/claim', authenticate, bonusGuard, async (req, res) => {
                 }
                 await db.run('UPDATE users SET bonus_balance = COALESCE(bonus_balance, 0) + ?, wagering_requirement = COALESCE(wagering_requirement, 0) + ? WHERE id = ?', [reward.amount, reward.amount * 15, userId]);
                 await db.run(
-                    'INSERT INTO transactions (user_id, type, amount, description) VALUES (?, ?, ?, ?)',
-                    [userId, 'mystery_drop', reward.amount, 'Mystery Drop: ' + reward.amount + ' bonus credits (15x wagering)']
+                    'INSERT INTO transactions (user_id, type, amount, balance_before, balance_after, reference) VALUES (?, ?, ?, COALESCE((SELECT balance FROM users WHERE id = ?), 0), COALESCE((SELECT balance FROM users WHERE id = ?), 0), ?)',
+                    [userId, 'mystery_drop', reward.amount, userId, userId, 'Mystery Drop: ' + reward.amount + ' bonus credits (15x wagering)']
                 );
             } else if (reward.type === 'gems') {
                 await db.run('UPDATE users SET gems = COALESCE(gems, 0) + ? WHERE id = ?', [reward.amount, userId]);
                 await db.run(
-                    'INSERT INTO transactions (user_id, type, amount, description) VALUES (?, ?, ?, ?)',
-                    [userId, 'mystery_drop_gems', 0, 'Mystery Drop: ' + reward.amount + ' gems']
+                    'INSERT INTO transactions (user_id, type, amount, balance_before, balance_after, reference) VALUES (?, ?, ?, COALESCE((SELECT balance FROM users WHERE id = ?), 0), COALESCE((SELECT balance FROM users WHERE id = ?), 0), ?)',
+                    [userId, 'mystery_drop_gems', 0, userId, userId, 'Mystery Drop: ' + reward.amount + ' gems']
                 );
             } else if (reward.type === 'wheel_spins') {
                 await db.run('UPDATE users SET bonus_wheel_spins = COALESCE(bonus_wheel_spins, 0) + ? WHERE id = ?', [reward.amount, userId]);

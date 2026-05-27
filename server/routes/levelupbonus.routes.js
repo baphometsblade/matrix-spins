@@ -90,8 +90,8 @@ router.post('/claim', authenticate, bonusGuard, async function(req, res) { // RO
       return res.json({ success: false, message: 'No new levels to claim' });
     }
     await db.run(
-      "INSERT INTO transactions (user_id, type, amount, description) VALUES (?, 'bonus', ?, ?)",
-      [userId, bonus, 'Level-up bonus: reached level ' + currentLevel + ' (bonus, 15x wagering)']
+      'INSERT INTO transactions (user_id, type, amount, balance_before, balance_after, reference) VALUES (?, ?, ?, COALESCE((SELECT balance FROM users WHERE id = ?), 0), COALESCE((SELECT balance FROM users WHERE id = ?), 0), ?)',
+      [userId, 'bonus', bonus, userId, userId, 'Level-up bonus: reached level ' + currentLevel + ' (bonus, 15x wagering)']
     );
     const updated = await db.get('SELECT balance FROM users WHERE id = ?', [userId]);
     return res.json({

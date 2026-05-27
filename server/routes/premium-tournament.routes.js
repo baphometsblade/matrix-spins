@@ -216,8 +216,8 @@ router.post('/:id/join', authenticate, async function(req, res) {
 
         // Record transaction
         await db.run(
-            "INSERT INTO transactions (user_id, type, amount, description) VALUES (?, 'tournament_entry', ?, ?)",
-            [userId, -entryFee, 'Premium Tournament Entry: ' + tournament.name]
+            'INSERT INTO transactions (user_id, type, amount, balance_before, balance_after, reference) VALUES (?, ?, ?, COALESCE((SELECT balance FROM users WHERE id = ?), 0), COALESCE((SELECT balance FROM users WHERE id = ?), 0), ?)',
+            [userId, 'tournament_entry', -entryFee, userId, userId, 'Premium Tournament Entry: ' + tournament.name]
         );
 
         // Increment current_players
@@ -528,8 +528,8 @@ router.post('/admin/finalize/:id', authenticate, requireAdmin, async function(re
                     // Record transaction
                     var ordinalSuffix = ['st', 'nd', 'rd', 'th', 'th'][i] || 'th';
                     await db.run(
-                        "INSERT INTO transactions (user_id, type, amount, description) VALUES (?, 'tournament_payout', ?, ?)",
-                        [finisher.user_id, winnings, tournament.name + ' Prize — ' + (i + 1) + ordinalSuffix + ' place: $' + winnings.toFixed(2)]
+                        'INSERT INTO transactions (user_id, type, amount, balance_before, balance_after, reference) VALUES (?, ?, ?, COALESCE((SELECT balance FROM users WHERE id = ?), 0), COALESCE((SELECT balance FROM users WHERE id = ?), 0), ?)',
+                        [finisher.user_id, 'tournament_payout', winnings, finisher.user_id, finisher.user_id, tournament.name + ' Prize — ' + (i + 1) + ordinalSuffix + ' place: $' + winnings.toFixed(2)]
                     );
 
                     payouts.push({

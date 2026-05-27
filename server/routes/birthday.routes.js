@@ -114,8 +114,8 @@ router.post('/claim', authenticate, bonusGuard, async (req, res) => { // ROUND 4
 
         // Transaction record
         await db.run(
-            "INSERT INTO transactions (user_id, type, amount, description) VALUES (?, 'birthday_bonus', ?, ?)",
-            [req.user.id, BIRTHDAY_CREDITS, 'Birthday Bonus — Happy Birthday!']
+            'INSERT INTO transactions (user_id, type, amount, balance_before, balance_after, reference) VALUES (?, ?, ?, COALESCE((SELECT balance FROM users WHERE id = ?), 0), COALESCE((SELECT balance FROM users WHERE id = ?), 0), ?)',
+            [req.user.id, 'birthday_bonus', BIRTHDAY_CREDITS, req.user.id, req.user.id, 'Birthday Bonus — Happy Birthday!']
         ).catch(function(e) { console.warn('[birthday] Transaction record error:', e.message); });
 
         var updatedUser = await db.get('SELECT balance FROM users WHERE id = ?', [req.user.id]);

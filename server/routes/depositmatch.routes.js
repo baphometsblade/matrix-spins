@@ -133,8 +133,8 @@ router.post('/claim', authenticate, bonusGuard, async function(req, res) {
     try {
         await db.run('UPDATE users SET bonus_balance = COALESCE(bonus_balance, 0) + ?, wagering_requirement = COALESCE(wagering_requirement, 0) + ?, deposit_match_credits = COALESCE(deposit_match_credits, 0) + ?, deposit_match_last = ? WHERE id = ?',
           [matchAmount, matchAmount * wageringMult, matchAmount, lastDeposit.created_at, userId]);
-        await db.run("INSERT INTO transactions (user_id, type, amount, description) VALUES (?, 'bonus', ?, ?)",
-          [userId, matchAmount, 'Deposit Match ' + Math.round(cfg.rate * 100) + '% (' + cfg.label + ') — $' + matchAmount.toFixed(2) + ' (30x wagering)']);
+        await db.run('INSERT INTO transactions (user_id, type, amount, balance_before, balance_after, reference) VALUES (?, ?, ?, COALESCE((SELECT balance FROM users WHERE id = ?), 0), COALESCE((SELECT balance FROM users WHERE id = ?), 0), ?)',
+          [userId, 'bonus', matchAmount, userId, userId, 'Deposit Match ' + Math.round(cfg.rate * 100) + '% (' + cfg.label + ') — $' + matchAmount.toFixed(2) + ' (30x wagering)']);
         await db.commit();
     } catch (txErr) {
         await db.rollback();

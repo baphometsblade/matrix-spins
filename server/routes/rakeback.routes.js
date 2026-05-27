@@ -97,7 +97,7 @@ router.post('/claim', authenticate, bonusGuard, async (req, res) => {
         // Credit to bonus_balance with 10x wagering (loss compensation)
         await db.run('UPDATE users SET bonus_balance = COALESCE(bonus_balance, 0) + ?, wagering_requirement = COALESCE(wagering_requirement, 0) + ? WHERE id = ?', [pendingRakeback, pendingRakeback * 10, req.user.id]);
         const description = 'Weekly rakeback - ' + weeklyWagered.toFixed(2) + ' wagered (bonus, 10x wagering)';
-        await db.run("INSERT INTO transactions (user_id, type, amount, description) VALUES (?, 'rakeback', ?, ?)", [req.user.id, pendingRakeback, description]);
+        await db.run('INSERT INTO transactions (user_id, type, amount, balance_before, balance_after, reference) VALUES (?, ?, ?, COALESCE((SELECT balance FROM users WHERE id = ?), 0), COALESCE((SELECT balance FROM users WHERE id = ?), 0), ?)', [req.user.id, 'rakeback', pendingRakeback, req.user.id, req.user.id, description]);
         const userRow = await db.get('SELECT balance FROM users WHERE id = ?', [req.user.id]);
         const newBalance = userRow ? parseFloat(userRow.balance) : 0;
         res.json({ success: true, credited: pendingRakeback, newBalance });

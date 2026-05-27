@@ -73,18 +73,18 @@ router.post('/', authenticate, bonusGuard, async function(req, res) {
             try {
                 if (reward.type === 'gems') {
                     await db.run('UPDATE users SET gems = COALESCE(gems, 0) + ? WHERE id = ?', [reward.amount, userId]);
-                    await db.run("INSERT INTO transactions (user_id, type, amount, description) VALUES (?, 'streak_reward', ?, ?)",
-                        [userId, reward.amount, 'Daily streak reward: ' + reward.amount + ' gems (day ' + newCount + ')']);
+                    await db.run('INSERT INTO transactions (user_id, type, amount, balance_before, balance_after, reference) VALUES (?, ?, ?, COALESCE((SELECT balance FROM users WHERE id = ?), 0), COALESCE((SELECT balance FROM users WHERE id = ?), 0), ?)',
+                        [userId, 'streak_reward', reward.amount, userId, userId, 'Daily streak reward: ' + reward.amount + ' gems (day ' + newCount + ')']);
                 } else if (reward.type === 'credits') {
                     await db.run('UPDATE users SET bonus_balance = COALESCE(bonus_balance, 0) + ?, wagering_requirement = COALESCE(wagering_requirement, 0) + ? WHERE id = ?', [reward.amount, reward.amount * 15, userId]);
-                    await db.run("INSERT INTO transactions (user_id, type, amount, description) VALUES (?, 'streak_reward', ?, ?)",
-                        [userId, reward.amount, 'Daily streak reward: $' + reward.amount + ' bonus credits (day ' + newCount + ', 15x wagering)']);
+                    await db.run('INSERT INTO transactions (user_id, type, amount, balance_before, balance_after, reference) VALUES (?, ?, ?, COALESCE((SELECT balance FROM users WHERE id = ?), 0), COALESCE((SELECT balance FROM users WHERE id = ?), 0), ?)',
+                        [userId, 'streak_reward', reward.amount, userId, userId, 'Daily streak reward: $' + reward.amount + ' bonus credits (day ' + newCount + ', 15x wagering)']);
                 } else if (reward.type === 'weekly' || reward.type === 'biweekly' || reward.type === 'monthly') {
                     var creditAmount = reward.credits || reward.amount || 0;
                     if (creditAmount > 0) {
                         await db.run('UPDATE users SET bonus_balance = COALESCE(bonus_balance, 0) + ?, wagering_requirement = COALESCE(wagering_requirement, 0) + ? WHERE id = ?', [creditAmount, creditAmount * 15, userId]);
-                        await db.run("INSERT INTO transactions (user_id, type, amount, description) VALUES (?, 'streak_reward', ?, ?)",
-                            [userId, creditAmount, 'Daily streak reward: $' + creditAmount + ' bonus credits (' + reward.type + ' bonus, day ' + newCount + ', 15x wagering)']);
+                        await db.run('INSERT INTO transactions (user_id, type, amount, balance_before, balance_after, reference) VALUES (?, ?, ?, COALESCE((SELECT balance FROM users WHERE id = ?), 0), COALESCE((SELECT balance FROM users WHERE id = ?), 0), ?)',
+                            [userId, 'streak_reward', creditAmount, userId, userId, 'Daily streak reward: $' + creditAmount + ' bonus credits (' + reward.type + ' bonus, day ' + newCount + ', 15x wagering)']);
                     }
                     if (reward.wheelSpins && reward.wheelSpins > 0) {
                         await db.run('UPDATE users SET bonus_wheel_spins = COALESCE(bonus_wheel_spins, 0) + ? WHERE id = ?', [reward.wheelSpins, userId]);

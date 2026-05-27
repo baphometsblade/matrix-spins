@@ -144,10 +144,13 @@ router.post('/claim', authenticate, bonusGuard, async (req, res) => {
 
         // Record transaction
         await db.run(
-            "INSERT INTO transactions (user_id, type, amount, description) VALUES (?, 'cashback', ?, ?)",
+            'INSERT INTO transactions (user_id, type, amount, balance_before, balance_after, reference) VALUES (?, ?, ?, COALESCE((SELECT balance FROM users WHERE id = ?), 0), COALESCE((SELECT balance FROM users WHERE id = ?), 0), ?)',
             [
                 req.user.id,
+                'cashback',
                 credited,
+                req.user.id,
+                req.user.id,
                 'Daily cashback (' + cfg.label + ') — ' + (cfg.rate * 100).toFixed(0) + '% of $' + netLosses.toFixed(2) + ' net losses'
             ]
         );

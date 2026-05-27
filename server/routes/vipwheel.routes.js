@@ -149,8 +149,8 @@ router.post('/spin', authenticate, bonusGuard, async function(req, res) {
           [creditVal, creditVal * 15, req.user.id]
         );
         await db.run(
-          "INSERT INTO transactions (user_id, type, amount, description) VALUES (?, 'bonus', ?, ?)",
-          [req.user.id, result.prize.value, 'VIP Wheel: ' + result.prize.label + ' (bonus, 15x wagering)']
+          'INSERT INTO transactions (user_id, type, amount, balance_before, balance_after, reference) VALUES (?, ?, ?, COALESCE((SELECT balance FROM users WHERE id = ?), 0), COALESCE((SELECT balance FROM users WHERE id = ?), 0), ?)',
+          [req.user.id, 'bonus', result.prize.value, req.user.id, req.user.id, 'VIP Wheel: ' + result.prize.label + ' (bonus, 15x wagering)']
         );
       } else {
         await db.run(

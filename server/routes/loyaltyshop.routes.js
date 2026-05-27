@@ -168,8 +168,8 @@ router.post('/redeem', authenticate, bonusGuard, async function(req, res) {
     }
 
     await db.run(
-      "INSERT INTO transactions (user_id, type, amount, description) VALUES (?, 'bonus', ?, ?)",
-      [userId, creditAmount, 'Loyalty Points Redemption — ' + redeemPts + ' pts → $' + creditAmount.toFixed(2) + ' (15x wagering)']
+      'INSERT INTO transactions (user_id, type, amount, balance_before, balance_after, reference) VALUES (?, ?, ?, COALESCE((SELECT balance FROM users WHERE id = ?), 0), COALESCE((SELECT balance FROM users WHERE id = ?), 0), ?)',
+      [userId, 'bonus', creditAmount, userId, userId, 'Loyalty Points Redemption — ' + redeemPts + ' pts → $' + creditAmount.toFixed(2) + ' (15x wagering)']
     );
 
     var updated   = await db.get('SELECT balance, loyalty_points FROM users WHERE id = ?', [userId]);

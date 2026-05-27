@@ -156,8 +156,8 @@ router.post('/record', authenticate, bonusGuard, async (req, res) => {
         if (reward.credits > 0) {
             await db.run('UPDATE users SET bonus_balance = COALESCE(bonus_balance, 0) + ?, wagering_requirement = COALESCE(wagering_requirement, 0) + ? WHERE id = ?', [reward.credits, reward.credits * 15, req.user.id]);
             await db.run(
-                "INSERT INTO transactions (user_id, type, amount, description) VALUES (?, 'deposit_streak', ?, ?)",
-                [req.user.id, reward.credits, 'Deposit Streak Day ' + newStreak + ' — ' + reward.label + ' (bonus, 15x wagering)']
+                'INSERT INTO transactions (user_id, type, amount, balance_before, balance_after, reference) VALUES (?, ?, ?, COALESCE((SELECT balance FROM users WHERE id = ?), 0), COALESCE((SELECT balance FROM users WHERE id = ?), 0), ?)',
+                [req.user.id, 'deposit_streak', reward.credits, req.user.id, req.user.id, 'Deposit Streak Day ' + newStreak + ' — ' + reward.label + ' (bonus, 15x wagering)']
             ).catch(function(e) { console.warn('[DepositStreak] fire-and-forget error:', e.message); });
         }
 
@@ -205,8 +205,8 @@ async function recordForUser(userId) {
     if (reward.credits > 0) {
         await db.run('UPDATE users SET bonus_balance = COALESCE(bonus_balance, 0) + ?, wagering_requirement = COALESCE(wagering_requirement, 0) + ? WHERE id = ?', [reward.credits, reward.credits * 15, userId]);
         await db.run(
-            "INSERT INTO transactions (user_id, type, amount, description) VALUES (?, 'deposit_streak', ?, ?)",
-            [userId, reward.credits, 'Deposit Streak Day ' + newStreak + ' — ' + reward.label + ' (bonus, 15x wagering)']
+            'INSERT INTO transactions (user_id, type, amount, balance_before, balance_after, reference) VALUES (?, ?, ?, COALESCE((SELECT balance FROM users WHERE id = ?), 0), COALESCE((SELECT balance FROM users WHERE id = ?), 0), ?)',
+            [userId, 'deposit_streak', reward.credits, userId, userId, 'Deposit Streak Day ' + newStreak + ' — ' + reward.label + ' (bonus, 15x wagering)']
         ).catch(function(e) { console.warn('[DepositStreak] fire-and-forget error:', e.message); });
     }
     await db.run(

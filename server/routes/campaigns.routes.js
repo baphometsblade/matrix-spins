@@ -348,9 +348,9 @@ router.post('/claim', authenticate, bonusGuard, async function(req, res) { // RO
 
         // Record transaction
         await db.run(
-            `INSERT INTO transactions (user_id, type, amount, description)
-             VALUES (?, ?, ?, ?)`,
-            [userId, 'bonus', bonusAmount, 'Deposit Match Bonus: ' + campaign.name + ' (' + matchPercent + '%) — $' + bonusAmount.toFixed(2)]
+            `INSERT INTO transactions (user_id, type, amount, balance_before, balance_after, reference)
+             VALUES (?, ?, ?, COALESCE((SELECT balance FROM users WHERE id = ?), 0), COALESCE((SELECT balance FROM users WHERE id = ?), 0), ?)`,
+            [userId, 'bonus', bonusAmount, userId, userId, 'Deposit Match Bonus: ' + campaign.name + ' (' + matchPercent + '%) — $' + bonusAmount.toFixed(2)]
         );
 
         // Fetch updated user bonus balance

@@ -241,8 +241,8 @@ router.post('/claim-vip-deposit-bonus', authenticate, bonusGuard, async function
 
             // Record transaction
             await db.run(
-                "INSERT INTO transactions (user_id, type, amount, description) VALUES (?, 'bonus', ?, ?)",
-                [userId, bonusAmount, 'VIP Deposit Bonus ' + tier.matchPercent + '% (' + tier.name + ') — $' + bonusAmount.toFixed(2)]
+                'INSERT INTO transactions (user_id, type, amount, balance_before, balance_after, reference) VALUES (?, ?, ?, COALESCE((SELECT balance FROM users WHERE id = ?), 0), COALESCE((SELECT balance FROM users WHERE id = ?), 0), ?)',
+                [userId, 'bonus', bonusAmount, userId, userId, 'VIP Deposit Bonus ' + tier.matchPercent + '% (' + tier.name + ') — $' + bonusAmount.toFixed(2)]
             );
 
             await db.commit();

@@ -106,8 +106,8 @@ router.post('/purchase', authenticate, bonusGuard, async function (req, res) {
                 var balAfter = postUpdate ? Number(postUpdate.balance) + Number(postUpdate.bonus_balance || 0) : 0;
                 var balBefore = Math.round((balAfter - item.amount) * 100) / 100;
                 await db.run(
-                    "INSERT INTO transactions (user_id, type, amount, balance_before, balance_after, description) VALUES (?, 'xpshop', ?, ?, ?, ?)",
-                    [userId, item.amount, balBefore, balAfter, 'XP Shop: ' + itemId + ' (cost ' + item.cost + ' XP, bonus, 15x wagering)']
+                    'INSERT INTO transactions (user_id, type, amount, balance_before, balance_after, reference) VALUES (?, ?, ?, ?, ?, ?)',
+                    [userId, 'xpshop', item.amount, balBefore, balAfter, 'XP Shop: ' + itemId + ' (cost ' + item.cost + ' XP, bonus, 15x wagering)']
                 );
                 granted = { type: 'balance', amount: item.amount };
             } else if (item.type === 'freespins') {

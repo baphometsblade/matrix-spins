@@ -183,9 +183,9 @@ router.post('/claim', authenticate, bonusGuard, withSchema, async (req, res) => 
 
     // Insert transaction record
     await db.run(
-      `INSERT INTO transactions (user_id, type, amount, description, created_at)
-       VALUES (?, 'bonus', ?, 'Weekly reload bonus (25% match) → bonus balance', datetime('now'))`,
-      [userId, bonus]
+      `INSERT INTO transactions (user_id, type, amount, balance_before, balance_after, reference, created_at)
+       VALUES (?, ?, ?, COALESCE((SELECT balance FROM users WHERE id = ?), 0), COALESCE((SELECT balance FROM users WHERE id = ?), 0), ?, datetime('now'))`,
+      [userId, 'bonus', bonus, userId, userId, 'Weekly reload bonus (25% match) → bonus balance']
     );
 
     // Fire-and-forget bonus notification email

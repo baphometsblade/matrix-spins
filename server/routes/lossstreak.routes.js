@@ -145,8 +145,8 @@ router.post('/claim-loss-offer', authenticate, bonusGuard, async function (req, 
 
         // Record transaction
         await db.run(
-            "INSERT INTO transactions (user_id, type, amount, description) VALUES (?, 'bonus', ?, ?)",
-            [req.user.id, bonusAmount, 'Loss Streak Deposit Match ' + Math.round(MATCH_PCT * 100) + '% — $' + bonusAmount.toFixed(2)]
+            'INSERT INTO transactions (user_id, type, amount, balance_before, balance_after, reference) VALUES (?, ?, ?, COALESCE((SELECT balance FROM users WHERE id = ?), 0), COALESCE((SELECT balance FROM users WHERE id = ?), 0), ?)',
+            [req.user.id, 'bonus', bonusAmount, req.user.id, req.user.id, 'Loss Streak Deposit Match ' + Math.round(MATCH_PCT * 100) + '% — $' + bonusAmount.toFixed(2)]
         );
 
         var updated = await db.get(

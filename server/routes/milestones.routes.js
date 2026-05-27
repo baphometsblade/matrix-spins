@@ -181,8 +181,8 @@ router.post('/claim', authenticate, bonusGuard, async function(req, res) {
 
     // Record transaction
     await db.run(
-      "INSERT INTO transactions (user_id, type, amount, description) VALUES (?, 'milestone_reward', ?, ?)",
-      [userId, milestone.reward, `Milestone reward: ${milestone.label}`]
+      'INSERT INTO transactions (user_id, type, amount, balance_before, balance_after, reference) VALUES (?, ?, ?, COALESCE((SELECT balance FROM users WHERE id = ?), 0), COALESCE((SELECT balance FROM users WHERE id = ?), 0), ?)',
+      [userId, 'milestone_reward', milestone.reward, userId, userId, `Milestone reward: ${milestone.label}`]
     );
 
     // Fetch updated player bonus balance

@@ -249,8 +249,8 @@ router.post('/claim-daily-bonus', authenticate, bonusGuard, async (req, res) => 
         );
 
         await db.run(
-            "INSERT INTO transactions (user_id, type, amount, description) VALUES (?, 'bonus', ?, ?)",
-            [user.id, reward.amount, `Daily bonus day ${dayIndex + 1} (bonus, 15x wagering)`]
+            'INSERT INTO transactions (user_id, type, amount, balance_before, balance_after, reference) VALUES (?, ?, ?, COALESCE((SELECT balance FROM users WHERE id = ?), 0), COALESCE((SELECT balance FROM users WHERE id = ?), 0), ?)',
+            [user.id, 'bonus', reward.amount, user.id, user.id, `Daily bonus day ${dayIndex + 1} (bonus, 15x wagering)`]
         );
 
         const updatedDailyUser = await db.get('SELECT balance FROM users WHERE id = ?', [user.id]);
@@ -316,8 +316,8 @@ router.post('/spin-wheel', authenticate, bonusGuard, async (req, res) => {
                 [seg.value, seg.value * 15, user.id]
             );
             await db.run(
-                "INSERT INTO transactions (user_id, type, amount, description) VALUES (?, 'bonus', ?, ?)",
-                [user.id, seg.value, 'Bonus wheel prize: ' + seg.label + ' (bonus, 15x wagering)']
+                'INSERT INTO transactions (user_id, type, amount, balance_before, balance_after, reference) VALUES (?, ?, ?, COALESCE((SELECT balance FROM users WHERE id = ?), 0), COALESCE((SELECT balance FROM users WHERE id = ?), 0), ?)',
+                [user.id, 'bonus', seg.value, user.id, user.id, 'Bonus wheel prize: ' + seg.label + ' (bonus, 15x wagering)']
             );
         } else {
             // Free spins — just record the spin time, no balance change
@@ -390,8 +390,8 @@ router.post('/redeem-promo', authenticate, bonusGuard, async (req, res) => {
                 [def.cash, def.cash * 15, user.id]
             );
             await db.run(
-                "INSERT INTO transactions (user_id, type, amount, description) VALUES (?, 'bonus', ?, ?)",
-                [user.id, def.cash, `Promo code: ${upperCode} (bonus, 15x wagering)`]
+                'INSERT INTO transactions (user_id, type, amount, balance_before, balance_after, reference) VALUES (?, ?, ?, COALESCE((SELECT balance FROM users WHERE id = ?), 0), COALESCE((SELECT balance FROM users WHERE id = ?), 0), ?)',
+                [user.id, 'bonus', def.cash, user.id, user.id, `Promo code: ${upperCode} (bonus, 15x wagering)`]
             );
         }
 
@@ -491,8 +491,8 @@ router.post('/claim-referral-bonus', authenticate, bonusGuard, async (req, res) 
         await db.run('UPDATE users SET bonus_balance = COALESCE(bonus_balance, 0) + ?, wagering_requirement = COALESCE(wagering_requirement, 0) + ?, referral_bonus_paid = 1 WHERE id = ?',
             [REFERRAL_BONUS_REFEREE, REFERRAL_BONUS_REFEREE * 15, user.id]);
         await db.run(
-            "INSERT INTO transactions (user_id, type, amount, description) VALUES (?, 'bonus', ?, ?)",
-            [user.id, REFERRAL_BONUS_REFEREE, 'Referral bonus — welcome reward (bonus, 15x wagering)']
+            'INSERT INTO transactions (user_id, type, amount, balance_before, balance_after, reference) VALUES (?, ?, ?, COALESCE((SELECT balance FROM users WHERE id = ?), 0), COALESCE((SELECT balance FROM users WHERE id = ?), 0), ?)',
+            [user.id, 'bonus', REFERRAL_BONUS_REFEREE, user.id, user.id, 'Referral bonus — welcome reward (bonus, 15x wagering)']
         );
 
         // Award bonus to referrer → bonus_balance with 15x wagering
@@ -523,8 +523,8 @@ router.post('/claim-referral-bonus', authenticate, bonusGuard, async (req, res) 
                 await db.run('UPDATE users SET bonus_balance = COALESCE(bonus_balance, 0) + ?, wagering_requirement = COALESCE(wagering_requirement, 0) + ? WHERE id = ?',
                     [REFERRAL_BONUS_REFERRER, REFERRAL_BONUS_REFERRER * 15, referrer.id]);
                 await db.run(
-                    "INSERT INTO transactions (user_id, type, amount, description) VALUES (?, 'bonus', ?, ?)",
-                    [referrer.id, REFERRAL_BONUS_REFERRER, 'Referral bonus — friend joined (bonus, 15x wagering)']
+                    'INSERT INTO transactions (user_id, type, amount, balance_before, balance_after, reference) VALUES (?, ?, ?, COALESCE((SELECT balance FROM users WHERE id = ?), 0), COALESCE((SELECT balance FROM users WHERE id = ?), 0), ?)',
+                    [referrer.id, 'bonus', REFERRAL_BONUS_REFERRER, referrer.id, referrer.id, 'Referral bonus — friend joined (bonus, 15x wagering)']
                 );
             } else {
                 console.warn('[User] Skipped referrer bonus — referrer ' + referrer.id + ' is self-excluded');
