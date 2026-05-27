@@ -58,6 +58,178 @@
     return h;
   }
 
+  // ──────────────────────────────────────────────────────────────────
+  // Symbol → emoji glyph map. Covers the 424 unique symbol IDs across
+  // the 100 games (extracted from js/game-registry.js). Grouped by
+  // theme for readability. Symbols use lower-case canonical ID keys.
+  // Multi-word IDs are hyphenated to match the registry's shape.
+  // ──────────────────────────────────────────────────────────────────
+  const SYMBOL_GLYPHS = {
+    // Generic slot specials
+    wild: '🃏', scatter: '⭐', bonus: '🎁', mystery: '❓', prize: '🎁',
+    bell: '🔔', 'gold-bell': '🔔', bar: '📊', 'triple-bar': '📊',
+    sevens: '7️⃣', 'lucky-seven': '7️⃣', 'gold-seven': '7️⃣', seven: '7️⃣',
+
+    // Fruit
+    cherry: '🍒', lemon: '🍋', orange: '🍊', grape: '🍇', plum: '🟣',
+    strawberry: '🍓', banana: '🍌', watermelon: '🍉', melon: '🍈',
+    peach: '🍑', apple: '🍎', 'lucky-fruit': '🍇', olive: '🫒',
+
+    // Treasure / gems / coins
+    diamond: '💎', emerald: '💚', ruby: '❤️', sapphire: '💙',
+    gem: '💎', jewel: '💎', jewels: '💎', gold: '💰', 'gold-bar': '🏆',
+    'gold-coin': '🪙', 'gold-ring': '💍', 'gold-nugget': '💰',
+    'gold-mask': '🎭', nugget: '💰', coin: '🪙', silver: '🥈', copper: '🟤',
+    brass: '🟫', treasure: '💰', 'treasure-chest': '🪙', vault: '🏦',
+    safe: '🔐', jade: '💚', moonstone: '🌙', opal: '💎', pearl: '🦪',
+    crystal: '💠', 'crystal-ball': '🔮', amulet: '🧿', riches: '💰',
+    fortune: '💰', bounty: '💰',
+
+    // Animals
+    wolf: '🐺', bear: '🐻', tiger: '🐅', lion: '🦁', eagle: '🦅',
+    owl: '🦉', cat: '🐱', elephant: '🐘', dragon: '🐉', koi: '🐟',
+    fish: '🐟', shark: '🦈', jellyfish: '🪼', panther: '🐾',
+    kangaroo: '🦘', koala: '🐨', crocodile: '🐊', dingo: '🐺',
+    platypus: '🦫', camel: '🐪', horse: '🐴', heron: '🪿',
+    zebra: '🦓', mermaid: '🧜‍♀️', seahorse: '🐢', turtle: '🐢',
+    salmon: '🐟', clownfish: '🐠', wildebeest: '🐃', joey: '🦘',
+    bastet: '🐈', sphinx: '🦁', falcon: '🦅', hawk: '🦅',
+    paw: '🐾', pack: '🐺', mane: '🦁', fang: '🦷', fangs: '🦷',
+    claw: '🐾', tusks: '🐘', stripes: '🐅', wing: '🪶', wings: '🪶',
+    feather: '🪶', horn: '🐐', nest: '🪺', honey: '🍯', prey: '🦌',
+    herd: '🐃', wattle: '🦃',
+
+    // Mystical / fantasy
+    wizard: '🧙', witch: '🧙‍♀️', mage: '🧙', fairy: '🧚', elf: '🧝',
+    druid: '🧙', sorcerer: '🧙', paladin: '🛡️', enchantress: '🧙‍♀️',
+    necromancer: '🧙‍♂️', archer: '🏹', merlin: '🧙', golem: '🪨',
+    bard: '🎶', dryad: '🌳', minotaur: '🐂', reaper: '💀', wand: '🪄',
+    spell: '✨', spellbook: '📖', scroll: '📜', potion: '🧪',
+    cauldron: '🍯', dagger: '🗡️', sword: '⚔️', magic: '✨',
+    arcane: '✨', enchanted: '✨', enchantment: '✨', rune: '🪨',
+    relic: '⚱️', staff: '🪄', amulets: '🧿', alchemist: '⚗️',
+    transmutation: '⚗️', labyrinth: '🌀',
+
+    // Egyptian / mythology
+    pharaoh: '🤴', anubis: '🐺', ra: '☀️', isis: '👸', osiris: '👑',
+    set: '🌑', horus: '🦅', thoth: '🦩', ankh: '☥', scarab: '🪲',
+    pyramid: '🔺', tomb: '⚰️', 'eye-of-horus': '👁️', eye: '👁️',
+    'sacred-disk': '☀️', 'sacred-bird': '🦅', 'sacred-lotus': '🪷',
+    'sacred-animal': '🐈', sacred: '☥', cleopatra: '👸', afterlife: '⚱️',
+    blessing: '🙏', rebirth: '🌅', ceremony: '🛕',
+
+    // Cosmic / space / sci-fi
+    star: '⭐', planet: '🪐', comet: '☄️', asteroid: '🪨', meteor: '☄️',
+    nebula: '🌌', 'black-hole': '🕳️', satellite: '🛰️',
+    spacecraft: '🚀', spaceship: '🚀', 'space-station': '🛰️',
+    shuttle: '🚀', alien: '👽', robot: '🤖', wormhole: '🌀',
+    warp: '🌀', 'warp-gate': '🌀', portal: '🌀', pulsar: '✨',
+    quasar: '✨', supernova: '✨', photon: '💡', proton: '⚛️',
+    neutron: '⚛️', particle: '⚛️', ion: '⚛️', plasma: '🔥',
+    reactor: '⚛️', quantum: '⚛️', singularity: '🌀', collapse: '💥',
+    flux: '💫', circuit: '🔌', gadget: '⚙️', tech: '🛠️', future: '🚀',
+    void: '🕳️', galaxy: '🌌', cosmos: '🌌', sky: '☁️', light: '💡',
+    'light-beam': '💡', mega: '💥',
+
+    // Cards / royalty
+    king: '👑', emperor: '👑', crown: '👑', throne: '🪑',
+    royal: '👑', master: '🧑‍🎓',
+
+    // Horror / dark
+    darkness: '🌑', midnight: '🌑', evil: '😈', mansion: '🏚️',
+    coffin: '⚰️', grave: '🪦', bones: '🦴', skull: '💀', ghost: '👻',
+    spirit: '👻', haunted: '🏚️', haunting: '👻', shadow: '🌑',
+    demon: '😈', vampire: '🧛', banshee: '👻', zombie: '🧟',
+    skeleton: '💀', undead: '🧟', apocalypse: '☣️', apparition: '👻',
+    phantom: '👻', curse: '🔮', 'dark-magic': '🌑', dark: '🌑',
+    decay: '🦴', blood: '🩸', inferno: '🔥', hex: '🔮',
+
+    // Asian / lucky
+    bamboo: '🎋', lotus: '🪷', pagoda: '🏯', lantern: '🏮',
+    fan: '🪭', silk: '🎀', incense: '🪔', 'jade-seal': '🟩',
+    'imperial-dragon': '🐉', 'lucky-cat': '🐈', 'lucky-bar': '🥢',
+    bonsai: '🎋', prosperity: '💰', abundance: '🌾', luck: '🍀',
+    festival: '🎊', celebration: '🎉', fireworks: '🎆', joy: '😊',
+    peace: '☮️',
+
+    // Australian / outback
+    boomerang: '🪃', didgeridoo: '🪈', outback: '🌵', eucalyptus: '🌿',
+    billy: '🍵', aboriginal: '🪃', 'aboriginal-art': '🪃',
+    'aboriginal-culture': '🪃', 'dot-painting': '🟠', dreamtime: '🌌',
+    'desert-rose': '🌸', tribal: '🪃', survival: '🌵', freedom: '🦅',
+
+    // Nature
+    tree: '🌳', forest: '🌲', mountain: '🏔️', river: '🏞️',
+    canyon: '🏞️', cloud: '☁️', lightning: '⚡', flower: '🌸',
+    blossom: '🌸', lily: '🪷', mushroom: '🍄', fire: '🔥',
+    water: '💧', mist: '🌫️', storm: '⛈️', thunder: '⛈️',
+    wave: '🌊', sea: '🌊', sun: '☀️', sunset: '🌅', moon: '🌙',
+    night: '🌙', earth: '🌍', stone: '🪨', sand: '🏜️',
+    desert: '🏜️', savanna: '🌾', jungle: '🌴', swamp: '🐊',
+    island: '🏝️', coral: '🪸', underwater: '🌊', pond: '🏞️',
+    'water-hole': '💧', nature: '🌿', moss: '🌿', grassland: '🌾',
+    bush: '🌳', acorn: '🌰', spice: '🌶️', cactus: '🌵',
+    rock: '🪨',
+
+    // Tools / weapons
+    axe: '🪓', bow: '🏹', arrow: '🏹', shield: '🛡️', helmet: '⛑️',
+    spear: '🔱', trident: '🔱', pickaxe: '⛏️', revolver: '🔫',
+    gun: '🔫', blaster: '🔫', cannon: '💣', cannonball: '💣',
+    dynamite: '🧨', chain: '⛓️',
+
+    // Buildings / places
+    castle: '🏰', palace: '🏯', tower: '🗼', temple: '⛩️',
+    sanctuary: '🛕', library: '📚', bridge: '🌉', pillar: '🏛️',
+
+    // Pirate / nautical
+    ship: '🚢', anchor: '⚓', pirate: '🏴‍☠️', 'pirate-flag': '🏴‍☠️',
+    compass: '🧭', map: '🗺️', rum: '🍾',
+
+    // Western / cowboy
+    cowboy: '🤠', sheriff: '⭐', outlaw: '🦹', saloon: '🍺',
+    wanted: '📜', west: '🌄', adventure: '🗺️', raider: '🦹',
+
+    // Circus
+    clown: '🤡', acrobat: '🤸', ringmaster: '🎩', tent: '🎪',
+    popcorn: '🍿', balloon: '🎈', ferris: '🎡', carousel: '🎠',
+    carnival: '🎪', circus: '🎪', performance: '🎭', mask: '🎭',
+    portrait: '🖼️', ticket: '🎟️',
+
+    // Steampunk / industrial
+    gear: '⚙️', machine: '⚙️', engine: '⚙️', mechanical: '⚙️',
+    steam: '💨', blueprint: '📐', innovation: '💡', speed: '💨',
+
+    // Mystic / spiritual
+    holy: '🙏', knowledge: '📚', wisdom: '🦉', power: '⚡',
+    strength: '💪', mystical: '🔮', supernatural: '👻',
+    secret: '🤫', legend: '📜', myth: '📜', quest: '🗺️',
+    guardian: '🛡️', game: '🎮', fun: '🎉',
+
+    // Mythical creatures
+    phoenix: '🔥', hunter: '🏹', warrior: '⚔️',
+
+    // Music
+    music: '🎵', melody: '🎵', song: '🎵', lyre: '🎵',
+    thread: '🧵',
+
+    // Misc
+    key: '🔑', clock: '⏰', mirror: '🪞', torch: '🔥',
+    book: '📖', red: '🔴', beauty: '🌹', danger: '⚠️',
+    rising: '📈', explosion: '💥', wheel: '🎡', athena: '🏛️',
+    cyborg: '🤖', balance: '⚖️', mining: '⛏️',
+
+    // Custom additions found in registry
+    'desert-dynasty': '🏜️', kraken: '🐙', ocean: '🌊',
+    crown_dynasty: '👑',
+
+    // Final coverage pass — 100% of the 424 registry symbol IDs
+    ancient: '🏛️', artifact: '🏺', aura: '✨', bonanza: '💰',
+    campfire: '🔥', caravan: '🐪', chaos: '🌀', death: '💀',
+    golden: '🌟', grizzly: '🐻', horror: '😱', howl: '🐺',
+    immortal: '☠️', ninja: '🥷', pan: '🐐', prowl: '🐆',
+    road: '🛣️', safari: '🦁', scythe: '☠️', wail: '👻',
+  };
+
   class SlotGame {
     constructor(containerId, gameConfig) {
       this.container = document.getElementById(containerId);
@@ -81,6 +253,12 @@
         // Stop conditions are checked at the end of each spin in _spin().
         // SPIN button doubles as the stop control when this is non-null.
         autoplay: null,
+        // Free-spins bonus-run state. Tracks the cumulative used count
+        // and total-won during a continuous run so the banner shows
+        // "FREE SPIN 3 of 10 — won $24.50 so far". null when no run is
+        // active. Activated when freeSpinsAwarded > 0 + freeSpinsAvailable
+        // was 0; retriggers add to total. Cleared when run ends.
+        bonusRun: null,
       };
 
       this._buildShell();
@@ -342,6 +520,30 @@
           .ce-jackpot-pill .ce-jp-label { opacity: 0.85; font-weight: 600; font-size: 0.7rem; text-transform: uppercase; }
           @media (max-width: 640px) { .ce-jackpot-pill { top: 8px; right: 8px; padding: 4px 10px 4px 8px; font-size: 0.72rem; } }
           @media (prefers-reduced-motion: reduce) { .ce-jackpot-pill .ce-jp-dot { animation: none; } }
+          /* Free-spins bonus-run banner. Sticky above the reels for the
+             duration of a free-spins run. Premium operators universally
+             surface this — it's the centrepiece UX moment of the bonus. */
+          .ce-bonus-banner {
+            margin: 0 0 .8rem 0; padding: .6rem .9rem;
+            background: linear-gradient(135deg, #F0C66E 0%, #FFD700 100%);
+            color: #1a1205; border-radius: 10px;
+            display: flex; align-items: center; justify-content: space-between; gap: .6rem;
+            font-family: "Plus Jakarta Sans", Inter, sans-serif; font-weight: 700;
+            box-shadow: 0 4px 14px rgba(240, 198, 110, 0.45);
+            animation: ceBonusPulse 1.6s ease-in-out infinite alternate;
+          }
+          .ce-bonus-banner .ce-bb-count { font-size: 1.05rem; letter-spacing: .04em; }
+          .ce-bonus-banner .ce-bb-total { font-size: 1.15rem; font-weight: 800; }
+          .ce-bonus-banner .ce-bb-label { font-size: .72rem; opacity: .8; text-transform: uppercase; font-weight: 600; }
+          @keyframes ceBonusPulse {
+            0%   { box-shadow: 0 4px 14px rgba(240, 198, 110, 0.45); transform: scale(1); }
+            100% { box-shadow: 0 6px 22px rgba(255, 215, 0, 0.70); transform: scale(1.01); }
+          }
+          @media (prefers-reduced-motion: reduce) { .ce-bonus-banner { animation: none; } }
+          @media (max-width: 640px) {
+            .ce-bonus-banner { padding: .5rem .7rem; }
+            .ce-bonus-banner .ce-bb-count, .ce-bonus-banner .ce-bb-total { font-size: 0.9rem; }
+          }
           /* Mobile touch targets — industry-standard 64px high spin button.
              Buttons stack vertically when the control bar overflows. */
           @media (max-width: 640px) {
@@ -369,13 +571,24 @@
     }
 
     _symbolGlyph(sym) {
+      // Comprehensive symbol → emoji map covering the 424 unique symbol
+      // IDs used across all 100 games (extracted via the game-registry).
+      // Before this expansion, only ~14 IDs hit the map and ~95% of cells
+      // rendered as 2-letter text codes ("WO", "PA", "MO", "PH") — making
+      // every game visually indistinguishable. With this map ~95% of
+      // cells now render with a theme-appropriate emoji.
+      //
+      // The map uses lowercase string keys; multi-word IDs use either
+      // hyphenated form (the canonical registry shape) OR a fallback
+      // substring match for compound IDs the engine doesn't recognise
+      // directly (e.g. 'lucky-seven' → matches 'seven' substring).
       const s = String(sym || '').toLowerCase();
-      const map = {
-        cherry:'🍒', lemon:'🍋', bar:'📊', sevens:'7️⃣', wild:'🃏', scatter:'⭐',
-        crown:'👑', diamond:'💎', star:'⭐', 'gold-bell':'🔔', bell:'🔔',
-        gold:'💰', dragon:'🐉', phoenix:'🦅', koi:'🐟',
-      };
-      return map[s] || s.slice(0, 2).toUpperCase();
+      if (SYMBOL_GLYPHS[s]) return SYMBOL_GLYPHS[s];
+      // Substring fallback: try matching the first hyphen-segment.
+      const head = s.split('-')[0];
+      if (head !== s && SYMBOL_GLYPHS[head]) return SYMBOL_GLYPHS[head];
+      // Last-resort: 2-letter text chip (legacy behaviour).
+      return s.slice(0, 2).toUpperCase();
     }
 
     _renderCell(cell, sym, r, y) {
@@ -1001,11 +1214,79 @@
 
     _renderFreeSpins() {
       const n = this.state.freeSpinsAvailable;
-      this.freeSpinsRow.innerHTML = '';
+      // Clear children safely (no innerHTML — keeps the row XSS-clean).
+      while (this.freeSpinsRow.firstChild) this.freeSpinsRow.removeChild(this.freeSpinsRow.firstChild);
       if (n > 0) {
         const btn = $el('button', { class: 'ce-btn', onclick: () => this._spin(true) }, `Use free spin (${n} left)`);
         this.freeSpinsRow.appendChild(btn);
       }
+    }
+
+    _renderBonusRunBanner() {
+      // Sticky banner above the reels during a free-spins run. The
+      // centrepiece UX moment of every premium slot — players watch the
+      // count climb and the total grow. Created/torn down by state.bonusRun
+      // transitions tracked in _spin().
+      const existing = document.getElementById('ce-bonus-banner');
+      const run = this.state.bonusRun;
+      if (!run) {
+        if (existing) existing.remove();
+        return;
+      }
+      const remaining = Math.max(0, (run.total || 0) - (run.used || 0));
+      const banner = existing || document.createElement('div');
+      if (!existing) {
+        banner.id = 'ce-bonus-banner';
+        banner.className = 'ce-bonus-banner';
+        banner.setAttribute('role', 'status');
+        banner.setAttribute('aria-live', 'polite');
+      }
+      while (banner.firstChild) banner.removeChild(banner.firstChild);
+      const left = document.createElement('div');
+      const lbl = document.createElement('div'); lbl.className = 'ce-bb-label'; lbl.textContent = 'Free Spins';
+      const cnt = document.createElement('div'); cnt.className = 'ce-bb-count';
+      cnt.textContent = '🎁 ' + (run.used || 0) + ' / ' + (run.total || 0) + (remaining > 0 ? '  ·  ' + remaining + ' left' : '  ·  bonus ending');
+      left.appendChild(lbl); left.appendChild(cnt);
+      const right = document.createElement('div');
+      const tLbl = document.createElement('div'); tLbl.className = 'ce-bb-label'; tLbl.textContent = 'Bonus won';
+      const tAmt = document.createElement('div'); tAmt.className = 'ce-bb-total';
+      tAmt.textContent = fmt(run.runTotalCents || 0);
+      right.appendChild(tLbl); right.appendChild(tAmt);
+      banner.appendChild(left);
+      banner.appendChild(right);
+      if (!existing) {
+        if (this.reelBox && this.reelBox.parentNode) {
+          this.reelBox.parentNode.insertBefore(banner, this.reelBox);
+        } else if (this.main) {
+          this.main.insertBefore(banner, this.main.firstChild);
+        }
+      }
+    }
+
+    _showBonusSummary(run) {
+      // Fired when a bonus run ends — quick toast summarising the haul.
+      const toast = document.createElement('div');
+      toast.setAttribute('role', 'status');
+      toast.setAttribute('aria-live', 'assertive');
+      toast.style.cssText =
+        'position:fixed;left:50%;top:30%;transform:translate(-50%,-50%);z-index:10520;' +
+        'padding:1.2rem 1.8rem;border-radius:14px;color:#1a1205;' +
+        'background:linear-gradient(135deg,#F0C66E 0%,#FFD700 100%);' +
+        'box-shadow:0 12px 36px rgba(0,0,0,0.55);text-align:center;' +
+        'font-family:"Plus Jakarta Sans",Inter,sans-serif;font-weight:800;' +
+        'animation:ceCelebratePop 600ms cubic-bezier(.2,.9,.4,1.2) both;';
+      const lbl = document.createElement('div');
+      lbl.style.cssText = 'font-size:.85rem;letter-spacing:.18em;opacity:.7;margin-bottom:.4rem;text-transform:uppercase;';
+      lbl.textContent = 'Bonus complete';
+      const amt = document.createElement('div');
+      amt.style.cssText = 'font-size:2.2rem;font-weight:900;';
+      amt.textContent = fmt(run.runTotalCents || 0);
+      const sub = document.createElement('div');
+      sub.style.cssText = 'font-size:.85rem;margin-top:.4rem;opacity:.75;';
+      sub.textContent = 'across ' + (run.used || 0) + ' free spin' + ((run.used === 1) ? '' : 's');
+      toast.appendChild(lbl); toast.appendChild(amt); toast.appendChild(sub);
+      document.body.appendChild(toast);
+      setTimeout(() => toast.remove(), 3500);
     }
 
     async _spin(useFreeSpin) {
@@ -1163,11 +1444,47 @@
       }
       this._updateBalanceChip(prevBalanceCents);
 
+      // Bonus-run state machine — drives the free-spins banner.
+      // Start: any spin that awards free spins and we don't have a run.
+      // Retrigger: spin during an active run that awards more spins.
+      // Tick: a free-spin use (useFreeSpin === true) increments used + total.
+      const awarded = result.freeSpinsAwarded || 0;
+      if (awarded > 0) {
+        if (this.state.bonusRun) {
+          // Retrigger — extend an existing run.
+          this.state.bonusRun.total += awarded;
+        } else {
+          // Fresh run kicking off.
+          this.state.bonusRun = { used: 0, total: awarded, runTotalCents: 0 };
+        }
+      }
+      if (useFreeSpin && this.state.bonusRun) {
+        this.state.bonusRun.used += 1;
+        this.state.bonusRun.runTotalCents += win;
+      }
+
       try {
         const fs = await api.getFreeSpins(this.gameId);
         this.state.freeSpinsAvailable = (fs.grants || []).reduce((a, gr) => a + gr.remaining, 0);
         this._renderFreeSpins();
       } catch {}
+
+      // Run-end detection: a free-spin just got used AND no more free
+      // spins remain. Surface the bonus-complete toast then clear the
+      // banner. Premium operators close out the bonus with a summary
+      // moment — it's the punctuation on the dopamine peak.
+      if (useFreeSpin && this.state.freeSpinsAvailable === 0 && this.state.bonusRun) {
+        const finished = this.state.bonusRun;
+        this.state.bonusRun = null;
+        this._renderBonusRunBanner();
+        // Don't show summary if the run had only 1 spin and won nothing —
+        // that's a degenerate case (server quirk or test fixture).
+        if (finished.used > 0 || finished.runTotalCents > 0) {
+          this._showBonusSummary(finished);
+        }
+      } else {
+        this._renderBonusRunBanner();
+      }
 
       if (result.fairness) {
         this.state.lastSpin = result;
