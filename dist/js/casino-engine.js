@@ -248,13 +248,23 @@
         'aria-label': 'Set bet to maximum',
         onclick: () => this._maxBet(),
       }, 'MAX');
+      // Paytable / game-info button. Reads from this.state.game.paytable
+      // which the API already includes. Closes a premium UX gap — the
+      // previous build never surfaced symbol payouts mid-game even
+      // though the data was loaded.
+      const infoBtn = $el('button', {
+        class: 'ce-btn ce-btn-info',
+        'aria-label': 'Game information and paytable',
+        title: 'Paytable',
+        onclick: () => this._showInfoModal(),
+      }, 'i');
       this.spinBtn = $el('button', {
         class: 'ce-btn primary',
         'aria-label': 'Spin',
         onclick: () => this._spin(false),
       }, 'SPIN');
 
-      [betMinus, this.betLabel, betPlus, betMax, this.spinBtn].forEach(b => controlBar.appendChild(b));
+      [betMinus, this.betLabel, betPlus, betMax, infoBtn, this.spinBtn].forEach(b => controlBar.appendChild(b));
       this.main.appendChild(controlBar);
 
       this.freeSpinsRow = $el('div', { style: { textAlign: 'center', marginTop: '.8rem', fontSize: '.9rem', opacity: .85 } });
@@ -274,6 +284,7 @@
           .ce-btn:disabled { opacity: .4; cursor: not-allowed; }
           .ce-btn-stepper { min-width: 44px; font-size: 1.1rem; }
           .ce-btn-maxbet { background: linear-gradient(135deg, ${primary}22, ${primary}11); border-color: ${primary}88; color: ${primary}; letter-spacing: 1px; font-weight: 800; }
+          .ce-btn-info { min-width: 36px; min-height: 36px; padding: .4rem .6rem; font-style: italic; font-weight: 800; font-family: serif; font-size: 1.05rem; border-radius: 50%; }
           .ce-btn.primary { background: linear-gradient(180deg, ${primary}, ${shade(primary,-20)}); color: #1a1205; border: none; font-weight: 800; letter-spacing: 2px; padding: .7rem 2rem; text-transform: uppercase; box-shadow: 0 4px 14px ${primary}55; }
           .ce-btn.primary:hover:not(:disabled) { box-shadow: 0 6px 22px ${primary}88; }
           .ce-btn.primary:active:not(:disabled) { transform: scale(0.95); box-shadow: 0 2px 8px ${primary}66; }
@@ -461,6 +472,172 @@
       this._fx('stop');
     }
 
+    _detectNearMiss(reelIdx, g, result) {
+      // Return true when the upcoming reel is the FINAL reel AND the
+      // already-landed reels share 2+ matching symbols on some row.
+      // The 2-on-a-row signal is the canonical trigger for slot
+      // anticipation — a player sees two matching symbols and feels
+      // the "is it going to land?" tension before the third reel
+      // commits. We only trigger on the final reel so the slowdown
+      // is the climax, not a mid-spin distraction.
+      if (!g || !result || !result.reels) return false;
+      if (reelIdx !== g.reels - 1) return false;
+      if (reelIdx < 2) return false;
+      try {
+        for (let y = 0; y < g.rows; y++) {
+          const counts = Object.create(null);
+          for (let r = 0; r < reelIdx; r++) {
+            const sym = result.reels[r] && result.reels[r][y];
+            if (sym == null) continue;
+            counts[sym] = (counts[sym] || 0) + 1;
+            if (counts[sym] >= 2) return true;
+          }
+        }
+      } catch (_) {
+        // never let a near-miss detection bug crash the spin
+        return false;
+      }
+      return false;
+    }
+
+    _showInfoModal() {
+      // Paytable / game-info modal. Reads from this.state.game and
+      // builds a quick-glance reference for the player mid-session.
+      // Built entirely with createElement + textContent — no innerHTML,
+      // no template interpolation, so game.name (which IS player-
+      // facing user content via the server registry) can't ever
+      // inject HTML even if some adversarial value got through.
+      const g = this.state.game;
+      if (!g) return;
+
+      this._fx('stop');
+
+      // Close any prior instance so a double-click doesn't stack overlays.
+      const prev = document.getElementById('ce-info-overlay');
+      if (prev) prev.remove();
+
+      const opener = document.activeElement;
+      const overlay = document.createElement('div');
+      overlay.id = 'ce-info-overlay';
+      overlay.setAttribute('role', 'dialog');
+      overlay.setAttribute('aria-modal', 'true');
+      overlay.setAttribute('aria-labelledby', 'ce-info-title');
+      overlay.style.cssText =
+        'position:fixed;inset:0;z-index:10600;background:rgba(0,0,0,0.65);' +
+        'display:flex;align-items:center;justify-content:center;padding:24px;';
+
+      const panel = document.createElement('div');
+      panel.style.cssText =
+        'background:linear-gradient(180deg,#161B23,#0F1218);' +
+        'border:1px solid ' + this._primary + '55;border-radius:14px;' +
+        'box-shadow:0 24px 60px rgba(0,0,0,0.55);' +
+        'width:min(440px,calc(100vw - 32px));' +
+        'max-height:calc(100vh - 48px);overflow-y:auto;' +
+        'color:#F0F0F5;font-family:Inter,system-ui,sans-serif;';
+
+      const header = document.createElement('div');
+      header.style.cssText =
+        'padding:18px 22px 6px;display:flex;align-items:center;gap:10px;';
+      const title = document.createElement('h2');
+      title.id = 'ce-info-title';
+      title.textContent = g.name || 'Game info';
+      title.style.cssText = 'margin:0;font-size:1.15rem;color:' + this._primary + ';flex:1;';
+      const closeBtn = document.createElement('button');
+      closeBtn.type = 'button';
+      closeBtn.setAttribute('aria-label', 'Close info');
+      closeBtn.textContent = '×';
+      closeBtn.style.cssText =
+        'background:transparent;border:0;color:#9CA3AF;font-size:24px;' +
+        'cursor:pointer;padding:4px 10px;line-height:1;';
+      header.appendChild(title);
+      header.appendChild(closeBtn);
+
+      const meta = document.createElement('div');
+      meta.style.cssText =
+        'padding:0 22px 12px;display:flex;flex-wrap:wrap;gap:8px;font-size:0.85rem;';
+      const metaTags = [];
+      if (g.volatility) metaTags.push(g.volatility + ' volatility');
+      if (g.paylines)   metaTags.push(g.paylines + ' lines');
+      const maxMult = (g.maxWinMultiplier || g.maxBetMultiplier);
+      if (maxMult)      metaTags.push('up to ' + maxMult + '× bet');
+      if (g.minBetCents && g.maxBetCents) {
+          metaTags.push(fmt(g.minBetCents) + ' – ' + fmt(g.maxBetCents) + ' bet');
+      }
+      metaTags.forEach(t => {
+        const chip = document.createElement('span');
+        chip.textContent = t;
+        chip.style.cssText =
+          'padding:4px 10px;border-radius:999px;border:1px solid ' + this._primary + '44;' +
+          'color:' + this._primary + ';background:rgba(255,255,255,0.03);';
+        meta.appendChild(chip);
+      });
+
+      const paytableSection = document.createElement('div');
+      paytableSection.style.cssText = 'padding:8px 22px 14px;';
+      if (g.paytable && typeof g.paytable === 'object') {
+        const h3 = document.createElement('h3');
+        h3.textContent = 'Symbol payouts';
+        h3.style.cssText = 'margin:6px 0 8px;font-size:0.85rem;color:#9CA3AF;text-transform:uppercase;letter-spacing:0.06em;font-weight:600;';
+        paytableSection.appendChild(h3);
+        const table = document.createElement('div');
+        table.style.cssText = 'display:grid;grid-template-columns:1fr auto;gap:6px 14px;font-size:0.88rem;';
+        Object.keys(g.paytable).forEach(sym => {
+          const val = g.paytable[sym];
+          const left = document.createElement('span');
+          left.textContent = String(sym);
+          left.style.cssText = 'color:#CDD3DE;font-variant-numeric:tabular-nums;';
+          const right = document.createElement('span');
+          right.textContent = (typeof val === 'object' ? JSON.stringify(val) : String(val));
+          right.style.cssText = 'color:#F0C66E;font-weight:600;text-align:right;font-variant-numeric:tabular-nums;';
+          table.appendChild(left);
+          table.appendChild(right);
+        });
+        paytableSection.appendChild(table);
+      }
+
+      const bonusSection = document.createElement('div');
+      bonusSection.style.cssText = 'padding:0 22px 14px;font-size:0.86rem;color:#CDD3DE;line-height:1.5;';
+      if (g.bonusType || g.bonusDesc) {
+        const h3 = document.createElement('h3');
+        h3.textContent = 'Bonus feature';
+        h3.style.cssText = 'margin:6px 0 6px;font-size:0.85rem;color:#9CA3AF;text-transform:uppercase;letter-spacing:0.06em;font-weight:600;';
+        bonusSection.appendChild(h3);
+        const p = document.createElement('p');
+        p.textContent = g.bonusDesc || g.bonusType || '';
+        p.style.cssText = 'margin:0;';
+        bonusSection.appendChild(p);
+      }
+
+      const foot = document.createElement('p');
+      foot.style.cssText =
+        'margin:0;padding:10px 22px 18px;font-size:0.72rem;color:#8B95A8;line-height:1.5;';
+      foot.textContent =
+        'All outcomes are computed by the casino server using a HMAC-SHA256 ' +
+        'commit-reveal scheme. The fairness panel below the reel grid lets you ' +
+        'verify each spin against the server seed hash.';
+
+      panel.appendChild(header);
+      panel.appendChild(meta);
+      if (paytableSection.children.length) panel.appendChild(paytableSection);
+      if (bonusSection.children.length)    panel.appendChild(bonusSection);
+      panel.appendChild(foot);
+      overlay.appendChild(panel);
+      document.body.appendChild(overlay);
+
+      function close() {
+        document.removeEventListener('keydown', onKey, true);
+        overlay.remove();
+        try { if (opener && opener.focus) opener.focus(); } catch (_) { /* noop */ }
+      }
+      function onKey(e) {
+        if (e.key === 'Escape') { e.preventDefault(); close(); }
+      }
+      closeBtn.addEventListener('click', close);
+      overlay.addEventListener('click', (e) => { if (e.target === overlay) close(); });
+      document.addEventListener('keydown', onKey, true);
+      setTimeout(() => closeBtn.focus(), 0);
+    }
+
     _renderFreeSpins() {
       const n = this.state.freeSpinsAvailable;
       this.freeSpinsRow.innerHTML = '';
@@ -493,7 +670,7 @@
       cells.forEach(c => c.classList.remove('highlight'));
       cells.forEach(c => c.classList.remove('just-landed'));
 
-      const rollInterval = setInterval(() => {
+      let rollInterval = setInterval(() => {
         cells.forEach((c, i) => {
           const s = symbols[(Math.random() * symbols.length) | 0];
           this._renderCell(c, s, (i / g.rows) | 0, i % g.rows);
@@ -514,11 +691,51 @@
         return;
       }
 
-      // Reel stop sequence \u2014 each reel gets a per-cell "just-landed"
-      // class that triggers a brief landing flash (see CSS keyframe
-      // ceLand), plus a soft "tick" sound and a 10ms haptic per reel.
+      // Reel stop sequence with near-miss anticipation.
+      //
+      // Standard premium slots stretch the last reel's stop when the
+      // already-landed reels suggest a big win is possible (matching
+      // high-value symbols on a single row). That moment of "is it
+      // going to land?" is the most engaging beat in slot UX \u2014 the
+      // audit explicitly called it the single most addictive feature
+      // and flagged it as 100% missing. We add it here.
+      //
+      // Detection: as each reel lands, scan rows 0..N-1 across the
+      // already-landed reels for 2+ matching symbols. If found on the
+      // FINAL reel (so we have anticipation, not premature reveal),
+      // we slow that reel from 240ms to ~1500ms with a slower visual
+      // roll cadence and a haptic heartbeat. The slowdown reveals the
+      // outcome regardless \u2014 the server already decided. The tension
+      // is the part the player remembers.
       for (let r = 0; r < g.reels; r++) {
-        await new Promise((resolve) => setTimeout(resolve, 240));
+        const nearMiss = this._detectNearMiss(r, g, result);
+        const delay = nearMiss ? 1500 : 240;
+
+        if (nearMiss) {
+          // Slow the rolling visual so the eye can register tension.
+          // 80ms \u2192 200ms cadence makes the symbols appear to crawl.
+          clearInterval(rollInterval);
+          rollInterval = setInterval(() => {
+            cells.forEach((c, i) => {
+              const reelCol = (i / g.rows) | 0;
+              // Only roll cells in the still-unlanded reel(s).
+              if (reelCol < r) return;
+              const s = symbols[(Math.random() * symbols.length) | 0];
+              this._renderCell(c, s, reelCol, i % g.rows);
+            });
+          }, 200);
+          // Heartbeat haptic \u2014 pulsing tension. Honoured by _fx for
+          // reduced-motion users (no buzz).
+          this._fx('stop');
+          await new Promise((resolve) => setTimeout(resolve, delay * 0.4));
+          this._fx('stop');
+          await new Promise((resolve) => setTimeout(resolve, delay * 0.4));
+          this._fx('stop');
+          await new Promise((resolve) => setTimeout(resolve, delay * 0.2));
+        } else {
+          await new Promise((resolve) => setTimeout(resolve, delay));
+        }
+
         const column = result.reels[r];
         for (let y = 0; y < g.rows; y++) {
           const cellIdx = r * g.rows + y;
