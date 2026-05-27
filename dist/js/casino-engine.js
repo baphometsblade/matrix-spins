@@ -207,15 +207,54 @@
         marginTop: '1rem', flexWrap: 'wrap',
       }});
 
-      const betMinus = $el('button', { class: 'ce-btn', onclick: () => this._changeBet(-1) }, '−');
-      const betPlus  = $el('button', { class: 'ce-btn', onclick: () => this._changeBet(+1) }, '+');
+      // Bet steppers — hold-to-repeat: pointerdown starts a repeating
+      // interval (150 ms cadence after a 350 ms initial delay) so a long
+      // press auto-increments. pointerup/leave/cancel/blur all stop it.
+      // Falls back to a single click when the user just taps.
+      const makeStepper = (dir, label) => {
+        const btn = $el('button', { class: 'ce-btn ce-btn-stepper', 'aria-label': dir > 0 ? 'Increase bet' : 'Decrease bet' }, label);
+        let initialTimer = null;
+        let repeatTimer = null;
+        const start = (e) => {
+          if (e && e.cancelable) e.preventDefault();
+          this._changeBet(dir);
+          initialTimer = setTimeout(() => {
+            repeatTimer = setInterval(() => this._changeBet(dir), 150);
+          }, 350);
+        };
+        const stop = () => {
+          if (initialTimer) { clearTimeout(initialTimer); initialTimer = null; }
+          if (repeatTimer)  { clearInterval(repeatTimer); repeatTimer = null; }
+        };
+        btn.addEventListener('pointerdown', start);
+        btn.addEventListener('pointerup', stop);
+        btn.addEventListener('pointerleave', stop);
+        btn.addEventListener('pointercancel', stop);
+        btn.addEventListener('blur', stop);
+        return btn;
+      };
+
+      const betMinus = makeStepper(-1, '−');
+      const betPlus  = makeStepper(+1, '+');
       this.betLabel  = $el('div', { style: {
         padding: '.5rem 1rem', minWidth: '140px', textAlign: 'center',
         border: `1px solid ${primary}55`, borderRadius: '8px', color: primary, fontWeight: 700,
       }}, fmt(this.state.betCents));
-      this.spinBtn = $el('button', { class: 'ce-btn primary', onclick: () => this._spin(false) }, 'SPIN');
+      // Max Bet shortcut — single click jumps to game.maxBetCents.
+      // Previously the player had to press + repeatedly to reach the max,
+      // which is an industry-standard premium UX gap.
+      const betMax = $el('button', {
+        class: 'ce-btn ce-btn-maxbet',
+        'aria-label': 'Set bet to maximum',
+        onclick: () => this._maxBet(),
+      }, 'MAX');
+      this.spinBtn = $el('button', {
+        class: 'ce-btn primary',
+        'aria-label': 'Spin',
+        onclick: () => this._spin(false),
+      }, 'SPIN');
 
-      [betMinus, this.betLabel, betPlus, this.spinBtn].forEach(b => controlBar.appendChild(b));
+      [betMinus, this.betLabel, betPlus, betMax, this.spinBtn].forEach(b => controlBar.appendChild(b));
       this.main.appendChild(controlBar);
 
       this.freeSpinsRow = $el('div', { style: { textAlign: 'center', marginTop: '.8rem', fontSize: '.9rem', opacity: .85 } });
@@ -228,13 +267,35 @@
         const s = document.createElement('style');
         s.id = 'ce-style';
         s.textContent = `
-          .ce-btn { padding: .6rem 1rem; background: transparent; color: #fff; border: 1px solid ${primary}66; border-radius: 8px; font: inherit; cursor: pointer; font-weight: 600; }
+          .ce-btn { padding: .6rem 1rem; background: transparent; color: #fff; border: 1px solid ${primary}66; border-radius: 8px; font: inherit; cursor: pointer; font-weight: 600; transition: transform 120ms ease, border-color 160ms ease, box-shadow 160ms ease; touch-action: manipulation; }
           .ce-btn:hover { border-color: ${primary}; }
+          .ce-btn:active { transform: scale(0.96); }
+          .ce-btn:focus-visible { outline: 2px solid ${primary}; outline-offset: 2px; }
           .ce-btn:disabled { opacity: .4; cursor: not-allowed; }
-          .ce-btn.primary { background: linear-gradient(180deg, ${primary}, ${shade(primary,-20)}); color: #1a1205; border: none; font-weight: 800; letter-spacing: 2px; padding: .7rem 2rem; text-transform: uppercase; }
-          .ce-cell { aspect-ratio: 1; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 1.4rem; color: white; text-shadow: 0 2px 4px rgba(0,0,0,.5); transition: transform .25s; user-select: none; }
-          .ce-cell.highlight { animation: ceFlash 0.9s ease-in-out infinite alternate; }
-          @keyframes ceFlash { from { transform: scale(1); filter: brightness(1); } to { transform: scale(1.08); filter: brightness(1.35); } }
+          .ce-btn-stepper { min-width: 44px; font-size: 1.1rem; }
+          .ce-btn-maxbet { background: linear-gradient(135deg, ${primary}22, ${primary}11); border-color: ${primary}88; color: ${primary}; letter-spacing: 1px; font-weight: 800; }
+          .ce-btn.primary { background: linear-gradient(180deg, ${primary}, ${shade(primary,-20)}); color: #1a1205; border: none; font-weight: 800; letter-spacing: 2px; padding: .7rem 2rem; text-transform: uppercase; box-shadow: 0 4px 14px ${primary}55; }
+          .ce-btn.primary:hover:not(:disabled) { box-shadow: 0 6px 22px ${primary}88; }
+          .ce-btn.primary:active:not(:disabled) { transform: scale(0.95); box-shadow: 0 2px 8px ${primary}66; }
+          .ce-cell { aspect-ratio: 1; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 1.4rem; color: white; text-shadow: 0 2px 4px rgba(0,0,0,.5); transition: transform .25s, filter .25s; user-select: none; }
+          .ce-cell.just-landed { animation: ceLand 240ms cubic-bezier(.34,1.4,.64,1) both; }
+          .ce-cell.highlight { animation: ceWinGlow 0.8s ease-in-out infinite alternate; box-shadow: 0 0 12px ${primary}, 0 0 24px ${primary}66; z-index: 1; position: relative; }
+          @keyframes ceLand { 0% { transform: translateY(-14px) scale(0.94); filter: brightness(0.7); } 60% { transform: translateY(2px) scale(1.04); filter: brightness(1.1); } 100% { transform: translateY(0) scale(1); filter: brightness(1); } }
+          @keyframes ceWinGlow { from { transform: scale(1); filter: brightness(1); } to { transform: scale(1.10); filter: brightness(1.45) saturate(1.3); } }
+          @keyframes ceCelebrateFade { 0% { opacity: 0; } 10% { opacity: 1; } 80% { opacity: 1; } 100% { opacity: 0; } }
+          @keyframes ceCelebratePop { 0% { transform: scale(0.4) rotate(-3deg); opacity: 0; } 70% { transform: scale(1.08) rotate(0.5deg); opacity: 1; } 100% { transform: scale(1) rotate(0); opacity: 1; } }
+          /* Mobile touch targets — industry-standard 64px high spin button.
+             Buttons stack vertically when the control bar overflows. */
+          @media (max-width: 640px) {
+            .ce-btn.primary { min-height: 64px; font-size: 1.15rem; padding: 1rem 1.4rem; flex: 1 1 100%; order: 99; }
+            .ce-btn-stepper { min-height: 48px; min-width: 48px; }
+            .ce-btn-maxbet { min-height: 48px; }
+          }
+          /* Reduced-motion honour — cells just snap, no landing/winglow loop. */
+          @media (prefers-reduced-motion: reduce) {
+            .ce-cell, .ce-cell.just-landed, .ce-cell.highlight,
+            .ce-btn, .ce-btn.primary { animation: none !important; transition: none !important; }
+          }
         `;
         document.head.appendChild(s);
       }
@@ -262,8 +323,123 @@
       cell.textContent = this._symbolGlyph(sym);
     }
 
-    _updateBalanceChip() {
-      this.balanceChip.textContent = fmt(this.state.balanceCents);
+    _updateBalanceChip(prevCents) {
+      // Coin count-up animation when balance moves. Caller passes the
+      // previous value (e.g. before the spin) so we animate prev → state.
+      // Falls back to a hard snap if no previous value or if the user
+      // has prefers-reduced-motion: reduce set.
+      const target = this.state.balanceCents;
+      const reduceMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      if (prevCents == null || reduceMotion || prevCents === target) {
+        this.balanceChip.textContent = fmt(target);
+        return;
+      }
+      this._countUp(this.balanceChip, prevCents, target, 700);
+    }
+
+    _countUp(el, fromCents, toCents, durationMs) {
+      // Animate a money display from `fromCents` to `toCents` over
+      // `durationMs`. Uses requestAnimationFrame with an ease-out cubic so
+      // the count slows as it approaches the final amount — feels weighty.
+      // Caller is responsible for the element having a money format.
+      if (!el || fromCents === toCents) return;
+      const start = performance.now();
+      const delta = toCents - fromCents;
+      const step = (now) => {
+        const elapsed = now - start;
+        const t = Math.min(1, elapsed / durationMs);
+        // ease-out cubic
+        const eased = 1 - Math.pow(1 - t, 3);
+        const v = Math.round(fromCents + delta * eased);
+        el.textContent = fmt(v);
+        if (t < 1) requestAnimationFrame(step);
+        else el.textContent = fmt(toCents);
+      };
+      requestAnimationFrame(step);
+    }
+
+    _fx(kind) {
+      // Centralised sound + haptic dispatcher. Sound names map to the
+      // js/sound-manager.js library (window.MatrixSound.play). Haptics
+      // honour prefers-reduced-motion: reduce per WCAG 2.3.3 (motion
+      // can trigger vestibular issues).
+      try {
+        const snd = window.MatrixSound && window.MatrixSound.play;
+        if (snd) {
+          if      (kind === 'spin')     snd('spin');
+          else if (kind === 'stop')     snd('tick');
+          else if (kind === 'small')    snd('win-small');
+          else if (kind === 'big')      snd('win-big');
+          else if (kind === 'mega')     snd('jackpot');
+          else if (kind === 'jackpot')  snd('jackpot');
+          else if (kind === 'bonus')    snd('notification');
+          else if (kind === 'error')    snd('error');
+        }
+      } catch (_) { /* never let audio crash the spin */ }
+
+      // Haptics — disabled under prefers-reduced-motion.
+      const reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      if (reduce || !navigator.vibrate) return;
+      try {
+        if      (kind === 'spin')    navigator.vibrate(20);
+        else if (kind === 'stop')    navigator.vibrate(10);
+        else if (kind === 'small')   navigator.vibrate(60);
+        else if (kind === 'big')     navigator.vibrate([80, 60, 80]);
+        else if (kind === 'mega')    navigator.vibrate([100, 60, 100, 60, 200]);
+        else if (kind === 'jackpot') navigator.vibrate([300, 100, 300, 100, 300, 100, 600]);
+        else if (kind === 'bonus')   navigator.vibrate([40, 30, 40]);
+        else if (kind === 'error')   navigator.vibrate([30, 30, 30]);
+      } catch (_) { /* some browsers throw on vibrate */ }
+    }
+
+    _celebrateWin(payoutCents, betCents) {
+      // Win-tier overlay for premium feel. Tiers chosen to align with the
+      // server-side payout cap structure (max win is 200x bet) and the
+      // industry-standard "Big/Mega/Epic" naming.
+      //
+      //   ≥  5x bet → no overlay, just the win-strip sound
+      //   ≥ 15x bet → Big Win
+      //   ≥ 50x bet → Mega Win
+      //   ≥ 100x bet → Epic Win
+      //
+      // Built entirely with createElement + textContent (no innerHTML),
+      // so it stays safe even when payoutCents is large.
+      if (!betCents || betCents <= 0) return;
+      const ratio = payoutCents / betCents;
+      let tier = null;
+      if      (ratio >= 100) tier = { label: 'EPIC WIN',  fx: 'mega', color: '#F0C66E', size: '4.2rem' };
+      else if (ratio >=  50) tier = { label: 'MEGA WIN',  fx: 'mega', color: '#F0C66E', size: '3.6rem' };
+      else if (ratio >=  15) tier = { label: 'BIG WIN',   fx: 'big',  color: '#FFD700', size: '3.0rem' };
+      if (!tier) return;
+
+      this._fx(tier.fx);
+
+      const overlay = document.createElement('div');
+      overlay.setAttribute('role', 'status');
+      overlay.setAttribute('aria-live', 'polite');
+      overlay.style.cssText =
+        'position:fixed;inset:0;z-index:10500;display:flex;flex-direction:column;' +
+        'align-items:center;justify-content:center;pointer-events:none;' +
+        'background:radial-gradient(circle at center,rgba(0,0,0,0.55) 0%,rgba(0,0,0,0) 70%);' +
+        'animation:ceCelebrateFade 1.8s ease-out forwards;';
+      const label = document.createElement('div');
+      label.textContent = tier.label;
+      label.style.cssText =
+        'font-family:"Plus Jakarta Sans",Inter,sans-serif;font-weight:900;' +
+        'letter-spacing:.3rem;font-size:' + tier.size + ';color:' + tier.color + ';' +
+        'text-shadow:0 0 24px ' + tier.color + ',0 0 8px ' + tier.color + ';' +
+        'animation:ceCelebratePop 600ms cubic-bezier(.2,.9,.4,1.2) both;';
+      const amount = document.createElement('div');
+      amount.textContent = fmt(payoutCents);
+      amount.style.cssText =
+        'margin-top:1rem;font-size:2.4rem;font-weight:800;color:#fff;' +
+        'text-shadow:0 2px 12px rgba(0,0,0,0.7);' +
+        'animation:ceCelebratePop 700ms 120ms cubic-bezier(.2,.9,.4,1.2) both;';
+      overlay.appendChild(label);
+      overlay.appendChild(amount);
+      document.body.appendChild(overlay);
+      // Self-clean
+      setTimeout(() => overlay.remove(), 2000);
     }
 
     _changeBet(dir) {
@@ -275,6 +451,14 @@
       if (next > g.maxBetCents) next = g.maxBetCents;
       this.state.betCents = next;
       this.betLabel.textContent = fmt(next);
+    }
+
+    _maxBet() {
+      const g = this.state.game;
+      if (!g) return;
+      this.state.betCents = g.maxBetCents;
+      this.betLabel.textContent = fmt(g.maxBetCents);
+      this._fx('stop');
     }
 
     _renderFreeSpins() {
@@ -292,11 +476,22 @@
       this.spinBtn.disabled = true;
       this.winStrip.textContent = '\u00A0';
 
+      // Capture pre-spin balance for the count-up animation after the
+      // result lands. Lets the chip animate from prev \u2192 new value rather
+      // than snapping.
+      const prevBalanceCents = this.state.balanceCents;
+
+      // Spin start \u2014 sound + light haptic. The AudioContext lazy-inits on
+      // the first user gesture (this click), so the very first spin may
+      // be silent in browsers that defer audio until interaction.
+      this._fx('spin');
+
       const api = window.MatrixSpinsAPI;
       const g = this.state.game;
       const symbols = g.symbols;
       const cells = Array.from(this.reelGrid.querySelectorAll('.ce-cell'));
       cells.forEach(c => c.classList.remove('highlight'));
+      cells.forEach(c => c.classList.remove('just-landed'));
 
       const rollInterval = setInterval(() => {
         cells.forEach((c, i) => {
@@ -312,19 +507,31 @@
         clearInterval(rollInterval);
         this.state.spinning = false;
         this.spinBtn.disabled = false;
+        this._fx('error');
         this.winStrip.style.color = '#ffb3b3';
         this.winStrip.textContent = err.message || 'Spin failed.';
         setTimeout(() => { this.winStrip.style.color = this._primary; }, 2000);
         return;
       }
 
+      // Reel stop sequence \u2014 each reel gets a per-cell "just-landed"
+      // class that triggers a brief landing flash (see CSS keyframe
+      // ceLand), plus a soft "tick" sound and a 10ms haptic per reel.
       for (let r = 0; r < g.reels; r++) {
         await new Promise((resolve) => setTimeout(resolve, 240));
         const column = result.reels[r];
         for (let y = 0; y < g.rows; y++) {
           const cellIdx = r * g.rows + y;
-          this._renderCell(cells[cellIdx], column[y], r, y);
+          const cell = cells[cellIdx];
+          this._renderCell(cell, column[y], r, y);
+          if (cell) {
+            cell.classList.remove('just-landed');
+            // eslint-disable-next-line no-unused-expressions
+            cell.offsetWidth; // reflow so re-adding the class re-fires the keyframe
+            cell.classList.add('just-landed');
+          }
         }
+        this._fx('stop');
       }
       clearInterval(rollInterval);
 
@@ -337,8 +544,15 @@
         if (cell) cell.classList.add('highlight');
       });
 
-      if (result.payoutCents > 0) {
-        this.winStrip.textContent = `Win ${fmt(result.payoutCents)}${result.multiplier !== 1 ? `  ×${result.multiplier}` : ''}`;
+      const bet = this.state.betCents;
+      const win = result.payoutCents || 0;
+      if (win > 0) {
+        this.winStrip.textContent = `Win ${fmt(win)}${result.multiplier !== 1 ? `  ×${result.multiplier}` : ''}`;
+        // Win tier: small win sound + light haptic. Big/Mega/Epic are
+        // handled by _celebrateWin which plays the bigger sound + the
+        // full-screen overlay.
+        if (win / Math.max(bet, 1) < 15) this._fx('small');
+        this._celebrateWin(win, bet);
       } else {
         this.winStrip.textContent = 'No win — try again';
         this.winStrip.style.opacity = .6;
@@ -347,6 +561,7 @@
 
       if (result.freeSpinsAwarded > 0) {
         this.winStrip.textContent += `  •  +${result.freeSpinsAwarded} free spins!`;
+        this._fx('bonus');
       }
 
       if (typeof result.balanceAfterCents === 'number') {
@@ -355,7 +570,7 @@
         const b = await api.getBalance();
         this.state.balanceCents = b.availableCents;
       }
-      this._updateBalanceChip();
+      this._updateBalanceChip(prevBalanceCents);
 
       try {
         const fs = await api.getFreeSpins(this.gameId);
