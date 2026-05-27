@@ -110,18 +110,15 @@
     }
     forgotSubmit.disabled = true;
     forgotMsg.classList.remove('visible');
-    try {
-      await api.fetch('/auth/forgot-password', { method: 'POST', body: { email } });
-      forgotMsg.className = 'alert success visible';
-      forgotMsg.textContent = 'If that email matches an account, a reset link has been sent. Check your inbox (and spam folder).';
-    } catch (err) {
-      // Server is supposed to always return 200 here — but if it errored,
-      // surface a generic message that doesn't leak account existence.
-      forgotMsg.className = 'alert success visible';
-      forgotMsg.textContent = 'If that email matches an account, a reset link has been sent. Check your inbox (and spam folder).';
-    } finally {
-      forgotSubmit.disabled = false;
-    }
+    // The server always returns 200 here (it deliberately doesn't reveal
+    // whether the email exists, to prevent account-enumeration). Surface
+    // the same success message in both code paths so a network error
+    // doesn't accidentally leak any signal either.
+    try { await api.fetch('/auth/forgot-password', { method: 'POST', body: { email } }); }
+    catch (_) { /* swallow — same UI either way */ }
+    forgotMsg.className = 'alert success visible';
+    forgotMsg.textContent = 'If that email matches an account, a reset link has been sent. Check your inbox (and spam folder).';
+    forgotSubmit.disabled = false;
   });
 })();
 </script>

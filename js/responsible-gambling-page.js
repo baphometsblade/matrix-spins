@@ -233,23 +233,23 @@
           });
           setMsg($('excludeMsg'), 'Self-exclusion activated. You will be logged out.', true);
           if (r.isPermanent) {
-            // CRITICAL: clear the local auth token before redirecting,
-            // otherwise an excluded user who has the page open in another
-            // tab (or who just opens the site again) is silently still
-            // signed in. The server-side `is_active=1` flag in
-            // self_exclusions does block fresh /api/* calls, but the
-            // /login redirect we want to force only fires if there's no
-            // stored token. Call api.logout() so the server-side session
-            // is also revoked, then fall back to direct removal.
+            // CRITICAL: clear the local auth token before redirecting.
+            // Without this an excluded user with the page open in another
+            // tab is silently still signed in — the server-side
+            // `is_active=1` flag blocks fresh /api/* calls but the login
+            // redirect only triggers when there's no stored token.
+            // One try/catch is enough: the only realistic failure is
+            // Safari private-mode storage which throws on the first op,
+            // and in that mode storage is ephemeral anyway.
             try {
               if (window.MatrixSpinsAPI && typeof window.MatrixSpinsAPI.logout === 'function') {
                 window.MatrixSpinsAPI.logout().catch(function() { /* network — keep going */ });
               }
-            } catch (_e) {}
-            try { localStorage.removeItem('casinoToken'); } catch (_e) {}
-            try { localStorage.removeItem('casinoUser'); } catch (_e) {}
-            try { localStorage.removeItem('casinoBalanceCents'); } catch (_e) {}
-            try { sessionStorage.clear(); } catch (_e) {}
+              ['casinoToken', 'casinoUser', 'casinoBalanceCents'].forEach(function(k) {
+                localStorage.removeItem(k);
+              });
+              sessionStorage.clear();
+            } catch (_e) { /* private mode / storage disabled — proceed */ }
             setTimeout(() => { window.location.href = 'index.html'; }, 1500);
           } else {
             loadExclusionStatus();

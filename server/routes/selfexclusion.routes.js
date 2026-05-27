@@ -26,38 +26,41 @@ db.run(`
 // Also add is_banned column to users if not present (for permanent exclusions)
 db.run("ALTER TABLE users ADD COLUMN is_banned INTEGER DEFAULT 0").catch(function(e) { if (e && !String(e.message || e).match(/already exists|duplicate column/i)) console.warn('[selfexclusion] ALTER failed:', e.message || e); });
 
+// Exclusion durations in milliseconds. 6mo / 12mo close a UK/AU
+// regulatory gap (UK Gambling Commission + AU Interactive Gambling Act
+// both require multi-month options alongside short cool-offs). Months
+// are approximated as 30-day blocks — matches what Pragmatic/Evolution
+// do and is the cleaner consumer expectation. `permanent` has no entry
+// here — the route returns null below for it.
+const DAY_MS = 24 * 60 * 60 * 1000;
+const EXCLUSION_DURATIONS_MS = {
+    cooldown_24h:    1 * DAY_MS,
+    cooldown_7d:     7 * DAY_MS,
+    cooldown_30d:   30 * DAY_MS,
+    cooldown_6mo:  180 * DAY_MS,
+    cooldown_12mo: 365 * DAY_MS,
+};
+
+const EXCLUSION_LABELS = {
+    cooldown_24h:  '24 hours',
+    cooldown_7d:   '7 days',
+    cooldown_30d:  '30 days',
+    cooldown_6mo:  '6 months',
+    cooldown_12mo: '12 months',
+    permanent:     'Permanent (account closed)',
+};
+
 /**
  * Helper: Calculate end timestamp based on exclusion type
- * @param {string} type - 'cooldown_24h', 'cooldown_7d', 'cooldown_30d',
- *   'cooldown_6mo', 'cooldown_12mo', 'permanent'
- * @returns {string|null} - ISO timestamp or null for permanent
- *
- * 6mo and 12mo were added to close a regulatory gap: UK Gambling
- * Commission and the AU Interactive Gambling Act both require operators
- * to offer multi-month self-exclusion periods alongside short cool-offs.
- * Months are approximated as 30-day blocks rather than calendar months
- * because that's the cleaner consumer expectation (and matches what
- * Pragmatic, Evolution etc. do).
+ * @param {string} type - one of EXCLUSION_DURATIONS_MS keys or 'permanent'
+ * @returns {string|null} - SQLite-format timestamp, or null for permanent
  */
 function calculateEndsAt(type) {
-    const now = new Date();
-    var ms;
-    if (type === 'cooldown_24h') {
-        ms = 24 * 60 * 60 * 1000;
-    } else if (type === 'cooldown_7d') {
-        ms = 7 * 24 * 60 * 60 * 1000;
-    } else if (type === 'cooldown_30d') {
-        ms = 30 * 24 * 60 * 60 * 1000;
-    } else if (type === 'cooldown_6mo') {
-        ms = 180 * 24 * 60 * 60 * 1000;
-    } else if (type === 'cooldown_12mo') {
-        ms = 365 * 24 * 60 * 60 * 1000;
-    } else {
-        // permanent: return null
-        return null;
-    }
-    // Normalize to SQLite datetime format (YYYY-MM-DD HH:MM:SS) for reliable comparison with datetime('now')
-    return new Date(now.getTime() + ms).toISOString().replace('T', ' ').replace('Z', '').split('.')[0];
+    const ms = EXCLUSION_DURATIONS_MS[type];
+    if (!ms) return null; // permanent or unknown
+    // Normalize to SQLite datetime format (YYYY-MM-DD HH:MM:SS) so the
+    // string compares correctly against datetime('now') in WHERE clauses.
+    return new Date(Date.now() + ms).toISOString().replace('T', ' ').replace('Z', '').split('.')[0];
 }
 
 /**
@@ -126,10 +129,9 @@ router.post('/activate', authenticate, async (req, res) => {
     try {
         const { type, reason } = req.body;
 
-        // Validate type. 6mo + 12mo added 2026-05-28 to close UK/AU
-        // regulatory gap requiring multi-month exclusion durations.
-        const validTypes = ['cooldown_24h', 'cooldown_7d', 'cooldown_30d', 'cooldown_6mo', 'cooldown_12mo', 'permanent'];
-        if (!type || !validTypes.includes(type)) {
+        // Valid types are the duration keys (which determine end-date)
+        // plus the special 'permanent' sentinel handled separately.
+        if (!type || !(EXCLUSION_DURATIONS_MS[type] || type === 'permanent')) {
             return res.status(400).json({ error: 'Invalid exclusion type' });
         }
 
@@ -164,14 +166,7 @@ router.post('/activate', authenticate, async (req, res) => {
             const u = await db.get('SELECT username, email FROM users WHERE id = ?', [req.user.id]);
             if (u && u.email) {
                 const emailService = require('../services/email.service');
-                const durationLabel = ({
-                    cooldown_24h:  '24 hours',
-                    cooldown_7d:   '7 days',
-                    cooldown_30d:  '30 days',
-                    cooldown_6mo:  '6 months',
-                    cooldown_12mo: '12 months',
-                    permanent:     'Permanent (account closed)',
-                })[type] || type;
+                const durationLabel = EXCLUSION_LABELS[type] || type;
                 emailService.sendSelfExclusionConfirmation(u.email, req.user.id, {
                     username: u.username,
                     durationLabel,

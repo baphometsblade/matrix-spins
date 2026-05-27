@@ -7,6 +7,12 @@
 
   var STORAGE_KEY = 'ms_age_verified';
   var DENY_KEY = 'ms_age_denied';
+  // Deny choices stick for 30 days. A determined user can still clear
+  // localStorage, but the previous build set NO flag and just navigated
+  // to google.com — pressing Back returned the user straight to a fully-
+  // functional casino. The flag introduces friction; the audit row at
+  // /api/age-deny is the actually-defensible compliance evidence.
+  var DENY_TTL_MS = 30 * 24 * 60 * 60 * 1000;
 
   function isVerified() {
     try {
@@ -20,14 +26,8 @@
   function isDenied() {
     try {
       var data = JSON.parse(localStorage.getItem(DENY_KEY));
-      // Treat the deny flag as sticky for 30 days. A determined user can
-      // still clear localStorage, but the previous build set NO flag and
-      // simply navigated to google.com — pressing Back returned the user
-      // straight to a fully-functional casino. This at least introduces
-      // friction and is logged below for audit.
       if (!data || !data.deniedAt) return false;
-      var THIRTY_DAYS_MS = 30 * 24 * 60 * 60 * 1000;
-      return (Date.now() - data.deniedAt) < THIRTY_DAYS_MS;
+      return (Date.now() - data.deniedAt) < DENY_TTL_MS;
     } catch (e) {
       return false;
     }

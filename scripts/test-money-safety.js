@@ -1128,8 +1128,12 @@ test('every *.routes.js file is either mounted or on the utility allowlist', () 
 
 test('client-called /api/fair endpoints have a mounted server route', () => {
     const indexSrc = fs.readFileSync(path.join(SERVER_DIR, 'index.js'), 'utf8');
-    assert(/app\.use\(\s*['"]\/api\/fair['"]/.test(indexSrc),
-        '/api/fair must be mounted — client ui-slot.js calls /api/fair/seed and /api/fair/verify');
+    // Accept BOTH the legacy direct mounting pattern (`app.use('/api/fair'`)
+    // AND the current wrapper pattern (`mount('/api/fair'`). The client now
+    // calls /api/fair via api.getSeeds() / api.fetch('/fair/verify') in
+    // js/api-client.js (ui-slot.js was deleted as dead code).
+    assert(/(app\.use|mount)\(\s*['"]\/api\/fair['"]/.test(indexSrc),
+        '/api/fair must be mounted — js/api-client.js calls /api/fair/seed and /api/fair/verify');
 });
 
 // ══════════════════════════════════════════════════════════════════════
@@ -1765,14 +1769,22 @@ const INDEX_R66  = fs.readFileSync(path.join(SERVER_DIR, 'index.js'), 'utf8');
 const POLYFILL   = fs.readFileSync(path.join(__dirname, '..', 'js', 'onclick-polyfill.js'), 'utf8');
 const PROMO_SRC  = fs.readFileSync(path.join(__dirname, '..', 'js', 'promo-popups.js'), 'utf8');
 const CSRF_SRC   = fs.readFileSync(path.join(__dirname, '..', 'js', 'csrf-helper.js'), 'utf8');
-const UI_SLOT    = fs.readFileSync(path.join(__dirname, '..', 'js', 'ui-slot.js'), 'utf8');
-
-// FE-HIGH#1 — legacy admin withdrawal panel no longer renders user-controlled data
+// FE-HIGH#1 — the entire `js/ui-slot.js` file was deleted in commit
+// (refactor pass, 2026-05-28). Audit confirmed it was never loaded by
+// any HTML or bundled into dist/. The legacy admin withdrawal panel it
+// contained — the source of CVE-FE-HIGH#1 — is therefore unreachable
+// by definition. File absence is a strictly stronger fix than the
+// previous source-grep assertion against the file's contents.
+const UI_SLOT_PATH = path.join(__dirname, '..', 'js', 'ui-slot.js');
 test('FE-HIGH#1: legacy ui-slot admin withdrawal panel no longer interpolates server fields', () => {
-    // Find the _loadWithdrawals function and verify the fix message
+    if (!fs.existsSync(UI_SLOT_PATH)) {
+        // File gone — XSS surface gone. Strongest possible pass.
+        return;
+    }
+    // Defensive: if the file is ever reintroduced, the old grep applies.
+    const UI_SLOT = fs.readFileSync(UI_SLOT_PATH, 'utf8');
     assert(/withdrawal queue has moved to the dedicated admin console/.test(UI_SLOT),
         'legacy panel must redirect operators to /admin instead of rendering API data');
-    // The old admin_notes innerHTML interpolation must NOT be present anymore
     assert(!/innerHTML[\s\S]{0,300}wd\.admin_notes/.test(UI_SLOT),
         'must NOT interpolate wd.admin_notes (or any wd.* server field) into innerHTML');
 });

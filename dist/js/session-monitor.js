@@ -143,15 +143,15 @@
       scheduleRealityCheck();
     });
     document.getElementById('smBreak').addEventListener('click', function () {
-      // End the server-side session before navigating away so the timer
-      // doesn't keep counting and so the player's spin-rate / wagered
-      // total are flushed for the audit log. fire-and-forget — even if
-      // the call fails we still want to send the player to the RG page.
-      try {
-        if (window.MatrixSpinsAPI && typeof window.MatrixSpinsAPI.fetch === 'function') {
-          window.MatrixSpinsAPI.fetch('/session/end', { method: 'POST', body: {} }).catch(function () {});
-        }
-      } catch (_) {}
+      // End the server-side session before navigating so the timer stops
+      // counting and the player's spin-rate / wagered total are flushed
+      // for the audit log. Fire-and-forget — even if the call fails we
+      // still send the player to the RG page. The .catch() inside
+      // handles fetch errors; the `&& typeof ... === 'function'` guard
+      // means there's no need for an outer try.
+      if (window.MatrixSpinsAPI && typeof window.MatrixSpinsAPI.fetch === 'function') {
+        window.MatrixSpinsAPI.fetch('/session/end', { method: 'POST', body: {} }).catch(function () {});
+      }
       window.location.href = 'responsible-gambling.html';
     });
   }

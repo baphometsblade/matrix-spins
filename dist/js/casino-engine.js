@@ -507,9 +507,8 @@
     _celebrateJackpot(amountCents, tier) {
       // Distinct jackpot celebration — separate path from _celebrateWin so
       // a jackpot doesn't look like a regular MEGA win. Five-second window
-      // (vs 2s for regular wins), tier-themed border + dot color, and
-      // confetti if window.confetti is available (js/confetti.min.js is
-      // self-hosted per MEMORY.md).
+      // (vs 2s for regular wins), tier-themed color, count-up animation,
+      // and confetti (lazy-loaded — see below).
       //
       // Tier colors mirror the four-tier jackpot pool:
       //   mini  → silver
@@ -522,8 +521,9 @@
         major: { label: 'MAJOR JACKPOT', color: '#F0C66E', glow: '240,198,110' },
         grand: { label: 'GRAND JACKPOT', color: '#FFD700', glow: '255,215,0'   },
       };
-      const theme = TIER_THEMES[String(tier || 'grand').toLowerCase()] || TIER_THEMES.grand;
-      const isGrand = String(tier || 'grand').toLowerCase() === 'grand';
+      const tierKey = String(tier || 'grand').toLowerCase();
+      const theme = TIER_THEMES[tierKey] || TIER_THEMES.grand;
+      const isGrand = tierKey === 'grand';
 
       this._fx('jackpot');
 
@@ -577,9 +577,9 @@
       // Confetti burst — three staggered bursts so it doesn't feel like
       // a single flat poof. Skip under reduced-motion. The 100 game pages
       // don't preload confetti.min.js (saves ~8KB on the 99% of sessions
-      // that never hit a jackpot), so we lazy-load it on demand here. If
-      // the script tag fails or is blocked, the overlay still works — we
-      // just skip the particle effect.
+      // that never hit a jackpot), so we lazy-load it on demand here.
+      // If the script tag fails the overlay still works — we just skip
+      // the particle effect.
       const reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
       if (!reduce) {
         const fireBursts = () => {
@@ -596,18 +596,18 @@
         if (typeof window.confetti === 'function') {
           fireBursts();
         } else {
-          // Lazy-inject. Path is computed relative to the page — game pages
-          // sit at /games/<slug>.html so they need ../js/, the lobby sits
-          // at / so it'd use js/. Try the games/ path first, fall back.
-          const tryLoad = (src, onError) => {
-            const tag = document.createElement('script');
-            tag.src = src;
-            tag.async = true;
-            tag.onload = () => fireBursts();
-            tag.onerror = onError;
-            document.head.appendChild(tag);
-          };
-          tryLoad('../js/confetti.min.js', () => tryLoad('js/confetti.min.js', () => { /* both failed — skip particles silently */ }));
+          // Game pages live at /games/<slug>.html → ../js/ ; lobby lives
+          // at / → js/. Pick the right path up front instead of chained
+          // error-fallback that does a wasted round-trip.
+          const confettiSrc = location.pathname.includes('/games/')
+            ? '../js/confetti.min.js'
+            : 'js/confetti.min.js';
+          const tag = document.createElement('script');
+          tag.src = confettiSrc;
+          tag.async = true;
+          tag.onload = fireBursts;
+          // onerror left unbound — particles silently skipped on load failure.
+          document.head.appendChild(tag);
         }
       }
 
@@ -768,6 +768,12 @@
       }, 0);
     }
 
+    _setAutoBtnEnabled(enabled) {
+      if (!this.autoBtn) return;
+      this.autoBtn.disabled = !enabled;
+      this.autoBtn.style.opacity = enabled ? '1' : '0.5';
+    }
+
     _startAutoplay(count) {
       // Begin the autoplay run. Guard against starting on top of an
       // already-running run (a programmatic call could collide).
@@ -777,10 +783,7 @@
       // Disable the AUTO button during the run so the player can't open
       // the picker mid-flight. SPIN morphs into STOP (see
       // _updateSpinBtnLabel) which is the correct in-run control.
-      if (this.autoBtn) {
-        this.autoBtn.disabled = true;
-        this.autoBtn.style.opacity = '0.5';
-      }
+      this._setAutoBtnEnabled(false);
       this._updateSpinBtnLabel();
       // Kick off the first spin. _spin will schedule the next one.
       this._spin(false);
@@ -789,11 +792,7 @@
     _stopAutoplay() {
       if (!this.state.autoplay) return;
       this.state.autoplay = null;
-      // Re-enable the AUTO button so the player can start a new run.
-      if (this.autoBtn) {
-        this.autoBtn.disabled = false;
-        this.autoBtn.style.opacity = '1';
-      }
+      this._setAutoBtnEnabled(true);
       this._updateSpinBtnLabel();
     }
 
@@ -1125,19 +1124,18 @@
 
       const bet = this.state.betCents;
       const win = result.payoutCents || 0;
-      // Jackpot branch — server-side jackpot service may flag a spin as a
-      // jackpot winner. Surface a distinct celebration BEFORE the regular
-      // win path so a jackpot doesn't look like a normal MEGA win.
-      // The flag shape may be either `result.jackpotWon = { tier, amount }`
-      // (preferred) or a top-level `result.jackpot = { tier, amount }` —
-      // accept both for resilience to future server tweaks.
+      // Jackpot branch — server-side jackpot service may flag a spin as
+      // a jackpot winner via `result.jackpotWon` (preferred) or
+      // `result.jackpot` (legacy alias). Surface a distinct celebration
+      // BEFORE the regular win path so a jackpot doesn't look like a
+      // normal MEGA win.
       const jackpotInfo = result.jackpotWon || result.jackpot || null;
-      if (jackpotInfo && (jackpotInfo.amount > 0 || jackpotInfo.amountCents > 0)) {
-        const jpCents = jackpotInfo.amountCents != null
-          ? jackpotInfo.amountCents
-          : Math.round((jackpotInfo.amount || 0) * 100);
+      const jpCents = jackpotInfo
+        ? (jackpotInfo.amountCents != null ? jackpotInfo.amountCents : Math.round((jackpotInfo.amount || 0) * 100))
+        : 0;
+      if (jpCents > 0) {
         const jpTier = jackpotInfo.tier || 'grand';
-        this.winStrip.textContent = `${String(jpTier).toUpperCase()} JACKPOT! ${fmt(jpCents)}`;
+        this.winStrip.textContent = `${jpTier.toUpperCase()} JACKPOT! ${fmt(jpCents)}`;
         this._celebrateJackpot(jpCents, jpTier);
       } else if (win > 0) {
         this.winStrip.textContent = `Win ${fmt(win)}${result.multiplier !== 1 ? `  ×${result.multiplier}` : ''}`;

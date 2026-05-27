@@ -332,15 +332,14 @@
       body.appendChild(tr);
       return;
     }
+    var RANK_COLORS = { 1: '#FFD700', 2: '#C0C0C0', 3: '#CD7F32' };
     rows.slice(0, 50).forEach(function(row, i) {
       var rank = (row.rank != null) ? row.rank : (i + 1);
       var tr = document.createElement('tr');
 
       var tdRank = document.createElement('td');
       tdRank.textContent = '#' + rank;
-      if (rank === 1) tdRank.style.color = '#FFD700';
-      else if (rank === 2) tdRank.style.color = '#C0C0C0';
-      else if (rank === 3) tdRank.style.color = '#CD7F32';
+      if (RANK_COLORS[rank]) tdRank.style.color = RANK_COLORS[rank];
       tr.appendChild(tdRank);
 
       var tdName = document.createElement('td');

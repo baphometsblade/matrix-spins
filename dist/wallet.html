@@ -752,25 +752,21 @@
           // Route through `api.fetch` so the api-client adds the
           // X-CSRF-Token header. Raw fetch() here used to return 403
           // because csrf-helper.js doesn't wrap claim endpoints by name.
+          // api.fetch throws on non-2xx, so a missing `success` flag in
+          // a 2xx response is the only thing the throw doesn't cover.
           const d = await api.fetch('/welcome-bonus/claim', { method: 'POST', body: {} });
-          if (d && d.success) {
-            // Replace banner contents using DOM (no innerHTML with untrusted data)
-            while (banner.firstChild) banner.removeChild(banner.firstChild);
-            const successMsg = document.createElement('div');
-            successMsg.style.cssText = 'color:#4ade80;font-weight:700;padding:0.5rem 0;';
-            successMsg.textContent = '✅ Bonus of $' + (d.bonusAmount || 0).toFixed(2) + ' credited to your account!';
-            banner.appendChild(successMsg);
-            // Refresh balance display
-            if (typeof loadBalances === 'function') loadBalances();
-            else if (typeof loadBalance === 'function') loadBalance();
-            else refreshData();
-          } else {
-            btn.disabled = false; btn.textContent = 'Claim Now';
-            alert((d && d.error) || 'Could not claim bonus. Please try again.');
-          }
-        } catch(e) {
+          if (!d || !d.success) throw new Error((d && d.error) || 'Could not claim bonus. Please try again.');
+          // Success — replace banner using DOM (no innerHTML with API data)
+          while (banner.firstChild) banner.removeChild(banner.firstChild);
+          const successMsg = document.createElement('div');
+          successMsg.style.cssText = 'color:#4ade80;font-weight:700;padding:0.5rem 0;';
+          successMsg.textContent = '✅ Bonus of $' + (d.bonusAmount || 0).toFixed(2) + ' credited to your account!';
+          banner.appendChild(successMsg);
+          if (typeof loadBalances === 'function') loadBalances();
+          else if (typeof loadBalance === 'function') loadBalance();
+          else refreshData();
+        } catch (e) {
           btn.disabled = false; btn.textContent = 'Claim Now';
-          // api.fetch throws on non-2xx; surface the message.
           alert((e && e.message) || 'Could not claim bonus. Please try again.');
         }
       });
