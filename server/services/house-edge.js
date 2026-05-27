@@ -256,8 +256,14 @@ function scaleWinForRTP(winAmount, betAmount, gameStats, game) {
     } else {
         targetRTP = config.TARGET_RTP || 0.88;
     }
-    // Safety clamp — never target outside 80-97% even if data is bad
-    targetRTP = Math.max(0.80, Math.min(0.97, targetRTP));
+    // Safety clamp — bracket the target RTP so corrupt config can't cause
+    // 0% or 200% payouts. Lower bound was 0.80 (industry-typical floor);
+    // raised the "edge of plausible" range down to 0.65 on 2026-05-26 when
+    // the operator dropped TARGET_RTP to 0.75 for a 25% house edge. Without
+    // this clamp adjustment, a 0.75 target would be silently clamped back
+    // up to 0.80 here and the configured house edge would not actually be
+    // delivered. The 0.65 floor still rejects obvious config-file corruption.
+    targetRTP = Math.max(0.65, Math.min(0.97, targetRTP));
 
     const targetPaid = gameStats.total_wagered * targetRTP;
     const deficit = targetPaid - gameStats.total_paid; // Positive = underpaying
