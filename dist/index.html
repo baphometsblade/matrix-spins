@@ -1920,6 +1920,8 @@
     
     
     
+    
+    
 
     <script>
         let allGames = [];
@@ -2253,8 +2255,22 @@
                     </div>
                 `;
 
-                card.onclick = () => navigateToGame(game.id);
-                card.onkeydown = (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); navigateToGame(game.id); } };
+                // Game launch — show the LoadingScreen overlay for a brief
+                // moment so the navigation feels like a transition rather
+                // than a hard cut. LoadingScreen auto-hides after 2.5s but
+                // typically the next page paints first and replaces it.
+                // Falls back to instant navigate if the module isn't
+                // available (e.g. cached older session).
+                const launch = () => {
+                    try {
+                        if (window.LoadingScreen && typeof window.LoadingScreen.show === 'function') {
+                            window.LoadingScreen.show(game.name || game.id, null);
+                        }
+                    } catch (_) { /* never block navigation on loader */ }
+                    setTimeout(() => navigateToGame(game.id), 280);
+                };
+                card.onclick = launch;
+                card.onkeydown = (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); launch(); } };
                 grid.appendChild(card);
             });
         }
@@ -2866,6 +2882,6 @@
     <!-- Site-wide jackpot win celebration + real-time pool ticker (socket.io) -->
     <script src="js/confetti.min.js?v=2b59dbb8" defer></script>
     <script src="js/jackpot-celebration.js?v=48be09d7" defer></script>
-    <script src="bundle.7b6e2ae6.min.js"></script>
+    <script src="bundle.3c09d027.min.js"></script>
 </body>
 </html>

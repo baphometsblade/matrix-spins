@@ -171,12 +171,19 @@ router.post('/claim/:slot', authenticate, bonusGuard, async function(req, res) {
         }
       }
       await db.run('UPDATE users SET bonus_balance = COALESCE(bonus_balance, 0) + ?, wagering_requirement = COALESCE(wagering_requirement, 0) + ? WHERE id = ?', [creditAmount, creditAmount * 15, userId]);
-      await db.run(
-        "INSERT INTO transactions (user_id, type, amount, description) VALUES (?, 'bonus', ?, ?)",
-        [userId, mission.reward_amount, 'Daily mission reward: ' + mission.label + ' (bonus, 15x wagering)']
-      );
+      // Use the canonical 6-column transactions schema. The previous
+      // INSERT into `description` (the column doesn't exist) silently
+      // 500'd every claim AFTER bonus_balance was credited — players
+      // saw an error toast on a mission they had actually completed.
+      // balance_before === balance_after because credit went to
+      // bonus_balance, not balance (matches admin_bonus pattern).
       const u = await db.get('SELECT balance FROM users WHERE id = ?', [userId]);
       newBalance = u ? parseFloat(u.balance) : null;
+      const balanceForLog = newBalance == null ? 0 : newBalance;
+      await db.run(
+        'INSERT INTO transactions (user_id, type, amount, balance_before, balance_after, reference) VALUES (?, ?, ?, ?, ?, ?)',
+        [userId, 'bonus', mission.reward_amount, balanceForLog, balanceForLog, 'Daily mission reward: ' + mission.label + ' (bonus, 15x wagering)']
+      );
     } else if (mission.reward_type === 'points') {
       await db.run(
         'UPDATE users SET loyalty_points = COALESCE(loyalty_points, 0) + ? WHERE id = ?',

@@ -58,19 +58,91 @@
 
   function fmtMoney(n) { return '$' + n.toLocaleString('en-US'); }
 
+  // Real-win cache, populated from /api/feed (last 20 big wins, usernames
+  // already masked to "AB***" server-side). We pop from this queue first
+  // and only fall back to synthetic data — explicitly labelled "Demo" —
+  // if the API is unreachable or returns no wins. The previous version
+  // was 100% synthetic which the audit flagged as a regulator concern
+  // (fabricated social proof) and an immersion-breaker (player notices
+  // repeating names and impossible-looking $15k wins on every visit).
+  var realWins = [];
+  var realWinsExhaustedAt = 0;
+  var feedFetching = false;
+
+  function fetchRealWins() {
+    if (feedFetching) return;
+    feedFetching = true;
+    fetch('/api/feed')
+      .then(function (r) { return r.ok ? r.json() : null; })
+      .then(function (data) {
+        if (data && Array.isArray(data.feed) && data.feed.length) {
+          realWins = data.feed.slice();
+          realWinsExhaustedAt = 0;
+        }
+      })
+      .catch(function () { /* silent; we'll fall back to synthetic */ })
+      .then(function () { feedFetching = false; });
+  }
+
+  function lookupGameName(gameId) {
+    try {
+      var reg = window.GAME_REGISTRY;
+      if (reg && Array.isArray(reg)) {
+        for (var i = 0; i < reg.length; i++) {
+          if (reg[i].id === gameId) return reg[i].name || gameId;
+        }
+      }
+    } catch (_) { /* noop */ }
+    // Fallback: prettify the id (sugar_rush → Sugar Rush).
+    return String(gameId || '').replace(/_/g, ' ').replace(/\b\w/g, function (c) { return c.toUpperCase(); });
+  }
+
+  function escapeHtml(s) {
+    return String(s == null ? '' : s)
+      .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+  }
+
   function genActivity() {
+    // Prefer real wins when we have them. Each toast pops one entry so
+    // we cycle through the most recent 20 real wins before refilling.
+    // When the queue drains we kick off a refill but return synthetic
+    // for this turn — the audit explicitly approved "synthetic with a
+    // Demo label" as the fallback shape.
+    if (realWins.length > 0) {
+      var win = realWins.shift();
+      var name = (win.username || 'Player');
+      var gameName = lookupGameName(win.gameId);
+      var amount = fmtMoney(Math.round(win.win || 0));
+      var icon = (win.mult && win.mult >= 50) ? '🔥' : '🎰';
+      var phrase = (win.mult && win.mult >= 50) ? 'hit a' : 'just won';
+      return {
+        icon: icon,
+        text: '<b class="af-name">' + escapeHtml(name) + '</b> ' + phrase + ' <span class="af-amount">' + amount + '</span> on <span class="af-game">' + escapeHtml(gameName) + '</span>',
+        name: name,
+      };
+    }
+    // Real-wins queue drained — kick off a refill (rate-limited).
+    var now = Date.now();
+    if (now - realWinsExhaustedAt > 8000) {
+      realWinsExhaustedAt = now;
+      fetchRealWins();
+    }
+    // Synthetic fallback. Marked with [Demo] so we never silently
+    // misrepresent fabricated activity as authenticated wins.
     var type = Math.random();
-    var name = genName();
+    var sName = genName();
+    var demo = ' <span class="af-demo" aria-label="(demonstration data)">[Demo]</span>';
     if (type < 0.45) {
-      return { icon: '🎰', text: '<b class="af-name">' + name + '</b> just won <span class="af-amount">' + fmtMoney(genAmount()) + '</span> on <span class="af-game">' + pick(games) + '</span>', name: name };
+      return { icon: '🎰', text: '<b class="af-name">' + sName + '</b>' + demo + ' just won <span class="af-amount">' + fmtMoney(genAmount()) + '</span> on <span class="af-game">' + pick(games) + '</span>', name: sName };
     } else if (type < 0.65) {
-      return { icon: '💰', text: '<b class="af-name">' + name + '</b> deposited <span class="af-amount">' + fmtMoney(rand(100, 2000)) + '</span>', name: name };
+      return { icon: '💰', text: '<b class="af-name">' + sName + '</b>' + demo + ' deposited <span class="af-amount">' + fmtMoney(rand(100, 2000)) + '</span>', name: sName };
     } else if (type < 0.80) {
-      return { icon: '🔥', text: '<b class="af-name">' + name + '</b> hit a <span class="af-amount">' + fmtMoney(genAmount() + 1000) + '</span> jackpot on <span class="af-game">' + pick(games) + '</span>!', name: name };
+      return { icon: '🔥', text: '<b class="af-name">' + sName + '</b>' + demo + ' hit a <span class="af-amount">' + fmtMoney(genAmount() + 1000) + '</span> jackpot on <span class="af-game">' + pick(games) + '</span>!', name: sName };
     } else if (type < 0.92) {
-      return { icon: '🎲', text: '<b class="af-name">' + name + '</b> just signed up and got <span class="af-amount">$1,000</span> in demo credits', name: name };
+      return { icon: '🎲', text: '<b class="af-name">' + sName + '</b>' + demo + ' just signed up and got <span class="af-amount">$1,000</span> in demo credits', name: sName };
     } else {
-      return { icon: '👑', text: '<b class="af-name">' + name + '</b> won the <span class="af-amount">' + fmtMoney(rand(5000, 25000)) + '</span> Progressive Jackpot!', name: name };
+      return { icon: '👑', text: '<b class="af-name">' + sName + '</b>' + demo + ' won the <span class="af-amount">' + fmtMoney(rand(5000, 25000)) + '</span> Progressive Jackpot!', name: sName };
     }
   }
 
@@ -146,7 +218,14 @@
     if (localStorage.getItem(STORAGE_KEY) === '1') return;
     injectCSS();
     buildContainer();
-    // Show first toast after short delay
+    // Prime the real-wins queue from /api/feed so the first toast
+    // can use authenticated data rather than synthetic fallback.
+    // Refresh every 30 seconds while the lobby is open — the toast
+    // cadence is ~15-25s so we refill in time.
+    fetchRealWins();
+    setInterval(fetchRealWins, 30000);
+    // Show first toast after short delay (gives /api/feed a moment
+    // to return before we'd otherwise fall back to synthetic).
     setTimeout(showToast, rand(3000, 6000));
     scheduleNext();
   }
