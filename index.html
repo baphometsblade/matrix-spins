@@ -1908,6 +1908,7 @@
     <script src="js/age-gate.js" defer></script>
     <script src="js/cookie-consent.js" defer></script>
     <script src="js/search.js" defer></script>
+    <script src="js/search-autocomplete.js" defer></script>
     <script src="js/favorites.js" defer></script>
     <script src="js/session-monitor.js" defer></script>
     <script src="js/sound-manager.js" defer></script>
@@ -1951,6 +1952,17 @@
             // Check daily bonus
             if (typeof window.CasinoDailyBonus !== 'undefined' && window.CasinoDailyBonus.checkAndShow) {
                 window.CasinoDailyBonus.checkAndShow();
+            }
+
+            // Search autocomplete dropdown — the script lives at
+            // js/search-autocomplete.js and styles in styles.css. It
+            // was previously dormant because the input-id selector and
+            // games-array global didn't match the lobby's shape. Patched
+            // those (2026-05-28); init it here so the dropdown lights up
+            // as soon as the lobby finishes rendering its game grid.
+            if (window.SearchAutocomplete && typeof window.SearchAutocomplete.init === 'function') {
+                try { window.SearchAutocomplete.init(); }
+                catch (e) { console.warn('[SearchAutocomplete] init failed:', e.message); }
             }
         }
 

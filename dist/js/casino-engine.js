@@ -76,6 +76,11 @@
         lastSpin: null,
         freeSpinsAvailable: 0,
         seeds: null,
+        // Autoplay state. null when not auto-spinning; otherwise:
+        //   { remaining: N, startCount: N }
+        // Stop conditions are checked at the end of each spin in _spin().
+        // SPIN button doubles as the stop control when this is non-null.
+        autoplay: null,
       };
 
       this._buildShell();
@@ -258,13 +263,31 @@
         title: 'Paytable',
         onclick: () => this._showInfoModal(),
       }, 'i');
+      // Autoplay button — opens the run-length picker. Hidden when an
+      // autoplay run is already active; the SPIN button doubles as STOP
+      // in that case. Industry-standard premium feature the audit
+      // flagged as absent.
+      const autoBtn = $el('button', {
+        class: 'ce-btn ce-btn-auto',
+        'aria-label': 'Start autoplay',
+        title: 'Autoplay',
+        onclick: (e) => this._showAutoplayPicker(e.currentTarget),
+      }, 'AUTO');
+      this.autoBtn = autoBtn;
+      // SPIN button doubles as STOP during autoplay — the onclick
+      // checks this.state.autoplay to decide which mode is active.
+      // _updateSpinBtnLabel keeps the visible text + aria-label in
+      // sync with the current state.
       this.spinBtn = $el('button', {
         class: 'ce-btn primary',
         'aria-label': 'Spin',
-        onclick: () => this._spin(false),
+        onclick: () => {
+          if (this.state.autoplay) this._stopAutoplay();
+          else this._spin(false);
+        },
       }, 'SPIN');
 
-      [betMinus, this.betLabel, betPlus, betMax, infoBtn, this.spinBtn].forEach(b => controlBar.appendChild(b));
+      [betMinus, this.betLabel, betPlus, betMax, infoBtn, autoBtn, this.spinBtn].forEach(b => controlBar.appendChild(b));
       this.main.appendChild(controlBar);
 
       this.freeSpinsRow = $el('div', { style: { textAlign: 'center', marginTop: '.8rem', fontSize: '.9rem', opacity: .85 } });
@@ -285,6 +308,9 @@
           .ce-btn-stepper { min-width: 44px; font-size: 1.1rem; }
           .ce-btn-maxbet { background: linear-gradient(135deg, ${primary}22, ${primary}11); border-color: ${primary}88; color: ${primary}; letter-spacing: 1px; font-weight: 800; }
           .ce-btn-info { min-width: 36px; min-height: 36px; padding: .4rem .6rem; font-style: italic; font-weight: 800; font-family: serif; font-size: 1.05rem; border-radius: 50%; }
+          .ce-btn-auto { background: linear-gradient(135deg, ${primary}22, ${primary}11); border-color: ${primary}88; color: ${primary}; letter-spacing: 1px; font-weight: 800; }
+          .ce-btn-autoplay { background: linear-gradient(180deg, #ef4444, #b91c1c); color: white; box-shadow: 0 4px 14px rgba(239,68,68,0.4); }
+          .ce-btn-autoplay:hover:not(:disabled) { box-shadow: 0 6px 22px rgba(239,68,68,0.6); }
           .ce-btn.primary { background: linear-gradient(180deg, ${primary}, ${shade(primary,-20)}); color: #1a1205; border: none; font-weight: 800; letter-spacing: 2px; padding: .7rem 2rem; text-transform: uppercase; box-shadow: 0 4px 14px ${primary}55; }
           .ce-btn.primary:hover:not(:disabled) { box-shadow: 0 6px 22px ${primary}88; }
           .ce-btn.primary:active:not(:disabled) { transform: scale(0.95); box-shadow: 0 2px 8px ${primary}66; }
@@ -470,6 +496,129 @@
       this.state.betCents = g.maxBetCents;
       this.betLabel.textContent = fmt(g.maxBetCents);
       this._fx('stop');
+    }
+
+    _showAutoplayPicker(anchorEl) {
+      // Small choice popover anchored to the AUTO button. Lets the player
+      // pick a fixed run length (10/25/50/100 spins). The popover is
+      // strictly the picker — once the player chooses, autoplay starts
+      // immediately and the SPIN button morphs into a STOP control that
+      // shows the remaining count. Industry-standard pattern.
+      // Close any prior instance.
+      const prev = document.getElementById('ce-autoplay-picker');
+      if (prev) { prev.remove(); return; }
+
+      this._fx('stop');
+
+      const rect = anchorEl.getBoundingClientRect();
+      const picker = document.createElement('div');
+      picker.id = 'ce-autoplay-picker';
+      picker.setAttribute('role', 'menu');
+      picker.setAttribute('aria-label', 'Choose autoplay length');
+      picker.style.cssText =
+        'position:fixed;z-index:10550;background:#161B23;' +
+        'border:1px solid ' + this._primary + '55;border-radius:10px;' +
+        'box-shadow:0 12px 32px rgba(0,0,0,0.6);' +
+        'padding:6px;display:flex;gap:4px;flex-direction:column;' +
+        'min-width:120px;' +
+        'top:' + Math.round(rect.bottom + 6) + 'px;' +
+        'left:' + Math.round(rect.left) + 'px;';
+
+      const presets = [10, 25, 50, 100];
+      presets.forEach(n => {
+        const item = document.createElement('button');
+        item.type = 'button';
+        item.setAttribute('role', 'menuitem');
+        item.textContent = n + ' spins';
+        item.style.cssText =
+          'background:transparent;border:0;color:#F0F0F5;text-align:left;' +
+          'padding:8px 12px;border-radius:6px;cursor:pointer;font:inherit;' +
+          'font-size:0.92rem;';
+        item.addEventListener('mouseenter', () => item.style.background = this._primary + '22');
+        item.addEventListener('mouseleave', () => item.style.background = 'transparent');
+        item.addEventListener('click', () => {
+          picker.remove();
+          this._startAutoplay(n);
+        });
+        picker.appendChild(item);
+      });
+
+      document.body.appendChild(picker);
+
+      // Close on outside click or Escape.
+      const onDocClick = (e) => {
+        if (e.target === anchorEl) return;
+        if (picker.contains(e.target)) return;
+        picker.remove();
+        document.removeEventListener('click', onDocClick, true);
+        document.removeEventListener('keydown', onKey, true);
+      };
+      const onKey = (e) => {
+        if (e.key === 'Escape') {
+          picker.remove();
+          document.removeEventListener('click', onDocClick, true);
+          document.removeEventListener('keydown', onKey, true);
+        }
+      };
+      setTimeout(() => {
+        document.addEventListener('click', onDocClick, true);
+        document.addEventListener('keydown', onKey, true);
+      }, 0);
+    }
+
+    _startAutoplay(count) {
+      // Begin the autoplay run. Guard against starting on top of an
+      // already-running run (the AUTO button is hidden during autoplay,
+      // but a programmatic call could collide).
+      if (this.state.autoplay) return;
+      const n = Math.max(1, Math.min(500, parseInt(count, 10) || 0));
+      this.state.autoplay = { remaining: n, startCount: n };
+      this._updateSpinBtnLabel();
+      // Kick off the first spin. _spin will schedule the next one.
+      this._spin(false);
+    }
+
+    _stopAutoplay() {
+      if (!this.state.autoplay) return;
+      this.state.autoplay = null;
+      this._updateSpinBtnLabel();
+    }
+
+    _updateSpinBtnLabel() {
+      const ap = this.state.autoplay;
+      if (!this.spinBtn) return;
+      if (ap) {
+        this.spinBtn.textContent = 'STOP (' + ap.remaining + ')';
+        this.spinBtn.classList.add('ce-btn-autoplay');
+        this.spinBtn.setAttribute('aria-label', 'Stop autoplay (' + ap.remaining + ' spins remaining)');
+      } else {
+        this.spinBtn.textContent = 'SPIN';
+        this.spinBtn.classList.remove('ce-btn-autoplay');
+        this.spinBtn.setAttribute('aria-label', 'Spin');
+      }
+    }
+
+    _shouldStopAutoplay(result, betCents) {
+      // Industry-standard stop-on conditions. Any one triggers the stop.
+      //
+      //   - Big win or larger (>=15x bet) — let the player savour the
+      //     win and decide whether to continue. Spamming through a $50
+      //     win on autopilot feels wrong.
+      //   - Free-spins / bonus trigger — the bonus is its own event;
+      //     pause autoplay so the player can engage with it consciously.
+      //   - Balance dipped under 5× minBet — running out of money on
+      //     autoplay is a worse player experience than stopping early.
+      //     Matches the existing per-spin "Insufficient balance" guard
+      //     and aligns with responsible-gambling expectations.
+      if (!result) return 'error';
+      const win = result.payoutCents || 0;
+      const bet = betCents || 1;
+      if (win / bet >= 15) return 'big_win';
+      if ((result.freeSpinsAwarded || 0) > 0) return 'bonus';
+      const g = this.state.game;
+      const floor = g ? g.minBetCents * 5 : 0;
+      if (this.state.balanceCents < floor) return 'low_balance';
+      return null;
     }
 
     _detectNearMiss(reelIdx, g, result) {
@@ -802,6 +951,23 @@
 
       this.state.spinning = false;
       this.spinBtn.disabled = false;
+
+      // Autoplay — schedule the next spin if a run is active and no
+      // stop condition fired this turn. The 900ms gap lets the win
+      // celebrate-overlay (if any) settle before the next spin starts,
+      // and gives the player a chance to hit STOP between spins.
+      if (this.state.autoplay && !useFreeSpin) {
+        this.state.autoplay.remaining--;
+        const stopReason = this._shouldStopAutoplay(result, bet);
+        if (stopReason || this.state.autoplay.remaining <= 0) {
+          this._stopAutoplay();
+        } else {
+          this._updateSpinBtnLabel();
+          setTimeout(() => {
+            if (this.state.autoplay && !this.state.spinning) this._spin(false);
+          }, 900);
+        }
+      }
     }
 
     _renderFairnessPanel() {

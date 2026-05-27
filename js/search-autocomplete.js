@@ -6,20 +6,27 @@
     init: function() {
       const self = this;
 
-      // Find the game search input
-      const searchInput = document.getElementById('gameSearchInput');
+      // Find the game search input. The lobby uses `#searchInput`; earlier
+      // builds also exposed `#gameSearchInput`. Accept either so this
+      // script works against either page shape without forcing an HTML
+      // rename. If neither exists, soft-warn and bail.
+      const searchInput = document.getElementById('gameSearchInput')
+                       || document.getElementById('searchInput');
       if (!searchInput) {
-        console.warn('[SearchAutocomplete] Game search input not found (gameSearchInput)');
+        console.warn('[SearchAutocomplete] Game search input not found (#searchInput or #gameSearchInput)');
         return;
       }
 
-      // Check if GAMES array is available
-      if (typeof games === 'undefined' && typeof window.games === 'undefined') {
-        console.warn('[SearchAutocomplete] GAMES array not found globally');
+      // Resolve the games array. Index.html populates `window.GAME_REGISTRY`
+      // synchronously from js/game-registry.js before initializeApp() runs;
+      // earlier callers used `window.games`. Accept either; we only need
+      // an array of {id, name, studio, …}.
+      const GAMES = (typeof games !== 'undefined') ? games
+                  : (window.games || window.GAME_REGISTRY);
+      if (!GAMES || !Array.isArray(GAMES) || GAMES.length === 0) {
+        console.warn('[SearchAutocomplete] Games array not found globally (looked for window.games and window.GAME_REGISTRY)');
         return;
       }
-
-      const GAMES = typeof games !== 'undefined' ? games : window.games;
 
       // State
       let isOpen = false;

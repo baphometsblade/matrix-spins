@@ -1919,6 +1919,7 @@
     
     
     
+    
 
     <script>
         let allGames = [];
@@ -1952,6 +1953,17 @@
             // Check daily bonus
             if (typeof window.CasinoDailyBonus !== 'undefined' && window.CasinoDailyBonus.checkAndShow) {
                 window.CasinoDailyBonus.checkAndShow();
+            }
+
+            // Search autocomplete dropdown — the script lives at
+            // js/search-autocomplete.js and styles in styles.css. It
+            // was previously dormant because the input-id selector and
+            // games-array global didn't match the lobby's shape. Patched
+            // those (2026-05-28); init it here so the dropdown lights up
+            // as soon as the lobby finishes rendering its game grid.
+            if (window.SearchAutocomplete && typeof window.SearchAutocomplete.init === 'function') {
+                try { window.SearchAutocomplete.init(); }
+                catch (e) { console.warn('[SearchAutocomplete] init failed:', e.message); }
             }
         }
 
@@ -2854,6 +2866,6 @@
     <!-- Site-wide jackpot win celebration + real-time pool ticker (socket.io) -->
     <script src="js/confetti.min.js?v=2b59dbb8" defer></script>
     <script src="js/jackpot-celebration.js?v=48be09d7" defer></script>
-    <script src="bundle.c19e450d.min.js"></script>
+    <script src="bundle.7b6e2ae6.min.js"></script>
 </body>
 </html>
