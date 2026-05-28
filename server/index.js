@@ -344,6 +344,9 @@ mount('/api/admin-metrics', './routes/adminmetrics.routes', 'admin-metrics');
 // Compliance audit logs
 mount('/api/age-deny', './routes/age-deny.routes', 'age-deny-audit');
 
+// Per-game personal stats (premium retention feature)
+mount('/api/games', './routes/mygamestats.routes', 'my-game-stats');
+
 // Money / withdrawals
 mount('/api/withdrawal-enhance', './routes/withdrawal-enhance.routes', 'withdrawal-enhance');
 mount('/api/crypto',             './routes/crypto.routes',             'crypto');

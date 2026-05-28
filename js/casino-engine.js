@@ -697,17 +697,20 @@
       // server-side payout cap structure (max win is 200x bet) and the
       // industry-standard "Big/Mega/Epic" naming.
       //
-      //   ≥  5x bet → no overlay, just the win-strip sound
-      //   ≥ 15x bet → Big Win
-      //   ≥ 50x bet → Mega Win
+      //   ≥  15x bet → Big Win
+      //   ≥  50x bet → Mega Win
       //   ≥ 100x bet → Epic Win
+      //   ≥ 150x bet → Super Mega Win (the max-win cap is 200x, so the
+      //                top quarter of the range earns its own tier — a
+      //                150x+ hit should NOT look the same as a 100x hit)
       //
       // Built entirely with createElement + textContent (no innerHTML),
       // so it stays safe even when payoutCents is large.
       if (!betCents || betCents <= 0) return;
       const ratio = payoutCents / betCents;
       let tier = null;
-      if      (ratio >= 100) tier = { label: 'EPIC WIN',  fx: 'mega', color: '#F0C66E', size: '4.2rem' };
+      if      (ratio >= 150) tier = { label: 'SUPER MEGA WIN', fx: 'mega', color: '#FF5DA2', size: '4.6rem' };
+      else if (ratio >= 100) tier = { label: 'EPIC WIN',  fx: 'mega', color: '#F0C66E', size: '4.2rem' };
       else if (ratio >=  50) tier = { label: 'MEGA WIN',  fx: 'mega', color: '#F0C66E', size: '3.6rem' };
       else if (ratio >=  15) tier = { label: 'BIG WIN',   fx: 'big',  color: '#FFD700', size: '3.0rem' };
       if (!tier) return;
@@ -1409,22 +1412,57 @@
         meta.appendChild(chip);
       });
 
+      // ── Lore / "About this game" ──
+      // 40-80 word theme story attached by the server from
+      // data/game-lore.json. Every premium slot has one; it's what
+      // makes a game feel like a place rather than a math model.
+      const loreSection = document.createElement('div');
+      if (g.lore) {
+        loreSection.style.cssText = 'padding:2px 22px 14px;';
+        const p = document.createElement('p');
+        p.textContent = g.lore;
+        p.style.cssText = 'margin:0;font-size:0.9rem;line-height:1.55;color:#C7CDD9;font-style:italic;';
+        loreSection.appendChild(p);
+      }
+
+      // ── Symbol payouts ──
+      // Now shows the cash value at the CURRENT bet alongside the raw
+      // multiplier ("5×  →  $5.00"). Players think in money, not
+      // multipliers — this is the interactive payout legend the audit
+      // flagged as missing. Handles both flat (sym→mult) and nested
+      // (sym→{5x,4x,3x}) paytable shapes.
       const paytableSection = document.createElement('div');
       paytableSection.style.cssText = 'padding:8px 22px 14px;';
       if (g.paytable && typeof g.paytable === 'object') {
         const h3 = document.createElement('h3');
-        h3.textContent = 'Symbol payouts';
+        h3.textContent = 'Symbol payouts (at ' + fmt(this.state.betCents) + ' bet)';
         h3.style.cssText = 'margin:6px 0 8px;font-size:0.85rem;color:#9CA3AF;text-transform:uppercase;letter-spacing:0.06em;font-weight:600;';
         paytableSection.appendChild(h3);
         const table = document.createElement('div');
         table.style.cssText = 'display:grid;grid-template-columns:1fr auto;gap:6px 14px;font-size:0.88rem;';
+        const betCents = this.state.betCents;
+        const cashFor = (mult) => {
+          const n = parseFloat(mult);
+          if (!isFinite(n)) return null;
+          return fmt(Math.round(betCents * n));
+        };
         Object.keys(g.paytable).forEach(sym => {
           const val = g.paytable[sym];
           const left = document.createElement('span');
-          left.textContent = String(sym);
+          left.textContent = this._symbolGlyph(String(sym)) + '  ' + String(sym);
           left.style.cssText = 'color:#CDD3DE;font-variant-numeric:tabular-nums;';
           const right = document.createElement('span');
-          right.textContent = (typeof val === 'object' ? JSON.stringify(val) : String(val));
+          if (val && typeof val === 'object') {
+            // Nested: show the top match-count payout in cash + multiplier.
+            const parts = Object.keys(val).map(k => {
+              const cash = cashFor(val[k]);
+              return k + ' ' + (cash ? cash : (val[k] + '×'));
+            });
+            right.textContent = parts.join('  ·  ');
+          } else {
+            const cash = cashFor(val);
+            right.textContent = cash ? (val + '×  →  ' + cash) : String(val);
+          }
           right.style.cssText = 'color:#F0C66E;font-weight:600;text-align:right;font-variant-numeric:tabular-nums;';
           table.appendChild(left);
           table.appendChild(right);
@@ -1445,6 +1483,24 @@
         bonusSection.appendChild(p);
       }
 
+      // ── Your stats on this game ──
+      // Async card filled from /api/games/:id/my-stats. Renders a
+      // placeholder synchronously so the modal doesn't block on the
+      // network, then populates when the fetch resolves. Retention
+      // signal — "your biggest win here was $X" makes the player feel
+      // known by the casino.
+      const statsSection = document.createElement('div');
+      statsSection.style.cssText = 'padding:4px 22px 14px;';
+      const statsH3 = document.createElement('h3');
+      statsH3.textContent = 'Your stats on this game';
+      statsH3.style.cssText = 'margin:6px 0 8px;font-size:0.85rem;color:#9CA3AF;text-transform:uppercase;letter-spacing:0.06em;font-weight:600;';
+      const statsBody = document.createElement('div');
+      statsBody.style.cssText = 'font-size:0.85rem;color:#9CA3AF;';
+      statsBody.textContent = 'Loading…';
+      statsSection.appendChild(statsH3);
+      statsSection.appendChild(statsBody);
+      this._fillPersonalStats(statsBody);
+
       const foot = document.createElement('p');
       foot.style.cssText =
         'margin:0;padding:10px 22px 18px;font-size:0.72rem;color:#8B95A8;line-height:1.5;';
@@ -1455,8 +1511,10 @@
 
       panel.appendChild(header);
       panel.appendChild(meta);
+      if (loreSection.children.length)     panel.appendChild(loreSection);
       if (paytableSection.children.length) panel.appendChild(paytableSection);
       if (bonusSection.children.length)    panel.appendChild(bonusSection);
+      panel.appendChild(statsSection);
       panel.appendChild(foot);
       overlay.appendChild(panel);
       document.body.appendChild(overlay);
@@ -1473,6 +1531,61 @@
       overlay.addEventListener('click', (e) => { if (e.target === overlay) close(); });
       document.addEventListener('keydown', onKey, true);
       setTimeout(() => closeBtn.focus(), 0);
+    }
+
+    async _fillPersonalStats(container) {
+      // Fetch per-game aggregates and render a compact stat grid. Failures
+      // are swallowed — the stats card is decorative, never gating. The
+      // server returns a zeroed shape on its own errors so we still get
+      // a clean "no history yet" render.
+      let stats = null;
+      try {
+        if (window.MatrixSpinsAPI && typeof window.MatrixSpinsAPI.myGameStats === 'function') {
+          stats = await window.MatrixSpinsAPI.myGameStats(this.gameId);
+        }
+      } catch (_) { /* network — fall through to unavailable */ }
+      if (!container || !container.isConnected) return; // modal closed while fetching
+      while (container.firstChild) container.removeChild(container.firstChild);
+
+      if (!stats || stats.unavailable) {
+        container.textContent = 'Stats unavailable right now.';
+        return;
+      }
+      if (!stats.spinCount) {
+        container.textContent = 'No spins yet — your stats will appear here after you play.';
+        return;
+      }
+
+      const grid = document.createElement('div');
+      grid.style.cssText = 'display:grid;grid-template-columns:1fr 1fr;gap:8px 16px;';
+      const fmtMoney = (v) => fmt(Math.round((v || 0) * 100));
+      const net = stats.netResult || 0;
+      const rows = [
+        ['Spins played', String(stats.spinCount)],
+        ['Sessions', String(stats.sessionsPlayed || 1)],
+        ['Biggest win', fmtMoney(stats.biggestWin)],
+        ['Total wagered', fmtMoney(stats.totalWagered)],
+        ['Average bet', fmtMoney(stats.averageBet)],
+        ['Net result', (net >= 0 ? '+' : '−') + fmtMoney(Math.abs(net))],
+      ];
+      rows.forEach(([label, value], i) => {
+        const cell = document.createElement('div');
+        cell.style.cssText = 'display:flex;flex-direction:column;gap:2px;';
+        const l = document.createElement('span');
+        l.textContent = label;
+        l.style.cssText = 'font-size:0.7rem;color:#8B95A8;text-transform:uppercase;letter-spacing:0.04em;';
+        const v = document.createElement('span');
+        v.textContent = value;
+        // Highlight biggest-win gold; colour net result green/red.
+        let colour = '#F0F0F5';
+        if (label === 'Biggest win') colour = '#F0C66E';
+        else if (label === 'Net result') colour = net >= 0 ? '#4ade80' : '#f87171';
+        v.style.cssText = 'font-size:1.0rem;font-weight:700;color:' + colour + ';font-variant-numeric:tabular-nums;';
+        cell.appendChild(l);
+        cell.appendChild(v);
+        grid.appendChild(cell);
+      });
+      container.appendChild(grid);
     }
 
     _renderFreeSpins() {

@@ -34,6 +34,19 @@ _spinSchemaBootstrap(
 // junk keys.
 const NONCE_RE = /^[a-zA-Z0-9_-]{16,64}$/;
 
+// ── Per-game lore ──
+// 100 curated theme stories keyed by gameId (data/game-lore.json),
+// attached to the GET /games/:id response so the engine's info modal
+// can render an "About this game" paragraph. Loaded once at startup;
+// missing file is non-fatal (the modal just omits the section).
+let GAME_LORE = {};
+try {
+    GAME_LORE = JSON.parse(fs.readFileSync(path.resolve(__dirname, '../../data/game-lore.json'), 'utf8'));
+    console.log('[Spin] loaded lore for', Object.keys(GAME_LORE).length, 'games');
+} catch (loreErr) {
+    console.warn('[Spin] game-lore.json not loaded:', loreErr.message);
+}
+
 // Pre-index game definitions for O(1) lookup
 const gameIndex = new Map();
 (Array.isArray(games) ? games : []).forEach(g => { if (g && g.id) gameIndex.set(g.id, g); });
@@ -296,7 +309,8 @@ router.get('/games/:id', async (req, res) => {
                 bonusType: game.bonusType || null,
                 bonusDesc: game.bonusDesc || '',
                 provider: game.provider || 'Matrix Spins',
-                jackpot: game.jackpot || 0
+                jackpot: game.jackpot || 0,
+                lore: GAME_LORE[game.id] || null
             }
         });
     } catch (err) {

@@ -224,6 +224,10 @@
     // Recovery lookup. Returns the prior spin response if the nonce was
     // committed server-side, or 404 if the bet was never charged.
     spinByNonce:  (nonce) => apiFetch(`/spin/by-nonce/${encodeURIComponent(nonce)}`),
+    // Per-game personal stats — aggregate spins for this player on this
+    // game. Surfaced in the engine's info modal ("your biggest win
+    // here was $X" + sessions/avg-bet/etc).
+    myGameStats:  (gameId) => apiFetch(`/games/${encodeURIComponent(gameId)}/my-stats`),
     getFreeSpins: (gameId) => apiFetch(`/freespins/available?gameId=${encodeURIComponent(gameId)}`),
     spinHistory:  (params) => apiFetch(`/game-history/${qs(params)}`),
     spinDetails:  (spinId) => apiFetch(`/game-history/${encodeURIComponent(spinId)}`),
