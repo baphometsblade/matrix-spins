@@ -59,11 +59,29 @@
   function removeOverlay(overlay) {
     overlay.classList.add('age-gate--exiting');
     document.body.classList.remove('age-gate-active');
-    overlay.addEventListener('animationend', function () {
-      if (overlay.parentNode) {
-        overlay.parentNode.removeChild(overlay);
-      }
-    });
+
+    // CRITICAL: do NOT rely solely on `animationend` to remove the overlay.
+    // animationend never fires when CSS animations are suppressed —
+    // prefers-reduced-motion (animation-duration → ~0), privacy/accessibility
+    // extensions that inject `* { animation: none !important }`, and
+    // forced-colors / high-contrast mode all do this. Without a fallback the
+    // overlay froze on screen AFTER the user confirmed (setVerified already
+    // ran), permanently blocking the entire site for those users — the
+    // exact "buttons don't work" report. Verified in-browser: with
+    // animations disabled, the animationend-only version never removed the
+    // overlay; this fallback removes it unconditionally.
+    var removed = false;
+    function finalize() {
+      if (removed) return;
+      removed = true;
+      if (overlay.parentNode) overlay.parentNode.removeChild(overlay);
+    }
+    // Remove when the fade-out finishes (normal path)…
+    overlay.addEventListener('animationend', finalize);
+    // …but ALWAYS remove via a timer slightly past the 0.35s exit animation,
+    // so animation-suppressed environments are never left stuck. The
+    // `removed` guard makes whichever fires second a no-op.
+    setTimeout(finalize, 450);
   }
 
   function createOverlay() {
