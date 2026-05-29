@@ -42,7 +42,6 @@ services:
     region: oregon
     branch: master
     autoDeploy: true
-    nodeVersion: "20"
     buildCommand: npm install --omit=dev --no-audit --no-fund && npm run build
     startCommand: node server/index.js
     healthCheckPath: /api/health/ping
@@ -53,6 +52,8 @@ services:
         value: "10000"
       - key: LOG_LEVEL
         value: info
+      - key: NODE_VERSION
+        value: "20"
 
       # ── Security (auto-generated unique values per deploy) ──
       - key: JWT_SECRET
