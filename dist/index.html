@@ -2101,26 +2101,21 @@
             }
         });
 
-        // ── Stable game-thumbnail mapping ────────────────────────
-        // The lobby's 100-game registry (window.GAME_REGISTRY, hyphenated ids
-        // like "golden-cherry-cascade") and the 215 thumbnail images shipped
-        // in /assets/thumbnails/ (underscored names like "ancient_tombs.webp")
-        // were built from different game catalogs — no id maps to a filename
-        // directly. Without intervention, every game card falls through to
-        // the letter-placeholder branch and zero of the .webp files are ever
-        // shown.
+        // ── Game thumbnail resolution ────────────────────────────
+        // Every game in `window.GAME_REGISTRY` now ships a `thumbnail`
+        // field pointing to its dedicated AI-generated photo-real key
+        // art under `assets/thumbnails/ai/<id>.webp` (rewired by
+        // `scripts/apply-game-themes.js` from `data/game-thumbnails.json`).
         //
-        // This helper picks one of the 215 thumbnails for each game.id via a
-        // simple deterministic hash, so every card renders real game art and
-        // the same game always gets the same thumbnail across reloads.
-        const GAME_THUMBNAIL_POOL = ['agent_zero.webp','ancient_tombs.webp','arcane_tower.webp','avalon_castle.webp','aztec_ascent.webp','aztec_temple.webp','banshee_wail.webp','berry_bliss.webp','big_bamboo.webp','big_top_bonanza.webp','black_ops_heist.webp','book_dead.webp','boomerang_luck.webp','buffalo_extreme.webp','buffalo_mega.webp','buffalo_stampede.webp','candy_blitz.webp','carnival_crown.webp','cash_vault.webp','castle_siege.webp','celestial_bazaar.webp','cherry_bombs.webp','circus_thrills.webp','cleopatra_gold.webp','cleopatra_moon.webp','comet_rush.webp','cosmic_cash.webp','cosmic_nova.webp','crimson_dynasty.webp','crimson_fang.webp','crocodile_dundee.webp','crocodile_gold.webp','crystal_cavern.webp','crystal_shrine.webp','crystal_veil.webp','cursed_night.webp','dead_alive.webp','deep_dive.webp','desert_dynasty.webp','diamond_falls.webp','diamond_strike.webp','diamond_vault.webp','dog_house_mega.webp','dragon_coins.webp','dragon_gate.webp','dragon_hoard.webp','dragon_megafire.webp','dragon_realm.webp','dragon_temple.webp','dragon_tumble.webp','dragonfire_forge.webp','eagle_summit.webp','eclipse_mystery.webp','eldritch_depths.webp','elvis_frog.webp','emerald_dragon.webp','emerald_kingdom.webp','eternal_romance.webp','extra_chilli.webp','fae_forest.webp','fairy_tales.webp','fire_hole.webp','flamingo_fiesta.webp','fortune_bazaar.webp','fortune_ox.webp','frost_queen.webp','fruit_bonanza.webp','fruit_party.webp','galactic_raiders.webp','galaxy_rush.webp','gates_olympus.webp','gates_valhalla.webp','gemhalla.webp','gems_bonanza.webp','gold_crown_club.webp','gold_rush_frog.webp','golden_cascade.webp','golden_fortune.webp','golden_genie.webp','golden_jaguar.webp','golden_vault.webp','grand_prix_rush.webp','grape_vine.webp','gravity_well.webp','great_barrier.webp','great_rhino.webp','harvest_megaways.webp','haunted_mansion.webp','honey_rush.webp','hot_chillies.webp','immortal_blood.webp','inferno_fiesta.webp','inferno_joker.webp','infinity_mirror.webp','isis_blessing.webp','jade_emperor.webp','jade_fortune.webp','joker_frenzy.webp','jungle_fury.webp','koi_ascension.webp','koi_cascade.webp','kookaburra_cash.webp','legacy_dead.webp','lemon_drop.webp','leopard_prowl.webp','lucky_dragon.webp','lucky_tanuki.webp','lunar_goddess.webp','madame_destiny.webp','mammoth_riches.webp','mega_diamond_rush.webp','mega_safari.webp','melon_feast.webp','midnight_oasis.webp','midnight_phantom.webp','mirror_palace.webp','monaco_million.webp','money_train.webp','moon_madness.webp','moon_rabbit.webp','mystic_grail.webp','mystic_wolf.webp','neon_heist.webp','neon_nebula.webp','neon_viper.webp','neptune_storm.webp','nile_jewels.webp','norse_vaults.webp','olympian_gods.webp','olympus_dream.webp','olympus_thunder.webp','opal_outback.webp','oriental_silk.webp','outback_king.webp','panda_paradise.webp','peach_paradise.webp','phantom_riches.webp','pharaoh_collect.webp','pharaohs_legacy.webp','phoenix_rising.webp','pirate_plunder.webp','plague_doctor.webp','platypus_fortune.webp','platypus_paradise.webp','pots_olympus.webp','power_crown.webp','primal_vault.webp','puppet_master.webp','pyramid_king.webp','pyramid_power.webp','quantum_burst.webp','rainbow_fortune.webp','reactoonz.webp','retro_tapes.webp','rhino_rampage.webp','rise_of_merlin.webp','rockstar_wild.webp','rome_eternal.webp','royal_mint.webp','runeblade.webp','sacred_ibis.webp','sakura_fortune.webp','samurai_blade.webp','samurai_honor.webp','samurai_ways.webp','san_quentin.webp','serpent_spell.webp','shark_reef.webp','solar_eclipse.webp','solar_system.webp','space_odyssey.webp','sphinx_riddle.webp','spice_fortune.webp','starburst_xxl.webp','starlight_princess.webp','steampunk_fortune.webp','stellar_drift.webp','sugar_rush.webp','sugar_supreme.webp','supernova_slots.webp','sweet_bonanza.webp','tangerine_tango.webp','temple_bells.webp','thunder_hero.webp','thunder_jackpot.webp','thunder_reel.webp','thunderstrike.webp','ticket_to_fortune.webp','tiger_strike.webp','tiger_temple.webp','titan_forge.webp','tomb_anubis.webp','tombstone_reload.webp','treasure_cove.webp','twin_dragons.webp','uluru_gold.webp','vault_coins.webp','viking_forge.webp','viking_voyage.webp','volcano_riches.webp','wanted_dead.webp','warp_station.webp','warrior_princess.webp','wild_depths.webp','wild_rooster.webp','wild_stampede.webp','wild_west_bounty.webp','wild_west_rush.webp','witches_brew.webp','wolf_canyon.webp','wolf_gold.webp','wolf_howl.webp','wolf_rise.webp','world_cup_glory.webp','zombie_carnival.webp'];
+        // The old 215-entry deterministic-hash fallback pool that lived
+        // here was removed when the rewire shipped — the registry is
+        // now the single source of truth. If a future game lacks a
+        // thumbnail field this returns an empty string and the
+        // existing `onerror="this.style.display='none'"` on the <img>
+        // hides the broken element so the placeholder badge underneath
+        // shows through.
         function getGameThumbnail(game) {
-            if (game && game.thumbnail) return game.thumbnail;
-            const id = (game && game.id) || (game && game.name) || '';
-            let hash = 0;
-            for (let i = 0; i < id.length; i++) hash = (hash * 31 + id.charCodeAt(i)) | 0;
-            const idx = Math.abs(hash) % GAME_THUMBNAIL_POOL.length;
-            return 'assets/thumbnails/' + GAME_THUMBNAIL_POOL[idx];
+            return (game && game.thumbnail) ? game.thumbnail : '';
         }
 
         // Render games
@@ -2910,6 +2905,6 @@
     <!-- Site-wide jackpot win celebration + real-time pool ticker (socket.io) -->
     <script src="js/confetti.min.js?v=2b59dbb8" defer></script>
     <script src="js/jackpot-celebration.js?v=48be09d7" defer></script>
-    <script src="bundle.48f0707b.min.js"></script>
+    <script src="bundle.95f1fb74.min.js"></script>
 </body>
 </html>

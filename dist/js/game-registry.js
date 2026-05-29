@@ -124,7 +124,7 @@ window.GAME_REGISTRY = [{
     features: ['cascading-wins', 'free-spins', 'multiplier'],
     badges: ['new'],
     bgGradient: 'linear-gradient(135deg, #DB2777 0%, #FB923C 50%, #FACC15 100%)',
-    thumbnail: 'assets/thumbnails/cherry_bombs.webp'
+    thumbnail: 'assets/thumbnails/ai/golden-cherry-cascade.webp'
   },
   {
     id: 'retro-fruit-fiesta',
@@ -145,7 +145,7 @@ window.GAME_REGISTRY = [{
     features: ['expanding-reels', 'multiplier-trail', 'bonus-spins'],
     badges: [],
     bgGradient: 'linear-gradient(135deg, #DB2777 0%, #FB923C 50%, #FACC15 100%)',
-    thumbnail: 'assets/thumbnails/retro_tapes.webp'
+    thumbnail: 'assets/thumbnails/ai/retro-fruit-fiesta.webp'
   },
   {
     id: 'classic-gold-vault',
@@ -166,7 +166,7 @@ window.GAME_REGISTRY = [{
     features: ['free-spins', 'sticky-reels', 'win-multiplier'],
     badges: [],
     bgGradient: 'linear-gradient(135deg, #DB2777 0%, #FB923C 50%, #FACC15 100%)',
-    thumbnail: 'assets/thumbnails/golden_vault.webp'
+    thumbnail: 'assets/thumbnails/ai/classic-gold-vault.webp'
   },
   {
     id: 'sunshine-lemon-drop',
@@ -187,7 +187,7 @@ window.GAME_REGISTRY = [{
     features: ['hold-respin', 'cash-win', 'bonus-feature'],
     badges: [],
     bgGradient: 'linear-gradient(135deg, #DB2777 0%, #FB923C 50%, #FACC15 100%)',
-    thumbnail: 'assets/thumbnails/lemon_drop.webp'
+    thumbnail: 'assets/thumbnails/ai/sunshine-lemon-drop.webp'
   },
   {
     id: 'golden-melons-paradise',
@@ -208,7 +208,7 @@ window.GAME_REGISTRY = [{
     features: ['walking-symbol', 'escalating-wins', 'free-spins'],
     badges: [],
     bgGradient: 'linear-gradient(135deg, #DB2777 0%, #FB923C 50%, #FACC15 100%)',
-    thumbnail: 'assets/thumbnails/melon_feast.webp'
+    thumbnail: 'assets/thumbnails/ai/golden-melons-paradise.webp'
   },
   {
     id: 'artdeco-cherry-royale',
@@ -229,7 +229,7 @@ window.GAME_REGISTRY = [{
     features: ['cascading-wins', 'multiplier-boost', 'free-spins'],
     badges: ['hot'],
     bgGradient: 'linear-gradient(135deg, #DB2777 0%, #FB923C 50%, #FACC15 100%)',
-    thumbnail: 'assets/thumbnails/royal_mint.webp'
+    thumbnail: 'assets/thumbnails/ai/artdeco-cherry-royale.webp'
   },
   {
     id: 'fruit-fortune-wheel',
@@ -250,7 +250,7 @@ window.GAME_REGISTRY = [{
     features: ['multiplier-track', 'bonus-wheel', 'instant-wins'],
     badges: [],
     bgGradient: 'linear-gradient(135deg, #DB2777 0%, #FB923C 50%, #FACC15 100%)',
-    thumbnail: 'assets/thumbnails/fruit_bonanza.webp'
+    thumbnail: 'assets/thumbnails/ai/fruit-fortune-wheel.webp'
   },
   {
     id: 'cherry-blossom-bonus',
@@ -271,7 +271,7 @@ window.GAME_REGISTRY = [{
     features: ['win-ladder', 'escalating-multiplier', 'free-spins'],
     badges: [],
     bgGradient: 'linear-gradient(135deg, #DB2777 0%, #FB923C 50%, #FACC15 100%)',
-    thumbnail: 'assets/thumbnails/sakura_fortune.webp'
+    thumbnail: 'assets/thumbnails/ai/cherry-blossom-bonus.webp'
   },
   {
     id: 'lucky-sevens-infinity',
@@ -292,7 +292,7 @@ window.GAME_REGISTRY = [{
     features: ['free-spins-bank', 'collector-symbols', 'multiplier'],
     badges: [],
     bgGradient: 'linear-gradient(135deg, #DB2777 0%, #FB923C 50%, #FACC15 100%)',
-    thumbnail: 'assets/thumbnails/infinity_mirror.webp'
+    thumbnail: 'assets/thumbnails/ai/lucky-sevens-infinity.webp'
   },
   {
     id: 'melon-madness-mixer',
@@ -313,7 +313,7 @@ window.GAME_REGISTRY = [{
     features: ['pick-bonus', 'hidden-prizes', 'multiplier-reveal'],
     badges: ['new'],
     bgGradient: 'linear-gradient(135deg, #DB2777 0%, #FB923C 50%, #FACC15 100%)',
-    thumbnail: 'assets/thumbnails/fruit_party.webp'
+    thumbnail: 'assets/thumbnails/ai/melon-madness-mixer.webp'
   },
   {
     id: 'vintage-vault-riches',
@@ -334,7 +334,7 @@ window.GAME_REGISTRY = [{
     features: ['megaways', 'variable-rows', 'free-spins'],
     badges: [],
     bgGradient: 'linear-gradient(135deg, #DB2777 0%, #FB923C 50%, #FACC15 100%)',
-    thumbnail: 'assets/thumbnails/vault_coins.webp'
+    thumbnail: 'assets/thumbnails/ai/vintage-vault-riches.webp'
   },
   {
     id: 'nebula-space-odyssey',
@@ -355,7 +355,7 @@ window.GAME_REGISTRY = [{
     features: ['cluster-pays', 'cascading-wins', 'free-spins'],
     badges: ['featured'],
     bgGradient: 'linear-gradient(135deg, #0F172A 0%, #1E3A8A 50%, #06B6D4 100%)',
-    thumbnail: 'assets/thumbnails/space_odyssey.webp'
+    thumbnail: 'assets/thumbnails/ai/nebula-space-odyssey.webp'
   },
   {
     id: 'cosmic-raider-mission',
@@ -376,7 +376,7 @@ window.GAME_REGISTRY = [{
     features: ['jackpot-meter', 'random-awards', 'multiplier'],
     badges: [],
     bgGradient: 'linear-gradient(135deg, #0F172A 0%, #1E3A8A 50%, #06B6D4 100%)',
-    thumbnail: 'assets/thumbnails/galactic_raiders.webp'
+    thumbnail: 'assets/thumbnails/ai/cosmic-raider-mission.webp'
   },
   {
     id: 'stellar-nexus-prime',
@@ -397,7 +397,7 @@ window.GAME_REGISTRY = [{
     features: ['respins', 'increasing-multiplier', 'bonus-spins'],
     badges: [],
     bgGradient: 'linear-gradient(135deg, #0F172A 0%, #1E3A8A 50%, #06B6D4 100%)',
-    thumbnail: 'assets/thumbnails/stellar_drift.webp'
+    thumbnail: 'assets/thumbnails/ai/stellar-nexus-prime.webp'
   },
   {
     id: 'galaxy-gates-opener',
@@ -418,7 +418,7 @@ window.GAME_REGISTRY = [{
     features: ['symbol-upgrade', 'cascading-reels', 'free-spins'],
     badges: ['new'],
     bgGradient: 'linear-gradient(135deg, #0F172A 0%, #1E3A8A 50%, #06B6D4 100%)',
-    thumbnail: 'assets/thumbnails/galaxy_rush.webp'
+    thumbnail: 'assets/thumbnails/ai/galaxy-gates-opener.webp'
   },
   {
     id: 'quantum-leap-vault',
@@ -439,7 +439,7 @@ window.GAME_REGISTRY = [{
     features: ['collector-symbol', 'gathering-mechanic', 'bonus-awards'],
     badges: [],
     bgGradient: 'linear-gradient(135deg, #0F172A 0%, #1E3A8A 50%, #06B6D4 100%)',
-    thumbnail: 'assets/thumbnails/quantum_burst.webp'
+    thumbnail: 'assets/thumbnails/ai/quantum-leap-vault.webp'
   },
   {
     id: 'meteor-strike-mayhem',
@@ -460,7 +460,7 @@ window.GAME_REGISTRY = [{
     features: ['colossal-symbols', 'mega-wins', 'free-spins'],
     badges: [],
     bgGradient: 'linear-gradient(135deg, #0F172A 0%, #1E3A8A 50%, #06B6D4 100%)',
-    thumbnail: 'assets/thumbnails/comet_rush.webp'
+    thumbnail: 'assets/thumbnails/ai/meteor-strike-mayhem.webp'
   },
   {
     id: 'pulsar-revolution',
@@ -481,7 +481,7 @@ window.GAME_REGISTRY = [{
     features: ['shifting-reels', 'cascading-wins', 'multiplier'],
     badges: ['hot'],
     bgGradient: 'linear-gradient(135deg, #0F172A 0%, #1E3A8A 50%, #06B6D4 100%)',
-    thumbnail: 'assets/thumbnails/supernova_slots.webp'
+    thumbnail: 'assets/thumbnails/ai/pulsar-revolution.webp'
   },
   {
     id: 'alien-artifact-hunt',
@@ -502,7 +502,7 @@ window.GAME_REGISTRY = [{
     features: ['symbol-transform', 'wild-expansion', 'bonus-spins'],
     badges: [],
     bgGradient: 'linear-gradient(135deg, #0F172A 0%, #1E3A8A 50%, #06B6D4 100%)',
-    thumbnail: 'assets/thumbnails/warp_station.webp'
+    thumbnail: 'assets/thumbnails/ai/alien-artifact-hunt.webp'
   },
   {
     id: 'void-vault-explorer',
@@ -523,7 +523,7 @@ window.GAME_REGISTRY = [{
     features: ['win-both-ways', 'two-direction-pays', 'free-spins'],
     badges: ['new'],
     bgGradient: 'linear-gradient(135deg, #0F172A 0%, #1E3A8A 50%, #06B6D4 100%)',
-    thumbnail: 'assets/thumbnails/cash_vault.webp'
+    thumbnail: 'assets/thumbnails/ai/void-vault-explorer.webp'
   },
   {
     id: 'stellar-collapse-spinner',
@@ -544,7 +544,7 @@ window.GAME_REGISTRY = [{
     features: ['locked-reels', 'respins', 'escalating-multiplier'],
     badges: [],
     bgGradient: 'linear-gradient(135deg, #0F172A 0%, #1E3A8A 50%, #06B6D4 100%)',
-    thumbnail: 'assets/thumbnails/cosmic_nova.webp'
+    thumbnail: 'assets/thumbnails/ai/stellar-collapse-spinner.webp'
   },
   {
     id: 'pharaoh-eternal-dynasty',
@@ -565,7 +565,7 @@ window.GAME_REGISTRY = [{
     features: ['split-symbols', 'cascading-wins', 'free-spins'],
     badges: ['featured'],
     bgGradient: 'linear-gradient(135deg, #92400E 0%, #D4A853 50%, #FCD34D 100%)',
-    thumbnail: 'assets/thumbnails/pharaohs_legacy.webp'
+    thumbnail: 'assets/thumbnails/ai/pharaoh-eternal-dynasty.webp'
   },
   {
     id: 'anubis-guardian-souls',
@@ -586,7 +586,7 @@ window.GAME_REGISTRY = [{
     features: ['symbol-stack', 'cascading-reels', 'bonus-spins'],
     badges: [],
     bgGradient: 'linear-gradient(135deg, #92400E 0%, #D4A853 50%, #FCD34D 100%)',
-    thumbnail: 'assets/thumbnails/tomb_anubis.webp'
+    thumbnail: 'assets/thumbnails/ai/anubis-guardian-souls.webp'
   },
   {
     id: 'cleopatra-treasure-vault',
@@ -607,7 +607,7 @@ window.GAME_REGISTRY = [{
     features: ['reel-sync', 'synchronous-wins', 'free-spins'],
     badges: [],
     bgGradient: 'linear-gradient(135deg, #92400E 0%, #D4A853 50%, #FCD34D 100%)',
-    thumbnail: 'assets/thumbnails/cleopatra_gold.webp'
+    thumbnail: 'assets/thumbnails/ai/cleopatra-treasure-vault.webp'
   },
   {
     id: 'horus-divine-judgment',
@@ -628,7 +628,7 @@ window.GAME_REGISTRY = [{
     features: ['nudge-reels', 'win-alignment', 'multiplier'],
     badges: ['new'],
     bgGradient: 'linear-gradient(135deg, #92400E 0%, #D4A853 50%, #FCD34D 100%)',
-    thumbnail: 'assets/thumbnails/sacred_ibis.webp'
+    thumbnail: 'assets/thumbnails/ai/horus-divine-judgment.webp'
   },
   {
     id: 'ra-sun-god-royale',
@@ -649,7 +649,7 @@ window.GAME_REGISTRY = [{
     features: ['avalanche', 'growing-multiplier', 'bonus-spins'],
     badges: [],
     bgGradient: 'linear-gradient(135deg, #92400E 0%, #D4A853 50%, #FCD34D 100%)',
-    thumbnail: 'assets/thumbnails/desert_dynasty.webp'
+    thumbnail: 'assets/thumbnails/ai/ra-sun-god-royale.webp'
   },
   {
     id: 'isis-magic-blessing',
@@ -670,7 +670,7 @@ window.GAME_REGISTRY = [{
     features: ['sticky-symbols', 'consecutive-wins', 'free-spins'],
     badges: [],
     bgGradient: 'linear-gradient(135deg, #92400E 0%, #D4A853 50%, #FCD34D 100%)',
-    thumbnail: 'assets/thumbnails/isis_blessing.webp'
+    thumbnail: 'assets/thumbnails/ai/isis-magic-blessing.webp'
   },
   {
     id: 'osiris-afterlife-riches',
@@ -691,7 +691,7 @@ window.GAME_REGISTRY = [{
     features: ['reel-expansion', 'expanding-rows', 'multiplier'],
     badges: ['hot'],
     bgGradient: 'linear-gradient(135deg, #92400E 0%, #D4A853 50%, #FCD34D 100%)',
-    thumbnail: 'assets/thumbnails/book_dead.webp'
+    thumbnail: 'assets/thumbnails/ai/osiris-afterlife-riches.webp'
   },
   {
     id: 'set-chaos-challenger',
@@ -712,7 +712,7 @@ window.GAME_REGISTRY = [{
     features: ['random-wilds', 'wild-expansion', 'free-spins'],
     badges: [],
     bgGradient: 'linear-gradient(135deg, #92400E 0%, #D4A853 50%, #FCD34D 100%)',
-    thumbnail: 'assets/thumbnails/ancient_tombs.webp'
+    thumbnail: 'assets/thumbnails/ai/set-chaos-challenger.webp'
   },
   {
     id: 'bastet-feline-fortune',
@@ -733,7 +733,7 @@ window.GAME_REGISTRY = [{
     features: ['super-wilds', 'multiplying-wilds', 'bonus-spins'],
     badges: ['new'],
     bgGradient: 'linear-gradient(135deg, #92400E 0%, #D4A853 50%, #FCD34D 100%)',
-    thumbnail: 'assets/thumbnails/golden_jaguar.webp'
+    thumbnail: 'assets/thumbnails/ai/bastet-feline-fortune.webp'
   },
   {
     id: 'thoth-wisdom-keeper',
@@ -754,7 +754,7 @@ window.GAME_REGISTRY = [{
     features: ['mystery-symbols', 'hidden-values', 'multiplier'],
     badges: [],
     bgGradient: 'linear-gradient(135deg, #92400E 0%, #D4A853 50%, #FCD34D 100%)',
-    thumbnail: 'assets/thumbnails/pyramid_king.webp'
+    thumbnail: 'assets/thumbnails/ai/thoth-wisdom-keeper.webp'
   },
   {
     id: 'merlin-arcane-wonders',
@@ -775,7 +775,7 @@ window.GAME_REGISTRY = [{
     features: ['linked-reels', 'synchronized-spins', 'free-spins'],
     badges: [],
     bgGradient: 'linear-gradient(135deg, #6B21A8 0%, #C026D3 50%, #F472B6 100%)',
-    thumbnail: 'assets/thumbnails/rise_of_merlin.webp'
+    thumbnail: 'assets/thumbnails/ai/merlin-arcane-wonders.webp'
   },
   {
     id: 'druid-forest-magic',
@@ -796,7 +796,7 @@ window.GAME_REGISTRY = [{
     features: ['collection-meter', 'symbol-tracking', 'bonus-awards'],
     badges: ['featured'],
     bgGradient: 'linear-gradient(135deg, #6B21A8 0%, #C026D3 50%, #F472B6 100%)',
-    thumbnail: 'assets/thumbnails/fae_forest.webp'
+    thumbnail: 'assets/thumbnails/ai/druid-forest-magic.webp'
   },
   {
     id: 'enchantress-crystal-ball',
@@ -817,7 +817,7 @@ window.GAME_REGISTRY = [{
     features: ['power-reels', 'multiplier-trigger', 'cascading-wins'],
     badges: [],
     bgGradient: 'linear-gradient(135deg, #6B21A8 0%, #C026D3 50%, #F472B6 100%)',
-    thumbnail: 'assets/thumbnails/crystal_shrine.webp'
+    thumbnail: 'assets/thumbnails/ai/enchantress-crystal-ball.webp'
   },
   {
     id: 'roaring-lion-kingdom',
@@ -838,7 +838,7 @@ window.GAME_REGISTRY = [{
     features: ['dual-zones', 'independent-reels', 'multiplier'],
     badges: ['new'],
     bgGradient: 'linear-gradient(135deg, #78350F 0%, #C2410C 50%, #FB923C 100%)',
-    thumbnail: 'assets/thumbnails/mega_safari.webp'
+    thumbnail: 'assets/thumbnails/ai/roaring-lion-kingdom.webp'
   },
   {
     id: 'tiger-treasures-strike',
@@ -859,7 +859,7 @@ window.GAME_REGISTRY = [{
     features: ['jackpot-trail', 'escalating-prizes', 'free-spins'],
     badges: [],
     bgGradient: 'linear-gradient(135deg, #78350F 0%, #C2410C 50%, #FB923C 100%)',
-    thumbnail: 'assets/thumbnails/tiger_strike.webp'
+    thumbnail: 'assets/thumbnails/ai/tiger-treasures-strike.webp'
   },
   {
     id: 'eagle-sky-sovereign',
@@ -880,7 +880,7 @@ window.GAME_REGISTRY = [{
     features: ['symbol-merge', 'combining-symbols', 'bonus-spins'],
     badges: [],
     bgGradient: 'linear-gradient(135deg, #78350F 0%, #C2410C 50%, #FB923C 100%)',
-    thumbnail: 'assets/thumbnails/eagle_summit.webp'
+    thumbnail: 'assets/thumbnails/ai/eagle-sky-sovereign.webp'
   },
   {
     id: 'wolf-pack-frenzy',
@@ -901,7 +901,7 @@ window.GAME_REGISTRY = [{
     features: ['bonus-buy', 'feature-purchase', 'instant-spins'],
     badges: ['hot'],
     bgGradient: 'linear-gradient(135deg, #064E3B 0%, #15803D 50%, #84CC16 100%)',
-    thumbnail: 'assets/thumbnails/wolf_howl.webp'
+    thumbnail: 'assets/thumbnails/ai/wolf-pack-frenzy.webp'
   },
   {
     id: 'bear-grizzly-gold',
@@ -922,7 +922,7 @@ window.GAME_REGISTRY = [{
     features: ['tumble-multiplier', 'cascading-resets', 'free-spins'],
     badges: [],
     bgGradient: 'linear-gradient(135deg, #064E3B 0%, #15803D 50%, #84CC16 100%)',
-    thumbnail: 'assets/thumbnails/mammoth_riches.webp'
+    thumbnail: 'assets/thumbnails/ai/bear-grizzly-gold.webp'
   },
   {
     id: 'elephant-safari-quest',
@@ -943,7 +943,7 @@ window.GAME_REGISTRY = [{
     features: ['gamble-feature', 'win-doubler', 'bonus-spins'],
     badges: ['new'],
     bgGradient: 'linear-gradient(135deg, #064E3B 0%, #15803D 50%, #84CC16 100%)',
-    thumbnail: 'assets/thumbnails/jungle_fury.webp'
+    thumbnail: 'assets/thumbnails/ai/elephant-safari-quest.webp'
   },
   {
     id: 'panther-midnight-prowler',
@@ -964,7 +964,7 @@ window.GAME_REGISTRY = [{
     features: ['locked-respins', 'position-retention', 'multiplier'],
     badges: [],
     bgGradient: 'linear-gradient(135deg, #064E3B 0%, #15803D 50%, #84CC16 100%)',
-    thumbnail: 'assets/thumbnails/leopard_prowl.webp'
+    thumbnail: 'assets/thumbnails/ai/panther-midnight-prowler.webp'
   },
   {
     id: 'kangaroo-outback-bound',
@@ -985,7 +985,7 @@ window.GAME_REGISTRY = [{
     features: ['reaction-pays', 'chain-reactions', 'free-spins'],
     badges: [],
     bgGradient: 'linear-gradient(135deg, #78350F 0%, #C2410C 50%, #FB923C 100%)',
-    thumbnail: 'assets/thumbnails/outback_king.webp'
+    thumbnail: 'assets/thumbnails/ai/kangaroo-outback-bound.webp'
   },
   {
     id: 'crocodile-dundee-strike',
@@ -1006,7 +1006,7 @@ window.GAME_REGISTRY = [{
     features: ['symbol-drop', 'vertical-stack', 'multiplier'],
     badges: ['featured'],
     bgGradient: 'linear-gradient(135deg, #78350F 0%, #C2410C 50%, #FB923C 100%)',
-    thumbnail: 'assets/thumbnails/crocodile_dundee.webp'
+    thumbnail: 'assets/thumbnails/ai/crocodile-dundee-strike.webp'
   },
   {
     id: 'dingo-desert-runner',
@@ -1027,7 +1027,7 @@ window.GAME_REGISTRY = [{
     features: ['extra-reel', 'expanded-reels', 'free-spins'],
     badges: [],
     bgGradient: 'linear-gradient(135deg, #78350F 0%, #C2410C 50%, #FB923C 100%)',
-    thumbnail: 'assets/thumbnails/opal_outback.webp'
+    thumbnail: 'assets/thumbnails/ai/dingo-desert-runner.webp'
   },
   {
     id: 'boomerang-tribal-magic',
@@ -1048,7 +1048,7 @@ window.GAME_REGISTRY = [{
     features: ['dropping-wilds', 'wild-cascade', 'bonus-spins'],
     badges: ['new'],
     bgGradient: 'linear-gradient(135deg, #78350F 0%, #C2410C 50%, #FB923C 100%)',
-    thumbnail: 'assets/thumbnails/boomerang_luck.webp'
+    thumbnail: 'assets/thumbnails/ai/boomerang-tribal-magic.webp'
   },
   {
     id: 'aboriginal-dreamtime-quest',
@@ -1069,7 +1069,7 @@ window.GAME_REGISTRY = [{
     features: ['persistent-meter', 'cumulative-progress', 'multiplier'],
     badges: [],
     bgGradient: 'linear-gradient(135deg, #78350F 0%, #C2410C 50%, #FB923C 100%)',
-    thumbnail: 'assets/thumbnails/uluru_gold.webp'
+    thumbnail: 'assets/thumbnails/ai/aboriginal-dreamtime-quest.webp'
   },
   {
     id: 'koala-bush-bonanza',
@@ -1090,7 +1090,7 @@ window.GAME_REGISTRY = [{
     features: ['symbol-morph', 'morphing-symbols', 'free-spins'],
     badges: [],
     bgGradient: 'linear-gradient(135deg, #78350F 0%, #C2410C 50%, #FB923C 100%)',
-    thumbnail: 'assets/thumbnails/kookaburra_cash.webp'
+    thumbnail: 'assets/thumbnails/ai/koala-bush-bonanza.webp'
   },
   {
     id: 'darkness-reaper-call',
@@ -1111,7 +1111,7 @@ window.GAME_REGISTRY = [{
     features: ['feature-buy', 'direct-bonus', 'multiplier'],
     badges: ['hot'],
     bgGradient: 'linear-gradient(135deg, #0A0A0A 0%, #450A0A 50%, #991B1B 100%)',
-    thumbnail: 'assets/thumbnails/midnight_phantom.webp'
+    thumbnail: 'assets/thumbnails/ai/darkness-reaper-call.webp'
   },
   {
     id: 'vampire-midnight-hunt',
@@ -1132,7 +1132,7 @@ window.GAME_REGISTRY = [{
     features: ['reel-rush', 'rapid-spin', 'free-spins'],
     badges: [],
     bgGradient: 'linear-gradient(135deg, #0A0A0A 0%, #450A0A 50%, #991B1B 100%)',
-    thumbnail: 'assets/thumbnails/immortal_blood.webp'
+    thumbnail: 'assets/thumbnails/ai/vampire-midnight-hunt.webp'
   },
   {
     id: 'ghost-haunted-mansion',
@@ -1153,7 +1153,7 @@ window.GAME_REGISTRY = [{
     features: ['win-spin', 'cascading-spins', 'multiplier'],
     badges: [],
     bgGradient: 'linear-gradient(135deg, #0A0A0A 0%, #450A0A 50%, #991B1B 100%)',
-    thumbnail: 'assets/thumbnails/haunted_mansion.webp'
+    thumbnail: 'assets/thumbnails/ai/ghost-haunted-mansion.webp'
   },
   {
     id: 'witch-curse-keeper',
@@ -1174,7 +1174,7 @@ window.GAME_REGISTRY = [{
     features: ['heat-map', 'targeted-respins', 'multiplier'],
     badges: ['new'],
     bgGradient: 'linear-gradient(135deg, #0A0A0A 0%, #450A0A 50%, #991B1B 100%)',
-    thumbnail: 'assets/thumbnails/witches_brew.webp'
+    thumbnail: 'assets/thumbnails/ai/witch-curse-keeper.webp'
   },
   {
     id: 'zombie-apocalypse-raid',
@@ -1195,7 +1195,7 @@ window.GAME_REGISTRY = [{
     features: ['charged-wilds', 'charge-meter', 'free-spins'],
     badges: [],
     bgGradient: 'linear-gradient(135deg, #0A0A0A 0%, #450A0A 50%, #991B1B 100%)',
-    thumbnail: 'assets/thumbnails/zombie_carnival.webp'
+    thumbnail: 'assets/thumbnails/ai/zombie-apocalypse-raid.webp'
   },
   {
     id: 'demon-inferno-gateway',
@@ -1216,7 +1216,7 @@ window.GAME_REGISTRY = [{
     features: ['symbol-chain', 'chain-reaction', 'multiplier'],
     badges: ['featured'],
     bgGradient: 'linear-gradient(135deg, #0A0A0A 0%, #450A0A 50%, #991B1B 100%)',
-    thumbnail: 'assets/thumbnails/inferno_joker.webp'
+    thumbnail: 'assets/thumbnails/ai/demon-inferno-gateway.webp'
   },
   {
     id: 'skeleton-bone-collector',
@@ -1237,7 +1237,7 @@ window.GAME_REGISTRY = [{
     features: ['scatter-pays', 'any-position-win', 'bonus-spins'],
     badges: [],
     bgGradient: 'linear-gradient(135deg, #0A0A0A 0%, #450A0A 50%, #991B1B 100%)',
-    thumbnail: 'assets/thumbnails/dead_alive.webp'
+    thumbnail: 'assets/thumbnails/ai/skeleton-bone-collector.webp'
   },
   {
     id: 'banshee-wailing-spirits',
@@ -1258,7 +1258,7 @@ window.GAME_REGISTRY = [{
     features: ['giant-symbols', 'mega-symbol', 'free-spins'],
     badges: ['new'],
     bgGradient: 'linear-gradient(135deg, #0A0A0A 0%, #450A0A 50%, #991B1B 100%)',
-    thumbnail: 'assets/thumbnails/banshee_wail.webp'
+    thumbnail: 'assets/thumbnails/ai/banshee-wailing-spirits.webp'
   },
   {
     id: 'dark-sorcerer-nexus',
@@ -1279,7 +1279,7 @@ window.GAME_REGISTRY = [{
     features: ['wild-storm', 'wild-flood', 'multiplier'],
     badges: [],
     bgGradient: 'linear-gradient(135deg, #0A0A0A 0%, #450A0A 50%, #991B1B 100%)',
-    thumbnail: 'assets/thumbnails/eldritch_depths.webp'
+    thumbnail: 'assets/thumbnails/ai/dark-sorcerer-nexus.webp'
   },
   {
     id: 'dragon-golden-fortune',
@@ -1300,7 +1300,7 @@ window.GAME_REGISTRY = [{
     features: ['level-up', 'progression', 'bonus-multiplier'],
     badges: ['hot'],
     bgGradient: 'linear-gradient(135deg, #7F1D1D 0%, #DC2626 50%, #FBBF24 100%)',
-    thumbnail: 'assets/thumbnails/dragon_hoard.webp'
+    thumbnail: 'assets/thumbnails/ai/dragon-golden-fortune.webp'
   },
   {
     id: 'jade-emperor-blessing',
@@ -1321,7 +1321,7 @@ window.GAME_REGISTRY = [{
     features: ['multiway-pays', 'multiple-directions', 'free-spins'],
     badges: [],
     bgGradient: 'linear-gradient(135deg, #7F1D1D 0%, #DC2626 50%, #FBBF24 100%)',
-    thumbnail: 'assets/thumbnails/jade_emperor.webp'
+    thumbnail: 'assets/thumbnails/ai/jade-emperor-blessing.webp'
   },
   {
     id: 'luck-prosperity-wheel',
@@ -1342,7 +1342,7 @@ window.GAME_REGISTRY = [{
     features: ['free-bet', 'bonus-round', 'multiplier'],
     badges: [],
     bgGradient: 'linear-gradient(135deg, #7F1D1D 0%, #DC2626 50%, #FBBF24 100%)',
-    thumbnail: 'assets/thumbnails/fortune_ox.webp'
+    thumbnail: 'assets/thumbnails/ai/luck-prosperity-wheel.webp'
   },
   {
     id: 'koi-fish-abundance',
@@ -1363,7 +1363,7 @@ window.GAME_REGISTRY = [{
     features: ['cascading-wilds', 'wild-cascade', 'bonus-spins'],
     badges: ['new'],
     bgGradient: 'linear-gradient(135deg, #7F1D1D 0%, #DC2626 50%, #FBBF24 100%)',
-    thumbnail: 'assets/thumbnails/koi_ascension.webp'
+    thumbnail: 'assets/thumbnails/ai/koi-fish-abundance.webp'
   },
   {
     id: 'cherry-blossom-temple',
@@ -1384,7 +1384,7 @@ window.GAME_REGISTRY = [{
     features: ['reel-power', 'power-ups', 'free-spins'],
     badges: [],
     bgGradient: 'linear-gradient(135deg, #7F1D1D 0%, #DC2626 50%, #FBBF24 100%)',
-    thumbnail: 'assets/thumbnails/temple_bells.webp'
+    thumbnail: 'assets/thumbnails/ai/cherry-blossom-temple.webp'
   },
   {
     id: 'pagoda-mystical-riches',
@@ -1405,7 +1405,7 @@ window.GAME_REGISTRY = [{
     features: ['symbol-explosion', 'chain-reaction', 'multiplier'],
     badges: ['featured'],
     bgGradient: 'linear-gradient(135deg, #7F1D1D 0%, #DC2626 50%, #FBBF24 100%)',
-    thumbnail: 'assets/thumbnails/oriental_silk.webp'
+    thumbnail: 'assets/thumbnails/ai/pagoda-mystical-riches.webp'
   },
   {
     id: 'golden-phoenix-rising',
@@ -1426,7 +1426,7 @@ window.GAME_REGISTRY = [{
     features: ['magnetic-wilds', 'wild-attraction', 'bonus-spins'],
     badges: [],
     bgGradient: 'linear-gradient(135deg, #7F1D1D 0%, #DC2626 50%, #FBBF24 100%)',
-    thumbnail: 'assets/thumbnails/phoenix_rising.webp'
+    thumbnail: 'assets/thumbnails/ai/golden-phoenix-rising.webp'
   },
   {
     id: 'silk-road-treasures',
@@ -1447,7 +1447,7 @@ window.GAME_REGISTRY = [{
     features: ['infinity-reels', 'expanding-reels', 'free-spins'],
     badges: ['new'],
     bgGradient: 'linear-gradient(135deg, #7F1D1D 0%, #DC2626 50%, #FBBF24 100%)',
-    thumbnail: 'assets/thumbnails/spice_fortune.webp'
+    thumbnail: 'assets/thumbnails/ai/silk-road-treasures.webp'
   },
   {
     id: 'red-lantern-festival',
@@ -1468,7 +1468,7 @@ window.GAME_REGISTRY = [{
     features: ['prize-disc', 'disc-spin', 'random-rewards'],
     badges: [],
     bgGradient: 'linear-gradient(135deg, #7F1D1D 0%, #DC2626 50%, #FBBF24 100%)',
-    thumbnail: 'assets/thumbnails/crimson_dynasty.webp'
+    thumbnail: 'assets/thumbnails/ai/red-lantern-festival.webp'
   },
   {
     id: 'pirate-treasure-map',
@@ -1489,7 +1489,7 @@ window.GAME_REGISTRY = [{
     features: ['symbol-swap', 'repositioning', 'multiplier'],
     badges: [],
     bgGradient: 'linear-gradient(135deg, #C026D3 0%, #38BDF8 50%, #FACC15 100%)',
-    thumbnail: 'assets/thumbnails/pirate_plunder.webp'
+    thumbnail: 'assets/thumbnails/ai/pirate-treasure-map.webp'
   },
   {
     id: 'cowboy-western-showdown',
@@ -1510,7 +1510,7 @@ window.GAME_REGISTRY = [{
     features: ['reel-clone', 'reel-duplication', 'free-spins'],
     badges: ['new'],
     bgGradient: 'linear-gradient(135deg, #C026D3 0%, #38BDF8 50%, #FACC15 100%)',
-    thumbnail: 'assets/thumbnails/wild_west_bounty.webp'
+    thumbnail: 'assets/thumbnails/ai/cowboy-western-showdown.webp'
   },
   {
     id: 'steampunk-gears-fortune',
@@ -1531,7 +1531,7 @@ window.GAME_REGISTRY = [{
     features: ['trail-bonus', 'milestone-rewards', 'bonus-trail'],
     badges: [],
     bgGradient: 'linear-gradient(135deg, #C026D3 0%, #38BDF8 50%, #FACC15 100%)',
-    thumbnail: 'assets/thumbnails/steampunk_fortune.webp'
+    thumbnail: 'assets/thumbnails/ai/steampunk-gears-fortune.webp'
   },
   {
     id: 'circus-spectacular-spins',
@@ -1552,7 +1552,7 @@ window.GAME_REGISTRY = [{
     features: ['turbo-mode', 'rapid-spins', 'multiplier'],
     badges: ['hot'],
     bgGradient: 'linear-gradient(135deg, #C026D3 0%, #38BDF8 50%, #FACC15 100%)',
-    thumbnail: 'assets/thumbnails/circus_thrills.webp'
+    thumbnail: 'assets/thumbnails/ai/circus-spectacular-spins.webp'
   },
   {
     id: 'robot-mega-machine',
@@ -1573,7 +1573,7 @@ window.GAME_REGISTRY = [{
     features: ['hyper-spins', 'ultra-fast', 'free-spins'],
     badges: [],
     bgGradient: 'linear-gradient(135deg, #C026D3 0%, #38BDF8 50%, #FACC15 100%)',
-    thumbnail: 'assets/thumbnails/money_train.webp'
+    thumbnail: 'assets/thumbnails/ai/robot-mega-machine.webp'
   },
   {
     id: 'underwater-coral-kingdom',
@@ -1594,7 +1594,7 @@ window.GAME_REGISTRY = [{
     features: ['double-feature', 'dual-bonus', 'multiplier'],
     badges: ['featured'],
     bgGradient: 'linear-gradient(135deg, #C026D3 0%, #38BDF8 50%, #FACC15 100%)',
-    thumbnail: 'assets/thumbnails/great_barrier.webp'
+    thumbnail: 'assets/thumbnails/ai/underwater-coral-kingdom.webp'
   },
   {
     id: 'ninja-shadow-master',
@@ -1615,7 +1615,7 @@ window.GAME_REGISTRY = [{
     features: ['symbol-collect', 'accumulation', 'bonus-awards'],
     badges: [],
     bgGradient: 'linear-gradient(135deg, #C026D3 0%, #38BDF8 50%, #FACC15 100%)',
-    thumbnail: 'assets/thumbnails/samurai_blade.webp'
+    thumbnail: 'assets/thumbnails/ai/ninja-shadow-master.webp'
   },
   {
     id: 'carnival-spinning-wheel',
@@ -1636,7 +1636,7 @@ window.GAME_REGISTRY = [{
     features: ['multiplier-cascade', 'cascading-multiplier', 'free-spins'],
     badges: ['new'],
     bgGradient: 'linear-gradient(135deg, #C026D3 0%, #38BDF8 50%, #FACC15 100%)',
-    thumbnail: 'assets/thumbnails/carnival_crown.webp'
+    thumbnail: 'assets/thumbnails/ai/carnival-spinning-wheel.webp'
   },
   {
     id: 'alchemist-transmutation-vault',
@@ -1657,7 +1657,7 @@ window.GAME_REGISTRY = [{
     features: ['wild-expansion', 'expanding-wild', 'multiplier'],
     badges: [],
     bgGradient: 'linear-gradient(135deg, #C026D3 0%, #38BDF8 50%, #FACC15 100%)',
-    thumbnail: 'assets/thumbnails/dragonfire_forge.webp'
+    thumbnail: 'assets/thumbnails/ai/alchemist-transmutation-vault.webp'
   },
   {
     id: 'wizard-spellbook-master',
@@ -1678,7 +1678,7 @@ window.GAME_REGISTRY = [{
     features: ['reverse-reels', 'backward-spin', 'multiplier'],
     badges: ['new'],
     bgGradient: 'linear-gradient(135deg, #6B21A8 0%, #C026D3 50%, #F472B6 100%)',
-    thumbnail: 'assets/thumbnails/mystic_grail.webp'
+    thumbnail: 'assets/thumbnails/ai/wizard-spellbook-master.webp'
   },
   {
     id: 'fairy-enchanted-forest',
@@ -1699,7 +1699,7 @@ window.GAME_REGISTRY = [{
     features: ['scatter-collect', 'collection-meter', 'free-spins'],
     badges: [],
     bgGradient: 'linear-gradient(135deg, #6B21A8 0%, #C026D3 50%, #F472B6 100%)',
-    thumbnail: 'assets/thumbnails/fairy_tales.webp'
+    thumbnail: 'assets/thumbnails/ai/fairy-enchanted-forest.webp'
   },
   {
     id: 'sorcerer-arcane-tower',
@@ -1720,7 +1720,7 @@ window.GAME_REGISTRY = [{
     features: ['reel-freeze', 'frozen-respins', 'bonus-spins'],
     badges: [],
     bgGradient: 'linear-gradient(135deg, #6B21A8 0%, #C026D3 50%, #F472B6 100%)',
-    thumbnail: 'assets/thumbnails/arcane_tower.webp'
+    thumbnail: 'assets/thumbnails/ai/sorcerer-arcane-tower.webp'
   },
   {
     id: 'paladin-holy-quest',
@@ -1741,7 +1741,7 @@ window.GAME_REGISTRY = [{
     features: ['symbol-split', 'splitting-symbols', 'multiplier'],
     badges: ['hot'],
     bgGradient: 'linear-gradient(135deg, #6B21A8 0%, #C026D3 50%, #F472B6 100%)',
-    thumbnail: 'assets/thumbnails/avalon_castle.webp'
+    thumbnail: 'assets/thumbnails/ai/paladin-holy-quest.webp'
   },
   {
     id: 'golem-stone-guardian',
@@ -1762,7 +1762,7 @@ window.GAME_REGISTRY = [{
     features: ['fortune-wheel', 'wheel-spin', 'random-rewards'],
     badges: [],
     bgGradient: 'linear-gradient(135deg, #6B21A8 0%, #C026D3 50%, #F472B6 100%)',
-    thumbnail: 'assets/thumbnails/titan_forge.webp'
+    thumbnail: 'assets/thumbnails/ai/golem-stone-guardian.webp'
   },
   {
     id: 'necromancer-dark-arts',
@@ -1783,7 +1783,7 @@ window.GAME_REGISTRY = [{
     features: ['bonus-ladder', 'ladder-climb', 'escalating-prizes'],
     badges: ['featured'],
     bgGradient: 'linear-gradient(135deg, #6B21A8 0%, #C026D3 50%, #F472B6 100%)',
-    thumbnail: 'assets/thumbnails/plague_doctor.webp'
+    thumbnail: 'assets/thumbnails/ai/necromancer-dark-arts.webp'
   },
   {
     id: 'elven-archer-legends',
@@ -1804,7 +1804,7 @@ window.GAME_REGISTRY = [{
     features: ['power-spins', 'enhanced-spins', 'multiplier'],
     badges: [],
     bgGradient: 'linear-gradient(135deg, #6B21A8 0%, #C026D3 50%, #F472B6 100%)',
-    thumbnail: 'assets/thumbnails/runeblade.webp'
+    thumbnail: 'assets/thumbnails/ai/elven-archer-legends.webp'
   },
   {
     id: 'mage-crystal-sanctuary',
@@ -1825,7 +1825,7 @@ window.GAME_REGISTRY = [{
     features: ['burst-mode', 'rapid-spins', 'free-spins'],
     badges: ['new'],
     bgGradient: 'linear-gradient(135deg, #6B21A8 0%, #C026D3 50%, #F472B6 100%)',
-    thumbnail: 'assets/thumbnails/crystal_veil.webp'
+    thumbnail: 'assets/thumbnails/ai/mage-crystal-sanctuary.webp'
   },
   {
     id: 'bard-mystical-melody',
@@ -1846,7 +1846,7 @@ window.GAME_REGISTRY = [{
     features: ['charged-reels', 'charge-meter', 'multiplier'],
     badges: [],
     bgGradient: 'linear-gradient(135deg, #6B21A8 0%, #C026D3 50%, #F472B6 100%)',
-    thumbnail: 'assets/thumbnails/eternal_romance.webp'
+    thumbnail: 'assets/thumbnails/ai/bard-mystical-melody.webp'
   },
   {
     id: 'diamond-deco-deluxe',
@@ -1860,7 +1860,7 @@ window.GAME_REGISTRY = [{
     symbols: ['diamond', 'ruby', 'emerald', 'gold-bar', 'cherry', 'seven', 'crown', 'bell'],
     features: ['wild-reel', 'free-spins', 'multiplier'], badges: [],
     bgGradient: 'linear-gradient(135deg, #DB2777 0%, #FB923C 50%, #FACC15 100%)',
-    thumbnail: 'assets/thumbnails/diamond_vault.webp'
+    thumbnail: 'assets/thumbnails/ai/diamond-deco-deluxe.webp'
   },
   {
     id: 'asteroid-lockdown',
@@ -1874,7 +1874,7 @@ window.GAME_REGISTRY = [{
     symbols: ['asteroid', 'space-station', 'shuttle', 'planet', 'nebula', 'comet', 'star', 'void'],
     features: ['symbol-lock', 'respin', 'cosmic-bonus'], badges: [],
     bgGradient: 'linear-gradient(135deg, #0F172A 0%, #1E3A8A 50%, #06B6D4 100%)',
-    thumbnail: 'assets/thumbnails/cosmic_cash.webp'
+    thumbnail: 'assets/thumbnails/ai/asteroid-lockdown.webp'
   },
   {
     id: 'singularity-storm',
@@ -1888,7 +1888,7 @@ window.GAME_REGISTRY = [{
     symbols: ['singularity', 'black-hole', 'warp-gate', 'plasma', 'ion', 'photon', 'quasar', 'pulsar'],
     features: ['reel-storm', 'wild-inject', 'multiplier-surge'], badges: ['new'],
     bgGradient: 'linear-gradient(135deg, #0F172A 0%, #1E3A8A 50%, #06B6D4 100%)',
-    thumbnail: 'assets/thumbnails/gravity_well.webp'
+    thumbnail: 'assets/thumbnails/ai/singularity-storm.webp'
   },
   {
     id: 'athenas-golden-shield',
@@ -1902,7 +1902,7 @@ window.GAME_REGISTRY = [{
     symbols: ['athena', 'shield', 'owl', 'olive', 'spear', 'helmet', 'temple', 'gold-coin'],
     features: ['treasure-hunt', 'map-collect', 'bonus-stages'], badges: [],
     bgGradient: 'linear-gradient(135deg, #92400E 0%, #D4A853 50%, #FCD34D 100%)',
-    thumbnail: 'assets/thumbnails/olympian_gods.webp'
+    thumbnail: 'assets/thumbnails/ai/athenas-golden-shield.webp'
   },
   {
     id: 'hall-of-minotaurs',
@@ -1916,7 +1916,7 @@ window.GAME_REGISTRY = [{
     symbols: ['minotaur', 'labyrinth', 'thread', 'axe', 'torch', 'pillar', 'horn', 'gold-mask'],
     features: ['gravity-reels', 'cluster-pay', 'maze-bonus'], badges: [],
     bgGradient: 'linear-gradient(135deg, #92400E 0%, #D4A853 50%, #FCD34D 100%)',
-    thumbnail: 'assets/thumbnails/gates_olympus.webp'
+    thumbnail: 'assets/thumbnails/ai/hall-of-minotaurs.webp'
   },
   {
     id: 'enchanted-grove-spirits',
@@ -1930,7 +1930,7 @@ window.GAME_REGISTRY = [{
     symbols: ['dryad', 'mushroom', 'fairy', 'acorn', 'owl', 'moss', 'crystal', 'moonstone'],
     features: ['symbol-rain', 'forest-bonus', 'spirit-wilds'], badges: [],
     bgGradient: 'linear-gradient(135deg, #6B21A8 0%, #C026D3 50%, #F472B6 100%)',
-    thumbnail: 'assets/thumbnails/crystal_cavern.webp'
+    thumbnail: 'assets/thumbnails/ai/enchanted-grove-spirits.webp'
   },
   {
     id: 'outback-thunder-run',
@@ -1944,7 +1944,7 @@ window.GAME_REGISTRY = [{
     symbols: ['thunder', 'lightning', 'canyon', 'eagle', 'desert-rose', 'boomerang', 'didgeridoo', 'opal'],
     features: ['collect-spin', 'thunder-meter', 'storm-bonus'], badges: ['hot'],
     bgGradient: 'linear-gradient(135deg, #78350F 0%, #C2410C 50%, #FB923C 100%)',
-    thumbnail: 'assets/thumbnails/thunderstrike.webp'
+    thumbnail: 'assets/thumbnails/ai/outback-thunder-run.webp'
   },
   {
     id: 'reef-shark-frenzy',
@@ -1958,7 +1958,7 @@ window.GAME_REGISTRY = [{
     symbols: ['shark', 'coral', 'clownfish', 'turtle', 'jellyfish', 'seahorse', 'pearl', 'trident'],
     features: ['stack-boost', 'frenzy-spins', 'deep-dive-bonus'], badges: [],
     bgGradient: 'linear-gradient(135deg, #064E3B 0%, #15803D 50%, #84CC16 100%)',
-    thumbnail: 'assets/thumbnails/shark_reef.webp'
+    thumbnail: 'assets/thumbnails/ai/reef-shark-frenzy.webp'
   },
   {
     id: 'billabong-gold-rush',
@@ -1972,7 +1972,7 @@ window.GAME_REGISTRY = [{
     symbols: ['nugget', 'pan', 'pickaxe', 'billy', 'platypus', 'wattle', 'river', 'campfire'],
     features: ['bonus-trail', 'gold-collect', 'rush-respins'], badges: [],
     bgGradient: 'linear-gradient(135deg, #78350F 0%, #C2410C 50%, #FB923C 100%)',
-    thumbnail: 'assets/thumbnails/gold_rush_frog.webp'
+    thumbnail: 'assets/thumbnails/ai/billabong-gold-rush.webp'
   },
   {
     id: 'cursed-carnival-night',
@@ -1986,7 +1986,7 @@ window.GAME_REGISTRY = [{
     symbols: ['clown', 'mirror', 'carousel', 'ticket', 'mask', 'popcorn', 'ferris', 'balloon'],
     features: ['multiplier-bomb', 'scare-spins', 'funhouse-bonus'], badges: [],
     bgGradient: 'linear-gradient(135deg, #0A0A0A 0%, #450A0A 50%, #991B1B 100%)',
-    thumbnail: 'assets/thumbnails/cursed_night.webp'
+    thumbnail: 'assets/thumbnails/ai/cursed-carnival-night.webp'
   },
   {
     id: 'tigers-golden-path',
@@ -2000,7 +2000,7 @@ window.GAME_REGISTRY = [{
     symbols: ['tiger', 'bamboo', 'pagoda', 'lantern', 'fan', 'coin', 'jade', 'lotus'],
     features: ['wild-transfer', 'golden-path', 'fortune-spins'], badges: [],
     bgGradient: 'linear-gradient(135deg, #7F1D1D 0%, #DC2626 50%, #FBBF24 100%)',
-    thumbnail: 'assets/thumbnails/tiger_temple.webp'
+    thumbnail: 'assets/thumbnails/ai/tigers-golden-path.webp'
   },
   {
     id: 'moonlit-koi-garden',
@@ -2014,7 +2014,7 @@ window.GAME_REGISTRY = [{
     symbols: ['koi', 'moon', 'bridge', 'lily', 'heron', 'stone', 'bonsai', 'lantern'],
     features: ['jackpot-wheel', 'moonlit-bonus', 'koi-wilds'], badges: ['new'],
     bgGradient: 'linear-gradient(135deg, #7F1D1D 0%, #DC2626 50%, #FBBF24 100%)',
-    thumbnail: 'assets/thumbnails/koi_cascade.webp'
+    thumbnail: 'assets/thumbnails/ai/moonlit-koi-garden.webp'
   },
   {
     id: 'imperial-dragon-ascent',
@@ -2028,7 +2028,7 @@ window.GAME_REGISTRY = [{
     symbols: ['imperial-dragon', 'pearl', 'throne', 'scroll', 'incense', 'silk', 'crown', 'jade-seal'],
     features: ['reel-upgrade', 'dragon-ascent', 'imperial-bonus'], badges: ['featured'],
     bgGradient: 'linear-gradient(135deg, #7F1D1D 0%, #DC2626 50%, #FBBF24 100%)',
-    thumbnail: 'assets/thumbnails/dragon_gate.webp'
+    thumbnail: 'assets/thumbnails/ai/imperial-dragon-ascent.webp'
   },
   {
     id: 'clockwork-heist',
@@ -2042,7 +2042,7 @@ window.GAME_REGISTRY = [{
     symbols: ['gear', 'vault', 'key', 'clock', 'dynamite', 'safe', 'blueprint', 'gold-bar'],
     features: ['win-streak', 'heist-bonus', 'vault-crack'], badges: [],
     bgGradient: 'linear-gradient(135deg, #475569 0%, #94A3B8 50%, #E2E8F0 100%)',
-    thumbnail: 'assets/thumbnails/neon_heist.webp'
+    thumbnail: 'assets/thumbnails/ai/clockwork-heist.webp'
   },
   {
     id: 'cannonball-express',
@@ -2056,7 +2056,7 @@ window.GAME_REGISTRY = [{
     symbols: ['cannon', 'cannonball', 'pirate-flag', 'anchor', 'compass', 'rum', 'treasure', 'skull'],
     features: ['symbol-burst', 'broadside-bonus', 'treasure-raid'], badges: [],
     bgGradient: 'linear-gradient(135deg, #475569 0%, #94A3B8 50%, #E2E8F0 100%)',
-    thumbnail: 'assets/thumbnails/grand_prix_rush.webp'
+    thumbnail: 'assets/thumbnails/ai/cannonball-express.webp'
   },
   {
     id: 'frontier-bounty-hunter',
@@ -2070,7 +2070,7 @@ window.GAME_REGISTRY = [{
     symbols: ['bounty', 'sheriff', 'wanted', 'revolver', 'horse', 'saloon', 'cactus', 'gold-nugget'],
     features: ['wild-streak', 'bounty-hunt', 'showdown-bonus'], badges: [],
     bgGradient: 'linear-gradient(135deg, #475569 0%, #94A3B8 50%, #E2E8F0 100%)',
-    thumbnail: 'assets/thumbnails/wild_west_rush.webp'
+    thumbnail: 'assets/thumbnails/ai/frontier-bounty-hunter.webp'
   },
   {
     id: 'quantum-turbo-flux',
@@ -2084,5 +2084,5 @@ window.GAME_REGISTRY = [{
     symbols: ['flux', 'quantum', 'proton', 'neutron', 'wave', 'particle', 'reactor', 'crystal'],
     features: ['turbo-respins', 'flux-meter', 'quantum-bonus'], badges: [],
     bgGradient: 'linear-gradient(135deg, #475569 0%, #94A3B8 50%, #E2E8F0 100%)',
-    thumbnail: 'assets/thumbnails/starburst_xxl.webp'
+    thumbnail: 'assets/thumbnails/ai/quantum-turbo-flux.webp'
   }];

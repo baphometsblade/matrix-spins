@@ -157,17 +157,45 @@ function applyToRegistry(filePath, thumbnailMap) {
         const id = idMatch[1];
         const theme = themeMatch ? themeMatch[1] : null;
 
-        const hasGradient  = /\bbgGradient\s*:/.test(obj);
-        const hasThumbnail = /\bthumbnail\s*:/.test(obj);
+        let working = obj;
+        let touched = false;
+
+        // ── Thumbnail: OVERWRITE the existing value when the map has an
+        // entry (the original 100 games all ship a stale .webp thumbnail
+        // that we are replacing with freshly generated AI art), and INSERT
+        // when absent.
+        //
+        // The regex uses `\b` to anchor on a word boundary so a future
+        // string literal containing the substring "thumbnail:" inside an
+        // unrelated field can't be mis-matched. Group 2 captures the
+        // current path so we can compare value-vs-value (rather than
+        // string-matching the whole token, which would churn entries that
+        // use double quotes by needlessly rewriting them to single). ──
+        const thumbRe = /\bthumbnail:\s*(['"`])((?:\\.|(?!\1).)*)\1/;
+        const hasThumbnail = thumbRe.test(working);
+        if (thumbnailMap[id]) {
+            const desired = 'assets/thumbnails/' + thumbnailMap[id];
+            if (hasThumbnail) {
+                const m = working.match(thumbRe);
+                if (m && m[2] !== desired) {
+                    working = working.replace(thumbRe, "thumbnail: '" + desired + "'");
+                    touched = true;
+                }
+            }
+        }
 
         const additions = [];
-        if (!hasGradient) {
+        if (!/\bbgGradient\s*:/.test(working)) {
             additions.push("    bgGradient: '" + gradientFor(theme) + "'");
         }
         if (!hasThumbnail && thumbnailMap[id]) {
             additions.push("    thumbnail: 'assets/thumbnails/" + thumbnailMap[id] + "'");
         }
-        if (additions.length === 0) return obj;
+
+        if (additions.length === 0) {
+            if (touched) changed++;
+            return working;
+        }
         changed++;
 
         // Inject before the closing brace. We rebuild the tail so the
@@ -175,8 +203,8 @@ function applyToRegistry(filePath, thumbnailMap) {
         // existing head, append a comma if the last field doesn't have
         // one, then add the new fields and the closing brace at the
         // same 2-space indent the registry uses.
-        const lastBrace = obj.lastIndexOf('}');
-        const head = obj.slice(0, lastBrace).replace(/\s+$/, '');
+        const lastBrace = working.lastIndexOf('}');
+        const head = working.slice(0, lastBrace).replace(/\s+$/, '');
         const comma = head.endsWith(',') ? '' : ',';
         return head + comma + '\n' + additions.join(',\n') + '\n  }';
     });
@@ -203,4 +231,4 @@ function main() {
 
 if (require.main === module) main();
 
-module.exports = { gradientFor, GRADIENTS_BY_THEME };
+module.exports = { gradientFor, GRADIENTS_BY_THEME, applyToRegistry };

@@ -1,0 +1,242 @@
+'use strict';
+
+/**
+ * Batch slot-art generator — drives the local Fooocus-API (Stable Diffusion
+ * XL) to produce photo-real key art for every game, then rewires
+ * data/game-thumbnails.json to point at the new assets.
+ *
+ * Source of truth: js/game-registry.js (id, name, theme, volatility,
+ * bonusType, symbols). For each game we build a theme-directed photo-real
+ * prompt and request a portrait slot-tile image.
+ *
+ * Usage:
+ *   node scripts/generate-slot-art.js --only golden-cherry-cascade   # one (validate)
+ *   node scripts/generate-slot-art.js --limit 10                      # first N
+ *   node scripts/generate-slot-art.js                                 # all 100
+ *   FOOOCUS_URL=http://127.0.0.1:8888 node scripts/generate-slot-art.js
+ *
+ * Output: assets/thumbnails/ai/<id>.png. Re-run is idempotent unless
+ * --force: games whose target file already exists are skipped.
+ */
+
+const fs = require('fs');
+const path = require('path');
+const http = require('http');
+
+const ROOT = path.resolve(__dirname, '..');
+const OUT_DIR = path.join(ROOT, 'assets', 'thumbnails', 'ai');
+const REGISTRY = path.join(ROOT, 'js', 'game-registry.js');
+const THUMB_MAP = path.join(ROOT, 'data', 'game-thumbnails.json');
+const FOOOCUS = (process.env.FOOOCUS_URL || 'http://127.0.0.1:8888').replace(/\/$/, '');
+
+const args = process.argv.slice(2);
+function argVal(name) { const i = args.indexOf('--' + name); return i >= 0 ? args[i + 1] : null; }
+const ONLY = argVal('only');
+const LIMIT = argVal('limit') ? parseInt(argVal('limit'), 10) : null;
+const FORCE = args.includes('--force');
+
+// ── Load the 100-game registry. The browser file does
+// `window.GAME_REGISTRY = [...]`; we shim a global `window` and require it
+// (plain require, no eval/new Function). ──
+function loadRegistry() {
+    global.window = global.window || {};
+    global.window.STUDIO_CONFIG = global.window.STUDIO_CONFIG || {};
+    global.window.GAME_REGISTRY = [];
+    delete require.cache[require.resolve(REGISTRY)];
+    require(REGISTRY);
+    return global.window.GAME_REGISTRY || [];
+}
+
+// ── Theme → art direction. Keyed off the registry `theme` field.
+// IMPORTANT: describe a SCENE/SUBJECT only. Never use the words "slot",
+// "reels", "poster", "cover", "title" — SDXL treats them as a cue to
+// render (garbled) title text and UI frames, which the negative prompt
+// cannot reliably suppress. ──
+const THEME_ART = {
+    'Fruit Classics':            'a luscious overflowing still life of glistening ripe fruit — red cherries, lemons, watermelon slices, juicy plums and grapes — water droplets, sun-drenched, vibrant saturated colour, macro food photography',
+    'Space / Sci-Fi':            'a breathtaking deep-space vista — a glowing colourful nebula, ringed planets and drifting asteroids beyond a sleek chrome starship, neon cyan and violet light, cosmic, cinematic sci-fi concept art',
+    'Ancient Egypt / Mythology': 'an opulent ancient-Egyptian tomb interior — a solid-gold pharaoh death mask, carved hieroglyph walls, scarab beetles and the golden Eye of Horus, warm torchlight, floating dust motes, cinematic',
+    'Asian / Lucky':             'a majestic golden Chinese dragon coiling around a glowing pearl amid red silk lanterns, koi fish, jade ornaments and cherry blossom petals, lacquered red and gold, ornate, cinematic',
+    'Australian / Outback':      'the sun-baked Australian outback at golden hour — towering red desert mesas, a powerful kangaroo, eucalyptus trees and glowing opal gemstones, warm amber light, epic landscape photography',
+    'Fantasy / Magic':           'an enchanted fantasy scene — a glowing arcane spellbook and floating runes, crystals and a mystical wizard tower in a misty emerald forest, magical glowing particles, ethereal light, concept art',
+    'Horror / Dark':            'a gothic horror scene — a fog-shrouded haunted mansion beneath a blood-red moon, flickering candles, perched ravens and an ornate skull, eerie cinematic darkness, cold blue rim light',
+    'Animals / Wildlife':        'a powerful apex predator in dramatic wilderness, intense direct gaze, richly detailed fur and feathers, golden savanna light, epic professional nature photography',
+    'Wildcard / Experimental':   'a bold surreal high-energy abstract composition — vivid neon gradients, floating geometric prisms, gold and jewel accents, striking modern digital art',
+    'Wildcard':                  'an opulent luxury still life — cascading gold coins, glittering diamonds and jewels on deep velvet, a dramatic spotlight, decadent and rich, cinematic product photography',
+};
+const DEFAULT_ART = 'an opulent luxury still life with cascading gold, glittering jewels and diamonds, dramatic cinematic spotlight, rich and decadent';
+
+// Glyph-ish hints from a game's own symbols sharpen the subject.
+function symbolHints(symbols) {
+    if (!Array.isArray(symbols) || !symbols.length) return '';
+    const pick = symbols
+        .filter(s => !/^(wild|scatter|bonus|bar|sevens?|gold-?bell|s\d)$/i.test(s))
+        .slice(0, 3)
+        .map(s => String(s).replace(/[-_]/g, ' '));
+    return pick.length ? (', featuring ' + pick.join(', ')) : '';
+}
+
+function nameSubject(name) {
+    return String(name || '').replace(/[-_]/g, ' ').trim();
+}
+
+function buildPrompt(game) {
+    const art = THEME_ART[game.theme] || DEFAULT_ART;
+    const subj = nameSubject(game.name);
+    const hints = symbolHints(game.symbols);
+    // No "slot"/"poster"/"title" framing — keep it a clean themed hero
+    // still so SDXL renders the subject, not garbled UI text.
+    return (
+        `${art}${hints}. Inspired by the theme "${subj}". ` +
+        'Vertical composition, single centred focal subject, ultra-detailed, ' +
+        'cinematic dramatic lighting, rich glossy highlights, high contrast, ' +
+        'photorealistic, 8k, clean uncluttered background, absolutely no text.'
+    );
+}
+
+const NEGATIVE = 'text, words, letters, numbers, digits, typography, caption, label, title, ' +
+    'watermark, signature, logo, brand, UI, HUD, buttons, score, menu, frame, border, ' +
+    'deformed, blurry, low quality, jpeg artifacts, extra limbs, mutated, ugly, flat, dull';
+
+// ── Minimal HTTP helpers (no deps) ──
+function httpJson(method, urlPath, body) {
+    return new Promise((resolve, reject) => {
+        const url = new URL(FOOOCUS + urlPath);
+        const payload = body ? Buffer.from(JSON.stringify(body)) : null;
+        const req = http.request({
+            hostname: url.hostname, port: url.port, path: url.pathname + url.search, method,
+            headers: Object.assign({ 'Accept': 'application/json' },
+                payload ? { 'Content-Type': 'application/json', 'Content-Length': payload.length } : {}),
+        }, res => {
+            let data = '';
+            res.on('data', c => { data += c; });
+            res.on('end', () => {
+                if (res.statusCode < 200 || res.statusCode >= 300) {
+                    return reject(new Error(`HTTP ${res.statusCode}: ${data.slice(0, 200)}`));
+                }
+                // 2xx must be JSON for any caller in this script; if Fooocus
+                // ever returns HTML/plain (proxy error page, auth wall), we
+                // surface that instead of letting `.job_id` come back
+                // undefined and producing a misleading "no job_id" error.
+                try { resolve(JSON.parse(data)); }
+                catch (e) { reject(new Error(`non-JSON 2xx from ${urlPath}: ${data.slice(0, 200)}`)); }
+            });
+        });
+        req.on('error', reject);
+        if (payload) req.write(payload);
+        req.end();
+    });
+}
+
+// PNG magic bytes — first 8 bytes of every valid PNG.
+const PNG_SIGNATURE = Buffer.from([0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A]);
+
+// Atomic file write: stage to .tmp on the same volume, then rename.
+function writeAtomic(targetPath, buffer) {
+    const tmp = targetPath + '.' + process.pid + '.tmp';
+    fs.writeFileSync(tmp, buffer);
+    fs.renameSync(tmp, targetPath);
+}
+
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+
+async function waitForApi(timeoutMs) {
+    const deadline = Date.now() + timeoutMs;
+    while (Date.now() < deadline) {
+        try { await httpJson('GET', '/v1/engines/styles'); return true; }
+        catch (_) { await sleep(4000); }
+    }
+    return false;
+}
+
+async function generateOne(game) {
+    const prompt = buildPrompt(game);
+    const reqBody = {
+        prompt,
+        negative_prompt: NEGATIVE,
+        style_selections: ['Fooocus V2', 'Fooocus Enhance', 'Fooocus Sharp', 'SAI Cinematic'],
+        performance_selection: 'Speed',
+        aspect_ratios_selection: '896*1152',
+        image_number: 1,
+        image_seed: -1,
+        base_model_name: 'juggernautXL_v8Rundiffusion.safetensors',
+        require_base64: true,
+        async_process: true,
+    };
+    const job = await httpJson('POST', '/v1/generation/text-to-image', reqBody);
+
+    const jobId = job.job_id || job.jobId;
+    if (!jobId) throw new Error('no job_id: ' + JSON.stringify(job).slice(0, 160));
+
+    for (let i = 0; i < 300; i++) {
+        await sleep(2000);
+        const q = await httpJson('GET', '/v1/generation/query-job?job_id=' + encodeURIComponent(jobId) + '&require_step_preview=false');
+        const stage = String(q.job_stage || q.job_status || '').toUpperCase();
+        if (stage === 'SUCCESS') {
+            const result = (q.job_result && q.job_result[0]) || {};
+            const b64 = result.base64 || result.im || result.image;
+            if (!b64) throw new Error('SUCCESS but no base64');
+            const buf = Buffer.from(String(b64).replace(/^data:image\/\w+;base64,/, ''), 'base64');
+            // Validate PNG magic before we hand back a buffer that would
+            // otherwise be silently written to disk and look "done" on the
+            // next idempotent rerun. Catches Fooocus returning HTML/JSON
+            // payloads that base64-decode to non-image bytes.
+            if (buf.length < 8 || !buf.slice(0, 8).equals(PNG_SIGNATURE)) {
+                throw new Error('payload is not a PNG (first bytes: ' + buf.slice(0, 8).toString('hex') + ')');
+            }
+            return buf;
+        }
+        if (stage === 'FAILED') throw new Error('job failed: ' + JSON.stringify(q).slice(0, 160));
+    }
+    throw new Error('job timed out');
+}
+
+// Defensive: registry ids must be `a-z0-9-` only (they are today). Guards
+// against a future id of `../etc` writing outside OUT_DIR.
+const SAFE_ID = /^[a-z0-9][a-z0-9-]*$/i;
+
+async function main() {
+    if (!fs.existsSync(OUT_DIR)) fs.mkdirSync(OUT_DIR, { recursive: true });
+
+    let games = loadRegistry();
+    if (ONLY) games = games.filter(g => g.id === ONLY);
+    if (LIMIT) games = games.slice(0, LIMIT);
+    if (!games.length) { console.error('No games matched.'); process.exit(1); }
+
+    console.log(`[slot-art] Fooocus: ${FOOOCUS} | games: ${games.length}`);
+    console.log('[slot-art] waiting for Fooocus-API to be ready…');
+    if (!await waitForApi(8 * 60 * 1000)) { console.error('[slot-art] API not reachable — is it loaded?'); process.exit(2); }
+    console.log('[slot-art] API ready. Generating…');
+
+    const map = fs.existsSync(THUMB_MAP) ? JSON.parse(fs.readFileSync(THUMB_MAP, 'utf8')) : {};
+    let done = 0, skipped = 0, failed = 0;
+    for (const game of games) {
+        if (!SAFE_ID.test(game.id)) {
+            console.error(`[slot-art] SKIP ${game.id}: unsafe id`);
+            failed++;
+            continue;
+        }
+        const outFile = path.join(OUT_DIR, game.id + '.png');
+        if (!FORCE && fs.existsSync(outFile)) { skipped++; map[game.id] = 'ai/' + game.id + '.png'; continue; }
+        const t0 = Date.now();
+        try {
+            const png = await generateOne(game);
+            // Atomic: stage to .tmp, then rename. Prevents a killed run
+            // from leaving a truncated PNG that the skip check on the
+            // next run would treat as "done".
+            writeAtomic(outFile, png);
+            map[game.id] = 'ai/' + game.id + '.png';
+            done++;
+            console.log(`[slot-art] OK ${game.id} (${((Date.now() - t0) / 1000).toFixed(0)}s) ${done}/${games.length}`);
+            writeAtomic(THUMB_MAP, Buffer.from(JSON.stringify(map, null, 2) + '\n', 'utf8'));
+        } catch (err) {
+            failed++;
+            console.error(`[slot-art] FAIL ${game.id}: ${err.message}`);
+        }
+    }
+    console.log(`[slot-art] done — generated ${done}, skipped ${skipped}, failed ${failed}`);
+}
+
+if (require.main === module) main().catch(e => { console.error(e); process.exit(1); });
+
+module.exports = { buildPrompt, loadRegistry };
