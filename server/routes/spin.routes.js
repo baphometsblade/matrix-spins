@@ -463,17 +463,26 @@ router.post('/', authenticate, async (req, res) => {
             return res.status(400).json({ error: `Maximum bet is $${config.MAX_BET}` });
         }
 
+        // ── Prefetch user_limits once (saves 4 DB round-trips per spin) ──
+        let _userLimitsRow = null;
+        try {
+            _userLimitsRow = await db.get(
+                'SELECT daily_wager_limit, max_bet_per_spin, pending_max_bet, pending_max_bet_at, ' +
+                'weekly_loss_limit, monthly_loss_limit, pending_weekly_loss, pending_weekly_loss_at, ' +
+                'pending_monthly_loss, pending_monthly_loss_at, session_time_limit, daily_loss_limit ' +
+                'FROM user_limits WHERE user_id = ?',
+                [userId]
+            );
+        } catch (ulErr) {
+            // Table/columns may not exist yet — fail open for limit checks
+            if (ulErr.message && !/no such column|no such table|column .* does not exist|relation .* does not exist/i.test(ulErr.message)) {
+                console.warn('[Spin] user_limits prefetch failed:', ulErr.message);
+            }
+        }
+
         // ── Daily wager limit enforcement (Responsible Gambling §12) ──
         {
-            let wagerLimitRow;
-            try {
-                wagerLimitRow = await db.get(
-                    'SELECT daily_wager_limit FROM user_limits WHERE user_id = ?', [userId]
-                );
-            } catch (wlErr) {
-                console.warn('[Spin] Wager limit check failed:', wlErr.message);
-                // Fail open — table column may not exist yet
-            }
+            const wagerLimitRow = _userLimitsRow;
             if (wagerLimitRow && wagerLimitRow.daily_wager_limit > 0) {
                 let todayWagered;
                 try {
@@ -507,72 +516,31 @@ router.post('/', authenticate, async (req, res) => {
         }
 
         // ── ROUND 26: Max bet cap during active wagering requirement ──
-        // Industry standard: players with bonus wagering active cannot bet more than
-        // 10% of their wagering requirement or $10, whichever is lower.
-        // Prevents clearing wagering with a single large bet to extract bonus funds.
-        {
-            let wagerUser;
-            try {
-                wagerUser = await db.get(
-                    'SELECT wagering_requirement, wagering_progress FROM users WHERE id = ?',
-                    [userId]
-                );
-            } catch (wagerErr) {
-                // ROUND 31: Fail CLOSED — was catch(_){} which silently bypassed wagering bet cap.
-                // If we can't check wagering, we can't allow the spin (player might be exploiting).
-                console.error('[Spin] Wagering check failed:', wagerErr.message);
-                activeSpins.delete(userId);
-                return res.status(500).json({ error: 'Security check failed. Please try again.' });
-            }
-            if (wagerUser && wagerUser.wagering_requirement > 0 && wagerUser.wagering_progress < wagerUser.wagering_requirement) {
-                var maxWagerBet = Math.max(1, Math.min(10, wagerUser.wagering_requirement * 0.10));
-                if (bet > maxWagerBet) {
-                    activeSpins.delete(userId);
-                    return res.status(400).json({
-                        error: 'Maximum bet while bonus wagering is active is $' + maxWagerBet.toFixed(2) + '. Complete your wagering requirement first.',
-                        maxBetDuringWagering: maxWagerBet,
-                        wageringRemaining: wagerUser.wagering_requirement - wagerUser.wagering_progress
-                    });
-                }
-            }
-        }
+        // Moved: wagering check now merged into the balance query below (line ~649)
+        // to save a DB round-trip. See "Wagering bet cap check" comment there.
 
         // ── Per-spin max-bet limit (responsible-gambling user setting) ──
-        try {
-            const maxBetRow = await db.get(
-                'SELECT max_bet_per_spin, pending_max_bet, pending_max_bet_at FROM user_limits WHERE user_id = ?',
-                [userId]
-            );
-            if (maxBetRow) {
-                let effectiveMax = maxBetRow.max_bet_per_spin;
-                if (maxBetRow.pending_max_bet && maxBetRow.pending_max_bet_at &&
-                    new Date(maxBetRow.pending_max_bet_at) <= new Date()) {
-                    effectiveMax = maxBetRow.pending_max_bet;
-                }
-                if (effectiveMax !== null && effectiveMax !== undefined && bet > effectiveMax) {
-                    activeSpins.delete(userId);
-                    return res.status(403).json({
-                        error: 'max_bet_per_spin',
-                        message: 'Your per-spin max bet is $' + Number(effectiveMax).toFixed(2) + '.',
-                        limit: Number(effectiveMax)
-                    });
-                }
+        // Uses prefetched _userLimitsRow — no extra DB query
+        if (_userLimitsRow) {
+            let effectiveMax = _userLimitsRow.max_bet_per_spin;
+            if (_userLimitsRow.pending_max_bet && _userLimitsRow.pending_max_bet_at &&
+                new Date(_userLimitsRow.pending_max_bet_at) <= new Date()) {
+                effectiveMax = _userLimitsRow.pending_max_bet;
             }
-        } catch (mbErr) {
-            // user_limits column may not exist yet — skip
-            if (mbErr.message && !/no such column|column .* does not exist/i.test(mbErr.message)) {
-                console.warn('[Spin] max-bet check error:', mbErr.message);
+            if (effectiveMax !== null && effectiveMax !== undefined && bet > effectiveMax) {
+                activeSpins.delete(userId);
+                return res.status(403).json({
+                    error: 'max_bet_per_spin',
+                    message: 'Your per-spin max bet is $' + Number(effectiveMax).toFixed(2) + '.',
+                    limit: Number(effectiveMax)
+                });
             }
         }
 
         // ── Weekly / Monthly loss-limit check (CLAUDE.md responsible gambling) ──
+        // Uses prefetched _userLimitsRow — no extra DB query
         try {
-            const llRow = await db.get(
-                'SELECT weekly_loss_limit, monthly_loss_limit, ' +
-                'pending_weekly_loss, pending_weekly_loss_at, pending_monthly_loss, pending_monthly_loss_at ' +
-                'FROM user_limits WHERE user_id = ?',
-                [userId]
-            );
+            const llRow = _userLimitsRow;
             if (llRow) {
                 const now = new Date();
                 const effective = (cur, pend, pendAt) => {
@@ -650,11 +618,29 @@ router.post('/', authenticate, async (req, res) => {
             });
         }
 
-        // ── Check balance (fresh from DB) ──
-        const currentUser = await db.get('SELECT balance, free_spin_state_json FROM users WHERE id = ?', [userId]);
+        // ── Check balance + wagering (single query, saves a round-trip) ──
+        const currentUser = await db.get(
+            'SELECT balance, free_spin_state_json, wagering_requirement, wagering_progress FROM users WHERE id = ?',
+            [userId]
+        );
         if (!currentUser) {
             activeSpins.delete(userId);
             return res.status(404).json({ error: 'User not found' });
+        }
+
+        // ── Wagering bet cap check (ROUND 26, merged from earlier query) ──
+        // Industry standard: players with bonus wagering active cannot bet more than
+        // 10% of their wagering requirement or $10, whichever is lower.
+        if (currentUser.wagering_requirement > 0 && currentUser.wagering_progress < currentUser.wagering_requirement) {
+            var maxWagerBet = Math.max(1, Math.min(10, currentUser.wagering_requirement * 0.10));
+            if (bet > maxWagerBet) {
+                activeSpins.delete(userId);
+                return res.status(400).json({
+                    error: 'Maximum bet while bonus wagering is active is $' + maxWagerBet.toFixed(2) + '. Complete your wagering requirement first.',
+                    maxBetDuringWagering: maxWagerBet,
+                    wageringRemaining: currentUser.wagering_requirement - currentUser.wagering_progress
+                });
+            }
         }
 
         // Restore free-spin state from DB if Map was cleared (e.g. server restart)

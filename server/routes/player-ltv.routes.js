@@ -300,8 +300,8 @@ async function getTierForScore(ltvScore) {
  * Admin endpoint to recalculate LTV for a specific player
  */
 router.post('/compute/:userId', authenticate, requireAdmin, async (req, res) => {
-  await _ensureTable();
   try {
+    await _ensureTable();
     const userId = parseInt(req.params.userId, 10);
     if (!Number.isFinite(userId)) {
       return res.status(400).json({ error: 'Invalid userId' });
@@ -370,8 +370,8 @@ router.post('/compute/:userId', authenticate, requireAdmin, async (req, res) => 
  * Runs asynchronously; returns immediately with job ID
  */
 router.post('/compute-all', authenticate, requireAdmin, async (req, res) => {
-  await _ensureTable();
   try {
+    await _ensureTable();
     const users = await db.all(
       'SELECT id FROM users WHERE is_banned = 0 ORDER BY id LIMIT 10000',
       []
@@ -457,8 +457,8 @@ router.post('/compute-all', authenticate, requireAdmin, async (req, res) => {
  * This endpoint is safe to expose to players
  */
 router.get('/my-score', authenticate, async (req, res) => {
-  await _ensureTable();
   try {
+    await _ensureTable();
     const score = await db.get(
       'SELECT ltv_tier FROM player_ltv_scores WHERE user_id = ?',
       [req.user.id]
@@ -501,8 +501,8 @@ router.get('/my-score', authenticate, async (req, res) => {
  * Admin endpoint: top players by LTV with tier distribution
  */
 router.get('/admin/leaderboard', authenticate, requireAdmin, async (req, res) => {
-  await _ensureTable();
   try {
+    await _ensureTable();
     const limit = Math.max(1, Math.min(parseInt(req.query.limit) || 100, 1000));
 
     const leaderboard = await db.all(
@@ -539,8 +539,8 @@ router.get('/admin/leaderboard', authenticate, requireAdmin, async (req, res) =>
  * Prioritize high-value players who are at risk of leaving
  */
 router.get('/admin/at-risk', authenticate, requireAdmin, async (req, res) => {
-  await _ensureTable();
   try {
+    await _ensureTable();
     const atRisk = await db.all(
       `SELECT
         user_id, ltv_score, ltv_tier, predicted_30d_value,
@@ -567,8 +567,8 @@ router.get('/admin/at-risk', authenticate, requireAdmin, async (req, res) => {
  * Targets: ltv_tier in (diamond, platinum, gold) AND monetization_score < 60
  */
 router.get('/admin/opportunities', authenticate, requireAdmin, async (req, res) => {
-  await _ensureTable();
   try {
+    await _ensureTable();
     const opportunities = await db.all(
       `SELECT
         user_id, ltv_score, ltv_tier, predicted_30d_value,

@@ -106,6 +106,7 @@ router.post('/payment/create-checkout', authenticate, async (req, res) => {
 
 // POST /api/payment/webhook — Stripe webhook for completed payments
 router.post('/payment/webhook', express.raw({ type: 'application/json' }), async (req, res) => {
+  try {
     const stripeAudit = require('../services/stripe-audit.service');
     if (!config.STRIPE_SECRET_KEY || !config.STRIPE_WEBHOOK_SECRET) {
         await stripeAudit.logEvent({ eventType: 'unknown', verified: false, errorMessage: 'webhooks not configured' });
@@ -547,6 +548,10 @@ router.post('/payment/webhook', express.raw({ type: 'application/json' }), async
     }
 
     res.json({ received: true });
+  } catch (outerErr) {
+    console.error('[Stripe] Unhandled webhook error:', outerErr.message);
+    if (!res.headersSent) res.status(500).json({ error: 'Internal webhook processing error' });
+  }
 });
 
 // GET /api/payment/prices — Return available deposit tiers
