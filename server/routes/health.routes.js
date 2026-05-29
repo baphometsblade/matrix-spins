@@ -1,4 +1,4 @@
-﻿const express = require('express');
+const express = require('express');
 const config = require('../config');
 const { authenticate, requireAdmin } = require('../middleware/auth');
 const fs = require('fs');
@@ -96,7 +96,7 @@ router.get('/ready', async (req, res) => {
  *
  * When PostgreSQL is unreachable the server runs degraded on SQLite and
  * blocks money ops. This surfaces the LAST captured PG connection error
- * so the operator can diagnose the cause (suspended Neon endpoint, bad
+ * so the operator can diagnose the cause (suspended/unreachable Postgres endpoint, bad
  * credentials, quota, network) without shell access to Render logs.
  *
  * Public (no auth) so it's reachable from a browser during an outage —

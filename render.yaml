@@ -7,7 +7,7 @@
 # fail the deploy. Heavy readiness probe is /api/health/ready.
 # ─────────────────────────────────────────────────────────────────────
 # ── Render-managed PostgreSQL ────────────────────────────────────────
-# Replaces the external Neon database (whose free-tier compute quota was
+# Replaces the previous external database (whose free-tier compute quota was
 # exhausted, putting the live site in degraded mode with all money ops
 # returning 503). This provisions a PERSISTENT Render Postgres and wires
 # DATABASE_URL into the web service automatically via `fromDatabase`

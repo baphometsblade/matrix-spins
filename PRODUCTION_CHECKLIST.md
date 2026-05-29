@@ -12,7 +12,7 @@ listing anything still missing.
 
 | Variable | Value | Why |
 |---|---|---|
-| `DATABASE_URL` | PostgreSQL connection string (`postgresql://user:pass@host:5432/db`) | SQLite data is wiped on every Render deploy. Use managed PG (Neon, Supabase, Render PG). While PG is unreachable the `degradedModeGuard` middleware returns 503 on all money ops so nothing is charged unrecoverably. |
+| `DATABASE_URL` | PostgreSQL connection string (`postgresql://user:pass@host:5432/db`) | SQLite data is wiped on every Render deploy. Use managed PG (Render-managed Postgres via render.yaml, or Supabase). While PG is unreachable the `degradedModeGuard` middleware returns 503 on all money ops so nothing is charged unrecoverably. |
 | `JWT_SECRET` | 48+ random chars (`node -e "console.log(require('crypto').randomBytes(48).toString('base64'))"`) | Signs user sessions. The launch-readiness check rejects common defaults (`dev-secret`, `change-me`, `password`, `123`, anything < 32 chars). |
 | `STRIPE_SECRET_KEY` | `sk_live_...` | Deposits return 503 without it. Test keys (`sk_test_...`) trigger a launch warning. |
 | `STRIPE_PUBLISHABLE_KEY` | `pk_live_...` | Client-side Stripe.js won't initialise without it. |
@@ -60,7 +60,7 @@ Disputes and refunds are claim-gated via the transaction log so Stripe retries (
 
 ## 3. PostgreSQL Setup
 
-1. Provision a Postgres instance (Render managed, Neon, Supabase).
+1. Provision a Postgres instance (Render-managed via render.yaml, or Supabase).
 2. Set `DATABASE_URL` in Render env. Schema auto-migrates on next boot
    via `server/db/schema-pg.js` (tables + USER_MIGRATIONS + WITHDRAWAL_MIGRATIONS).
 3. Verify: `curl https://msaart.online/api/health` returns `{"status":"ok"}`.
