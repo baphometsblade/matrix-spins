@@ -269,6 +269,14 @@
       overlay.classList.remove('mx-show');
       setTimeout(function () { if (overlay.parentNode) overlay.parentNode.removeChild(overlay); }, 450);
       lsSet(LS.TOUR_DONE, '1');
+      // BULLETPROOF scroll release: reset the body scroll-lock DIRECTLY here,
+      // not solely via the MutationObserver in launchTour(). If the observer
+      // ever misses the removal (timing, or the overlay is detached by other
+      // code), the page would be left permanently unscrollable
+      // (body.style.overflow:'hidden' stuck) — the "scroll does not work"
+      // report. Resetting inline here guarantees release the instant the
+      // tour is dismissed.
+      document.body.style.overflow = '';
       showProgressBar();
     }
 
@@ -299,13 +307,25 @@
 
   function launchTour() {
     injectCSS();
+    // CRITICAL: mark the tour as seen the MOMENT it launches — not only when
+    // the user explicitly clicks Skip / completes it (which is all closeTour
+    // used to do). Previously, a visitor who reloaded or navigated away
+    // without dismissing the tour got the full-screen, scroll-LOCKING tour
+    // again on EVERY subsequent visit (observed: 9 visits, tour_done=null),
+    // and each time it set body{overflow:hidden} and blocked scrolling — the
+    // "scroll does not work" report. Setting the flag on show guarantees the
+    // tour appears at most once, so returning users can always scroll.
+    lsSet(LS.TOUR_DONE, '1');
     var overlay = buildTourOverlay();
     document.body.appendChild(overlay);
     // Force reflow then show
     overlay.offsetHeight; // eslint-disable-line no-unused-expressions
     requestAnimationFrame(function () { overlay.classList.add('mx-show'); });
-    // Disable body scroll
+    // Disable body scroll while the tour is up.
     document.body.style.overflow = 'hidden';
+    // Safety net: if the overlay leaves the DOM by ANY path (closeTour,
+    // external removal, navigation), restore scrolling. closeTour also
+    // resets overflow directly — this observer is the backstop.
     var obs = new MutationObserver(function () {
       if (!document.querySelector('.mx-tour-overlay')) {
         document.body.style.overflow = '';
@@ -313,6 +333,17 @@
       }
     });
     obs.observe(document.body, { childList: true });
+    // Escape key always dismisses the tour (accessibility + escape hatch so
+    // the user is never trapped behind it).
+    var onEsc = function (e) {
+      if (e.key === 'Escape') {
+        document.removeEventListener('keydown', onEsc);
+        document.body.style.overflow = '';
+        var ov = document.querySelector('.mx-tour-overlay');
+        if (ov && ov.parentNode) ov.parentNode.removeChild(ov);
+      }
+    };
+    document.addEventListener('keydown', onEsc);
   }
 
   /* ================================================================

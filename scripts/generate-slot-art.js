@@ -47,24 +47,27 @@ function loadRegistry() {
     return global.window.GAME_REGISTRY || [];
 }
 
-// ── Theme → art direction. Keyed off the registry `theme` field.
-// IMPORTANT: describe a SCENE/SUBJECT only. Never use the words "slot",
-// "reels", "poster", "cover", "title" — SDXL treats them as a cue to
-// render (garbled) title text and UI frames, which the negative prompt
-// cannot reliably suppress. ──
+// ── Theme → art direction + DISTINCT visual style per theme. Keyed off
+// the registry `theme` field. Each entry baking in its own medium
+// (oil paint / ukiyo-e / synthwave / engraving / photo) so the lobby
+// reads like a curated art gallery rather than 100 photo-real tiles.
+// IMPORTANT: describe a SCENE/SUBJECT + STYLE only. Never use the words
+// "slot", "reels", "poster", "cover", "title" — SDXL treats them as a
+// cue to render (garbled) title text and UI frames, which the negative
+// prompt cannot reliably suppress. ──
 const THEME_ART = {
-    'Fruit Classics':            'a luscious overflowing still life of glistening ripe fruit — red cherries, lemons, watermelon slices, juicy plums and grapes — water droplets, sun-drenched, vibrant saturated colour, macro food photography',
-    'Space / Sci-Fi':            'a breathtaking deep-space vista — a glowing colourful nebula, ringed planets and drifting asteroids beyond a sleek chrome starship, neon cyan and violet light, cosmic, cinematic sci-fi concept art',
-    'Ancient Egypt / Mythology': 'an opulent ancient-Egyptian tomb interior — a solid-gold pharaoh death mask, carved hieroglyph walls, scarab beetles and the golden Eye of Horus, warm torchlight, floating dust motes, cinematic',
-    'Asian / Lucky':             'a majestic golden Chinese dragon coiling around a glowing pearl amid red silk lanterns, koi fish, jade ornaments and cherry blossom petals, lacquered red and gold, ornate, cinematic',
-    'Australian / Outback':      'the sun-baked Australian outback at golden hour — towering red desert mesas, a powerful kangaroo, eucalyptus trees and glowing opal gemstones, warm amber light, epic landscape photography',
-    'Fantasy / Magic':           'an enchanted fantasy scene — a glowing arcane spellbook and floating runes, crystals and a mystical wizard tower in a misty emerald forest, magical glowing particles, ethereal light, concept art',
-    'Horror / Dark':            'a gothic horror scene — a fog-shrouded haunted mansion beneath a blood-red moon, flickering candles, perched ravens and an ornate skull, eerie cinematic darkness, cold blue rim light',
-    'Animals / Wildlife':        'a powerful apex predator in dramatic wilderness, intense direct gaze, richly detailed fur and feathers, golden savanna light, epic professional nature photography',
-    'Wildcard / Experimental':   'a bold surreal high-energy abstract composition — vivid neon gradients, floating geometric prisms, gold and jewel accents, striking modern digital art',
-    'Wildcard':                  'an opulent luxury still life — cascading gold coins, glittering diamonds and jewels on deep velvet, a dramatic spotlight, decadent and rich, cinematic product photography',
+    'Fruit Classics':            'in the glossy commercial style of premium 1990s food advertising photography — a luscious overflowing still life of glistening ripe fruit (red cherries, lemons, watermelon slices, juicy plums and grapes) with sparkling water droplets, ultra-saturated colors, sun-drenched studio lighting, ultra-sharp macro detail',
+    'Space / Sci-Fi':            'in the bold style of synthwave / vaporwave retrofuturist digital illustration — a deep-space vista with a glowing nebula, ringed planets and a sleek chrome starship, magenta and electric-cyan neon gradients, geometric grid horizon, vector-clean sci-fi concept art',
+    'Ancient Egypt / Mythology': 'in the rich painterly style of a 19th-century orientalist oil painting (Jean-Léon Gérôme, Lawrence Alma-Tadema) — an opulent ancient-Egyptian tomb interior with a solid-gold pharaoh death mask, carved hieroglyph walls, golden scarabs and the Eye of Horus, warm earth pigments, classical chiaroscuro torchlight, visible oil brushwork',
+    'Asian / Lucky':             'in the bold flat style of a traditional Japanese ukiyo-e woodblock print (Hokusai, Hiroshige) — a majestic golden Chinese dragon coiling around a glowing pearl amid red silk lanterns, koi fish and cherry blossom petals, limited palette of crimson, gold and indigo, strong black ink outlines, decorative stylised wave patterns',
+    'Australian / Outback':      'in the earthy painterly style of indigenous Australian dot-art watercolor — the sun-baked outback at golden hour with towering red desert mesas, a powerful kangaroo, eucalyptus trees and glowing opal gemstones, ochre, burnt sienna and amber palette, dreamtime dot motifs woven through the composition',
+    'Fantasy / Magic':           'in the painterly oil-on-canvas style of an epic high-fantasy book-cover illustration (Frank Frazetta, Magali Villeneuve, Donato Giancola) — a glowing arcane spellbook with floating runes, crystals and a mystical wizard tower in a misty emerald forest, magical glowing particles, dramatic painted clouds, sweeping god-rays',
+    'Horror / Dark':             'in the eerie style of a Gustave Doré ink engraving — a gothic fog-shrouded haunted mansion beneath a blood-red moon, flickering candles, perched ravens and an ornate skull, intricate cross-hatching, deep velvet blacks, monochrome composition with a subtle crimson accent',
+    'Animals / Wildlife':        'in the editorial style of professional National Geographic wildlife photography — a powerful apex predator in dramatic wilderness, intense direct eye contact, richly detailed fur and feathers, golden-hour rim light, telephoto compression, ultra-sharp focus on the eyes',
+    'Wildcard / Experimental':   'in the bold graphic style of a contemporary modernist propaganda-poster pop art print — a striking abstract composition with vivid flat color blocks, floating geometric prisms and gold accents, dynamic asymmetric layout, clean vector-illustrated edges',
+    'Wildcard':                  'in the lavish style of a 1920s Art Deco luxury illustration (Erté, Tamara de Lempicka) — cascading gold coins, glittering diamonds and jewels on deep velvet beneath a dramatic spotlight, gold-leaf accents, geometric Egyptian-revival patterns, gilded-age aesthetic',
 };
-const DEFAULT_ART = 'an opulent luxury still life with cascading gold, glittering jewels and diamonds, dramatic cinematic spotlight, rich and decadent';
+const DEFAULT_ART = 'in the lavish style of a 1920s Art Deco luxury illustration with cascading gold and jewels on velvet, gold-leaf accents, geometric patterns, gilded-age aesthetic';
 
 // Glyph-ish hints from a game's own symbols sharpen the subject.
 function symbolHints(symbols) {
@@ -85,12 +88,15 @@ function buildPrompt(game) {
     const subj = nameSubject(game.name);
     const hints = symbolHints(game.symbols);
     // No "slot"/"poster"/"title" framing — keep it a clean themed hero
-    // still so SDXL renders the subject, not garbled UI text.
+    // composition so SDXL renders the subject, not garbled UI text.
+    // The STYLE comes from THEME_ART (oil painting / ukiyo-e / synthwave
+    // / engraving / photo) — DO NOT add "photorealistic" or "8k" here:
+    // those generic descriptors would flatten every theme back into a
+    // single photo look and erase the per-theme variety.
     return (
         `${art}${hints}. Inspired by the theme "${subj}". ` +
-        'Vertical composition, single centred focal subject, ultra-detailed, ' +
-        'cinematic dramatic lighting, rich glossy highlights, high contrast, ' +
-        'photorealistic, 8k, clean uncluttered background, absolutely no text.'
+        'Vertical composition, single centred focal subject, rich and detailed, ' +
+        'high quality, clean uncluttered background, absolutely no text or letters anywhere in the image.'
     );
 }
 
@@ -154,7 +160,11 @@ async function generateOne(game) {
     const reqBody = {
         prompt,
         negative_prompt: NEGATIVE,
-        style_selections: ['Fooocus V2', 'Fooocus Enhance', 'Fooocus Sharp', 'SAI Cinematic'],
+        // Minimal style nudges only — V2 is a general quality booster,
+        // Enhance polishes detail. Removed "Fooocus Sharp" + "SAI Cinematic"
+        // because they hard-bias the output toward a photoreal look, which
+        // would override the per-theme art-style direction in THEME_ART.
+        style_selections: ['Fooocus V2', 'Fooocus Enhance'],
         performance_selection: 'Speed',
         aspect_ratios_selection: '896*1152',
         image_number: 1,

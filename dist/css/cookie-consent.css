@@ -283,27 +283,57 @@
 /* ── Mobile ────────────────────────────────────────── */
 
 @media (max-width: 640px) {
+  /* ── BULLETPROOF mobile banner ──────────────────────────────────────
+     History: on phones the banner repeatedly ballooned tall enough to
+     blanket the bottom of the screen, pushing its own dismiss buttons
+     BELOW the viewport. Because the banner is `position:fixed` with
+     `pointer-events:auto`, that made the whole lower screen untappable
+     and un-scrollable — the user could neither reach the page CTAs nor
+     dismiss the banner ("scroll does not work").
+
+     This block makes the failure structurally impossible, independent of
+     text length or the user's system font-scaling:
+       1. HARD height cap (max-height: 80vh) — the banner can never cover
+          more than 80% of the viewport, so page content is always
+          visible/scrollable behind it.
+       2. Internal scroll (overflow-y:auto) — if content ever exceeds the
+          cap, the banner scrolls inside itself instead of overflowing
+          off-screen.
+       3. STICKY action bar — Accept / Reject / Customize are pinned to
+          the bottom of the banner and stay on-screen no matter what, so
+          the banner is always dismissable with one tap. */
+  .mcc-banner {
+    max-height: 80vh;
+  }
+
   .mcc-banner-inner {
     flex-direction: column;
     align-items: stretch;
     padding: 18px 16px;
     gap: 16px;
+    max-height: 80vh;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
   }
 
-  /* CRITICAL mobile fix: .mcc-banner-text carries `flex: 1 1 320px`, whose
-     320px basis is intended as a WIDTH in the desktop row layout. When the
-     container flips to `flex-direction: column` here, that basis becomes a
-     320px HEIGHT — inflating the cookie text box to ~320px and the whole
-     fixed banner to ~530px. On a 390x844 phone that banner blanketed the
-     hero "Get Started" CTA and the bottom deposit-modal area, making both
-     untappable (they sat behind the oversized banner). Reset to auto so the
-     text is content-height (~60px) and the banner is a compact bottom strip. */
+  /* .mcc-banner-text carries `flex: 1 1 320px`; in the column layout that
+     320px basis would become a 320px HEIGHT and inflate the banner. Reset
+     to content-height. (Belt: the max-height cap above already prevents
+     the catastrophic case even without this line.) */
   .mcc-banner-text {
     flex: 0 0 auto;
   }
 
   .mcc-banner-actions {
     flex-direction: column;
+    /* Pin the dismiss buttons to the bottom of the (now scrollable)
+       banner so they are ALWAYS reachable — the core guarantee. */
+    position: sticky;
+    bottom: 0;
+    z-index: 1;
+    background: rgba(13, 15, 20, 0.98);
+    margin: 0 -16px -18px;
+    padding: 12px 16px 16px;
   }
 
   .mcc-btn {
@@ -313,6 +343,9 @@
 
   .mcc-panel {
     max-width: 100%;
+    max-height: 88vh;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
     border-radius: 14px 14px 0 0;
   }
 }
