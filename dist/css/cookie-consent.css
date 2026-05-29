@@ -290,6 +290,18 @@
     gap: 16px;
   }
 
+  /* CRITICAL mobile fix: .mcc-banner-text carries `flex: 1 1 320px`, whose
+     320px basis is intended as a WIDTH in the desktop row layout. When the
+     container flips to `flex-direction: column` here, that basis becomes a
+     320px HEIGHT — inflating the cookie text box to ~320px and the whole
+     fixed banner to ~530px. On a 390x844 phone that banner blanketed the
+     hero "Get Started" CTA and the bottom deposit-modal area, making both
+     untappable (they sat behind the oversized banner). Reset to auto so the
+     text is content-height (~60px) and the banner is a compact bottom strip. */
+  .mcc-banner-text {
+    flex: 0 0 auto;
+  }
+
   .mcc-banner-actions {
     flex-direction: column;
   }

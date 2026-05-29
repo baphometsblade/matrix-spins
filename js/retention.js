@@ -156,7 +156,7 @@
       overlay.id = 'low-balance-prompt';
       overlay.style.cssText = `
         position: fixed; top: 0; left: 0; right: 0; bottom: 0;
-        background: rgba(0,0,0,0.85); z-index: 10000;
+        background: rgba(0,0,0,0.85); z-index: 1000000;
         display: flex; align-items: center; justify-content: center;
         animation: fadeIn 0.3s ease;
       `;
@@ -289,7 +289,7 @@
       modal.id = 'deposit-modal';
       modal.style.cssText = `
         position: fixed; top: 0; left: 0; right: 0; bottom: 0;
-        background: rgba(0,0,0,0.9); z-index: 10000;
+        background: rgba(0,0,0,0.9); z-index: 1000000;
         display: flex; align-items: center; justify-content: center;
       `;
 
@@ -414,7 +414,7 @@
     _showConfirmation(amount, newBalance) {
       const toast = document.createElement('div');
       toast.style.cssText = `
-        position: fixed; top: 20px; right: 20px; z-index: 10001;
+        position: fixed; top: 20px; right: 20px; z-index: 1000001;
         background: linear-gradient(135deg, #1a3a1a, #0d2d0d); border: 2px solid #4CAF50;
         border-radius: 8px; padding: 20px 28px; color: #4CAF50;
         font-weight: bold; font-size: 16px; box-shadow: 0 8px 24px rgba(0,0,0,0.5);
@@ -439,7 +439,7 @@
       modal.id = 'withdraw-modal';
       modal.style.cssText = `
         position: fixed; top: 0; left: 0; right: 0; bottom: 0;
-        background: rgba(0,0,0,0.9); z-index: 10000;
+        background: rgba(0,0,0,0.9); z-index: 1000000;
         display: flex; align-items: center; justify-content: center;
       `;
       modal.innerHTML = `
@@ -494,7 +494,7 @@
 
       const toast = document.createElement('div');
       toast.style.cssText = `
-        position: fixed; top: 20px; right: 20px; z-index: 10001;
+        position: fixed; top: 20px; right: 20px; z-index: 1000001;
         background: linear-gradient(135deg, #1a1a3a, #0d0d2d); border: 2px solid #6495ED;
         border-radius: 8px; padding: 20px 28px; color: #6495ED;
         font-weight: bold; font-size: 16px; box-shadow: 0 8px 24px rgba(0,0,0,0.5);
@@ -525,7 +525,7 @@
       const toast = document.createElement('div');
       toast.style.cssText = `
         position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
-        z-index: 10001; background: #2d1a00; border: 2px solid #FFA500;
+        z-index: 1000001; background: #2d1a00; border: 2px solid #FFA500;
         border-radius: 8px; padding: 16px 28px; color: #FFA500;
         font-size: 14px; box-shadow: 0 4px 16px rgba(0,0,0,0.5); max-width: 400px; text-align: center;
       `;

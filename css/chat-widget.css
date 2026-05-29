@@ -62,13 +62,20 @@
   flex-direction: column;
   overflow: hidden;
   opacity: 0;
+  /* CRITICAL: the closed panel is invisible (opacity:0) but was left with the
+     default pointer-events:auto. As a position:fixed, z-index:999999 element
+     ~358x560px on mobile, it blanketed the hero CTA and the bottom deposit
+     area — every tap there hit this unseen panel instead of the intended
+     button. That single gap broke BOTH the "Get Started" button and the
+     mobile deposit modal. A closed overlay must never capture pointer events. */
+  pointer-events: none;
   transform: translateY(8px) scale(0.98);
   transition: opacity 180ms ease, transform 180ms ease;
   z-index: 999999;
   color: var(--msc-text);
   backdrop-filter: blur(12px);
 }
-.msc-panel.msc-panel-open { opacity: 1; transform: translateY(0) scale(1); }
+.msc-panel.msc-panel-open { opacity: 1; transform: translateY(0) scale(1); pointer-events: auto; }
 
 .msc-header {
   display: flex;
