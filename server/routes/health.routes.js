@@ -76,7 +76,7 @@ router.get('/ready', async (req, res) => {
             httpStatus = 503;
         }
     } catch (err) {
-        checks.db = { ok: false, error: err.message };
+        checks.db = { ok: false, error: 'Database connection failed' };
         httpStatus = 503;
     }
 

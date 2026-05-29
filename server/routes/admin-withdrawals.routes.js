@@ -289,7 +289,8 @@ router.get('/stripe-audit/recent', authenticate, adminOnly, async (req, res) => 
         const events = await stripeAudit.recentEvents(limit);
         res.json({ success: true, count: events.length, events });
     } catch (err) {
-        res.status(500).json({ error: err.message });
+        console.error('[admin-withdrawals/stripe-audit]', err);
+        res.status(500).json({ error: 'Failed to fetch stripe audit data' });
     }
 });
 
@@ -300,7 +301,8 @@ router.get('/stripe-audit/stats', authenticate, adminOnly, async (req, res) => {
         const stats = await stripeAudit.statsByType(days);
         res.json({ success: true, days, stats });
     } catch (err) {
-        res.status(500).json({ error: err.message });
+        console.error('[admin-withdrawals/stripe-stats]', err);
+        res.status(500).json({ error: 'Failed to fetch stripe audit stats' });
     }
 });
 

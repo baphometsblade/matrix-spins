@@ -169,7 +169,10 @@ router.post('/upload', authenticate, (req, res, next) => {
     upload.single('file')(req, res, async (err) => {
         if (err) {
             logger.warn('KYC upload error', { error: err.message });
-            return res.status(400).json({ error: err.message || 'Upload failed' });
+            const safeMsg = err.code === 'LIMIT_FILE_SIZE' ? 'File too large (max 10 MB)'
+                : err.code === 'LIMIT_UNEXPECTED_FILE' ? 'Unexpected file field'
+                : 'Upload failed';
+            return res.status(400).json({ error: safeMsg });
         }
         try {
             if (!req.file) return res.status(400).json({ error: 'No file uploaded' });

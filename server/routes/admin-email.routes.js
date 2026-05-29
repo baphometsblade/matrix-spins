@@ -81,7 +81,7 @@ router.post('/test', authenticate, adminOnly, async (req, res) => {
         res.json({ success: true, ...result });
     } catch (err) {
         console.error('[admin-email/test]', err);
-        res.status(500).json({ error: err.message });
+        res.status(500).json({ error: 'Failed to send test email' });
     }
 });
 
@@ -117,7 +117,7 @@ router.post('/broadcast', authenticate, adminOnly, async (req, res) => {
         res.json({ success: true, ...result });
     } catch (err) {
         console.error('[admin-email/broadcast]', err);
-        res.status(500).json({ error: err.message });
+        res.status(500).json({ error: 'Failed to send broadcast' });
     }
 });
 
@@ -159,7 +159,7 @@ router.get('/segments/:segment/preview', authenticate, adminOnly, async (req, re
         });
     } catch (err) {
         console.error('[admin-email/preview]', err);
-        res.status(500).json({ error: err.message });
+        res.status(500).json({ error: 'Failed to preview segment' });
     }
 });
 

@@ -1435,7 +1435,7 @@ router.post('/events', async (req, res) => {
         res.json({ success: true });
     } catch (e) {
         console.warn('[Admin] Create event error:', e.message);
-        res.status(400).json({ error: e.message });
+        res.status(400).json({ error: 'Failed to create event' });
     }
 });
 

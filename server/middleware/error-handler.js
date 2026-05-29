@@ -13,6 +13,7 @@
  *   - Operators can inspect full stack via X-Debug-Token header (= ADMIN_PASSWORD).
  */
 
+const crypto = require('crypto');
 const logger = require('../utils/logger');
 
 function asyncHandler(fn) {
@@ -40,7 +41,14 @@ function globalErrorHandler(err, req, res, _next) {
 
     const status = err.status || err.statusCode || 500;
     const isProd = process.env.NODE_ENV === 'production';
-    const debugToken = process.env.ADMIN_PASSWORD && req.headers && req.headers['x-debug-token'] === process.env.ADMIN_PASSWORD;
+    // Timing-safe comparison to prevent token enumeration
+    const debugToken = (() => {
+        const adminPw = process.env.ADMIN_PASSWORD;
+        const headerVal = req.headers && req.headers['x-debug-token'];
+        if (!adminPw || !headerVal || adminPw.length !== headerVal.length) return false;
+        try { return crypto.timingSafeEqual(Buffer.from(adminPw), Buffer.from(headerVal)); }
+        catch (_) { return false; }
+    })();
 
     const meta = {
         method: req.method,

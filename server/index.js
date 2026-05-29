@@ -121,7 +121,13 @@ const ALLOWED_ORIGINS = (() => {
 })();
 app.use(cors({
   origin(origin, cb) {
-    if (!origin || ALLOWED_ORIGINS.includes(origin)) return cb(null, true);
+    // In production, reject null/missing origins (sandboxed iframes, file:// pages)
+    // In development, allow missing origin for tools like curl / Postman
+    if (!origin) {
+      const isDev = !process.env.NODE_ENV || process.env.NODE_ENV === 'development';
+      return cb(null, isDev);
+    }
+    if (ALLOWED_ORIGINS.includes(origin)) return cb(null, true);
     cb(null, false);
   },
   credentials: true,
@@ -521,7 +527,7 @@ app.get('/api/health-summary', async (req, res) => {
   res.json({
     status: isDegraded() || !dbOk ? 'degraded' : 'ok',
     degraded: isDegraded(),
-    pgError: lastPgError() || null,
+    pgError: (lastPgError() ? 'PG connection error' : null),
     uptime: process.uptime(),
     timestamp: new Date().toISOString(),
     version: '2.1.0',

@@ -36,7 +36,7 @@ async function checkDatabase() {
             const db = require('../database');
             pgActive = typeof db.isPg === 'function' ? db.isPg() : false;
         } catch (_) { /* ignore */ }
-        return { ok: false, isPg: pgActive, degraded: true, error: err.message };
+        return { ok: false, isPg: pgActive, degraded: true, error: 'Database check failed' };
     }
 }
 
@@ -120,7 +120,7 @@ router.get('/', authenticate, requireAdmin, async (req, res) => {
         });
     } catch (err) {
         console.error('[setup-status] Unexpected error:', err.message);
-        res.status(500).json({ error: 'Failed to retrieve setup status', detail: err.message });
+        res.status(500).json({ error: 'Failed to retrieve setup status' });
     }
 });
 
