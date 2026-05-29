@@ -1,0 +1,33 @@
+{
+    "root": true,
+    "env": {
+        "browser": true,
+        "es2022": true
+    },
+    "parserOptions": {
+        "ecmaVersion": 2022,
+        "sourceType": "script"
+    },
+    "globals": {
+        "MatrixSpinsAPI": "readonly",
+        "MatrixSound": "readonly",
+        "MatrixModal": "readonly",
+        "MatrixAgeGate": "readonly",
+        "GameHistory": "readonly",
+        "LoadingScreen": "readonly",
+        "confetti": "readonly",
+        "Stripe": "readonly",
+        "io": "readonly",
+        "showToast": "readonly",
+        "showMessage": "readonly",
+        "openSlot": "readonly",
+        "showGame": "readonly",
+        "games": "readonly",
+        "GAME_REGISTRY": "readonly",
+        "STUDIO_CONFIG": "readonly"
+    },
+    "rules": {
+        "no-undef": "error",
+        "no-unused-vars": "off"
+    }
+}

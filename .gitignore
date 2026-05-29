@@ -28,3 +28,4 @@ server/data/maintenance.json
 
 # Serena MCP server's local cache + project config
 .serena/
+.playwright-mcp/

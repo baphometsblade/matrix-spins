@@ -9,6 +9,20 @@ if [ -n "$CHANGED" ]; then
     }
 fi
 
+# Client (browser) code is excluded from the main lint via .eslintignore,
+# so it had ZERO no-undef coverage — that gap let a `ReferenceError: api
+# is not defined` ship to production (commit e4c25de4) and break every
+# spin. lint:client runs a strict no-undef gate over the self-contained
+# client modules whenever any of them changes.
+CHANGED_CLIENT=$(git diff --cached --name-only --diff-filter=ACM | grep -E '^js/(casino-engine|api-client|age-gate|session-monitor|responsible-gambling-page|loading-screen|daily-missions|activity-feed|jackpot|search-autocomplete|csrf-helper|matrix-modal)\.js$' || true)
+if [ -n "$CHANGED_CLIENT" ]; then
+    echo "[pre-commit] Linting client modules (no-undef gate)…"
+    npm run --silent lint:client || {
+        echo "[pre-commit] client lint failed — a browser module references an undefined identifier"
+        exit 1
+    }
+fi
+
 # Quick test pass — unit tests only (full suite runs in CI)
 if [ -d tests/unit ]; then
     echo "[pre-commit] Running unit tests…"

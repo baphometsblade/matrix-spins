@@ -92,6 +92,40 @@ router.get('/ready', async (req, res) => {
 });
 
 /**
+ * GET /api/health/db-error — diagnostic for degraded-mode outages.
+ *
+ * When PostgreSQL is unreachable the server runs degraded on SQLite and
+ * blocks money ops. This surfaces the LAST captured PG connection error
+ * so the operator can diagnose the cause (suspended Neon endpoint, bad
+ * credentials, quota, network) without shell access to Render logs.
+ *
+ * Public (no auth) so it's reachable from a browser during an outage —
+ * but the error message is sanitized to strip anything resembling a
+ * connection string / credentials before it leaves the server.
+ */
+router.get('/db-error', (req, res) => {
+    const db = require('../database');
+    const degraded = !!(db.isDegraded && db.isDegraded());
+    let lastError = (db.lastPgError && db.lastPgError()) || null;
+    if (lastError) {
+        lastError = String(lastError)
+            // Redact postgres URIs (postgres://user:pass@host:port/db).
+            .replace(/postgres(?:ql)?:\/\/[^\s'"]+/gi, 'postgres://[redacted]')
+            // Redact bare user:pass@host credential fragments.
+            .replace(/\b[\w.-]+:[^@\s]+@[\w.-]+/g, '[redacted]@[host]')
+            .slice(0, 300);
+    }
+    res.json({
+        degraded,
+        lastError,
+        hint: degraded
+            ? 'PostgreSQL unreachable — money ops blocked. Check DATABASE_URL on Render + the database provider (is the endpoint suspended/over quota?). The server auto-reconnects within 5 min once PG is reachable.'
+            : 'Database healthy — no degraded state.',
+        timestamp: new Date().toISOString(),
+    });
+});
+
+/**
  * GET /api/health â€” Public health check
  * Returns basic server status, uptime, and version
  */
