@@ -285,19 +285,40 @@
         return;
       }
       try {
-        const [game, balance, seeds, freeSpins] = await Promise.all([
-          window.MatrixSpinsAPI.getGame(this.gameId).then(r => r.game),
+        // ONLY the game config is required to render the reels. Balance,
+        // seeds, and free-spins are enhancements — if any fail (e.g. the
+        // DB is briefly degraded and /api/balance 503s), the game must
+        // STILL load with the reels visible + a reconnect notice, NOT a
+        // blank fatal page. Previously all four were in one Promise.all,
+        // so a balance 503 blanked the whole game ("games don't load").
+        const game = await window.MatrixSpinsAPI.getGame(this.gameId).then(r => r.game);
+        if (!game) throw new Error('Game configuration not found.');
+        this.state.game = game;
+        this.state.betCents = Math.max(game.minBetCents, Math.min(game.betStepCents * 5, game.maxBetCents));
+
+        // Non-fatal enhancements — settle independently.
+        const [balanceR, seedsR, freeSpinsR] = await Promise.allSettled([
           window.MatrixSpinsAPI.getBalance(),
           window.MatrixSpinsAPI.getSeeds(),
-          window.MatrixSpinsAPI.getFreeSpins(this.gameId).catch(() => ({ grants: [] })),
+          window.MatrixSpinsAPI.getFreeSpins(this.gameId),
         ]);
-        this.state.game = game;
-        this.state.balanceCents = balance.availableCents;
-        this.state.currency = balance.currency;
-        this.state.seeds = seeds;
-        this.state.freeSpinsAvailable = (freeSpins.grants || []).reduce((a, g) => a + g.remaining, 0);
-        this.state.betCents = Math.max(game.minBetCents, Math.min(game.betStepCents * 5, game.maxBetCents));
+        if (balanceR.status === 'fulfilled' && balanceR.value) {
+          this.state.balanceCents = balanceR.value.availableCents;
+          this.state.currency = balanceR.value.currency || this.state.currency;
+        } else {
+          // Balance unavailable (degraded DB / network). Render anyway and
+          // flag it — spins will surface the real error if attempted.
+          this.state.balanceCents = 0;
+          this._balanceUnavailable = true;
+        }
+        if (seedsR.status === 'fulfilled') this.state.seeds = seedsR.value;
+        if (freeSpinsR.status === 'fulfilled' && freeSpinsR.value) {
+          this.state.freeSpinsAvailable = (freeSpinsR.value.grants || []).reduce((a, g) => a + g.remaining, 0);
+        }
         this._render();
+        if (this._balanceUnavailable) {
+          this.winStrip && (this.winStrip.textContent = 'Reconnecting to your balance…');
+        }
       } catch (err) {
         this._fatal(err.message || 'Failed to load game.');
       }
@@ -378,13 +399,25 @@
       this.reelGrid = $el('div', { style: {
         display: 'grid', gridTemplateColumns: `repeat(${game.reels}, 1fr)`, gap: '.4rem',
       }});
+      // Seed the idle grid with the game's REAL symbols (random per cell)
+      // so the reels look like a slot at rest. Previously every cell was
+      // built with the literal '?' placeholder — which _symbolGlyph maps
+      // to "?" — so before the first spin the whole grid showed question
+      // marks ("reels don't display properly"). Math.random is fine here:
+      // this is purely cosmetic idle decoration, not an outcome (the
+      // server decides every real spin; the roll animation already uses
+      // Math.random the same way).
+      const idleSymbols = (game.symbols && game.symbols.length)
+        ? game.symbols
+        : ['cherry', 'lemon', 'orange', 'plum', 'bar', 'sevens', 'wild'];
       for (let r = 0; r < game.reels; r++) {
         const col = $el('div', { style: {
           background: this.theme.reelBg || '#0a0a15', borderRadius: '10px',
           border: `1px solid ${primary}33`, padding: '.3rem', display: 'flex', flexDirection: 'column', gap: '.3rem',
         }});
         for (let y = 0; y < game.rows; y++) {
-          col.appendChild(this._makeCell('?', r, y));
+          const sym = idleSymbols[(Math.random() * idleSymbols.length) | 0];
+          col.appendChild(this._makeCell(sym, r, y));
         }
         this.reelGrid.appendChild(col);
       }

@@ -611,8 +611,18 @@ function bindCatchAll() {
       setHeaders(res, filePath) {
         const ext = path.extname(filePath).toLowerCase();
         if (/bundle\.[a-f0-9]+\.(min\.)?js|styles\.[a-f0-9]+\.(min\.)?css/.test(filePath)) {
+          // Content-hashed bundles never change for a given URL → cache forever.
           res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
         } else if (ext === '.html') {
+          res.setHeader('Cache-Control', 'no-cache, must-revalidate');
+        } else if (ext === '.js' || ext === '.css') {
+          // UNHASHED client modules — casino-engine.js, api-client.js,
+          // css/*.css, etc. The 100 game pages reference these by a plain
+          // path with NO content hash, so a long max-age served stale
+          // code for up to an hour after every fix shipped (this is why
+          // a reel/UI fix appeared "not to work" until the cache expired).
+          // Revalidate on every load via ETag: a 304 is a few hundred
+          // bytes, and fixes reach players immediately.
           res.setHeader('Cache-Control', 'no-cache, must-revalidate');
         }
       },
@@ -630,7 +640,11 @@ function bindCatchAll() {
         if (ext === '.html') {
           res.setHeader('Cache-Control', 'no-cache, must-revalidate');
         } else if (['.css', '.js'].includes(ext)) {
-          res.setHeader('Cache-Control', 'public, max-age=604800');
+          // Was max-age=604800 (7 DAYS) — unhashed client JS/CSS would be
+          // a week stale after a deploy. Revalidate via ETag so fixes
+          // ship immediately. (Hashed bundles aren't served by this dev
+          // branch; in production the bundle branch above handles them.)
+          res.setHeader('Cache-Control', 'no-cache, must-revalidate');
         } else if (['.png', '.jpg', '.jpeg', '.webp', '.svg', '.woff2', '.woff'].includes(ext)) {
           res.setHeader('Cache-Control', 'public, max-age=2592000');
         }
