@@ -1132,6 +1132,7 @@
     async _spinWithRetry(opts) {
       // 3 retries on transient errors (network, 5xx, timeout). Same
       // nonce each attempt so the server can dedupe.
+      const api = window.MatrixSpinsAPI; // method-local — `api` is NOT module-scoped
       const BACKOFFS = [0, 500, 1500, 4000];
       let lastErr = null;
       for (let attempt = 0; attempt < BACKOFFS.length; attempt++) {
@@ -1235,6 +1236,7 @@
       // not, just clear the stale entry — the bet was never charged.
       const pending = this._readPendingNonce();
       if (!pending) return;
+      const api = window.MatrixSpinsAPI; // method-local — `api` is NOT module-scoped
       try {
         const recovered = await api.spinByNonce(pending.nonce);
         if (recovered && recovered.recovered) {

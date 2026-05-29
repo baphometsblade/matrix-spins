@@ -1055,10 +1055,29 @@ router.post('/', authenticate, async (req, res) => {
         // replay branch at the top of this route. NULL when the client
         // didn't supply one (older clients or pages that don't enable
         // recovery) — the partial unique index excludes NULLs.
-        await db.run(
-            'INSERT INTO spins (user_id, game_id, bet_amount, result_grid, win_amount, rng_seed, client_nonce) VALUES (?, ?, ?, ?, ?, ?, ?)',
-            [userId, gameId, usedFreeSpin ? 0 : bet, JSON.stringify(spinResult.grid), spinResult.winAmount, spinResult.seed, nonce || null]
-        );
+        //
+        // This INSERT runs AFTER the financial transaction has already
+        // committed (balance debit + win credit). The per-user mutex
+        // (activeSpins) prevents same-instance concurrent spins, so a
+        // unique-constraint violation here can only happen in a rare
+        // cross-instance nonce race. If it does, the financial state is
+        // already consistent — we must NOT 500 the player on a spin that
+        // actually happened. Swallow the duplicate-key error (one audit
+        // row already exists from the instance that won the race) and let
+        // the response proceed with this request's computed outcome.
+        try {
+            await db.run(
+                'INSERT INTO spins (user_id, game_id, bet_amount, result_grid, win_amount, rng_seed, client_nonce) VALUES (?, ?, ?, ?, ?, ?, ?)',
+                [userId, gameId, usedFreeSpin ? 0 : bet, JSON.stringify(spinResult.grid), spinResult.winAmount, spinResult.seed, nonce || null]
+            );
+        } catch (insErr) {
+            const msg = String(insErr && insErr.message || insErr);
+            if (/unique|constraint|duplicate/i.test(msg)) {
+                console.warn('[Spin] duplicate client_nonce on INSERT (cross-instance race) — spin already logged, continuing:', nonce);
+            } else {
+                throw insErr; // genuine DB error — let the outer handler deal with it
+            }
+        }
 
         // ── Update game stats (house edge tracking) ──
         await houseEdge.updateGameStats(db, gameId, usedFreeSpin ? 0 : bet, spinResult.winAmount);
