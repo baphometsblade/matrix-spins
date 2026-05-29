@@ -6,6 +6,34 @@
 # /api/health/ping endpoint (no DB hit) so cold-start PG warmups don't
 # fail the deploy. Heavy readiness probe is /api/health/ready.
 # ─────────────────────────────────────────────────────────────────────
+# ── Render-managed PostgreSQL ────────────────────────────────────────
+# Replaces the external Neon database (whose free-tier compute quota was
+# exhausted, putting the live site in degraded mode with all money ops
+# returning 503). This provisions a PERSISTENT Render Postgres and wires
+# DATABASE_URL into the web service automatically via `fromDatabase`
+# below — no manual connection string to copy.
+#
+# Plan note: `basic-256mb` is the entry PAID tier (persistent, no 90-day
+# expiry, no compute-hour quota — unlike free Postgres). Bump to
+# basic-1gb / pro-* in the dashboard as traffic grows. Do NOT use `free`
+# here: Render free Postgres expires after 90 days and is wiped, which
+# would reproduce the exact degraded-mode outage we're fixing.
+#
+# If you ALREADY have a separate Render Postgres you pay for and want to
+# reuse it instead of this blueprint-managed one: delete this `databases`
+# block + the `fromDatabase` wiring below, uncomment the `DATABASE_URL`
+# (sync:false) env var, and paste that DB's *Internal* Connection String
+# in the dashboard.
+databases:
+  - name: matrix-spins-db
+    plan: basic-256mb
+    region: oregon
+    databaseName: matrixspins
+    user: matrixspins
+    # Lock down inbound access — only the web service (same Render private
+    # network) reaches it via the internal connection string.
+    ipAllowList: []
+
 services:
   - type: web
     name: matrix-spins
@@ -59,13 +87,21 @@ services:
       - key: BTC_WALLET_ADDRESS
         value: "bc1qtl6rrtzcnrjycjdccm08d42u2qucu7qnz7ma0q"
 
-      # ── Database (REQUIRED — provision PostgreSQL on Neon/Supabase/Render) ──
-      # Without DATABASE_URL the server runs SQLite which is wiped on every
-      # redeploy — money operations will be permanently blocked in degraded mode.
-      # Set this manually in the Render dashboard with a real connection string:
-      #   postgresql://user:pass@host:5432/dbname?sslmode=require
-      # - key: DATABASE_URL
-      #   sync: false
+      # ── Database — Render-managed PostgreSQL (see `databases:` above) ──
+      # Auto-wired from the matrix-spins-db instance: Render injects the
+      # internal connection string at deploy time. No manual step. When PG
+      # is reachable the server exits degraded mode automatically (within
+      # the 5-min reconnect loop) and money operations resume.
+      - key: DATABASE_URL
+        fromDatabase:
+          name: matrix-spins-db
+          property: connectionString
+      #
+      # (Reuse an existing Render Postgres instead? Remove the two lines
+      #  of `fromDatabase` wiring + the `databases:` block above, then:
+      #   - key: DATABASE_URL
+      #     sync: false
+      #  and paste the Internal Connection String in the dashboard.)
 
       # ── Stripe (REQUIRED for card deposits — set manually in dashboard) ──
       # - key: STRIPE_SECRET_KEY
