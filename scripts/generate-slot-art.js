@@ -66,6 +66,10 @@ const THEME_ART = {
     'Animals / Wildlife':        'in the editorial style of professional National Geographic wildlife photography — a powerful apex predator in dramatic wilderness, intense direct eye contact, richly detailed fur and feathers, golden-hour rim light, telephoto compression, ultra-sharp focus on the eyes',
     'Wildcard / Experimental':   'in the bold graphic style of a contemporary modernist propaganda-poster pop art print — a striking abstract composition with vivid flat color blocks, floating geometric prisms and gold accents, dynamic asymmetric layout, clean vector-illustrated edges',
     'Wildcard':                  'in the lavish style of a 1920s Art Deco luxury illustration (Erté, Tamara de Lempicka) — cascading gold coins, glittering diamonds and jewels on deep velvet beneath a dramatic spotlight, gold-leaf accents, geometric Egyptian-revival patterns, gilded-age aesthetic',
+    // After-Dark collection (18+): TASTEFUL, ELEGANT glamour only — Art Deco
+    // glamour poster / luxury perfume-ad aesthetic. Explicitly classy and
+    // fully-clothed; the negative prompt further bars any explicit content.
+    'After Dark / Glamour':      'in the elegant style of a vintage 1920s Art Deco glamour poster and a luxury perfume advertisement (Erté, Tamara de Lempicka) — a sophisticated, tasteful after-dark nightlife scene: deep velvet and gold filigree, champagne coupes, red roses, a masquerade mask and distant neon city lights, sensual mysterious mood conveyed through lighting and shadow, refined and classy, rich jewel tones, dramatic single-spotlight, gold-leaf accents, fully-clothed elegant silhouettes only',
 };
 const DEFAULT_ART = 'in the lavish style of a 1920s Art Deco luxury illustration with cascading gold and jewels on velvet, gold-leaf accents, geometric patterns, gilded-age aesthetic';
 
@@ -102,7 +106,10 @@ function buildPrompt(game) {
 
 const NEGATIVE = 'text, words, letters, numbers, digits, typography, caption, label, title, ' +
     'watermark, signature, logo, brand, UI, HUD, buttons, score, menu, frame, border, ' +
-    'deformed, blurry, low quality, jpeg artifacts, extra limbs, mutated, ugly, flat, dull';
+    'deformed, blurry, low quality, jpeg artifacts, extra limbs, mutated, ugly, flat, dull, ' +
+    // Keep the After-Dark collection strictly tasteful — bar any explicit output.
+    'nudity, nude, naked, nsfw, explicit, pornographic, sexual content, suggestive nudity, ' +
+    'lingerie, underwear, exposed skin, cleavage, fetish';
 
 // ── Minimal HTTP helpers (no deps) ──
 function httpJson(method, urlPath, body) {

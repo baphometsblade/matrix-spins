@@ -65,6 +65,8 @@
   // Multi-word IDs are hyphenated to match the registry's shape.
   // ──────────────────────────────────────────────────────────────────
   const SYMBOL_GLYPHS = {
+    // ── After Dark collection (18+) ──
+    martini: '🍸', sax: '🎷', lips: '💋', shell: '🐚', trident: '🔱', siren: '🧜‍♀️', rose: '🌹', cocktail: '🍹', stiletto: '👠', champagne: '🍾', candle: '🕯️', wine: '🍷', heart: '❤️', vinyl: '💿', disco: '🪩', serpent: '🐍', goblet: '🥃', raven: '🐦‍⬛', ace: '🅰️', queen: '👸', dice: '🎲', cigar: '🚬', lipstick: '💄',
     // Generic slot specials
     wild: '🃏', scatter: '⭐', bonus: '🎁', mystery: '❓', prize: '🎁',
     bell: '🔔', 'gold-bell': '🔔', bar: '📊', 'triple-bar': '📊',
