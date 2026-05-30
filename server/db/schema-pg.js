@@ -774,6 +774,43 @@ const TABLES = [
         claimed INTEGER DEFAULT 0,
         UNIQUE(user_id, mission_date, slot)
     )`,
+
+    // ── Tables historically created lazily by route bootstraps. They MUST be
+    // defined here too, because the INDEXES array below builds indexes ON these
+    // tables during init(). On a fresh PostgreSQL database the route bootstraps
+    // have not run yet at init() time, so a `CREATE INDEX ... ON self_exclusions`
+    // would throw `relation "self_exclusions" does not exist`, fail init, and trip
+    // DEGRADED MODE — blocking every money operation on a real-money casino.
+    // Column sets MUST match the route bootstrap definitions (selfexclusion.routes.js,
+    // notifications.routes.js, audit-log util) so route INSERTs keep working. ──
+    `CREATE TABLE IF NOT EXISTS self_exclusions (
+        id SERIAL PRIMARY KEY,
+        user_id INTEGER NOT NULL,
+        exclusion_type TEXT NOT NULL,
+        reason TEXT,
+        starts_at TIMESTAMPTZ DEFAULT NOW(),
+        ends_at TEXT,
+        is_active INTEGER DEFAULT 1,
+        created_at TIMESTAMPTZ DEFAULT NOW()
+    )`,
+    `CREATE TABLE IF NOT EXISTS notifications (
+        id SERIAL PRIMARY KEY,
+        user_id INTEGER NOT NULL,
+        type TEXT NOT NULL,
+        title TEXT NOT NULL,
+        body TEXT NOT NULL DEFAULT '',
+        link_action TEXT,
+        "read" INTEGER DEFAULT 0,
+        created_at TIMESTAMPTZ DEFAULT NOW()
+    )`,
+    `CREATE TABLE IF NOT EXISTS audit_log (
+        id SERIAL PRIMARY KEY,
+        event_type TEXT NOT NULL,
+        user_id INTEGER,
+        ip TEXT,
+        details TEXT,
+        created_at TIMESTAMPTZ DEFAULT NOW()
+    )`,
 ];
 
 const INDEXES = [

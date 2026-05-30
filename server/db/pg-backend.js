@@ -152,9 +152,19 @@ class PgBackend {
             }
         }
 
-        // Indexes
+        // Indexes — per-index try/catch. An index is a PERFORMANCE optimization;
+        // a single failing CREATE INDEX must NEVER abort init() and trip degraded
+        // mode on a real-money casino. Some indexes target tables that are created
+        // lazily by route bootstraps (self_exclusions, notifications, audit_log…) —
+        // those tables are now also defined in schema.TABLES above so these succeed,
+        // but the guard is kept as defense-in-depth against future schema drift.
+        // (Mirrors the DEFERRED_INDEXES try/catch in sqlite-backend.js.)
         for (const idx of schema.INDEXES) {
-            await this.pool.query(idx);
+            try {
+                await this.pool.query(idx);
+            } catch (err) {
+                console.warn('[DB/PG] Skipping index (non-fatal):', err.message);
+            }
         }
 
         // Seed admin

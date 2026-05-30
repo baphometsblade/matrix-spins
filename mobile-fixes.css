@@ -584,3 +584,76 @@
   }
 
 }
+
+/* ════════════════════════════════════════════════════════════════════
+   MOBILE READABILITY FLOOR  (added 2026-05-30)
+   A live audit of the lobby at 390px width found large amounts of
+   secondary text rendering at 9–11px — jackpot-ticker tier labels
+   (9.3px), bottom-nav labels (10px), studio/mechanic badges (10px),
+   card titles (10.9px), filter chips & stat tags (11px). The hero and
+   primary buttons were fine, but the supporting labels read as "tiny",
+   which is what users report as "everything is too small on mobile".
+
+   Policy: primary readable text → 14px floor; dense decorative pills /
+   multi-item bars (corner badges, 5-up bottom nav) → 12px floor, because
+   forcing 14px there overflows their fixed containers. Tappable controls
+   get a 44px min-height (WCAG 2.5.5).
+   ════════════════════════════════════════════════════════════════════ */
+@media (max-width: 640px) {
+
+  /* Game-card title — primary, was ~10.9px → readable 14px */
+  .game-card .name,
+  .game-card-name,
+  .game-card .game-card-name {
+    font-size: 14px !important;
+    line-height: 1.3 !important;
+  }
+
+  /* Card meta / chips / tags — readable 12px floor */
+  .game-card .label,
+  .game-mechanic,
+  .stat-tag,
+  .studio-card-count,
+  .cert-badge,
+  .showcase-card-rtp {
+    font-size: 12px !important;
+  }
+
+  /* Filter chips double as tap targets — bump text + guarantee 44px tall */
+  .filter-chip {
+    font-size: 13px !important;
+    min-height: 44px !important;
+    display: inline-flex !important;
+    align-items: center !important;
+  }
+
+  /* Corner badges (new / hot / featured) — decorative, modest 12px floor */
+  .badge,
+  .badge.new,
+  .badge.featured,
+  .game-studio-badge {
+    font-size: 12px !important;
+  }
+
+  /* Jackpot ticker tier labels — were 9.3px, lift to 11px (cramped row;
+     the dollar figures beside them are already larger) */
+  .jackpot-tier {
+    font-size: 11px !important;
+  }
+
+  /* Bottom mobile nav labels — were 10px; 11px keeps 5 items on one row */
+  .mobile-nav-item,
+  .mobile-nav-item.active {
+    font-size: 11px !important;
+  }
+
+  /* Button-like controls: enforce a 44px touch target. Scoped to
+     button/role=button and common CTA classes — NOT bare text links,
+     so footer link lists don't get bloated. */
+  button,
+  [role="button"],
+  a.btn, a.cta, a.deposit-btn, a.play-btn, a.btn-primary,
+  input[type="button"], input[type="submit"] {
+    min-height: 44px !important;
+  }
+}
