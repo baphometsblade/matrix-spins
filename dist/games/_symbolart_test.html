@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"><title>symbol-art render test</title>
+<style>html,body{height:100%;margin:0;background:#0D0309}</style></head>
+<body>
+<div id="game-container" style="width:100%;min-height:100vh"></div>
+<script>
+// Minimal API stub so the real engine boots without auth — fetches the REAL
+// game config + uses the REAL /data/symbol-art.json + /assets/symbols tiles.
+window.MatrixSpinsAPI = {
+  formatCents: c => '$' + ((c||0)/100).toFixed(2),
+  loadSession: async () => ({ id: 1, username: 'tester' }),
+  getGame: async () => (await fetch('/api/spin/games/midnight-velvet-club')).json(),
+  getBalance: async () => ({ availableCents: 100000, currency: 'USD' }),
+  getSeeds: async () => ({ serverSeedHash: 'x', clientSeed: 'y', nonce: 0 }),
+  getFreeSpins: async () => ({ grants: [] }),
+  myGameStats: async () => ({}),
+};
+</script>
+<script src="../js/casino-engine.js"></script>
+<script>
+  CasinoEngine.init('game-container', { id: 'midnight-velvet-club', name: 'Midnight Velvet' });
+</script>
+</body></html>

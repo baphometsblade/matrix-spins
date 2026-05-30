@@ -321,6 +321,10 @@
         if (freeSpinsR.status === 'fulfilled' && freeSpinsR.value) {
           this.state.freeSpinsAvailable = (freeSpinsR.value.grants || []).reduce((a, g) => a + g.remaining, 0);
         }
+        // Load the per-game symbol-art manifest before first paint so reels
+        // render bitmap tiles directly (no emoji→image flash). Tolerant:
+        // never throws, so a missing/!ok manifest just yields emoji reels.
+        await this._loadSymbolArt();
         this._render();
         if (this._balanceUnavailable) {
           this.winStrip && (this.winStrip.textContent = 'Reconnecting to your balance…');
@@ -565,7 +569,11 @@
           .ce-btn.primary { background: linear-gradient(180deg, ${primary}, ${shade(primary,-20)}); color: #1a1205; border: none; font-weight: 800; letter-spacing: 2px; padding: .7rem 2rem; text-transform: uppercase; box-shadow: 0 4px 14px ${primary}55; }
           .ce-btn.primary:hover:not(:disabled) { box-shadow: 0 6px 22px ${primary}88; }
           .ce-btn.primary:active:not(:disabled) { transform: scale(0.95); box-shadow: 0 2px 8px ${primary}66; }
-          .ce-cell { aspect-ratio: 1; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 1.4rem; color: white; text-shadow: 0 2px 4px rgba(0,0,0,.5); transition: transform .25s, filter .25s; user-select: none; }
+          .ce-cell { aspect-ratio: 1; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 1.4rem; color: white; text-shadow: 0 2px 4px rgba(0,0,0,.5); transition: transform .25s, filter .25s; user-select: none; overflow: hidden; }
+          /* Bitmap symbol tile (per-game custom art). Fills the cell — the
+             tile already includes an integrated themed background, so the
+             cell gradient shows only if the image fails to decode. */
+          .ce-cell-img { width: 100%; height: 100%; display: block; border-radius: inherit; object-fit: cover; object-position: center; pointer-events: none; -webkit-user-drag: none; user-select: none; }
           .ce-cell.just-landed { animation: ceLand 240ms cubic-bezier(.34,1.4,.64,1) both; }
           .ce-cell.highlight { animation: ceWinGlow 0.8s ease-in-out infinite alternate; box-shadow: 0 0 12px ${primary}, 0 0 24px ${primary}66; z-index: 1; position: relative; }
           @keyframes ceLand { 0% { transform: translateY(-14px) scale(0.94); filter: brightness(0.7); } 60% { transform: translateY(2px) scale(1.04); filter: brightness(1.1); } 100% { transform: translateY(0) scale(1); filter: brightness(1); } }
@@ -629,9 +637,57 @@
       }
     }
 
+    // ── Custom symbol art (per-game bitmap tiles) ──────────────────────
+    // Loads /data/symbol-art.json ONCE (cached on window, shared across
+    // every engine instance/page). Fire-and-forget tolerant: any failure
+    // (404, parse error, offline) leaves the manifest empty and every cell
+    // falls back to the emoji glyph — so games without art are unaffected.
+    async _loadSymbolArt() {
+      if (window.CE_SYMBOL_ART) { this._symbolArt = window.CE_SYMBOL_ART; return; }
+      if (!window.__CE_SYMBOL_ART_PROMISE) {
+        window.__CE_SYMBOL_ART_PROMISE = fetch('/data/symbol-art.json', { credentials: 'omit', cache: 'force-cache' })
+          .then(r => (r.ok ? r.json() : {}))
+          .catch(() => ({}))
+          .then(m => { window.CE_SYMBOL_ART = m || {}; return window.CE_SYMBOL_ART; });
+      }
+      try { this._symbolArt = await window.__CE_SYMBOL_ART_PROMISE; }
+      catch (_) { this._symbolArt = {}; }
+    }
+
+    // Resolve the bitmap-tile URL for (this game, symbol), or null.
+    _symbolArtURL(sym) {
+      const m = this._symbolArt || window.CE_SYMBOL_ART;
+      if (!m || !this.gameId) return null;
+      const g = m[this.gameId];
+      if (!g) return null;
+      const rel = g[String(sym || '').toLowerCase()];
+      return rel ? ('/assets/symbols/' + rel) : null;
+    }
+
+    // Fill a reel cell with a bitmap tile when art exists, else the emoji
+    // glyph. A decode/404 error on the <img> falls straight back to glyph,
+    // so a single missing tile never blanks a cell.
+    _fillCell(cell, sym) {
+      const url = this._symbolArtURL(sym);
+      if (url) {
+        const img = document.createElement('img');
+        img.className = 'ce-cell-img';
+        img.alt = '';
+        img.loading = 'lazy';
+        img.decoding = 'async';
+        img.addEventListener('error', () => { cell.textContent = this._symbolGlyph(sym); }, { once: true });
+        img.src = url;
+        cell.appendChild(img);
+      } else {
+        cell.textContent = this._symbolGlyph(sym);
+      }
+    }
+
     _makeCell(sym, r, y) {
       const [a, b] = symbolColors(sym, r * 3 + y);
-      return $el('div', { class: 'ce-cell', style: { background: `linear-gradient(135deg, ${a}, ${b})` } }, this._symbolGlyph(sym));
+      const cell = $el('div', { class: 'ce-cell', style: { background: `linear-gradient(135deg, ${a}, ${b})` } });
+      this._fillCell(cell, sym);
+      return cell;
     }
 
     _symbolGlyph(sym) {
@@ -659,7 +715,7 @@
       cell.innerHTML = '';
       const [a, b] = symbolColors(sym, r * 3 + y);
       cell.style.background = `linear-gradient(135deg, ${a}, ${b})`;
-      cell.textContent = this._symbolGlyph(sym);
+      this._fillCell(cell, sym);
     }
 
     _updateBalanceChip(prevCents) {

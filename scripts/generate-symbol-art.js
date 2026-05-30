@@ -137,28 +137,32 @@ function nameSubject(name) {
 }
 
 function buildPrompt(game, symId) {
-    const bg = THEME_BG[game.theme] || DEFAULT_BG;
     const subj = symbolSubject(symId);
     const hint = symbolHint(symId);
-    const gameName = nameSubject(game.name);
-    // SQUARE composition. ONE big centred subject. INTEGRATED background.
-    // No "slot"/"icon"/"sticker"/"title" framing — those make SDXL render
-    // garbled UI text and frames the negative prompt can't reliably kill.
+    // Tight ISOLATED PRODUCT SHOT of the symbol object — the object must be
+    // the subject and fill the frame. We deliberately use a SIMPLE velvet
+    // backdrop rather than the full theme scene (THEME_BG), because the rich
+    // scene made SDXL render figures/empty frames instead of the object
+    // (e.g. "pearl" → a woman, "feather" → an empty picture frame). No people.
     return (
-        `A ${subj} as the single large centred focal subject, ${hint}, ` +
-        `set against ${bg}. ` +
-        `Inspired by the theme "${gameName}". ` +
-        'Square composition, the subject fills most of the frame, ' +
-        'ultra-detailed, cinematic dramatic lighting, rich glossy highlights, ' +
-        'high contrast, photorealistic, 8k, premium casino game tile aesthetic, ' +
-        'no border, no frame, no UI, no text anywhere in the image.'
+        `A luxury product macro photograph of ${subj} — ${hint} — ` +
+        'as the single isolated subject, centred and filling most of the square frame, ' +
+        'resting on a simple deep-velvet backdrop with soft warm-gold bokeh, ' +
+        'ultra-detailed, dramatic studio lighting, rich glossy highlights, high contrast, ' +
+        'photorealistic, 8k, premium casino game-symbol tile, clean uncluttered background, ' +
+        'no people, no human figure, no picture frame, no border, no text.'
     );
 }
 
 const NEGATIVE = 'text, words, letters, numbers, digits, typography, caption, label, title, ' +
     'watermark, signature, logo, brand, UI, HUD, buttons, score, menu, frame, border, ' +
     'multiple subjects, collage, grid, split screen, tiny details, busy background, ' +
-    'deformed, blurry, low quality, jpeg artifacts, extra limbs, mutated, ugly, flat, dull';
+    'deformed, blurry, low quality, jpeg artifacts, extra limbs, mutated, ugly, flat, dull, ' +
+    // Symbols are OBJECTS — bar people entirely (also fixes "pearl"→woman),
+    // and bar any explicit output as belt-and-suspenders.
+    'person, people, human, human figure, portrait, face, man, woman, body, ' +
+    'nudity, nude, naked, nsfw, explicit, pornographic, sexual content, ' +
+    'lingerie, underwear, exposed skin, cleavage, fetish';
 
 // ── Minimal HTTP helpers (no deps) — same shape as generate-slot-art ──
 function httpJson(method, urlPath, body) {
