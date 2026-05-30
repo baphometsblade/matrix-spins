@@ -601,7 +601,11 @@
    ════════════════════════════════════════════════════════════════════ */
 @media (max-width: 640px) {
 
-  /* Game-card title — primary, was ~10.9px → readable 14px */
+  /* Game-card title — the most prominent repeated lobby text (120×). The live
+     DOM class is .game-name (inside .game-info); was 13px → 14px floor. The
+     other aliases are kept for older/other card markup. */
+  .game-card .game-name,
+  .game-info .game-name,
   .game-card .name,
   .game-card-name,
   .game-card .game-card-name {
