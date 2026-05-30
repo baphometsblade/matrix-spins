@@ -70,6 +70,13 @@ const THEME_ART = {
     // glamour poster / luxury perfume-ad aesthetic. Explicitly classy and
     // fully-clothed; the negative prompt further bars any explicit content.
     'After Dark / Glamour':      'in the elegant style of a vintage 1920s Art Deco glamour poster and a luxury perfume advertisement (Erté, Tamara de Lempicka) — a sophisticated, tasteful after-dark nightlife scene: deep velvet and gold filigree, champagne coupes, red roses, a masquerade mask and distant neon city lights, sensual mysterious mood conveyed through lighting and shadow, refined and classy, rich jewel tones, dramatic single-spotlight, gold-leaf accents, fully-clothed elegant silhouettes only',
+    // Crimson Velvet collection (18+): ornate Art Nouveau ROMANCE — Mucha
+    // decorative panel. FIGURE-FREE still life of romantic OBJECTS only —
+    // this guarantees a tasteful result (the SDXL base model renders
+    // undraped figures from "sensual figure" prompts even with strong
+    // negatives, so we simply do not request a figure at all). On-theme
+    // for the slot symbols regardless.
+    'After Dark / Romance':      'in the ornate decorative style of an Alphonse Mucha Art Nouveau panel — a lavish romantic STILL LIFE with NO people and NO human figures: a lush bouquet of red and pink roses, a lit golden candelabra, an ornate lace hand-fan, a jewelled masquerade mask and flowing silk ribbons, framed by swirling gold-leaf floral arabesques and a stained-glass halo, warm crimson, plum and gold palette, intricate organic linework, an ornamental still-life panel, absolutely no people, no human figures, no portrait',
 };
 const DEFAULT_ART = 'in the lavish style of a 1920s Art Deco luxury illustration with cascading gold and jewels on velvet, gold-leaf accents, geometric patterns, gilded-age aesthetic';
 
