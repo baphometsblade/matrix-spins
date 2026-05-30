@@ -1,0 +1,726 @@
+{
+  "_generated": "scripts/map-and-generate-assets.js",
+  "_note": "Maps hyphen game slugs to underscore art assets. background = final per-slug webp under assets/backgrounds/slots/.",
+  "games": {
+    "aboriginal-dreamtime-quest": {
+      "background": "aboriginal-dreamtime-quest.webp",
+      "sourceBackground": null,
+      "backgroundOrigin": "generate",
+      "symbolDir": null
+    },
+    "alchemist-transmutation-vault": {
+      "background": "alchemist-transmutation-vault.webp",
+      "sourceBackground": null,
+      "backgroundOrigin": "generate",
+      "symbolDir": null
+    },
+    "alien-artifact-hunt": {
+      "background": "alien-artifact-hunt.webp",
+      "sourceBackground": null,
+      "backgroundOrigin": "generate",
+      "symbolDir": null
+    },
+    "anubis-guardian-souls": {
+      "background": "anubis-guardian-souls.webp",
+      "sourceBackground": "tomb_anubis_bg.webp",
+      "backgroundOrigin": "copy",
+      "symbolDir": "tomb_anubis"
+    },
+    "artdeco-cherry-royale": {
+      "background": "artdeco-cherry-royale.webp",
+      "sourceBackground": null,
+      "backgroundOrigin": "generate",
+      "symbolDir": null
+    },
+    "asteroid-lockdown": {
+      "background": "asteroid-lockdown.webp",
+      "sourceBackground": null,
+      "backgroundOrigin": "generate",
+      "symbolDir": null
+    },
+    "athenas-golden-shield": {
+      "background": "athenas-golden-shield.webp",
+      "sourceBackground": null,
+      "backgroundOrigin": "generate",
+      "symbolDir": null
+    },
+    "banshee-wailing-spirits": {
+      "background": "banshee-wailing-spirits.webp",
+      "sourceBackground": "banshee_wail_bg.webp",
+      "backgroundOrigin": "copy",
+      "symbolDir": "banshee_wail"
+    },
+    "bard-mystical-melody": {
+      "background": "bard-mystical-melody.webp",
+      "sourceBackground": null,
+      "backgroundOrigin": "generate",
+      "symbolDir": null
+    },
+    "bastet-feline-fortune": {
+      "background": "bastet-feline-fortune.webp",
+      "sourceBackground": null,
+      "backgroundOrigin": "generate",
+      "symbolDir": null
+    },
+    "bear-grizzly-gold": {
+      "background": "bear-grizzly-gold.webp",
+      "sourceBackground": null,
+      "backgroundOrigin": "generate",
+      "symbolDir": null
+    },
+    "billabong-gold-rush": {
+      "background": "billabong-gold-rush.webp",
+      "sourceBackground": null,
+      "backgroundOrigin": "generate",
+      "symbolDir": null
+    },
+    "boomerang-tribal-magic": {
+      "background": "boomerang-tribal-magic.webp",
+      "sourceBackground": "boomerang_luck_bg.webp",
+      "backgroundOrigin": "copy",
+      "symbolDir": "boomerang_luck"
+    },
+    "cannonball-express": {
+      "background": "cannonball-express.webp",
+      "sourceBackground": null,
+      "backgroundOrigin": "generate",
+      "symbolDir": null
+    },
+    "carnival-heat": {
+      "background": "carnival-heat.webp",
+      "sourceBackground": "carnival_crown_bg.webp",
+      "backgroundOrigin": "copy",
+      "symbolDir": "carnival_crown"
+    },
+    "carnival-spinning-wheel": {
+      "background": "carnival-spinning-wheel.webp",
+      "sourceBackground": "carnival_crown_bg.webp",
+      "backgroundOrigin": "copy",
+      "symbolDir": "carnival_crown"
+    },
+    "casanovas-venice": {
+      "background": "casanovas-venice.webp",
+      "sourceBackground": null,
+      "backgroundOrigin": "generate",
+      "symbolDir": null
+    },
+    "cherry-blossom-bonus": {
+      "background": "cherry-blossom-bonus.webp",
+      "sourceBackground": null,
+      "backgroundOrigin": "generate",
+      "symbolDir": null
+    },
+    "cherry-blossom-temple": {
+      "background": "cherry-blossom-temple.webp",
+      "sourceBackground": "dragon_temple_bg.webp",
+      "backgroundOrigin": "copy",
+      "symbolDir": "dragon_temple"
+    },
+    "cherry-lips-cabaret": {
+      "background": "cherry-lips-cabaret.webp",
+      "sourceBackground": null,
+      "backgroundOrigin": "generate",
+      "symbolDir": null
+    },
+    "circus-spectacular-spins": {
+      "background": "circus-spectacular-spins.webp",
+      "sourceBackground": "circus_thrills_bg.webp",
+      "backgroundOrigin": "copy",
+      "symbolDir": "circus_thrills"
+    },
+    "classic-gold-vault": {
+      "background": "classic-gold-vault.webp",
+      "sourceBackground": null,
+      "backgroundOrigin": "generate",
+      "symbolDir": null
+    },
+    "cleopatra-treasure-vault": {
+      "background": "cleopatra-treasure-vault.webp",
+      "sourceBackground": "cleopatra_gold_bg.webp",
+      "backgroundOrigin": "copy",
+      "symbolDir": "cleopatra_moon"
+    },
+    "clockwork-heist": {
+      "background": "clockwork-heist.webp",
+      "sourceBackground": "clockwork_realm_bg.webp",
+      "backgroundOrigin": "copy",
+      "symbolDir": null
+    },
+    "cosmic-raider-mission": {
+      "background": "cosmic-raider-mission.webp",
+      "sourceBackground": "cosmic_nova_bg.webp",
+      "backgroundOrigin": "copy",
+      "symbolDir": "cosmic_nova"
+    },
+    "cowboy-western-showdown": {
+      "background": "cowboy-western-showdown.webp",
+      "sourceBackground": null,
+      "backgroundOrigin": "generate",
+      "symbolDir": null
+    },
+    "crimson-boudoir": {
+      "background": "crimson-boudoir.webp",
+      "sourceBackground": "crimson_fang_bg.webp",
+      "backgroundOrigin": "copy",
+      "symbolDir": "crimson_fang"
+    },
+    "crocodile-dundee-strike": {
+      "background": "crocodile-dundee-strike.webp",
+      "sourceBackground": "crocodile_dundee_bg.webp",
+      "backgroundOrigin": "copy",
+      "symbolDir": "crocodile_dundee"
+    },
+    "cursed-carnival-night": {
+      "background": "cursed-carnival-night.webp",
+      "sourceBackground": "cursed_night_bg.webp",
+      "backgroundOrigin": "copy",
+      "symbolDir": "cursed_night"
+    },
+    "dark-sorcerer-nexus": {
+      "background": "dark-sorcerer-nexus.webp",
+      "sourceBackground": null,
+      "backgroundOrigin": "generate",
+      "symbolDir": null
+    },
+    "darkness-reaper-call": {
+      "background": "darkness-reaper-call.webp",
+      "sourceBackground": null,
+      "backgroundOrigin": "generate",
+      "symbolDir": null
+    },
+    "demon-inferno-gateway": {
+      "background": "demon-inferno-gateway.webp",
+      "sourceBackground": "demon_chambers_bg.webp",
+      "backgroundOrigin": "copy",
+      "symbolDir": null
+    },
+    "diamond-deco-deluxe": {
+      "background": "diamond-deco-deluxe.webp",
+      "sourceBackground": "diamond_falls_bg.webp",
+      "backgroundOrigin": "copy",
+      "symbolDir": null
+    },
+    "diamonds-and-lace": {
+      "background": "diamonds-and-lace.webp",
+      "sourceBackground": "diamond_falls_bg.webp",
+      "backgroundOrigin": "copy",
+      "symbolDir": null
+    },
+    "dingo-desert-runner": {
+      "background": "dingo-desert-runner.webp",
+      "sourceBackground": "desert_dynasty_bg.webp",
+      "backgroundOrigin": "copy",
+      "symbolDir": "desert_dynasty"
+    },
+    "dragon-golden-fortune": {
+      "background": "dragon-golden-fortune.webp",
+      "sourceBackground": "dragon_coins_bg.webp",
+      "backgroundOrigin": "copy",
+      "symbolDir": "dragon_gate"
+    },
+    "druid-forest-magic": {
+      "background": "druid-forest-magic.webp",
+      "sourceBackground": "fae_forest_bg.webp",
+      "backgroundOrigin": "copy",
+      "symbolDir": "fae_forest"
+    },
+    "eagle-sky-sovereign": {
+      "background": "eagle-sky-sovereign.webp",
+      "sourceBackground": "eagle_summit_bg.webp",
+      "backgroundOrigin": "copy",
+      "symbolDir": "eagle_summit"
+    },
+    "elephant-safari-quest": {
+      "background": "elephant-safari-quest.webp",
+      "sourceBackground": "mega_safari_bg.webp",
+      "backgroundOrigin": "copy",
+      "symbolDir": null
+    },
+    "elven-archer-legends": {
+      "background": "elven-archer-legends.webp",
+      "sourceBackground": null,
+      "backgroundOrigin": "generate",
+      "symbolDir": null
+    },
+    "enchanted-grove-spirits": {
+      "background": "enchanted-grove-spirits.webp",
+      "sourceBackground": "enchanted_grove_bg.webp",
+      "backgroundOrigin": "copy",
+      "symbolDir": null
+    },
+    "enchantress-crystal-ball": {
+      "background": "enchantress-crystal-ball.webp",
+      "sourceBackground": "crystal_cavern_bg.webp",
+      "backgroundOrigin": "copy",
+      "symbolDir": "crystal_cavern"
+    },
+    "fairy-enchanted-forest": {
+      "background": "fairy-enchanted-forest.webp",
+      "sourceBackground": "fae_forest_bg.webp",
+      "backgroundOrigin": "copy",
+      "symbolDir": "fae_forest"
+    },
+    "forbidden-fruit": {
+      "background": "forbidden-fruit.webp",
+      "sourceBackground": "fruit_bonanza_bg.webp",
+      "backgroundOrigin": "copy",
+      "symbolDir": "fruit_bonanza"
+    },
+    "frontier-bounty-hunter": {
+      "background": "frontier-bounty-hunter.webp",
+      "sourceBackground": "wild_west_bounty_bg.webp",
+      "backgroundOrigin": "copy",
+      "symbolDir": "wild_west_bounty"
+    },
+    "fruit-fortune-wheel": {
+      "background": "fruit-fortune-wheel.webp",
+      "sourceBackground": "fruit_bonanza_bg.webp",
+      "backgroundOrigin": "copy",
+      "symbolDir": "fruit_bonanza"
+    },
+    "galaxy-gates-opener": {
+      "background": "galaxy-gates-opener.webp",
+      "sourceBackground": "galaxy_rush_bg.webp",
+      "backgroundOrigin": "copy",
+      "symbolDir": "galaxy_rush"
+    },
+    "geishas-secret": {
+      "background": "geishas-secret.webp",
+      "sourceBackground": null,
+      "backgroundOrigin": "generate",
+      "symbolDir": null
+    },
+    "ghost-haunted-mansion": {
+      "background": "ghost-haunted-mansion.webp",
+      "sourceBackground": "haunted_mansion_bg.webp",
+      "backgroundOrigin": "copy",
+      "symbolDir": "haunted_mansion"
+    },
+    "goddess-of-desire": {
+      "background": "goddess-of-desire.webp",
+      "sourceBackground": null,
+      "backgroundOrigin": "generate",
+      "symbolDir": null
+    },
+    "golden-cherry-cascade": {
+      "background": "golden-cherry-cascade.webp",
+      "sourceBackground": "golden_cascade_bg.webp",
+      "backgroundOrigin": "copy",
+      "symbolDir": "koi_cascade"
+    },
+    "golden-melons-paradise": {
+      "background": "golden-melons-paradise.webp",
+      "sourceBackground": "melon_feast_bg.webp",
+      "backgroundOrigin": "copy",
+      "symbolDir": "melon_feast"
+    },
+    "golden-phoenix-rising": {
+      "background": "golden-phoenix-rising.webp",
+      "sourceBackground": "phoenix_rising_bg.webp",
+      "backgroundOrigin": "copy",
+      "symbolDir": null
+    },
+    "golem-stone-guardian": {
+      "background": "golem-stone-guardian.webp",
+      "sourceBackground": null,
+      "backgroundOrigin": "generate",
+      "symbolDir": null
+    },
+    "hall-of-minotaurs": {
+      "background": "hall-of-minotaurs.webp",
+      "sourceBackground": null,
+      "backgroundOrigin": "generate",
+      "symbolDir": null
+    },
+    "high-roller-after-dark": {
+      "background": "high-roller-after-dark.webp",
+      "sourceBackground": null,
+      "backgroundOrigin": "generate",
+      "symbolDir": null
+    },
+    "horus-divine-judgment": {
+      "background": "horus-divine-judgment.webp",
+      "sourceBackground": null,
+      "backgroundOrigin": "generate",
+      "symbolDir": null
+    },
+    "imperial-dragon-ascent": {
+      "background": "imperial-dragon-ascent.webp",
+      "sourceBackground": "dragon_coins_bg.webp",
+      "backgroundOrigin": "copy",
+      "symbolDir": "dragon_gate"
+    },
+    "isis-magic-blessing": {
+      "background": "isis-magic-blessing.webp",
+      "sourceBackground": "isis_blessing_bg.webp",
+      "backgroundOrigin": "copy",
+      "symbolDir": "isis_blessing"
+    },
+    "jade-emperor-blessing": {
+      "background": "jade-emperor-blessing.webp",
+      "sourceBackground": "jade_emperor_bg.webp",
+      "backgroundOrigin": "copy",
+      "symbolDir": "jade_emperor"
+    },
+    "kangaroo-outback-bound": {
+      "background": "kangaroo-outback-bound.webp",
+      "sourceBackground": "opal_outback_bg.webp",
+      "backgroundOrigin": "copy",
+      "symbolDir": "opal_outback"
+    },
+    "koala-bush-bonanza": {
+      "background": "koala-bush-bonanza.webp",
+      "sourceBackground": null,
+      "backgroundOrigin": "generate",
+      "symbolDir": null
+    },
+    "koi-fish-abundance": {
+      "background": "koi-fish-abundance.webp",
+      "sourceBackground": "koi_ascension_bg.webp",
+      "backgroundOrigin": "copy",
+      "symbolDir": "koi_cascade"
+    },
+    "luck-prosperity-wheel": {
+      "background": "luck-prosperity-wheel.webp",
+      "sourceBackground": null,
+      "backgroundOrigin": "generate",
+      "symbolDir": null
+    },
+    "lucky-sevens-infinity": {
+      "background": "lucky-sevens-infinity.webp",
+      "sourceBackground": "infinity_mirror_bg.webp",
+      "backgroundOrigin": "copy",
+      "symbolDir": "infinity_mirror"
+    },
+    "mage-crystal-sanctuary": {
+      "background": "mage-crystal-sanctuary.webp",
+      "sourceBackground": "crystal_cavern_bg.webp",
+      "backgroundOrigin": "copy",
+      "symbolDir": "crystal_cavern"
+    },
+    "masquerade-seduction": {
+      "background": "masquerade-seduction.webp",
+      "sourceBackground": null,
+      "backgroundOrigin": "generate",
+      "symbolDir": null
+    },
+    "melon-madness-mixer": {
+      "background": "melon-madness-mixer.webp",
+      "sourceBackground": "melon_feast_bg.webp",
+      "backgroundOrigin": "copy",
+      "symbolDir": "melon_feast"
+    },
+    "merlin-arcane-wonders": {
+      "background": "merlin-arcane-wonders.webp",
+      "sourceBackground": "arcane_tower_bg.webp",
+      "backgroundOrigin": "copy",
+      "symbolDir": "arcane_tower"
+    },
+    "meteor-strike-mayhem": {
+      "background": "meteor-strike-mayhem.webp",
+      "sourceBackground": null,
+      "backgroundOrigin": "generate",
+      "symbolDir": null
+    },
+    "midnight-velvet-club": {
+      "background": "midnight-velvet-club.webp",
+      "sourceBackground": "velvet_lounge_bg.webp",
+      "backgroundOrigin": "copy",
+      "symbolDir": null
+    },
+    "moonlit-koi-garden": {
+      "background": "moonlit-koi-garden.webp",
+      "sourceBackground": "koi_ascension_bg.webp",
+      "backgroundOrigin": "copy",
+      "symbolDir": "koi_cascade"
+    },
+    "moonlit-tryst": {
+      "background": "moonlit-tryst.webp",
+      "sourceBackground": null,
+      "backgroundOrigin": "generate",
+      "symbolDir": null
+    },
+    "nebula-space-odyssey": {
+      "background": "nebula-space-odyssey.webp",
+      "sourceBackground": "space_odyssey_bg.webp",
+      "backgroundOrigin": "copy",
+      "symbolDir": "space_odyssey"
+    },
+    "necromancer-dark-arts": {
+      "background": "necromancer-dark-arts.webp",
+      "sourceBackground": null,
+      "backgroundOrigin": "generate",
+      "symbolDir": null
+    },
+    "neon-temptation": {
+      "background": "neon-temptation.webp",
+      "sourceBackground": "neon_nebula_bg.webp",
+      "backgroundOrigin": "copy",
+      "symbolDir": "neon_nebula"
+    },
+    "ninja-shadow-master": {
+      "background": "ninja-shadow-master.webp",
+      "sourceBackground": null,
+      "backgroundOrigin": "generate",
+      "symbolDir": null
+    },
+    "osiris-afterlife-riches": {
+      "background": "osiris-afterlife-riches.webp",
+      "sourceBackground": null,
+      "backgroundOrigin": "generate",
+      "symbolDir": null
+    },
+    "outback-thunder-run": {
+      "background": "outback-thunder-run.webp",
+      "sourceBackground": "opal_outback_bg.webp",
+      "backgroundOrigin": "copy",
+      "symbolDir": "opal_outback"
+    },
+    "pagoda-mystical-riches": {
+      "background": "pagoda-mystical-riches.webp",
+      "sourceBackground": null,
+      "backgroundOrigin": "generate",
+      "symbolDir": null
+    },
+    "paladin-holy-quest": {
+      "background": "paladin-holy-quest.webp",
+      "sourceBackground": null,
+      "backgroundOrigin": "generate",
+      "symbolDir": null
+    },
+    "panther-midnight-prowler": {
+      "background": "panther-midnight-prowler.webp",
+      "sourceBackground": null,
+      "backgroundOrigin": "generate",
+      "symbolDir": null
+    },
+    "pharaoh-eternal-dynasty": {
+      "background": "pharaoh-eternal-dynasty.webp",
+      "sourceBackground": "golden_pharaoh_bg.webp",
+      "backgroundOrigin": "copy",
+      "symbolDir": null
+    },
+    "phoenix-passion": {
+      "background": "phoenix-passion.webp",
+      "sourceBackground": "phoenix_rising_bg.webp",
+      "backgroundOrigin": "copy",
+      "symbolDir": null
+    },
+    "pirate-treasure-map": {
+      "background": "pirate-treasure-map.webp",
+      "sourceBackground": "pirate_fortune_bg.webp",
+      "backgroundOrigin": "copy",
+      "symbolDir": "pirate_plunder"
+    },
+    "pulsar-revolution": {
+      "background": "pulsar-revolution.webp",
+      "sourceBackground": null,
+      "backgroundOrigin": "generate",
+      "symbolDir": null
+    },
+    "quantum-leap-vault": {
+      "background": "quantum-leap-vault.webp",
+      "sourceBackground": "quantum_burst_bg.webp",
+      "backgroundOrigin": "copy",
+      "symbolDir": null
+    },
+    "quantum-turbo-flux": {
+      "background": "quantum-turbo-flux.webp",
+      "sourceBackground": "quantum_burst_bg.webp",
+      "backgroundOrigin": "copy",
+      "symbolDir": null
+    },
+    "ra-sun-god-royale": {
+      "background": "ra-sun-god-royale.webp",
+      "sourceBackground": null,
+      "backgroundOrigin": "generate",
+      "symbolDir": null
+    },
+    "red-lantern-festival": {
+      "background": "red-lantern-festival.webp",
+      "sourceBackground": null,
+      "backgroundOrigin": "generate",
+      "symbolDir": null
+    },
+    "reef-shark-frenzy": {
+      "background": "reef-shark-frenzy.webp",
+      "sourceBackground": "shark_reef_bg.webp",
+      "backgroundOrigin": "copy",
+      "symbolDir": "shark_reef"
+    },
+    "retro-fruit-fiesta": {
+      "background": "retro-fruit-fiesta.webp",
+      "sourceBackground": "fruit_bonanza_bg.webp",
+      "backgroundOrigin": "copy",
+      "symbolDir": "fruit_bonanza"
+    },
+    "roaring-lion-kingdom": {
+      "background": "roaring-lion-kingdom.webp",
+      "sourceBackground": "five_lions_bg.webp",
+      "backgroundOrigin": "copy",
+      "symbolDir": null
+    },
+    "robot-mega-machine": {
+      "background": "robot-mega-machine.webp",
+      "sourceBackground": null,
+      "backgroundOrigin": "generate",
+      "symbolDir": null
+    },
+    "scarlet-seduction": {
+      "background": "scarlet-seduction.webp",
+      "sourceBackground": null,
+      "backgroundOrigin": "generate",
+      "symbolDir": null
+    },
+    "set-chaos-challenger": {
+      "background": "set-chaos-challenger.webp",
+      "sourceBackground": "chaos_crew_bg.webp",
+      "backgroundOrigin": "copy",
+      "symbolDir": null
+    },
+    "silk-road-treasures": {
+      "background": "silk-road-treasures.webp",
+      "sourceBackground": "oriental_silk_bg.webp",
+      "backgroundOrigin": "copy",
+      "symbolDir": "oriental_silk"
+    },
+    "singularity-storm": {
+      "background": "singularity-storm.webp",
+      "sourceBackground": null,
+      "backgroundOrigin": "generate",
+      "symbolDir": null
+    },
+    "siren-song-temptation": {
+      "background": "siren-song-temptation.webp",
+      "sourceBackground": null,
+      "backgroundOrigin": "generate",
+      "symbolDir": null
+    },
+    "skeleton-bone-collector": {
+      "background": "skeleton-bone-collector.webp",
+      "sourceBackground": null,
+      "backgroundOrigin": "generate",
+      "symbolDir": null
+    },
+    "sorcerer-arcane-tower": {
+      "background": "sorcerer-arcane-tower.webp",
+      "sourceBackground": "arcane_tower_bg.webp",
+      "backgroundOrigin": "copy",
+      "symbolDir": "arcane_tower"
+    },
+    "steampunk-gears-fortune": {
+      "background": "steampunk-gears-fortune.webp",
+      "sourceBackground": "steampunk_gears_bg.webp",
+      "backgroundOrigin": "copy",
+      "symbolDir": "steampunk_fortune"
+    },
+    "stellar-collapse-spinner": {
+      "background": "stellar-collapse-spinner.webp",
+      "sourceBackground": "stellar_drift_bg.webp",
+      "backgroundOrigin": "copy",
+      "symbolDir": "stellar_drift"
+    },
+    "stellar-nexus-prime": {
+      "background": "stellar-nexus-prime.webp",
+      "sourceBackground": "stellar_drift_bg.webp",
+      "backgroundOrigin": "copy",
+      "symbolDir": "stellar_drift"
+    },
+    "sunshine-lemon-drop": {
+      "background": "sunshine-lemon-drop.webp",
+      "sourceBackground": "lemon_drop_bg.webp",
+      "backgroundOrigin": "copy",
+      "symbolDir": "lemon_drop"
+    },
+    "tango-inferno": {
+      "background": "tango-inferno.webp",
+      "sourceBackground": "inferno_fiesta_bg.webp",
+      "backgroundOrigin": "copy",
+      "symbolDir": "tangerine_tango"
+    },
+    "thoth-wisdom-keeper": {
+      "background": "thoth-wisdom-keeper.webp",
+      "sourceBackground": null,
+      "backgroundOrigin": "generate",
+      "symbolDir": null
+    },
+    "tiger-treasures-strike": {
+      "background": "tiger-treasures-strike.webp",
+      "sourceBackground": "tiger_strike_bg.webp",
+      "backgroundOrigin": "copy",
+      "symbolDir": "tiger_strike"
+    },
+    "tigers-golden-path": {
+      "background": "tigers-golden-path.webp",
+      "sourceBackground": "tiger_strike_bg.webp",
+      "backgroundOrigin": "copy",
+      "symbolDir": "tiger_strike"
+    },
+    "underwater-coral-kingdom": {
+      "background": "underwater-coral-kingdom.webp",
+      "sourceBackground": null,
+      "backgroundOrigin": "generate",
+      "symbolDir": null
+    },
+    "vampire-midnight-hunt": {
+      "background": "vampire-midnight-hunt.webp",
+      "sourceBackground": null,
+      "backgroundOrigin": "generate",
+      "symbolDir": null
+    },
+    "velvet-rope-vip": {
+      "background": "velvet-rope-vip.webp",
+      "sourceBackground": "velvet_lounge_bg.webp",
+      "backgroundOrigin": "copy",
+      "symbolDir": null
+    },
+    "vintage-vault-riches": {
+      "background": "vintage-vault-riches.webp",
+      "sourceBackground": null,
+      "backgroundOrigin": "generate",
+      "symbolDir": null
+    },
+    "vixen-noir": {
+      "background": "vixen-noir.webp",
+      "sourceBackground": null,
+      "backgroundOrigin": "generate",
+      "symbolDir": null
+    },
+    "void-vault-explorer": {
+      "background": "void-vault-explorer.webp",
+      "sourceBackground": null,
+      "backgroundOrigin": "generate",
+      "symbolDir": null
+    },
+    "whisper-and-silk": {
+      "background": "whisper-and-silk.webp",
+      "sourceBackground": "oriental_silk_bg.webp",
+      "backgroundOrigin": "copy",
+      "symbolDir": "oriental_silk"
+    },
+    "witch-curse-keeper": {
+      "background": "witch-curse-keeper.webp",
+      "sourceBackground": null,
+      "backgroundOrigin": "generate",
+      "symbolDir": null
+    },
+    "wizard-spellbook-master": {
+      "background": "wizard-spellbook-master.webp",
+      "sourceBackground": null,
+      "backgroundOrigin": "generate",
+      "symbolDir": null
+    },
+    "wolf-pack-frenzy": {
+      "background": "wolf-pack-frenzy.webp",
+      "sourceBackground": "mystic_wolf_bg.webp",
+      "backgroundOrigin": "copy",
+      "symbolDir": "wolf_canyon"
+    },
+    "zombie-apocalypse-raid": {
+      "background": "zombie-apocalypse-raid.webp",
+      "sourceBackground": "zombie_carnival_bg.webp",
+      "backgroundOrigin": "copy",
+      "symbolDir": "zombie_carnival"
+    }
+  }
+}

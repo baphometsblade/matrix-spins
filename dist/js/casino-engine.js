@@ -336,10 +336,13 @@
 
     _buildShell() {
       const theme = this.theme;
-      const bg = theme.bgGradient || 'linear-gradient(135deg, #0D0F14 0%, #13151C 100%)';
       const primary = theme.primaryColor || '#D4A853';
       const container = this.container;
-      container.style.background = bg;
+      // Translucent scrim instead of an opaque fill, so the per-game background
+      // art set on <body> (scripts/map-and-generate-assets.js — one .webp per
+      // game) reads through as atmosphere while keeping the topbar/reels legible.
+      // If the art ever fails to load, <body>'s flat #0D0F14 shows through.
+      container.style.background = 'linear-gradient(180deg, rgba(7,9,13,0.58) 0%, rgba(7,9,13,0.76) 55%, rgba(7,9,13,0.88) 100%)';
       container.style.minHeight = '100vh';
       container.style.color = '#F0F0F5';
       container.style.fontFamily = "'Inter', system-ui, sans-serif";
