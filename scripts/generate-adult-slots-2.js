@@ -43,10 +43,11 @@ const STUDIO = {
     description: 'Ornate Art Nouveau romance — candlelit boudoirs, tango fire and moonlit trysts, gilded for adult players.'
 };
 
-// Only ids not already in SYMBOL_GLYPHS (batch 1 added lips, rose, candle…).
+// Only ids NOT already in SYMBOL_GLYPHS. blossom/fan/lantern/silk already
+// exist in the engine's base map (silk → 🎀), so we deliberately omit them
+// to avoid duplicate-key shadowing; those symbols render via the originals.
 const NEW_GLYPHS = {
-    flame: '🔥', blossom: '🌸', fan: '🪭', lantern: '🏮', gondola: '🛶',
-    letter: '💌', ribbon: '🎀', silk: '🧣', bouquet: '💐', spade: '♠️'
+    flame: '🔥', gondola: '🛶', letter: '💌', ribbon: '🎀', bouquet: '💐', spade: '♠️'
 };
 
 // Symbols LOW→HIGH pay; last two are wild+scatter.

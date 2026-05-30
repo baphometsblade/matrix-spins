@@ -65,8 +65,10 @@
   // Multi-word IDs are hyphenated to match the registry's shape.
   // ──────────────────────────────────────────────────────────────────
   const SYMBOL_GLYPHS = {
-    // ── Crimson Velvet collection (18+) ──
-    flame: '🔥', blossom: '🌸', fan: '🪭', lantern: '🏮', gondola: '🛶', letter: '💌', ribbon: '🎀', silk: '🧣', bouquet: '💐', spade: '♠️',
+    // ── Crimson Velvet collection (18+) — only keys NOT already defined
+    // below (blossom/fan/lantern/silk pre-exist; the original entries win,
+    // so we don't re-declare them and avoid duplicate-key shadowing). ──
+    flame: '🔥', gondola: '🛶', letter: '💌', ribbon: '🎀', bouquet: '💐', spade: '♠️',
     // ── After Dark collection (18+) ──
     martini: '🍸', sax: '🎷', lips: '💋', shell: '🐚', trident: '🔱', siren: '🧜‍♀️', rose: '🌹', cocktail: '🍹', stiletto: '👠', champagne: '🍾', candle: '🕯️', wine: '🍷', heart: '❤️', vinyl: '💿', disco: '🪩', serpent: '🐍', goblet: '🥃', raven: '🐦‍⬛', ace: '🅰️', queen: '👸', dice: '🎲', cigar: '🚬', lipstick: '💄',
     // Generic slot specials
