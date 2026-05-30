@@ -49,6 +49,11 @@ const ARGS = new Set(process.argv.slice(2));
 const DRY_RUN = ARGS.has('--dry-run');
 const INJECT_CSS = ARGS.has('--inject-css');
 const FORCE = ARGS.has('--force');
+// --only=slug1,slug2 — (re)generate just these slugs, ALWAYS via Fooocus and
+// always overwriting (used to replace QA-flagged copies/generations with fresh
+// themed, text-free art). Implies regeneration regardless of any prior match.
+const ONLY_ARG = [...ARGS].find((a) => a.startsWith('--only='));
+const ONLY = ONLY_ARG ? new Set(ONLY_ARG.slice('--only='.length).split(',').filter(Boolean)) : null;
 
 // Tokens too generic to anchor a match (casino filler / colours / outcomes).
 const STOPWORDS = new Set([
@@ -185,31 +190,55 @@ function bestMatch(slug, candidateNames, idf) {
 // ----------------------------------------------------------------------------
 // Themed prompt builder for generation
 // ----------------------------------------------------------------------------
+// Order matters — FIRST regex to match wins. Tuned against a visual QA pass:
+// the art must be a SCENE/ENVIRONMENT (no slot cabinets, no signage, no text).
 const THEME_FLAVORS = [
-  [/(pharaoh|anubis|isis|osiris|horus|ra-|cleopatra|sphinx|nile|pyramid|thoth|sun-god|tomb|scarab|set-)/, 'ancient egyptian, hieroglyphics, sandstone temple, gold ornaments'],
-  [/(dragon|jade|koi|geisha|samurai|ninja|pagoda|silk|lantern|cherry-blossom|red-lantern|emperor|tiger|sakura|oriental)/, 'east asian, ornate, jade and crimson, misty mountains'],
-  [/(zombie|vampire|ghost|demon|necromancer|skeleton|haunted|witch|cursed|darkness|reaper|banshee|crypt|grave|inferno|hell)/, 'gothic horror, eerie fog, candlelight, ominous'],
-  [/(space|galaxy|cosmic|nebula|stellar|quantum|alien|asteroid|meteor|pulsar|singularity|void|warp|orbit|astro|supernova|black-?hole)/, 'deep space, nebulae, neon starlight, sci-fi'],
-  [/(robot|cyber|neon|mecha|android|machine|circuit|pulsar|turbo|flux)/, 'cyberpunk, neon glow, chrome and circuitry, futuristic'],
-  [/(wizard|mage|sorcerer|druid|merlin|elven|fairy|enchant|arcane|spell|grove|paladin|golem|minotaur|crystal-ball|grail)/, 'high fantasy, glowing runes, enchanted forest, mystical'],
-  [/(wolf|lion|tiger|bear|panther|eagle|elephant|koala|kangaroo|dingo|crocodile|shark|reef|safari|wildlife|leopard)/, 'wild nature, dramatic wildlife, lush environment'],
-  [/(outback|aboriginal|billabong|boomerang|uluru|dundee|frontier)/, 'australian outback, red desert, ochre tones, dawn light'],
-  [/(cowboy|western|frontier|bounty|cannonball|express|saloon)/, 'wild west, dusty frontier town, golden hour'],
-  [/(cherry|melon|fruit|lemon|berry|grape|sunshine|tangerine|peach|forbidden-fruit)/, 'vibrant fruit symbols, juicy, bright candy colours'],
-  [/(seduction|boudoir|velvet|burlesque|cabaret|temptation|noir|desire|passion|tryst|masquerade|vixen|siren|lace|whisper|geisha|casanova|tango|vip)/, 'sensual art-deco glamour, deep red velvet, moody lounge lighting'],
-  [/(steampunk|clockwork|gears|heist|vintage|deco|artdeco|art-deco)/, 'art-deco steampunk, brass gears, vintage opulence'],
-  [/(circus|carnival|masquerade)/, 'dark carnival, vintage circus tent, theatrical lighting'],
-  [/(pirate|treasure-map|reef|sunken|coral|underwater)/, 'pirate adventure, ocean depths, weathered treasure'],
-  [/(phoenix|fire|flame|volcano|solar|inferno)/, 'blazing fire, molten embers, fiery glow'],
+  [/(pharaoh|anubis|isis|osiris|horus|ra-|cleopatra|sphinx|nile|pyramid|thoth|sun-god|tomb|scarab|set-)/, 'ancient egyptian landscape, giza pyramids and sandstone temple, golden desert dusk, hieroglyph-carved walls'],
+  [/(underwater|coral|reef|ocean|mermaid|atlantis|sunken)/, 'vibrant underwater coral reef, sunlit turquoise ocean, tropical fish, aquatic kingdom'],
+  [/(pirate|treasure-map|buccaneer|galleon)/, 'pirate cove, weathered treasure chests and gold doubloons, tall ship on a moonlit sea'],
+  [/(carnival|circus|funfair|big-top)/, 'eerie dark carnival, vintage circus big-top tent, fog and string lights, haunted funfair'],
+  [/(koi|lotus|water-garden)/, 'tranquil japanese koi pond, golden and orange koi fish in rippling moonlit water, lotus flowers and stone lanterns'],
+  [/(dragon|jade|geisha|samurai|ninja|pagoda|silk-road|lantern|red-lantern|cherry-blossom|sakura|emperor|oriental)/, 'east asian scene, ornate red pagoda, jade and crimson, cherry blossoms, misty mountains'],
+  [/(phoenix)/, 'majestic phoenix firebird with blazing golden-orange feathers rising in flames, embers'],
+  [/(zombie|vampire|ghost|demon|necromancer|skeleton|haunted|witch|cursed|darkness|reaper|banshee|crypt|grave|inferno|hell|bone|wraith)/, 'gothic horror scene, eerie fog, candlelight, blood moon, ominous ruins'],
+  [/(space|galaxy|cosmic|nebula|stellar|quantum|alien|asteroid|meteor|pulsar|singularity|void|warp|orbit|astro|supernova|black-?hole|interstellar)/, 'deep space vista, swirling nebulae, distant planets and starfield, cinematic sci-fi'],
+  [/(robot|cyber|neon|mecha|android|machine|circuit|turbo|flux)/, 'cyberpunk environment, neon glow, chrome and circuitry, futuristic cityscape'],
+  [/(bard|melody|minstrel|lute)/, 'medieval fantasy tavern, lone bard with a lute, warm candlelight, music in the air'],
+  [/(wizard|mage|sorcerer|druid|merlin|elven|fairy|enchant|arcane|spell|grove|paladin|holy|golem|minotaur|crystal-ball|grail|knight)/, 'high fantasy scene, glowing arcane runes, enchanted misty forest, ethereal magic'],
+  [/(wolf|lion|bear|panther|eagle|elephant|koala|kangaroo|crocodile|shark|safari|leopard|rhino|buffalo|stallion)/, 'dramatic wildlife in a cinematic natural environment, lush and moody'],
+  [/(outback|aboriginal|billabong|boomerang|uluru|dundee|dingo|dreamtime)/, 'australian outback, red desert dunes and rock formations, ochre tones, eucalyptus, dawn light'],
+  [/(cannonball|express|locomotive|railroad)/, 'vintage steam locomotive thundering down the tracks, billowing smoke, golden-hour frontier'],
+  [/(cowboy|western|frontier|bounty|saloon|sheriff)/, 'wild west frontier, dusty desert town and mesas, golden hour, weathered wood'],
+  [/(cherry|melon|fruit|lemon|berry|grape|sunshine|tangerine|peach|orchard|forbidden)/, 'lush ripe fruit still life, juicy cherries grapes and melons, vibrant candy colours, warm light'],
+  [/(venice|venetian|gondola|casanova)/, 'romantic venice canals at dusk, ornate baroque palazzo, gondolas, candlelit masquerade'],
+  [/(seduction|boudoir|velvet|burlesque|cabaret|temptation|noir|desire|passion|tryst|masquerade|vixen|siren|lace|whisper|scarlet|crimson|sensual|vip|rope)/, 'sensual art-deco glamour, deep red velvet drapes and chaise, moody candlelit lounge, tasteful elegant'],
+  [/(steampunk|clockwork|gears|heist|vintage)/, 'art-deco steampunk, intricate brass gears and clockwork machinery, vintage opulence, warm glow'],
+  [/(diamond|jewel|gem|opal|sapphire|deco)/, 'sparkling diamonds and faceted gemstones, art-deco black and gold luxury, brilliant reflections'],
+  [/(prosperity|jackpot|fortune)/, 'abundant cascading gold coins and auspicious fortune symbols, red and gold, opulent'],
+  [/(vault|bullion|safe|gold)/, 'vast treasury vault stacked with gold bullion bars and coins, dramatic spotlighting'],
+  [/(high-roller|casino|royale|luxe|deluxe)/, 'opulent high-roller casino lounge, gold and black art-deco, champagne luxury, dramatic lighting'],
+  [/(fire|flame|volcano|solar|ember|lava)/, 'blazing fire and molten embers, volcanic glow, intense heat'],
 ];
+
+const PROMPT_SUFFIX = 'dark atmospheric cinematic background scene, volumetric lighting, highly detailed, 4k, no people holding signs, no text';
+
+// Per-slug overrides for prompts where the generic flavor reliably attracts an
+// unwanted prop (a human subject pulls in a held placard; a trail attracts a
+// signpost). These force an unpeopled scene/landscape so no signage appears.
+const OVERRIDE_FLAVORS = {
+  'crocodile-dundee-strike': 'a large saltwater crocodile lurking in a misty australian billabong, tall reeds and red earth, dawn fog, cinematic wildlife',
+  'aboriginal-dreamtime-quest': 'extreme close-up of the colossal red sandstone face of Uluru filling the entire frame at sunset, deep weathered rock texture, crevices and ridges, glowing crimson and burnt orange',
+  'billabong-gold-rush': 'a serene australian billabong waterhole at golden dawn, gum trees mirrored in still water, red earth banks, uninhabited wilderness',
+  'set-chaos-challenger': 'the giza pyramids at golden sunset over vast empty rippled sand dunes, dramatic glowing sky, uninhabited desert',
+};
 
 function themedPrompt(slug) {
   const words = slug.replace(/-/g, ' ');
-  let flavor = '';
+  if (OVERRIDE_FLAVORS[slug]) return `${words}, ${OVERRIDE_FLAVORS[slug]}, ${PROMPT_SUFFIX}`;
   for (const [re, f] of THEME_FLAVORS) {
-    if (re.test(slug)) { flavor = ', ' + f; return `${words}${flavor}, dark atmospheric slot machine background, cinematic, 4k, no text`; }
+    if (re.test(slug)) return `${words}, ${f}, ${PROMPT_SUFFIX}`;
   }
-  return `${words}, dark atmospheric slot machine background, cinematic, 4k, no text`;
+  return `${words}, ${PROMPT_SUFFIX}`;
 }
 
 // ----------------------------------------------------------------------------
@@ -219,7 +248,7 @@ function generateImage(prompt) {
   return new Promise((resolve, reject) => {
     const payload = JSON.stringify({
       prompt,
-      negative_prompt: 'text watermark blurry words letters signature logo ui frame border',
+      negative_prompt: 'slot machine, arcade cabinet, gambling machine, casino cabinet, reels, screen, monitor, display, ui, hud, control panel, buttons, keypad, marquee, signage, sign, signpost, road sign, trail sign, wooden sign, plaque, stone tablet, engraved tablet, poster, banner, scroll, open book, billboard, text, letters, words, numbers, typography, inscription, watermark, signature, logo, label, caption, frame, border, deformed, mutated, extra limbs, malformed hands, lowres, low quality, blurry, jpeg artifacts',
       width: 1344,
       height: 768,
       seed: -1,
@@ -314,10 +343,13 @@ async function main() {
   for (const slug of slugs) {
     const bg = bestMatch(slug, backgrounds, bgIdf);
     const sym = symbolDirs.length ? bestMatch(slug, symbolDirs, symIdf) : null;
+    // --only forces fresh generation (overriding any matched copy) for the
+    // listed slugs — used to replace QA-flagged art with themed, text-free art.
+    const forceGen = ONLY && ONLY.has(slug);
     decisions.push({
       slug,
-      action: bg ? 'copy' : 'generate',
-      sourceBackground: bg ? bg.name : null,
+      action: forceGen ? 'generate' : bg ? 'copy' : 'generate',
+      sourceBackground: forceGen ? null : bg ? bg.name : null,
       matchScore: bg ? Number(bg.score.toFixed(2)) : 0,
       matchShared: bg ? bg.shared : [],
       symbolDir: sym ? sym.name : null,
@@ -376,8 +408,10 @@ async function main() {
   let skipped = 0;
   let failed = 0;
   for (const d of decisions) {
+    if (ONLY && !ONLY.has(d.slug)) { skipped++; continue; }
     const dest = path.join(BG_DIR, `${d.slug}.webp`);
-    if (!FORCE && fs.existsSync(dest)) { skipped++; continue; }
+    // --only always overwrites; otherwise skip slugs that already have art.
+    if (!FORCE && !ONLY && fs.existsSync(dest)) { skipped++; continue; }
     try {
       if (d.action === 'copy') {
         fs.copyFileSync(path.join(BG_DIR, d.sourceBackground), dest);

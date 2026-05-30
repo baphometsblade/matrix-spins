@@ -88,14 +88,14 @@
     },
     "carnival-heat": {
       "background": "carnival-heat.webp",
-      "sourceBackground": "carnival_crown_bg.webp",
-      "backgroundOrigin": "copy",
+      "sourceBackground": null,
+      "backgroundOrigin": "generate",
       "symbolDir": "carnival_crown"
     },
     "carnival-spinning-wheel": {
       "background": "carnival-spinning-wheel.webp",
-      "sourceBackground": "carnival_crown_bg.webp",
-      "backgroundOrigin": "copy",
+      "sourceBackground": null,
+      "backgroundOrigin": "generate",
       "symbolDir": "carnival_crown"
     },
     "casanovas-venice": {
@@ -142,8 +142,8 @@
     },
     "clockwork-heist": {
       "background": "clockwork-heist.webp",
-      "sourceBackground": "clockwork_realm_bg.webp",
-      "backgroundOrigin": "copy",
+      "sourceBackground": null,
+      "backgroundOrigin": "generate",
       "symbolDir": null
     },
     "cosmic-raider-mission": {
@@ -160,20 +160,20 @@
     },
     "crimson-boudoir": {
       "background": "crimson-boudoir.webp",
-      "sourceBackground": "crimson_fang_bg.webp",
-      "backgroundOrigin": "copy",
+      "sourceBackground": null,
+      "backgroundOrigin": "generate",
       "symbolDir": "crimson_fang"
     },
     "crocodile-dundee-strike": {
       "background": "crocodile-dundee-strike.webp",
-      "sourceBackground": "crocodile_dundee_bg.webp",
-      "backgroundOrigin": "copy",
+      "sourceBackground": null,
+      "backgroundOrigin": "generate",
       "symbolDir": "crocodile_dundee"
     },
     "cursed-carnival-night": {
       "background": "cursed-carnival-night.webp",
-      "sourceBackground": "cursed_night_bg.webp",
-      "backgroundOrigin": "copy",
+      "sourceBackground": null,
+      "backgroundOrigin": "generate",
       "symbolDir": "cursed_night"
     },
     "dark-sorcerer-nexus": {
@@ -190,26 +190,26 @@
     },
     "demon-inferno-gateway": {
       "background": "demon-inferno-gateway.webp",
-      "sourceBackground": "demon_chambers_bg.webp",
-      "backgroundOrigin": "copy",
+      "sourceBackground": null,
+      "backgroundOrigin": "generate",
       "symbolDir": null
     },
     "diamond-deco-deluxe": {
       "background": "diamond-deco-deluxe.webp",
-      "sourceBackground": "diamond_falls_bg.webp",
-      "backgroundOrigin": "copy",
+      "sourceBackground": null,
+      "backgroundOrigin": "generate",
       "symbolDir": null
     },
     "diamonds-and-lace": {
       "background": "diamonds-and-lace.webp",
-      "sourceBackground": "diamond_falls_bg.webp",
-      "backgroundOrigin": "copy",
+      "sourceBackground": null,
+      "backgroundOrigin": "generate",
       "symbolDir": null
     },
     "dingo-desert-runner": {
       "background": "dingo-desert-runner.webp",
-      "sourceBackground": "desert_dynasty_bg.webp",
-      "backgroundOrigin": "copy",
+      "sourceBackground": null,
+      "backgroundOrigin": "generate",
       "symbolDir": "desert_dynasty"
     },
     "dragon-golden-fortune": {
@@ -268,8 +268,8 @@
     },
     "frontier-bounty-hunter": {
       "background": "frontier-bounty-hunter.webp",
-      "sourceBackground": "wild_west_bounty_bg.webp",
-      "backgroundOrigin": "copy",
+      "sourceBackground": null,
+      "backgroundOrigin": "generate",
       "symbolDir": "wild_west_bounty"
     },
     "fruit-fortune-wheel": {
@@ -304,8 +304,8 @@
     },
     "golden-cherry-cascade": {
       "background": "golden-cherry-cascade.webp",
-      "sourceBackground": "golden_cascade_bg.webp",
-      "backgroundOrigin": "copy",
+      "sourceBackground": null,
+      "backgroundOrigin": "generate",
       "symbolDir": "koi_cascade"
     },
     "golden-melons-paradise": {
@@ -316,8 +316,8 @@
     },
     "golden-phoenix-rising": {
       "background": "golden-phoenix-rising.webp",
-      "sourceBackground": "phoenix_rising_bg.webp",
-      "backgroundOrigin": "copy",
+      "sourceBackground": null,
+      "backgroundOrigin": "generate",
       "symbolDir": null
     },
     "golem-stone-guardian": {
@@ -376,8 +376,8 @@
     },
     "koi-fish-abundance": {
       "background": "koi-fish-abundance.webp",
-      "sourceBackground": "koi_ascension_bg.webp",
-      "backgroundOrigin": "copy",
+      "sourceBackground": null,
+      "backgroundOrigin": "generate",
       "symbolDir": "koi_cascade"
     },
     "luck-prosperity-wheel": {
@@ -430,8 +430,8 @@
     },
     "moonlit-koi-garden": {
       "background": "moonlit-koi-garden.webp",
-      "sourceBackground": "koi_ascension_bg.webp",
-      "backgroundOrigin": "copy",
+      "sourceBackground": null,
+      "backgroundOrigin": "generate",
       "symbolDir": "koi_cascade"
     },
     "moonlit-tryst": {
@@ -508,8 +508,8 @@
     },
     "pirate-treasure-map": {
       "background": "pirate-treasure-map.webp",
-      "sourceBackground": "pirate_fortune_bg.webp",
-      "backgroundOrigin": "copy",
+      "sourceBackground": null,
+      "backgroundOrigin": "generate",
       "symbolDir": "pirate_plunder"
     },
     "pulsar-revolution": {
@@ -520,14 +520,14 @@
     },
     "quantum-leap-vault": {
       "background": "quantum-leap-vault.webp",
-      "sourceBackground": "quantum_burst_bg.webp",
-      "backgroundOrigin": "copy",
+      "sourceBackground": null,
+      "backgroundOrigin": "generate",
       "symbolDir": null
     },
     "quantum-turbo-flux": {
       "background": "quantum-turbo-flux.webp",
-      "sourceBackground": "quantum_burst_bg.webp",
-      "backgroundOrigin": "copy",
+      "sourceBackground": null,
+      "backgroundOrigin": "generate",
       "symbolDir": null
     },
     "ra-sun-god-royale": {
@@ -574,8 +574,8 @@
     },
     "set-chaos-challenger": {
       "background": "set-chaos-challenger.webp",
-      "sourceBackground": "chaos_crew_bg.webp",
-      "backgroundOrigin": "copy",
+      "sourceBackground": null,
+      "backgroundOrigin": "generate",
       "symbolDir": null
     },
     "silk-road-treasures": {
@@ -694,8 +694,8 @@
     },
     "whisper-and-silk": {
       "background": "whisper-and-silk.webp",
-      "sourceBackground": "oriental_silk_bg.webp",
-      "backgroundOrigin": "copy",
+      "sourceBackground": null,
+      "backgroundOrigin": "generate",
       "symbolDir": "oriental_silk"
     },
     "witch-curse-keeper": {
