@@ -630,6 +630,15 @@
                they're equally reachable as the bet steppers. */
             .ce-btn-info, .ce-btn-turbo, .ce-btn-auto { min-height: 48px; min-width: 48px; }
           }
+          /* Mobile readability lift (2026-05-30) — bigger reel glyphs + a 16px
+             body floor so in-game labels/text stay legible on phones. Tile art
+             (.ce-cell-img) fills the cell and is unaffected; this only enlarges
+             the emoji-fallback glyph and inherited rem-based text. */
+          @media (max-width: 640px) {
+            .ce-cell { font-size: 1.7rem; }
+            body { font-size: 16px; }
+            .ce-btn { font-size: 1rem; }
+          }
           /* Reduced-motion honour — cells just snap, no landing/winglow loop. */
           @media (prefers-reduced-motion: reduce) {
             .ce-cell, .ce-cell.just-landed, .ce-cell.highlight,
