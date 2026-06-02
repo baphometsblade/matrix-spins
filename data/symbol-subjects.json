@@ -12,7 +12,7 @@
   "wheel": "an ornate golden fortune wheel ringed with jewels",
   "ra": "an ornate golden falcon-headed Egyptian sun-god idol crowned with a glowing solar disc",
   "set": "a carved golden ancient-Egyptian beast-headed deity statuette",
-  "isis": "an ornate golden Egyptian goddess funerary statuette, fully robed in draped linen with folded falcon wings, modest, no bare skin",
+  "isis": "an ornate golden Egyptian goddess funerary mask with a vulture-and-cobra headdress, jewelled lapis inlay, head only, no body, no torso, no bare skin",
   "osiris": "a golden green-faced Egyptian king funerary idol holding crook and flail",
   "horus": "a golden Egyptian falcon-headed deity idol with a blue-and-gold crown",
   "thoth": "a golden ibis-headed Egyptian deity statuette",
@@ -35,11 +35,11 @@
   "rebirth": "a glowing phoenix egg wreathed in flame",
   "blessing": "a pair of golden praying hands haloed in light",
   "ceremony": "a glowing ceremonial golden chalice wreathed in incense smoke",
-  "athena": "an ornate golden helmeted Greek goddess statuette with an owl",
+  "athena": "an ornate golden Corinthian war helmet with an owl perched on its crest, no face, no body",
   "minotaur": "a fierce bronze horned minotaur statue",
   "phoenix": "a blazing golden phoenix firebird rising from flame",
-  "siren": "an ornate golden mermaid figurehead statuette",
-  "mermaid": "an ornate golden mermaid figurehead statuette",
+  "siren": "an ornate golden seashell-and-trident emblem with flowing waves, decorative crest, no figure",
+  "mermaid": "an ornate golden mermaid-tail and seashell emblem, decorative crest, no torso, no figure",
   "golem": "a massive carved-stone rune golem",
   "dryad": "a glowing enchanted tree-spirit carving wreathed in leaves",
   "banshee": "a glowing pale screaming ghost-woman wraith draped in tattered grey robes with hollow eyes, spectral, plain dark background",
@@ -387,5 +387,7 @@
   "emerald": "a brilliant faceted emerald gem",
   "ruby": "a brilliant faceted ruby gem",
   "sapphire": "a brilliant faceted blue sapphire gem",
-  "diamond": "a brilliant sparkling cut diamond"
+  "diamond": "a brilliant sparkling cut diamond",
+  "goddess": "an ornate golden goddess funerary mask with a jewelled headdress, head only, no body, no torso",
+  "nymph": "a glowing enchanted golden flower-and-vine emblem, no figure"
 }
