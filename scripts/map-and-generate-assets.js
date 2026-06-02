@@ -54,6 +54,10 @@ const FORCE = ARGS.has('--force');
 // themed, text-free art). Implies regeneration regardless of any prior match.
 const ONLY_ARG = [...ARGS].find((a) => a.startsWith('--only='));
 const ONLY = ONLY_ARG ? new Set(ONLY_ARG.slice('--only='.length).split(',').filter(Boolean)) : null;
+// --thumbnails — (re)generate PORTRAIT lobby card thumbnails (448x576) into
+// assets/thumbnails/ai/<slug>.webp instead of backgrounds. Pair with --only.
+const THUMBNAILS = ARGS.has('--thumbnails');
+const THUMB_DIR = path.join(ROOT, 'assets', 'thumbnails', 'ai');
 
 // Tokens too generic to anchor a match (casino filler / colours / outcomes).
 const STOPWORDS = new Set([
@@ -232,25 +236,79 @@ const OVERRIDE_FLAVORS = {
   'set-chaos-challenger': 'the giza pyramids at golden sunset over vast empty rippled sand dunes, dramatic glowing sky, uninhabited desert',
 };
 
+// Resolve the theme flavor for a slug (shared by background + thumbnail prompts).
+function flavorFor(slug) {
+  if (OVERRIDE_FLAVORS[slug]) return OVERRIDE_FLAVORS[slug];
+  for (const [re, f] of THEME_FLAVORS) if (re.test(slug)) return f;
+  return '';
+}
+
 function themedPrompt(slug) {
   const words = slug.replace(/-/g, ' ');
-  if (OVERRIDE_FLAVORS[slug]) return `${words}, ${OVERRIDE_FLAVORS[slug]}, ${PROMPT_SUFFIX}`;
-  for (const [re, f] of THEME_FLAVORS) {
-    if (re.test(slug)) return `${words}, ${f}, ${PROMPT_SUFFIX}`;
+  const f = flavorFor(slug);
+  return f ? `${words}, ${f}, ${PROMPT_SUFFIX}` : `${words}, ${PROMPT_SUFFIX}`;
+}
+
+// ── Thumbnail prompts ───────────────────────────────────────────────────────
+// Lobby cards are 448x576 PORTRAIT — they want a single dramatic HERO subject,
+// not a wide scene. Generated at the 896x1152 Fooocus bucket then downscaled.
+const THUMB_SUFFIX = 'single dramatic central hero subject, close-up portrait composition, premium slot game key art, vivid colours, cinematic lighting, ornate, highly detailed, no text';
+
+// Per-slug thumbnail overrides where the generic flavor produced the wrong
+// subject (a card MUST show the named subject — phoenix, eagle, lion, etc.).
+const THUMB_OVERRIDE = {
+  'golden-phoenix-rising': 'a magnificent phoenix firebird with blazing golden and crimson wings spread wide, rising from flames and embers',
+  'phoenix-passion': 'a radiant phoenix firebird wreathed in red and orange flames, passionate fiery plumage',
+  'eagle-sky-sovereign': 'a majestic bald eagle in close-up, wings spread, soaring against a dramatic golden sky',
+  'roaring-lion-kingdom': 'a powerful male lion with a full mane roaring, regal golden savanna light, close-up',
+  'tiger-treasures-strike': 'a fierce bengal tiger prowling, intense eyes, bold orange and black stripes, gold accents',
+  'hall-of-minotaurs': 'a towering horned minotaur warrior in a torchlit greek labyrinth, muscular, menacing',
+  'reef-shark-frenzy': 'a sleek great white shark mid-strike underwater, coral reef, shafts of sunlight',
+  'panther-midnight-prowler': 'a sleek black panther prowling at midnight, glowing eyes, deep blue moonlit jungle',
+  'cannonball-express': 'a vintage steam locomotive charging head-on, billowing smoke, glowing headlight, golden hour',
+  'eagle': 'a majestic eagle',
+  'diamond-deco-deluxe': 'a giant sparkling brilliant-cut diamond on black velvet, art-deco gold geometric setting, dazzling reflections',
+  'lucky-sevens-infinity': 'three glowing golden lucky 7 symbols and gold coins, classic vegas slot icon, radiant',
+  'quantum-turbo-flux': 'a swirling vortex of blue and violet quantum energy, glowing particle streams, futuristic sci-fi core',
+  'alchemist-transmutation-vault': "an alchemist's table with glowing potions, brass astrolabe, gold transmutation circle, candlelight",
+  'golem-stone-guardian': 'a colossal stone golem guardian with glowing runes, towering and moss-covered, looming close-up',
+  'enchantress-crystal-ball': 'a beautiful enchantress gazing into a glowing crystal ball, arcane purple light, fully clothed in ornate robes',
+  'zombie-apocalypse-raid': 'a horde of menacing zombies advancing through a ruined city at dusk, decayed and eerie',
+  'whisper-and-silk': 'an elegant woman in a flowing silk gown amid draped curtains, soft candlelight, tasteful and refined',
+  'vintage-vault-riches': 'an open antique bank vault overflowing with gold bars and coins, warm vintage spotlight',
+  'melon-madness-mixer': 'a vibrant pile of ripe watermelons and melon slices, juicy and glistening, bright summer colours',
+  'carnival-heat': 'a dazzling carnival at night, a brightly lit ferris wheel and spinning carousel, fireworks and vivid neon, no people',
+  'athenas-golden-shield': 'a single gleaming ornate round ancient greek hoplite shield with a raised owl emblem, polished gold and bronze, glowing, dark background, no gold bars',
+  'boomerang-tribal-magic': 'a carved wooden aboriginal boomerang painted with ochre dot-art patterns, glowing with magic, floating against a red outback sky',
+  'red-lantern-festival': 'a dense cluster of glowing red chinese paper lanterns hanging at night, warm golden light, festive, bokeh',
+};
+
+function thumbPrompt(slug) {
+  const words = slug.replace(/-/g, ' ');
+  let f = THUMB_OVERRIDE[slug] || flavorFor(slug);
+  // Keep sensual/glamour thumbnails strictly tasteful & clothed (lobby is public).
+  if (/(seduction|boudoir|velvet|burlesque|cabaret|temptation|noir|desire|passion|tryst|vixen|siren|lace|whisper|scarlet|crimson|sensual|geisha|goddess|masquerade)/.test(slug)) {
+    f = (THUMB_OVERRIDE[slug] || f) + ', elegant woman in an ornate evening gown, fully clothed, tasteful art-deco glamour';
   }
-  return `${words}, ${PROMPT_SUFFIX}`;
+  return f ? `${words}, ${f}, ${THUMB_SUFFIX}` : `${words}, ${THUMB_SUFFIX}`;
 }
 
 // ----------------------------------------------------------------------------
 // Fooocus-API generation
 // ----------------------------------------------------------------------------
-function generateImage(prompt) {
+// Shared negative prompt. Includes NSFW terms — the lobby is public-facing and
+// a QA pass found bare-breast nudity on two goddess thumbnails (compliance risk).
+const NEGATIVE_PROMPT = 'nude, nudity, topless, bare breasts, exposed chest, areola, nipples, nsfw, explicit, sexual, lingerie, underwear, ' +
+  'slot machine, arcade cabinet, gambling machine, casino cabinet, reels, screen, monitor, display, ui, hud, control panel, buttons, keypad, marquee, signage, sign, signpost, road sign, trail sign, wooden sign, plaque, stone tablet, engraved tablet, poster, banner, scroll, open book, billboard, text, letters, words, numbers, typography, inscription, watermark, signature, logo, label, caption, frame, border, deformed, mutated, extra limbs, malformed hands, lowres, low quality, blurry, jpeg artifacts';
+
+function generateImage(prompt, opts = {}) {
+  const { width = 1344, height = 768 } = opts;
   return new Promise((resolve, reject) => {
     const payload = JSON.stringify({
       prompt,
-      negative_prompt: 'slot machine, arcade cabinet, gambling machine, casino cabinet, reels, screen, monitor, display, ui, hud, control panel, buttons, keypad, marquee, signage, sign, signpost, road sign, trail sign, wooden sign, plaque, stone tablet, engraved tablet, poster, banner, scroll, open book, billboard, text, letters, words, numbers, typography, inscription, watermark, signature, logo, label, caption, frame, border, deformed, mutated, extra limbs, malformed hands, lowres, low quality, blurry, jpeg artifacts',
-      width: 1344,
-      height: 768,
+      negative_prompt: NEGATIVE_PROMPT,
+      width,
+      height,
       seed: -1,
       style_selections: ['Fooocus Cinematic'],
       performance_selection: 'Speed',
@@ -323,11 +381,39 @@ function injectCss(slug) {
 // ----------------------------------------------------------------------------
 // Main
 // ----------------------------------------------------------------------------
+// Generate portrait lobby thumbnails (448x576) for the slugs in --only.
+async function generateThumbnails() {
+  if (!sharp) { console.error('sharp required'); process.exit(1); }
+  if (!ONLY || !ONLY.size) { console.error('--thumbnails requires --only=slug1,slug2'); process.exit(1); }
+  if (!fs.existsSync(THUMB_DIR)) fs.mkdirSync(THUMB_DIR, { recursive: true });
+  const list = [...ONLY];
+  console.log(`Thumbnail regen: ${list.length} slugs -> ${path.relative(ROOT, THUMB_DIR)}/<slug>.webp (448x576)\n`);
+  let done = 0;
+  let failed = 0;
+  for (const slug of list) {
+    const dest = path.join(THUMB_DIR, `${slug}.webp`);
+    try {
+      const png = await generateImage(thumbPrompt(slug), { width: 896, height: 1152 });
+      const out = await sharp(png).resize(448, 576, { fit: 'cover', position: 'attention' }).webp({ quality: 84 }).toBuffer();
+      fs.writeFileSync(dest, out);
+      done++;
+      console.log(`[thumb ${done + failed}/${list.length}] ${slug} (${(out.length / 1024).toFixed(0)}KB)`);
+    } catch (e) {
+      failed++;
+      console.error(`  FAILED ${slug}: ${e.message}`);
+    }
+  }
+  console.log(`\nDone. thumbnails=${done} failed=${failed}`);
+  if (failed) process.exitCode = 1;
+}
+
 async function main() {
   if (!DRY_RUN && !sharp) {
     console.error('sharp is required for image conversion but failed to load.');
     process.exit(1);
   }
+
+  if (THUMBNAILS) { await generateThumbnails(); return; }
 
   const slugs = listGameSlugs();
   const backgrounds = listSourceBackgrounds();
