@@ -365,6 +365,10 @@
 
   function showProgressBar() {
     if (document.querySelector('.mx-bar')) return;
+    // Never show the full-width bottom progress bar on game pages: it is
+    // position:fixed bottom:0 (z=7000) and would overlap / intercept clicks on
+    // the in-game sticky spin/bet control bar that lives at the bottom edge.
+    if (/\/games\//.test(location.pathname)) return;
     var visits = parseInt(lsGet(LS.VISIT_COUNT, '0'), 10);
     if (visits > 5) return;
     injectCSS();
