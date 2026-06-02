@@ -593,7 +593,12 @@
           .ce-jackpot-pill { position: fixed; top: 12px; right: 12px; z-index: 10300; pointer-events: none; background: linear-gradient(120deg, #1a1205 0%, #3e2a08 100%); border: 1px solid #F0C66E; border-radius: 999px; padding: 6px 14px 6px 12px; color: #FFD700; font-size: 0.78rem; font-weight: 700; letter-spacing: 0.04em; box-shadow: 0 0 18px rgba(240,198,110,0.35); display: flex; align-items: center; gap: 8px; font-family: "Plus Jakarta Sans", Inter, sans-serif; }
           .ce-jackpot-pill .ce-jp-dot { width: 8px; height: 8px; border-radius: 50%; background: #FFD700; box-shadow: 0 0 8px #FFD700; animation: ceJackpotPulse 1.4s ease-in-out infinite; }
           .ce-jackpot-pill .ce-jp-label { opacity: 0.85; font-weight: 600; font-size: 0.7rem; text-transform: uppercase; }
-          @media (max-width: 640px) { .ce-jackpot-pill { top: 8px; right: 8px; padding: 4px 10px 4px 8px; font-size: 0.72rem; } }
+          /* On phones the topbar (LOBBY + balance + Wallet + Account) fills the
+             top row, so a fixed top-right pill SAT ON TOP of the Wallet/Account
+             links (they were visually covered even though the pill is
+             pointer-events:none). Drop it into the empty band BELOW the topbar,
+             horizontally centred, so nothing overlaps. */
+          @media (max-width: 640px) { .ce-jackpot-pill { top: 62px; right: auto; left: 50%; transform: translateX(-50%); padding: 3px 12px 3px 10px; font-size: 0.7rem; line-height: 1.15; white-space: nowrap; max-width: calc(100vw - 24px); } .ce-jackpot-pill .ce-jp-label { font-size: 0.62rem; } }
           @media (prefers-reduced-motion: reduce) { .ce-jackpot-pill .ce-jp-dot { animation: none; } }
           /* Free-spins bonus-run banner. Sticky above the reels for the
              duration of a free-spins run. Premium operators universally
@@ -657,7 +662,12 @@
     async _loadSymbolArt() {
       if (window.CE_SYMBOL_ART) { this._symbolArt = window.CE_SYMBOL_ART; return; }
       if (!window.__CE_SYMBOL_ART_PROMISE) {
-        window.__CE_SYMBOL_ART_PROMISE = fetch('/data/symbol-art.json', { credentials: 'omit', cache: 'force-cache' })
+        // cache:'no-cache' → always revalidate with the server (cheap 304 when
+        // unchanged) so newly-generated symbol art appears for returning users.
+        // 'force-cache' would pin a stale manifest forever (e.g. an early
+        // 1-game manifest), hiding all later art — the same trap that froze
+        // sw.js. The tiles themselves are immutable per-id, so they stay cached.
+        window.__CE_SYMBOL_ART_PROMISE = fetch('/data/symbol-art.json', { credentials: 'omit', cache: 'no-cache' })
           .then(r => (r.ok ? r.json() : {}))
           .catch(() => ({}))
           .then(m => { window.CE_SYMBOL_ART = m || {}; return window.CE_SYMBOL_ART; });

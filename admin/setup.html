@@ -296,7 +296,6 @@
     <div class="card loading"><div class="card-icon">📧</div><div class="card-label">Email (SMTP)</div><div class="card-value"><span class="spinner"></span></div></div>
     <div class="card loading"><div class="card-icon">🔐</div><div class="card-label">Auth (JWT)</div><div class="card-value"><span class="spinner"></span></div></div>
     <div class="card loading"><div class="card-icon">🛡️</div><div class="card-label">Admin Key</div><div class="card-value"><span class="spinner"></span></div></div>
-    <div class="card loading"><div class="card-icon">🌍</div><div class="card-label">Geo Compliance</div><div class="card-value"><span class="spinner"></span></div></div>
   </div>
 
   <!-- Pending deposits needing approval -->
@@ -569,7 +568,6 @@ function renderCards(s) {
   const emailOk  = s.smtp && s.smtp.configured;
   const jwtOk    = s.jwt && s.jwt.configured;
   const adminOk  = s.adminApiKey && s.adminApiKey.configured;
-  const geoOk    = s.geoBlock && s.geoBlock.configured;
 
   document.getElementById('cards').innerHTML = `
     <div class="card ${stripeOk ? 'ok' : 'bad'}">
@@ -596,11 +594,6 @@ function renderCards(s) {
       <div class="card-icon">🛡️</div>
       <div class="card-label">Admin Key</div>
       <div class="card-value">${adminOk ? '✅ Set' : '⚠️ Not set'}</div>
-    </div>
-    <div class="card ${geoOk ? 'ok' : 'warn'}">
-      <div class="card-icon">🌍</div>
-      <div class="card-label">Geo Compliance</div>
-      <div class="card-value">${geoOk ? '✅ Active' : '⚠️ Disabled'}</div>
     </div>
   `;
 }
@@ -774,7 +767,6 @@ function refresh() {
     <div class="card loading"><div class="card-icon">📧</div><div class="card-label">Email</div><div class="card-value"><span class="spinner"></span></div></div>
     <div class="card loading"><div class="card-icon">🔐</div><div class="card-label">Auth</div><div class="card-value"><span class="spinner"></span></div></div>
     <div class="card loading"><div class="card-icon">🛡️</div><div class="card-label">Admin Key</div><div class="card-value"><span class="spinner"></span></div></div>
-    <div class="card loading"><div class="card-icon">🌍</div><div class="card-label">Geo</div><div class="card-value"><span class="spinner"></span></div></div>
   `;
   document.getElementById('banner').innerHTML = '';
   Promise.all([loadSetupStatus(), loadPendingDeposits()]);

@@ -264,7 +264,6 @@ router.get('/detailed', authenticate, requireAdmin, async (req, res) => {
                 stripeConfigured: !!process.env.STRIPE_SECRET_KEY,
                 webhookConfigured: !!process.env.STRIPE_WEBHOOK_SECRET,
                 adminApiKeyConfigured: !!process.env.ADMIN_API_KEY,
-                geoBlockEnabled: !!process.env.ALLOWED_COUNTRIES,
             },
         });
     } catch (err) {

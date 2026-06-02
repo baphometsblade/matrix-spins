@@ -60,7 +60,6 @@ router.get('/', authenticate, requireAdmin, async (req, res) => {
         const adminApiKeyConf      = !!process.env.ADMIN_API_KEY;
         const allowedOriginVal     = process.env.ALLOWED_ORIGIN || '';
         const allowedOriginConf    = !!allowedOriginVal;
-        const geoBlockConf         = !!process.env.ALLOWED_COUNTRIES;
 
         // ── Revenue-blocked list ────────────────────────────────────────────
         const revenueBlocked = [];
@@ -110,9 +109,6 @@ router.get('/', authenticate, requireAdmin, async (req, res) => {
             allowedOrigin: {
                 configured: allowedOriginConf,
                 value:      originDisplay,
-            },
-            geoBlock: {
-                configured: geoBlockConf,
             },
             overallReady,
             revenueBlocked,

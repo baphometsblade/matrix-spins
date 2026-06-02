@@ -895,9 +895,7 @@ test('launch-readiness warns on missing DATABASE_URL', () => {
     assert(/DATABASE_URL missing/.test(INDEX_SRC), 'must warn on missing DATABASE_URL');
 });
 
-test('launch-readiness warns on missing geo-block config', () => {
-    assert(/ALLOWED_COUNTRIES or BLOCKED_COUNTRIES/.test(INDEX_SRC), 'must warn on missing geo config');
-});
+// (geo-block launch-readiness test removed — geo-blocking has been removed)
 
 // ══════════════════════════════════════════════════════════════════════
 console.log('\n=== AML (anti-money-laundering) service ===');

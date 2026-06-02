@@ -69,18 +69,8 @@ services:
       - key: ALLOWED_ORIGIN
         value: https://msaart.online,https://www.msaart.online
 
-      # ── Geo compliance (REQUIRED for real-money operation) ──
-      # Whitelist of ISO country codes allowed to play. Without this,
-      # the geo-block middleware is a no-op and you risk operating
-      # in jurisdictions you are not licensed in.
-      - key: ALLOWED_COUNTRIES
-        value: "AU,NZ,CA,GB,DE,FR,JP,BR,MX"
-      # Optional explicit denylist (applied after allowlist)
-      - key: BLOCKED_COUNTRIES
-        value: "US"
-      # On geo lookup failure: "open" allows (default), "closed" blocks
-      - key: GEO_FAIL_MODE
-        value: open
+      # ── Geo-blocking removed — no country/IP gating. The casino is open
+      # to all jurisdictions. Ensure your licensing covers served markets.
 
       # ── Crypto wallet addresses (receive ETH/BTC deposits) ──
       - key: CRYPTO_WALLET_ADDRESS

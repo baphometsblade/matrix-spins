@@ -195,7 +195,6 @@ try {
 }
 
 const { degradedModeGuard } = require('./middleware/degraded-mode');
-const { geoBlock } = require('./middleware/geo-block');
 
 // ── Rate Limiters ──────────────────────────────────────────
 // General API limit: 100 req/min/IP per spec. Polling endpoints (jackpot,
@@ -278,10 +277,9 @@ const spinLimiter = rateLimit({
 });
 app.use('/api/spin', spinLimiter);
 
-// ── Geo-Block (only active if ALLOWED_COUNTRIES is set) ────
-app.use('/api/auth/register', geoBlock);
-app.use('/api/payment',       geoBlock);
-
+// ── Geo-Block REMOVED — the casino is open to all jurisdictions. No
+// country/IP gating on registration or payments. (Operator decision; ensure
+// licensing covers your served markets.) ───────────────────
 // ── Degraded-Mode Guard on money endpoints ─────────────────
 // Stripe webhook is INTENTIONALLY excluded — we still need to receive
 // confirmations for in-flight payments when PG reconnects.
