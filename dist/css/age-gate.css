@@ -10,7 +10,12 @@ body.age-gate-active {
   left: 0;
   width: 100vw;
   height: 100vh;
-  z-index: 10000;
+  /* Legal age gate MUST sit above EVERY other overlay (cookie banner z=99999,
+     misc modals up to z=1000001) so its "I confirm I am 18" button is always
+     clickable. Was z=10000 — the cookie consent banner rendered on top of the
+     confirm button on shorter/mobile viewports, blocking the click and locking
+     users out of the entire site. */
+  z-index: 2147483647;
   /* Default: hidden. JS adds .age-gate-visible to show. Prevents the overlay
      from briefly painting fullscreen black on first render. */
   display: none;

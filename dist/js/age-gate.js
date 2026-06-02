@@ -88,6 +88,12 @@
     var overlay = document.createElement('div');
     overlay.id = 'age-gate-overlay';
     overlay.className = 'age-gate-overlay';
+    // Defense-in-depth: force the legal age gate above EVERY other overlay
+    // (cookie banner z=99999, promo modals up to z=1000001) via an inline style,
+    // so the "I confirm I am 18" button is clickable even if a browser is still
+    // serving a stale-cached age-gate.css. Without this, the cookie banner
+    // rendered on top of the confirm button and locked users out of the site.
+    overlay.style.zIndex = '2147483647';
     overlay.setAttribute('role', 'dialog');
     overlay.setAttribute('aria-modal', 'true');
     overlay.setAttribute('aria-labelledby', 'age-gate-title');
