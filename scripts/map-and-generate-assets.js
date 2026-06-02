@@ -234,6 +234,14 @@ const OVERRIDE_FLAVORS = {
   'aboriginal-dreamtime-quest': 'extreme close-up of the colossal red sandstone face of Uluru filling the entire frame at sunset, deep weathered rock texture, crevices and ridges, glowing crimson and burnt orange',
   'billabong-gold-rush': 'a serene australian billabong waterhole at golden dawn, gum trees mirrored in still water, red earth banks, uninhabited wilderness',
   'set-chaos-challenger': 'the giza pyramids at golden sunset over vast empty rippled sand dunes, dramatic glowing sky, uninhabited desert',
+  // Coherence fixes — backgrounds whose generic flavor diverged from the (good)
+  // thumbnail/name. Force the matching theme so the lobby card and in-game
+  // background read as the same game.
+  'cherry-lips-cabaret': 'a sultry art-deco cabaret lounge interior, red velvet stage curtains and glowing footlights, glamorous nightclub, moody crimson lighting',
+  'neon-temptation': 'a sultry neon-lit nightclub interior at night, glowing pink and cyan neon, art-deco glamour lounge, moody reflections',
+  'imperial-dragon-ascent': 'a majestic golden chinese imperial dragon coiling through temple clouds, ornate red and gold asian palace, hanging lanterns',
+  'lucky-sevens-infinity': 'a classic vegas slot jackpot, glowing golden lucky 777 triple sevens and cascading gold coins, radiant red and gold',
+  'zombie-apocalypse-raid': 'a horde of zombies shambling through a ruined apocalyptic city street at dusk, decay and fog, abandoned wrecked cars',
 };
 
 // Resolve the theme flavor for a slug (shared by background + thumbnail prompts).
@@ -278,6 +286,7 @@ const THUMB_OVERRIDE = {
   'vintage-vault-riches': 'an open antique bank vault overflowing with gold bars and coins, warm vintage spotlight',
   'melon-madness-mixer': 'a vibrant pile of ripe watermelons and melon slices, juicy and glistening, bright summer colours',
   'carnival-heat': 'a dazzling carnival at night, a brightly lit ferris wheel and spinning carousel, fireworks and vivid neon, no people',
+  'neon-temptation': 'a glamorous woman bathed in glowing pink and cyan neon nightclub light, sultry mood, vivid neon reflections and bokeh',
   'athenas-golden-shield': 'a single gleaming ornate round ancient greek hoplite shield with a raised owl emblem, polished gold and bronze, glowing, dark background, no gold bars',
   'boomerang-tribal-magic': 'a carved wooden aboriginal boomerang painted with ochre dot-art patterns, glowing with magic, floating against a red outback sky',
   'red-lantern-festival': 'a dense cluster of glowing red chinese paper lanterns hanging at night, warm golden light, festive, bokeh',
