@@ -590,7 +590,7 @@
           @keyframes ceJackpotPulse { 0%, 100% { transform: scale(1); filter: brightness(1); } 50% { transform: scale(1.06); filter: brightness(1.3); } }
           @keyframes ceJackpotShimmer { 0% { background-position: 0% 50%; } 100% { background-position: 200% 50%; } }
           /* Jackpot ticker pill in the game-page corner. */
-          .ce-jackpot-pill { position: fixed; top: 12px; right: 12px; z-index: 10300; background: linear-gradient(120deg, #1a1205 0%, #3e2a08 100%); border: 1px solid #F0C66E; border-radius: 999px; padding: 6px 14px 6px 12px; color: #FFD700; font-size: 0.78rem; font-weight: 700; letter-spacing: 0.04em; box-shadow: 0 0 18px rgba(240,198,110,0.35); display: flex; align-items: center; gap: 8px; font-family: "Plus Jakarta Sans", Inter, sans-serif; }
+          .ce-jackpot-pill { position: fixed; top: 12px; right: 12px; z-index: 10300; pointer-events: none; background: linear-gradient(120deg, #1a1205 0%, #3e2a08 100%); border: 1px solid #F0C66E; border-radius: 999px; padding: 6px 14px 6px 12px; color: #FFD700; font-size: 0.78rem; font-weight: 700; letter-spacing: 0.04em; box-shadow: 0 0 18px rgba(240,198,110,0.35); display: flex; align-items: center; gap: 8px; font-family: "Plus Jakarta Sans", Inter, sans-serif; }
           .ce-jackpot-pill .ce-jp-dot { width: 8px; height: 8px; border-radius: 50%; background: #FFD700; box-shadow: 0 0 8px #FFD700; animation: ceJackpotPulse 1.4s ease-in-out infinite; }
           .ce-jackpot-pill .ce-jp-label { opacity: 0.85; font-weight: 600; font-size: 0.7rem; text-transform: uppercase; }
           @media (max-width: 640px) { .ce-jackpot-pill { top: 8px; right: 8px; padding: 4px 10px 4px 8px; font-size: 0.72rem; } }
