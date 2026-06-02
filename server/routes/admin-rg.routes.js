@@ -134,6 +134,22 @@ router.post('/user/:id/limits', authenticate, requireAdmin, async (req, res) => 
             return res.status(400).json({ error: 'Compliance reason (min 5 chars) is required' });
         }
 
+        // These are responsible-gambling SAFETY limits — reject any non-numeric,
+        // negative, or absurd value so a typo/garbage payload can't silently
+        // weaken or void a player's protective limit.
+        const LIMIT_MAX = 100000000;
+        const numericLimits = {
+            dailyLossLimit, weeklyLossLimit, monthlyLossLimit, maxBetPerSpin,
+            sessionTimeLimit, dailyWagerLimit, dailyDepositLimit, weeklyDepositLimit, monthlyDepositLimit
+        };
+        for (const [k, v] of Object.entries(numericLimits)) {
+            if (v === undefined || v === null) continue;
+            const n = Number(v);
+            if (!Number.isFinite(n) || n < 0 || n > LIMIT_MAX) {
+                return res.status(400).json({ error: `Invalid ${k}: must be a number between 0 and ${LIMIT_MAX}` });
+            }
+        }
+
         // Ensure rows exist
         await db.run('INSERT INTO user_limits (user_id) VALUES (?) ON CONFLICT DO NOTHING', [targetId])
             .catch(async () => {

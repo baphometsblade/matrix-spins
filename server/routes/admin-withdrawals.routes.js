@@ -217,12 +217,19 @@ router.post('/bulk-approve', authenticate, adminOnly, async (req, res) => {
         for (const id of numericIds) {
             try {
                 const wd = await db.get(
-                    'SELECT id, user_id, amount, currency, payment_type, reference, status, created_at FROM withdrawals WHERE id = ?',
+                    'SELECT w.id, w.user_id, w.amount, w.currency, w.payment_type, w.reference, w.status, w.created_at, u.is_banned ' +
+                    'FROM withdrawals w JOIN users u ON u.id = w.user_id WHERE w.id = ?',
                     [id]
                 );
                 if (!wd) { results.push({ id, ok: false, error: 'not found' }); continue; }
                 if (wd.status !== 'pending' && wd.status !== 'otp_verified') {
                     results.push({ id, ok: false, error: 'wrong status: ' + wd.status });
+                    continue;
+                }
+                // Fraud gate: never bulk-release funds to a banned account — the
+                // single-row /queue view already marks banned users non-approvable.
+                if (wd.is_banned) {
+                    results.push({ id, ok: false, error: 'user banned' });
                     continue;
                 }
                 // Cooling-off check

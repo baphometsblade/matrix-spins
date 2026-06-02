@@ -18,6 +18,7 @@ const router = express.Router();
 const { authenticate } = require('../middleware/auth');
 const emailService = require('../services/email.service');
 const db = require('../database');
+const config = require('../config'); // was referenced (config.ADMIN_EMAIL on /test) but never imported → ReferenceError on the default-recipient path
 
 // ── Admin guard ─────────────────────────────────────────────
 // Pure role check. Previously also accepted X-Admin-Token = ADMIN_PASSWORD,
