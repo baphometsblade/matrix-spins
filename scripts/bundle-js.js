@@ -358,12 +358,18 @@ function copyStaticAssets() {
 
         if (fs.existsSync(src)) {
             if (file === 'sw.js') {
-                // Auto-set CACHE_VERSION to current timestamp so stale caches are purged on each deploy
+                // Auto-stamp the SW version with the build time so the activate
+                // handler purges stale caches on every deploy. The SW was
+                // refactored from `const CACHE_VERSION = <ts>` to
+                // `const VERSION = 'vX.Y.Z'`, so we rewrite whichever form is
+                // present (the old regex silently no-op'd → caches never bumped).
                 let swContent = fs.readFileSync(src, 'utf8');
                 const buildVersion = Date.now();
-                swContent = swContent.replace(/^const CACHE_VERSION = \d+;/m, 'const CACHE_VERSION = ' + buildVersion + ';');
+                swContent = swContent
+                    .replace(/^const CACHE_VERSION = \d+;/m, 'const CACHE_VERSION = ' + buildVersion + ';')
+                    .replace(/^const VERSION = '[^']*';/m, "const VERSION = 'b" + buildVersion + "';");
                 fs.writeFileSync(dst, swContent);
-                log(`Copied ${file} (CACHE_VERSION → ${buildVersion})`);
+                log(`Copied ${file} (VERSION → b${buildVersion})`);
             } else {
                 fs.copyFileSync(src, dst);
                 log(`Copied ${file}`);

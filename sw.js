@@ -2,7 +2,7 @@
 // PWA: cache-first statics, network-first HTML, network-only API,
 // offline fallback, version-update messaging.
 
-const VERSION = 'v6.0.0';
+const VERSION = 'v6.1.0';
 const STATIC_CACHE  = `matrix-spins-static-${VERSION}`;
 const RUNTIME_CACHE = `matrix-spins-runtime-${VERSION}`;
 const HTML_CACHE    = `matrix-spins-html-${VERSION}`;
@@ -96,7 +96,18 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // Static asset — cache-first
+  // Unhashed app code (js/css/mjs WITHOUT a content hash) — stale-while-revalidate
+  // so code fixes (e.g. js/casino-engine.js) reach returning users on their next
+  // load instead of being pinned cache-first until the SW VERSION is bumped.
+  // Content-hashed bundles (bundle.<hash>.min.js / styles.<hash>.min.css) are
+  // immutable and intentionally fall through to cache-first below.
+  if (/\.(js|mjs|css)(\?.*)?$/i.test(url.pathname) &&
+      !/\.[a-f0-9]{8,}\.(min\.)?(js|css)(\?.*)?$/i.test(url.pathname)) {
+    event.respondWith(staleWhileRevalidate(request, RUNTIME_CACHE));
+    return;
+  }
+
+  // Static asset — cache-first (media, fonts, hashed bundles)
   if (isStaticAsset(url.pathname)) {
     event.respondWith(cacheFirst(request, RUNTIME_CACHE));
     return;
