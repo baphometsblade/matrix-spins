@@ -261,6 +261,13 @@ const adminLimiter = rateLimit({
   message: { error: 'Admin rate limit exceeded.' },
 });
 app.use('/api/admin', adminLimiter);
+// The hyphenated admin prefixes are SEPARATE path segments, so the line above
+// does NOT cover them. Rate-limit them too — these carry the most abuse-prone
+// admin mutations (bulk withdrawal approval, mass email broadcast, RG limits).
+app.use('/api/admin-withdrawals', adminLimiter);
+app.use('/api/admin-email', adminLimiter);
+app.use('/api/admin-rg', adminLimiter);
+app.use('/api/admin-metrics', adminLimiter);
 
 const spinLimiter = rateLimit({
   windowMs: 60 * 1000,

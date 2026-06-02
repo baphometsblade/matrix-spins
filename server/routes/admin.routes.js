@@ -509,32 +509,51 @@ router.post('/bulk-bonus', async (req, res) => {
         }
 
         let credited = 0;
+        const skipped = [];
         for (const uid of userIds) {
             const userId = parseInt(uid);
-            if (isNaN(userId)) continue;
+            if (isNaN(userId)) { continue; }
 
             const user = await db.get('SELECT id, balance FROM users WHERE id = ?', [userId]);
-            if (!user) continue;
+            if (!user) { skipped.push({ userId, reason: 'not found' }); continue; }
 
             // Skip self-excluded users in bulk bonus
-            if (await checkTargetSelfExclusion(userId)) continue;
+            if (await checkTargetSelfExclusion(userId)) { skipped.push({ userId, reason: 'self-excluded' }); continue; }
+
+            // Lifetime admin-bonus cap ($10,000/user) — same guard the single
+            // send-bonus enforces. Count BOTH admin_bonus and admin_bulk_bonus so
+            // the two paths can't be combined to stack unbounded bonus liability.
+            const lt = await db.get(
+                "SELECT COALESCE(SUM(amount), 0) as total FROM transactions WHERE user_id = ? AND type IN ('admin_bonus', 'admin_bulk_bonus')",
+                [userId]
+            );
+            const lifetimeTotal = lt ? parseFloat(lt.total) || 0 : 0;
+            if (lifetimeTotal + bonusAmount > 10000) { skipped.push({ userId, reason: 'lifetime cap ($10k) exceeded' }); continue; }
 
             const balanceBefore = user.balance || 0;
-            // Bulk bonuses go to bonus_balance with 15x standard wagering (per CLAUDE.md)
-            var wageringReq = bonusAmount * 15;
+            const wageringReq = bonusAmount * 15; // standard 15x (per CLAUDE.md)
 
-            await db.run(
-                'UPDATE users SET bonus_balance = COALESCE(bonus_balance, 0) + ?, wagering_requirement = COALESCE(wagering_requirement, 0) + ? WHERE id = ?',
-                [bonusAmount, wageringReq, userId]
-            );
-            await db.run(
-                'INSERT INTO transactions (user_id, type, amount, balance_before, balance_after, reference) VALUES (?, ?, ?, ?, ?, ?)',
-                [userId, 'admin_bulk_bonus', bonusAmount, balanceBefore, balanceBefore, reason || 'Admin bulk bonus (bonus_balance + wagering)']
-            );
-            credited++;
+            // Per-user transaction: a mid-loop failure rolls back THAT user only,
+            // never leaving a credited balance with no transaction row (or vice versa).
+            await db.beginTransaction();
+            try {
+                await db.run(
+                    'UPDATE users SET bonus_balance = COALESCE(bonus_balance, 0) + ?, wagering_requirement = COALESCE(wagering_requirement, 0) + ? WHERE id = ?',
+                    [bonusAmount, wageringReq, userId]
+                );
+                await db.run(
+                    'INSERT INTO transactions (user_id, type, amount, balance_before, balance_after, reference) VALUES (?, ?, ?, ?, ?, ?)',
+                    [userId, 'admin_bulk_bonus', bonusAmount, balanceBefore, balanceBefore, reason || 'Admin bulk bonus (bonus_balance + wagering)']
+                );
+                await db.commit();
+                credited++;
+            } catch (e) {
+                try { await db.rollback(); } catch (_) { /* ignore */ }
+                skipped.push({ userId, reason: 'db error' });
+            }
         }
 
-        res.json({ message: 'Bulk bonus sent', credited, totalAmount: credited * bonusAmount });
+        res.json({ message: 'Bulk bonus processed', credited, skipped, totalAmount: credited * bonusAmount });
     } catch (err) {
         console.warn('[Admin] Bulk bonus error:', err.message);
         res.status(500).json({ error: 'Failed to send bulk bonus' });
