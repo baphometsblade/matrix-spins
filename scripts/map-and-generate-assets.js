@@ -242,6 +242,18 @@ const OVERRIDE_FLAVORS = {
   'imperial-dragon-ascent': 'a majestic golden chinese imperial dragon coiling through temple clouds, ornate red and gold asian palace, hanging lanterns',
   'lucky-sevens-infinity': 'a classic vegas slot jackpot, glowing golden lucky 777 triple sevens and cascading gold coins, radiant red and gold',
   'zombie-apocalypse-raid': 'a horde of zombies shambling through a ruined apocalyptic city street at dusk, decay and fog, abandoned wrecked cars',
+  // Uniqueness fixes — these games previously SHARED a copied background with a
+  // theme-twin. Each gets a distinct on-theme scene so no two games look alike.
+  'fairy-enchanted-forest': 'a luminous fairy glade at twilight, glowing winged fairies and sparkling bioluminescent flowers, soft pastel teal and pink light, dewy magic',
+  'mage-crystal-sanctuary': 'a radiant crystal sanctuary, towering luminous blue and white crystals around a glowing mage circle, beams of light, sacred',
+  'fruit-fortune-wheel': 'a giant ornate golden fortune wheel ringed with glowing fruit symbols, cherries lemons and bells, festive carnival glow',
+  'retro-fruit-fiesta': 'a retro 1980s arcade fruit display, neon-outlined cherries grapes and melons on chrome, vintage vegas neon, synthwave',
+  'melon-madness-mixer': 'an explosive splash of watermelon and honeydew slices bursting with juice, dynamic motion, vivid green pink and red',
+  'outback-thunder-run': 'a dramatic australian outback under a violent thunderstorm, forked lightning over towering red mesas, swirling dust',
+  'sorcerer-arcane-tower': "a dark sorcerer's obsidian arcane tower under a stormy violet sky, crackling purple lightning and glowing runes, ominous",
+  'velvet-rope-vip': 'an exclusive VIP nightclub entrance with a red velvet rope on gold stanchions, glamorous marquee spotlights, deep red and gold',
+  'stellar-nexus-prime': 'a radiant cosmic nexus, a brilliant galactic core with converging blue and gold energy streams, vibrant swirling nebula',
+  'tigers-golden-path': 'a majestic golden bengal tiger striding a glowing path through an ornate asian temple garden, jade lanterns and gold, misty',
 };
 
 // Resolve the theme flavor for a slug (shared by background + thumbnail prompts).
