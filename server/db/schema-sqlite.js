@@ -780,6 +780,8 @@ const TABLES = [
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         event_type TEXT NOT NULL,
         user_id INTEGER,
+        amount REAL,
+        reference TEXT,
         ip TEXT,
         details TEXT,
         created_at TEXT DEFAULT (datetime('now'))
@@ -994,4 +996,15 @@ const WITHDRAWAL_MIGRATIONS = [
     ['otp_verified_at', 'TEXT'],
 ];
 
-module.exports = { TABLES, INDEXES, DEFERRED_INDEXES, USER_MIGRATIONS, WITHDRAWAL_MIGRATIONS };
+/** Extra columns added to audit_log table via migrations (column name → definition).
+ *  Existing deployments created audit_log before amount/reference were first-class
+ *  columns, so the audit helper's INSERT (event_type,user_id,amount,reference,details)
+ *  failed with "table audit_log has no column named amount" and the compliance trail
+ *  silently dropped. Applied with try/catch so a missing-table/locked ALTER can NEVER
+ *  trip degraded mode (same rule as DEFERRED_INDEXES). */
+const AUDIT_LOG_MIGRATIONS = [
+    ['amount', 'REAL'],
+    ['reference', 'TEXT'],
+];
+
+module.exports = { TABLES, INDEXES, DEFERRED_INDEXES, USER_MIGRATIONS, WITHDRAWAL_MIGRATIONS, AUDIT_LOG_MIGRATIONS };

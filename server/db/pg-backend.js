@@ -152,6 +152,31 @@ class PgBackend {
             }
         }
 
+        // audit_log table column migrations — amount/reference were added after the
+        // table shipped, so existing DBs lack them and the audit helper's INSERT fails
+        // with: column "amount" of relation "audit_log" does not exist. Wrapped in
+        // try/catch so a failed ALTER can NEVER abort init() and trip degraded mode
+        // (an audit-trail column add must never block money ops — same rule as INDEXES).
+        if (schema.AUDIT_LOG_MIGRATIONS) {
+            try {
+                const alResult = await this.pool.query(
+                    "SELECT column_name FROM information_schema.columns WHERE table_name = 'audit_log'"
+                );
+                const alColNames = alResult.rows.map(r => r.column_name);
+                for (const [name, def] of schema.AUDIT_LOG_MIGRATIONS) {
+                    if (!SAFE_COL_NAME.test(name) || !SAFE_COL_DEF.test(def)) {
+                        console.error('[DB/PG] Skipping unsafe audit_log migration:', name, def);
+                        continue;
+                    }
+                    if (!alColNames.includes(name)) {
+                        await this.pool.query(`ALTER TABLE audit_log ADD COLUMN ${name} ${def}`);
+                    }
+                }
+            } catch (err) {
+                console.warn('[DB/PG] audit_log migration skipped (non-fatal):', err.message);
+            }
+        }
+
         // Indexes — per-index try/catch. An index is a PERFORMANCE optimization;
         // a single failing CREATE INDEX must NEVER abort init() and trip degraded
         // mode on a real-money casino. Some indexes target tables that are created

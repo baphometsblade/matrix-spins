@@ -71,6 +71,29 @@ class SqliteBackend {
             }
         }
 
+        // audit_log table column migrations — amount/reference were added after the
+        // table shipped, so existing DBs lack them and the audit helper's INSERT fails.
+        // Wrapped in try/catch: an audit-trail column add must NEVER trip degraded mode.
+        if (schema.AUDIT_LOG_MIGRATIONS) {
+            try {
+                const alStmt = this.db.prepare('PRAGMA table_info(audit_log)');
+                const alColNames = [];
+                while (alStmt.step()) { alColNames.push(alStmt.getAsObject().name); }
+                alStmt.free();
+                for (const [name, def] of schema.AUDIT_LOG_MIGRATIONS) {
+                    if (!SAFE_COL_NAME.test(name) || !SAFE_COL_DEF.test(def)) {
+                        console.error(`[DB/SQLite] Skipping unsafe audit_log migration: ${name} ${def}`);
+                        continue;
+                    }
+                    if (!alColNames.includes(name)) {
+                        this.db.run(`ALTER TABLE audit_log ADD COLUMN ${name} ${def}`);
+                    }
+                }
+            } catch (err) {
+                console.warn('[DB/SQLite] audit_log migration skipped (non-fatal):', err.message);
+            }
+        }
+
         // Indexes
         for (const idx of schema.INDEXES) {
             this.db.run(idx);

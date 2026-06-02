@@ -807,6 +807,8 @@ const TABLES = [
         id SERIAL PRIMARY KEY,
         event_type TEXT NOT NULL,
         user_id INTEGER,
+        amount NUMERIC(15,2),
+        reference TEXT,
         ip TEXT,
         details TEXT,
         created_at TIMESTAMPTZ DEFAULT NOW()
@@ -1027,4 +1029,15 @@ const USER_STATUS_MIGRATIONS = [
     ['password_hash', 'TEXT'],
 ];
 
-module.exports = { TABLES, INDEXES, USER_MIGRATIONS, WITHDRAWAL_MIGRATIONS, SPIN_MIGRATIONS, TRANSACTION_MIGRATIONS, USER_STATUS_MIGRATIONS };
+/** Extra columns added to audit_log table via migrations (column name → PG definition).
+ *  Existing deployments created audit_log before amount/reference were first-class
+ *  columns, so the audit helper's INSERT (event_type,user_id,amount,reference,details)
+ *  failed with "column \"amount\" of relation \"audit_log\" does not exist" and the
+ *  compliance trail silently dropped. Applied with try/catch so a failed ALTER can
+ *  NEVER trip degraded mode (same rule as INDEXES). */
+const AUDIT_LOG_MIGRATIONS = [
+    ['amount', 'NUMERIC(15,2)'],
+    ['reference', 'TEXT'],
+];
+
+module.exports = { TABLES, INDEXES, USER_MIGRATIONS, WITHDRAWAL_MIGRATIONS, SPIN_MIGRATIONS, TRANSACTION_MIGRATIONS, USER_STATUS_MIGRATIONS, AUDIT_LOG_MIGRATIONS };
