@@ -641,6 +641,9 @@
           .ce-btn-info, .ce-btn-turbo { min-width: 40px; min-height: 40px; padding: .4rem; border-radius: 50%; font-weight: 800; color: var(--ce-primary); background: linear-gradient(135deg, color-mix(in srgb, var(--ce-primary) 20%, transparent), transparent); border-color: color-mix(in srgb, var(--ce-primary) 50%, transparent); }
           .ce-btn-info { font-style: italic; font-family: var(--ce-font-display); font-size: 1.05rem; }
           .ce-btn-autoplay { background: linear-gradient(180deg, #ef4444, #b91c1c) !important; color: #fff !important; border: none !important; box-shadow: 0 4px 14px rgba(239,68,68,0.45) !important; }
+          /* During autoplay the spin button turns into a red STOP — hide the
+             gold themed arrow-ring so it doesn't orbit the red button. */
+          .ce-btn.primary.ce-spin.ce-btn-autoplay::before { opacity: 0; }
 
           /* ── Signature circular spin button (the NetEnt/Yggdrasil tell) ── */
           .ce-btn.primary.ce-spin { width: 92px; height: 92px; min-width: 92px; padding: 0; border-radius: 50%; border: none; color: #160f02; font-family: var(--ce-font-display); font-weight: 900; letter-spacing: 1px; text-transform: uppercase; font-size: .95rem; background: radial-gradient(circle at 50% 32%, var(--ce-secondary) 0%, var(--ce-primary) 46%, var(--ce-primary-d) 100%); box-shadow: var(--ce-spin-glow), 0 6px 18px rgba(0,0,0,.5), inset 0 2px 6px rgba(255,255,255,.35), inset 0 -6px 12px rgba(0,0,0,.35); position: relative; display: flex; align-items: center; justify-content: center; text-shadow: 0 1px 1px rgba(255,255,255,.3); }
@@ -2126,9 +2129,18 @@
         this._renderBonusRunBanner();
       }
 
-      if (result.fairness) {
+      // Refresh the provably-fair panel after every spin. The server sends a
+      // per-spin `spinIntegrity` HMAC (not a full seed reveal), so we keep the
+      // session seeds visible and append the spin signature. Falls back to
+      // `result.fairness` if a future server sends per-spin seeds.
+      if (result.spinIntegrity || result.fairness) {
         this.state.lastSpin = result;
-        this._updateFairnessPanel(result.fairness, result.spinId);
+        const seeds = result.fairness || {
+          serverSeedHash: this.state.seeds?.serverSeedHash || '',
+          clientSeed: this.state.seeds?.clientSeed || '',
+          nonce: this.state.seeds?.nonce || 0,
+        };
+        this._updateFairnessPanel(seeds, result.spinId, result.spinIntegrity);
       }
 
       this.state.spinning = false;
@@ -2172,15 +2184,20 @@
       return box;
     }
 
-    _updateFairnessPanel(fairness, spinId) {
+    _updateFairnessPanel(fairness, spinId, signature) {
       if (!this.fairnessBody) return;
-      this.fairnessBody.innerHTML = '';
+      this.fairnessBody.replaceChildren();
+      fairness = fairness || {};
       const rows = [
         ['Server seed hash', fairness.serverSeedHash || '—'],
         ['Client seed', fairness.clientSeed || '—'],
         ['Nonce', String(fairness.nonce ?? '—')],
       ];
       if (spinId) rows.push(['Spin id', spinId]);
+      // Per-spin integrity signature (server HMAC over grid+win+balance). Lets
+      // a player confirm the exact spin they saw was the one the server
+      // resolved — the server sends this as `spinIntegrity`.
+      if (signature) rows.push(['Spin signature', signature]);
       for (const [k, v] of rows) {
         this.fairnessBody.appendChild($el('div', { style: { opacity: .6 } }, k));
         this.fairnessBody.appendChild($el('div', { style: { wordBreak: 'break-all' } }, v));
