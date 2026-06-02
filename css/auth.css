@@ -15,9 +15,19 @@
 * { box-sizing: border-box; margin: 0; padding: 0; }
 html, body { min-height: 100%; }
 body {
-  background: radial-gradient(1200px 600px at 20% -10%, rgba(212,175,55,.12), transparent 60%),
-              radial-gradient(900px 500px at 110% 110%, rgba(212,175,55,.08), transparent 60%),
-              var(--bg);
+  /* Layers (top→bottom): gold vignette tints, a navy readability scrim, then a
+     premium casino-lounge backdrop. The .rs-card sits opaque on top, so text
+     stays fully legible while the backdrop reads as atmosphere. */
+  background-color: var(--bg);
+  background-image:
+    radial-gradient(1200px 600px at 20% -10%, rgba(212,175,55,.12), transparent 60%),
+    radial-gradient(900px 500px at 110% 110%, rgba(212,175,55,.08), transparent 60%),
+    linear-gradient(180deg, rgba(10,14,39,.82) 0%, rgba(10,14,39,.90) 100%),
+    url('../assets/backgrounds/auth_bg.webp');
+  background-size: auto, auto, auto, cover;
+  background-position: center, center, center, center;
+  background-repeat: no-repeat;
+  background-attachment: fixed;
   color: var(--text);
   font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
   line-height: 1.5;
