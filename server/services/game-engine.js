@@ -495,6 +495,10 @@ async function resolveSpin(game, betAmount, gameStats, freeSpinState = null, db 
                 type: 'cluster',
                 clusterCount: clusters.length,
                 totalSize,
+                // Winning cell coords ([col,row]) so the client can highlight
+                // the symbols that paid. Presentational only — does not affect
+                // the win math above.
+                cells: clusters.flatMap(cl => cl.cells || []),
                 message: `CLUSTER WIN! ${clusters.length} cluster(s) = $${winAmount.toFixed(2)}!`,
             };
         } else if (freeSpinState.active && (game.bonusType === 'tumble' || game.bonusType === 'avalanche')) {
@@ -529,6 +533,9 @@ async function resolveSpin(game, betAmount, gameStats, freeSpinState = null, db 
             winDetails = {
                 type: 'payline',
                 lineCount: paylineWins.length,
+                // Winning cell coords ([col,row]) for client-side highlight of
+                // the symbols on each winning payline. Presentational only.
+                cells: paylineWins.flatMap(w => w.cells || []),
                 message: paylineWins.length === 1
                     ? `WIN! ${paylineWins[0].matchCount}-of-a-kind = $${winAmount.toFixed(2)}!`
                     : `MULTI-LINE WIN! ${paylineWins.length} paylines = $${winAmount.toFixed(2)}!`,
@@ -559,8 +566,16 @@ async function resolveSpin(game, betAmount, gameStats, freeSpinState = null, db 
                 winAmount = Math.round(winAmount * wheelMult * 100) / 100;
             }
 
+            // Classic wins land on the top row — highlight every reel whose
+            // top symbol is the winning symbol or a wild. Presentational only.
+            const classicCells = [];
+            for (let col = 0; col < grid.length; col++) {
+                const s = grid[col][0];
+                if (s === classicResult.symbol || isWild(s, game)) classicCells.push([col, 0]);
+            }
             winDetails = {
                 type: classicResult.type,
+                cells: classicCells,
                 message: classicResult.type === 'triple'
                     ? `MEGA WIN! Triple match = $${winAmount.toFixed(2)}!`
                     : `Nice win! Double match = $${winAmount.toFixed(2)}!`,

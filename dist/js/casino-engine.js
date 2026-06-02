@@ -1885,8 +1885,12 @@
       }
       if (!Array.isArray(r.lineWins)) {
         // Server win positions, if present, let us highlight winning cells.
+        // game-engine surfaces winDetails.cells as [[col,row],...] which is
+        // exactly the engine's [reel,row] highlight format → one synthetic
+        // line carrying every winning cell.
         const wd = r.winDetails || {};
-        r.lineWins = Array.isArray(wd.lines) ? wd.lines
+        r.lineWins = Array.isArray(wd.cells) && wd.cells.length ? [{ positions: wd.cells }]
+          : Array.isArray(wd.lines) ? wd.lines
           : Array.isArray(wd.lineWins) ? wd.lineWins
           : [];
       }

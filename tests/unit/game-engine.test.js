@@ -101,6 +101,17 @@ describe('Game Engine — Payline detection', () => {
         const wins = engine.checkPaylineWins(grid, paylineGame);
         const fiveOfKindS2 = wins.find(w => w.matchCount === 5 && w.symbol === 's2');
         expect(fiveOfKindS2).toBeDefined();
+        // Winning cells must be [col,row] pairs so the client can highlight the
+        // paying symbols (surfaced via winDetails.cells → engine highlight).
+        // Regression guard for the win-highlight pipeline added 2026-06-03.
+        expect(Array.isArray(fiveOfKindS2.cells)).toBe(true);
+        expect(fiveOfKindS2.cells).toHaveLength(5);
+        fiveOfKindS2.cells.forEach(([col, row]) => {
+            expect(Number.isInteger(col)).toBe(true);
+            expect(Number.isInteger(row)).toBe(true);
+        });
+        // top payline → all five cells on row 0, reels 0..4
+        expect(fiveOfKindS2.cells).toEqual([[0, 0], [1, 0], [2, 0], [3, 0], [4, 0]]);
     });
 
     test('3-of-a-kind on middle payline (line 0)', () => {
