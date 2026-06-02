@@ -98,7 +98,7 @@
     kangaroo: '🦘', koala: '🐨', crocodile: '🐊', dingo: '🐺',
     platypus: '🦫', camel: '🐪', horse: '🐴', heron: '🪿',
     zebra: '🦓', mermaid: '🧜‍♀️', seahorse: '🐢', turtle: '🐢',
-    salmon: '🐟', clownfish: '🐠', wildebeest: '🐃', joey: '🦘',
+    salmon: '🐟', clownfish: '🐠', wildebeest: '🐃', joey: '🦘', dove: '🕊️',
     bastet: '🐈', sphinx: '🦁', falcon: '🦅', hawk: '🦅',
     paw: '🐾', pack: '🐺', mane: '🦁', fang: '🦷', fangs: '🦷',
     claw: '🐾', tusks: '🐘', stripes: '🐅', wing: '🪶', wings: '🪶',

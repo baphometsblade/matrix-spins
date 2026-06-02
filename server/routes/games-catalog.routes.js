@@ -18,6 +18,7 @@ const express = require('express');
 const games = require('../../shared/game-definitions');
 const db = require('../database');
 const { optionalAuth } = require('../middleware/auth');
+const { getSlugGame } = require('../services/slug-registry');
 
 const router = express.Router();
 
@@ -227,6 +228,14 @@ router.get('/:id', (req, res) => {
     for (const cand of candidates) {
         g = games.find(x => String(x.id || '').toLowerCase() === cand);
         if (g) break;
+    }
+    // The 120 slot pages (/games/<slug>.html) use hyphenated IDs that live in
+    // js/game-registry.js, NOT game-definitions.js. Resolve them to their REAL
+    // themed config (descriptive symbols → engine emoji glyphs). Without this,
+    // every hyphenated slot fell to the synthetic ['s1'..'s5'] placeholder and
+    // the reels rendered "S1".."S5" text chips instead of themed symbols.
+    if (!g) {
+        g = getSlugGame(raw);
     }
     if (!g) {
         // Synthetic fallback so the engine can render. Real spin attempts
