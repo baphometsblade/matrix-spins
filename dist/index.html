@@ -1415,10 +1415,35 @@
                 animation: none !important;
             }
         }
+
+        /* Narrow phones: the header-right packs balance + VIP widget + wagering
+           bar + Deposit + search + notification bell + menu, which overflowed
+           375px and pushed the bell/menu OFF-SCREEN. Keep the essentials
+           (balance — real-money rule — + Deposit + bell + menu); drop the
+           secondary VIP tier widget and header wagering bar (both available on
+           the VIP/account pages). */
+        @media (max-width: 480px) {
+            /* Keep only the essentials in the bar — balance (real-money rule),
+               Deposit/Sign-Up (conversion), and the hamburger. The standalone
+               icons (sound, search, notifications, RG-limits, avatar) are all
+               reachable from the hamburger menu, so they are redundant here and
+               were overflowing Deposit + the menu OFF-SCREEN at 375px. */
+            .header-right #vipMiniWidget,
+            .header-right #wageringBarWrap,
+            .header-right .ms-search-trigger,
+            .header-right button[aria-label="Toggle sound"],
+            .header-right .msn-bell-wrap,
+            .header-right #limitsBtn,
+            .header-right .limits-btn,
+            .header-right .avatar { display: none !important; }
+            .header-right { gap: 6px; flex-wrap: nowrap; }
+            .header-right .balance-card { padding: 4px 8px; }
+            .header-logo { max-width: 120px; overflow: hidden; }
+        }
     </style>
 
 
-    <link rel="stylesheet" href="styles.b00c117a.min.css">
+    <link rel="stylesheet" href="styles.fdcdb86f.min.css">
 </head>
 <body>
     <!-- HEADER -->
@@ -2905,6 +2930,6 @@
     <!-- Site-wide jackpot win celebration + real-time pool ticker (socket.io) -->
     <script src="js/confetti.min.js?v=2b59dbb8" defer></script>
     <script src="js/jackpot-celebration.js?v=48be09d7" defer></script>
-    <script src="bundle.5cd8bd56.min.js"></script>
+    <script src="bundle.1c72ff9c.min.js"></script>
 </body>
 </html>

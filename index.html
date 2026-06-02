@@ -1415,6 +1415,31 @@
                 animation: none !important;
             }
         }
+
+        /* Narrow phones: the header-right packs balance + VIP widget + wagering
+           bar + Deposit + search + notification bell + menu, which overflowed
+           375px and pushed the bell/menu OFF-SCREEN. Keep the essentials
+           (balance — real-money rule — + Deposit + bell + menu); drop the
+           secondary VIP tier widget and header wagering bar (both available on
+           the VIP/account pages). */
+        @media (max-width: 480px) {
+            /* Keep only the essentials in the bar — balance (real-money rule),
+               Deposit/Sign-Up (conversion), and the hamburger. The standalone
+               icons (sound, search, notifications, RG-limits, avatar) are all
+               reachable from the hamburger menu, so they are redundant here and
+               were overflowing Deposit + the menu OFF-SCREEN at 375px. */
+            .header-right #vipMiniWidget,
+            .header-right #wageringBarWrap,
+            .header-right .ms-search-trigger,
+            .header-right button[aria-label="Toggle sound"],
+            .header-right .msn-bell-wrap,
+            .header-right #limitsBtn,
+            .header-right .limits-btn,
+            .header-right .avatar { display: none !important; }
+            .header-right { gap: 6px; flex-wrap: nowrap; }
+            .header-right .balance-card { padding: 4px 8px; }
+            .header-logo { max-width: 120px; overflow: hidden; }
+        }
     </style>
 <link rel="stylesheet" href="unified-ux.css">
 <script src="js/unified-ux.js" defer></script>
