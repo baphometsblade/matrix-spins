@@ -120,16 +120,45 @@ function symbolHint(symId) {
     return 'a richly detailed thematic hero subject, dramatic cinematic key light, polished glossy highlights';
 }
 
+// ── Subject overrides — concrete, SDXL-renderable phrases for ambiguous /
+// proper-noun / abstract / short symbol ids. Without these, ids like "ra"
+// render as the letter "R", deity names render as random people, and
+// abstracts ("luck", "fortune") render as garbled frames. Characters are
+// phrased as inanimate IDOLS/MASKS/EMBLEMS so they stay premium and respect
+// the global "no people" negative. Loaded once from data/symbol-subjects.json. ──
+const SUBJECTS_FILE = path.join(ROOT, 'data', 'symbol-subjects.json');
+let SUBJECT_OVERRIDES = {};
+try {
+    const raw = JSON.parse(fs.readFileSync(SUBJECTS_FILE, 'utf8')) || {};
+    for (const [k, v] of Object.entries(raw)) {
+        if (k.startsWith('_') || typeof v !== 'string') continue;
+        SUBJECT_OVERRIDES[k.toLowerCase()] = v;
+    }
+} catch (e) {
+    console.error('[symbol-art] WARN: could not load symbol-subjects.json:', e.message);
+}
+
 // Humanise the registry id into a noun phrase the model can render.
-// "s3_candy_cane" → "candy cane"; "wild_zeus" → "zeus wild";
-// "gold-bell" → "gold bell"; "eye-of-horus" → "eye of horus".
+// Consults SUBJECT_OVERRIDES first (concrete phrase for ambiguous ids), then
+// falls back to a cleaned-up version of the id.
+// "s3_candy_cane" → "candy cane"; "gold-bell" → "gold bell";
+// "ra" → "an ornate golden falcon-headed Egyptian sun-god idol …" (override).
 function symbolSubject(symId) {
     let s = String(symId || '').toLowerCase();
+    if (SUBJECT_OVERRIDES[s]) return SUBJECT_OVERRIDES[s];
     // Strip the s1_/s2_/s3_/s4_/s5_ tier prefix.
     s = s.replace(/^s[1-5][-_]/, '');
+    if (SUBJECT_OVERRIDES[s]) return SUBJECT_OVERRIDES[s];
     // Normalise separators.
     s = s.replace(/[-_]+/g, ' ').trim();
     return s || 'mystery icon';
+}
+
+// True when the id has a concrete override (used to drop the generic low/mid/
+// high-pay styling hint so it doesn't fight the override's own art direction).
+function hasOverride(symId) {
+    const s = String(symId || '').toLowerCase();
+    return !!(SUBJECT_OVERRIDES[s] || SUBJECT_OVERRIDES[s.replace(/^s[1-5][-_]/, '')]);
 }
 
 function nameSubject(name) {
@@ -138,7 +167,13 @@ function nameSubject(name) {
 
 function buildPrompt(game, symId) {
     const subj = symbolSubject(symId);
-    const hint = symbolHint(symId);
+    // Overridden subjects carry their own art direction, so the generic
+    // low/mid/high-pay hint would only fight them. Role symbols (wild,
+    // scatter, bonus, bar, seven, bell) are never overridden, so they still
+    // receive their proper aura/styling hint from symbolHint().
+    const hint = hasOverride(symId)
+        ? 'premium ornate collectible casino game-symbol craftsmanship, mirror-finish reflections, cinematic key light'
+        : symbolHint(symId);
     // Tight ISOLATED PRODUCT SHOT of the symbol object — the object must be
     // the subject and fill the frame. We deliberately use a SIMPLE velvet
     // backdrop rather than the full theme scene (THEME_BG), because the rich
@@ -154,7 +189,8 @@ function buildPrompt(game, symId) {
     );
 }
 
-const NEGATIVE = 'text, words, letters, numbers, digits, typography, caption, label, title, ' +
+const NEGATIVE = 'text, words, letters, single letter, alphabet character, initial, monogram, ' +
+    'numbers, digits, typography, caption, label, title, lettering, inscription, ' +
     'watermark, signature, logo, brand, UI, HUD, buttons, score, menu, frame, border, ' +
     'multiple subjects, collage, grid, split screen, tiny details, busy background, ' +
     'deformed, blurry, low quality, jpeg artifacts, extra limbs, mutated, ugly, flat, dull, ' +

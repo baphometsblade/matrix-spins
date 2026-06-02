@@ -67,6 +67,35 @@ describe('Spin Flow — End-to-end spin lifecycle', () => {
         expect(spin.body.balance).toBeCloseTo(100 - 1 + (spin.body.winAmount || 0), 2);
     });
 
+    // REGRESSION (2026-06-03): the browser slot engine (js/api-client.js) posts
+    // the stake as `bet`, but the route only destructured `betAmount` — so EVERY
+    // spin from the actual game UI failed with "Valid bet amount is required"
+    // (the slot was unspinnable). Every OTHER test in this file sends `betAmount`,
+    // which masked the bug. These two lock the `bet` field name in.
+    test('accepts `bet` field name (what the browser api-client sends)', async () => {
+        const { token, userId } = await registerAndDeposit('spinbet');
+        const db = require('../../server/database');
+        await db.run('UPDATE users SET balance = ? WHERE id = ?', [100, userId]);
+        const spin = await request(app)
+            .post('/api/spin')
+            .set('Authorization', `Bearer ${token}`)
+            .send({ gameId: 'sugar_rush', bet: 1 });
+        expect([200, 201]).toContain(spin.statusCode);
+        expect(spin.body).toHaveProperty('grid');
+        expect(spin.body).not.toHaveProperty('error');
+        expect(spin.body.balance).toBeCloseTo(100 - 1 + (spin.body.winAmount || 0), 2);
+    });
+
+    test('rejects when NEITHER bet nor betAmount is provided', async () => {
+        const { token } = await registerAndDeposit('spinnobet');
+        const res = await request(app)
+            .post('/api/spin')
+            .set('Authorization', `Bearer ${token}`)
+            .send({ gameId: 'sugar_rush' });
+        expect(res.statusCode).toBe(400);
+        expect(String(res.body.error || '')).toMatch(/bet amount/i);
+    });
+
     test('Spin rejects unknown gameId', async () => {
         const { token } = await registerAndDeposit('spinflow2');
         const res = await request(app)

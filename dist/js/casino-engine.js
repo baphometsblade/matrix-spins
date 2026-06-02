@@ -334,22 +334,74 @@
       }
     }
 
+    // Inject the studio display/body fonts (Cinzel, Orbitron, Black Ops One,
+    // Playfair, …) once per page. The game HTML only loads Inter + Plus Jakarta
+    // Sans, so each studio's themed font silently fell back to a generic
+    // serif/sans — the per-game GUIs all looked the same. Loading the full set
+    // lets each studio render in its real typeface.
+    _injectThemeFonts() {
+      if (document.getElementById('ce-theme-fonts')) return;
+      const link = document.createElement('link');
+      link.id = 'ce-theme-fonts';
+      link.rel = 'stylesheet';
+      link.href = 'https://fonts.googleapis.com/css2?' + [
+        'Cinzel:wght@500;700;900', 'Crimson+Text:wght@600;700', 'Orbitron:wght@600;700;900',
+        'Black+Ops+One', 'Playfair+Display:wght@600;700;900', 'Fredoka+One', 'Righteous',
+        'Poppins:wght@600;700;800', 'Lora:wght@500;600;700', 'Space+Mono:wght@700', 'Caveat:wght@600;700',
+      ].map((f) => 'family=' + f).join('&') + '&display=swap';
+      document.head.appendChild(link);
+    }
+
+    // Translate the full per-game studioTheme into CSS custom properties on the
+    // engine root. The stylesheet (below) reads ONLY these vars, so every game
+    // is skinned by its own palette / fonts / frame / glow — the engine used to
+    // apply just primaryColor and throw the rest away.
+    _applyThemeVars() {
+      const t = this.theme || {};
+      const root = this.container;
+      const primary = t.primaryColor || '#D4A853';
+      const secondary = t.secondaryColor || shade(primary, 18);
+      const accent = t.accentColor || secondary;
+      const win = t.winHighlight || '#FFD700';
+      const reelBorder = t.reelBorder || primary;
+      const vars = {
+        '--ce-primary': primary,
+        '--ce-primary-d': shade(primary, -26),
+        '--ce-secondary': secondary,
+        '--ce-secondary-d': shade(secondary, -26),
+        '--ce-accent': accent,
+        '--ce-win': win,
+        '--ce-reel-bg': t.reelBg || '#0a0a15',
+        '--ce-reel-border': reelBorder,
+        '--ce-font-display': t.fontFamily || "'Plus Jakarta Sans', Inter, sans-serif",
+        '--ce-font-body': t.fontFamilyBody || "'Inter', system-ui, sans-serif",
+        '--ce-frame-border': t.borderStyle || ('2px solid ' + reelBorder),
+        '--ce-frame-shadow': t.boxShadow || ('0 10px 40px ' + primary + '22, inset 0 0 30px ' + primary + '12'),
+        '--ce-spin-glow': t.spinButtonGlow || ('0 0 26px ' + primary + '88'),
+      };
+      for (const [k, v] of Object.entries(vars)) root.style.setProperty(k, v);
+      if (t.id) root.dataset.ceStudio = t.id;
+      this._primary = primary;
+    }
+
     _buildShell() {
       const theme = this.theme;
       const primary = theme.primaryColor || '#D4A853';
       const container = this.container;
+      this._injectThemeFonts();
+      this._applyThemeVars();
       // Translucent scrim instead of an opaque fill, so the per-game background
       // art set on <body> (scripts/map-and-generate-assets.js — one .webp per
       // game) reads through as atmosphere while keeping the topbar/reels legible.
       // If the art ever fails to load, <body>'s flat #0D0F14 shows through.
-      container.style.background = 'linear-gradient(180deg, rgba(7,9,13,0.58) 0%, rgba(7,9,13,0.76) 55%, rgba(7,9,13,0.88) 100%)';
+      container.style.background = 'linear-gradient(180deg, rgba(7,9,13,0.52) 0%, rgba(7,9,13,0.72) 55%, rgba(7,9,13,0.86) 100%)';
       container.style.minHeight = '100vh';
       container.style.color = '#F0F0F5';
-      container.style.fontFamily = "'Inter', system-ui, sans-serif";
+      container.style.fontFamily = 'var(--ce-font-body)';
       container.style.position = 'relative';
       container.style.paddingBottom = '2rem';
-      this._primary = primary;
-      container.innerHTML = '';
+      container.classList.add('ce-root');
+      container.replaceChildren();
 
       this.topbar = $el('div', { style: {
         display: 'flex', justifyContent: 'space-between', alignItems: 'center',
@@ -391,8 +443,8 @@
 
       this.main.appendChild(
         $el('div', { style: { textAlign: 'center', padding: '.6rem 0 1.2rem' } },
-          $el('h1', { style: { fontSize: '1.8rem', letterSpacing: '2px', textTransform: 'uppercase', color: primary, fontFamily: this.theme.fontFamily || 'Plus Jakarta Sans, Inter, sans-serif' } }, game.name || this.displayName),
-          $el('p', { style: { opacity: .7, fontSize: '.85rem', marginTop: '.3rem' } },
+          $el('h1', { class: 'ce-title' }, game.name || this.displayName),
+          $el('p', { class: 'ce-subtitle', style: { marginTop: '.3rem' } },
             // RTP number deliberately omitted from this header per the
             // operator policy that removed per-game RTP claims from the
             // player-facing UI (commit b2eec40d). RTP disclosure lives
@@ -403,13 +455,10 @@
         )
       );
 
-      this.reelBox = $el('div', { style: {
+      this.reelBox = $el('div', { class: 'ce-reelbox', style: {
         margin: '0 auto', maxWidth: '860px',
-        background: 'rgba(0,0,0,.35)', borderRadius: '14px', padding: '1rem',
-        border: `2px solid ${primary}66`,
-        boxShadow: `0 10px 40px ${primary}20, inset 0 0 30px ${primary}10`,
       }});
-      this.reelGrid = $el('div', { style: {
+      this.reelGrid = $el('div', { class: 'ce-reelgrid', style: {
         display: 'grid', gridTemplateColumns: `repeat(${game.reels}, 1fr)`, gap: '.4rem',
       }});
       // Seed the idle grid with the game's REAL symbols (random per cell)
@@ -424,9 +473,8 @@
         ? game.symbols
         : ['cherry', 'lemon', 'orange', 'plum', 'bar', 'sevens', 'wild'];
       for (let r = 0; r < game.reels; r++) {
-        const col = $el('div', { style: {
-          background: this.theme.reelBg || '#0a0a15', borderRadius: '10px',
-          border: `1px solid ${primary}33`, padding: '.3rem', display: 'flex', flexDirection: 'column', gap: '.3rem',
+        const col = $el('div', { class: 'ce-col', style: {
+          display: 'flex', flexDirection: 'column', gap: '.3rem',
         }});
         for (let y = 0; y < game.rows; y++) {
           const sym = idleSymbols[(Math.random() * idleSymbols.length) | 0];
@@ -437,14 +485,10 @@
       this.reelBox.appendChild(this.reelGrid);
       this.main.appendChild(this.reelBox);
 
-      this.winStrip = $el('div', { style: {
-        textAlign: 'center', minHeight: '2.4rem', marginTop: '.8rem',
-        fontSize: '1.2rem', fontWeight: 700, color: primary,
-        transition: 'opacity .3s',
-      }}, '\u00A0');
+      this.winStrip = $el('div', { class: 'ce-winstrip' }, '\u00A0');
       this.main.appendChild(this.winStrip);
 
-      const controlBar = $el('div', { style: {
+      const controlBar = $el('div', { class: 'ce-panel', style: {
         display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '.8rem',
         marginTop: '1rem', flexWrap: 'wrap',
       }});
@@ -478,10 +522,7 @@
 
       const betMinus = makeStepper(-1, '−');
       const betPlus  = makeStepper(+1, '+');
-      this.betLabel  = $el('div', { style: {
-        padding: '.5rem 1rem', minWidth: '140px', textAlign: 'center',
-        border: `1px solid ${primary}55`, borderRadius: '8px', color: primary, fontWeight: 700,
-      }}, fmt(this.state.betCents));
+      this.betLabel  = $el('div', { class: 'ce-betlabel' }, fmt(this.state.betCents));
       // Max Bet shortcut — single click jumps to game.maxBetCents.
       // Previously the player had to press + repeatedly to reach the max,
       // which is an industry-standard premium UX gap.
@@ -536,7 +577,7 @@
       // _updateSpinBtnLabel keeps the visible text + aria-label in
       // sync with the current state.
       this.spinBtn = $el('button', {
-        class: 'ce-btn primary',
+        class: 'ce-btn primary ce-spin',
         'aria-label': 'Spin',
         onclick: () => {
           if (this.state.autoplay) this._stopAutoplay();
@@ -557,21 +598,59 @@
         const s = document.createElement('style');
         s.id = 'ce-style';
         s.textContent = `
-          .ce-btn { padding: .6rem 1rem; background: transparent; color: #fff; border: 1px solid ${primary}66; border-radius: 8px; font: inherit; cursor: pointer; font-weight: 600; transition: transform 120ms ease, border-color 160ms ease, box-shadow 160ms ease; touch-action: manipulation; }
-          .ce-btn:hover { border-color: ${primary}; }
+          /* ───────────────────────────────────────────────────────────────
+             PER-GAME SKIN. Every rule below reads the CSS custom properties
+             set by _applyThemeVars() from the game's full studioTheme, so each
+             game renders in its own palette / fonts / frame / glow — the engine
+             used to apply just primaryColor and discard the rest. This is what
+             gives each slot a distinct "custom GUI" (NetEnt / Yggdrasil style:
+             one premium engine, per-game skin). color-mix() derives translucent
+             tints from the solid theme hexes.
+             ─────────────────────────────────────────────────────────────── */
+          .ce-title { margin: 0; font-family: var(--ce-font-display); font-size: clamp(1.5rem, 4.6vw, 2.4rem); font-weight: 900; letter-spacing: 2px; text-transform: uppercase; line-height: 1.1; color: var(--ce-primary); text-shadow: 0 0 20px color-mix(in srgb, var(--ce-primary) 45%, transparent), 0 2px 4px rgba(0,0,0,.6); }
+          .ce-subtitle { margin: 0; opacity: .72; font-size: .8rem; letter-spacing: 1.5px; text-transform: uppercase; font-family: var(--ce-font-body); color: #d2d5dd; }
+
+          /* Ornate themed reel frame (themed border + glow + corner brackets) */
+          .ce-reelbox { position: relative; background: rgba(0,0,0,.4); border-radius: 16px; padding: 1.1rem; border: var(--ce-frame-border); box-shadow: var(--ce-frame-shadow); }
+          .ce-reelbox::before { content: ''; position: absolute; inset: 6px; border-radius: 11px; pointer-events: none; box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--ce-accent) 38%, transparent); }
+          .ce-reelbox::after { content: ''; position: absolute; inset: 0; border-radius: 16px; pointer-events: none; opacity: .8; filter: drop-shadow(0 0 4px var(--ce-win));
+            background:
+              linear-gradient(var(--ce-win),var(--ce-win)) 0 0/20px 3px no-repeat,
+              linear-gradient(var(--ce-win),var(--ce-win)) 0 0/3px 20px no-repeat,
+              linear-gradient(var(--ce-win),var(--ce-win)) 100% 0/20px 3px no-repeat,
+              linear-gradient(var(--ce-win),var(--ce-win)) 100% 0/3px 20px no-repeat,
+              linear-gradient(var(--ce-win),var(--ce-win)) 0 100%/20px 3px no-repeat,
+              linear-gradient(var(--ce-win),var(--ce-win)) 0 100%/3px 20px no-repeat,
+              linear-gradient(var(--ce-win),var(--ce-win)) 100% 100%/20px 3px no-repeat,
+              linear-gradient(var(--ce-win),var(--ce-win)) 100% 100%/3px 20px no-repeat; }
+          .ce-col { background: var(--ce-reel-bg, #0a0a15); border-radius: 10px; border: 1px solid color-mix(in srgb, var(--ce-reel-border) 32%, transparent); padding: .3rem; }
+          .ce-winstrip { text-align: center; min-height: 2.4rem; margin-top: .8rem; font-size: 1.25rem; font-weight: 800; font-family: var(--ce-font-display); color: var(--ce-win); text-shadow: 0 0 14px color-mix(in srgb, var(--ce-win) 40%, transparent); transition: opacity .3s; }
+
+          /* Glassy themed control panel */
+          .ce-panel { background: linear-gradient(180deg, rgba(10,12,18,.55), rgba(8,10,15,.78)); border: 1px solid color-mix(in srgb, var(--ce-primary) 38%, transparent); border-radius: 16px; padding: .85rem 1rem; box-shadow: inset 0 1px 0 rgba(255,255,255,.07), 0 8px 26px rgba(0,0,0,.4); -webkit-backdrop-filter: blur(7px); backdrop-filter: blur(7px); }
+          .ce-betlabel { padding: .5rem 1rem; min-width: 130px; text-align: center; border: 1px solid color-mix(in srgb, var(--ce-primary) 50%, transparent); border-radius: 10px; color: var(--ce-primary); font-weight: 800; font-family: var(--ce-font-display); letter-spacing: 1px; background: rgba(0,0,0,.25); }
+
+          /* Buttons */
+          .ce-btn { padding: .6rem 1rem; background: transparent; color: #fff; border: 1px solid color-mix(in srgb, var(--ce-primary) 45%, transparent); border-radius: 10px; font: inherit; font-family: var(--ce-font-body); cursor: pointer; font-weight: 700; transition: transform 120ms ease, border-color 160ms ease, box-shadow 160ms ease; touch-action: manipulation; }
+          .ce-btn:hover { border-color: var(--ce-primary); box-shadow: 0 0 12px color-mix(in srgb, var(--ce-primary) 32%, transparent); }
           .ce-btn:active { transform: scale(0.96); }
-          .ce-btn:focus-visible { outline: 2px solid ${primary}; outline-offset: 2px; }
+          .ce-btn:focus-visible { outline: 2px solid var(--ce-primary); outline-offset: 2px; }
           .ce-btn:disabled { opacity: .4; cursor: not-allowed; }
-          .ce-btn-stepper { min-width: 44px; font-size: 1.1rem; }
-          .ce-btn-maxbet { background: linear-gradient(135deg, ${primary}22, ${primary}11); border-color: ${primary}88; color: ${primary}; letter-spacing: 1px; font-weight: 800; }
-          .ce-btn-info { min-width: 36px; min-height: 36px; padding: .4rem .6rem; font-style: italic; font-weight: 800; font-family: serif; font-size: 1.05rem; border-radius: 50%; }
-          .ce-btn-turbo { min-width: 36px; min-height: 36px; padding: .4rem .6rem; font-size: 1.0rem; font-weight: 800; border-radius: 50%; background: linear-gradient(135deg, ${primary}22, ${primary}11); border-color: ${primary}88; color: ${primary}; }
-          .ce-btn-auto { background: linear-gradient(135deg, ${primary}22, ${primary}11); border-color: ${primary}88; color: ${primary}; letter-spacing: 1px; font-weight: 800; }
-          .ce-btn-autoplay { background: linear-gradient(180deg, #ef4444, #b91c1c); color: white; box-shadow: 0 4px 14px rgba(239,68,68,0.4); }
-          .ce-btn-autoplay:hover:not(:disabled) { box-shadow: 0 6px 22px rgba(239,68,68,0.6); }
-          .ce-btn.primary { background: linear-gradient(180deg, ${primary}, ${shade(primary,-20)}); color: #1a1205; border: none; font-weight: 800; letter-spacing: 2px; padding: .7rem 2rem; text-transform: uppercase; box-shadow: 0 4px 14px ${primary}55; }
-          .ce-btn.primary:hover:not(:disabled) { box-shadow: 0 6px 22px ${primary}88; }
-          .ce-btn.primary:active:not(:disabled) { transform: scale(0.95); box-shadow: 0 2px 8px ${primary}66; }
+          .ce-btn-stepper { min-width: 46px; font-size: 1.2rem; color: var(--ce-primary); font-weight: 800; }
+          .ce-btn-maxbet, .ce-btn-auto { background: linear-gradient(135deg, color-mix(in srgb, var(--ce-primary) 22%, transparent), transparent); border-color: color-mix(in srgb, var(--ce-primary) 55%, transparent); color: var(--ce-primary); letter-spacing: 1px; font-weight: 800; }
+          .ce-btn-info, .ce-btn-turbo { min-width: 40px; min-height: 40px; padding: .4rem; border-radius: 50%; font-weight: 800; color: var(--ce-primary); background: linear-gradient(135deg, color-mix(in srgb, var(--ce-primary) 20%, transparent), transparent); border-color: color-mix(in srgb, var(--ce-primary) 50%, transparent); }
+          .ce-btn-info { font-style: italic; font-family: var(--ce-font-display); font-size: 1.05rem; }
+          .ce-btn-autoplay { background: linear-gradient(180deg, #ef4444, #b91c1c) !important; color: #fff !important; border: none !important; box-shadow: 0 4px 14px rgba(239,68,68,0.45) !important; }
+
+          /* ── Signature circular spin button (the NetEnt/Yggdrasil tell) ── */
+          .ce-btn.primary.ce-spin { width: 92px; height: 92px; min-width: 92px; padding: 0; border-radius: 50%; border: none; color: #160f02; font-family: var(--ce-font-display); font-weight: 900; letter-spacing: 1px; text-transform: uppercase; font-size: .95rem; background: radial-gradient(circle at 50% 32%, var(--ce-secondary) 0%, var(--ce-primary) 46%, var(--ce-primary-d) 100%); box-shadow: var(--ce-spin-glow), 0 6px 18px rgba(0,0,0,.5), inset 0 2px 6px rgba(255,255,255,.35), inset 0 -6px 12px rgba(0,0,0,.35); position: relative; display: flex; align-items: center; justify-content: center; text-shadow: 0 1px 1px rgba(255,255,255,.3); }
+          .ce-btn.primary.ce-spin::before { content: ''; position: absolute; inset: -6px; border-radius: 50%; background: conic-gradient(from 0deg, transparent 0deg, var(--ce-win) 55deg, transparent 130deg, transparent 180deg, var(--ce-win) 235deg, transparent 310deg); -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 5px), #000 calc(100% - 4px)); mask: radial-gradient(farthest-side, transparent calc(100% - 5px), #000 calc(100% - 4px)); animation: ceSpinRing 4s linear infinite; opacity: .9; }
+          .ce-btn.primary.ce-spin:hover:not(:disabled) { filter: brightness(1.07); box-shadow: var(--ce-spin-glow), 0 8px 26px rgba(0,0,0,.6), inset 0 2px 6px rgba(255,255,255,.4); }
+          .ce-btn.primary.ce-spin:active:not(:disabled) { transform: scale(0.94); }
+          .ce-btn.primary.ce-spin:disabled::before { animation-play-state: paused; }
+          @keyframes ceSpinRing { to { transform: rotate(360deg); } }
+          @media (prefers-reduced-motion: reduce) { .ce-btn.primary.ce-spin::before { animation: none; } }
+          @media (max-width: 640px) { .ce-btn.primary.ce-spin { width: 78px; height: 78px; min-width: 78px; font-size: .82rem; } .ce-panel { gap: .5rem; padding: .7rem .6rem; } .ce-betlabel { min-width: 92px; padding: .45rem .6rem; } .ce-btn { padding: .5rem .7rem; } }
           .ce-cell { aspect-ratio: 1; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 1.4rem; color: white; text-shadow: 0 2px 4px rgba(0,0,0,.5); transition: transform .25s, filter .25s; user-select: none; overflow: hidden; }
           /* Bitmap symbol tile (per-game custom art). Fills the cell — the
              tile already includes an integrated themed background, so the
@@ -1784,6 +1863,38 @@
       setTimeout(() => toast.remove(), 3500);
     }
 
+    // Bridge the server's spin-response vocabulary to the field names this
+    // engine's animation + win-display code expects. The two evolved
+    // separately: the server returns { grid, winAmount (dollars), balance
+    // (dollars), winDetails, ... } while the engine reads { reels,
+    // payoutCents, balanceAfterCents, lineWins, multiplier, ... }. Without
+    // this bridge, result.reels is undefined and the reel-stop loop throws
+    // (result.reels[r]) — aborting EVERY spin (button stuck disabled, no win
+    // shown). Combined with the earlier `bet`/`betAmount` mismatch, the
+    // browser slot UI could never complete a spin. Idempotent: only fills a
+    // field when the engine-native one is absent, so a future server that
+    // already speaks cents keeps working.
+    _normalizeSpinResult(r) {
+      if (!r || typeof r !== 'object') return r;
+      if (!r.reels && Array.isArray(r.grid)) r.reels = r.grid;
+      if (r.payoutCents == null && typeof r.winAmount === 'number') r.payoutCents = Math.round(r.winAmount * 100);
+      if (r.balanceAfterCents == null && typeof r.balance === 'number') r.balanceAfterCents = Math.round(r.balance * 100);
+      if (r.multiplier == null) {
+        const m = r.winDetails && (r.winDetails.multiplier || r.winDetails.totalMultiplier);
+        r.multiplier = (typeof m === 'number' && m > 0) ? m : 1;
+      }
+      if (!Array.isArray(r.lineWins)) {
+        // Server win positions, if present, let us highlight winning cells.
+        const wd = r.winDetails || {};
+        r.lineWins = Array.isArray(wd.lines) ? wd.lines
+          : Array.isArray(wd.lineWins) ? wd.lineWins
+          : [];
+      }
+      if (r.scatterWin === undefined) r.scatterWin = null;
+      if (r.freeSpinsAwarded == null) r.freeSpinsAwarded = 0;
+      return r;
+    }
+
     async _spin(useFreeSpin) {
       if (this.state.spinning) return;
       this.state.spinning = true;
@@ -1852,6 +1963,11 @@
       }
       // Spin completed (fresh or recovered) — clear the pending nonce.
       this._clearPendingNonce();
+
+      // Bridge server response → engine field names (grid→reels, winAmount→
+      // payoutCents, balance→balanceAfterCents, …). MUST run before the reel-
+      // stop loop, which reads result.reels[r].
+      result = this._normalizeSpinResult(result);
 
       // Reel stop sequence with near-miss anticipation.
       //

@@ -322,7 +322,15 @@ router.get('/games/:id', async (req, res) => {
 // POST /api/spin
 router.post('/', authenticate, async (req, res) => {
     try {
-        const { gameId, betAmount, nonce } = req.body;
+        const { gameId, nonce } = req.body;
+        // Accept BOTH field names. The browser slot engine (js/api-client.js)
+        // posts the stake as `bet` (dollars), while server-side scripts/tests
+        // post it as `betAmount`. The route only read `betAmount`, so EVERY
+        // spin from the actual game UI failed with "Valid bet amount is
+        // required" — the slot was unspinnable. Coalesce the two.
+        const betAmount = (typeof req.body.betAmount === 'number') ? req.body.betAmount
+            : (typeof req.body.bet === 'number') ? req.body.bet
+            : req.body.betAmount;
         const userId = req.user.id;
 
         // ── Nonce replay: if the client supplied a nonce that already
