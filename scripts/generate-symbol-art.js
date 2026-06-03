@@ -191,7 +191,18 @@ function buildPrompt(game, symId) {
 
 const NEGATIVE = 'text, words, letters, single letter, alphabet character, initial, monogram, ' +
     'numbers, digits, typography, caption, label, title, lettering, inscription, ' +
-    'watermark, signature, logo, brand, UI, HUD, buttons, score, menu, frame, border, ' +
+    // Strengthened anti-text: the QA pass found ~40 tiles with garbled/embossed
+    // fake text. Hammer every flavour of it.
+    'gibberish text, garbled text, fake text, random letters, embossed text, ' +
+    'engraved text, stamped text, scribbles, calligraphy, runic text, ' +
+    'watermark, signature, logo, brand, UI, HUD, buttons, score, menu, ' +
+    // Anti-empty-frame: ~35 tiles rendered as ornate frames with no subject.
+    'picture frame, empty frame, ornate frame, photo frame, display case, ' +
+    'blank panel, vacant frame, framed border, mat board, ' +
+    // Zero-crypto policy (CLAUDE.md) + the QA found ~15 "gold" tiles rendered as
+    // Bitcoin coins. Bar all crypto iconography hard.
+    'bitcoin, cryptocurrency, crypto coin, bitcoin logo, B symbol coin, ' +
+    'currency symbol, dollar sign, euro sign, coin with letter, ' +
     'multiple subjects, collage, grid, split screen, tiny details, busy background, ' +
     'deformed, blurry, low quality, jpeg artifacts, extra limbs, mutated, ugly, flat, dull, ' +
     // Symbols are OBJECTS — bar people entirely (also fixes "pearl"→woman),

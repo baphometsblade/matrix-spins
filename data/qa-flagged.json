@@ -1,0 +1,578 @@
+[
+ {
+  "tile": "aboriginal-dreamtime-quest/ancient",
+  "issue": "rendered number 8 in frame"
+ },
+ {
+  "tile": "aboriginal-dreamtime-quest/dot-painting",
+  "issue": "perforated metal sheet, not dot painting"
+ },
+ {
+  "tile": "aboriginal-dreamtime-quest/gold",
+  "issue": "Bitcoin/crypto coins, off-theme"
+ },
+ {
+  "tile": "alien-artifact-hunt/artifact",
+  "issue": "empty ornate frame, no subject"
+ },
+ {
+  "tile": "alien-artifact-hunt/spaceship",
+  "issue": "gold medallion with letter T, no spaceship"
+ },
+ {
+  "tile": "artdeco-cherry-royale/bar",
+  "issue": "gold bar with garbled embossed text"
+ },
+ {
+  "tile": "artdeco-cherry-royale/sevens",
+  "issue": "shows 76 instead of sevens"
+ },
+ {
+  "tile": "asteroid-lockdown/asteroid",
+  "issue": "ornate gold box, not an asteroid"
+ },
+ {
+  "tile": "asteroid-lockdown/nebula",
+  "issue": "jeweled gold box, not a nebula"
+ },
+ {
+  "tile": "asteroid-lockdown/planet",
+  "issue": "gold box with skull, not a planet"
+ },
+ {
+  "tile": "asteroid-lockdown/shuttle",
+  "issue": "garbled text CANOEN rendered"
+ },
+ {
+  "tile": "asteroid-lockdown/space-station",
+  "issue": "roulette wheel, not space station"
+ },
+ {
+  "tile": "banshee-wailing-spirits/spirit",
+  "issue": "Generic ornate box, no spirit depicted"
+ },
+ {
+  "tile": "banshee-wailing-spirits/wail",
+  "issue": "Generic gold box, does not depict wail"
+ },
+ {
+  "tile": "bard-mystical-melody/gold",
+  "issue": "Bitcoin coin with crypto B symbol, off-theme"
+ },
+ {
+  "tile": "bastet-feline-fortune/ankh",
+  "issue": "Christian cross, not an Egyptian ankh"
+ },
+ {
+  "tile": "bastet-feline-fortune/gold",
+  "issue": "Bitcoin coin with crypto B symbol, off-theme"
+ },
+ {
+  "tile": "bastet-feline-fortune/jewel",
+  "issue": "Empty jewelry box, no jewel inside"
+ },
+ {
+  "tile": "billabong-gold-rush/campfire",
+  "issue": "Ornate jeweled box, not a campfire"
+ },
+ {
+  "tile": "billabong-gold-rush/river",
+  "issue": "Ornate cross plaque, not a river"
+ },
+ {
+  "tile": "cannonball-express/rum",
+  "issue": "Garbled rendered text on rum bottle label"
+ },
+ {
+  "tile": "carnival-heat/gold",
+  "issue": "Bitcoin crypto coin, off-theme and forbidden crypto"
+ },
+ {
+  "tile": "carnival-spinning-wheel/celebration",
+  "issue": "Empty ornate frame, no subject inside"
+ },
+ {
+  "tile": "carnival-spinning-wheel/ticket",
+  "issue": "Garbled text CA NIVAL PERLA TICEET"
+ },
+ {
+  "tile": "cherry-blossom-bonus/bar",
+  "issue": "Garbled gibberish embossed stamp text"
+ },
+ {
+  "tile": "cherry-blossom-bonus/orange",
+  "issue": "Amber glass droplet, not an orange"
+ },
+ {
+  "tile": "circus-spectacular-spins/acrobat",
+  "issue": "Gold rings on a rail, no acrobat depicted"
+ },
+ {
+  "tile": "circus-spectacular-spins/tent",
+  "issue": "Garbled text CASNOS CARUS around tent"
+ },
+ {
+  "tile": "clockwork-heist/dynamite",
+  "issue": "Brass cartridge/lighter, not dynamite"
+ },
+ {
+  "tile": "darkness-reaper-call/scythe",
+  "issue": "Gold-framed mirror, not a scythe weapon"
+ },
+ {
+  "tile": "demon-inferno-gateway/portal",
+  "issue": "Rendered letter R on medallion"
+ },
+ {
+  "tile": "diamond-deco-deluxe/diamond",
+  "issue": "Ornate book/plaque, no diamond depicted"
+ },
+ {
+  "tile": "diamonds-and-lace/gold",
+  "issue": "Bitcoin crypto coin with B letter"
+ },
+ {
+  "tile": "dingo-desert-runner/desert",
+  "issue": "Bitcoin crypto coin, not desert"
+ },
+ {
+  "tile": "dingo-desert-runner/speed",
+  "issue": "Empty ornate frame, no subject"
+ },
+ {
+  "tile": "druid-forest-magic/forest",
+  "issue": "Empty ornate gold frame, no subject"
+ },
+ {
+  "tile": "druid-forest-magic/potion",
+  "issue": "Word CASINO rendered on bottle"
+ },
+ {
+  "tile": "druid-forest-magic/spell",
+  "issue": "Rendered M monogram letter"
+ },
+ {
+  "tile": "eagle-sky-sovereign/cloud",
+  "issue": "Red club/tree shape, not a cloud"
+ },
+ {
+  "tile": "elephant-safari-quest/adventure",
+  "issue": "Garbled gibberish text on map"
+ },
+ {
+  "tile": "elephant-safari-quest/safari",
+  "issue": "Generic gold box, off-theme"
+ },
+ {
+  "tile": "elven-archer-legends/archer",
+  "issue": "Gold scepter, no archer depicted"
+ },
+ {
+  "tile": "elven-archer-legends/arrow",
+  "issue": "Jeweled box, not an arrow"
+ },
+ {
+  "tile": "elven-archer-legends/bow",
+  "issue": "Empty gold frame, no subject"
+ },
+ {
+  "tile": "elven-archer-legends/elf",
+  "issue": "Jeweled tiara, no elf figure"
+ },
+ {
+  "tile": "elven-archer-legends/forest",
+  "issue": "Gold box with rendered letter R"
+ },
+ {
+  "tile": "enchanted-grove-spirits/fairy",
+  "issue": "Gold cube with letters, no fairy"
+ },
+ {
+  "tile": "enchantress-crystal-ball/enchantress",
+  "issue": "Jeweled brooch, no enchantress figure"
+ },
+ {
+  "tile": "fairy-enchanted-forest/fairy",
+  "issue": "Rendered garbled text FAIRY GLOSSY GOLD"
+ },
+ {
+  "tile": "fairy-enchanted-forest/forest",
+  "issue": "Rendered text CASINO, not a forest"
+ },
+ {
+  "tile": "forbidden-fruit/serpent",
+  "issue": "Coiled metal band, no serpent depicted"
+ },
+ {
+  "tile": "frontier-bounty-hunter/saloon",
+  "issue": "Framed cross emblem, not a saloon"
+ },
+ {
+  "tile": "frontier-bounty-hunter/wanted",
+  "issue": "Revolver and rope, not wanted poster"
+ },
+ {
+  "tile": "galaxy-gates-opener/planet",
+  "issue": "Ornate pedestal bowl, not a planet"
+ },
+ {
+  "tile": "galaxy-gates-opener/satellite",
+  "issue": "Generic medallion plaque, not a satellite"
+ },
+ {
+  "tile": "galaxy-gates-opener/spaceship",
+  "issue": "Gold spade emblem, not a spaceship"
+ },
+ {
+  "tile": "ghost-haunted-mansion/mansion",
+  "issue": "Empty ornate frame, no mansion inside"
+ },
+ {
+  "tile": "golden-melons-paradise/grape",
+  "issue": "Single red glass ball, not grapes"
+ },
+ {
+  "tile": "golden-phoenix-rising/gold",
+  "issue": "Bitcoin-logo coins, forbidden crypto symbol"
+ },
+ {
+  "tile": "golden-phoenix-rising/golden",
+  "issue": "Bitcoin coin with B logo"
+ },
+ {
+  "tile": "golden-phoenix-rising/rising",
+  "issue": "Generic gold box, off-theme"
+ },
+ {
+  "tile": "golem-stone-guardian/rune",
+  "issue": "Rendered Latin letter R, not a rune"
+ },
+ {
+  "tile": "hall-of-minotaurs/axe",
+  "issue": "Rendered text reading 'AXE CASINO'"
+ },
+ {
+  "tile": "high-roller-after-dark/ace",
+  "issue": "Card shows 'Q', not an ace"
+ },
+ {
+  "tile": "imperial-dragon-ascent/scroll",
+  "issue": "Empty ornate frame, no scroll"
+ },
+ {
+  "tile": "jade-emperor-blessing/palace",
+  "issue": "Empty ornate frame, no palace"
+ },
+ {
+  "tile": "kangaroo-outback-bound/desert",
+  "issue": "Rendered LK monogram letters on tile"
+ },
+ {
+  "tile": "kangaroo-outback-bound/gold",
+  "issue": "Bitcoin crypto coin, off-theme"
+ },
+ {
+  "tile": "koala-bush-bonanza/gold",
+  "issue": "Bitcoin crypto coin, off-theme"
+ },
+ {
+  "tile": "koala-bush-bonanza/joey",
+  "issue": "Empty frame, no joey depicted"
+ },
+ {
+  "tile": "koi-fish-abundance/pond",
+  "issue": "Empty ornate frame, no pond"
+ },
+ {
+  "tile": "koi-fish-abundance/water",
+  "issue": "Generic gold cube, not water"
+ },
+ {
+  "tile": "lucky-sevens-infinity/sevens",
+  "issue": "Shows number 6 not 7"
+ },
+ {
+  "tile": "mage-crystal-sanctuary/light",
+  "issue": "Empty frame with no subject"
+ },
+ {
+  "tile": "mage-crystal-sanctuary/mage",
+  "issue": "Plain dark box, no mage"
+ },
+ {
+  "tile": "mage-crystal-sanctuary/scatter",
+  "issue": "Garbled gibberish text on border"
+ },
+ {
+  "tile": "melon-madness-mixer/melon",
+  "issue": "Depicts a pumpkin, not melon"
+ },
+ {
+  "tile": "melon-madness-mixer/sevens",
+  "issue": "Garbled text reads CASNO"
+ },
+ {
+  "tile": "merlin-arcane-wonders/spell",
+  "issue": "Garbled rendered letters in medallion center"
+ },
+ {
+  "tile": "meteor-strike-mayhem/spacecraft",
+  "issue": "Ornate medallion, no spacecraft depicted"
+ },
+ {
+  "tile": "moonlit-koi-garden/stone",
+  "issue": "Carved gold box, not a stone"
+ },
+ {
+  "tile": "nebula-space-odyssey/comet",
+  "issue": "Ace of Spades card, not a comet"
+ },
+ {
+  "tile": "nebula-space-odyssey/planet",
+  "issue": "Roulette wheel, not a planet"
+ },
+ {
+  "tile": "nebula-space-odyssey/satellite",
+  "issue": "Generic gold ornament, not a satellite"
+ },
+ {
+  "tile": "nebula-space-odyssey/spacecraft",
+  "issue": "Gold cube with Bitcoin glyph, not spacecraft"
+ },
+ {
+  "tile": "neon-temptation/heart",
+  "issue": "Gold heart with garbled text inside"
+ },
+ {
+  "tile": "osiris-afterlife-riches/gold",
+  "issue": "Bitcoin coins with logo and text"
+ },
+ {
+  "tile": "outback-thunder-run/canyon",
+  "issue": "Empty gilded frame with blank gold panel"
+ },
+ {
+  "tile": "pagoda-mystical-riches/gold",
+  "issue": "Empty black photo frame, no subject"
+ },
+ {
+  "tile": "pagoda-mystical-riches/spirit",
+  "issue": "Ornate frame with empty black center"
+ },
+ {
+  "tile": "paladin-holy-quest/holy",
+  "issue": "Roulette wheel with rendered letter K"
+ },
+ {
+  "tile": "paladin-holy-quest/light",
+  "issue": "Roulette/zodiac wheel, off-theme for light"
+ },
+ {
+  "tile": "paladin-holy-quest/sword",
+  "issue": "Decorative rings/boxes, no sword"
+ },
+ {
+  "tile": "panther-midnight-prowler/jungle",
+  "issue": "Empty inner gold frame, no jungle"
+ },
+ {
+  "tile": "pharaoh-eternal-dynasty/ankh",
+  "issue": "Latin cross, not an Egyptian ankh"
+ },
+ {
+  "tile": "pharaoh-eternal-dynasty/sphinx",
+  "issue": "Pharaoh bust, not a sphinx"
+ },
+ {
+  "tile": "pirate-treasure-map/gold",
+  "issue": "Bitcoin crypto coins, off-theme for pirate gold"
+ },
+ {
+  "tile": "pirate-treasure-map/island",
+  "issue": "Ornate empty panel, no island depicted"
+ },
+ {
+  "tile": "pirate-treasure-map/map",
+  "issue": "Gaming table surface, not a treasure map"
+ },
+ {
+  "tile": "pulsar-revolution/light-beam",
+  "issue": "Roulette wheel with rendered letter R"
+ },
+ {
+  "tile": "quantum-leap-vault/planet",
+  "issue": "Framed medallion, no planet depicted"
+ },
+ {
+  "tile": "quantum-leap-vault/portal",
+  "issue": "Jewelry ring in box, not a portal"
+ },
+ {
+  "tile": "quantum-leap-vault/spacecraft",
+  "issue": "Spade card symbol, not a spacecraft"
+ },
+ {
+  "tile": "quantum-turbo-flux/wave",
+  "issue": "Jeweled number 2, not a wave"
+ },
+ {
+  "tile": "ra-sun-god-royale/ankh",
+  "issue": "Christian cross, not an Egyptian ankh"
+ },
+ {
+  "tile": "ra-sun-god-royale/gold",
+  "issue": "Bitcoin crypto coins, off-theme for Egyptian gold"
+ },
+ {
+  "tile": "red-lantern-festival/celebration",
+  "issue": "Empty black picture frame, no subject"
+ },
+ {
+  "tile": "reef-shark-frenzy/trident",
+  "issue": "Shows fleur-de-lis emblem, not a trident"
+ },
+ {
+  "tile": "retro-fruit-fiesta/triple-bar",
+  "issue": "Single gold bar with garbled text BAOR, not triple bars"
+ },
+ {
+  "tile": "roaring-lion-kingdom/savanna",
+  "issue": "Horse figurine in frame, not a savanna"
+ },
+ {
+  "tile": "robot-mega-machine/circuit",
+  "issue": "Empty ornate frame, no circuit subject"
+ },
+ {
+  "tile": "set-chaos-challenger/desert",
+  "issue": "Bitcoin-stamped gold bar, not desert; crypto symbol"
+ },
+ {
+  "tile": "silk-road-treasures/road",
+  "issue": "modern asphalt highway, off-theme for Silk Road"
+ },
+ {
+  "tile": "silk-road-treasures/silk",
+  "issue": "empty ornate gold frame, no silk subject"
+ },
+ {
+  "tile": "singularity-storm/photon",
+  "issue": "jewel box with rendered number/text labels"
+ },
+ {
+  "tile": "singularity-storm/singularity",
+  "issue": "empty ornate frame, black void, no subject"
+ },
+ {
+  "tile": "siren-song-temptation/siren",
+  "issue": "shows a seashell, not a siren figure"
+ },
+ {
+  "tile": "siren-song-temptation/trident",
+  "issue": "rendered word TRIDENT plus spade, no trident"
+ },
+ {
+  "tile": "skeleton-bone-collector/grave",
+  "issue": "generic decorative box, not a grave"
+ },
+ {
+  "tile": "sorcerer-arcane-tower/arcane",
+  "issue": "rendered letter A on medallion"
+ },
+ {
+  "tile": "sorcerer-arcane-tower/sorcerer",
+  "issue": "orb on book, no sorcerer figure"
+ },
+ {
+  "tile": "sorcerer-arcane-tower/spell",
+  "issue": "rendered letter H monogram in frame"
+ },
+ {
+  "tile": "steampunk-gears-fortune/innovation",
+  "issue": "rendered letter B on device"
+ },
+ {
+  "tile": "steampunk-gears-fortune/steam",
+  "issue": "garbled casino text, no steam depicted"
+ },
+ {
+  "tile": "stellar-collapse-spinner/comet",
+  "issue": "Empty ornate frame, no subject inside"
+ },
+ {
+  "tile": "stellar-collapse-spinner/spacecraft",
+  "issue": "Gem medallion, no spacecraft depicted"
+ },
+ {
+  "tile": "stellar-nexus-prime/spacecraft",
+  "issue": "Two gold orbs in frame, no spacecraft"
+ },
+ {
+  "tile": "sunshine-lemon-drop/bar",
+  "issue": "Garbled stamped text EUROO 91 9999"
+ },
+ {
+  "tile": "sunshine-lemon-drop/orange",
+  "issue": "Clear glass marble, not an orange"
+ },
+ {
+  "tile": "sunshine-lemon-drop/sevens",
+  "issue": "Shows number 2, not a seven"
+ },
+ {
+  "tile": "tango-inferno/lips",
+  "issue": "Empty gold frame, no lips depicted"
+ },
+ {
+  "tile": "underwater-coral-kingdom/mermaid",
+  "issue": "Gold swan/bird relief, no mermaid"
+ },
+ {
+  "tile": "vampire-midnight-hunt/night",
+  "issue": "Rendered text '50 CASINO' on box"
+ },
+ {
+  "tile": "vampire-midnight-hunt/vampire",
+  "issue": "Jewelry casket, no vampire figure"
+ },
+ {
+  "tile": "vixen-noir/ace",
+  "issue": "Stray rendered 'Y' letter, mismatched suits"
+ },
+ {
+  "tile": "void-vault-explorer/crystal",
+  "issue": "Ornate gold frame, empty center, no crystal"
+ },
+ {
+  "tile": "void-vault-explorer/spacecraft",
+  "issue": "Generic jeweled box, not a spacecraft"
+ },
+ {
+  "tile": "void-vault-explorer/void",
+  "issue": "Empty ornate frame, no subject"
+ },
+ {
+  "tile": "witch-curse-keeper/hex",
+  "issue": "Rendered letter T as central subject"
+ },
+ {
+  "tile": "wizard-spellbook-master/crystal",
+  "issue": "Jeweled box with empty dark center, no crystal"
+ },
+ {
+  "tile": "wizard-spellbook-master/scroll",
+  "issue": "Metal cylinder canister, not a scroll"
+ },
+ {
+  "tile": "wizard-spellbook-master/wizard",
+  "issue": "Star pendant ornament, not a wizard"
+ },
+ {
+  "tile": "wolf-pack-frenzy/forest",
+  "issue": "Generic gold rosette medallion, not a forest"
+ },
+ {
+  "tile": "zombie-apocalypse-raid/zombie",
+  "issue": "Garbled gibberish text on tombstone plaque"
+ }
+]
