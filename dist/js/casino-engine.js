@@ -1794,8 +1794,46 @@
       // Clear children safely (no innerHTML — keeps the row XSS-clean).
       while (this.freeSpinsRow.firstChild) this.freeSpinsRow.removeChild(this.freeSpinsRow.firstChild);
       if (n > 0) {
-        const btn = $el('button', { class: 'ce-btn', onclick: () => this._spin(true) }, `Use free spin (${n} left)`);
+        // GRANTED free spins (bonus). These are consumed via POST /freespins/use
+        // (fixed bonus_balance credit), NOT a reel spin — routing them through
+        // _spin(true) posted bet:0 which the spin route rejected (400), so the
+        // button was dead. Wire it to the correct endpoint.
+        const btn = $el('button', { class: 'ce-btn ce-btn-maxbet', onclick: () => this._useGrantedFreeSpin() }, `Use free spin (${n} left)`);
         this.freeSpinsRow.appendChild(btn);
+      }
+    }
+
+    // Consume one granted free spin via the bonus endpoint. The server credits a
+    // fixed FREE_SPIN_VALUE to bonus_balance (with wagering) and decrements the
+    // count; it is not a reel outcome, so we surface a clear confirmation.
+    async _useGrantedFreeSpin() {
+      if (this.state.spinning || this._claimingFreeSpin) return;
+      this._claimingFreeSpin = true;
+      const btn = this.freeSpinsRow.querySelector('button');
+      if (btn) btn.disabled = true;
+      try {
+        const r = await window.MatrixSpinsAPI.useGrantedFreeSpin();
+        this._fx('bonus');
+        this.state.freeSpinsAvailable = (typeof r.remaining === 'number')
+          ? r.remaining
+          : Math.max(0, this.state.freeSpinsAvailable - 1);
+        // Free spins credit bonus_balance (not withdrawable) — refresh the chip
+        // (it tracks withdrawable balance, which is unchanged) and tell the player.
+        try {
+          const b = await window.MatrixSpinsAPI.getBalance();
+          if (typeof b.availableCents === 'number') this.state.balanceCents = b.availableCents;
+          this._updateBalanceChip();
+        } catch (_) { /* non-fatal */ }
+        this.winStrip.style.color = this._primary;
+        this.winStrip.textContent = `Free spin claimed — bonus credited! (${this.state.freeSpinsAvailable} left)`;
+        this._renderFreeSpins();
+      } catch (err) {
+        if (btn) btn.disabled = false;
+        this.winStrip.style.color = '#ffb3b3';
+        this.winStrip.textContent = 'Free spin failed' + (err && err.message ? ' — ' + err.message : '') + '.';
+        setTimeout(() => { this.winStrip.style.color = this._primary; }, 3000);
+      } finally {
+        this._claimingFreeSpin = false;
       }
     }
 

@@ -7,8 +7,22 @@ const router = express.Router();
 // GET /api/balance
 router.get('/', authenticate, async (req, res) => {
     try {
-        const user = await db.get('SELECT balance FROM users WHERE id = ?', [req.user.id]);
-        res.json({ balance: user ? user.balance : 0 });
+        const user = await db.get('SELECT balance, bonus_balance FROM users WHERE id = ?', [req.user.id]);
+        const balance = user ? Number(user.balance) || 0 : 0;       // withdrawable, dollars
+        const bonus = user ? Number(user.bonus_balance) || 0 : 0;   // locked until wagered, dollars
+        // The wallet UI (wallet.html) and the slot engine (casino-engine.js boot)
+        // read cents-suffixed fields — availableCents / balanceCents / lockedCents.
+        // Returning only { balance } (dollars) made every balance render $0.00.
+        // Keep `balance` (dollars) for backward-compat AND emit the cents fields
+        // both clients expect. available = withdrawable, locked = bonus/wagering.
+        res.json({
+            balance,
+            bonusBalance: bonus,
+            balanceCents: Math.round(balance * 100),
+            availableCents: Math.round(balance * 100),
+            lockedCents: Math.round(bonus * 100),
+            totalCents: Math.round((balance + bonus) * 100),
+        });
     } catch (err) {
         console.warn('[Balance] Get balance error:', err.message);
         res.status(500).json({ error: 'Failed to get balance' });

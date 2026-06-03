@@ -186,7 +186,14 @@
 
     // wallet — server mounts balance.routes.js at /api/balance
     getBalance:      () => apiFetch('/balance/'),
-    getTransactions: (params) => apiFetch(`/balance/transactions${qs(params)}`),
+    // The history/transaction routes return `amount`/`balance_after` in DOLLARS,
+    // but wallet.html renders from *_cents fields → every row showed $0.00.
+    // Normalize here (single client layer) so all consumers get cents fields
+    // without touching the server routes other tools depend on.
+    getTransactions: (params) => apiFetch(`/balance/transactions${qs(params)}`).then((r) => {
+        if (r && Array.isArray(r.transactions)) r.transactions.forEach(_centsify);
+        return r;
+    }),
 
     // games — server mounts games-catalog.routes.js at /api/games (GET /, /:id, /search),
     // fair.routes.js at /api/fair, gamehistory.routes.js at /api/game-history.
@@ -229,16 +236,27 @@
     // here was $X" + sessions/avg-bet/etc).
     myGameStats:  (gameId) => apiFetch(`/games/${encodeURIComponent(gameId)}/my-stats`),
     getFreeSpins: (gameId) => apiFetch(`/freespins/available?gameId=${encodeURIComponent(gameId)}`),
+    // Consume one GRANTED free spin (bonus). The server credits a fixed
+    // FREE_SPIN_VALUE to bonus_balance (with wagering) and decrements the count.
+    // This is NOT a reel spin — the slot's "Use free spin" button calls this.
+    useGrantedFreeSpin: () => apiFetch('/freespins/use', { method: 'POST', body: {} }),
     spinHistory:  (params) => apiFetch(`/game-history/${qs(params)}`),
     spinDetails:  (spinId) => apiFetch(`/game-history/${encodeURIComponent(spinId)}`),
 
     // payments — server mounts payment.routes.js at /api/payment (singular)
     depositCheckout: (amount) =>
       apiFetch('/payment/create-checkout', { method: 'POST', body: { amount } }),
-    listDeposits:    (params) => apiFetch(`/payment/deposits${qs(params)}`),
+    listDeposits:    (params) => apiFetch(`/payment/deposits${qs(params)}`).then((r) => {
+      if (r && Array.isArray(r.deposits)) r.deposits.forEach(_centsify);
+      return r;
+    }),
     requestWithdrawal: (body) => apiFetch('/payment/withdraw', { method: 'POST', body }),
-    cancelWithdrawal:  (id)   => apiFetch(`/payment/withdrawal/${encodeURIComponent(id)}/cancel`, { method: 'POST' }),
-    listWithdrawals:   (params) => apiFetch(`/payment/withdrawals${qs(params)}`),
+    // Server route is POST /payment/withdraw/:id/cancel (not /withdrawal/) — fixed path.
+    cancelWithdrawal:  (id)   => apiFetch(`/payment/withdraw/${encodeURIComponent(id)}/cancel`, { method: 'POST' }),
+    listWithdrawals:   (params) => apiFetch(`/payment/withdrawals${qs(params)}`).then((r) => {
+      if (r && Array.isArray(r.withdrawals)) r.withdrawals.forEach(_centsify);
+      return r;
+    }),
 
     // compliance — server mounts at /api/payment for limits, /api/user for self-exclude
     getLimits:    ()   => apiFetch('/payment/limits'),
@@ -258,6 +276,17 @@
       .filter(([, v]) => v !== undefined && v !== null && v !== '')
       .map(([k, v]) => `${encodeURIComponent(k)}=${encodeURIComponent(v)}`);
     return parts.length ? `?${parts.join('&')}` : '';
+  }
+
+  // Add cents-suffixed fields to a money row whose server values are in DOLLARS.
+  // The wallet UI renders from *_cents; the routes return amount/balance_after in
+  // dollars. Hoisted so the api method definitions above can reference it.
+  function _centsify(row) {
+    if (!row || typeof row !== 'object') return row;
+    if (row.amount_cents == null && typeof row.amount === 'number') row.amount_cents = Math.round(row.amount * 100);
+    if (row.balance_after_cents == null && typeof row.balance_after === 'number') row.balance_after_cents = Math.round(row.balance_after * 100);
+    if (row.balance_before_cents == null && typeof row.balance_before === 'number') row.balance_before_cents = Math.round(row.balance_before * 100);
+    return row;
   }
 
   // Generic API call for routes not wrapped above
