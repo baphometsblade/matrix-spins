@@ -25,6 +25,7 @@
 const fs = require('fs');
 const path = require('path');
 const sharp = require('sharp');
+const manifestLib = require('./lib/symbol-art-manifest');
 
 const ROOT = path.resolve(__dirname, '..');
 const SYM_ROOT = path.join(ROOT, 'assets', 'symbols');
@@ -38,24 +39,14 @@ const KEEP_PNG = args.includes('--keep-png');
 
 const SIZE = 224;     // matches the 2x retina cell render size for ~112px cells
 const QUALITY = 82;
-const SAFE_ID = /^[a-z0-9][a-z0-9_-]*$/i;
+const SAFE_ID = manifestLib.SAFE_ID;
 
-// Atomic write — stage to .tmp, rename. Prevents a killed run from leaving
-// a half-written JSON manifest that throws on the next parse.
-function writeAtomic(targetPath, buffer) {
-    const tmp = targetPath + '.' + process.pid + '.tmp';
-    fs.writeFileSync(tmp, buffer);
-    fs.renameSync(tmp, targetPath);
-}
-
-function loadManifest() {
-    if (!fs.existsSync(MANIFEST)) return {};
-    try { return JSON.parse(fs.readFileSync(MANIFEST, 'utf8')) || {}; }
-    catch (e) { console.error('[optimize-sym] WARN: manifest unreadable, starting fresh:', e.message); return {}; }
-}
-function persistMap(map) {
-    writeAtomic(MANIFEST, Buffer.from(JSON.stringify(map, null, 2) + '\n', 'utf8'));
-}
+// Manifest IO delegates to scripts/lib/symbol-art-manifest.js. fsync'd write,
+// whitespace-rejecting load, shape-validated persist — see the lib for the
+// failure modes this closes.
+const writeAtomic = manifestLib.writeAtomicFsync;
+function loadManifest() { return manifestLib.loadManifest(MANIFEST, SYM_ROOT); }
+function persistMap(map) { manifestLib.persistManifest(MANIFEST, map); }
 
 async function main() {
     if (!fs.existsSync(SYM_ROOT)) { console.error('No symbol-art dir:', SYM_ROOT); process.exit(1); }

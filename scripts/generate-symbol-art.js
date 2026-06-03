@@ -42,6 +42,7 @@
 const fs = require('fs');
 const path = require('path');
 const http = require('http');
+const manifestLib = require('./lib/symbol-art-manifest');
 
 const ROOT = path.resolve(__dirname, '..');
 const OUT_ROOT = path.join(ROOT, 'assets', 'symbols');
@@ -240,14 +241,12 @@ function httpJson(method, urlPath, body) {
 // PNG magic bytes — first 8 bytes of every valid PNG.
 const PNG_SIGNATURE = Buffer.from([0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A]);
 
-// Atomic file write: stage to .tmp on the same volume, then rename. Same
-// approach as generate-slot-art — prevents a killed run from leaving a
-// truncated PNG that the idempotent skip would treat as "done".
-function writeAtomic(targetPath, buffer) {
-    const tmp = targetPath + '.' + process.pid + '.tmp';
-    fs.writeFileSync(tmp, buffer);
-    fs.renameSync(tmp, targetPath);
-}
+// Atomic, fsync-safe write. Stages to a pid-suffixed .tmp on the same volume,
+// fsyncs the data before rename so a Windows crash-replay can't leave the
+// target pointing at uncommitted clusters (the failure mode that produced
+// the 59k-of-whitespace manifest). Shared with the manifest lib so all
+// writers behave identically.
+const writeAtomic = manifestLib.writeAtomicFsync;
 
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 
@@ -301,17 +300,19 @@ async function generateOne(game, symId) {
 
 // Defensive: registry ids must be `a-z0-9_-` only (s1_lollipop, gold-bell …).
 // Guards against a future id of `../etc` writing outside OUT_ROOT.
-const SAFE_ID = /^[a-z0-9][a-z0-9_-]*$/i;
+const SAFE_ID = manifestLib.SAFE_ID;
 
-// Manifest helpers — keep on-disk JSON in lock-step with what's been generated.
-function loadManifest() {
-    if (!fs.existsSync(MANIFEST)) return {};
-    try { return JSON.parse(fs.readFileSync(MANIFEST, 'utf8')) || {}; }
-    catch (e) { console.error('[symbol-art] WARN: manifest unreadable, starting fresh:', e.message); return {}; }
-}
-function persistManifest(map) {
-    writeAtomic(MANIFEST, Buffer.from(JSON.stringify(map, null, 2) + '\n', 'utf8'));
-}
+// Manifest helpers delegate to scripts/lib/symbol-art-manifest.js. Three
+// crucial differences from the previous in-script versions:
+//   • loadManifest refuses to silently treat a corrupted/whitespace-only
+//     manifest as `{}`; when on-disk tiles exist it rebuilds from disk
+//     truth, so the next persistManifest can't wipe coverage.
+//   • persistManifest shape-validates before writing and fails loudly on
+//     any degenerate map (never persists a half-baked object).
+//   • The atomic write fsyncs the data before the rename, closing the
+//     crash-replay window that produced the original corruption.
+function loadManifest() { return manifestLib.loadManifest(MANIFEST, OUT_ROOT); }
+function persistManifest(map) { manifestLib.persistManifest(MANIFEST, map); }
 
 async function main() {
     if (!fs.existsSync(OUT_ROOT)) fs.mkdirSync(OUT_ROOT, { recursive: true });
