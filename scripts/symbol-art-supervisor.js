@@ -42,7 +42,11 @@ const MAX_ITERS = 120;          // hard cap on restart cycles
 const FOOOCUS_BOOT_TIMEOUT = 6 * 60 * 1000;  // wait up to 6 min for model load
 const HEALTH_EVERY = 15 * 1000; // poll Fooocus every 15s while generating
 const HEALTH_FAILS_TO_KILL = 4; // 4 × 15s = 60s of API-down → Fooocus is dead
-const STALL_LIMIT = 6 * 60 * 1000; // no new tile in 6 min → stuck, restart
+// Fooocus can deadlock: the API keeps answering /v1/engines/styles (health OK)
+// but submitted jobs sit in WAITING forever (worker thread hung after a VRAM
+// crash). The health check can't catch that, so we rely on tile-progress: if no
+// NEW tile lands in this window, Fooocus is wedged and must be FULLY restarted.
+const STALL_LIMIT = 150 * 1000; // no new tile in 150s → wedged, hard-restart
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 function log(...a) { console.log('[supervisor]', new Date().toISOString().slice(11, 19), ...a); }
@@ -181,6 +185,15 @@ async function main() {
 
     const why = await runGeneratorWithWatchdog();
     log('generator cycle ended:', why);
+    // CRITICAL: a 'stalled' cycle means Fooocus is WEDGED (health OK but jobs hang
+    // in WAITING). The health check passes, so ensureFooocus() would NOT relaunch
+    // it — leaving it stuck forever. Force-kill it here so the next iteration
+    // brings up a fresh Fooocus (fresh VRAM + worker). Same for fooocus-died.
+    if (why === 'stalled' || why === 'fooocus-died') {
+      log('Hard-restarting Fooocus to clear the wedged worker…');
+      killStaleFooocus();
+      await sleep(5000);
+    }
     await sleep(3000); // let processes settle before recount/relaunch
   }
   log('Hit MAX_ITERS — stopping. Remaining:', countMissing(work));
