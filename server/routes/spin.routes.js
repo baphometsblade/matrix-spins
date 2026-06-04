@@ -35,16 +35,34 @@ _spinSchemaBootstrap(
 const NONCE_RE = /^[a-zA-Z0-9_-]{16,64}$/;
 
 // ── Per-game lore ──
-// 100 curated theme stories keyed by gameId (data/game-lore.json),
+// 100+ curated theme stories keyed by gameId (data/game-lore.json),
 // attached to the GET /games/:id response so the engine's info modal
 // can render an "About this game" paragraph. Loaded once at startup;
-// missing file is non-fatal (the modal just omits the section).
+// missing/unparseable file is non-fatal (the modal just omits the
+// section) — this MUST NOT crash the server because lore is a presentation
+// nicety and a parse failure would otherwise take down every revenue
+// route on the casino. We log at ERROR level with structured context so
+// the issue surfaces in monitoring instead of being a quiet "warn" line.
 let GAME_LORE = {};
+const LORE_PATH = path.resolve(__dirname, '../../data/game-lore.json');
 try {
-    GAME_LORE = JSON.parse(fs.readFileSync(path.resolve(__dirname, '../../data/game-lore.json'), 'utf8'));
+    const raw = fs.readFileSync(LORE_PATH, 'utf8');
+    const parsed = JSON.parse(raw);
+    if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
+        throw new Error('game-lore.json is not a plain object');
+    }
+    GAME_LORE = parsed;
     console.log('[Spin] loaded lore for', Object.keys(GAME_LORE).length, 'games');
 } catch (loreErr) {
-    console.warn('[Spin] game-lore.json not loaded:', loreErr.message);
+    // ERROR-level (not warn) so monitoring picks this up — silently
+    // serving empty modals on every game would mask a corruption that
+    // the operator needs to fix immediately.
+    console.error('[Spin] game-lore.json unavailable — modals will be empty:', {
+        path: LORE_PATH,
+        error: loreErr.message,
+        action: 'restore from git or rerun adult-slots generator',
+    });
+    GAME_LORE = {};
 }
 
 // Pre-index game definitions for O(1) lookup

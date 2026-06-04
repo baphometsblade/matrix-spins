@@ -24,6 +24,7 @@
 
 const fs = require('fs');
 const path = require('path');
+const { writeAtomicFsync } = require('./lib/symbol-art-manifest');
 
 const ROOT = path.resolve(__dirname, '..');
 const REGISTRY = path.join(ROOT, 'js', 'game-registry.js');
@@ -338,11 +339,30 @@ function updatePages() {
     changed.push(n + ' game pages');
 }
 
+// Merge new entries into a JSON manifest and persist atomically.
+// See generate-adult-slots.js mergeJson for full rationale — TL;DR: throw
+// loudly on a corrupted file instead of silently overwriting with a
+// near-empty {} (the data-loss pattern that compounded the symbol-art
+// incident), and fsync the staged write before rename so a Windows
+// crash-replay can't land the renamed file pointing at whitespace.
 function mergeJson(file, addFn) {
     let obj = {};
-    if (fs.existsSync(file)) { try { obj = JSON.parse(fs.readFileSync(file, 'utf8')); } catch (_) {} }
+    if (fs.existsSync(file)) {
+        const raw = fs.readFileSync(file, 'utf8');
+        try { obj = JSON.parse(raw); }
+        catch (e) {
+            throw new Error(
+                '[crimson] refusing to overwrite unparseable manifest at ' + file +
+                ': ' + e.message + '. Run `git checkout ' + path.relative(ROOT, file) +
+                '` (or restore from backup) before re-running this script.'
+            );
+        }
+        if (!obj || typeof obj !== 'object' || Array.isArray(obj)) {
+            throw new Error('[crimson] manifest is not a plain object: ' + file);
+        }
+    }
     addFn(obj);
-    fs.writeFileSync(file, JSON.stringify(obj, null, 2) + '\n');
+    writeAtomicFsync(file, Buffer.from(JSON.stringify(obj, null, 2) + '\n', 'utf8'));
 }
 
 function main() {

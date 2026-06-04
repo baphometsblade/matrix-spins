@@ -17,6 +17,7 @@
 const fs = require('fs');
 const path = require('path');
 const sharp = require('sharp');
+const { writeAtomicFsync } = require('./lib/symbol-art-manifest');
 
 const ROOT = path.resolve(__dirname, '..');
 const AI_DIR = path.join(ROOT, 'assets', 'thumbnails', 'ai');
@@ -29,13 +30,15 @@ const WIDTH = 448;   // 2x a ~224px card; portrait height follows aspect
 const QUALITY = 82;
 const SAFE_ID = /^[a-z0-9][a-z0-9-]*$/i;
 
-// Atomic write — stage to .tmp, fsync optional, rename. Prevents a killed
-// run from leaving a half-written JSON map that throws on the next parse.
-function writeAtomic(targetPath, buffer) {
-    const tmp = targetPath + '.' + process.pid + '.tmp';
-    fs.writeFileSync(tmp, buffer);
-    fs.renameSync(tmp, targetPath);
-}
+// Atomic, fsync-safe write. Delegates to the shared lib so this script and
+// its sibling generate-slot-art.js use the SAME write primitive — the prior
+// in-script writeAtomic skipped fsync between writeFileSync and renameSync,
+// the exact failure mode that wiped data/symbol-art.json under a Windows
+// crash-replay (NTFS commits the rename's directory entry before the data
+// blocks flush; on power-loss the rebooted FS sees a new directory entry
+// pointing at uncommitted clusters whose contents are whatever was there
+// before — often whitespace from a prior memory page).
+const writeAtomic = writeAtomicFsync;
 
 function persistMap(map) {
     writeAtomic(THUMB_MAP, Buffer.from(JSON.stringify(map, null, 2) + '\n', 'utf8'));

@@ -22,6 +22,7 @@
 const fs = require('fs');
 const path = require('path');
 const http = require('http');
+const { writeAtomicFsync } = require('./lib/symbol-art-manifest');
 
 const ROOT = path.resolve(__dirname, '..');
 const OUT_DIR = path.join(ROOT, 'assets', 'thumbnails', 'ai');
@@ -151,12 +152,12 @@ function httpJson(method, urlPath, body) {
 // PNG magic bytes — first 8 bytes of every valid PNG.
 const PNG_SIGNATURE = Buffer.from([0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A]);
 
-// Atomic file write: stage to .tmp on the same volume, then rename.
-function writeAtomic(targetPath, buffer) {
-    const tmp = targetPath + '.' + process.pid + '.tmp';
-    fs.writeFileSync(tmp, buffer);
-    fs.renameSync(tmp, targetPath);
-}
+// Atomic, fsync-safe write. Shared with optimize-slot-art.js and the symbol-art
+// pipeline so all writers to data/game-thumbnails.json + on-disk tiles use the
+// same primitive. The prior in-script writeAtomic skipped fsync between the
+// staged write and the rename — the exact failure mode that wiped
+// data/symbol-art.json under a Windows crash-replay.
+const writeAtomic = writeAtomicFsync;
 
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 

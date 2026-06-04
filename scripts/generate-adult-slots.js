@@ -28,6 +28,7 @@
 
 const fs = require('fs');
 const path = require('path');
+const { writeAtomicFsync } = require('./lib/symbol-art-manifest');
 
 const ROOT = path.resolve(__dirname, '..');
 const REGISTRY = path.join(ROOT, 'js', 'game-registry.js');
@@ -350,11 +351,37 @@ function updatePages() {
     changed.push(n + ' game pages');
 }
 
+// Merge new entries into a JSON manifest and persist atomically.
+//
+// Two hardenings vs. the previous version:
+//   1. If the existing file is unparseable, THROW with a clear message
+//      instead of silently catch-and-`obj = {}`. The old silent catch
+//      caused the worst-case symbol-art-style data loss — a single
+//      corrupted manifest would be overwritten with ONLY the current
+//      studio's ~10 entries, silently wiping every other game. Loud
+//      failure tells the operator to git-checkout the file and rerun.
+//   2. The final write is fsync'd before rename (via writeAtomicFsync)
+//      so a Windows crash-replay can't land the renamed file pointing at
+//      uncommitted (whitespace) clusters — the failure mode that wiped
+//      data/symbol-art.json earlier in this incident.
 function mergeJson(file, addFn) {
     let obj = {};
-    if (fs.existsSync(file)) { try { obj = JSON.parse(fs.readFileSync(file, 'utf8')); } catch (_) {} }
+    if (fs.existsSync(file)) {
+        const raw = fs.readFileSync(file, 'utf8');
+        try { obj = JSON.parse(raw); }
+        catch (e) {
+            throw new Error(
+                '[adult-slots] refusing to overwrite unparseable manifest at ' + file +
+                ': ' + e.message + '. Run `git checkout ' + path.relative(ROOT, file) +
+                '` (or restore from backup) before re-running this script.'
+            );
+        }
+        if (!obj || typeof obj !== 'object' || Array.isArray(obj)) {
+            throw new Error('[adult-slots] manifest is not a plain object: ' + file);
+        }
+    }
     addFn(obj);
-    fs.writeFileSync(file, JSON.stringify(obj, null, 2) + '\n');
+    writeAtomicFsync(file, Buffer.from(JSON.stringify(obj, null, 2) + '\n', 'utf8'));
 }
 
 function updateLore() {
