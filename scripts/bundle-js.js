@@ -9,6 +9,7 @@
 const fs = require('fs');
 const path = require('path');
 const crypto = require('crypto');
+const { writeAtomicFsync } = require('./lib/symbol-art-manifest');
 
 // --- Configuration ---
 const ROOT_DIR = path.join(__dirname, '..');
@@ -217,9 +218,12 @@ function bundleJavaScript() {
     const bundleFileName = `bundle.${hash}.js`;
     const bundlePath = path.join(DIST_DIR, bundleFileName);
 
-    // Write bundled JavaScript
+    // Write bundled JavaScript via atomic fsync'd rename. Content-hashed
+    // filename means a corrupt write is mostly defended-against (the HTML
+    // wouldn't reference a half-bundle), but fsync still prevents a Windows
+    // crash-replay from landing the file with whitespace clusters.
     ensureDir(DIST_DIR);
-    fs.writeFileSync(bundlePath, bundleContent, 'utf8');
+    writeAtomicFsync(bundlePath, Buffer.from(bundleContent, 'utf8'));
     log(`Created bundle: ${bundleFileName} (${(bundleContent.length / 1024).toFixed(2)} KB)`);
 
     // Write early scripts (keep in original location references)
@@ -264,7 +268,7 @@ function bundleCSS() {
     const cssPath = path.join(DIST_DIR, cssFileName);
 
     ensureDir(DIST_DIR);
-    fs.writeFileSync(cssPath, cssContent, 'utf8');
+    writeAtomicFsync(cssPath, Buffer.from(cssContent, 'utf8'));
     log(`Created CSS bundle: ${cssFileName} (${(cssContent.length / 1024).toFixed(2)} KB)`);
 
     return {
@@ -333,12 +337,15 @@ function generateDistIndex(jsInfo, cssInfo, originalHtml) {
         distHtml = distHtml.slice(0, bodyClosingIndex) + bundleScript + '\n' + distHtml.slice(bodyClosingIndex);
     }
 
-    // Write dist/index.html
+    // Write dist/index.html. This is the FULL-SITE-DOWN target — Render and
+    // Vercel both serve this file as the SPA entry point; a kill mid-write
+    // strands users on a truncated HTML with no <script> tags. Atomic fsync'd
+    // rename is essential here.
     ensureDir(DIST_DIR);
     // Fix encoding corruption: Render build env can double-encode UTF-8
     distHtml = distHtml.replace(/ï¿½/g, '•');
     distHtml = distHtml.replace(/�/g, '•');
-    fs.writeFileSync(path.join(DIST_DIR, 'index.html'), distHtml, 'utf8');
+    writeAtomicFsync(path.join(DIST_DIR, 'index.html'), Buffer.from(distHtml, 'utf8'));
     log('Created dist/index.html');
 
     return distHtml;
@@ -368,7 +375,10 @@ function copyStaticAssets() {
                 swContent = swContent
                     .replace(/^const CACHE_VERSION = \d+;/m, 'const CACHE_VERSION = ' + buildVersion + ';')
                     .replace(/^const VERSION = '[^']*';/m, "const VERSION = 'b" + buildVersion + "';");
-                fs.writeFileSync(dst, swContent);
+                // sw.js corruption = stale-cache lockout for every returning
+                // PWA user forever (per MEMORY.md service-worker stale-JS trap).
+                // Atomic fsync write closes the crash-replay corruption window.
+                writeAtomicFsync(dst, Buffer.from(swContent, 'utf8'));
                 log(`Copied ${file} (VERSION → b${buildVersion})`);
             } else {
                 fs.copyFileSync(src, dst);
@@ -497,7 +507,7 @@ async function minifyCSS(cssFileName) {
         const minFileName = `styles.${minHash}.min.css`;
         const minPath = path.join(DIST_DIR, minFileName);
 
-        fs.writeFileSync(minPath, minContent, 'utf8');
+        writeAtomicFsync(minPath, Buffer.from(minContent, 'utf8'));
 
         const originalSize = source.length;
         const minSize = minContent.length;
@@ -549,7 +559,7 @@ async function minifyBundle(bundleFileName) {
         const minFileName = `bundle.${minHash}.min.js`;
         const minPath = path.join(DIST_DIR, minFileName);
 
-        fs.writeFileSync(minPath, minContent, 'utf8');
+        writeAtomicFsync(minPath, Buffer.from(minContent, 'utf8'));
 
         const originalSize = source.length;
         const minSize = minContent.length;
@@ -639,7 +649,9 @@ async function main() {
                 html = html.replace(cssInfo.cssFile, cssMinInfo.minFile);
                 log(`Swapped CSS ref: ${cssInfo.cssFile} → ${cssMinInfo.minFile}`);
             }
-            fs.writeFileSync(distIndexPath, html, 'utf8');
+            // Second dist/index.html write — the min-swap rewrite. Same
+            // full-site-down rationale as the earlier write at line ~345.
+            writeAtomicFsync(distIndexPath, Buffer.from(html, 'utf8'));
         }
 
         // Remove unminified bundles from dist/ (saves ~5MB deploy size)

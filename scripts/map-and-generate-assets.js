@@ -396,7 +396,10 @@ function injectCss(slug) {
   } else {
     html = block + html;
   }
-  fs.writeFileSync(file, html);
+  // Atomic + fsync'd HTML write. A truncation here would leave the per-game
+  // page broken until the next generator run; not site-down but visible to
+  // any player who clicks that lobby card.
+  writeAtomicFsync(file, Buffer.from(html, 'utf8'));
   return 'done';
 }
 

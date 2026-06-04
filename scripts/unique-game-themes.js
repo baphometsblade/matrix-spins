@@ -23,6 +23,7 @@
 const fs = require('fs');
 const path = require('path');
 const sharp = require('sharp');
+const { writeAtomicFsync } = require('./lib/symbol-art-manifest');
 
 const ROOT = path.resolve(__dirname, '..');
 const GAMES_DIR = path.join(ROOT, 'games');
@@ -155,7 +156,7 @@ async function main() {
     html = setThemeColor(html, 'primaryColor', r.primary);
     html = setThemeColor(html, 'secondaryColor', r.secondary);
     html = setThemeColor(html, 'accentColor', r.accent);
-    if (html !== before) { fs.writeFileSync(file, html); changed++; }
+    if (html !== before) { writeAtomicFsync(file, Buffer.from(html, 'utf8')); changed++; }
   }
   console.log(`\nUpdated studioTheme colours in ${changed}/${rows.length} game pages.`);
 }

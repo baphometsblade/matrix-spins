@@ -10,6 +10,7 @@
 const fs = require('fs');
 const path = require('path');
 const crypto = require('crypto');
+const { writeAtomicFsync } = require('./lib/symbol-art-manifest');
 
 const ROOT = path.resolve(__dirname, '..');
 const GAMES_DIR = path.join(ROOT, 'games');
@@ -575,7 +576,7 @@ function main() {
             if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
 
             const html = generateGameHTML(game, globalIdx);
-            fs.writeFileSync(path.join(dir, 'index.html'), html, 'utf-8');
+            writeAtomicFsync(path.join(dir, 'index.html'), Buffer.from(html, 'utf-8'));
             built++;
 
             // Progress bar

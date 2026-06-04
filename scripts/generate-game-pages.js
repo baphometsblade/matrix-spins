@@ -10,6 +10,7 @@
 
 const fs = require('fs');
 const path = require('path');
+const { writeAtomicFsync } = require('./lib/symbol-art-manifest');
 
 // Load game definitions
 const gameDefs = require('../shared/game-definitions');
@@ -722,7 +723,7 @@ ${payoutsHtml ? `
 </html>`;
 
     const filePath = path.join(gamesDir, game.id + '.html');
-    fs.writeFileSync(filePath, html, 'utf8');
+    writeAtomicFsync(filePath, Buffer.from(html, 'utf8'));
     generated++;
 });
 
