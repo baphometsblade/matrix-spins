@@ -28,6 +28,7 @@
 const fs = require('fs');
 const path = require('path');
 const http = require('http');
+const { writeAtomicFsync } = require('./lib/symbol-art-manifest');
 
 let sharp = null;
 try { sharp = require('sharp'); } catch (_) { /* validated at startup */ }
@@ -490,7 +491,9 @@ async function main() {
       symbolDir: d.symbolDir,                          // null = no confident symbol set
     };
   }
-  fs.writeFileSync(MAP_OUT, JSON.stringify(mapObj, null, 2));
+  // Atomic + fsync'd write — see scripts/lib/symbol-art-manifest.js for
+  // the failure mode (Windows crash-replay on non-fsync rename).
+  writeAtomicFsync(MAP_OUT, Buffer.from(JSON.stringify(mapObj, null, 2) + '\n', 'utf8'));
   console.log(`Wrote ${path.relative(ROOT, MAP_OUT)} (${decisions.length} games).`);
 
   if (DRY_RUN) {

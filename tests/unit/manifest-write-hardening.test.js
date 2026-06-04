@@ -56,6 +56,38 @@ const VULNERABLE_WRITERS = [
     },
 ];
 
+// Source-file writers hardened in the same incident's follow-up. The "target
+// path strings" entry lists literal substrings any write line must NOT
+// mention; the "identifier" entry lists the bound constant names that point
+// at those paths in each script (e.g. REGISTRY = path.join(...,'js','game-registry.js')).
+const VULNERABLE_SOURCE_WRITERS = [
+    {
+        file: path.join(SCRIPTS, 'apply-bet-ranges.js'),
+        identifiers: ['REGISTRY_SRC', 'REGISTRY_DIST'],
+        targetPaths: ['js/game-registry.js'],
+    },
+    {
+        file: path.join(SCRIPTS, 'apply-game-themes.js'),
+        identifiers: ['REGISTRY_SRC', 'REGISTRY_DIST'],
+        targetPaths: ['js/game-registry.js'],
+    },
+    {
+        file: path.join(SCRIPTS, 'generate-adult-slots.js'),
+        identifiers: ['REGISTRY', 'ENGINE'],
+        targetPaths: ['js/game-registry.js', 'js/casino-engine.js'],
+    },
+    {
+        file: path.join(SCRIPTS, 'generate-adult-slots-2.js'),
+        identifiers: ['REGISTRY', 'ENGINE'],
+        targetPaths: ['js/game-registry.js', 'js/casino-engine.js'],
+    },
+    {
+        file: path.join(SCRIPTS, 'generate-100-games.js'),
+        identifiers: ['outPath'],
+        targetPaths: ['shared/game-definitions.js'],
+    },
+];
+
 const ADULT_SLOTS_SCRIPTS = [
     path.join(SCRIPTS, 'generate-adult-slots.js'),
     path.join(SCRIPTS, 'generate-adult-slots-2.js'),
@@ -240,7 +272,98 @@ describe('Part 2 — adult-slots mergeJson throws loudly on a corrupted manifest
     });
 });
 
-describe('Part 3 — writeAtomicFsync round-trips data through write+read', () => {
+describe('Part 3 — source-file writers are hardened too', () => {
+    VULNERABLE_SOURCE_WRITERS.forEach(w => {
+        const name = path.basename(w.file);
+
+        test(`${name} imports writeAtomicFsync (and assertSourceShape where applicable) from the shared lib`, () => {
+            const src = readSrc(w.file);
+            expect(src).toMatch(/require\(['"]\.\/lib\/symbol-art-manifest['"]\)/);
+            expect(src).toMatch(/writeAtomicFsync/);
+        });
+
+        test(`${name} contains no bare fs.writeFileSync targeting source-file paths or constants`, () => {
+            const src = readSrc(w.file);
+            const stripped = src
+                .replace(/\/\*[\s\S]*?\*\//g, '')
+                .replace(/\/\/[^\n]*/g, '');
+
+            const lines = stripped.split('\n');
+            const offenders = [];
+            const idPattern = new RegExp(
+                'fs\\.writeFileSync\\s*\\(\\s*(?:[A-Za-z_$][A-Za-z0-9_$]*|path\\.join\\([^)]*\\))'
+            );
+            for (let i = 0; i < lines.length; i++) {
+                const line = lines[i];
+                if (!/fs\.writeFileSync\s*\(/.test(line)) continue;
+
+                // Flag if line mentions any literal target path the writer ships to.
+                for (const target of w.targetPaths) {
+                    if (line.includes(target)) offenders.push(`${i + 1}: ${line.trim()}`);
+                }
+                // Flag if line writes to one of the bound constant identifiers.
+                const m = line.match(/fs\.writeFileSync\s*\(\s*([A-Za-z_$][A-Za-z0-9_$]*)/);
+                if (m && w.identifiers.includes(m[1])) offenders.push(`${i + 1}: ${line.trim()}`);
+            }
+            expect(offenders).toEqual([]);
+        });
+    });
+});
+
+describe('Part 4 — assertSourceShape catches truncation upstream of disk', () => {
+    const { assertSourceShape } = require('../../scripts/lib/symbol-art-manifest');
+
+    test('passes a valid source string against all asserts', () => {
+        const valid = '// header\n'.repeat(200) + 'GAME_REGISTRY = [{}];\n';
+        expect(() =>
+            assertSourceShape(valid, {
+                label: 'demo',
+                minLength: 500,
+                mustContain: ['GAME_REGISTRY'],
+                mustEndWith: '];',
+            })
+        ).not.toThrow();
+    });
+
+    test('rejects a truncated source shorter than minLength', () => {
+        expect(() =>
+            assertSourceShape('GAME_REGISTRY = [];', {
+                label: 'demo',
+                minLength: 5000,
+                mustContain: ['GAME_REGISTRY'],
+            })
+        ).toThrow(/suspiciously short/);
+    });
+
+    test('rejects a source missing a required marker', () => {
+        expect(() =>
+            assertSourceShape('module.exports = {};', {
+                label: 'demo',
+                minLength: 10,
+                mustContain: ['GAME_REGISTRY'],
+            })
+        ).toThrow(/missing required marker/);
+    });
+
+    test('rejects a source that does not end with the expected terminator', () => {
+        expect(() =>
+            assertSourceShape('GAME_REGISTRY = []; // truncated', {
+                label: 'demo',
+                minLength: 10,
+                mustContain: ['GAME_REGISTRY'],
+                mustEndWith: '];',
+            })
+        ).toThrow(/does not end with/);
+    });
+
+    test('rejects a non-string source', () => {
+        expect(() =>
+            assertSourceShape({}, { label: 'demo' })
+        ).toThrow(/expected string/);
+    });
+});
+
+describe('Part 5 — writeAtomicFsync round-trips data through write+read', () => {
     const { writeAtomicFsync } = require('../../scripts/lib/symbol-art-manifest');
 
     test('writes binary data atomically and removes the staged .tmp', () => {

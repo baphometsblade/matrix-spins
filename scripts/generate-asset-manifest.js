@@ -9,6 +9,7 @@
 
 const fs = require('fs');
 const path = require('path');
+const { writeAtomicFsync } = require('./lib/symbol-art-manifest');
 
 const repoRoot = path.resolve(__dirname, '..');
 const gameDefs = require('../shared/game-definitions');
@@ -87,9 +88,12 @@ games.forEach(game => {
     manifest.games[game.id] = entry;
 });
 
-// Write manifest
+// Write manifest atomically + fsync'd. The lobby fallback reads this to
+// resolve missing thumbnails; a Windows crash-replay against the prior
+// bare write could have landed assets/manifest.json on uncommitted
+// whitespace clusters (same failure mode that wiped data/symbol-art.json).
 const manifestPath = path.join(repoRoot, 'assets', 'manifest.json');
-fs.writeFileSync(manifestPath, JSON.stringify(manifest, null, 2), 'utf8');
+writeAtomicFsync(manifestPath, Buffer.from(JSON.stringify(manifest, null, 2) + '\n', 'utf8'));
 
 console.log(`\n  ═══ Asset Manifest ═══`);
 console.log(`  Games: ${games.length}`);

@@ -29,3 +29,5 @@ server/data/maintenance.json
 # Serena MCP server's local cache + project config
 .serena/
 .playwright-mcp/
+# Ad-hoc verification screenshots produced by playwright runs in repo root.
+live-slot-engine-tiles*.png

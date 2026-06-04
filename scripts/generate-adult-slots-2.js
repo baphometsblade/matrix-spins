@@ -24,7 +24,7 @@
 
 const fs = require('fs');
 const path = require('path');
-const { writeAtomicFsync } = require('./lib/symbol-art-manifest');
+const { writeAtomicFsync, assertSourceShape } = require('./lib/symbol-art-manifest');
 
 const ROOT = path.resolve(__dirname, '..');
 const REGISTRY = path.join(ROOT, 'js', 'game-registry.js');
@@ -315,7 +315,15 @@ function updateRegistry() {
         src = head.slice(0, lastBrace + 1) + ',\n' + objs + '\n' + src.slice(closeIdx);
     }
 
-    fs.writeFileSync(REGISTRY, src);
+    // Pre-write shape assert + atomic fsync'd persist — see generate-adult-slots.js
+    // for the full-site-down impact rationale on game-registry.js.
+    assertSourceShape(src, {
+        label: 'js/game-registry.js',
+        minLength: 5000,
+        mustContain: ['GAME_REGISTRY'],
+        mustEndWith: '];',
+    });
+    writeAtomicFsync(REGISTRY, Buffer.from(src, 'utf8'));
     changed.push('js/game-registry.js (' + (hasGames ? 'studio only' : '+studio, +' + GAMES.length + ' games') + ')');
 }
 
@@ -328,14 +336,29 @@ function updateGlyphs() {
         Object.entries(NEW_GLYPHS).map(([k, v]) => `${k}: '${v}'`).join(', ') + ',';
     const at = m.index + m[0].length;
     src = src.slice(0, at) + ins + src.slice(at);
-    fs.writeFileSync(ENGINE, src);
+    // casino-engine.js is engine-broken radius — see generate-adult-slots.js.
+    assertSourceShape(src, {
+        label: 'js/casino-engine.js',
+        minLength: 10000,
+        mustContain: ['SYMBOL_GLYPHS', 'CasinoEngine'],
+    });
+    writeAtomicFsync(ENGINE, Buffer.from(src, 'utf8'));
     changed.push('js/casino-engine.js (+' + Object.keys(NEW_GLYPHS).length + ' glyphs)');
 }
 
 function updatePages() {
     if (!fs.existsSync(GAMES_DIR)) fs.mkdirSync(GAMES_DIR, { recursive: true });
     let n = 0;
-    GAMES.forEach(g => { fs.writeFileSync(path.join(GAMES_DIR, g.id + '.html'), pageHtml(g)); n++; });
+    GAMES.forEach(g => {
+        const html = pageHtml(g);
+        assertSourceShape(html, {
+            label: 'games/' + g.id + '.html',
+            minLength: 500,
+            mustContain: ['CasinoEngine.init'],
+        });
+        writeAtomicFsync(path.join(GAMES_DIR, g.id + '.html'), Buffer.from(html, 'utf8'));
+        n++;
+    });
     changed.push(n + ' game pages');
 }
 

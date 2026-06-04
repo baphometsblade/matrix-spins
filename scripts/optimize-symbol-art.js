@@ -43,8 +43,10 @@ const SAFE_ID = manifestLib.SAFE_ID;
 
 // Manifest IO delegates to scripts/lib/symbol-art-manifest.js. fsync'd write,
 // whitespace-rejecting load, shape-validated persist — see the lib for the
-// failure modes this closes.
-const writeAtomic = manifestLib.writeAtomicFsync;
+// failure modes this closes. The script's other writes are sharp's toFile
+// (binary tile output), which has its own internal close-on-completion path
+// and is per-file regenerable on a kill — so no writeAtomic indirection is
+// needed for those.
 function loadManifest() { return manifestLib.loadManifest(MANIFEST, SYM_ROOT); }
 function persistMap(map) { manifestLib.persistManifest(MANIFEST, map); }
 

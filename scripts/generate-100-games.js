@@ -17,6 +17,7 @@
 
 const fs = require('fs');
 const path = require('path');
+const { writeAtomicFsync, assertSourceShape } = require('./lib/symbol-art-manifest');
 
 // Provider studios (fictional)
 const PROVIDERS = [
@@ -855,10 +856,19 @@ function generateDefinitions() {
   return lines.join('\n');
 }
 
-// Write output
+// Write output. Pre-write shape assert guards against an upstream string-build
+// regression that would otherwise persist a truncated/half-rewritten
+// game-definitions.js — required by the server at boot (any game-page hit goes
+// 503 on the catalog route). Atomic+fsync rename prevents Windows crash-replay
+// from landing the new directory entry on uncommitted whitespace clusters.
 const output = generateDefinitions();
 const outPath = path.join(__dirname, '..', 'shared', 'game-definitions.js');
-fs.writeFileSync(outPath, output, 'utf8');
+assertSourceShape(output, {
+    label: 'game-definitions.js',
+    minLength: 5000,
+    mustContain: ['module.exports', 'GAMES'],
+});
+writeAtomicFsync(outPath, Buffer.from(output, 'utf8'));
 
 console.log('Generated ' + GAMES.length + ' game definitions');
 console.log('Output: ' + outPath);

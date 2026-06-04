@@ -27,6 +27,7 @@
 
 const fs = require('fs');
 const path = require('path');
+const { writeAtomicFsync, assertSourceShape } = require('./lib/symbol-art-manifest');
 
 const ROOT = path.resolve(__dirname, '..');
 const REGISTRY_SRC = path.join(ROOT, 'js', 'game-registry.js');
@@ -215,7 +216,20 @@ function applyToRegistry(filePath, thumbnailMap) {
     }
 
     const out = before + rewritten.join(',\n  ') + after;
-    fs.writeFileSync(filePath, out);
+    // Pre-write shape assert + atomic fsync'd persist. game-registry.js is
+    // the full-site-down target — a truncation blanks the lobby and breaks
+    // every game page's /api/games/:id resolution. See apply-bet-ranges.js
+    // for the same defensive contract.
+    // minLength=200 catches catastrophic truncation (e.g. the 59K→0 wipe
+    // shape) but stays under the smallest realistic registry test fixture.
+    // The real shape protection is mustContain + mustEndWith.
+    assertSourceShape(out, {
+        label: path.basename(filePath),
+        minLength: 200,
+        mustContain: ['GAME_REGISTRY'],
+        mustEndWith: '];',
+    });
+    writeAtomicFsync(filePath, Buffer.from(out, 'utf8'));
     console.log('[apply-game-themes] ' + path.basename(filePath) + ' — wrote ' + changed + ' updated game(s)');
     return { written: true, changed: changed };
 }

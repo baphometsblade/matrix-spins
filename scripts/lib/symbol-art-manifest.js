@@ -195,6 +195,49 @@ function persistManifest(manifestPath, map) {
     writeAtomicFsync(manifestPath, Buffer.from(body, 'utf8'));
 }
 
+/**
+ * Pre-write sanity check for source-file writers.
+ *
+ * Several scripts regenerate critical runtime source files (js/game-registry.js,
+ * js/casino-engine.js, shared/game-definitions.js, etc.). If the in-memory
+ * string they're about to write is somehow truncated — buggy string-build,
+ * partial merge, broken template — the bare fs.writeFileSync would happily
+ * persist a half-file that bricks the lobby or the engine for every player.
+ *
+ * Callers pass:
+ *   - source: the string about to be written
+ *   - opts.minLength: minimum acceptable size (rejects truncation)
+ *   - opts.mustContain: array of marker substrings that MUST be present
+ *   - opts.mustEndWith: optional trailing marker (e.g. ';\n' or '];')
+ *
+ * Throws Error with a clear message if any check fails. Use this BEFORE
+ * writeAtomicFsync so we never persist a malformed file in the first place.
+ */
+function assertSourceShape(source, opts) {
+    const { minLength, mustContain, mustEndWith, label } = opts || {};
+    if (typeof source !== 'string') {
+        throw new Error('[' + (label || 'source') + '] expected string, got ' + typeof source);
+    }
+    if (minLength != null && source.length < minLength) {
+        throw new Error('[' + (label || 'source') + '] suspiciously short: ' + source.length + ' < ' + minLength + ' bytes');
+    }
+    if (Array.isArray(mustContain)) {
+        for (const marker of mustContain) {
+            if (!source.includes(marker)) {
+                throw new Error('[' + (label || 'source') + '] missing required marker: ' + JSON.stringify(marker));
+            }
+        }
+    }
+    if (mustEndWith) {
+        const trimmed = source.trimEnd();
+        const target = String(mustEndWith).trimEnd();
+        if (!trimmed.endsWith(target)) {
+            const tail = trimmed.slice(-40);
+            throw new Error('[' + (label || 'source') + '] does not end with ' + JSON.stringify(mustEndWith) + ' (tail: ' + JSON.stringify(tail) + ')');
+        }
+    }
+}
+
 module.exports = {
     SAFE_ID,
     MIN_TILE_BYTES,
@@ -205,4 +248,5 @@ module.exports = {
     countDiskTiles,
     loadManifest,
     persistManifest,
+    assertSourceShape,
 };

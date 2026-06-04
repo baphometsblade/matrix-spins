@@ -24,6 +24,7 @@
 
 const fs = require('fs');
 const path = require('path');
+const { writeAtomicFsync, assertSourceShape } = require('./lib/symbol-art-manifest');
 
 const ROOT = path.resolve(__dirname, '..');
 const REGISTRY_SRC = path.join(ROOT, 'js', 'game-registry.js');
@@ -172,7 +173,21 @@ function applyToRegistry(filePath) {
     }
 
     const out = before + rewritten.join(',\n  ') + after;
-    fs.writeFileSync(filePath, out);
+    // Pre-write shape assert + atomic fsync'd persist. The registry feeds
+    // the lobby render AND the server's slug-registry that resolves
+    // /api/games/:id config for all 120 slot pages — a truncated write
+    // here blanks the lobby and falls every game back to synthetic
+    // s1..s5 symbols. We require minimum length, a GAME_REGISTRY marker,
+    // and a `];` terminator on the registry array.
+    // minLength=200 — same rationale as apply-game-themes.js. Real shape
+    // protection comes from mustContain + mustEndWith.
+    assertSourceShape(out, {
+        label: path.basename(filePath),
+        minLength: 200,
+        mustContain: ['GAME_REGISTRY'],
+        mustEndWith: '];',
+    });
+    writeAtomicFsync(filePath, Buffer.from(out, 'utf8'));
     console.log('[apply-bet-ranges] ' + path.basename(filePath) + ' — wrote ' + changed + ' game(s)');
     return { written: true, changed: changed };
 }
