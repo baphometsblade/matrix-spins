@@ -883,7 +883,44 @@ const INDEXES = [
 
     // Audit fix: targeted transaction lookup indexes (user+type filter, user+time sort)
     `CREATE INDEX IF NOT EXISTS idx_transactions_user_type ON transactions(user_id, type)`,
-    `CREATE INDEX IF NOT EXISTS idx_transactions_user_created ON transactions(user_id, created_at DESC)`
+    `CREATE INDEX IF NOT EXISTS idx_transactions_user_created ON transactions(user_id, created_at DESC)`,
+
+    // 2026-06-17 — Missing index migration (revenue, bonus, admin/analytics)
+    // CRITICAL: Revenue/Auth
+    `CREATE INDEX IF NOT EXISTS idx_users_email ON users(email)`,
+    `CREATE INDEX IF NOT EXISTS idx_users_username ON users(username)`,
+    `CREATE INDEX IF NOT EXISTS idx_deposits_reference ON deposits(reference)`,
+    `CREATE INDEX IF NOT EXISTS idx_spins_user_game ON spins(user_id, game_id, created_at)`,
+    // HIGH: Bonus/claim tables
+    `CREATE INDEX IF NOT EXISTS idx_cashback_rewards_user ON cashback_rewards(user_id, created_at)`,
+    `CREATE INDEX IF NOT EXISTS idx_milestone_claims_user ON milestone_claims(user_id, milestone_id)`,
+    `CREATE INDEX IF NOT EXISTS idx_session_reengage_claims_user ON session_reengage_claims(user_id)`,
+    `CREATE INDEX IF NOT EXISTS idx_loss_cashback_claims_user ON loss_cashback_claims(user_id)`,
+    `CREATE INDEX IF NOT EXISTS idx_happy_hour_bonuses_user ON happy_hour_bonuses(user_id)`,
+    `CREATE INDEX IF NOT EXISTS idx_withdrawal_offers_user ON withdrawal_offers(user_id, created_at)`,
+    `CREATE INDEX IF NOT EXISTS idx_referral_codes_user ON referral_codes(user_id)`,
+    `CREATE INDEX IF NOT EXISTS idx_referral_codes_code ON referral_codes(code)`,
+    `CREATE INDEX IF NOT EXISTS idx_referral_claims_referrer ON referral_claims(referrer_id)`,
+    `CREATE INDEX IF NOT EXISTS idx_referral_claims_referred ON referral_claims(referred_id)`,
+    `CREATE INDEX IF NOT EXISTS idx_promo_codes_code ON promo_codes(code)`,
+    `CREATE INDEX IF NOT EXISTS idx_promo_redemptions_user ON promo_redemptions(user_id)`,
+    `CREATE INDEX IF NOT EXISTS idx_promo_redemptions_code ON promo_redemptions(code_id)`,
+    `CREATE INDEX IF NOT EXISTS idx_battle_pass_claims_user_pass ON battle_pass_claims(user_id, pass_id)`,
+    `CREATE INDEX IF NOT EXISTS idx_battle_pass_progress_user_pass ON battle_pass_progress(user_id, pass_id)`,
+    // MEDIUM: Admin/analytics/service
+    `CREATE INDEX IF NOT EXISTS idx_activity_log_user ON activity_log(user_id, created_at)`,
+    `CREATE INDEX IF NOT EXISTS idx_activity_log_created ON activity_log(created_at)`,
+    `CREATE INDEX IF NOT EXISTS idx_newsletter_subscribers_email ON newsletter_subscribers(email)`,
+    `CREATE INDEX IF NOT EXISTS idx_password_reset_tokens_token ON password_reset_tokens(token)`,
+    `CREATE INDEX IF NOT EXISTS idx_email_verification_tokens_token ON email_verification_tokens(token)`,
+    `CREATE INDEX IF NOT EXISTS idx_slot_races_status ON slot_races(status)`,
+    `CREATE INDEX IF NOT EXISTS idx_slot_race_entries_race_user ON slot_race_entries(race_id, user_id)`,
+    `CREATE INDEX IF NOT EXISTS idx_gem_balances_user ON gem_balances(user_id)`,
+    `CREATE INDEX IF NOT EXISTS idx_cosmetic_inventory_user ON cosmetic_inventory(user_id, item_id)`,
+    `CREATE INDEX IF NOT EXISTS idx_active_boosts_user ON active_boosts(user_id, expires_at)`,
+    `CREATE INDEX IF NOT EXISTS idx_slot_events_active ON slot_events(is_active, start_at, end_at)`,
+    `CREATE INDEX IF NOT EXISTS idx_seasonal_event_progress_user ON seasonal_event_progress(user_id, event_id)`,
+    `CREATE INDEX IF NOT EXISTS idx_gem_purchases_user ON gem_purchases(user_id, created_at)`,
 ];
 
 

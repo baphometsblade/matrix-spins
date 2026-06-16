@@ -3,5 +3,20 @@ Allow: /
 Disallow: /api/
 Disallow: /admin.html
 Disallow: /deposit/
+Disallow: /account.html
+Disallow: /wallet.html
+Disallow: /login.html
+Disallow: /signup.html
+Disallow: /profile.html
+Disallow: /2fa-settings.html
+Disallow: /kyc.html
+Disallow: /payment-methods.html
+Disallow: /receipts.html
+Disallow: /bonus-history.html
+Disallow: /jackpot-history.html
+Disallow: /history.html
+Disallow: /email-preferences.html
+Disallow: /crypto-deposit.html
+Disallow: /friends.html
 
 Sitemap: https://msaart.online/sitemap.xml

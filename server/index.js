@@ -772,6 +772,16 @@ async function initSchemas() {
   } catch (err) {
     logger.warn('NFT tables init deferred', { error: err.message });
   }
+
+  // ── Index migration — runs AFTER all service schemas so lazily-created
+  // tables (gem_balances, cosmetic_inventory, active_boosts, promo_codes,
+  // email_verification_tokens, etc.) exist by this point. ──
+  try {
+    const { applyIndexes } = require('./db/migration-add-indexes');
+    await applyIndexes(require('./database'));
+  } catch (err) {
+    logger.warn('Index migration failed (non-fatal)', { error: err.message });
+  }
 }
 
 // ── Async Setup (DB + routes + service schemas) ────────────

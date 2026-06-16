@@ -54,6 +54,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link rel="dns-prefetch" href="https://fonts.googleapis.com">
+    <link rel="dns-prefetch" href="https://fonts.gstatic.com">
     <!-- Preload critical font to reduce LCP -->
     <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap" onload="this.onload=null;this.rel='stylesheet'">
     <noscript><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap" rel="stylesheet"></noscript>
@@ -78,16 +79,21 @@
     <link rel="stylesheet" href="css/landing-redesign.css">
     <!-- Progressive Jackpot CSS -->
     <link rel="stylesheet" href="css/jackpot.css">
-    <!-- Chat Widget & Notifications CSS -->
-    <link rel="stylesheet" href="css/chat-widget.css">
-    <link rel="stylesheet" href="css/notifications.css">
+    <!-- Chat Widget & Notifications CSS (deferred — not needed for first paint) -->
+    <link rel="stylesheet" href="css/chat-widget.css" media="print" onload="this.media='all'">
+    <noscript><link rel="stylesheet" href="css/chat-widget.css"></noscript>
+    <link rel="stylesheet" href="css/notifications.css" media="print" onload="this.media='all'">
+    <noscript><link rel="stylesheet" href="css/notifications.css"></noscript>
     <!-- Compliance & UX Enhancement CSS -->
-    <link rel="stylesheet" href="css/age-gate.css">
+    <link rel="stylesheet" href="css/age-gate.css" media="print" onload="this.media='all'">
+    <noscript><link rel="stylesheet" href="css/age-gate.css"></noscript>
     <link rel="stylesheet" href="css/skeleton.css">
     <link rel="stylesheet" href="css/search.css">
     <link rel="stylesheet" href="css/favorites.css">
-    <link rel="stylesheet" href="css/session-monitor.css">
-    <link rel="stylesheet" href="css/conversion.css">
+    <link rel="stylesheet" href="css/session-monitor.css" media="print" onload="this.media='all'">
+    <noscript><link rel="stylesheet" href="css/session-monitor.css"></noscript>
+    <link rel="stylesheet" href="css/conversion.css" media="print" onload="this.media='all'">
+    <noscript><link rel="stylesheet" href="css/conversion.css"></noscript>
     <style>
         :root {
             --bg-base: #0D0F14;
@@ -2252,7 +2258,7 @@
                 // because the parent card has the click handler too.
                 card.innerHTML = `
                     <div class="game-visual" style="background: ${game.bgGradient || `linear-gradient(135deg, ${studioColor}, ${studioColor}66)`}">
-                        <img class="game-thumb" src="${getGameThumbnail(game)}" alt="" loading="lazy" decoding="async" aria-hidden="true" onerror="this.style.display='none'">
+                        <img class="game-thumb" src="${getGameThumbnail(game)}" alt="" loading="lazy" decoding="async" width="352" height="220" aria-hidden="true" onerror="this.style.display='none'">
                         <div class="game-placeholder" aria-hidden="true">${game.name.charAt(0)}</div>
                         <div class="game-studio-badge" style="background: ${studioColor}cc" aria-hidden="true">${game.studio || game.provider || ''}</div>
                         <div class="game-badges" aria-hidden="true">
@@ -2490,7 +2496,7 @@
                 const studio = (typeof window.STUDIO_CONFIG !== 'undefined') ? window.STUDIO_CONFIG[g.studioId] : null;
                 const color = studio ? studio.colors.primary : '#D4A853';
                 const showcaseBg = g.bgGradient || ('linear-gradient(135deg,' + color + ',' + color + '66)');
-                const showcaseThumb = getGameThumbnail(g) ? '<img class="game-thumb" src="' + getGameThumbnail(g) + '" alt="' + g.name + '" loading="lazy" decoding="async" onerror="this.style.display=\'none\'">' : '';
+                const showcaseThumb = getGameThumbnail(g) ? '<img class="game-thumb" src="' + getGameThumbnail(g) + '" alt="' + g.name + '" loading="eager" decoding="async" width="280" height="175" onerror="this.style.display=\'none\'">' : '';
                 return '<div class="showcase-card" onclick="navigateToGame(\'' + g.id + '\')">' +
                     '<div class="showcase-card-visual" style="background:' + showcaseBg + '">' +
                     showcaseThumb +
