@@ -610,5 +610,77 @@
  {
   "tile": "dark-sorcerer-nexus/sorcerer",
   "issue": "decorative orb, not a sorcerer figure; off-theme"
+ },
+ {
+  "tile": "luck-prosperity-wheel/coin",
+  "issue": "Bitcoin/crypto coin (B glyph on coin face) — CLAUDE.md zero-crypto violation"
+ },
+ {
+  "tile": "wizard-spellbook-master/gold",
+  "issue": "gold coins embossed with Bitcoin B symbol — CLAUDE.md zero-crypto violation"
+ },
+ {
+  "tile": "alien-artifact-hunt/relic",
+  "issue": "roulette wheel, not a relic (off-theme)"
+ },
+ {
+  "tile": "dark-sorcerer-nexus/lightning",
+  "issue": "gold gem signet ring, no lightning (off-theme)"
+ },
+ {
+  "tile": "dingo-desert-runner/sunset",
+  "issue": "candle-lit altar, not a sunset (off-theme)"
+ },
+ {
+  "tile": "eagle-sky-sovereign/mountain",
+  "issue": "gold pyramid ornament, not a mountain (off-theme)"
+ },
+ {
+  "tile": "elephant-safari-quest/water-hole",
+  "issue": "casino gaming table, not a water-hole (off-theme)"
+ },
+ {
+  "tile": "golden-phoenix-rising/sun",
+  "issue": "empty ornate frame, no sun (empty-frame)"
+ },
+ {
+  "tile": "kangaroo-outback-bound/outback",
+  "issue": "jeweled medallion brooch, not an outback landscape (off-theme)"
+ },
+ {
+  "tile": "kangaroo-outback-bound/bush",
+  "issue": "gold runic medallion, not an outback bush (off-theme)"
+ },
+ {
+  "tile": "koala-bush-bonanza/bush",
+  "issue": "gold floral ornaments, not a bush (off-theme)"
+ },
+ {
+  "tile": "koala-bush-bonanza/outback",
+  "issue": "jeweled treasure box, not outback scenery (off-theme)"
+ },
+ {
+  "tile": "banshee-wailing-spirits/mist",
+  "issue": "decorative jeweled plaque, no mist (off-theme)"
+ },
+ {
+  "tile": "golden-melons-paradise/orange",
+  "issue": "amber droplet, not an orange fruit (off-theme)"
+ },
+ {
+  "tile": "meteor-strike-mayhem/explosion",
+  "issue": "decorative framed panel, no explosion (off-theme)"
+ },
+ {
+  "tile": "meteor-strike-mayhem/asteroid",
+  "issue": "faceted gold gem/die, not a rocky asteroid (off-theme)"
+ },
+ {
+  "tile": "ghost-haunted-mansion/spirit",
+  "issue": "empty frame with gold locket, no spirit (empty-frame)"
+ },
+ {
+  "tile": "moonlit-tryst/moon",
+  "issue": "jeweled gold medallion, not a moon (off-theme)"
  }
 ]

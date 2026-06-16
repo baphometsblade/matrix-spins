@@ -62,8 +62,35 @@ describe('curated symbol-art shipping contract', () => {
     expect(missing).toEqual([]);
   });
 
-  test('the specific Bitcoin/crypto gold tile is NOT shipped (CLAUDE.md zero-crypto)', () => {
-    expect(shipped['aboriginal-dreamtime-quest'] &&
-      shipped['aboriginal-dreamtime-quest'].gold).toBeFalsy();
+  test('known Bitcoin/crypto tiles are NOT shipped (CLAUDE.md zero-crypto)', () => {
+    // Each of these was a real ₿ Bitcoin tile that reached the live shipped reels
+    // and was caught by visual QA. SDXL renders crypto coinage on gold/coin prompts,
+    // and the single-pass finder has a crypto false-negative rate — these were only
+    // caught by a dedicated crypto-skeptic re-inspection. Lock them out explicitly so
+    // a regression that drops them from qa-flagged.json fails here with a crypto label.
+    const cryptoTiles = [
+      'aboriginal-dreamtime-quest/gold',
+      'luck-prosperity-wheel/coin',
+      'wizard-spellbook-master/gold',
+    ];
+    const live = cryptoTiles.filter((t) => {
+      const [game, sym] = t.split('/');
+      return shipped[game] && shipped[game][sym];
+    });
+    expect(live).toEqual([]);
+  });
+
+  test('every shipped tile is an optimised .webp — no raw PNG on live reels', () => {
+    // The generator emits 768x768 PNGs (~600-900 KB); optimize-symbol-art.js
+    // converts them to ~8-25 KB 224px webp. A raw PNG reaching the shipped
+    // manifest means the optimize step was skipped and live reels would pull
+    // ~700 KB per cell — a serious perf regression. Lock it to webp-only.
+    const rawPng = [];
+    for (const [game, syms] of Object.entries(shipped)) {
+      for (const [sym, rel] of Object.entries(syms)) {
+        if (!/\.webp$/i.test(rel)) rawPng.push(`${game}/${sym} -> ${rel}`);
+      }
+    }
+    expect(rawPng).toEqual([]);
   });
 });

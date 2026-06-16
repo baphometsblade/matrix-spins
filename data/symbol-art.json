@@ -1,11 +1,11 @@
 {
   "aboriginal-dreamtime-quest": {
     "aboriginal": "aboriginal-dreamtime-quest/aboriginal.webp",
-    "ancient": "aboriginal-dreamtime-quest/ancient.png",
+    "ancient": "aboriginal-dreamtime-quest/ancient.webp",
     "ceremony": "aboriginal-dreamtime-quest/ceremony.webp",
-    "dot-painting": "aboriginal-dreamtime-quest/dot-painting.png",
+    "dot-painting": "aboriginal-dreamtime-quest/dot-painting.webp",
     "dreamtime": "aboriginal-dreamtime-quest/dreamtime.webp",
-    "gold": "aboriginal-dreamtime-quest/gold.png",
+    "gold": "aboriginal-dreamtime-quest/gold.webp",
     "quest": "aboriginal-dreamtime-quest/quest.webp",
     "scatter": "aboriginal-dreamtime-quest/scatter.webp",
     "spirit": "aboriginal-dreamtime-quest/spirit.webp",
@@ -25,13 +25,13 @@
   },
   "alien-artifact-hunt": {
     "alien": "alien-artifact-hunt/alien.webp",
-    "artifact": "alien-artifact-hunt/artifact.png",
+    "artifact": "alien-artifact-hunt/artifact.webp",
     "crystal": "alien-artifact-hunt/crystal.webp",
     "planet": "alien-artifact-hunt/planet.webp",
     "portal": "alien-artifact-hunt/portal.webp",
     "relic": "alien-artifact-hunt/relic.webp",
     "scatter": "alien-artifact-hunt/scatter.webp",
-    "spaceship": "alien-artifact-hunt/spaceship.png",
+    "spaceship": "alien-artifact-hunt/spaceship.webp",
     "star": "alien-artifact-hunt/star.webp",
     "wild": "alien-artifact-hunt/wild.webp"
   },
@@ -48,7 +48,7 @@
     "wild": "anubis-guardian-souls/wild.webp"
   },
   "artdeco-cherry-royale": {
-    "bar": "artdeco-cherry-royale/bar.png",
+    "bar": "artdeco-cherry-royale/bar.webp",
     "cherry": "artdeco-cherry-royale/cherry.webp",
     "crown": "artdeco-cherry-royale/crown.webp",
     "diamond": "artdeco-cherry-royale/diamond.webp",
@@ -56,13 +56,18 @@
     "ruby": "artdeco-cherry-royale/ruby.webp",
     "sapphire": "artdeco-cherry-royale/sapphire.webp",
     "scatter": "artdeco-cherry-royale/scatter.webp",
-    "sevens": "artdeco-cherry-royale/sevens.png",
+    "sevens": "artdeco-cherry-royale/sevens.webp",
     "wild": "artdeco-cherry-royale/wild.webp"
   },
   "asteroid-lockdown": {
     "comet": "asteroid-lockdown/comet.webp",
     "star": "asteroid-lockdown/star.webp",
-    "void": "asteroid-lockdown/void.webp"
+    "void": "asteroid-lockdown/void.webp",
+    "asteroid": "asteroid-lockdown/asteroid.webp",
+    "space-station": "asteroid-lockdown/space-station.webp",
+    "shuttle": "asteroid-lockdown/shuttle.webp",
+    "planet": "asteroid-lockdown/planet.webp",
+    "nebula": "asteroid-lockdown/nebula.webp"
   },
   "athenas-golden-shield": {
     "athena": "athenas-golden-shield/athena.webp",
@@ -81,9 +86,9 @@
     "haunting": "banshee-wailing-spirits/haunting.webp",
     "mist": "banshee-wailing-spirits/mist.webp",
     "scatter": "banshee-wailing-spirits/scatter.webp",
-    "spirit": "banshee-wailing-spirits/spirit.png",
+    "spirit": "banshee-wailing-spirits/spirit.webp",
     "supernatural": "banshee-wailing-spirits/supernatural.webp",
-    "wail": "banshee-wailing-spirits/wail.png",
+    "wail": "banshee-wailing-spirits/wail.webp",
     "wild": "banshee-wailing-spirits/wild.webp"
   },
   "bard-mystical-melody": {
@@ -95,14 +100,15 @@
     "music": "bard-mystical-melody/music.webp",
     "scatter": "bard-mystical-melody/scatter.webp",
     "song": "bard-mystical-melody/song.webp",
-    "wild": "bard-mystical-melody/wild.webp"
+    "wild": "bard-mystical-melody/wild.webp",
+    "gold": "bard-mystical-melody/gold.webp"
   },
   "bastet-feline-fortune": {
-    "ankh": "bastet-feline-fortune/ankh.png",
+    "ankh": "bastet-feline-fortune/ankh.webp",
     "bastet": "bastet-feline-fortune/bastet.webp",
     "cat": "bastet-feline-fortune/cat.webp",
-    "gold": "bastet-feline-fortune/gold.png",
-    "jewel": "bastet-feline-fortune/jewel.png",
+    "gold": "bastet-feline-fortune/gold.webp",
+    "jewel": "bastet-feline-fortune/jewel.webp",
     "pyramid": "bastet-feline-fortune/pyramid.webp",
     "scarab": "bastet-feline-fortune/scarab.webp",
     "scatter": "bastet-feline-fortune/scatter.webp",
@@ -127,7 +133,9 @@
     "pan": "billabong-gold-rush/pan.webp",
     "pickaxe": "billabong-gold-rush/pickaxe.webp",
     "platypus": "billabong-gold-rush/platypus.webp",
-    "wattle": "billabong-gold-rush/wattle.webp"
+    "wattle": "billabong-gold-rush/wattle.webp",
+    "river": "billabong-gold-rush/river.webp",
+    "campfire": "billabong-gold-rush/campfire.webp"
   },
   "boomerang-tribal-magic": {
     "aboriginal-art": "boomerang-tribal-magic/aboriginal-art.webp",
@@ -148,7 +156,8 @@
     "compass": "cannonball-express/compass.webp",
     "pirate-flag": "cannonball-express/pirate-flag.webp",
     "skull": "cannonball-express/skull.webp",
-    "treasure": "cannonball-express/treasure.webp"
+    "treasure": "cannonball-express/treasure.webp",
+    "rum": "cannonball-express/rum.webp"
   },
   "carnival-heat": {
     "crown": "carnival-heat/crown.webp",
@@ -157,7 +166,8 @@
     "lips": "carnival-heat/lips.webp",
     "mask": "carnival-heat/mask.webp",
     "scatter": "carnival-heat/scatter.webp",
-    "wild": "carnival-heat/wild.webp"
+    "wild": "carnival-heat/wild.webp",
+    "gold": "carnival-heat/gold.webp"
   },
   "carnival-spinning-wheel": {
     "carnival": "carnival-spinning-wheel/carnival.webp",
@@ -167,7 +177,9 @@
     "prize": "carnival-spinning-wheel/prize.webp",
     "scatter": "carnival-spinning-wheel/scatter.webp",
     "wheel": "carnival-spinning-wheel/wheel.webp",
-    "wild": "carnival-spinning-wheel/wild.webp"
+    "wild": "carnival-spinning-wheel/wild.webp",
+    "ticket": "carnival-spinning-wheel/ticket.webp",
+    "celebration": "carnival-spinning-wheel/celebration.webp"
   },
   "casanovas-venice": {
     "gondola": "casanovas-venice/gondola.webp",
@@ -180,13 +192,13 @@
     "wine": "casanovas-venice/wine.webp"
   },
   "cherry-blossom-bonus": {
-    "bar": "cherry-blossom-bonus/bar.png",
+    "bar": "cherry-blossom-bonus/bar.webp",
     "blossom": "cherry-blossom-bonus/blossom.webp",
     "cherry": "cherry-blossom-bonus/cherry.webp",
     "crown": "cherry-blossom-bonus/crown.webp",
     "gold-coin": "cherry-blossom-bonus/gold-coin.webp",
     "lemon": "cherry-blossom-bonus/lemon.webp",
-    "orange": "cherry-blossom-bonus/orange.png",
+    "orange": "cherry-blossom-bonus/orange.webp",
     "ruby": "cherry-blossom-bonus/ruby.webp",
     "scatter": "cherry-blossom-bonus/scatter.webp",
     "wild": "cherry-blossom-bonus/wild.webp"
@@ -221,7 +233,9 @@
     "performance": "circus-spectacular-spins/performance.webp",
     "ringmaster": "circus-spectacular-spins/ringmaster.webp",
     "scatter": "circus-spectacular-spins/scatter.webp",
-    "wild": "circus-spectacular-spins/wild.webp"
+    "wild": "circus-spectacular-spins/wild.webp",
+    "acrobat": "circus-spectacular-spins/acrobat.webp",
+    "tent": "circus-spectacular-spins/tent.webp"
   },
   "classic-gold-vault": {
     "bell": "classic-gold-vault/bell.webp",
@@ -254,7 +268,8 @@
     "gold-bar": "clockwork-heist/gold-bar.webp",
     "key": "clockwork-heist/key.webp",
     "safe": "clockwork-heist/safe.webp",
-    "vault": "clockwork-heist/vault.webp"
+    "vault": "clockwork-heist/vault.webp",
+    "dynamite": "clockwork-heist/dynamite.webp"
   },
   "cosmic-raider-mission": {
     "alien": "cosmic-raider-mission/alien.webp",
@@ -331,7 +346,7 @@
     "death": "darkness-reaper-call/death.webp",
     "reaper": "darkness-reaper-call/reaper.webp",
     "scatter": "darkness-reaper-call/scatter.webp",
-    "scythe": "darkness-reaper-call/scythe.png",
+    "scythe": "darkness-reaper-call/scythe.webp",
     "shadow": "darkness-reaper-call/shadow.webp",
     "skull": "darkness-reaper-call/skull.webp",
     "wild": "darkness-reaper-call/wild.webp"
@@ -344,7 +359,7 @@
     "fire": "demon-inferno-gateway/fire.webp",
     "gold": "demon-inferno-gateway/gold.webp",
     "inferno": "demon-inferno-gateway/inferno.webp",
-    "portal": "demon-inferno-gateway/portal.png",
+    "portal": "demon-inferno-gateway/portal.webp",
     "scatter": "demon-inferno-gateway/scatter.webp",
     "wild": "demon-inferno-gateway/wild.webp"
   },
@@ -355,7 +370,8 @@
     "emerald": "diamond-deco-deluxe/emerald.webp",
     "gold-bar": "diamond-deco-deluxe/gold-bar.webp",
     "ruby": "diamond-deco-deluxe/ruby.webp",
-    "seven": "diamond-deco-deluxe/seven.webp"
+    "seven": "diamond-deco-deluxe/seven.webp",
+    "diamond": "diamond-deco-deluxe/diamond.webp"
   },
   "diamonds-and-lace": {
     "champagne": "diamonds-and-lace/champagne.webp",
@@ -364,17 +380,18 @@
     "pearl": "diamonds-and-lace/pearl.webp",
     "ribbon": "diamonds-and-lace/ribbon.webp",
     "scatter": "diamonds-and-lace/scatter.webp",
-    "wild": "diamonds-and-lace/wild.webp"
+    "wild": "diamonds-and-lace/wild.webp",
+    "gold": "diamonds-and-lace/gold.webp"
   },
   "dingo-desert-runner": {
     "aboriginal-culture": "dingo-desert-runner/aboriginal-culture.webp",
-    "desert": "dingo-desert-runner/desert.png",
+    "desert": "dingo-desert-runner/desert.webp",
     "dingo": "dingo-desert-runner/dingo.webp",
     "freedom": "dingo-desert-runner/freedom.webp",
     "gold": "dingo-desert-runner/gold.webp",
     "sand": "dingo-desert-runner/sand.webp",
     "scatter": "dingo-desert-runner/scatter.webp",
-    "speed": "dingo-desert-runner/speed.png",
+    "speed": "dingo-desert-runner/speed.webp",
     "sunset": "dingo-desert-runner/sunset.webp",
     "wild": "dingo-desert-runner/wild.webp"
   },
@@ -393,17 +410,17 @@
   "druid-forest-magic": {
     "crystal": "druid-forest-magic/crystal.webp",
     "druid": "druid-forest-magic/druid.webp",
-    "forest": "druid-forest-magic/forest.png",
+    "forest": "druid-forest-magic/forest.webp",
     "magic": "druid-forest-magic/magic.webp",
     "nature": "druid-forest-magic/nature.webp",
-    "potion": "druid-forest-magic/potion.png",
+    "potion": "druid-forest-magic/potion.webp",
     "scatter": "druid-forest-magic/scatter.webp",
-    "spell": "druid-forest-magic/spell.png",
+    "spell": "druid-forest-magic/spell.webp",
     "tree": "druid-forest-magic/tree.webp",
     "wild": "druid-forest-magic/wild.webp"
   },
   "eagle-sky-sovereign": {
-    "cloud": "eagle-sky-sovereign/cloud.png",
+    "cloud": "eagle-sky-sovereign/cloud.webp",
     "eagle": "eagle-sky-sovereign/eagle.webp",
     "freedom": "eagle-sky-sovereign/freedom.webp",
     "gold": "eagle-sky-sovereign/gold.webp",
@@ -415,12 +432,12 @@
     "wing": "eagle-sky-sovereign/wing.webp"
   },
   "elephant-safari-quest": {
-    "adventure": "elephant-safari-quest/adventure.png",
+    "adventure": "elephant-safari-quest/adventure.webp",
     "elephant": "elephant-safari-quest/elephant.webp",
     "gold": "elephant-safari-quest/gold.webp",
     "grassland": "elephant-safari-quest/grassland.webp",
     "herd": "elephant-safari-quest/herd.webp",
-    "safari": "elephant-safari-quest/safari.png",
+    "safari": "elephant-safari-quest/safari.webp",
     "scatter": "elephant-safari-quest/scatter.webp",
     "tusks": "elephant-safari-quest/tusks.webp",
     "water-hole": "elephant-safari-quest/water-hole.webp",
@@ -431,7 +448,12 @@
     "legend": "elven-archer-legends/legend.webp",
     "magic": "elven-archer-legends/magic.webp",
     "scatter": "elven-archer-legends/scatter.webp",
-    "wild": "elven-archer-legends/wild.webp"
+    "wild": "elven-archer-legends/wild.webp",
+    "elf": "elven-archer-legends/elf.webp",
+    "archer": "elven-archer-legends/archer.webp",
+    "bow": "elven-archer-legends/bow.webp",
+    "arrow": "elven-archer-legends/arrow.webp",
+    "forest": "elven-archer-legends/forest.webp"
   },
   "enchanted-grove-spirits": {
     "acorn": "enchanted-grove-spirits/acorn.webp",
@@ -440,12 +462,13 @@
     "moonstone": "enchanted-grove-spirits/moonstone.webp",
     "moss": "enchanted-grove-spirits/moss.webp",
     "mushroom": "enchanted-grove-spirits/mushroom.webp",
-    "owl": "enchanted-grove-spirits/owl.webp"
+    "owl": "enchanted-grove-spirits/owl.webp",
+    "fairy": "enchanted-grove-spirits/fairy.webp"
   },
   "enchantress-crystal-ball": {
     "aura": "enchantress-crystal-ball/aura.webp",
     "crystal-ball": "enchantress-crystal-ball/crystal-ball.webp",
-    "enchantress": "enchantress-crystal-ball/enchantress.png",
+    "enchantress": "enchantress-crystal-ball/enchantress.webp",
     "magic": "enchantress-crystal-ball/magic.webp",
     "mystical": "enchantress-crystal-ball/mystical.webp",
     "potion": "enchantress-crystal-ball/potion.webp",
@@ -462,7 +485,9 @@
     "mushroom": "fairy-enchanted-forest/mushroom.webp",
     "scatter": "fairy-enchanted-forest/scatter.webp",
     "wild": "fairy-enchanted-forest/wild.webp",
-    "wings": "fairy-enchanted-forest/wings.webp"
+    "wings": "fairy-enchanted-forest/wings.webp",
+    "fairy": "fairy-enchanted-forest/fairy.webp",
+    "forest": "fairy-enchanted-forest/forest.webp"
   },
   "forbidden-fruit": {
     "apple": "forbidden-fruit/apple.webp",
@@ -471,7 +496,8 @@
     "heart": "forbidden-fruit/heart.webp",
     "rose": "forbidden-fruit/rose.webp",
     "scatter": "forbidden-fruit/scatter.webp",
-    "wild": "forbidden-fruit/wild.webp"
+    "wild": "forbidden-fruit/wild.webp",
+    "serpent": "forbidden-fruit/serpent.webp"
   },
   "frontier-bounty-hunter": {
     "bounty": "frontier-bounty-hunter/bounty.webp",
@@ -479,7 +505,9 @@
     "gold-nugget": "frontier-bounty-hunter/gold-nugget.webp",
     "horse": "frontier-bounty-hunter/horse.webp",
     "revolver": "frontier-bounty-hunter/revolver.webp",
-    "sheriff": "frontier-bounty-hunter/sheriff.webp"
+    "sheriff": "frontier-bounty-hunter/sheriff.webp",
+    "wanted": "frontier-bounty-hunter/wanted.webp",
+    "saloon": "frontier-bounty-hunter/saloon.webp"
   },
   "fruit-fortune-wheel": {
     "apple": "fruit-fortune-wheel/apple.webp",
@@ -497,10 +525,10 @@
     "alien": "galaxy-gates-opener/alien.webp",
     "comet": "galaxy-gates-opener/comet.webp",
     "meteor": "galaxy-gates-opener/meteor.webp",
-    "planet": "galaxy-gates-opener/planet.png",
-    "satellite": "galaxy-gates-opener/satellite.png",
+    "planet": "galaxy-gates-opener/planet.webp",
+    "satellite": "galaxy-gates-opener/satellite.webp",
     "scatter": "galaxy-gates-opener/scatter.webp",
-    "spaceship": "galaxy-gates-opener/spaceship.png",
+    "spaceship": "galaxy-gates-opener/spaceship.webp",
     "star": "galaxy-gates-opener/star.webp",
     "warp": "galaxy-gates-opener/warp.webp",
     "wild": "galaxy-gates-opener/wild.webp"
@@ -521,7 +549,7 @@
     "ghost": "ghost-haunted-mansion/ghost.webp",
     "gold": "ghost-haunted-mansion/gold.webp",
     "haunted": "ghost-haunted-mansion/haunted.webp",
-    "mansion": "ghost-haunted-mansion/mansion.png",
+    "mansion": "ghost-haunted-mansion/mansion.webp",
     "portrait": "ghost-haunted-mansion/portrait.webp",
     "scatter": "ghost-haunted-mansion/scatter.webp",
     "spirit": "ghost-haunted-mansion/spirit.webp",
@@ -552,7 +580,7 @@
   "golden-melons-paradise": {
     "cherry": "golden-melons-paradise/cherry.webp",
     "gold-bar": "golden-melons-paradise/gold-bar.webp",
-    "grape": "golden-melons-paradise/grape.png",
+    "grape": "golden-melons-paradise/grape.webp",
     "lucky-fruit": "golden-melons-paradise/lucky-fruit.webp",
     "orange": "golden-melons-paradise/orange.webp",
     "peach": "golden-melons-paradise/peach.webp",
@@ -568,7 +596,10 @@
     "rebirth": "golden-phoenix-rising/rebirth.webp",
     "scatter": "golden-phoenix-rising/scatter.webp",
     "sun": "golden-phoenix-rising/sun.webp",
-    "wild": "golden-phoenix-rising/wild.webp"
+    "wild": "golden-phoenix-rising/wild.webp",
+    "golden": "golden-phoenix-rising/golden.webp",
+    "rising": "golden-phoenix-rising/rising.webp",
+    "gold": "golden-phoenix-rising/gold.webp"
   },
   "golem-stone-guardian": {
     "ancient": "golem-stone-guardian/ancient.webp",
@@ -579,7 +610,8 @@
     "rock": "golem-stone-guardian/rock.webp",
     "scatter": "golem-stone-guardian/scatter.webp",
     "stone": "golem-stone-guardian/stone.webp",
-    "wild": "golem-stone-guardian/wild.webp"
+    "wild": "golem-stone-guardian/wild.webp",
+    "rune": "golem-stone-guardian/rune.webp"
   },
   "hall-of-minotaurs": {
     "gold-mask": "hall-of-minotaurs/gold-mask.webp",
@@ -588,7 +620,8 @@
     "minotaur": "hall-of-minotaurs/minotaur.webp",
     "pillar": "hall-of-minotaurs/pillar.webp",
     "thread": "hall-of-minotaurs/thread.webp",
-    "torch": "hall-of-minotaurs/torch.webp"
+    "torch": "hall-of-minotaurs/torch.webp",
+    "axe": "hall-of-minotaurs/axe.webp"
   },
   "high-roller-after-dark": {
     "champagne": "high-roller-after-dark/champagne.webp",
@@ -597,7 +630,8 @@
     "dice": "high-roller-after-dark/dice.webp",
     "queen": "high-roller-after-dark/queen.webp",
     "scatter": "high-roller-after-dark/scatter.webp",
-    "wild": "high-roller-after-dark/wild.webp"
+    "wild": "high-roller-after-dark/wild.webp",
+    "ace": "high-roller-after-dark/ace.webp"
   },
   "horus-divine-judgment": {
     "amulet": "horus-divine-judgment/amulet.webp",
@@ -618,7 +652,8 @@
     "jade-seal": "imperial-dragon-ascent/jade-seal.webp",
     "pearl": "imperial-dragon-ascent/pearl.webp",
     "silk": "imperial-dragon-ascent/silk.webp",
-    "throne": "imperial-dragon-ascent/throne.webp"
+    "throne": "imperial-dragon-ascent/throne.webp",
+    "scroll": "imperial-dragon-ascent/scroll.webp"
   },
   "isis-magic-blessing": {
     "amulet": "isis-magic-blessing/amulet.webp",
@@ -640,7 +675,7 @@
     "gold": "jade-emperor-blessing/gold.webp",
     "incense": "jade-emperor-blessing/incense.webp",
     "jade": "jade-emperor-blessing/jade.webp",
-    "palace": "jade-emperor-blessing/palace.png",
+    "palace": "jade-emperor-blessing/palace.webp",
     "scatter": "jade-emperor-blessing/scatter.webp",
     "wild": "jade-emperor-blessing/wild.webp"
   },
@@ -648,9 +683,9 @@
     "aboriginal-art": "kangaroo-outback-bound/aboriginal-art.webp",
     "boomerang": "kangaroo-outback-bound/boomerang.webp",
     "bush": "kangaroo-outback-bound/bush.webp",
-    "desert": "kangaroo-outback-bound/desert.png",
+    "desert": "kangaroo-outback-bound/desert.webp",
     "didgeridoo": "kangaroo-outback-bound/didgeridoo.webp",
-    "gold": "kangaroo-outback-bound/gold.png",
+    "gold": "kangaroo-outback-bound/gold.webp",
     "kangaroo": "kangaroo-outback-bound/kangaroo.webp",
     "outback": "kangaroo-outback-bound/outback.webp",
     "scatter": "kangaroo-outback-bound/scatter.webp",
@@ -660,8 +695,8 @@
     "bonanza": "koala-bush-bonanza/bonanza.webp",
     "bush": "koala-bush-bonanza/bush.webp",
     "eucalyptus": "koala-bush-bonanza/eucalyptus.webp",
-    "gold": "koala-bush-bonanza/gold.png",
-    "joey": "koala-bush-bonanza/joey.png",
+    "gold": "koala-bush-bonanza/gold.webp",
+    "joey": "koala-bush-bonanza/joey.webp",
     "koala": "koala-bush-bonanza/koala.webp",
     "nature": "koala-bush-bonanza/nature.webp",
     "outback": "koala-bush-bonanza/outback.webp",
@@ -674,10 +709,8 @@
     "gold": "koi-fish-abundance/gold.webp",
     "koi": "koi-fish-abundance/koi.webp",
     "luck": "koi-fish-abundance/luck.webp",
-    "pond": "koi-fish-abundance/pond.png",
     "scatter": "koi-fish-abundance/scatter.webp",
     "silk": "koi-fish-abundance/silk.webp",
-    "water": "koi-fish-abundance/water.png",
     "wild": "koi-fish-abundance/wild.webp"
   },
   "luck-prosperity-wheel": {
@@ -700,7 +733,7 @@
     "gold-bell": "lucky-sevens-infinity/gold-bell.webp",
     "lemon": "lucky-sevens-infinity/lemon.webp",
     "scatter": "lucky-sevens-infinity/scatter.webp",
-    "sevens": "lucky-sevens-infinity/sevens.png",
+    "sevens": "lucky-sevens-infinity/sevens.webp",
     "star": "lucky-sevens-infinity/star.webp",
     "wild": "lucky-sevens-infinity/wild.webp"
   },
@@ -711,7 +744,10 @@
     "magic": "mage-crystal-sanctuary/magic.webp",
     "power": "mage-crystal-sanctuary/power.webp",
     "sanctuary": "mage-crystal-sanctuary/sanctuary.webp",
-    "wild": "mage-crystal-sanctuary/wild.webp"
+    "wild": "mage-crystal-sanctuary/wild.webp",
+    "mage": "mage-crystal-sanctuary/mage.webp",
+    "light": "mage-crystal-sanctuary/light.webp",
+    "scatter": "mage-crystal-sanctuary/scatter.webp"
   },
   "masquerade-seduction": {
     "candle": "masquerade-seduction/candle.webp",
@@ -729,9 +765,9 @@
     "gold-ring": "melon-madness-mixer/gold-ring.webp",
     "grape": "melon-madness-mixer/grape.webp",
     "lemon": "melon-madness-mixer/lemon.webp",
-    "melon": "melon-madness-mixer/melon.png",
+    "melon": "melon-madness-mixer/melon.webp",
     "scatter": "melon-madness-mixer/scatter.webp",
-    "sevens": "melon-madness-mixer/sevens.png",
+    "sevens": "melon-madness-mixer/sevens.webp",
     "watermelon": "melon-madness-mixer/watermelon.webp",
     "wild": "melon-madness-mixer/wild.webp"
   },
@@ -742,7 +778,7 @@
     "merlin": "merlin-arcane-wonders/merlin.webp",
     "potion": "merlin-arcane-wonders/potion.webp",
     "scatter": "merlin-arcane-wonders/scatter.webp",
-    "spell": "merlin-arcane-wonders/spell.png",
+    "spell": "merlin-arcane-wonders/spell.webp",
     "staff": "merlin-arcane-wonders/staff.webp",
     "wand": "merlin-arcane-wonders/wand.webp",
     "wild": "merlin-arcane-wonders/wild.webp"
@@ -755,7 +791,7 @@
     "meteor": "meteor-strike-mayhem/meteor.webp",
     "planet": "meteor-strike-mayhem/planet.webp",
     "scatter": "meteor-strike-mayhem/scatter.webp",
-    "spacecraft": "meteor-strike-mayhem/spacecraft.png",
+    "spacecraft": "meteor-strike-mayhem/spacecraft.webp",
     "star": "meteor-strike-mayhem/star.webp",
     "wild": "meteor-strike-mayhem/wild.webp"
   },
@@ -776,7 +812,8 @@
     "koi": "moonlit-koi-garden/koi.webp",
     "lantern": "moonlit-koi-garden/lantern.webp",
     "lily": "moonlit-koi-garden/lily.webp",
-    "moon": "moonlit-koi-garden/moon.webp"
+    "moon": "moonlit-koi-garden/moon.webp",
+    "stone": "moonlit-koi-garden/stone.webp"
   },
   "moonlit-tryst": {
     "candle": "moonlit-tryst/candle.webp",
@@ -790,13 +827,13 @@
   },
   "nebula-space-odyssey": {
     "alien": "nebula-space-odyssey/alien.webp",
-    "comet": "nebula-space-odyssey/comet.png",
+    "comet": "nebula-space-odyssey/comet.webp",
     "meteor": "nebula-space-odyssey/meteor.webp",
     "nebula": "nebula-space-odyssey/nebula.webp",
-    "planet": "nebula-space-odyssey/planet.png",
-    "satellite": "nebula-space-odyssey/satellite.png",
+    "planet": "nebula-space-odyssey/planet.webp",
+    "satellite": "nebula-space-odyssey/satellite.webp",
     "scatter": "nebula-space-odyssey/scatter.webp",
-    "spacecraft": "nebula-space-odyssey/spacecraft.png",
+    "spacecraft": "nebula-space-odyssey/spacecraft.webp",
     "star": "nebula-space-odyssey/star.webp",
     "wild": "nebula-space-odyssey/wild.webp"
   },
@@ -819,7 +856,8 @@
     "lips": "neon-temptation/lips.webp",
     "scatter": "neon-temptation/scatter.webp",
     "vinyl": "neon-temptation/vinyl.webp",
-    "wild": "neon-temptation/wild.webp"
+    "wild": "neon-temptation/wild.webp",
+    "heart": "neon-temptation/heart.webp"
   },
   "ninja-shadow-master": {
     "dagger": "ninja-shadow-master/dagger.webp",
@@ -836,7 +874,7 @@
   "osiris-afterlife-riches": {
     "afterlife": "osiris-afterlife-riches/afterlife.webp",
     "amulet": "osiris-afterlife-riches/amulet.webp",
-    "gold": "osiris-afterlife-riches/gold.png",
+    "gold": "osiris-afterlife-riches/gold.webp",
     "osiris": "osiris-afterlife-riches/osiris.webp",
     "pyramid": "osiris-afterlife-riches/pyramid.webp",
     "scarab": "osiris-afterlife-riches/scarab.webp",
@@ -852,7 +890,8 @@
     "eagle": "outback-thunder-run/eagle.webp",
     "lightning": "outback-thunder-run/lightning.webp",
     "opal": "outback-thunder-run/opal.webp",
-    "thunder": "outback-thunder-run/thunder.webp"
+    "thunder": "outback-thunder-run/thunder.webp",
+    "canyon": "outback-thunder-run/canyon.webp"
   },
   "pagoda-mystical-riches": {
     "lantern": "pagoda-mystical-riches/lantern.webp",
@@ -862,7 +901,9 @@
     "scatter": "pagoda-mystical-riches/scatter.webp",
     "temple": "pagoda-mystical-riches/temple.webp",
     "treasure": "pagoda-mystical-riches/treasure.webp",
-    "wild": "pagoda-mystical-riches/wild.webp"
+    "wild": "pagoda-mystical-riches/wild.webp",
+    "gold": "pagoda-mystical-riches/gold.webp",
+    "spirit": "pagoda-mystical-riches/spirit.webp"
   },
   "paladin-holy-quest": {
     "gold": "paladin-holy-quest/gold.webp",
@@ -871,12 +912,15 @@
     "sacred": "paladin-holy-quest/sacred.webp",
     "scatter": "paladin-holy-quest/scatter.webp",
     "shield": "paladin-holy-quest/shield.webp",
-    "wild": "paladin-holy-quest/wild.webp"
+    "wild": "paladin-holy-quest/wild.webp",
+    "sword": "paladin-holy-quest/sword.webp",
+    "holy": "paladin-holy-quest/holy.webp",
+    "light": "paladin-holy-quest/light.webp"
   },
   "panther-midnight-prowler": {
     "claw": "panther-midnight-prowler/claw.webp",
     "eye": "panther-midnight-prowler/eye.webp",
-    "jungle": "panther-midnight-prowler/jungle.png",
+    "jungle": "panther-midnight-prowler/jungle.webp",
     "midnight": "panther-midnight-prowler/midnight.webp",
     "mystery": "panther-midnight-prowler/mystery.webp",
     "panther": "panther-midnight-prowler/panther.webp",
@@ -886,14 +930,14 @@
     "wild": "panther-midnight-prowler/wild.webp"
   },
   "pharaoh-eternal-dynasty": {
-    "ankh": "pharaoh-eternal-dynasty/ankh.png",
+    "ankh": "pharaoh-eternal-dynasty/ankh.webp",
     "eye-of-horus": "pharaoh-eternal-dynasty/eye-of-horus.webp",
     "gold": "pharaoh-eternal-dynasty/gold.webp",
     "pharaoh": "pharaoh-eternal-dynasty/pharaoh.webp",
     "pyramid": "pharaoh-eternal-dynasty/pyramid.webp",
     "scarab": "pharaoh-eternal-dynasty/scarab.webp",
     "scatter": "pharaoh-eternal-dynasty/scatter.webp",
-    "sphinx": "pharaoh-eternal-dynasty/sphinx.png",
+    "sphinx": "pharaoh-eternal-dynasty/sphinx.webp",
     "treasure": "pharaoh-eternal-dynasty/treasure.webp",
     "wild": "pharaoh-eternal-dynasty/wild.webp"
   },
@@ -914,12 +958,15 @@
     "ship": "pirate-treasure-map/ship.webp",
     "skull": "pirate-treasure-map/skull.webp",
     "treasure": "pirate-treasure-map/treasure.webp",
-    "wild": "pirate-treasure-map/wild.webp"
+    "wild": "pirate-treasure-map/wild.webp",
+    "map": "pirate-treasure-map/map.webp",
+    "island": "pirate-treasure-map/island.webp",
+    "gold": "pirate-treasure-map/gold.webp"
   },
   "pulsar-revolution": {
     "alien": "pulsar-revolution/alien.webp",
     "comet": "pulsar-revolution/comet.webp",
-    "light-beam": "pulsar-revolution/light-beam.png",
+    "light-beam": "pulsar-revolution/light-beam.webp",
     "nebula": "pulsar-revolution/nebula.webp",
     "planet": "pulsar-revolution/planet.webp",
     "pulsar": "pulsar-revolution/pulsar.webp",
@@ -931,11 +978,11 @@
   "quantum-leap-vault": {
     "alien": "quantum-leap-vault/alien.webp",
     "crystal": "quantum-leap-vault/crystal.webp",
-    "planet": "quantum-leap-vault/planet.png",
-    "portal": "quantum-leap-vault/portal.png",
+    "planet": "quantum-leap-vault/planet.webp",
+    "portal": "quantum-leap-vault/portal.webp",
     "quantum": "quantum-leap-vault/quantum.webp",
     "scatter": "quantum-leap-vault/scatter.webp",
-    "spacecraft": "quantum-leap-vault/spacecraft.png",
+    "spacecraft": "quantum-leap-vault/spacecraft.webp",
     "star": "quantum-leap-vault/star.webp",
     "vault": "quantum-leap-vault/vault.webp",
     "wild": "quantum-leap-vault/wild.webp"
@@ -947,11 +994,12 @@
     "particle": "quantum-turbo-flux/particle.webp",
     "proton": "quantum-turbo-flux/proton.webp",
     "quantum": "quantum-turbo-flux/quantum.webp",
-    "reactor": "quantum-turbo-flux/reactor.webp"
+    "reactor": "quantum-turbo-flux/reactor.webp",
+    "wave": "quantum-turbo-flux/wave.webp"
   },
   "ra-sun-god-royale": {
-    "ankh": "ra-sun-god-royale/ankh.png",
-    "gold": "ra-sun-god-royale/gold.png",
+    "ankh": "ra-sun-god-royale/ankh.webp",
+    "gold": "ra-sun-god-royale/gold.webp",
     "pyramid": "ra-sun-god-royale/pyramid.webp",
     "ra": "ra-sun-god-royale/ra.webp",
     "sacred-disk": "ra-sun-god-royale/sacred-disk.webp",
@@ -970,7 +1018,8 @@
     "luck": "red-lantern-festival/luck.webp",
     "red": "red-lantern-festival/red.webp",
     "scatter": "red-lantern-festival/scatter.webp",
-    "wild": "red-lantern-festival/wild.webp"
+    "wild": "red-lantern-festival/wild.webp",
+    "celebration": "red-lantern-festival/celebration.webp"
   },
   "reef-shark-frenzy": {
     "clownfish": "reef-shark-frenzy/clownfish.webp",
@@ -979,7 +1028,8 @@
     "pearl": "reef-shark-frenzy/pearl.webp",
     "seahorse": "reef-shark-frenzy/seahorse.webp",
     "shark": "reef-shark-frenzy/shark.webp",
-    "turtle": "reef-shark-frenzy/turtle.webp"
+    "turtle": "reef-shark-frenzy/turtle.webp",
+    "trident": "reef-shark-frenzy/trident.webp"
   },
   "retro-fruit-fiesta": {
     "banana": "retro-fruit-fiesta/banana.webp",
@@ -989,7 +1039,7 @@
     "grape": "retro-fruit-fiesta/grape.webp",
     "scatter": "retro-fruit-fiesta/scatter.webp",
     "strawberry": "retro-fruit-fiesta/strawberry.webp",
-    "triple-bar": "retro-fruit-fiesta/triple-bar.png",
+    "triple-bar": "retro-fruit-fiesta/triple-bar.webp",
     "watermelon": "retro-fruit-fiesta/watermelon.webp",
     "wild": "retro-fruit-fiesta/wild.webp"
   },
@@ -999,7 +1049,7 @@
     "king": "roaring-lion-kingdom/king.webp",
     "lion": "roaring-lion-kingdom/lion.webp",
     "mane": "roaring-lion-kingdom/mane.webp",
-    "savanna": "roaring-lion-kingdom/savanna.png",
+    "savanna": "roaring-lion-kingdom/savanna.webp",
     "scatter": "roaring-lion-kingdom/scatter.webp",
     "wild": "roaring-lion-kingdom/wild.webp",
     "wildebeest": "roaring-lion-kingdom/wildebeest.webp",
@@ -1014,7 +1064,8 @@
     "robot": "robot-mega-machine/robot.webp",
     "scatter": "robot-mega-machine/scatter.webp",
     "tech": "robot-mega-machine/tech.webp",
-    "wild": "robot-mega-machine/wild.webp"
+    "wild": "robot-mega-machine/wild.webp",
+    "circuit": "robot-mega-machine/circuit.webp"
   },
   "scarlet-seduction": {
     "goblet": "scarlet-seduction/goblet.webp",
@@ -1029,7 +1080,7 @@
   "set-chaos-challenger": {
     "chaos": "set-chaos-challenger/chaos.webp",
     "curse": "set-chaos-challenger/curse.webp",
-    "desert": "set-chaos-challenger/desert.png",
+    "desert": "set-chaos-challenger/desert.webp",
     "gold": "set-chaos-challenger/gold.webp",
     "pyramid": "set-chaos-challenger/pyramid.webp",
     "sacred-animal": "set-chaos-challenger/sacred-animal.webp",
@@ -1046,7 +1097,9 @@
     "scatter": "silk-road-treasures/scatter.webp",
     "spice": "silk-road-treasures/spice.webp",
     "treasure": "silk-road-treasures/treasure.webp",
-    "wild": "silk-road-treasures/wild.webp"
+    "wild": "silk-road-treasures/wild.webp",
+    "silk": "silk-road-treasures/silk.webp",
+    "road": "silk-road-treasures/road.webp"
   },
   "singularity-storm": {
     "black-hole": "singularity-storm/black-hole.webp",
@@ -1054,7 +1107,9 @@
     "plasma": "singularity-storm/plasma.webp",
     "pulsar": "singularity-storm/pulsar.webp",
     "quasar": "singularity-storm/quasar.webp",
-    "warp-gate": "singularity-storm/warp-gate.webp"
+    "warp-gate": "singularity-storm/warp-gate.webp",
+    "singularity": "singularity-storm/singularity.webp",
+    "photon": "singularity-storm/photon.webp"
   },
   "siren-song-temptation": {
     "moon": "siren-song-temptation/moon.webp",
@@ -1062,14 +1117,16 @@
     "rose": "siren-song-temptation/rose.webp",
     "scatter": "siren-song-temptation/scatter.webp",
     "shell": "siren-song-temptation/shell.webp",
-    "wild": "siren-song-temptation/wild.webp"
+    "wild": "siren-song-temptation/wild.webp",
+    "trident": "siren-song-temptation/trident.webp",
+    "siren": "siren-song-temptation/siren.webp"
   },
   "skeleton-bone-collector": {
     "bones": "skeleton-bone-collector/bones.webp",
     "coffin": "skeleton-bone-collector/coffin.webp",
     "death": "skeleton-bone-collector/death.webp",
     "gold": "skeleton-bone-collector/gold.webp",
-    "grave": "skeleton-bone-collector/grave.png",
+    "grave": "skeleton-bone-collector/grave.webp",
     "reaper": "skeleton-bone-collector/reaper.webp",
     "scatter": "skeleton-bone-collector/scatter.webp",
     "skeleton": "skeleton-bone-collector/skeleton.webp",
@@ -1083,7 +1140,10 @@
     "scatter": "sorcerer-arcane-tower/scatter.webp",
     "tower": "sorcerer-arcane-tower/tower.webp",
     "wand": "sorcerer-arcane-tower/wand.webp",
-    "wild": "sorcerer-arcane-tower/wild.webp"
+    "wild": "sorcerer-arcane-tower/wild.webp",
+    "sorcerer": "sorcerer-arcane-tower/sorcerer.webp",
+    "arcane": "sorcerer-arcane-tower/arcane.webp",
+    "spell": "sorcerer-arcane-tower/spell.webp"
   },
   "steampunk-gears-fortune": {
     "brass": "steampunk-gears-fortune/brass.webp",
@@ -1093,16 +1153,18 @@
     "gear": "steampunk-gears-fortune/gear.webp",
     "gold": "steampunk-gears-fortune/gold.webp",
     "scatter": "steampunk-gears-fortune/scatter.webp",
-    "wild": "steampunk-gears-fortune/wild.webp"
+    "wild": "steampunk-gears-fortune/wild.webp",
+    "steam": "steampunk-gears-fortune/steam.webp",
+    "innovation": "steampunk-gears-fortune/innovation.webp"
   },
   "stellar-collapse-spinner": {
     "alien": "stellar-collapse-spinner/alien.webp",
     "black-hole": "stellar-collapse-spinner/black-hole.webp",
     "collapse": "stellar-collapse-spinner/collapse.webp",
-    "comet": "stellar-collapse-spinner/comet.png",
+    "comet": "stellar-collapse-spinner/comet.webp",
     "planet": "stellar-collapse-spinner/planet.webp",
     "scatter": "stellar-collapse-spinner/scatter.webp",
-    "spacecraft": "stellar-collapse-spinner/spacecraft.png",
+    "spacecraft": "stellar-collapse-spinner/spacecraft.webp",
     "star": "stellar-collapse-spinner/star.webp",
     "void": "stellar-collapse-spinner/void.webp",
     "wild": "stellar-collapse-spinner/wild.webp"
@@ -1114,20 +1176,20 @@
     "planet": "stellar-nexus-prime/planet.webp",
     "satellite": "stellar-nexus-prime/satellite.webp",
     "scatter": "stellar-nexus-prime/scatter.webp",
-    "spacecraft": "stellar-nexus-prime/spacecraft.png",
+    "spacecraft": "stellar-nexus-prime/spacecraft.webp",
     "star": "stellar-nexus-prime/star.webp",
     "wild": "stellar-nexus-prime/wild.webp",
     "wormhole": "stellar-nexus-prime/wormhole.webp"
   },
   "sunshine-lemon-drop": {
     "apple": "sunshine-lemon-drop/apple.webp",
-    "bar": "sunshine-lemon-drop/bar.png",
+    "bar": "sunshine-lemon-drop/bar.webp",
     "cherry": "sunshine-lemon-drop/cherry.webp",
     "gold-ring": "sunshine-lemon-drop/gold-ring.webp",
     "lemon": "sunshine-lemon-drop/lemon.webp",
-    "orange": "sunshine-lemon-drop/orange.png",
+    "orange": "sunshine-lemon-drop/orange.webp",
     "scatter": "sunshine-lemon-drop/scatter.webp",
-    "sevens": "sunshine-lemon-drop/sevens.png",
+    "sevens": "sunshine-lemon-drop/sevens.webp",
     "star": "sunshine-lemon-drop/star.webp",
     "wild": "sunshine-lemon-drop/wild.webp"
   },
@@ -1138,7 +1200,8 @@
     "rose": "tango-inferno/rose.webp",
     "scatter": "tango-inferno/scatter.webp",
     "wild": "tango-inferno/wild.webp",
-    "wine": "tango-inferno/wine.webp"
+    "wine": "tango-inferno/wine.webp",
+    "lips": "tango-inferno/lips.webp"
   },
   "thoth-wisdom-keeper": {
     "gold": "thoth-wisdom-keeper/gold.webp",
@@ -1183,7 +1246,8 @@
     "sea": "underwater-coral-kingdom/sea.webp",
     "treasure": "underwater-coral-kingdom/treasure.webp",
     "underwater": "underwater-coral-kingdom/underwater.webp",
-    "wild": "underwater-coral-kingdom/wild.webp"
+    "wild": "underwater-coral-kingdom/wild.webp",
+    "mermaid": "underwater-coral-kingdom/mermaid.webp"
   },
   "vampire-midnight-hunt": {
     "blood": "vampire-midnight-hunt/blood.webp",
@@ -1192,9 +1256,9 @@
     "fangs": "vampire-midnight-hunt/fangs.webp",
     "immortal": "vampire-midnight-hunt/immortal.webp",
     "moon": "vampire-midnight-hunt/moon.webp",
-    "night": "vampire-midnight-hunt/night.png",
+    "night": "vampire-midnight-hunt/night.webp",
     "scatter": "vampire-midnight-hunt/scatter.webp",
-    "vampire": "vampire-midnight-hunt/vampire.png",
+    "vampire": "vampire-midnight-hunt/vampire.webp",
     "wild": "vampire-midnight-hunt/wild.webp"
   },
   "velvet-rope-vip": {
@@ -1226,18 +1290,19 @@
     "queen": "vixen-noir/queen.webp",
     "scatter": "vixen-noir/scatter.webp",
     "spade": "vixen-noir/spade.webp",
-    "wild": "vixen-noir/wild.webp"
+    "wild": "vixen-noir/wild.webp",
+    "ace": "vixen-noir/ace.webp"
   },
   "void-vault-explorer": {
     "alien": "void-vault-explorer/alien.webp",
-    "crystal": "void-vault-explorer/crystal.png",
+    "crystal": "void-vault-explorer/crystal.webp",
     "mystery": "void-vault-explorer/mystery.webp",
     "planet": "void-vault-explorer/planet.webp",
     "scatter": "void-vault-explorer/scatter.webp",
-    "spacecraft": "void-vault-explorer/spacecraft.png",
+    "spacecraft": "void-vault-explorer/spacecraft.webp",
     "star": "void-vault-explorer/star.webp",
     "vault": "void-vault-explorer/vault.webp",
-    "void": "void-vault-explorer/void.png",
+    "void": "void-vault-explorer/void.webp",
     "wild": "void-vault-explorer/wild.webp"
   },
   "whisper-and-silk": {
@@ -1254,7 +1319,7 @@
     "cauldron": "witch-curse-keeper/cauldron.webp",
     "curse": "witch-curse-keeper/curse.webp",
     "dark-magic": "witch-curse-keeper/dark-magic.webp",
-    "hex": "witch-curse-keeper/hex.png",
+    "hex": "witch-curse-keeper/hex.webp",
     "potion": "witch-curse-keeper/potion.webp",
     "scatter": "witch-curse-keeper/scatter.webp",
     "spell": "witch-curse-keeper/spell.webp",
@@ -1269,11 +1334,14 @@
     "scatter": "wizard-spellbook-master/scatter.webp",
     "spellbook": "wizard-spellbook-master/spellbook.webp",
     "staff": "wizard-spellbook-master/staff.webp",
-    "wild": "wizard-spellbook-master/wild.webp"
+    "wild": "wizard-spellbook-master/wild.webp",
+    "wizard": "wizard-spellbook-master/wizard.webp",
+    "crystal": "wizard-spellbook-master/crystal.webp",
+    "scroll": "wizard-spellbook-master/scroll.webp"
   },
   "wolf-pack-frenzy": {
     "fang": "wolf-pack-frenzy/fang.webp",
-    "forest": "wolf-pack-frenzy/forest.png",
+    "forest": "wolf-pack-frenzy/forest.webp",
     "howl": "wolf-pack-frenzy/howl.webp",
     "moon": "wolf-pack-frenzy/moon.webp",
     "pack": "wolf-pack-frenzy/pack.webp",
@@ -1293,6 +1361,6 @@
     "survival": "zombie-apocalypse-raid/survival.webp",
     "undead": "zombie-apocalypse-raid/undead.webp",
     "wild": "zombie-apocalypse-raid/wild.webp",
-    "zombie": "zombie-apocalypse-raid/zombie.png"
+    "zombie": "zombie-apocalypse-raid/zombie.webp"
   }
 }
