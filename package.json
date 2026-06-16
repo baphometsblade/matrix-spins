@@ -79,8 +79,7 @@
     "stripe": "^14.21.0",
     "terser": "^5.46.2",
     "winston": "^3.19.0",
-    "winston-daily-rotate-file": "^5.0.0",
-    "ws": "^8.21.0"
+    "winston-daily-rotate-file": "^5.0.0"
   },
   "optionalDependencies": {
     "canvas": "^3.2.3"
@@ -96,6 +95,8 @@
     "supertest": "^7.0.0"
   },
   "overrides": {
-    "qs": ">=6.15.2"
+    "qs": ">=6.15.2",
+    "ws": ">=8.21.0",
+    "form-data": ">=4.0.6"
   }
 }
