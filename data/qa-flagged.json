@@ -8,10 +8,6 @@
   "issue": "perforated metal sheet, not dot painting"
  },
  {
-  "tile": "aboriginal-dreamtime-quest/gold",
-  "issue": "Bitcoin/crypto coins, off-theme"
- },
- {
   "tile": "alien-artifact-hunt/artifact",
   "issue": "empty ornate frame, no subject"
  },
@@ -56,16 +52,8 @@
   "issue": "Generic gold box, does not depict wail"
  },
  {
-  "tile": "bard-mystical-melody/gold",
-  "issue": "Bitcoin coin with crypto B symbol, off-theme"
- },
- {
   "tile": "bastet-feline-fortune/ankh",
   "issue": "Christian cross, not an Egyptian ankh"
- },
- {
-  "tile": "bastet-feline-fortune/gold",
-  "issue": "Bitcoin coin with crypto B symbol, off-theme"
  },
  {
   "tile": "bastet-feline-fortune/jewel",
@@ -82,10 +70,6 @@
  {
   "tile": "cannonball-express/rum",
   "issue": "Garbled rendered text on rum bottle label"
- },
- {
-  "tile": "carnival-heat/gold",
-  "issue": "Bitcoin crypto coin, off-theme and forbidden crypto"
  },
  {
   "tile": "carnival-spinning-wheel/celebration",
@@ -232,14 +216,6 @@
   "issue": "Single red glass ball, not grapes"
  },
  {
-  "tile": "golden-phoenix-rising/gold",
-  "issue": "Bitcoin-logo coins, forbidden crypto symbol"
- },
- {
-  "tile": "golden-phoenix-rising/golden",
-  "issue": "Bitcoin coin with B logo"
- },
- {
   "tile": "golden-phoenix-rising/rising",
   "issue": "Generic gold box, off-theme"
  },
@@ -266,14 +242,6 @@
  {
   "tile": "kangaroo-outback-bound/desert",
   "issue": "Rendered LK monogram letters on tile"
- },
- {
-  "tile": "kangaroo-outback-bound/gold",
-  "issue": "Bitcoin crypto coin, off-theme"
- },
- {
-  "tile": "koala-bush-bonanza/gold",
-  "issue": "Bitcoin crypto coin, off-theme"
  },
  {
   "tile": "koala-bush-bonanza/joey",
@@ -336,16 +304,8 @@
   "issue": "Generic gold ornament, not a satellite"
  },
  {
-  "tile": "nebula-space-odyssey/spacecraft",
-  "issue": "Gold cube with Bitcoin glyph, not spacecraft"
- },
- {
   "tile": "neon-temptation/heart",
   "issue": "Gold heart with garbled text inside"
- },
- {
-  "tile": "osiris-afterlife-riches/gold",
-  "issue": "Bitcoin coins with logo and text"
  },
  {
   "tile": "outback-thunder-run/canyon",
@@ -382,10 +342,6 @@
  {
   "tile": "pharaoh-eternal-dynasty/sphinx",
   "issue": "Pharaoh bust, not a sphinx"
- },
- {
-  "tile": "pirate-treasure-map/gold",
-  "issue": "Bitcoin crypto coins, off-theme for pirate gold"
  },
  {
   "tile": "pirate-treasure-map/island",
@@ -444,10 +400,6 @@
   "issue": "Empty ornate frame, no circuit subject"
  },
  {
-  "tile": "set-chaos-challenger/desert",
-  "issue": "Bitcoin-stamped gold bar, not desert; crypto symbol"
- },
- {
   "tile": "silk-road-treasures/road",
   "issue": "modern asphalt highway, off-theme for Silk Road"
  },
@@ -486,10 +438,6 @@
  {
   "tile": "sorcerer-arcane-tower/spell",
   "issue": "rendered letter H monogram in frame"
- },
- {
-  "tile": "steampunk-gears-fortune/innovation",
-  "issue": "rendered letter B on device"
  },
  {
   "tile": "steampunk-gears-fortune/steam",
@@ -614,5 +562,61 @@
  {
   "tile": "dingo-desert-runner/sunset",
   "issue": "regenerated 3x (2026-06-17): generator product-shot template forces a picture-frame/gold-box around the scene; cannot render a clean frameless sunset — kept on emoji fallback"
+ },
+ {
+  "tile": "alchemist-transmutation-vault/vault",
+  "issue": "AUDIT 2026-06-17: central dial medallion stamped with a B/R letter (SDXL Bitcoin-stamp pattern); crypto-suspect + stray letter"
+ },
+ {
+  "tile": "cherry-blossom-bonus/gold-coin",
+  "issue": "AUDIT 2026-06-17: coin stamped with fabricated 1K denomination (garbled fake text)"
+ },
+ {
+  "tile": "classic-gold-vault/gold-bar",
+  "issue": "AUDIT 2026-06-17: gold ingot with illegible fake stamped lettering (garbled text)"
+ },
+ {
+  "tile": "clockwork-heist/gold-bar",
+  "issue": "AUDIT 2026-06-17: bullion bar with garbled/fake stamped text"
+ },
+ {
+  "tile": "diamond-deco-deluxe/gold-bar",
+  "issue": "AUDIT 2026-06-17: ingot with garbled embossed foundry text"
+ },
+ {
+  "tile": "fruit-fortune-wheel/coin",
+  "issue": "AUDIT 2026-06-17: coin centre is garbled/illegible fake stamped lettering"
+ },
+ {
+  "tile": "koi-fish-abundance/abundance",
+  "issue": "AUDIT 2026-06-17: empty hollow gold picture frame with coins spilling out (empty-frame)"
+ },
+ {
+  "tile": "lucky-sevens-infinity/bar",
+  "issue": "AUDIT 2026-06-17: ingot bar with garbled fake lettering and numbers"
+ },
+ {
+  "tile": "melon-madness-mixer/bar",
+  "issue": "AUDIT 2026-06-17: ingot bar with mirrored garbled embossed text"
+ },
+ {
+  "tile": "pharaoh-eternal-dynasty/gold",
+  "issue": "AUDIT 2026-06-17: CRYPTO (2-pass confirmed) coins stamped with Bitcoin-B-like glyph"
+ },
+ {
+  "tile": "thoth-wisdom-keeper/gold",
+  "issue": "AUDIT 2026-06-17: CRYPTO (2-pass confirmed) foreground coin clearly stamped with Bitcoin B"
+ },
+ {
+  "tile": "tigers-golden-path/coin",
+  "issue": "AUDIT 2026-06-17: coin with central glyph reading as Bitcoin B (crypto-suspect)"
+ },
+ {
+  "tile": "vintage-vault-riches/bar",
+  "issue": "AUDIT 2026-06-17: ingot with garbled fake assay text"
+ },
+ {
+  "tile": "vintage-vault-riches/vault",
+  "issue": "AUDIT 2026-06-17: gold bar with garbled stamped text"
  }
 ]

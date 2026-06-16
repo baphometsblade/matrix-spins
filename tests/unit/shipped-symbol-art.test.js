@@ -70,13 +70,19 @@ describe('curated symbol-art shipping contract', () => {
     // a regression that drops them from qa-flagged.json fails here with a crypto label.
     //
     // 2026-06-17: luck-prosperity-wheel/coin and wizard-spellbook-master/gold were
-    // GENUINELY fixed — re-generated with anti-crypto game-scoped subjects (a Chinese
-    // square-holed lucky charm; a gold-ingot treasure hoard with NO coin faces), then
-    // verified crypto-clean by a dedicated crypto-skeptic visual re-inspection. They
-    // are now shipped, so they're removed from this guard. aboriginal-dreamtime-quest/
-    // gold was NOT regenerated and remains a live Bitcoin tile → it stays guarded.
+    // GENUINELY fixed — re-generated with anti-crypto game-scoped subjects, then
+    // verified crypto-clean by a dedicated crypto-skeptic visual re-inspection.
+    // aboriginal-dreamtime-quest/gold was likewise regenerated (raw gold dust + nuggets,
+    // no coins) and verified clean, so it now ships and leaves this guard.
+    //
+    // A 16-agent two-pass crypto audit of the 96 shipped gold/coin tiles then caught
+    // TWO live Bitcoin tiles the earlier single-pass audit had shipped — confirmed by
+    // both audit passes AND a manual crypto-skeptic re-read. They are now masked
+    // (qa-flagged) pending a clean nugget-based regen; lock them out explicitly so a
+    // regression that drops them from qa-flagged.json fails here with a crypto label.
     const cryptoTiles = [
-      'aboriginal-dreamtime-quest/gold',
+      'thoth-wisdom-keeper/gold',
+      'pharaoh-eternal-dynasty/gold',
     ];
     const live = cryptoTiles.filter((t) => {
       const [game, sym] = t.split('/');
