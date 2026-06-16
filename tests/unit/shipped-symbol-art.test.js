@@ -68,10 +68,15 @@ describe('curated symbol-art shipping contract', () => {
     // and the single-pass finder has a crypto false-negative rate — these were only
     // caught by a dedicated crypto-skeptic re-inspection. Lock them out explicitly so
     // a regression that drops them from qa-flagged.json fails here with a crypto label.
+    //
+    // 2026-06-17: luck-prosperity-wheel/coin and wizard-spellbook-master/gold were
+    // GENUINELY fixed — re-generated with anti-crypto game-scoped subjects (a Chinese
+    // square-holed lucky charm; a gold-ingot treasure hoard with NO coin faces), then
+    // verified crypto-clean by a dedicated crypto-skeptic visual re-inspection. They
+    // are now shipped, so they're removed from this guard. aboriginal-dreamtime-quest/
+    // gold was NOT regenerated and remains a live Bitcoin tile → it stays guarded.
     const cryptoTiles = [
       'aboriginal-dreamtime-quest/gold',
-      'luck-prosperity-wheel/coin',
-      'wizard-spellbook-master/gold',
     ];
     const live = cryptoTiles.filter((t) => {
       const [game, sym] = t.split('/');

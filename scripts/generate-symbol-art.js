@@ -144,11 +144,21 @@ try {
 // falls back to a cleaned-up version of the id.
 // "s3_candy_cane" → "candy cane"; "gold-bell" → "gold bell";
 // "ra" → "an ornate golden falcon-headed Egyptian sun-god idol …" (override).
-function symbolSubject(symId) {
+//
+// A GAME-SCOPED key ("<game-id>/<symbol-id>", e.g. "luck-prosperity-wheel/coin")
+// wins over a bare symbol key. This lets a single tile carry a precise,
+// theme-appropriate subject (a Chinese lucky coin for one game; a generic gold
+// sovereign for the rest) without the bare-key override leaking across all
+// games that share the symbol id. Bare keys remain the default for everything
+// not scoped. Used to re-roll the 18 QA-masked tiles with exact subjects.
+function symbolSubject(symId, gameId) {
     let s = String(symId || '').toLowerCase();
+    const g = String(gameId || '').toLowerCase();
+    if (g && SUBJECT_OVERRIDES[g + '/' + s]) return SUBJECT_OVERRIDES[g + '/' + s];
     if (SUBJECT_OVERRIDES[s]) return SUBJECT_OVERRIDES[s];
     // Strip the s1_/s2_/s3_/s4_/s5_ tier prefix.
     s = s.replace(/^s[1-5][-_]/, '');
+    if (g && SUBJECT_OVERRIDES[g + '/' + s]) return SUBJECT_OVERRIDES[g + '/' + s];
     if (SUBJECT_OVERRIDES[s]) return SUBJECT_OVERRIDES[s];
     // Normalise separators.
     s = s.replace(/[-_]+/g, ' ').trim();
@@ -157,9 +167,15 @@ function symbolSubject(symId) {
 
 // True when the id has a concrete override (used to drop the generic low/mid/
 // high-pay styling hint so it doesn't fight the override's own art direction).
-function hasOverride(symId) {
+// Honours the same game-scoped → bare precedence as symbolSubject().
+function hasOverride(symId, gameId) {
     const s = String(symId || '').toLowerCase();
-    return !!(SUBJECT_OVERRIDES[s] || SUBJECT_OVERRIDES[s.replace(/^s[1-5][-_]/, '')]);
+    const g = String(gameId || '').toLowerCase();
+    const stripped = s.replace(/^s[1-5][-_]/, '');
+    return !!(
+        (g && (SUBJECT_OVERRIDES[g + '/' + s] || SUBJECT_OVERRIDES[g + '/' + stripped])) ||
+        SUBJECT_OVERRIDES[s] || SUBJECT_OVERRIDES[stripped]
+    );
 }
 
 function nameSubject(name) {
@@ -167,12 +183,13 @@ function nameSubject(name) {
 }
 
 function buildPrompt(game, symId) {
-    const subj = symbolSubject(symId);
+    const gameId = game && game.id;
+    const subj = symbolSubject(symId, gameId);
     // Overridden subjects carry their own art direction, so the generic
     // low/mid/high-pay hint would only fight them. Role symbols (wild,
     // scatter, bonus, bar, seven, bell) are never overridden, so they still
     // receive their proper aura/styling hint from symbolHint().
-    const hint = hasOverride(symId)
+    const hint = hasOverride(symId, gameId)
         ? 'premium ornate collectible casino game-symbol craftsmanship, mirror-finish reflections, cinematic key light'
         : symbolHint(symId);
     // Tight ISOLATED PRODUCT SHOT of the symbol object — the object must be
