@@ -20,20 +20,16 @@
 
 const express = require('express');
 const router = express.Router();
-const { authenticate } = require('../middleware/auth');
+const { authenticate, requireAdmin } = require('../middleware/auth');
 const db = require('../database');
 const config = require('../config');
 
-function adminOnly(req, res, next) {
-    const tokenOk = config.ADMIN_PASSWORD && req.headers['x-admin-token'] === config.ADMIN_PASSWORD;
-    const roleOk = req.user && (req.user.role === 'admin' || req.user.is_admin);
-    if (tokenOk || roleOk) return next();
-    return res.status(403).json({ error: 'Admin only' });
-}
+// All admin-withdrawal routes require authentication + admin role
+router.use(authenticate, requireAdmin);
 
 // ─── Queue (pending withdrawals) ───────────────────────────
 
-router.get('/queue', authenticate, adminOnly, async (req, res) => {
+router.get('/queue', async (req, res) => {
     try {
         const minAmount = parseFloat(req.query.minAmount) || 0;
         const paymentType = req.query.paymentType || null;
@@ -90,7 +86,7 @@ router.get('/queue', authenticate, adminOnly, async (req, res) => {
     }
 });
 
-router.get('/history', authenticate, adminOnly, async (req, res) => {
+router.get('/history', async (req, res) => {
     try {
         const status = req.query.status || null;
         const limit = Math.min(500, Math.max(1, parseInt(req.query.limit, 10) || 100));
@@ -108,7 +104,8 @@ router.get('/history', authenticate, adminOnly, async (req, res) => {
             sql += ' AND w.status = ?';
             params.push(status);
         }
-        sql += ` ORDER BY w.processed_at DESC NULLS LAST LIMIT ${limit} OFFSET ${offset}`;
+        sql += ' ORDER BY w.processed_at DESC NULLS LAST LIMIT ? OFFSET ?';
+        params.push(limit, offset);
 
         // SQLite doesn't support NULLS LAST — handle gracefully
         let rows;
@@ -126,7 +123,7 @@ router.get('/history', authenticate, adminOnly, async (req, res) => {
     }
 });
 
-router.get('/stats', authenticate, adminOnly, async (req, res) => {
+router.get('/stats', async (req, res) => {
     try {
         const isPg = typeof db.isPg === 'function' && db.isPg();
         const dayClause = isPg ? "created_at >= NOW() - INTERVAL '1 day'" : "created_at >= datetime('now', '-1 day')";
@@ -151,7 +148,7 @@ router.get('/stats', authenticate, adminOnly, async (req, res) => {
     }
 });
 
-router.get('/:id', authenticate, adminOnly, async (req, res) => {
+router.get('/:id', async (req, res) => {
     try {
         const id = parseInt(req.params.id, 10);
         if (!Number.isFinite(id)) return res.status(400).json({ error: 'Invalid id' });
@@ -177,7 +174,7 @@ router.get('/:id', authenticate, adminOnly, async (req, res) => {
     }
 });
 
-router.post('/:id/note', authenticate, adminOnly, async (req, res) => {
+router.post('/:id/note', async (req, res) => {
     try {
         const id = parseInt(req.params.id, 10);
         const { note } = req.body || {};
@@ -206,7 +203,7 @@ router.post('/:id/note', authenticate, adminOnly, async (req, res) => {
     }
 });
 
-router.post('/bulk-approve', authenticate, adminOnly, async (req, res) => {
+router.post('/bulk-approve', async (req, res) => {
     try {
         const ids = (req.body && req.body.ids) || [];
         if (!Array.isArray(ids) || ids.length === 0) return res.status(400).json({ error: 'ids required' });
@@ -289,7 +286,7 @@ router.post('/bulk-approve', authenticate, adminOnly, async (req, res) => {
 
 // ─── Stripe webhook audit (admin diagnostics) ───────────────
 
-router.get('/stripe-audit/recent', authenticate, adminOnly, async (req, res) => {
+router.get('/stripe-audit/recent', async (req, res) => {
     try {
         const stripeAudit = require('../services/stripe-audit.service');
         const limit = Math.max(1, Math.min(500, parseInt(req.query.limit, 10) || 100));
@@ -301,7 +298,7 @@ router.get('/stripe-audit/recent', authenticate, adminOnly, async (req, res) => 
     }
 });
 
-router.get('/stripe-audit/stats', authenticate, adminOnly, async (req, res) => {
+router.get('/stripe-audit/stats', async (req, res) => {
     try {
         const stripeAudit = require('../services/stripe-audit.service');
         const days = Math.max(1, Math.min(90, parseInt(req.query.days, 10) || 7));

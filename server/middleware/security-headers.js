@@ -12,11 +12,11 @@ const helmet = require('helmet');
 
 const CSP_DIRECTIVES = {
     defaultSrc: ["'self'"],
-    scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'", 'https://js.stripe.com', 'https://www.googletagmanager.com', 'https://www.google-analytics.com'],
+    scriptSrc: ["'self'", "'unsafe-inline'", 'https://js.stripe.com', 'https://www.googletagmanager.com', 'https://www.google-analytics.com', 'https://cdn.jsdelivr.net'],
     styleSrc: ["'self'", "'unsafe-inline'", 'https://fonts.googleapis.com'],
     fontSrc: ["'self'", 'data:', 'https://fonts.gstatic.com'],
-    imgSrc: ["'self'", 'data:', 'https:', 'blob:'],
-    connectSrc: ["'self'", 'https://api.stripe.com', 'https://www.google-analytics.com', 'https://api.coingecko.com', 'https://cloudflare-eth.com', 'https://ipapi.co', 'wss:', 'https:'],
+    imgSrc: ["'self'", 'data:', 'blob:', 'https://www.google-analytics.com', 'https://www.googletagmanager.com'],
+    connectSrc: ["'self'", 'https://api.stripe.com', 'https://checkout.stripe.com', 'https://js.stripe.com', 'https://www.google-analytics.com', 'https://www.googletagmanager.com', 'https://api.coingecko.com', 'https://cloudflare-eth.com', 'https://ipapi.co', 'wss:'],
     frameSrc: ['https://js.stripe.com', 'https://hooks.stripe.com'],
     objectSrc: ["'none'"],
     frameAncestors: ["'none'"],

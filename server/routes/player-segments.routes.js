@@ -366,7 +366,7 @@ router.get('/me', authenticate, async function(req, res) {
  */
 router.get('/admin/overview', authenticate, async function(req, res) {
   try {
-    if (req.user.role !== 'admin') {
+    if (!req.user.is_admin) {
       return res.status(403).json({ error: 'Admin access required' });
     }
 
@@ -405,7 +405,7 @@ router.get('/admin/overview', authenticate, async function(req, res) {
  */
 router.post('/admin/compute-all', authenticate, async function(req, res) {
   try {
-    if (req.user.role !== 'admin') {
+    if (!req.user.is_admin) {
       return res.status(403).json({ error: 'Admin access required' });
     }
 
@@ -455,7 +455,7 @@ router.post('/admin/compute-all', authenticate, async function(req, res) {
  */
 router.get('/admin/segment/:name', authenticate, async function(req, res) {
   try {
-    if (req.user.role !== 'admin') {
+    if (!req.user.is_admin) {
       return res.status(403).json({ error: 'Admin access required' });
     }
 

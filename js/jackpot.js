@@ -8,7 +8,7 @@
  *   • Mini   — starts $50,     seeded from 0.5% of every bet
  *
  * In demo mode (no API), uses simulated growth with random variance.
- * In live mode, polls /api/jackpots every 5 seconds.
+ * In live mode, polls /api/jackpot every 5 seconds.
  */
 (function () {
   'use strict';
@@ -159,7 +159,7 @@
   // ── Live API Mode ──────────────────────────────────────────
   async function fetchLivePools() {
     try {
-      const res = await fetch('/api/jackpots');
+      const res = await fetch('/api/jackpot');
       if (!res.ok) return;
       const data = await res.json();
       if (data.pools) {
