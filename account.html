@@ -136,9 +136,9 @@
           </h2>
           <div id="pwAlert" class="alert"></div>
           <form id="pwForm">
-            <div class="field"><label>Current password</label><input id="currentPassword" type="password" required autocomplete="current-password"></div>
-            <div class="field"><label>New password</label><input id="newPassword" type="password" required minlength="10" autocomplete="new-password"></div>
-            <div class="field"><label>Confirm new password</label><input id="confirmPassword" type="password" required minlength="10" autocomplete="new-password"></div>
+            <div class="field"><label for="currentPassword">Current password</label><input id="currentPassword" type="password" required autocomplete="current-password"></div>
+            <div class="field"><label for="newPassword">New password</label><input id="newPassword" type="password" required minlength="10" autocomplete="new-password"></div>
+            <div class="field"><label for="confirmPassword">Confirm new password</label><input id="confirmPassword" type="password" required minlength="10" autocomplete="new-password"></div>
             <button class="btn" style="width:auto;">Update password</button>
           </form>
         </div>
@@ -168,16 +168,16 @@
           <div id="limAlert" class="alert"></div>
           <form id="limitsForm">
             <div class="row">
-              <div class="field"><label>Daily deposit cap ($)</label><input id="daily_deposit" type="number" min="1" step="1"></div>
-              <div class="field"><label>Weekly deposit cap ($)</label><input id="weekly_deposit" type="number" min="1" step="1"></div>
+              <div class="field"><label for="daily_deposit">Daily deposit cap ($)</label><input id="daily_deposit" type="number" min="1" step="1"></div>
+              <div class="field"><label for="weekly_deposit">Weekly deposit cap ($)</label><input id="weekly_deposit" type="number" min="1" step="1"></div>
             </div>
             <div class="row">
-              <div class="field"><label>Monthly deposit cap ($)</label><input id="monthly_deposit" type="number" min="1" step="1"></div>
-              <div class="field"><label>Daily loss cap ($)</label><input id="daily_loss" type="number" min="1" step="1"></div>
+              <div class="field"><label for="monthly_deposit">Monthly deposit cap ($)</label><input id="monthly_deposit" type="number" min="1" step="1"></div>
+              <div class="field"><label for="daily_loss">Daily loss cap ($)</label><input id="daily_loss" type="number" min="1" step="1"></div>
             </div>
             <div class="row">
-              <div class="field"><label>Session time limit (min)</label><input id="session_time" type="number" min="5" step="5"></div>
-              <div class="field"><label>Reality check (min)</label><input id="reality_check" type="number" min="5" step="5"></div>
+              <div class="field"><label for="session_time">Session time limit (min)</label><input id="session_time" type="number" min="5" step="5"></div>
+              <div class="field"><label for="reality_check">Reality check (min)</label><input id="reality_check" type="number" min="5" step="5"></div>
             </div>
             <button class="btn" id="saveLimits" style="width:auto;">Save limits</button>
           </form>
@@ -191,7 +191,7 @@
           <p class="muted" style="margin-bottom:0.8rem;">Blocks access to your account for a chosen period. This cannot be reversed early.</p>
           <div id="seAlert" class="alert"></div>
           <div class="row">
-            <div class="field"><label>Exclude until</label><input id="seUntil" type="datetime-local"></div>
+            <div class="field"><label for="seUntil">Exclude until</label><input id="seUntil" type="datetime-local"></div>
             <div class="field" style="display:flex;align-items:flex-end;">
               <button id="seBtn" class="btn danger" style="width:auto;">Self-exclude</button>
             </div>
@@ -218,7 +218,7 @@
           <div id="kycDocs" style="margin-bottom:1rem;"></div>
 
           <div id="kycUploadForm" style="display:none;">
-            <div class="field"><label>Document type</label>
+            <div class="field"><label for="kycDocType">Document type</label>
               <select id="kycDocType" style="background:var(--bg-elev);color:var(--text);border:1px solid var(--border);border-radius:8px;padding:0.5rem 0.8rem;font:inherit;width:100%;">
                 <option value="passport">Passport</option>
                 <option value="drivers_license">Driver's license</option>
@@ -226,7 +226,7 @@
                 <option value="proof_of_address">Proof of address</option>
               </select>
             </div>
-            <div class="field"><label>Document number</label><input id="kycDocNumber" type="text" placeholder="Document number"></div>
+            <div class="field"><label for="kycDocNumber">Document number</label><input id="kycDocNumber" type="text" placeholder="Document number"></div>
             <div id="kycUploadAlert" class="alert"></div>
             <button class="btn" id="submitKycBtn" style="width:auto;">Submit for verification</button>
           </div>

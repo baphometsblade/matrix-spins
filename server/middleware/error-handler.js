@@ -39,6 +39,15 @@ function globalErrorHandler(err, req, res, _next) {
         }
     } catch (_) { /* ignore */ }
 
+    // Malformed JSON body from express.json() → clean user-facing message
+    if (err.type === 'entity.parse.failed' && err instanceof SyntaxError) {
+        return res.status(400).json({
+            error: 'Malformed JSON in request body',
+            requestId: req.id,
+            referenceNumber: 'ERR-' + Date.now().toString(36).toUpperCase(),
+        });
+    }
+
     const status = err.status || err.statusCode || 500;
     const isProd = process.env.NODE_ENV === 'production';
     // Timing-safe comparison to prevent token enumeration

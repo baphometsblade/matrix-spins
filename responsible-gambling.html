@@ -373,9 +373,9 @@
                     <h3>Deposit Limits</h3>
                     <p>Cap the total you can deposit per day, week, or month. Lowering takes effect immediately. Raising requires 24 hours.</p>
                     <div class="rg-grid">
-                        <label>Daily ($)<input type="number" id="dlDaily" min="0" step="1" placeholder="No limit"></label>
-                        <label>Weekly ($)<input type="number" id="dlWeekly" min="0" step="1" placeholder="No limit"></label>
-                        <label>Monthly ($)<input type="number" id="dlMonthly" min="0" step="1" placeholder="No limit"></label>
+                        <label for="dlDaily">Daily ($)<input type="number" id="dlDaily" min="0" step="1" placeholder="No limit"></label>
+                        <label for="dlWeekly">Weekly ($)<input type="number" id="dlWeekly" min="0" step="1" placeholder="No limit"></label>
+                        <label for="dlMonthly">Monthly ($)<input type="number" id="dlMonthly" min="0" step="1" placeholder="No limit"></label>
                     </div>
                     <div class="rg-usage" id="dlUsage">Loading current usage…</div>
                     <button class="rg-btn" id="dlSave">Update deposit limits</button>
@@ -387,9 +387,9 @@
                     <h3>Loss Limits</h3>
                     <p>Cap your <strong>net losses</strong> (wagered − won) per day, week, or month. Hitting a limit blocks further play in that window.</p>
                     <div class="rg-grid">
-                        <label>Daily ($)<input type="number" id="llDaily" min="0" step="1" placeholder="No limit"></label>
-                        <label>Weekly ($)<input type="number" id="llWeekly" min="0" step="1" placeholder="No limit"></label>
-                        <label>Monthly ($)<input type="number" id="llMonthly" min="0" step="1" placeholder="No limit"></label>
+                        <label for="llDaily">Daily ($)<input type="number" id="llDaily" min="0" step="1" placeholder="No limit"></label>
+                        <label for="llWeekly">Weekly ($)<input type="number" id="llWeekly" min="0" step="1" placeholder="No limit"></label>
+                        <label for="llMonthly">Monthly ($)<input type="number" id="llMonthly" min="0" step="1" placeholder="No limit"></label>
                     </div>
                     <div class="rg-usage" id="llUsage">Loading current usage…</div>
                     <button class="rg-btn" id="llSave">Update loss limits</button>
@@ -401,8 +401,8 @@
                     <h3>Wager Limits</h3>
                     <p>Set a per-spin maximum bet and a daily total wager cap. Spins exceeding either limit are blocked.</p>
                     <div class="rg-grid">
-                        <label>Max bet per spin ($)<input type="number" id="maxBet" min="0" step="0.50" placeholder="No limit"></label>
-                        <label>Daily wager cap ($)<input type="number" id="wagerDaily" min="0" step="1" placeholder="No limit"></label>
+                        <label for="maxBet">Max bet per spin ($)<input type="number" id="maxBet" min="0" step="0.50" placeholder="No limit"></label>
+                        <label for="wagerDaily">Daily wager cap ($)<input type="number" id="wagerDaily" min="0" step="1" placeholder="No limit"></label>
                     </div>
                     <button class="rg-btn" id="wagerSave">Update wager limits</button>
                     <div class="rg-msg" id="wagerMsg"></div>
@@ -413,8 +413,8 @@
                     <h3>Session Time &amp; Reality Check</h3>
                     <p>Limit how long a single session can last and how often we remind you to review your activity.</p>
                     <div class="rg-grid">
-                        <label>Session limit (minutes, 15-1440)<input type="number" id="sessionLimit" min="15" max="1440" step="5" placeholder="No limit"></label>
-                        <label>Reality check every
+                        <label for="sessionLimit">Session limit (minutes, 15-1440)<input type="number" id="sessionLimit" min="15" max="1440" step="5" placeholder="No limit"></label>
+                        <label for="realityCheck">Reality check every
                             <select id="realityCheck">
                                 <option value="30">30 minutes</option>
                                 <option value="60" selected>60 minutes</option>
@@ -480,54 +480,54 @@
             <div class="questionnaire">
                 <h4>How Much Are You Playing?</h4>
                 <div class="question">
-                    <label>
-                        <input type="checkbox" name="q1">
+                    <label for="q1">
+                        <input type="checkbox" name="q1" id="q1">
                         <span class="question-text">I spend more time and money on gambling than I intended</span>
                     </label>
                 </div>
                 <div class="question">
-                    <label>
-                        <input type="checkbox" name="q2">
+                    <label for="q2">
+                        <input type="checkbox" name="q2" id="q2">
                         <span class="question-text">I gamble to escape problems or negative feelings</span>
                     </label>
                 </div>
                 <div class="question">
-                    <label>
-                        <input type="checkbox" name="q3">
+                    <label for="q3">
+                        <input type="checkbox" name="q3" id="q3">
                         <span class="question-text">I've hidden my gambling activities from family or friends</span>
                     </label>
                 </div>
 
                 <h4 style="margin-top: 30px;">Control & Impact</h4>
                 <div class="question">
-                    <label>
-                        <input type="checkbox" name="q4">
+                    <label for="q4">
+                        <input type="checkbox" name="q4" id="q4">
                         <span class="question-text">I find it difficult to stop or cut back on gambling</span>
                     </label>
                 </div>
                 <div class="question">
-                    <label>
-                        <input type="checkbox" name="q5">
+                    <label for="q5">
+                        <input type="checkbox" name="q5" id="q5">
                         <span class="question-text">Gambling has negatively affected my relationships, work, or finances</span>
                     </label>
                 </div>
                 <div class="question">
-                    <label>
-                        <input type="checkbox" name="q6">
+                    <label for="q6">
+                        <input type="checkbox" name="q6" id="q6">
                         <span class="question-text">I've borrowed money or sold items to fund gambling</span>
                     </label>
                 </div>
 
                 <h4 style="margin-top: 30px;">Help & Recovery</h4>
                 <div class="question">
-                    <label>
-                        <input type="checkbox" name="q7">
+                    <label for="q7">
+                        <input type="checkbox" name="q7" id="q7">
                         <span class="question-text">I feel anxious or irritable when I'm not gambling</span>
                     </label>
                 </div>
                 <div class="question">
-                    <label>
-                        <input type="checkbox" name="q8">
+                    <label for="q8">
+                        <input type="checkbox" name="q8" id="q8">
                         <span class="question-text">I've attempted to control my gambling but been unsuccessful</span>
                     </label>
                 </div>

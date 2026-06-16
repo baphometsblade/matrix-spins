@@ -88,7 +88,7 @@
     <p>Manual secret: <span class="secret" id="secretText"></span></p>
     <h3 style="margin-top:18px;">Step 2 — Enter the 6-digit code</h3>
     <div class="row">
-      <input id="verifyCode" type="text" inputmode="numeric" maxlength="6" placeholder="000000">
+      <label for="verifyCode" style="font-size:0;position:absolute;width:1px;height:1px;overflow:hidden;">Verification code</label><input id="verifyCode" type="text" inputmode="numeric" maxlength="6" placeholder="000000">
       <button id="verifyBtn" class="btn">Verify &amp; Enable</button>
       <button id="cancelSetupBtn" class="btn secondary">Cancel</button>
     </div>
@@ -109,7 +109,7 @@
     <h3>Disable 2FA</h3>
     <p class="sub">Enter a fresh 6-digit code (or a backup code) to confirm.</p>
     <div class="row">
-      <input id="disableCode" type="text" inputmode="text" maxlength="11" placeholder="123456 or BACKUP-CODE">
+      <label for="disableCode" style="font-size:0;position:absolute;width:1px;height:1px;overflow:hidden;">Disable code</label><input id="disableCode" type="text" inputmode="text" maxlength="11" placeholder="123456 or BACKUP-CODE">
       <button id="confirmDisableBtn" class="btn danger">Confirm Disable</button>
       <button id="cancelDisableBtn" class="btn secondary">Cancel</button>
     </div>
@@ -120,7 +120,7 @@
     <h3>Regenerate Backup Codes</h3>
     <p class="sub">Old codes are invalidated immediately. Enter a current 6-digit code to confirm.</p>
     <div class="row">
-      <input id="regenCode" type="text" inputmode="numeric" maxlength="6" placeholder="000000">
+      <label for="regenCode" style="font-size:0;position:absolute;width:1px;height:1px;overflow:hidden;">Regeneration code</label><input id="regenCode" type="text" inputmode="numeric" maxlength="6" placeholder="000000">
       <button id="confirmRegenBtn" class="btn">Generate New Codes</button>
       <button id="cancelRegenBtn" class="btn secondary">Cancel</button>
     </div>

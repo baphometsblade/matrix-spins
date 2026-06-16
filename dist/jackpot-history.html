@@ -40,6 +40,7 @@
   td { padding: 14px 16px; border-top: 1px solid rgba(255,255,255,0.04); font-size: 14px; }
   td.amt { font-weight: 700; color: #ffd700; text-align: right; }
   .empty { padding: 40px; text-align: center; color: #8a8aa0; }
+  .table-responsive { overflow-x: auto; -webkit-overflow-scrolling: touch; }
   .badge { display: inline-block; padding: 3px 10px; border-radius: 999px; font-size: 11px; text-transform: uppercase; font-weight: 600; letter-spacing: 0.05em; }
   .badge.mini  { background: rgba(74,143,209,0.2); color: #6ab6f0; }
   .badge.minor { background: rgba(74,209,143,0.2); color: #6af0b6; }
@@ -100,10 +101,12 @@
   </div>
 
   <h3 style="margin-bottom:14px">Recent Winners</h3>
+  <div class="table-responsive">
   <table>
     <thead><tr><th>Date</th><th>Player</th><th>Tier</th><th style="text-align:right">Amount</th></tr></thead>
     <tbody id="winnersBody"><tr><td colspan="4" class="empty">Loading…</td></tr></tbody>
   </table>
+  </div>
 
 </div>
 

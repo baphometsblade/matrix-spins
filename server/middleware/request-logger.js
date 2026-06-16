@@ -16,11 +16,21 @@ const SLOW_MS = parseInt(process.env.SLOW_REQUEST_MS, 10) || 1500;
 // Lightweight in-memory perf store. For high-volume endpoints we keep a
 // fixed-size ring buffer of the last 200 latencies; older samples drop off.
 const RING_SIZE = 200;
+const MAX_ENDPOINTS = 200; // Cap perfMap size to prevent memory growth from unique path segments
 const perfMap = new Map(); // key: "METHOD path" -> { count, errorCount, ring: [], idx, sum }
 
 function recordLatency(key, ms, isError) {
     let entry = perfMap.get(key);
     if (!entry) {
+        // Evict least-used entry if we hit the size cap (prevents unbounded growth
+        // from user-controlled path segments like /api/profile/:username)
+        if (perfMap.size >= MAX_ENDPOINTS) {
+            let minKey = null, minCount = Infinity;
+            for (const [k, v] of perfMap) {
+                if (v.count < minCount) { minCount = v.count; minKey = k; }
+            }
+            if (minKey) perfMap.delete(minKey);
+        }
         entry = { count: 0, errorCount: 0, ring: new Array(RING_SIZE).fill(null), idx: 0, sum: 0 };
         perfMap.set(key, entry);
     }

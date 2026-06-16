@@ -40,6 +40,7 @@
   .toolbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;flex-wrap:wrap;gap:12px;}
   .count{color:#7fbf7f;font-size:12px;letter-spacing:1px;}
   td.ref{font-family:'Courier New',monospace;font-size:12px;color:#9ec79e;word-break:break-all;}
+  .table-responsive{overflow-x:auto;-webkit-overflow-scrolling:touch;}
 </style>
 </head>
 <body>
@@ -70,7 +71,7 @@
     <button class="btn secondary" id="refreshBtn">Refresh</button>
   </div>
 
-  <div id="tableWrap">
+  <div id="tableWrap" class="table-responsive">
     <div class="empty">Loading…</div>
   </div>
 </main>

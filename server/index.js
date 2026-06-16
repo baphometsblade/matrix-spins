@@ -14,6 +14,10 @@
 require('./utils/secure-rng');
 
 const express = require('express');
+// Monkey-patches Express to catch unhandled async rejections in route handlers,
+// forwarding them to the globalErrorHandler instead of leaving the client hanging.
+// Must load BEFORE any routes are defined. Zero-config, no per-handler wrapper needed.
+require('express-async-errors');
 const http = require('http');
 const path = require('path');
 const fs = require('fs');
@@ -179,6 +183,16 @@ try {
 }
 app.use('/api', optionalAuth);
 
+// ── Idle-session timeout (MUST run after optionalAuth so req.user is set) ──
+// A valid JWT is accepted for its full 7-day life; this adds a second clock so
+// a session idle > SESSION_IDLE_TIMEOUT_MINUTES (default 30) is rejected with
+// 401 and must re-authenticate — limiting the blast radius of a stolen token.
+// The idle flag is cleared on successful login via idle-timeout._reset(user.id)
+// (wired in auth.routes.js). This mount was dropped in 5c23dd8d (Apr 26); the
+// middleware + tests + login _reset were left intact, so restore it here.
+const { idleTimeoutMiddleware } = require('./middleware/idle-timeout');
+app.use(idleTimeoutMiddleware);
+
 try {
   const { csrfMiddleware, getCsrfTokenHandler } = require('./middleware/csrf');
   app.get('/api/csrf-token', verifyToken, getCsrfTokenHandler);
@@ -231,6 +245,14 @@ app.use('/api/auth/logout',   authLimiter);
 const passwordResetLimiter = rateLimit({ windowMs: 60 * 60 * 1000, max: 3, standardHeaders: true, legacyHeaders: false });
 app.use('/api/auth/forgot-password', passwordResetLimiter);
 app.use('/api/auth/reset-password',  passwordResetLimiter);
+
+// Email verification + resend: app-level express-rate-limit (replaced leaky
+// in-memory Maps). verify-email is throttled to blunt token-guessing/DB-load
+// abuse; resend is throttled hard to stop verification-email spam.
+const emailVerifyLimiter = rateLimit({ windowMs: 60 * 1000,      max: 10, standardHeaders: true, legacyHeaders: false });
+const emailResendLimiter = rateLimit({ windowMs: 60 * 60 * 1000, max: 5,  standardHeaders: true, legacyHeaders: false });
+app.use('/api/auth/verify-email',        emailVerifyLimiter);
+app.use('/api/auth/resend-verification', emailResendLimiter);
 
 const claimLimiter = rateLimit({ windowMs: 60 * 1000, max: 10, standardHeaders: true, legacyHeaders: false });
 const claimPaths = [
@@ -637,7 +659,9 @@ function bindCatchAll() {
         }
       },
     }));
-    app.use('/assets', express.static(path.join(FRONTEND_ROOT, 'assets'), { dotfiles: 'deny', maxAge: '7d', immutable: true }));
+    // Assets are NOT content-hashed — 'immutable' would prevent revalidation
+    // of updated images for the full maxAge. Use ETag revalidation instead.
+    app.use('/assets', express.static(path.join(FRONTEND_ROOT, 'assets'), { dotfiles: 'deny', maxAge: '7d', etag: true, lastModified: true }));
     app.use(express.static(FRONTEND_ROOT, { dotfiles: 'deny', maxAge: '1h' }));
   } else {
     app.use(express.static(FRONTEND_ROOT, {
