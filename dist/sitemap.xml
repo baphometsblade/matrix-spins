@@ -114,6 +114,7 @@
   <url><loc>https://msaart.online/achievements.html</loc><changefreq>monthly</changefreq><priority>0.7</priority></url>
   <url><loc>https://msaart.online/privacy.html</loc><changefreq>monthly</changefreq><priority>0.5</priority></url>
   <url><loc>https://msaart.online/faq.html</loc><changefreq>monthly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://msaart.online/contact.html</loc><changefreq>monthly</changefreq><priority>0.8</priority></url>
   <!-- Category Pages -->
   <url><loc>https://msaart.online/categories/egyptian-mythology.html</loc><changefreq>weekly</changefreq><priority>0.8</priority></url>
   <url><loc>https://msaart.online/categories/fruit-classics.html</loc><changefreq>weekly</changefreq><priority>0.8</priority></url>

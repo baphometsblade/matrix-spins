@@ -87,7 +87,7 @@ router.post('/payment/create-checkout', authenticate, async (req, res) => {
             line_items: lineItems,
             mode: 'payment',
             success_url: (process.env.APP_URL || config.ALLOWED_ORIGIN || 'https://msaart.online') + '/deposit/success.html?amount=' + amountNum,
-            cancel_url: (process.env.APP_URL || config.ALLOWED_ORIGIN || 'https://msaart.online') + '?deposit=cancelled',
+            cancel_url: (process.env.APP_URL || config.ALLOWED_ORIGIN || 'https://msaart.online') + '/deposit/cancel.html',
             metadata: {
                 type: 'casino_deposit',
                 amount: amountNum.toString(),

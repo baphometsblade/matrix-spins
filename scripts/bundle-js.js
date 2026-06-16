@@ -357,7 +357,7 @@ function generateDistIndex(jsInfo, cssInfo, originalHtml) {
 function copyStaticAssets() {
     log('Copying static assets...');
 
-    const staticFiles = ['manifest.json', 'favicon.svg', 'sw.js', 'robots.txt', 'sitemap.xml', 'offline.html', 'premium-v3-upgrades.js', 'premium-v2-fixes.js', 'provably-fair.html', 'responsible-gambling.html', 'terms.html', 'privacy.html', 'cookie-policy.html', 'aml.html', 'faq.html', '404.html', 'launch.html', 'affiliates.html', 'referral.html', 'promotions.html', 'wallet.html', 'login.html', 'signup.html', 'leaderboard.html', 'account.html', 'achievements.html', 'vip.html', 'tournaments.html', 'bonus-history.html', 'jackpot-history.html', 'history.html', 'spin-wheel.html', 'unified-ux.css'];
+    const staticFiles = ['manifest.json', 'favicon.svg', 'sw.js', 'robots.txt', 'sitemap.xml', 'offline.html', 'premium-v3-upgrades.js', 'premium-v2-fixes.js', 'provably-fair.html', 'responsible-gambling.html', 'terms.html', 'privacy.html', 'cookie-policy.html', 'aml.html', 'faq.html', 'contact.html', '404.html', 'launch.html', 'affiliates.html', 'referral.html', 'promotions.html', 'wallet.html', 'login.html', 'signup.html', 'leaderboard.html', 'account.html', 'achievements.html', 'vip.html', 'tournaments.html', 'bonus-history.html', 'jackpot-history.html', 'history.html', 'spin-wheel.html', 'unified-ux.css'];
 
     staticFiles.forEach(file => {
         const src = path.join(ROOT_DIR, file);
@@ -442,7 +442,7 @@ function copyStaticAssets() {
     });
 
     // Copy HTML directories (games/, categories/) to dist/
-    ['games', 'categories', 'images', 'img'].forEach(dir => {
+    ['games', 'categories', 'images', 'img', 'deposit'].forEach(dir => {
         const srcDir = path.join(ROOT_DIR, dir);
         const dstDir = path.join(DIST_DIR, dir);
         if (fs.existsSync(srcDir)) {

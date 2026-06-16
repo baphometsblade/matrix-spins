@@ -604,10 +604,7 @@
             box-shadow: 0 12px 32px rgba(251, 191, 36, 0.18), 0 6px 16px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(251, 191, 36, 0.15);
         }
 
-        @keyframes thumbShimmer {
-            0%   { background-position: -200% 0; }
-            100% { background-position: 200% 0; }
-        }
+        
         .game-thumbnail {
             width: 100%;
             aspect-ratio: 3 / 4;
@@ -2977,7 +2974,6 @@
         /* 4. GOLDENEDGE — Rotating pastel rainbow shimmer */
         @keyframes goldenShimmer {
             0%   { background-position: 0%   50%; }
-            50%  { background-position: 100% 50%; }
             100% { background-position: 0%   50%; }
         }
         .slot-chrome-golden-reels .slot-reel-area::before {
@@ -3449,9 +3445,6 @@
         }
 
         @keyframes winBorderShift {
-            0% { background-position: 0% 50%; }
-            50% { background-position: 100% 50%; }
-            100% { background-position: 0% 50%; }
         }
 
         @keyframes winInnerPulse {
@@ -3577,8 +3570,6 @@
         }
 
         @keyframes scatterRing {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
         }
 
         @keyframes scatterSparkle {
@@ -3640,7 +3631,6 @@
         @keyframes winEntranceBurst {
             0% { transform: scale(0.8); opacity: 0.5; }
             50% { transform: scale(1.15); }
-            100% { transform: scale(1); opacity: 1; }
         }
 
         /* ============================================
@@ -3669,7 +3659,6 @@
         }
 
         @keyframes screenShakeMega {
-            0%, 100% { transform: translate(0); }
             5% { transform: translate(-8px, 4px); }
             10% { transform: translate(6px, -7px); }
             15% { transform: translate(-5px, 8px); }
@@ -3805,7 +3794,6 @@
         }
 
         @keyframes ambientBreath {
-            0%, 100% { filter: brightness(1); }
             50% { filter: brightness(1.06) saturate(1.05); }
         }
 
@@ -3901,14 +3889,9 @@
             filter: blur(5px);
         }
 
-        @keyframes bigWinPulse {
-            0%, 100% { transform: scale(1); filter: brightness(1); }
-            50% { transform: scale(1.05); filter: brightness(1.3); }
-        }
+        
 
         @keyframes bigWinSpin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
         }
 
         /* ═══ Free Spins Overlay ═══ */
@@ -3931,7 +3914,6 @@
             85%  { transform: translateX(-2px); }
         }
         @keyframes fsScatterPop {
-            0%   { transform: scale(1);   filter: brightness(1); }
             25%  { transform: scale(1.5); filter: brightness(4) drop-shadow(0 0 24px #fbbf24); }
             60%  { transform: scale(1.3); filter: brightness(2.5) drop-shadow(0 0 16px #fbbf24); }
             100% { transform: scale(1.35); filter: brightness(3) drop-shadow(0 0 20px #fbbf24); }
@@ -4097,9 +4079,7 @@
             to   { transform: rotate(360deg); }
         }
         @keyframes fsSummaryAmount {
-            0%   { transform: scale(0.8); opacity: 0.5; }
             50%  { transform: scale(1.08); }
-            100% { transform: scale(1); opacity: 1; }
         }
 
         .fs-summary-card {
@@ -4202,7 +4182,6 @@
         }
         @keyframes hudSlideIn {
             0%   { transform: translateY(-100%); opacity: 0; }
-            100% { transform: translateY(0);     opacity: 1; }
         }
 
         .free-spins-hud {
@@ -4286,18 +4265,7 @@
             animation: screenShake 0.5s ease-out;
         }
 
-        @keyframes screenShake {
-            0%, 100% { transform: translate(0); }
-            10% { transform: translate(-5px, -3px); }
-            20% { transform: translate(5px, 3px); }
-            30% { transform: translate(-3px, 5px); }
-            40% { transform: translate(3px, -5px); }
-            50% { transform: translate(-5px, 3px); }
-            60% { transform: translate(5px, -3px); }
-            70% { transform: translate(-3px, -5px); }
-            80% { transform: translate(3px, 5px); }
-            90% { transform: translate(-2px, -2px); }
-        }
+        
 
         .sparkle-particle {
             position: fixed;
@@ -4472,7 +4440,6 @@
         }
 
         @keyframes pulse-win {
-            0%, 100% { transform: scale(1); }
             50% { transform: scale(1.02); }
         }
 
@@ -4492,7 +4459,6 @@
             z-index: 5;
         }
         @keyframes symbolWinPop {
-            0% { transform: scale(1); }
             50% { transform: scale(1.18); }
             100% { transform: scale(1); }
         }
@@ -4573,8 +4539,6 @@
         }
 
         @keyframes ppBurstRotate {
-            from { transform: rotate(0deg); }
-            to { transform: rotate(360deg); }
         }
 
         .pp-win-content {
@@ -4674,7 +4638,6 @@
         }
 
         @keyframes ppTierPulse {
-            0%, 100% { transform: scale(1); }
             50% { transform: scale(1.05); }
         }
 
@@ -4685,8 +4648,6 @@
 
         /* Enhanced win animations for mega/epic tiers */
         @keyframes megaWinBounce {
-            0%, 100% { transform: scale(1); }
-            50% { transform: scale(1.08); }
         }
 
         @keyframes megaWinShake {
@@ -4695,8 +4656,6 @@
         }
 
         @keyframes epicWinPulse {
-            0%, 100% { transform: scale(1); }
-            50% { transform: scale(1.1); }
         }
 
         @keyframes epicWinShake {
@@ -4706,7 +4665,6 @@
         }
 
         @keyframes winGradientShift {
-            0%, 100% { filter: brightness(1); }
             50% { filter: brightness(1.05); }
         }
 
@@ -4722,9 +4680,6 @@
         @keyframes particleFloat {
             0% {
                 transform: translateY(0) translateX(0) scale(1);
-                opacity: 1;
-            }
-            50% {
                 opacity: 1;
             }
             100% {
@@ -4774,7 +4729,6 @@
 
         /* Sparkle/shine effect on symbols */
         @keyframes symbolSparkle {
-            0%, 100% { filter: brightness(1); }
             50% { filter: brightness(1.3) drop-shadow(0 0 15px rgba(255,215,0,0.6)); }
         }
 
@@ -4880,16 +4834,7 @@
         }
 
         /* Confetti Animation */
-        @keyframes confetti-fall {
-            0% {
-                transform: translateY(-100vh) rotate(0deg);
-                opacity: 1;
-            }
-            100% {
-                transform: translateY(100vh) rotate(720deg);
-                opacity: 0;
-            }
-        }
+        
 
         .confetti {
             position: fixed;
@@ -4945,7 +4890,6 @@
         }
 
         @keyframes spin {
-            to { transform: rotate(360deg); }
         }
 
         /* Pulse effect for hot games */
@@ -4963,10 +4907,7 @@
         }
 
         /* Shimmer effect for buttons */
-        @keyframes shimmer {
-            0% { background-position: -1000px 0; }
-            100% { background-position: 1000px 0; }
-        }
+        
 
         .shimmer-btn {
             background-image: linear-gradient(
@@ -4980,10 +4921,7 @@
         }
 
         /* Achievement notification animations */
-        @keyframes slideInRight {
-            from { transform: translateX(400px); opacity: 0; }
-            to { transform: translateX(0); opacity: 1; }
-        }
+        
 
         @keyframes slideOutRight {
             from { transform: translateX(0); opacity: 1; }
@@ -5055,8 +4993,6 @@
         }
 
         @keyframes toastSlideOut {
-            from { transform: translateX(0); opacity: 1; }
-            to { transform: translateX(400px); opacity: 0; }
         }
 
         /* Pass 1: Balance animation */
@@ -5074,7 +5010,6 @@
         }
 
         @keyframes balanceFlashRed {
-            0%, 100% { box-shadow: 0 4px 20px rgba(16, 185, 129, 0.3); }
             50% { box-shadow: 0 0 24px rgba(239, 68, 68, 0.7); }
         }
 
@@ -6017,9 +5952,6 @@
             transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
-        .btn:hover {
-            transform: translateY(-1px);
-        }
 
         .container {
             max-width: 1216px;
@@ -6557,7 +6489,6 @@
         }
 
         @keyframes balanceFlashRed5g {
-            0%, 100% { box-shadow: none; }
             50% { box-shadow: 0 0 20px rgba(239, 68, 68, 0.6); }
         }
 
@@ -6663,10 +6594,7 @@
             animation: autoSpinPulse 1s ease-in-out infinite;
         }
 
-        @keyframes autoSpinPulse {
-            0%, 100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4); }
-            50% { box-shadow: 0 0 16px rgba(239, 68, 68, 0.6); }
-        }
+        
 
         /* ===== Ticker Animation ===== */
         .ticker-content {
@@ -6684,10 +6612,7 @@
             flex-shrink: 0;
         }
 
-        @keyframes tickerScroll {
-            0%   { transform: translateX(0); }
-            100% { transform: translateX(-50%); }
-        }
+        
 
         /* ═══════════════════════════════════════════════════════════════════
            PRAGMATIC PLAY-STYLE SLOT UI — Full-screen layout with bottom bar
@@ -7664,9 +7589,6 @@
                 font-size: 14px;
             }
 
-            .logo-text h1 {
-                font-size: 18px;
-            }
 
             .balance-amount {
                 font-size: 16px;
@@ -7774,9 +7696,6 @@
                 padding: 6px 12px;
             }
 
-            .logo-text h1 {
-                font-size: 18px;
-            }
 
             .balance-amount {
                 font-size: 14px;
@@ -8871,14 +8790,8 @@
     80% { transform: translateX(1px); }
 }
 
-.screen-shake {
-    animation: screenShake 0.5s ease-out;
-}
 
 @keyframes bigWinPulse {
-    0% { transform: scale(1); }
-    50% { transform: scale(1.05); }
-    100% { transform: scale(1); }
 }
 
 .slot-reel-area.big-win-pulse {
@@ -8890,9 +8803,7 @@
 /* ═══════════════════════════════════════════════════════════════════ */
 
 @keyframes winCounter {
-    0% { transform: scale(0.5); opacity: 0; }
     50% { transform: scale(1.2); }
-    100% { transform: scale(1); opacity: 1; }
 }
 
 .win-amount-animated {
@@ -9560,17 +9471,12 @@
 ═══════════════════════════════════════════════════════════════ */
 /* ── Big Win Overlay — tiered, provider-aware ──────────────────────── */
 @keyframes bigwinFadeIn {
-    from { opacity: 0; }
-    to   { opacity: 1; }
 }
 @keyframes bigwinRays {
-    from { transform: rotate(0deg); }
-    to   { transform: rotate(360deg); }
 }
 @keyframes bigwinModalPop {
     0%   { transform: scale(0.35) rotate(-4deg); opacity: 0; }
     60%  { transform: scale(1.06) rotate(1deg); opacity: 1; }
-    100% { transform: scale(1) rotate(0deg); opacity: 1; }
 }
 @keyframes bigwinLabelPulse {
     from { transform: scale(1); filter: brightness(1); }
@@ -9580,12 +9486,7 @@
     from { box-shadow: 0 0 20px rgba(251,191,36,0.5); }
     to   { box-shadow: 0 0 40px rgba(251,191,36,0.9), 0 0 0 4px rgba(251,191,36,0.15); }
 }
-@keyframes coinFall {
-    0%   { top: -50px; transform: rotate(0deg) scale(0.4); opacity: 0; }
-    8%   { opacity: 1; transform: rotate(20deg) scale(1); }
-    88%  { opacity: 0.9; }
-    100% { top: 115%; transform: rotate(400deg) scale(0.7); opacity: 0; }
-}
+
 @keyframes bigwinCountUp {
     from { transform: scale(0.6) translateY(16px); opacity: 0; }
     to   { transform: scale(1) translateY(0); opacity: 1; }
@@ -10217,7 +10118,6 @@
     0%   { opacity: 0; }
     8%   { opacity: 1; }
     72%  { opacity: 1; }
-    100% { opacity: 0; }
 }
 
 /* Animated line-draw effect on the main payline path */
@@ -10727,7 +10627,6 @@
     box-shadow: inset 0 0 0 2px rgba(255,215,0,0.7), 0 0 20px rgba(255,215,0,0.4) !important;
 }
 @keyframes anticipationShake {
-    0%, 100% { transform: translateX(0); }
     25%       { transform: translateX(-3px); }
     75%       { transform: translateX(3px); }
 }
@@ -11980,9 +11879,6 @@
     animation: milestone-reward-pop 0.5s ease;
 }
 @keyframes milestone-reward-pop {
-    0% { transform: scale(0.5); opacity: 0; }
-    50% { transform: scale(1.2); }
-    100% { transform: scale(1); opacity: 1; }
 }
 
 /* ═══════════════════════════════════════════════════════════════════════
@@ -12263,13 +12159,10 @@
 /* Random Jackpot overlay pop */
 @keyframes rjPop {
   0%   { transform: scale(0); opacity: 0; }
-  100% { transform: scale(1); opacity: 1; }
 }
 
 /* Prize Wheel result reveal */
 @keyframes wheelPrizeIn {
-  0%   { transform: scale(0); opacity: 0; }
-  100% { transform: scale(1); opacity: 1; }
 }
 
 
@@ -12303,11 +12196,7 @@
 }
 .fav-btn:hover { transform: scale(1.3); }
 .fav-btn.fav-active { animation: favPop 0.3s ease-out; }
-@keyframes favPop {
-    0%   { transform: scale(1); }
-    50%  { transform: scale(1.5); }
-    100% { transform: scale(1); }
-}
+
 .filter-fav-count {
     display: inline-block; background: #e11d48;
     color: #fff; font-size: 10px; font-weight: 700;
@@ -12445,8 +12334,6 @@
 /* Multiplier Wilds badge (multWildCss) */
 .mw-badge { animation: mwPop 0.25s cubic-bezier(0.34,1.56,0.64,1) both; }
 @keyframes mwPop {
-    0%   { transform: scale(0); opacity: 0; }
-    100% { transform: scale(1); opacity: 1; }
 }
 
 /* Cascading Reels explode (cascadeCss) */
@@ -12474,8 +12361,6 @@
 
 /* Colossal Symbols reveal (colossalCss) */
 @keyframes colossalIn {
-    0%   { transform: scale(0.5); opacity: 0; }
-    100% { transform: scale(1);   opacity: 1; }
 }
 
 /* =====================================================
@@ -12895,7 +12780,6 @@
     50%       { filter: brightness(1.14) drop-shadow(0 0 5px rgba(100,200,255,0.55)); }
 }
 @keyframes scatterIdleShimmer {
-    0%, 100% { filter: brightness(1) drop-shadow(0 0 0px transparent); }
     50%       { filter: brightness(1.16) drop-shadow(0 0 6px rgba(255,215,0,0.55)); }
 }
 .reel-wild-idle {
@@ -13269,10 +13153,8 @@
 /* ---- Win-toast notifications ------------------------------------------ */
 @keyframes toastIn {
     from { transform: translateX(110%); opacity: 0; }
-    to   { transform: translateX(0);    opacity: 1; }
 }
 @keyframes toastOut {
-    from { transform: translateX(0);    opacity: 1; }
     to   { transform: translateX(110%); opacity: 0; }
 }
 .win-toast {
@@ -13352,8 +13234,6 @@
     padding: 2px 6px;
 }
 @keyframes betNudgeSlideUp {
-    from { opacity: 0; transform: translateX(-50%) translateY(20px); }
-    to { opacity: 1; transform: translateX(-50%) translateY(0); }
 }
 
 /* ---- Slot modal open shimmer ------------------------------------------ */
@@ -13802,10 +13682,8 @@
 .game-fav-btn.fav-active { color: #ff4466; }
 .game-fav-btn.fav-active:hover { color: #ff6680; }
 @keyframes favPop {
-  0%   { transform: scale(1); }
   40%  { transform: scale(1.4); }
   70%  { transform: scale(0.9); }
-  100% { transform: scale(1); }
 }
 .game-fav-btn.fav-pop { animation: favPop 0.35s cubic-bezier(0.34,1.56,0.64,1); }
 
@@ -14111,12 +13989,8 @@
   line-height: 1;
   transition: color 0.15s;
 }
-.paytable-close:hover { color: #fff; }
 .paytable-body {
   padding: 16px 20px 20px;
-}
-.paytable-section {
-  margin-bottom: 20px;
 }
 .paytable-section-title {
   font-size: 10px;
@@ -14405,8 +14279,6 @@ button.active .filter-tab-count {
     animation: jpOverlayIn 0.35s ease-out forwards;
 }
 @keyframes jpOverlayIn {
-    from { opacity: 0; }
-    to   { opacity: 1; }
 }
 
 .jackpot-win-modal {
@@ -14427,7 +14299,6 @@ button.active .filter-tab-count {
 }
 @keyframes jpModalIn {
     from { transform: scale(0.6) translateY(40px); opacity: 0; }
-    to   { transform: scale(1) translateY(0); opacity: 1; }
 }
 
 .jackpot-win-modal--mini {
@@ -14499,7 +14370,6 @@ button.active .filter-tab-count {
 }
 @keyframes jpAmountSlam {
     from { transform: scale(0.5); opacity: 0; }
-    to   { transform: scale(1); opacity: 1; }
 }
 .jackpot-win-modal--mega .jackpot-win-amount {
     background: linear-gradient(135deg, #c084fc, #a855f7, #7c3aed);
@@ -14719,7 +14589,6 @@ button.active .filter-tab-count {
 }
 @keyframes tournBadgeFadeIn {
     from { opacity: 0; transform: translateY(-6px); }
-    to   { opacity: 1; transform: translateY(0); }
 }
 .tourn-slot-badge strong { color: #818cf8; }
 
@@ -15060,8 +14929,6 @@ button.active .filter-tab-count {
 }
 
 @keyframes hotColdPulse {
-    0%, 100% { transform: scale(1); }
-    50%       { transform: scale(1.18); }
 }
 
 /* Max Win badge on game cards */
@@ -15775,7 +15642,6 @@ button.active .filter-tab-count {
 
 /* Sprint 38 — Session Timer */
 @keyframes timer-pulse {
-    0%, 100% { opacity: 1; }
     50%       { opacity: 0.65; }
 }
 .settings-select:focus { border-color: rgba(240,192,64,0.5); }
@@ -15996,7 +15862,6 @@ kbd { display: inline-flex; align-items: center; justify-content: center; min-wi
 @keyframes bt-pop-anim {
     0%   { transform: scale(0.6); opacity: 0.5; }
     60%  { transform: scale(1.15); opacity: 1; }
-    100% { transform: scale(1); opacity: 1; }
 }
 
 /* ===== Sprint 75: Streak Bonus Toast ===== */
@@ -16028,7 +15893,6 @@ kbd { display: inline-flex; align-items: center; justify-content: center; min-wi
     animation: sbt-pulse 1s ease-in-out infinite alternate;
 }
 @keyframes sbt-pulse {
-    0%   { transform: scale(1); }
     100% { transform: scale(1.05); text-shadow: 0 0 20px rgba(255,215,0,0.7), 0 2px 6px rgba(0,0,0,0.5); }
 }
 
@@ -16282,7 +16146,6 @@ kbd { display: inline-flex; align-items: center; justify-content: center; min-wi
 
 /* Sprint 77 — Win Balance Pulse */
 @keyframes bal-win-pulse {
-    0%   { transform: scale(1);    filter: brightness(1); }
     30%  { transform: scale(1.18); filter: brightness(1.6) drop-shadow(0 0 8px #ffe066); }
     70%  { transform: scale(1.05); filter: brightness(1.2); }
     100% { transform: scale(1);    filter: brightness(1); }
@@ -16495,7 +16358,6 @@ kbd { display: inline-flex; align-items: center; justify-content: center; min-wi
 .pl-amt  { font-variant-numeric: tabular-nums; }
 @keyframes pl-fade-in {
     from { opacity: 0; transform: translateY(-4px); }
-    to   { opacity: 1; transform: translateY(0); }
 }
 
 
@@ -16547,7 +16409,6 @@ kbd { display: inline-flex; align-items: center; justify-content: center; min-wi
     border: 1px solid rgba(255,68,68,0.4);
 }
 @keyframes bal-alert-flash-anim {
-    0%, 100% { opacity: 1; }
     50% { opacity: 0.3; }
 }
 .bal-alert-flash { animation: bal-alert-flash-anim 0.5s ease 2; }
@@ -16765,7 +16626,6 @@ kbd { display: inline-flex; align-items: center; justify-content: center; min-wi
     transition: width 0.3s ease;
 }
 @keyframes jp-flash-anim {
-    0%, 100% { opacity: 1; }
     50% { opacity: 0; }
 }
 .jp-flash { animation: jp-flash-anim 0.2s ease 4; }
@@ -16883,7 +16743,6 @@ kbd { display: inline-flex; align-items: center; justify-content: center; min-wi
 @keyframes milestone-pop {
     0% { transform: scale(0.8); opacity: 0; }
     80% { transform: scale(1.05); }
-    100% { transform: scale(1); opacity: 1; }
 }
 
 /* Sprint 119: Net P&L */
@@ -16975,7 +16834,6 @@ kbd { display: inline-flex; align-items: center; justify-content: center; min-wi
     animation: lsa-pulse 0.8s ease-in-out infinite alternate;
 }
 @keyframes lsa-pulse {
-    from { opacity: 0.7; }
     to   { opacity: 1; box-shadow: 0 0 6px rgba(255,118,117,0.4); }
 }
 
@@ -17079,7 +16937,6 @@ kbd { display: inline-flex; align-items: center; justify-content: center; min-wi
     animation: sht-flash 0.5s ease-in-out 3;
 }
 @keyframes sht-flash {
-    0%, 100% { box-shadow: none; }
     50%       { box-shadow: 0 0 10px rgba(253,203,110,0.7); }
 }
 .sht-fill {
@@ -17329,7 +17186,6 @@ kbd { display: inline-flex; align-items: center; justify-content: center; min-wi
 .scatter-gap-badge.sgb-mid  { color: #fdcb6e; background: rgba(253,203,110,0.1); }
 .scatter-gap-badge.sgb-long { color: #ff7675; background: rgba(255,118,117,0.1); animation: sgb-pulse 1.2s ease-in-out infinite alternate; }
 @keyframes sgb-pulse {
-    from { opacity: 0.8; }
     to   { opacity: 1; box-shadow: 0 0 5px rgba(255,118,117,0.3); }
 }
 
@@ -17429,7 +17285,6 @@ kbd { display: inline-flex; align-items: center; justify-content: center; min-wi
 .brb-caution { color: #fdcb6e; background: rgba(253,203,110,0.15); }
 .brb-safe    { color: #00cec9; background: rgba(0,206,201,0.1); }
 @keyframes brb-flash {
-    from { opacity: 0.8; }
     to   { opacity: 1; box-shadow: 0 0 5px rgba(214,48,49,0.4); }
 }
 
@@ -17501,7 +17356,6 @@ kbd { display: inline-flex; align-items: center; justify-content: center; min-wi
 }
 @keyframes wtl-appear {
     from { transform: scale(0.8); opacity: 0; }
-    to   { transform: scale(1);   opacity: 1; }
 }
 .wtl-line    { color: #00ff88; background: rgba(0,255,136,0.12); border: 1px solid rgba(0,255,136,0.25); }
 .wtl-scatter { color: #fdcb6e; background: rgba(253,203,110,0.12); border: 1px solid rgba(253,203,110,0.25); }
@@ -17842,7 +17696,6 @@ kbd { display: inline-flex; align-items: center; justify-content: center; min-wi
 
 @keyframes cine-toast-in {
   from { opacity: 0; transform: translateX(110%); }
-  to   { opacity: 1; transform: translateX(0); }
 }
 @keyframes cine-toast-out {
   from { opacity: 1; transform: translateX(0); }
@@ -18115,9 +17968,7 @@ kbd { display: inline-flex; align-items: center; justify-content: center; min-wi
   width: 100%;
   overflow-x: auto;
   overflow-y: hidden;
-  scrollbar-width: none;
-  -ms-overflow-style: none;
-  padding: 12px;
+  scrollbar-width: none;padding: 12px;
   margin-bottom: 8px;
   scroll-snap-type: x mandatory;
   display: flex;
@@ -18377,8 +18228,6 @@ kbd { display: inline-flex; align-items: center; justify-content: center; min-wi
 @keyframes bonusActivatedSubtitle {
   0%, 20% { opacity: 0; transform: translateY(30px) scale(0.8); filter: blur(4px); }
   40%  { opacity: 1; transform: translateY(0) scale(1); filter: blur(0); }
-  65%  { opacity: 1; }
-  100% { opacity: 0; }
 }
 @keyframes bonusActivatedRays {
   0%   { opacity: 0; transform: rotate(0deg); }
@@ -19380,7 +19229,6 @@ kbd { display: inline-flex; align-items: center; justify-content: center; min-wi
 .win-breakdown-line:last-of-type { border-bottom: none; }
 @keyframes wbdLineIn {
   from { opacity: 0; transform: translateX(12px); }
-  to   { opacity: 1; transform: translateX(0); }
 }
 .wbd-line-left {
   display: flex;
@@ -19453,8 +19301,6 @@ kbd { display: inline-flex; align-items: center; justify-content: center; min-wi
   transform-origin: center center;
 }
 @keyframes plLabelPop {
-  from { opacity: 0; transform: scale(0.5); }
-  to   { opacity: 1; transform: scale(1); }
 }
 
 /* ── Tumble / Avalanche Chain Counter ── */
@@ -19480,7 +19326,6 @@ kbd { display: inline-flex; align-items: center; justify-content: center; min-wi
 @keyframes chainBump {
   0%   { transform: translateX(-50%) scale(0.6); opacity: 0; }
   60%  { transform: translateX(-50%) scale(1.15); }
-  100% { transform: translateX(-50%) scale(1);   opacity: 1; }
 }
 .tumble-chain-badge.chain-exit {
   animation: chainFade 0.4s ease-out forwards;
@@ -19503,8 +19348,6 @@ kbd { display: inline-flex; align-items: center; justify-content: center; min-wi
   animation: multRevFadeIn 0.2s ease-out;
 }
 @keyframes multRevFadeIn {
-  from { opacity: 0; }
-  to   { opacity: 1; }
 }
 .mult-reveal-wheel {
   font-size: 3.5rem;
@@ -19526,7 +19369,6 @@ kbd { display: inline-flex; align-items: center; justify-content: center; min-wi
 }
 @keyframes multValSlam {
   from { opacity: 0; transform: scale(2) translateY(-10px); }
-  to   { opacity: 1; transform: scale(1) translateY(0); }
 }
 .mult-reveal-label {
   font-size: 0.75rem;
@@ -19604,9 +19446,6 @@ kbd { display: inline-flex; align-items: center; justify-content: center; min-wi
   animation: mcBump 0.25s ease-out;
 }
 @keyframes mcBump {
-  0%   { transform: scale(1); }
-  50%  { transform: scale(1.2); }
-  100% { transform: scale(1); }
 }
 
 /* ── Mystery Stack Reveal ── */
@@ -19737,14 +19576,11 @@ kbd { display: inline-flex; align-items: center; justify-content: center; min-wi
         }
 
         @keyframes luckyHourIconBounce {
-            0%, 100% { transform: scale(1); }
-            50%      { transform: scale(1.2); }
         }
 
 /* ── Leaderboard Widget ── */
 @keyframes lbSlideIn {
     from { opacity: 0; transform: translateX(-10px); }
-    to   { opacity: 1; transform: translateX(0); }
 }
 .lb-user { color: #e2e8f0; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .lb-game { color: #94a3b8; font-size: 0.75rem; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -20476,7 +20312,6 @@ kbd { display: inline-flex; align-items: center; justify-content: center; min-wi
     from { opacity: 0; } to { opacity: 1; }
 }
 @keyframes _s30shimmer {
-    0% { transform: translateX(-100%); }
     100% { transform: translateX(200%); }
 }
 /* ── Responsive ─────────────────────────────────────────────────────────────── */
@@ -20599,7 +20434,6 @@ kbd { display: inline-flex; align-items: center; justify-content: center; min-wi
 
 /* ── Sprint 31 Keyframes ────────────────────────────────────────────────────── */
 @keyframes _s31fadeIn {
-    from { opacity: 0; } to { opacity: 1; }
 }
 @keyframes _s31rotate {
     from { transform: rotate(0deg); } to { transform: rotate(360deg); }
@@ -20877,7 +20711,6 @@ kbd { display: inline-flex; align-items: center; justify-content: center; min-wi
 }
 
 @keyframes _s32WmeSweep {
-    0% { left: -100%; }
     50% { left: 100%; }
     100% { left: 100%; }
 }
@@ -21297,9 +21130,6 @@ kbd { display: inline-flex; align-items: center; justify-content: center; min-wi
 }
 
 @keyframes _s33LwSpin {
-    from {
-        transform: rotate(0deg);
-    }
     to {
         transform: rotate(2160deg);
     }
@@ -21558,8 +21388,6 @@ kbd { display: inline-flex; align-items: center; justify-content: center; min-wi
 }
 
 @keyframes _s34AchGlint {
-    0%   { background-position: -200% center; }
-    100% { background-position: 200% center; }
 }
 
 #achievementPopup {
@@ -21656,12 +21484,7 @@ kbd { display: inline-flex; align-items: center; justify-content: center; min-wi
    3. Countdown Flash Deal Banner (#flashDealBanner)
    -------------------------------------------------- */
 
-@keyframes _s34FdBounceIn {
-    0%   { opacity: 0; transform: translateX(-50%) translateY(100%) scale(0.9); }
-    60%  { opacity: 1; transform: translateX(-50%) translateY(-8px) scale(1.02); }
-    80%  { transform: translateX(-50%) translateY(3px) scale(0.99); }
-    100% { transform: translateX(-50%) translateY(0) scale(1); }
-}
+
 
 @keyframes _s34FdUrgentGlow {
     0%, 100% { box-shadow: 0 6px 30px rgba(220, 38, 38, 0.3); }
@@ -22019,7 +21842,6 @@ kbd { display: inline-flex; align-items: center; justify-content: center; min-wi
 
 @keyframes _s35slideIn {
     0% { transform: translateX(120%); opacity: 0; }
-    100% { transform: translateX(0); opacity: 1; }
 }
 
 @keyframes _s35slideOut {
@@ -22192,7 +22014,6 @@ kbd { display: inline-flex; align-items: center; justify-content: center; min-wi
 
 @keyframes _s36calModalIn {
     from { opacity: 0; transform: scale(0.9) translateY(20px); }
-    to   { opacity: 1; transform: scale(1) translateY(0); }
 }
 
 .dlc-close-btn {
@@ -22647,10 +22468,6 @@ kbd { display: inline-flex; align-items: center; justify-content: center; min-wi
 }
 
 @keyframes _s37_rlbSlideUp {
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
 }
 
 .referral-lb-panel.referral-lb-closing {
@@ -22921,8 +22738,6 @@ kbd { display: inline-flex; align-items: center; justify-content: center; min-wi
 }
 
 @keyframes _s37_insShieldPulse {
-    0%, 100% { transform: scale(1); }
-    50% { transform: scale(1.15); }
 }
 
 .spin-ins-label {
@@ -23017,7 +22832,6 @@ kbd { display: inline-flex; align-items: center; justify-content: center; min-wi
 
 @keyframes _s37_insGuaranteePop {
     from { opacity: 0; transform: scale(0.7); }
-    to { opacity: 1; transform: scale(1); }
 }
 
 .spin-ins-guarantee-icon {
@@ -23046,7 +22860,6 @@ kbd { display: inline-flex; align-items: center; justify-content: center; min-wi
 
 @keyframes _s37_insBadgeBounce {
     from { opacity: 0; transform: scale(0.5) translateY(4px); }
-    to { opacity: 1; transform: scale(1) translateY(0); }
 }
 
 .spin-ins-refund-flash {
@@ -23103,8 +22916,6 @@ kbd { display: inline-flex; align-items: center; justify-content: center; min-wi
 }
 
 @keyframes _s37_hhGradientShift {
-    0%, 100% { background-position: 0% 50%; }
-    50% { background-position: 100% 50%; }
 }
 
 .happy-hour-banner.happy-hour-ending {
@@ -23154,7 +22965,6 @@ kbd { display: inline-flex; align-items: center; justify-content: center; min-wi
 }
 
 @keyframes _s37_hhTimerUrgent {
-    0%, 100% { opacity: 1; }
     50% { opacity: 0.5; }
 }
 
@@ -23187,9 +22997,6 @@ kbd { display: inline-flex; align-items: center; justify-content: center; min-wi
 }
 
 @keyframes _s37_hhMultShimmer {
-    0% { left: -100%; }
-    50% { left: 100%; }
-    100% { left: 100%; }
 }
 
 .happy-hour-multiplier-pulse {
@@ -23316,8 +23123,6 @@ body.happy-hour-active .header-container {
 }
 
 @keyframes _s37_hhToastIn {
-    from { opacity: 0; transform: translateX(-50%) translateY(20px); }
-    to { opacity: 1; transform: translateX(-50%) translateY(0); }
 }
 
 .happy-hour-toast.happy-hour-toast-out {
@@ -23325,7 +23130,6 @@ body.happy-hour-active .header-container {
 }
 
 @keyframes _s37_hhToastOut {
-    to { opacity: 0; transform: translateX(-50%) translateY(-10px); }
 }
 
 .happy-hour-toast-icon {
@@ -23460,24 +23264,16 @@ body.happy-hour-active .header-container {
    -------------------------------------------------------------------------- */
 
 @keyframes _s38_recoveryFadeIn {
-    0% { opacity: 0; }
-    100% { opacity: 1; }
 }
 
 @keyframes _s38_recoveryCardPop {
-    0% { opacity: 0; transform: scale(0.85) translateY(20px); }
     60% { opacity: 1; transform: scale(1.03) translateY(-4px); }
-    100% { opacity: 1; transform: scale(1) translateY(0); }
 }
 
 @keyframes _s38_recoveryShimmer {
-    0% { background-position: -200% center; }
-    100% { background-position: 200% center; }
 }
 
 @keyframes _s38_recoveryBadgePulse {
-    0%, 100% { transform: scale(1); }
-    50% { transform: scale(1.08); }
 }
 
 .loss-recovery-overlay {
@@ -23715,13 +23511,11 @@ body.happy-hour-active .header-container {
 
 @keyframes _s38_mileSlideUp {
     0% { opacity: 0; transform: translateY(100%) scale(0.95); }
-    60% { opacity: 1; transform: translateY(-8px) scale(1.02); }
     100% { opacity: 1; transform: translateY(0) scale(1); }
 }
 
 @keyframes _s38_mileConfetti {
     0% { opacity: 1; transform: translateY(0) rotate(0deg) scale(1); }
-    50% { opacity: 1; }
     100% { opacity: 0; transform: translateY(-60px) rotate(var(--confetti-rot, 180deg)) scale(0.3); }
 }
 
@@ -23731,10 +23525,8 @@ body.happy-hour-active .header-container {
 }
 
 @keyframes _s38_mileBounce {
-    0% { transform: scale(1); }
     30% { transform: scale(1.25); }
     60% { transform: scale(0.9); }
-    100% { transform: scale(1); }
 }
 
 .session-mile-bar-wrap {
@@ -23960,7 +23752,6 @@ body.happy-hour-active .header-container {
 
 @keyframes _s38_betSuggestEnter {
     0% { opacity: 0; transform: translateY(8px) scale(0.92); }
-    100% { opacity: 1; transform: translateY(0) scale(1); }
 }
 
 @keyframes _s38_betSuggestPulse {
@@ -23969,12 +23760,10 @@ body.happy-hour-active .header-container {
 }
 
 @keyframes _s38_betSuggestArrow {
-    0%, 100% { transform: translateX(0); }
     50% { transform: translateX(-4px); }
 }
 
 @keyframes _s38_betSuggestShine {
-    0% { left: -100%; }
     100% { left: 200%; }
 }
 
@@ -24245,41 +24034,31 @@ body.happy-hour-active .header-container {
 
 @keyframes _s39_fadeSlideUp {
     from { opacity: 0; transform: translateY(30px) scale(0.97); }
-    to   { opacity: 1; transform: translateY(0) scale(1); }
 }
 
 @keyframes _s39_fadeIn {
-    from { opacity: 0; }
-    to   { opacity: 1; }
 }
 
 @keyframes _s39_itemPop {
     0%   { opacity: 0; transform: translateY(20px) scale(0.9); }
     60%  { transform: translateY(-4px) scale(1.02); }
-    100% { opacity: 1; transform: translateY(0) scale(1); }
 }
 
 @keyframes _s39_pointsPulse {
-    0%, 100% { transform: scale(1); }
     50%      { transform: scale(1.12); }
 }
 
 @keyframes _s39_shimmer {
-    0%   { background-position: -200% center; }
-    100% { background-position: 200% center; }
 }
 
 @keyframes _s39_wheelSpin {
-    0%   { transform: rotate(0deg); }
     100% { transform: rotate(1800deg); }
 }
 
 @keyframes _s39_wheelDecel {
-    0%   { transform: rotate(0deg); }
     60%  { transform: rotate(1500deg); }
     80%  { transform: rotate(1720deg); }
     95%  { transform: rotate(1785deg); }
-    100% { transform: rotate(1800deg); }
 }
 
 @keyframes _s39_wheelGlow {
@@ -24295,11 +24074,9 @@ body.happy-hour-active .header-container {
 @keyframes _s39_resultReveal {
     0%   { opacity: 0; transform: scale(0.3); }
     60%  { transform: scale(1.1); }
-    100% { opacity: 1; transform: scale(1); }
 }
 
 @keyframes _s39_confettiBurst {
-    0%   { opacity: 1; transform: translateY(0) rotate(0deg) scale(1); }
     100% { opacity: 0; transform: translateY(-120px) rotate(720deg) scale(0.3); }
 }
 
@@ -24310,13 +24087,10 @@ body.happy-hour-active .header-container {
 }
 
 @keyframes _s39_segmentPulse {
-    0%, 100% { filter: brightness(1); }
     50%      { filter: brightness(1.3); }
 }
 
 @keyframes _s39_pointerBounce {
-    0%, 100% { transform: translateY(0); }
-    50%      { transform: translateY(-6px); }
 }
 
 
@@ -25182,17 +24956,9 @@ body.happy-hour-active .header-container {
   70% {
     transform: scale(0.95) rotate(-1deg);
   }
-  100% {
-    transform: scale(1) rotate(0deg);
-    opacity: 1;
-  }
 }
 
 @keyframes _s40_sparkle {
-  0%, 100% {
-    opacity: 0;
-    transform: scale(0) rotate(0deg);
-  }
   25% {
     opacity: 1;
     transform: scale(1.2) rotate(90deg);
@@ -25208,13 +24974,9 @@ body.happy-hour-active .header-container {
 }
 
 @keyframes _s40_overlayFadeIn {
-  from { opacity: 0; }
-  to   { opacity: 1; }
 }
 
 @keyframes _s40_overlayFadeOut {
-  from { opacity: 1; }
-  to   { opacity: 0; }
 }
 
 @keyframes _s40_boxEntrance {
@@ -25229,15 +24991,9 @@ body.happy-hour-active .header-container {
   80% {
     transform: scale(0.96) translateY(3px);
   }
-  100% {
-    transform: scale(1) translateY(0);
-    opacity: 1;
-  }
 }
 
 @keyframes _s40_btnShimmer {
-  0% { background-position: -200% center; }
-  100% { background-position: 200% center; }
 }
 
 @keyframes _s40_trophySpin {
@@ -25255,10 +25011,6 @@ body.happy-hour-active .header-container {
     transform: translateY(20px);
     opacity: 0;
   }
-  to {
-    transform: translateY(0);
-    opacity: 1;
-  }
 }
 
 @keyframes _s40_slideDown {
@@ -25273,9 +25025,6 @@ body.happy-hour-active .header-container {
 }
 
 @keyframes _s40_meterFillShine {
-  0% { background-position: 0% 50%; }
-  50% { background-position: 100% 50%; }
-  100% { background-position: 0% 50%; }
 }
 
 @keyframes _s40_milestoneGlowPulse {
@@ -26067,17 +25816,9 @@ body.happy-hour-active .header-container {
     opacity: 1;
     transform: translateX(-6%) scale(1.01);
   }
-  100% {
-    opacity: 1;
-    transform: translateX(0) scale(1);
-  }
 }
 
 @keyframes _s41_slideOutRight {
-  0% {
-    opacity: 1;
-    transform: translateX(0) scale(1);
-  }
   100% {
     opacity: 0;
     transform: translateX(120%) scale(0.92);
@@ -26093,17 +25834,9 @@ body.happy-hour-active .header-container {
     opacity: 1;
     transform: translateX(6%) scale(1.01);
   }
-  100% {
-    opacity: 1;
-    transform: translateX(0) scale(1);
-  }
 }
 
 @keyframes _s41_slideOutLeft {
-  0% {
-    opacity: 1;
-    transform: translateX(0) scale(1);
-  }
   100% {
     opacity: 0;
     transform: translateX(-120%) scale(0.92);
@@ -26172,9 +25905,7 @@ body.happy-hour-active .header-container {
 }
 
 @keyframes _s41_dayCheckPop {
-  0% { transform: scale(0); opacity: 0; }
   60% { transform: scale(1.3); opacity: 1; }
-  100% { transform: scale(1); opacity: 1; }
 }
 
 @keyframes _s41_multiplierBadgePulse {
@@ -26198,8 +25929,6 @@ body.happy-hour-active .header-container {
 }
 
 @keyframes _s41_fadeIn {
-  0% { opacity: 0; }
-  100% { opacity: 1; }
 }
 
 
@@ -27173,9 +26902,6 @@ body.s41-both-panels #dailyCashbackPanel {
    ------------------------------------------------------------------ */
 
 @keyframes _s42_wheelSpin {
-  0% {
-    transform: rotate(0deg);
-  }
   80% {
     transform: rotate(1800deg);
   }
@@ -27185,10 +26911,6 @@ body.s41-both-panels #dailyCashbackPanel {
 }
 
 @keyframes _s42_warningPulse {
-  0%, 100% {
-    opacity: 1;
-    transform: scale(1);
-  }
   50% {
     opacity: 0.5;
     transform: scale(1.2);
@@ -27200,44 +26922,21 @@ body.s41-both-panels #dailyCashbackPanel {
     transform: translateY(100%);
     opacity: 0;
   }
-  100% {
-    transform: translateY(0);
-    opacity: 1;
-  }
 }
 
 @keyframes _s42_chipBounce {
-  0% {
-    transform: scale(1);
-  }
-  30% {
-    transform: scale(1.25);
-  }
   50% {
     transform: scale(0.9);
   }
   70% {
     transform: scale(1.1);
   }
-  100% {
-    transform: scale(1);
-  }
 }
 
 @keyframes _s42_overlayFadeIn {
-  0% {
-    opacity: 0;
-  }
-  100% {
-    opacity: 1;
-  }
 }
 
 @keyframes _s42_cardPopIn {
-  0% {
-    opacity: 0;
-    transform: translate(-50%, -50%) scale(0.8);
-  }
   100% {
     opacity: 1;
     transform: translate(-50%, -50%) scale(1);
@@ -27245,12 +26944,6 @@ body.s41-both-panels #dailyCashbackPanel {
 }
 
 @keyframes _s42_shimmer {
-  0% {
-    background-position: -200% center;
-  }
-  100% {
-    background-position: 200% center;
-  }
 }
 
 @keyframes _s42_pointerBob {
@@ -28113,16 +27806,9 @@ body.s41-both-panels #dailyCashbackPanel {
   75% {
     transform: translate(-50%, -50%) scale(0.97);
   }
-  100% {
-    opacity: 1;
-    transform: translate(-50%, -50%) scale(1);
-  }
 }
 
 @keyframes _s43_clockTick {
-  0% {
-    transform: rotate(0deg);
-  }
   10% {
     transform: rotate(6deg);
   }
@@ -28135,21 +27821,9 @@ body.s41-both-panels #dailyCashbackPanel {
 }
 
 @keyframes _s43_shimmerSlide {
-  0% {
-    left: -100%;
-  }
-  100% {
-    left: 200%;
-  }
 }
 
 @keyframes _s43_backdropFadeIn {
-  0% {
-    opacity: 0;
-  }
-  100% {
-    opacity: 1;
-  }
 }
 
 @keyframes _s43_badgeUnlock {
@@ -28159,10 +27833,6 @@ body.s41-both-panels #dailyCashbackPanel {
   }
   60% {
     transform: scale(1.2) rotate(5deg);
-    opacity: 1;
-  }
-  100% {
-    transform: scale(1) rotate(0deg);
     opacity: 1;
   }
 }
@@ -28937,10 +28607,6 @@ body.s41-both-panels #dailyCashbackPanel {
     opacity: 0;
     transform: translateY(60px) scale(0.92);
   }
-  to {
-    opacity: 1;
-    transform: translateY(0) scale(1);
-  }
 }
 
 @keyframes _s44_tileFlip {
@@ -28956,27 +28622,11 @@ body.s41-both-panels #dailyCashbackPanel {
 }
 
 @keyframes _s44_resultSlideIn {
-  from {
-    opacity: 0;
-    transform: translateY(20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
 }
 
 @keyframes _s44_badgeEarnedPop {
-  0% {
-    transform: scale(0.5);
-    opacity: 0;
-  }
   60% {
     transform: scale(1.2);
-    opacity: 1;
-  }
-  100% {
-    transform: scale(1);
     opacity: 1;
   }
 }
@@ -28997,10 +28647,6 @@ body.s41-both-panels #dailyCashbackPanel {
     transform: translateY(100%);
     opacity: 0;
   }
-  to {
-    transform: translateY(0);
-    opacity: 1;
-  }
 }
 
 @keyframes _s44_shieldPulse {
@@ -29019,19 +28665,9 @@ body.s41-both-panels #dailyCashbackPanel {
     opacity: 0;
     transform: translateY(6px);
   }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
 }
 
 @keyframes _s44_tileShimmer {
-  0% {
-    background-position: -200% center;
-  }
-  100% {
-    background-position: 200% center;
-  }
 }
 
 /* -------------------------------------------------------
@@ -29920,25 +29556,19 @@ body.s41-both-panels #dailyCashbackPanel {
    ---------------------------------------------------------- */
 
 @keyframes _s45_fadeIn {
-  from { opacity: 0; }
-  to   { opacity: 1; }
 }
 
 @keyframes _s45_slideUp {
   from { opacity: 0; transform: translateY(40px) scale(0.95); }
-  to   { opacity: 1; transform: translateY(0) scale(1); }
 }
 
 @keyframes _s45_slideDown {
   from { transform: translateY(-100%); }
-  to   { transform: translateY(0); }
 }
 
 @keyframes _s45_bounceIn {
   0%   { transform: scale(0.3); opacity: 0; }
-  50%  { transform: scale(1.12); opacity: 1; }
   70%  { transform: scale(0.92); }
-  100% { transform: scale(1); }
 }
 
 @keyframes _s45_crownBounce {
@@ -29949,10 +29579,8 @@ body.s41-both-panels #dailyCashbackPanel {
 }
 
 @keyframes _s45_amountPop {
-  0%   { transform: scale(0); opacity: 0; }
   60%  { transform: scale(1.25); opacity: 1; }
   80%  { transform: scale(0.9); }
-  100% { transform: scale(1); }
 }
 
 @keyframes _s45_starFloat {
@@ -29962,8 +29590,6 @@ body.s41-both-panels #dailyCashbackPanel {
 }
 
 @keyframes _s45_shimmerGold {
-  0%   { background-position: -200% center; }
-  100% { background-position: 200% center; }
 }
 
 @keyframes _s45_pulseGlow {
@@ -29979,7 +29605,6 @@ body.s41-both-panels #dailyCashbackPanel {
 
 @keyframes _s45_coinFall {
   0%   { transform: translateY(-80px) rotate(0deg); opacity: 1; }
-  80%  { opacity: 1; }
   100% { transform: translateY(calc(100vh + 40px)) rotate(720deg); opacity: 0; }
 }
 
@@ -30000,7 +29625,6 @@ body.s41-both-panels #dailyCashbackPanel {
 
 @keyframes _s45_slideRight {
   from { transform: translateX(-20px); opacity: 0; }
-  to   { transform: translateX(0); opacity: 1; }
 }
 
 @keyframes _s45_historyExpand {
@@ -31008,17 +30632,9 @@ body.s41-both-panels #dailyCashbackPanel {
     transform: translateX(8px);
     opacity: 1;
   }
-  100% {
-    transform: translateX(0);
-    opacity: 1;
-  }
 }
 
 @keyframes _s46_slideOutLeft {
-  0% {
-    transform: translateX(0);
-    opacity: 1;
-  }
   100% {
     transform: translateX(-120%);
     opacity: 0;
@@ -31026,29 +30642,13 @@ body.s41-both-panels #dailyCashbackPanel {
 }
 
 @keyframes _s46_slideInRight {
-  0% {
-    transform: translateX(120%);
-    opacity: 0;
-  }
   60% {
     transform: translateX(-8px);
-    opacity: 1;
-  }
-  100% {
-    transform: translateX(0);
     opacity: 1;
   }
 }
 
 @keyframes _s46_slideOutRight {
-  0% {
-    transform: translateX(0);
-    opacity: 1;
-  }
-  100% {
-    transform: translateX(120%);
-    opacity: 0;
-  }
 }
 
 @keyframes _s46_fadeScaleIn {
@@ -31060,17 +30660,9 @@ body.s41-both-panels #dailyCashbackPanel {
     transform: scale(1.05) translateY(0);
     opacity: 1;
   }
-  100% {
-    transform: scale(1) translateY(0);
-    opacity: 1;
-  }
 }
 
 @keyframes _s46_fadeScaleOut {
-  0% {
-    transform: scale(1);
-    opacity: 1;
-  }
   100% {
     transform: scale(0.7) translateY(-10px);
     opacity: 0;
@@ -31115,12 +30707,6 @@ body.s41-both-panels #dailyCashbackPanel {
 }
 
 @keyframes _s46_shimmerFill {
-  0% {
-    background-position: -200% center;
-  }
-  100% {
-    background-position: 200% center;
-  }
 }
 
 @keyframes _s46_milestoneReached {
@@ -31199,9 +30785,7 @@ body.s41-both-panels #dailyCashbackPanel {
   overflow-y: hidden;
   scroll-behavior: smooth;
   -webkit-overflow-scrolling: touch;
-  scrollbar-width: none;
-  -ms-overflow-style: none;
-}
+  scrollbar-width: none;}
 
 .s46-fqp-scroll::-webkit-scrollbar {
   display: none;
@@ -32196,9 +31780,7 @@ body.s41-both-panels #dailyCashbackPanel {
 }
 
 @keyframes _s47_milestoneCheck {
-  0% { transform: scale(0) rotate(-180deg); opacity: 0; }
   60% { transform: scale(1.3) rotate(10deg); opacity: 1; }
-  100% { transform: scale(1) rotate(0deg); opacity: 1; }
 }
 
 @keyframes _s47_fireFlicker {
@@ -32219,7 +31801,6 @@ body.s41-both-panels #dailyCashbackPanel {
 }
 
 @keyframes _s47_multiplierBounce {
-  0%, 100% { transform: translateY(0); }
   30% { transform: translateY(-6px); }
   60% { transform: translateY(2px); }
 }
@@ -32230,7 +31811,6 @@ body.s41-both-panels #dailyCashbackPanel {
 }
 
 @keyframes _s47_lidOpen {
-  0% { transform: rotateX(0deg) translateY(0); }
   40% { transform: rotateX(-110deg) translateY(-30px); }
   60% { transform: rotateX(-95deg) translateY(-25px); }
   100% { transform: rotateX(-105deg) translateY(-28px); }
@@ -32238,7 +31818,6 @@ body.s41-both-panels #dailyCashbackPanel {
 
 @keyframes _s47_sparkle {
   0% { transform: translate(0, 0) scale(0) rotate(0deg); opacity: 1; }
-  50% { opacity: 1; }
   100% { transform: translate(var(--s47-sx, 60px), var(--s47-sy, -80px)) scale(1.2) rotate(360deg); opacity: 0; }
 }
 
@@ -32246,7 +31825,6 @@ body.s41-both-panels #dailyCashbackPanel {
   0% { transform: scale(0) rotate(-10deg); opacity: 0; }
   60% { transform: scale(1.15) rotate(3deg); opacity: 1; }
   80% { transform: scale(0.95) rotate(-1deg); }
-  100% { transform: scale(1) rotate(0deg); opacity: 1; }
 }
 
 @keyframes _s47_confettiFall {
@@ -32255,19 +31833,14 @@ body.s41-both-panels #dailyCashbackPanel {
 }
 
 @keyframes _s47_timerTick {
-  0%, 100% { opacity: 1; }
   50% { opacity: 0.6; }
 }
 
 @keyframes _s47_slideDown {
-  0% { transform: translateY(-100%); opacity: 0; }
-  100% { transform: translateY(0); opacity: 1; }
 }
 
 @keyframes _s47_depositCardSlideIn {
-  0% { transform: translateX(-120%); opacity: 0; }
   60% { transform: translateX(5%); opacity: 1; }
-  100% { transform: translateX(0); opacity: 1; }
 }
 
 /* ── 1. Daily Deposit Goal ────────────────────────────────────────────────── */
@@ -33520,15 +33093,11 @@ body.s47-gift-open {
 }
 
 @keyframes _s48_arrowBounce {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-6px); }
 }
 
 @keyframes _s48_rungUnlock {
-  0% { transform: scale(1); filter: brightness(1); }
   30% { transform: scale(1.15); filter: brightness(1.5); }
   60% { transform: scale(0.95); filter: brightness(1.2); }
-  100% { transform: scale(1); filter: brightness(1); }
 }
 
 @keyframes _s48_topRungCelebrate {
@@ -33541,7 +33110,6 @@ body.s47-gift-open {
 
 @keyframes _s48_slideInRight {
   0% { transform: translateX(100%); opacity: 0; }
-  100% { transform: translateX(0); opacity: 1; }
 }
 
 @keyframes _s48_slideUpPanel {
@@ -33556,8 +33124,6 @@ body.s47-gift-open {
 }
 
 @keyframes _s48_fadeIn {
-  0% { opacity: 0; }
-  100% { opacity: 1; }
 }
 
 @keyframes _s48_fadeInUp {
@@ -33571,8 +33137,6 @@ body.s47-gift-open {
 }
 
 @keyframes _s48_shimmerBar {
-  0% { background-position: -200% center; }
-  100% { background-position: 200% center; }
 }
 
 @keyframes _s48_cardHoverLift {
@@ -33582,7 +33146,6 @@ body.s47-gift-open {
 
 @keyframes _s48_rankBadgeShine {
   0% { background-position: -100% 0; }
-  100% { background-position: 200% 0; }
 }
 
 /* --------------------------------------------------------------------------
@@ -36048,7 +35611,6 @@ body.s47-gift-open {
 
 /* 2 - digit flash when <30s */
 @keyframes _s49_digit_flash {
-  0%, 100% { opacity: 1; }
   50%      { opacity: 0.4; }
 }
 
@@ -36062,8 +35624,6 @@ body.s47-gift-open {
 @keyframes _s49_place_entrance {
   0%   { transform: scale(3); opacity: 0; }
   60%  { transform: scale(0.9); opacity: 1; }
-  80%  { transform: scale(1.05); }
-  100% { transform: scale(1); opacity: 1; }
 }
 
 /* 5 - liquid wave on fill surface */
@@ -36095,7 +35655,6 @@ body.s47-gift-open {
 
 /* 8 - contribution tick rise */
 @keyframes _s49_tick_rise {
-  0%   { transform: translateX(-50%) translateY(0); opacity: 1; }
   100% { transform: translateX(-50%) translateY(-30px); opacity: 0; }
 }
 
@@ -36107,8 +35666,6 @@ body.s47-gift-open {
 
 /* 10 - banner rotate (conic sweep) */
 @keyframes _s49_banner_rotate {
-  0%   { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
 }
 
 /* 11 - flame dance for streak */
@@ -36143,9 +35700,7 @@ body.s47-gift-open {
 
 /* 14 - spin counter bump on increment */
 @keyframes _s49_spin_bump {
-  0%   { transform: scale(1); }
   40%  { transform: scale(1.25); color: #00ff88; }
-  100% { transform: scale(1); }
 }
 
 .s49-race-spin-count.s49-bumping {
@@ -36155,7 +35710,6 @@ body.s47-gift-open {
 /* 15 - share button ripple on click */
 @keyframes _s49_share_ripple {
   0%   { transform: scale(0); opacity: 0.5; }
-  100% { transform: scale(2.5); opacity: 0; }
 }
 
 .s49-share-btn-ripple {
@@ -36488,13 +36042,9 @@ body.s47-gift-open {
    -------------------------------------------------------------------------- */
 
 @keyframes _s50_fadeInScale {
-  0% { opacity: 0; transform: scale(0.85) translateY(20px); }
-  100% { opacity: 1; transform: scale(1) translateY(0); }
 }
 
 @keyframes _s50_shimmerGold {
-  0% { background-position: -200% center; }
-  100% { background-position: 200% center; }
 }
 
 @keyframes _s50_pulseGlow {
@@ -36526,7 +36076,6 @@ body.s47-gift-open {
 
 @keyframes _s50_widgetSlideUp {
   0% { transform: translateY(100%) scale(0.9); opacity: 0; }
-  100% { transform: translateY(0) scale(1); opacity: 1; }
 }
 
 @keyframes _s50_barGrow {
@@ -36536,7 +36085,6 @@ body.s47-gift-open {
 
 @keyframes _s50_countUp {
   0% { opacity: 0; transform: translateY(8px); }
-  100% { opacity: 1; transform: translateY(0); }
 }
 
 @keyframes _s50_crownBob {
@@ -36546,13 +36094,9 @@ body.s47-gift-open {
 
 @keyframes _s50_ripple {
   0% { transform: scale(1); opacity: 0.5; }
-  100% { transform: scale(2.5); opacity: 0; }
 }
 
 @keyframes _s50_gradientShift {
-  0% { background-position: 0% 50%; }
-  50% { background-position: 100% 50%; }
-  100% { background-position: 0% 50%; }
 }
 
 @keyframes _s50_spinStar {
@@ -37534,9 +37078,7 @@ body.s47-gift-open {
 
   .s50-jackpot-tiers {
     gap: 8px;
-    overflow-x: auto;
-    -ms-overflow-style: none;
-    scrollbar-width: none;
+    overflow-x: auto;scrollbar-width: none;
   }
 
   .s50-jackpot-tiers::-webkit-scrollbar {
@@ -37747,8 +37289,6 @@ body.s47-gift-open {
     animation: _sessionDangerPulse 1.2s ease-in-out infinite;
 }
 @keyframes _sessionDangerPulse {
-    0%, 100% { opacity: 1; }
-    50%       { opacity: 0.65; }
 }
 @media (max-width: 650px) {
     #sessionTimerDisplay { display: none !important; }
@@ -39118,7 +38658,6 @@ body.slot-game-active [class*="modal-backdrop"]:not(#slotModal) {
     animation: hcm-pulse 1.5s ease-in-out infinite;
 }
 @keyframes hcm-pulse {
-    0%, 100% { opacity: 1; }
     50%      { opacity: 0.75; }
 }
 .hcm-fire { color: #ff3838; background: linear-gradient(135deg, rgba(255,56,56,0.2), rgba(255,118,117,0.15)); text-shadow: 0 0 6px rgba(255,56,56,0.5); }
@@ -39287,8 +38826,6 @@ body.slot-game-active [class*="modal-backdrop"]:not(#slotModal) {
     animation: brh-pulse 0.8s ease-in-out infinite;
 }
 @keyframes brh-pulse {
-    0%, 100% { opacity: 1; }
-    50%      { opacity: 0.6; }
 }
 
 /* Sprint 185: Risk score badge */
@@ -39353,7 +38890,6 @@ body.slot-game-active [class*="modal-backdrop"]:not(#slotModal) {
 }
 @keyframes lsb-flash {
     0%   { transform: scale(1.4); opacity: 0.5; }
-    100% { transform: scale(1);   opacity: 1; }
 }
 
 /* Sprint 188: Payout histogram bar */
@@ -39422,7 +38958,6 @@ body.slot-game-active [class*="modal-backdrop"]:not(#slotModal) {
     animation: asb-pulse 0.5s ease-in-out infinite alternate;
 }
 @keyframes asb-pulse {
-    from { filter: brightness(1); }
     to   { filter: brightness(1.2); }
 }
 
@@ -39444,7 +38979,6 @@ body.slot-game-active [class*="modal-backdrop"]:not(#slotModal) {
 }
 .wcb-ended { color: #636e72; background: rgba(99,110,114,0.08); }
 @keyframes wcb-shake {
-    0%, 100% { transform: translateX(0); }
     25%      { transform: translateX(-2px); }
     75%      { transform: translateX(2px); }
 }
@@ -39496,7 +39030,6 @@ body.slot-game-active [class*="modal-backdrop"]:not(#slotModal) {
 }
 @keyframes wmb-pop {
     0%   { transform: scale(1.3); opacity: 0.5; }
-    100% { transform: scale(1);   opacity: 1; }
 }
 
 /* Sprint 196: Loss streak comfort badge */
@@ -39592,8 +39125,6 @@ body.slot-game-active [class*="modal-backdrop"]:not(#slotModal) {
     animation: sbb-warn 1s ease-in-out infinite;
 }
 @keyframes sbb-warn {
-    0%, 100% { opacity: 1; }
-    50%      { opacity: 0.6; }
 }
 
 
@@ -39618,7 +39149,6 @@ body.slot-game-active [class*="modal-backdrop"]:not(#slotModal) {
     animation: dub-shine 1s ease-in-out infinite alternate;
 }
 @keyframes dub-shine {
-    from { filter: brightness(1); }
     to   { filter: brightness(1.25); }
 }
 
@@ -39649,8 +39179,6 @@ body.slot-game-active [class*="modal-backdrop"]:not(#slotModal) {
     animation: scb-pulse 1.2s ease-in-out infinite;
 }
 @keyframes scb-pulse {
-    0%, 100% { opacity: 1; }
-    50%      { opacity: 0.65; }
 }
 
 /* Sprint 206: Bet efficiency badge */
@@ -39769,7 +39297,6 @@ body.slot-game-active [class*="modal-backdrop"]:not(#slotModal) {
 }
 @keyframes mjp-burst {
     0%   { transform: scale(1.4); }
-    100% { transform: scale(1); }
 }
 
 /* Sprint 214: Keyboard hint badge */
@@ -39826,8 +39353,6 @@ body.slot-game-active [class*="modal-backdrop"]:not(#slotModal) {
     animation: pbb-flash 0.6s ease-out;
 }
 @keyframes pbb-flash {
-    0%   { transform: scale(1.3); opacity: 0.5; }
-    100% { transform: scale(1); opacity: 1; }
 }
 
 /* Sprint 217: Grind meter badge */
@@ -39904,7 +39429,6 @@ body.slot-game-active [class*="modal-backdrop"]:not(#slotModal) {
     animation: cga-shiver 0.3s ease-in-out;
 }
 @keyframes cga-shiver {
-    0%, 100% { transform: translateX(0); }
     25%      { transform: translateX(-1px); }
     75%      { transform: translateX(1px); }
 }
@@ -39949,8 +39473,6 @@ body.slot-game-active [class*="modal-backdrop"]:not(#slotModal) {
     animation: end-glow 1.5s ease-in-out infinite alternate;
 }
 @keyframes end-glow {
-    from { filter: brightness(1); }
-    to   { filter: brightness(1.2); }
 }
 
 
@@ -41216,7 +40738,6 @@ body.slot-game-active [class*="modal-backdrop"]:not(#slotModal) {
 .rating-later-btn { background: #333; color: #ccc; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; margin: 4px; }
 
 @media (min-width: 769px) {
-    .mobile-bottom-nav { display: none; }
 }
 
 
@@ -41382,7 +40903,6 @@ body.slot-game-active [class*="modal-backdrop"]:not(#slotModal) {
 }
 @keyframes particleFall {
     0% { transform: translateY(0) rotate(0deg); opacity: 1; }
-    100% { transform: translateY(100vh) rotate(720deg); opacity: 0; }
 }
 .bigwin-overlay {
     position: fixed; top: 0; left: 0; width: 100%; height: 100%;
@@ -42308,7 +41828,6 @@ body.no-animations *{animation:none!important;transition:none!important}
 .lb-season-widget{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:linear-gradient(135deg,#1a1a2e,#16213e);border:1px solid #ffd700;border-radius:16px;padding:25px;z-index:10000;width:420px;max-height:80vh;overflow-y:auto;color:#fff}
 .lb-inner h3{color:#ffd700;margin-bottom:10px}
 .lb-season-info{display:flex;justify-content:space-between;font-size:0.85em;color:#aaa;margin-bottom:10px}
-.lb-prizes{display:flex;gap:15px;margin-bottom:12px;font-size:0.85em;color:#ffd700}
 .lb-row{display:flex;align-items:center;gap:10px;padding:8px;border-bottom:1px solid #222;font-size:0.9em}
 .lb-you{background:rgba(255,215,0,0.1);border-radius:8px}
 .lb-rank{font-weight:bold;color:#ffd700;min-width:30px}
@@ -42316,7 +41835,6 @@ body.no-animations *{animation:none!important;transition:none!important}
 .lb-name{flex:1}
 .lb-score{color:#00ff88;font-weight:bold}
 .friends-panel{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:linear-gradient(135deg,#1a1a2e,#16213e);border:1px solid #6c5ce7;border-radius:16px;padding:25px;z-index:10000;width:380px;color:#fff}
-.fr-inner h3{color:#a29bfe;margin-bottom:12px}
 .fr-search{display:flex;gap:8px;margin-bottom:12px}
 .fr-search input{flex:1;padding:8px;border-radius:6px;border:1px solid #333;background:#0d1117;color:#fff}
 .fr-add{padding:8px 16px;background:#6c5ce7;border:none;border-radius:6px;color:#fff;font-weight:bold;cursor:pointer}
@@ -42361,8 +41879,6 @@ body.no-animations *{animation:none!important;transition:none!important}
 .cjp-bar{height:4px;background:#222;border-radius:2px;overflow:hidden;margin:4px 0}
 .cjp-fill{height:100%;background:linear-gradient(90deg,#ffd700,#ff8c00);border-radius:2px;transition:width 0.5s}
 .cjp-info{font-size:0.7em;color:#888}
-.referral-tiers-panel{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:linear-gradient(135deg,#1a1a2e,#16213e);border:1px solid #ffd700;border-radius:16px;padding:25px;z-index:10000;width:400px;color:#fff}
-.rt-inner h3{color:#ffd700;margin-bottom:12px}
 .rt-current{display:flex;justify-content:space-between;padding:12px;border:1px solid;border-radius:10px;margin-bottom:12px;font-size:0.9em}
 .rt-tier{font-weight:bold;font-size:1.1em}
 .rt-code{display:flex;align-items:center;gap:10px;padding:10px;background:rgba(0,0,0,0.3);border-radius:8px;margin-bottom:12px;font-size:0.9em}
@@ -42774,21 +42290,10 @@ body.no-animations *{animation:none!important;transition:none!important}
 /* ===== Sprint 603-610: Server-Side Enhancements ===== */
 
 /* Server Status Badge */
-.ss-badge603{position:fixed;top:32px;left:12px;font-size:10px;padding:3px 10px;border-radius:8px;font-weight:700;z-index:9998}
-.ss-ok,.ss-healthy{background:rgba(76,175,80,0.15);color:#4caf50}
-.ss-degraded{background:rgba(255,152,0,0.15);color:#ff9800}
-.ss-error,.ss-offline{background:rgba(244,67,54,0.15);color:#f44336}
 
 /* Connection Quality */
-.cq-badge603{position:fixed;top:32px;right:60px;font-size:10px;padding:3px 8px;border-radius:8px;font-weight:700;z-index:9998}
-.cq-good{background:rgba(76,175,80,0.15);color:#4caf50}
-.cq-fair{background:rgba(255,152,0,0.15);color:#ff9800}
-.cq-poor{background:rgba(244,67,54,0.15);color:#f44336}
 
 /* Low Bandwidth Mode */
-.ms-low-bandwidth .season-banner555,.ms-low-bandwidth .promo-banner587{display:none}
-.ms-low-bandwidth .chat-panel595{display:none}
-.ms-low-bandwidth .admin-qs563{display:none}
 
 
 /* ===== Sprint 611-618: Advanced Analytics ===== */
@@ -43009,7 +42514,6 @@ body.no-animations *{animation:none!important;transition:none!important}
 .pt-header h3 { margin: 0; font-size: 15px; }
 .pt-header button { background: none; border: none; color: #94a3b8; font-size: 20px; cursor: pointer; }
 .pt-body { padding: 16px; }
-.pt-section { margin-bottom: 16px; }
 .pt-section h4 { color: #f59e0b; font-size: 13px; margin: 0 0 8px; }
 .pt-row { display: flex; justify-content: space-between; padding: 6px 0; font-size: 13px; color: #94a3b8; border-bottom: 1px solid rgba(255,255,255,0.05); }
 .pt-row span:last-child { color: #fff; font-weight: 600; }
@@ -43330,7 +42834,6 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 @media (max-width: 768px) {
     .hero-slides { height: 240px; }
     .hero-slide { padding: 20px 24px; }
-    .hero-title { font-size: 22px; }
     .hero-slide-thumb { width: 120px; height: 120px; }
     .hero-play-btn { padding: 10px 24px; font-size: 13px; }
 }
@@ -43338,5 +42841,4 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
     .hero-slides { height: 200px; }
     .hero-slide-thumb { display: none; }
     .hero-slide-content { max-width: 100%; }
-    .hero-title { font-size: 20px; }
 }

@@ -268,14 +268,18 @@ app.use('/api/admin-email', adminLimiter);
 app.use('/api/admin-rg', adminLimiter);
 app.use('/api/admin-metrics', adminLimiter);
 
+const userRateLimit = require('./middleware/user-ratelimit');
 const spinLimiter = rateLimit({
   windowMs: 60 * 1000,
-  max: parseInt(process.env.RL_SPIN_PER_MIN, 10) || 60,
+  max: parseInt(process.env.RL_SPIN_PER_MIN, 10) || 120,
   standardHeaders: true,
   legacyHeaders: false,
   message: { error: 'Spin rate limit exceeded — slow down.' },
 });
 app.use('/api/spin', spinLimiter);
+// Per-user spin limiter — prevents multi-account bot farming via proxy rotation.
+// IP limiter (above) catches naive bots; this catches authenticated abuse.
+app.use('/api/spin', userRateLimit({ maxRequests: 120, windowMs: 60 * 1000 }));
 
 // ── Geo-Block REMOVED — the casino is open to all jurisdictions. No
 // country/IP gating on registration or payments. (Operator decision; ensure
@@ -489,6 +493,7 @@ mount('/api/deposit-campaigns', './routes/campaigns.routes',           'deposit-
 // Health + newsletter + SEO (dynamic sitemap/robots)
 mount('/api/health',     './routes/health.routes',     'health');
 mount('/api/newsletter', './routes/newsletter.routes', 'newsletter');
+mount('/api/contact',    './routes/contact.routes',    'contact');
 mount('/api/bundles',    './routes/bundles.routes',    'bundles (stub — 501 until Stripe wired)');
 mount('/',               './routes/seo.routes',        'seo (sitemap, robots, structured-data)');
 
