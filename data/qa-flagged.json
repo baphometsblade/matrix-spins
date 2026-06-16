@@ -112,14 +112,6 @@
   "issue": "Ornate book/plaque, no diamond depicted"
  },
  {
-  "tile": "diamonds-and-lace/gold",
-  "issue": "Bitcoin crypto coin with B letter"
- },
- {
-  "tile": "dingo-desert-runner/desert",
-  "issue": "Bitcoin crypto coin, not desert"
- },
- {
   "tile": "dingo-desert-runner/speed",
   "issue": "Empty ornate frame, no subject"
  },
@@ -312,10 +304,6 @@
   "issue": "Empty gilded frame with blank gold panel"
  },
  {
-  "tile": "pagoda-mystical-riches/gold",
-  "issue": "Empty black photo frame, no subject"
- },
- {
   "tile": "pagoda-mystical-riches/spirit",
   "issue": "Ornate frame with empty black center"
  },
@@ -374,10 +362,6 @@
  {
   "tile": "ra-sun-god-royale/ankh",
   "issue": "Christian cross, not an Egyptian ankh"
- },
- {
-  "tile": "ra-sun-god-royale/gold",
-  "issue": "Bitcoin crypto coins, off-theme for Egyptian gold"
  },
  {
   "tile": "red-lantern-festival/celebration",
@@ -564,14 +548,6 @@
   "issue": "regenerated 3x (2026-06-17): generator product-shot template forces a picture-frame/gold-box around the scene; cannot render a clean frameless sunset — kept on emoji fallback"
  },
  {
-  "tile": "alchemist-transmutation-vault/vault",
-  "issue": "AUDIT 2026-06-17: central dial medallion stamped with a B/R letter (SDXL Bitcoin-stamp pattern); crypto-suspect + stray letter"
- },
- {
-  "tile": "cherry-blossom-bonus/gold-coin",
-  "issue": "AUDIT 2026-06-17: coin stamped with fabricated 1K denomination (garbled fake text)"
- },
- {
   "tile": "classic-gold-vault/gold-bar",
   "issue": "AUDIT 2026-06-17: gold ingot with illegible fake stamped lettering (garbled text)"
  },
@@ -584,14 +560,6 @@
   "issue": "AUDIT 2026-06-17: ingot with garbled embossed foundry text"
  },
  {
-  "tile": "fruit-fortune-wheel/coin",
-  "issue": "AUDIT 2026-06-17: coin centre is garbled/illegible fake stamped lettering"
- },
- {
-  "tile": "koi-fish-abundance/abundance",
-  "issue": "AUDIT 2026-06-17: empty hollow gold picture frame with coins spilling out (empty-frame)"
- },
- {
   "tile": "lucky-sevens-infinity/bar",
   "issue": "AUDIT 2026-06-17: ingot bar with garbled fake lettering and numbers"
  },
@@ -600,23 +568,7 @@
   "issue": "AUDIT 2026-06-17: ingot bar with mirrored garbled embossed text"
  },
  {
-  "tile": "pharaoh-eternal-dynasty/gold",
-  "issue": "AUDIT 2026-06-17: CRYPTO (2-pass confirmed) coins stamped with Bitcoin-B-like glyph"
- },
- {
-  "tile": "thoth-wisdom-keeper/gold",
-  "issue": "AUDIT 2026-06-17: CRYPTO (2-pass confirmed) foreground coin clearly stamped with Bitcoin B"
- },
- {
-  "tile": "tigers-golden-path/coin",
-  "issue": "AUDIT 2026-06-17: coin with central glyph reading as Bitcoin B (crypto-suspect)"
- },
- {
   "tile": "vintage-vault-riches/bar",
   "issue": "AUDIT 2026-06-17: ingot with garbled fake assay text"
- },
- {
-  "tile": "vintage-vault-riches/vault",
-  "issue": "AUDIT 2026-06-17: gold bar with garbled stamped text"
  }
 ]

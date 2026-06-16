@@ -69,21 +69,20 @@ describe('curated symbol-art shipping contract', () => {
     // caught by a dedicated crypto-skeptic re-inspection. Lock them out explicitly so
     // a regression that drops them from qa-flagged.json fails here with a crypto label.
     //
-    // 2026-06-17: luck-prosperity-wheel/coin and wizard-spellbook-master/gold were
-    // GENUINELY fixed — re-generated with anti-crypto game-scoped subjects, then
-    // verified crypto-clean by a dedicated crypto-skeptic visual re-inspection.
-    // aboriginal-dreamtime-quest/gold was likewise regenerated (raw gold dust + nuggets,
-    // no coins) and verified clean, so it now ships and leaves this guard.
-    //
-    // A 16-agent two-pass crypto audit of the 96 shipped gold/coin tiles then caught
-    // TWO live Bitcoin tiles the earlier single-pass audit had shipped — confirmed by
-    // both audit passes AND a manual crypto-skeptic re-read. They are now masked
-    // (qa-flagged) pending a clean nugget-based regen; lock them out explicitly so a
-    // regression that drops them from qa-flagged.json fails here with a crypto label.
-    const cryptoTiles = [
-      'thoth-wisdom-keeper/gold',
-      'pharaoh-eternal-dynasty/gold',
-    ];
+    // History (all 2026-06-17): SDXL stamps a Bitcoin B on bare gold-coin prompts, so
+    // every "gold"/"coin" tile that ever rendered crypto was regenerated AWAY from coins
+    // — raw gold NUGGETS/dust (no flat face to stamp), a Chinese square-holed coin, an
+    // ingot/treasure hoard, themed coin embosses (tiger/flower/fruit) — then verified
+    // crypto-clean by a dedicated crypto-skeptic re-read. Tiles fixed & shipped this way:
+    //   luck-prosperity-wheel/coin, wizard-spellbook-master/gold, aboriginal-dreamtime-quest/gold,
+    //   and (caught by a 16-agent TWO-PASS audit that the earlier single-pass audit had
+    //   shipped) thoth-wisdom-keeper/gold + pharaoh-eternal-dynasty/gold (live Bitcoin),
+    //   plus tigers-golden-path/coin + alchemist-transmutation-vault/vault (crypto-suspect).
+    // No known-crypto tile remains in the library, so this explicit guard is now empty;
+    // the "ZERO QA-flagged tiles shipped" test above plus the standing two-pass crypto
+    // audit (scripts-driven) are the ongoing protection. If a future regen ever ships a
+    // tile that QA flags as crypto, add it here so a re-introduction fails with a label.
+    const cryptoTiles = [];
     const live = cryptoTiles.filter((t) => {
       const [game, sym] = t.split('/');
       return shipped[game] && shipped[game][sym];
