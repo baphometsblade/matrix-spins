@@ -737,19 +737,28 @@
     }
 
     // ── Custom symbol art (per-game bitmap tiles) ──────────────────────
-    // Loads /data/symbol-art.json ONCE (cached on window, shared across
+    // Loads /data/symbol-art-shipped.json ONCE (cached on window, shared across
     // every engine instance/page). Fire-and-forget tolerant: any failure
     // (404, parse error, offline) leaves the manifest empty and every cell
     // falls back to the emoji glyph — so games without art are unaffected.
+    //
+    // NOTE: this is the *curated* manifest, NOT data/symbol-art.json. The latter
+    // is the generator's full "what exists" list (rewritten continuously by the
+    // resumable tile generator) and includes tiles that FAILED visual QA
+    // (gibberish text, empty frames, off-theme, crypto coinage). Shipping that
+    // raw would put broken/non-compliant tiles on live reels. symbol-art-shipped
+    // .json is built by scripts/build-shipped-symbol-art.js, which subtracts
+    // data/qa-flagged.json + data/qa-unreviewed.json. Excluded symbols fall back
+    // to the themed emoji glyph. Rebuild + redeploy after each regen+reQA pass.
     async _loadSymbolArt() {
       if (window.CE_SYMBOL_ART) { this._symbolArt = window.CE_SYMBOL_ART; return; }
       if (!window.__CE_SYMBOL_ART_PROMISE) {
         // cache:'no-cache' → always revalidate with the server (cheap 304 when
-        // unchanged) so newly-generated symbol art appears for returning users.
+        // unchanged) so newly-approved symbol art appears for returning users.
         // 'force-cache' would pin a stale manifest forever (e.g. an early
         // 1-game manifest), hiding all later art — the same trap that froze
         // sw.js. The tiles themselves are immutable per-id, so they stay cached.
-        window.__CE_SYMBOL_ART_PROMISE = fetch('/data/symbol-art.json', { credentials: 'omit', cache: 'no-cache' })
+        window.__CE_SYMBOL_ART_PROMISE = fetch('/data/symbol-art-shipped.json', { credentials: 'omit', cache: 'no-cache' })
           .then(r => (r.ok ? r.json() : {}))
           .catch(() => ({}))
           .then(m => { window.CE_SYMBOL_ART = m || {}; return window.CE_SYMBOL_ART; });
