@@ -1,6 +1,7 @@
 'use strict';
 const router = require('express').Router();
 const db = require('../database');
+const cache = require('../services/cache.service');
 
 // GET /api/leaderboard — returns available leaderboard endpoints
 router.get('/', (req, res) => {
@@ -118,8 +119,13 @@ function periodHandler(period) {
             const metric = String(req.query.metric || 'biggest_win').toLowerCase();
             if (!VALID_METRICS.has(metric)) return res.status(400).json({ error: 'Invalid metric' });
             const limit = Math.min(parseInt(req.query.limit, 10) || 25, 100);
+            const cacheKey = 'lb:' + period + ':' + metric + ':' + limit;
+            var cached = cache.get(cacheKey);
+            if (cached) return res.json(cached);
             const entries = await fetchLeaderboard(period, metric, limit);
-            res.json({ period, metric, entries });
+            const payload = { period, metric, entries };
+            cache.set(cacheKey, payload, 30);
+            res.json(payload);
         } catch (err) {
             res.status(500).json({ error: 'Failed to load leaderboard' });
         }
@@ -137,8 +143,13 @@ router.get('/biggest-multiplier', async (req, res) => {
         const limit = Math.min(parseInt(req.query.limit, 10) || 25, 100);
         const validPeriods = new Set(['daily', 'weekly', 'monthly', 'all_time']);
         if (!validPeriods.has(period)) return res.status(400).json({ error: 'Invalid period' });
+        const cacheKey = 'lb:' + period + ':highest_multiplier:' + limit;
+        var cached = cache.get(cacheKey);
+        if (cached) return res.json(cached);
         const entries = await fetchLeaderboard(period, 'highest_multiplier', limit);
-        res.json({ period, metric: 'highest_multiplier', entries });
+        const payload = { period, metric: 'highest_multiplier', entries };
+        cache.set(cacheKey, payload, 30);
+        res.json(payload);
     } catch (err) {
         res.status(500).json({ error: 'Failed to load leaderboard' });
     }
@@ -147,6 +158,8 @@ router.get('/biggest-multiplier', async (req, res) => {
 // GET /api/leaderboard/bigwins — top 20 all-time biggest wins by win_amount
 router.get('/bigwins', async (req, res) => {
     try {
+        var cached = cache.get('lb:bigwins');
+        if (cached) return res.json(cached);
         const rows = await db.all(
             `SELECT s.user_id, u.username, s.game_id, s.bet_amount, s.win_amount,
                     ROUND(CAST(s.win_amount / NULLIF(s.bet_amount, 0) AS NUMERIC), 2) as multiplier,
@@ -170,7 +183,9 @@ router.get('/bigwins', async (req, res) => {
             };
         });
 
-        res.json({ entries: entries });
+        const payload = { entries: entries };
+        cache.set('lb:bigwins', payload, 30);
+        res.json(payload);
     } catch (err) {
         res.status(500).json({ error: 'Failed to load big wins leaderboard' });
     }
@@ -179,6 +194,8 @@ router.get('/bigwins', async (req, res) => {
 // GET /api/leaderboard/weekly — top 20 wagerers this calendar week (Mon 00:00 UTC to now)
 router.get('/weekly', async (req, res) => {
     try {
+        var cached = cache.get('lb:weekly');
+        if (cached) return res.json(cached);
         const now = new Date();
         const dayOfWeek = now.getUTCDay();
         const daysToMonday = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
@@ -209,7 +226,9 @@ router.get('/weekly', async (req, res) => {
             };
         });
 
-        res.json({ entries: entries, weekStart: mondayStr });
+        const payload = { entries: entries, weekStart: mondayStr };
+        cache.set('lb:weekly', payload, 30);
+        res.json(payload);
     } catch (err) {
         res.status(500).json({ error: 'Failed to load weekly leaderboard' });
     }
@@ -218,6 +237,8 @@ router.get('/weekly', async (req, res) => {
 // GET /api/leaderboard/richlist — top 20 users by current balance
 router.get('/richlist', async (req, res) => {
     try {
+        var cached = cache.get('lb:richlist');
+        if (cached) return res.json(cached);
         const rows = await db.all(
             `SELECT id as user_id, username, balance
              FROM users
@@ -234,7 +255,9 @@ router.get('/richlist', async (req, res) => {
             };
         });
 
-        res.json({ entries: entries });
+        const payload = { entries: entries };
+        cache.set('lb:richlist', payload, 30);
+        res.json(payload);
     } catch (err) {
         res.status(500).json({ error: 'Failed to load rich list' });
     }
@@ -243,6 +266,8 @@ router.get('/richlist', async (req, res) => {
 // GET /api/leaderboard/recent-wins — top 10 biggest wins in last 24 hours (lobby FOMO widget)
 router.get('/recent-wins', async (req, res) => {
     try {
+        var cached = cache.get('lb:recent-wins');
+        if (cached) return res.json(cached);
         const cutoff = new Date(Date.now() - 24 * 60 * 60 * 1000)
             .toISOString().slice(0, 19).replace('T', ' ');
 
@@ -277,7 +302,9 @@ router.get('/recent-wins', async (req, res) => {
             };
         });
 
-        res.json({ wins: wins });
+        const payload = { wins: wins };
+        cache.set('lb:recent-wins', payload, 30);
+        res.json(payload);
     } catch (err) {
         res.status(500).json({ error: 'Failed to load recent wins' });
     }
@@ -287,6 +314,8 @@ router.get('/recent-wins', async (req, res) => {
 // GET /api/leaderboard/top — top 20 all-time players by total wagered (Season Leaderboard widget)
 router.get('/top', async (req, res) => {
     try {
+        var cached = cache.get('lb:top');
+        if (cached) return res.json(cached);
         const rows = await db.all(
             `SELECT s.user_id, u.username,
                     SUM(s.bet_amount) as total_wagered,
@@ -310,7 +339,9 @@ router.get('/top', async (req, res) => {
             };
         });
 
-        res.json({ entries: entries });
+        const payload = { entries: entries };
+        cache.set('lb:top', payload, 30);
+        res.json(payload);
     } catch (err) {
         res.status(500).json({ error: 'Failed to load top leaderboard' });
     }

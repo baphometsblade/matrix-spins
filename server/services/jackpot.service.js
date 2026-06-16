@@ -3,6 +3,7 @@
 const db = require('../database');
 const crypto = require('crypto');
 const config = require('../config');
+const cache = require('./cache.service');
 
 // Lazy realtime — service may not be attached yet at module load
 let _realtime = null;
@@ -136,6 +137,9 @@ async function processJackpotContribution(userId, betAmount) {
                 console.warn('[Jackpot] Transaction log failed:', txLogErr.message);
             }
 
+            // Invalidate jackpot level cache after a win
+            cache.clear('jackpot:levels');
+
             // Jackpot win email (fire-and-forget — never blocks payout)
             try {
                 const u = await db.get('SELECT username, email FROM users WHERE id = ?', [userId]);
@@ -167,6 +171,8 @@ async function processJackpotContribution(userId, betAmount) {
  * Used by the public GET /api/jackpot endpoint.
  */
 async function getJackpotLevels() {
+    var cached = cache.get('jackpot:levels');
+    if (cached) return cached;
     const rows = await db.all(
         `SELECT jp.tier, jp.current_amount, jp.seed_amount, jp.last_won_at,
                 jp.last_winner_id, u.username AS last_winner_username
@@ -174,7 +180,7 @@ async function getJackpotLevels() {
          LEFT JOIN users u ON jp.last_winner_id = u.id
          ORDER BY jp.seed_amount ASC`
     );
-    return rows.map(r => {
+    var result = rows.map(r => {
         // SECURITY: Round displayed amounts to nearest $50-$100 to prevent
         // exact mustHitAt threshold prediction. Players should see approximate
         // jackpot values, not the exact amount that determines the trigger.
@@ -190,6 +196,8 @@ async function getJackpotLevels() {
             lastWinnerUsername: r.last_winner_username || null,
         };
     });
+    cache.set('jackpot:levels', result, 4);
+    return result;
 }
 
 /**
@@ -267,6 +275,9 @@ async function checkAndAward(userId, betAmount, minBet, isJackpotGame) {
                 // Race lost — try the next tier
                 continue;
             }
+
+            // Invalidate jackpot level cache after a win
+            cache.clear('jackpot:levels');
 
             // Broadcast win to all connected clients (best-effort)
             try {

@@ -1379,7 +1379,7 @@ function showAddMethodForm(type) {
     formContainer.innerHTML = `
         <div class="wallet-add-form">
             <div class="wallet-add-form__header">
-                <span class="wallet-add-form__title">${meta.icon || ''} Add ${meta.label || type}</span>
+                <span class="wallet-add-form__title">${meta.icon || ''} Add ${escapeHtml(meta.label || type)}</span>
                 <button class="wallet-btn wallet-btn--sm wallet-btn--ghost" onclick="hideAddMethodForm()">&times;</button>
             </div>
             <div class="wallet-add-form__body">

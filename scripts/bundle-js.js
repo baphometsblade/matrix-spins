@@ -686,6 +686,25 @@ async function main() {
             if (fs.existsSync(unminCss)) { fs.unlinkSync(unminCss); log(`Removed unminified: ${cssInfo.cssFile}`); }
         }
 
+        // Step 9: Update dist/sw.js with correct hashed bundle filenames
+        // The SW precaches hashed bundles for instant first paint; those
+        // hashes must match the bundles we just built.
+        const distSwPath = path.join(DIST_DIR, 'sw.js');
+        if (fs.existsSync(distSwPath)) {
+            let swContent = fs.readFileSync(distSwPath, 'utf8');
+            const finalJs  = minInfo      ? minInfo.minFile    : jsInfo.bundleFile;
+            const finalCss = cssMinInfo    ? cssMinInfo.minFile : cssInfo.cssFile;
+
+            // Replace the PRECACHE_HASHED_BUNDLES array contents with current hashes
+            swContent = swContent.replace(
+                /const PRECACHE_HASHED_BUNDLES = \[[\s\S]*?\];/m,
+                `const PRECACHE_HASHED_BUNDLES = [\n  '/${finalCss}',\n  '/${finalJs}',\n];`
+            );
+
+            writeAtomicFsync(distSwPath, Buffer.from(swContent, 'utf8'));
+            log(`Updated dist/sw.js PRECACHE_HASHED_BUNDLES: ${finalCss}, ${finalJs}`);
+        }
+
         // Validate — ensure dist/index.html references files that actually exist
         const distIndex = readFile(path.join(DIST_DIR, 'index.html'));
         const jsRef = distIndex.match(/bundle\.[a-f0-9]+(?:\.min)?\.js/);

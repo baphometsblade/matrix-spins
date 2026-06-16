@@ -2,7 +2,7 @@
 // PWA: cache-first statics, network-first HTML, network-only API,
 // offline fallback, version-update messaging.
 
-const VERSION = 'b1781619511949';
+const VERSION = 'b1781649756286';
 const STATIC_CACHE  = `matrix-spins-static-${VERSION}`;
 const RUNTIME_CACHE = `matrix-spins-runtime-${VERSION}`;
 const HTML_CACHE    = `matrix-spins-html-${VERSION}`;
@@ -33,6 +33,14 @@ const PRECACHE_OPTIONAL = [
   '/privacy.html',
 ];
 
+// Content-hashed bundles — precached for instant first paint on returning
+// visits. These change per build; the bundle script auto-updates the hashes
+// in dist/sw.js during each build (see scripts/bundle-js.js).
+const PRECACHE_HASHED_BUNDLES = [
+  '/styles.aad0f7ac.min.css',
+  '/bundle.eb2096ab.min.js',
+];
+
 // ─── Install: precache app shell ───────────────────────────────
 self.addEventListener('install', (event) => {
   event.waitUntil((async () => {
@@ -41,6 +49,11 @@ self.addEventListener('install', (event) => {
     // Optional assets — fetched individually so one 404 doesn't fail install
     await Promise.allSettled(
       PRECACHE_OPTIONAL.map(url => cache.add(url).catch(() => null))
+    );
+    // Hashed bundles — critical for first paint but must not block install
+    // (hash may not match if SW is cached but bundles were rebuilt)
+    await Promise.allSettled(
+      PRECACHE_HASHED_BUNDLES.map(url => cache.add(url).catch(() => null))
     );
     // Don't auto-skipWaiting — wait for client postMessage so the user
     // sees the "update available" banner before reload.

@@ -212,8 +212,8 @@
     el.innerHTML =
       '<div class="fav-mini-icon">' + info.icon + '</div>' +
       '<div class="fav-mini-body">' +
-        '<div class="fav-mini-name">' + info.name + '</div>' +
-        '<div class="fav-mini-studio">' + (info.studio || '') + '</div>' +
+        '<div class="fav-mini-name">' + escapeHtml(info.name) + '</div>' +
+        '<div class="fav-mini-studio">' + escapeHtml(info.studio || '') + '</div>' +
         '<div class="fav-mini-play">▶ Play</div>' +
       '</div>';
     el.addEventListener('click', function () {

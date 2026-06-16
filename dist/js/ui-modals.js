@@ -428,7 +428,7 @@
                     .map(([gameId, plays]) => {
                         const game = games.find((item) => item.id === gameId);
                         const gameName = game ? game.name : gameId;
-                        return `<li><span>${gameName}</span><strong>${plays} ${plays === 1 ? 'play' : 'plays'}</strong></li>`;
+                        return `<li><span>${escapeHtml(gameName)}</span><strong>${plays} ${plays === 1 ? 'play' : 'plays'}</strong></li>`;
                     })
                     .join('');
             }
@@ -549,7 +549,7 @@
                 const shortName = name.length > 18 ? name.slice(0, 17) + '…' : name;
                 return `
                     <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 10px;background:rgba(0,0,0,0.3);border-radius:6px;margin-bottom:6px;">
-                        <span style="font-size:12px;color:#e2e8f0;flex:1;min-width:0;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;" title="${name}">${shortName}</span>
+                        <span style="font-size:12px;color:#e2e8f0;flex:1;min-width:0;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;" title="${escapeHtml(name)}">${escapeHtml(shortName)}</span>
                         <span style="font-size:11px;color:#94a3b8;margin:0 12px;white-space:nowrap;">${gs.spins.toLocaleString()} spins</span>
                         <span style="font-size:12px;font-weight:700;color:${rtpColor};white-space:nowrap;">${rtp === '—' ? '—' : rtp + '% RTP'}</span>
                     </div>
@@ -576,7 +576,7 @@
             el.innerHTML = `
                 <div style="font-size:28px;margin-bottom:4px;">${ch.icon}</div>
                 <div style="font-size:13px;letter-spacing:1px;margin-bottom:2px;">✅ CHALLENGE COMPLETE!</div>
-                <div style="font-size:15px;">${ch.label}</div>
+                <div style="font-size:15px;">${escapeHtml(ch.label)}</div>
                 <div style="font-size:12px;color:#6ee7b7;margin-top:4px;">+${ch.xp} XP${ch.reward ? ' · +$' + ch.reward : ''} awarded!</div>
             `;
             document.body.appendChild(el);
@@ -601,8 +601,8 @@
                     <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">
                         <span style="font-size:20px;">${ch.icon}</span>
                         <div style="flex:1;min-width:0;">
-                            <div style="font-size:12px;font-weight:700;color:${done ? '#34d399' : '#e2e8f0'};">${ch.label}${done ? ' ✓' : ''}</div>
-                            <div style="font-size:10px;color:#64748b;">${ch.desc}</div>
+                            <div style="font-size:12px;font-weight:700;color:${done ? '#34d399' : '#e2e8f0'};">${escapeHtml(ch.label)}${done ? ' ✓' : ''}</div>
+                            <div style="font-size:10px;color:#64748b;">${escapeHtml(ch.desc)}</div>
                         </div>
                         <div style="font-size:11px;font-weight:700;color:#fbbf24;white-space:nowrap;">+${ch.xp} XP</div>
                     </div>
@@ -686,7 +686,7 @@
                     ">
                         <div style="font-size: 32px; margin-bottom: 6px;">${achievement.icon}</div>
                         <div style="font-size: 11px; font-weight: 700; color: ${unlocked ? '#fbbf24' : '#94a3b8'}; margin-bottom: 4px;">${escapeHtml(achievement.name)}</div>
-                        <div style="font-size: 9px; color: #64748b;">${achievement.desc}</div>
+                        <div style="font-size: 9px; color: #64748b;">${escapeHtml(achievement.desc)}</div>
                         ${unlocked ? '<div style="font-size: 10px; color: #10b981; margin-top: 4px; font-weight: 700;">\u2705 UNLOCKED</div>' : ''}
                     </div>
                 `;
@@ -795,8 +795,8 @@
                 + 'pointer-events:none;max-width:320px;';
             t.innerHTML = `<span style="font-size:28px">${ach.icon}</span><div>`
                 + `<div style="font-size:10px;color:#7b61ff;font-weight:700;letter-spacing:1px;text-transform:uppercase">Achievement Unlocked!</div>`
-                + `<div style="font-weight:700;margin:2px 0">${ach.name}</div>`
-                + `<div style="font-size:11px;color:rgba(255,255,255,0.6)">${ach.desc}</div></div>`;
+                + `<div style="font-weight:700;margin:2px 0">${escapeHtml(ach.name)}</div>`
+                + `<div style="font-size:11px;color:rgba(255,255,255,0.6)">${escapeHtml(ach.desc)}</div></div>`;
             document.body.appendChild(t);
             requestAnimationFrame(() => requestAnimationFrame(() => {
                 t.style.transform = 'translateX(-50%) translateY(0)';
@@ -897,8 +897,8 @@
                 <div class="ach-grid">
                   ${ACH_DEFS.map(a => `<div class="ach-card ${s.unlocked.includes(a.id)?'ach-unlocked':'ach-locked'}">
                     <div class="ach-icon">${a.icon}</div>
-                    <div class="ach-name">${a.name}</div>
-                    <div class="ach-desc">${a.desc}</div>
+                    <div class="ach-name">${escapeHtml(a.name)}</div>
+                    <div class="ach-desc">${escapeHtml(a.desc)}</div>
                   </div>`).join('')}
                 </div>`;
         }

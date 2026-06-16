@@ -419,7 +419,7 @@
       <div class="highlight-section">
         <div class="highlight-card">
           <div class="highlight-label">Favorite Game</div>
-          <div class="highlight-value">${favoriteGame}</div>
+          <div class="highlight-value">${escapeHtml(favoriteGame)}</div>
         </div>
         <div class="highlight-card">
           <div class="highlight-label">Current Streak</div>
@@ -438,7 +438,7 @@
 
     container.innerHTML = `
       <div class="error-message">
-        <strong>Error loading stats:</strong> ${message}
+        <strong>Error loading stats:</strong> ${escapeHtml(message)}
       </div>
     `;
   }

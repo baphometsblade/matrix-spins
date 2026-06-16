@@ -537,10 +537,10 @@ const MatrixMoney = (() => {
     overlay.innerHTML = `
       <div style="max-width: 500px; width: 100%; background: rgba(15,23,42,0.95); border: 1px solid rgba(86,210,160,0.3); border-radius: 14px; padding: 32px; color: #e0e0e0; text-align: center;">
         <div style="font-size: 48px; margin-bottom: 16px;">✓</div>
-        <h2 style="font-size: 24px; margin-bottom: 16px; color: #56d2a0; font-weight: 700;">${title}</h2>
-        <p style="color: #aaa; font-size: 14px; margin-bottom: 16px; line-height: 1.6;">${message}</p>
+        <h2 style="font-size: 24px; margin-bottom: 16px; color: #56d2a0; font-weight: 700;">${escapeHtml(title)}</h2>
+        <p style="color: #aaa; font-size: 14px; margin-bottom: 16px; line-height: 1.6;">${escapeHtml(message)}</p>
         <div style="background: rgba(86,210,160,0.1); border-left: 3px solid #56d2a0; padding: 12px 14px; border-radius: 6px; margin-bottom: 20px; text-align: left; font-size: 12px;">
-          <p style="color: #aaa;">${additionalInfo}</p>
+          <p style="color: #aaa;">${escapeHtml(additionalInfo)}</p>
         </div>
         <button onclick="this.closest('.modal-overlay').remove()" style="width: 100%; padding: 12px 20px; background: linear-gradient(135deg, #56d2a0, #4ecdc4); color: #000; border: none; border-radius: 6px; font-weight: 700; cursor: pointer;">Continue</button>
       </div>
@@ -557,7 +557,7 @@ const MatrixMoney = (() => {
       <div style="max-width: 500px; width: 100%; background: rgba(15,23,42,0.95); border: 1px solid rgba(255,70,70,0.3); border-radius: 14px; padding: 32px; color: #e0e0e0; text-align: center;">
         <div style="font-size: 48px; margin-bottom: 16px;">⚠</div>
         <h2 style="font-size: 22px; margin-bottom: 16px; color: #ff4646; font-weight: 700;">Error</h2>
-        <p style="color: #aaa; font-size: 14px; margin-bottom: 20px;">${message}</p>
+        <p style="color: #aaa; font-size: 14px; margin-bottom: 20px;">${escapeHtml(message)}</p>
         <button onclick="this.closest('.modal-overlay').remove()" style="width: 100%; padding: 12px 20px; background: rgba(255,70,70,0.3); color: #ff4646; border: 1px solid rgba(255,70,70,0.5); border-radius: 6px; font-weight: 700; cursor: pointer;">Close</button>
       </div>
     `;

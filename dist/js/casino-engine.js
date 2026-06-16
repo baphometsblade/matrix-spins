@@ -18,6 +18,23 @@
  * Every other field (name, themes, rtp, min/max bet) is used only for display
  * and is OVERRIDDEN by authoritative values fetched from the backend.
  */
+
+// ── Global escapeHtml utility (XSS prevention) ──────────────────
+// Accessible from all scripts via window.escapeHtml.
+// Individual files may still have their own local copy for safety,
+// but this guarantees availability before any module loads.
+if (!window.escapeHtml) {
+  window.escapeHtml = function(str) {
+    if (str == null) return '';
+    return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+  };
+}
+
 (function () {
   'use strict';
 

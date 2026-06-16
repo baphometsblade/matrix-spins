@@ -8,6 +8,22 @@
  *
  * Configure window.RS_API_BASE at page load (default: /api).
  */
+
+// ── Global escapeHtml utility (XSS prevention) ──────────────────
+// Accessible from all scripts via window.escapeHtml.
+// Defined here (api-client.js) because this file loads on every page.
+if (!window.escapeHtml) {
+  window.escapeHtml = function(str) {
+    if (str == null) return '';
+    return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+  };
+}
+
 (function () {
   'use strict';
 

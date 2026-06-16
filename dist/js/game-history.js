@@ -564,7 +564,7 @@
           return `
             <tr>
               <td>${formatDateTime(spin.timestamp)}</td>
-              <td>${spin.gameName}</td>
+              <td>${escapeHtml(spin.gameName)}</td>
               <td class="amount-cell">${formatCurrency(spin.betAmount)}</td>
               <td class="amount-cell">${formatCurrency(spin.winAmount)}</td>
               <td class="multiplier-cell">${spin.multiplier}x</td>

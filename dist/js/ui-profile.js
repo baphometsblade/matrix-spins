@@ -907,7 +907,7 @@ function renderProfileSidebar() {
     const initials = getAvatarInitials(uname);
 
     sidebar.innerHTML = `
-        <div class="profile-sidebar-avatar" style="background:${grad};">${initials}</div>
+        <div class="profile-sidebar-avatar" style="background:${grad};">${escapeHtml(initials)}</div>
         <div class="profile-sidebar-name">${escapeHtml(uname)}</div>
         <div class="profile-sidebar-email">${escapeHtml(email)}</div>
         <ul class="profile-nav">
@@ -1557,7 +1557,7 @@ function renderProfileOverview() {
 
         <div class="profile-overview-header">
             <div class="profile-avatar-large" style="background:${getAvatarGradient(uname)};">
-                ${getAvatarInitials(uname)}
+                ${escapeHtml(getAvatarInitials(uname))}
             </div>
             <div class="profile-header-info">
                 <div class="profile-header-username">${escapeHtml(uname)}</div>
@@ -1737,7 +1737,7 @@ function renderVerificationTab() {
     el.innerHTML = `
         <div class="profile-section-title">Identity Verification (KYC)</div>
 
-        <div class="profile-verify-status ${kycStatus}">
+        <div class="profile-verify-status ${escapeHtml(kycStatus)}">
             <div class="profile-verify-icon">${cfg.icon}</div>
             <div class="profile-verify-text">
                 <h3>${cfg.title}</h3>

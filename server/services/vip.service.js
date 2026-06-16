@@ -9,6 +9,7 @@
  */
 
 const db = require('../database');
+const cache = require('./cache.service');
 
 const TIERS = [
     {
@@ -130,6 +131,9 @@ async function addXp(userId, betAmount) {
         await _logTierUp(userId, oldTierName, calculatedTier.name);
         tierUp = true;
     }
+
+    // Invalidate cached VIP status after XP change
+    cache.clear('vip:status:' + userId);
 
     return {
         xpGained: xp,
@@ -263,6 +267,9 @@ async function claimCashback(userId) {
         [amount, wagering, userId]
     );
 
+    // Invalidate cached VIP status after cashback claim
+    cache.clear('vip:status:' + userId);
+
     try {
         await db.run(
             'INSERT INTO transactions (user_id, type, amount, balance_before, balance_after, reference) VALUES (?, ?, ?, ?, ?, ?)',
@@ -277,6 +284,9 @@ async function claimCashback(userId) {
  * Public read: full VIP status for the player profile page.
  */
 async function getStatus(userId) {
+    var cacheKey = 'vip:status:' + userId;
+    var cached = cache.get(cacheKey);
+    if (cached) return cached;
     var row = await db.get(
         'SELECT vip_tier, vip_xp, vip_xp_lifetime, vip_tier_reached_at, ' +
         'vip_cashback_pending, vip_cashback_last_credited, ' +
@@ -303,7 +313,7 @@ async function getStatus(userId) {
         (!row.vip_cashback_last_credited ||
          String(row.vip_cashback_last_credited).slice(0, 7) !== _currentPeriod());
 
-    return {
+    var status = {
         tier: current.name,
         tierIcon: current.icon,
         tierColor: current.color,
@@ -329,6 +339,8 @@ async function getStatus(userId) {
             lastCredited: row.vip_cashback_last_credited
         }
     };
+    cache.set(cacheKey, status, 60);
+    return status;
 }
 
 function getTiers() {

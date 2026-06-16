@@ -334,9 +334,9 @@ function _renderEnhancedProgress(tier, nextTier, progressPct) {
 
     container.innerHTML = `
         <div style="margin-bottom:8px;display:flex;justify-content:space-between;align-items:center;">
-            <span style="font-size:12px;font-weight:700;color:${colorFrom};">${tier.icon || '\u2B50'} ${tier.name}</span>
+            <span style="font-size:12px;font-weight:700;color:${colorFrom};">${tier.icon || '\u2B50'} ${escapeHtml(tier.name)}</span>
             ${nextTier
-                ? `<span style="font-size:12px;color:#64748b;">${nextTier.icon || '\u2B50'} ${nextTier.name}</span>`
+                ? `<span style="font-size:12px;color:#64748b;">${nextTier.icon || '\u2B50'} ${escapeHtml(nextTier.name)}</span>`
                 : `<span style="font-size:11px;color:#fbbf24;">MAX TIER \u{1F451}</span>`
             }
         </div>
@@ -395,7 +395,7 @@ function _renderTierCards(currentTierIdx) {
             <div class="vip-mini-tier-card ${state}" style="${currentStyle}">
                 ${i === currentTierIdx ? '<div class="vip-current-badge">YOU</div>' : ''}
                 <div class="vip-tier-badge">${t.icon || '\u2B50'}</div>
-                <div class="vip-tier-name-label" style="color:${t.color || '#e2e8f0'};">${t.name}</div>
+                <div class="vip-tier-name-label" style="color:${t.color || '#e2e8f0'};">${escapeHtml(t.name)}</div>
                 <div class="vip-tier-perk">${perkLines}</div>
             </div>
         `;
@@ -426,7 +426,7 @@ function _renderWagerCountdown(nextTier, currentWagered) {
     container.innerHTML = `<div class="vip-wager-countdown">
         <span style="font-size:28px;">${nextTier.icon || '\u2B50'}</span>
         <div style="flex:1;">
-            <div style="font-size:11px;color:#64748b;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:2px;">Wager to reach ${nextTier.name}</div>
+            <div style="font-size:11px;color:#64748b;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:2px;">Wager to reach ${escapeHtml(nextTier.name)}</div>
             <div style="display:flex;align-items:baseline;gap:6px;">
                 <span class="vip-wager-amount">$${formatMoney(needed)}</span>
                 <span style="font-size:11px;color:#475569;">more</span>
@@ -981,7 +981,7 @@ function _renderVipModalContent() {
             <div class="vip-benefits-list">
                 ${tier.benefits.map(b => `
                     <div class="vip-benefit-tag">
-                        <span class="vip-benefit-check">\u2713</span> ${b}
+                        <span class="vip-benefit-check">\u2713</span> ${escapeHtml(b)}
                     </div>
                 `).join('')}
             </div>
@@ -1145,8 +1145,8 @@ function renderVipTierCard(tier) {
             <div class="vip-tier-card-top">
                 <div class="vip-tier-icon">${tier.icon}</div>
                 <div class="vip-tier-info">
-                    <h3>${tier.name}</h3>
-                    <div class="vip-tier-subtitle">${currentUser ? currentUser.username || 'Player' : 'Player'} &bull; VIP Member</div>
+                    <h3>${escapeHtml(tier.name)}</h3>
+                    <div class="vip-tier-subtitle">${escapeHtml(currentUser ? currentUser.username || 'Player' : 'Player')} &bull; VIP Member</div>
                 </div>
             </div>
             <div style="display:flex; gap:24px; flex-wrap:wrap;">
@@ -1194,14 +1194,14 @@ function _renderProgressSection(tier, nextTier, progress, wagered) {
     return `
         <div class="vip-progress-section" style="--vip-color:${nextTier.color}; --vip-color-dark:${nextTier.colorDark};">
             <div class="vip-progress-labels">
-                <span>Progress to <strong style="color:${nextTier.color};">${nextTier.name}</strong></span>
+                <span>Progress to <strong style="color:${nextTier.color};">${escapeHtml(nextTier.name)}</strong></span>
                 <span class="vip-progress-value">${progress.toFixed(1)}%</span>
             </div>
             <div class="vip-progress-track">
                 <div class="vip-progress-fill" style="width:0%; background:linear-gradient(90deg,${tier.color},${nextTier.color});"></div>
             </div>
             <div class="vip-progress-next">
-                Wager <strong>$${formatMoney(remaining)}</strong> more to reach <strong>${nextTier.name}</strong>
+                Wager <strong>$${formatMoney(remaining)}</strong> more to reach <strong>${escapeHtml(nextTier.name)}</strong>
             </div>
         </div>
     `;
@@ -1212,7 +1212,7 @@ function _renderWeeklyReloadSection(tier) {
         return `
             <div class="vip-reload-section">
                 <h4>WEEKLY RELOAD BONUS</h4>
-                <p>Unlock the weekly reload bonus by reaching <strong style="color:${VIP_TIERS[1].color};">${VIP_TIERS[1].name}</strong> tier (wager $${formatMoney(VIP_TIERS[1].minWagered)}+).</p>
+                <p>Unlock the weekly reload bonus by reaching <strong style="color:${VIP_TIERS[1].color};">${escapeHtml(VIP_TIERS[1].name)}</strong> tier (wager $${formatMoney(VIP_TIERS[1].minWagered)}+).</p>
                 <div class="vip-reload-unavailable">Currently available from Silver tier and above.</div>
             </div>
         `;
@@ -1228,7 +1228,7 @@ function _renderWeeklyReloadSection(tier) {
     return `
         <div class="vip-reload-section">
             <h4>WEEKLY RELOAD BONUS</h4>
-            <p>As a <span style="color:${tier.color}; font-weight:700;">${tier.name}</span> member, you receive a ${tier.weeklyReloadPct}% weekly reload — up to <strong>$${formatMoney(bonusAmount)}</strong>.</p>
+            <p>As a <span style="color:${tier.color}; font-weight:700;">${escapeHtml(tier.name)}</span> member, you receive a ${tier.weeklyReloadPct}% weekly reload — up to <strong>$${formatMoney(bonusAmount)}</strong>.</p>
             ${canClaim
                 ? `<button class="vip-reload-btn vip-reload-btn--active" onclick="claimWeeklyReload()">CLAIM $${formatMoney(bonusAmount)}</button>`
                 : `<button class="vip-reload-btn vip-reload-btn--disabled" disabled>CLAIMED</button>
@@ -1264,7 +1264,7 @@ function _renderComparisonTable(currentIdx) {
         const cls = isCurrent ? ' class="vip-table-current"' : '';
         return `
             <tr${cls}>
-                <td class="vip-table-tier-cell" style="color:${t.color};">${t.icon} ${t.name}${isCurrent ? ' *' : ''}</td>
+                <td class="vip-table-tier-cell" style="color:${t.color};">${t.icon} ${escapeHtml(t.name)}${isCurrent ? ' *' : ''}</td>
                 <td>${t.minWagered === 0 ? '$0' : '$' + t.minWagered.toLocaleString()}${t.maxWagered === Infinity ? '+' : ' - $' + t.maxWagered.toLocaleString()}</td>
                 <td style="color:${t.color}; font-weight:700;">${t.cashbackPct}%</td>
                 <td>${t.weeklyReloadPct > 0 ? t.weeklyReloadPct + '%' : '--'}</td>
@@ -1369,7 +1369,7 @@ function renderVipBadge() {
     badge.style.borderColor = tier.color;
     badge.style.color = tier.color;
     badge.style.background = `linear-gradient(135deg, ${tier.color}15, ${tier.color}08)`;
-    badge.innerHTML = `<span class="vip-header-badge-icon">${tier.icon}</span> ${tier.name.toUpperCase()}`;
+    badge.innerHTML = `<span class="vip-header-badge-icon">${tier.icon}</span> ${escapeHtml(tier.name.toUpperCase())}`;
 
     updateVipMiniBar();
 }
