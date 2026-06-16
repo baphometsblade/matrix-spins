@@ -4,13 +4,18 @@
     
     const PROMO_CHECK_INTERVAL = 120000; // Check every 2 minutes
     const SHOWN_PROMOS = new Set();
-    
+    let _promoEndpointDead = false; // stop polling after first 404
+
     async function fetchPromos() {
+        if (_promoEndpointDead) return [];
         try {
             const token = localStorage.getItem('casinoToken');
             const headers = token ? { 'Authorization': 'Bearer ' + token } : {};
             const resp = await fetch('/api/promos/active', { headers });
-            if (!resp.ok) return [];
+            if (!resp.ok) {
+                if (resp.status === 404) _promoEndpointDead = true; // future endpoint — stop polling
+                return [];
+            }
             const data = await resp.json();
             return data.promos || [];
         } catch (e) { return []; }

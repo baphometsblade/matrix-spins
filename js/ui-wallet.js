@@ -4019,6 +4019,10 @@ async function walletRenderLoyaltyShopSection(parentContainer) {
 
 // ── Limbo Quick-Game Card ──────────────────────────────────────────────
 function renderLimboCard(parentContainer) {
+    // TABLE GAMES REMOVED — slots only casino
+    console.log('Limbo: table games removed, skipping render');
+    return;
+
     if (document.getElementById('limboCard')) return;
 
     // ── inject CSS once ──
@@ -4263,6 +4267,10 @@ function renderLimboCard(parentContainer) {
 // ═══════════════════════════════════════════════════════
 
 function renderRedDogCard(parentContainer) {
+    // TABLE GAMES REMOVED — slots only casino
+    console.log('Red Dog: table games removed, skipping render');
+    return;
+
     if (document.getElementById('redDogCard')) return;
 
     /* ── CSS (inject once) ───────────────────────────────── */

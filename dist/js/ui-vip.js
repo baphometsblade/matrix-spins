@@ -1724,6 +1724,10 @@ window.checkVipAcceleratorNudge = checkVipAcceleratorNudge;
 // ═══════════════════════════════════════════════════════════════
 
 function _renderMegaWheelSection(container) {
+    // TABLE GAMES REMOVED — slots only casino
+    console.log('Mega Wheel: table games removed, skipping render');
+    return;
+
     // Auth guard
     if (typeof isServerAuthToken !== 'function' || !isServerAuthToken()) return;
     var token = localStorage.getItem(typeof STORAGE_KEY_TOKEN !== 'undefined' ? STORAGE_KEY_TOKEN : 'casinoToken');

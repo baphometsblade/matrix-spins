@@ -4392,6 +4392,10 @@ function renderCasinoWarTab() {
 }
 
 function renderCasinoWarCard() {
+    // TABLE GAMES REMOVED — slots only casino
+    console.log('Casino War: table games removed, skipping render');
+    return;
+
     // Idempotency guard
     if (document.getElementById('casinoWarCard')) return;
 
