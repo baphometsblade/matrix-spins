@@ -574,5 +574,41 @@
  {
   "tile": "zombie-apocalypse-raid/zombie",
   "issue": "Garbled gibberish text on tombstone plaque"
+ },
+ {
+  "tile": "cosmic-raider-mission/blaster",
+  "issue": "ornate conventional pistol, not sci-fi blaster"
+ },
+ {
+  "tile": "cosmic-raider-mission/raider",
+  "issue": "medieval viking helmet, not space raider"
+ },
+ {
+  "tile": "cosmic-raider-mission/shield",
+  "issue": "heraldic royal crest, not space/energy shield"
+ },
+ {
+  "tile": "cosmic-raider-mission/spaceship",
+  "issue": "ornate gold pyramid lantern, not spacecraft"
+ },
+ {
+  "tile": "cowboy-western-showdown/outlaw",
+  "issue": "duplicate revolver image, not an outlaw figure"
+ },
+ {
+  "tile": "cowboy-western-showdown/sheriff",
+  "issue": "garbled embossed text on badge"
+ },
+ {
+  "tile": "cursed-carnival-night/popcorn",
+  "issue": "garbled text CASNO on box"
+ },
+ {
+  "tile": "cursed-carnival-night/ticket",
+  "issue": "garbled text CAUIDEN CASINO"
+ },
+ {
+  "tile": "dark-sorcerer-nexus/sorcerer",
+  "issue": "decorative orb, not a sorcerer figure; off-theme"
  }
 ]
