@@ -1294,8 +1294,9 @@ test('idle-timeout middleware is exported + mounted globally after optionalAuth'
     const indexSrc = fs.readFileSync(path.join(SERVER_DIR, 'index.js'), 'utf8');
     assert(/app\.use\(idleTimeoutMiddleware\)/.test(indexSrc),
         'idleTimeoutMiddleware must be mounted globally');
-    // Must run AFTER optionalAuth (so req.user is populated)
-    const optIdx = indexSrc.indexOf('app.use(optionalAuth)');
+    // Must run AFTER optionalAuth (so req.user is populated). optionalAuth is
+    // mounted path-scoped on /api (`app.use('/api', optionalAuth)`), not global.
+    const optIdx = indexSrc.indexOf("app.use('/api', optionalAuth)");
     const idleIdx = indexSrc.indexOf('app.use(idleTimeoutMiddleware)');
     assert(optIdx > 0 && idleIdx > optIdx, 'idle middleware must come after optionalAuth');
 });
