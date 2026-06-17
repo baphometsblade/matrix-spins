@@ -4,6 +4,14 @@ const router = require('express').Router();
 const { authenticate } = require('../middleware/auth');
 const { bonusGuard } = require('../middleware/bonus-guard');
 const db = require('../database');
+const rateLimit = require('express-rate-limit');
+const purchaseLimit = rateLimit({
+    windowMs: 60 * 1000,
+    max: 10,
+    standardHeaders: true,
+    legacyHeaders: false,
+    message: { error: 'Too many purchase attempts, please slow down' },
+});
 
 // ============================================================================
 // LAZY INIT: Create tables and seed data on first request (not at require-time)
@@ -501,7 +509,7 @@ router.get('/progress', authenticate, async (req, res) => {
 });
 
 // POST /purchase — Buy premium or elite tier (authenticated)
-router.post('/purchase', authenticate, async (req, res) => {
+router.post('/purchase', authenticate, purchaseLimit, async (req, res) => {
   try {
     await _ensureBattlePassData();
     const userId = req.user.id;

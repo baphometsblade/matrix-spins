@@ -5,6 +5,14 @@ const router = express.Router();
 const { authenticate } = require('../middleware/auth');
 const { bonusGuard } = require('../middleware/bonus-guard');
 const db = require('../database');
+const rateLimit = require('express-rate-limit');
+const activateLimit = rateLimit({
+    windowMs: 60 * 1000,
+    max: 10,
+    standardHeaders: true,
+    legacyHeaders: false,
+    message: { error: 'Too many purchase attempts, please slow down' },
+});
 
 // Bootstrap: add subscription columns. ALTER TABLE ADD COLUMN is idempotent
 // in effect but neither SQLite nor older PG accept IF NOT EXISTS here, so
@@ -87,7 +95,7 @@ router.get('/status', authenticate, async (req, res) => {
 });
 
 // POST /api/subscription/activate — auth required
-router.post('/activate', authenticate, async (req, res) => {
+router.post('/activate', authenticate, activateLimit, async (req, res) => {
     try {
         // ROUND 34: Self-exclusion check (regulatory compliance)
         try {

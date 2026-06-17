@@ -13,6 +13,15 @@
 const router = require('express').Router();
 const db = require('../database');
 const { authenticate, requireAdmin } = require('../middleware/auth');
+const rateLimit = require('express-rate-limit');
+const subscribeLimit = rateLimit({
+    windowMs: 60 * 60 * 1000, // 1 hour
+    max: 5,
+    standardHeaders: true,
+    legacyHeaders: false,
+    message: { error: 'Too many subscribe attempts, please try again later' },
+    keyGenerator: (req) => req.ip,
+});
 
 /**
  * Email validation regex — basic check for email format
@@ -79,7 +88,7 @@ bootstrapTable().catch(function(e) { console.warn('[Newsletter] Bootstrap failed
  *
  * Returns: { success: true, message: 'Subscribed successfully' }
  */
-router.post('/subscribe', async (req, res) => {
+router.post('/subscribe', subscribeLimit, async (req, res) => {
     try {
         const { email } = req.body;
 

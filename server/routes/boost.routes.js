@@ -4,6 +4,14 @@ const express = require('express');
 const router = express.Router();
 const { authenticate } = require('../middleware/auth');
 const boostService = require('../services/boost.service');
+const rateLimit = require('express-rate-limit');
+const purchaseLimit = rateLimit({
+    windowMs: 60 * 1000,
+    max: 10,
+    standardHeaders: true,
+    legacyHeaders: false,
+    message: { error: 'Too many purchase attempts, please slow down' },
+});
 
 // GET /api/boosts — active boosts for the authenticated user
 router.get('/', authenticate, async (req, res) => {
@@ -27,7 +35,7 @@ router.get('/available', async (req, res) => {
 });
 
 // POST /api/boosts/purchase — purchase a boost (auth required)
-router.post('/purchase', authenticate, async (req, res) => {
+router.post('/purchase', authenticate, purchaseLimit, async (req, res) => {
     try {
         const { boostType } = req.body;
         if (!boostType) return res.status(400).json({ error: 'boostType required' });

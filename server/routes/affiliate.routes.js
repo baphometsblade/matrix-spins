@@ -6,6 +6,15 @@
 const router = require('express').Router();
 const db = require('../database');
 const { authenticate } = require('../middleware/auth');
+const rateLimit = require('express-rate-limit');
+const trackLimit = rateLimit({
+    windowMs: 60 * 1000, // 1 minute
+    max: 30,
+    standardHeaders: true,
+    legacyHeaders: false,
+    message: { error: 'Rate limit exceeded' },
+    keyGenerator: (req) => req.ip,
+});
 
 var isPg = db.isPg();
 var idDef = isPg ? 'SERIAL PRIMARY KEY' : 'INTEGER PRIMARY KEY AUTOINCREMENT';
@@ -60,7 +69,7 @@ function getClientIp(req) {
  * Records a visit/conversion without authentication
  * Body: { utmSource, utmMedium, utmCampaign, utmContent, affiliateId, landingPage }
  */
-router.post('/track', async (req, res) => {
+router.post('/track', trackLimit, async (req, res) => {
     try {
         const {
             utmSource,

@@ -14,7 +14,14 @@
   function getStoredConsent() {
     try {
       const data = localStorage.getItem(STORAGE_KEY);
-      return data ? JSON.parse(data) : null;
+      if (!data) return null;
+      const parsed = JSON.parse(data);
+      // Re-ask consent after 365 days (GDPR best practice)
+      if (parsed && parsed.timestamp) {
+        const ageMs = Date.now() - new Date(parsed.timestamp).getTime();
+        if (ageMs > 365 * 24 * 60 * 60 * 1000) return null;
+      }
+      return parsed;
     } catch (e) {
       return null;
     }
@@ -63,6 +70,7 @@
         <div class="mcc-banner-inner">
           <p class="mcc-banner-text">
             We use cookies to enhance your gaming experience, analyze site traffic, and personalize content.
+            <a href="/cookie-policy.html" class="mcc-policy-link">Cookie Policy</a>
           </p>
           <div class="mcc-banner-actions">
             <button id="mcc-accept-all" class="mcc-btn mcc-btn--primary">Accept All</button>

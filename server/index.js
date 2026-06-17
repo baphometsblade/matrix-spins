@@ -574,6 +574,21 @@ app.get('/api/health-summary', async (req, res) => {
       ok: dbOk,
       responseMs: dbResponseMs,
     },
+    connections: await (async () => {
+      try {
+        const httpServer = app.get('server');
+        const io = app.get('io');
+        const httpConns = await new Promise((resolve) => {
+          if (httpServer && typeof httpServer.getConnections === 'function') {
+            httpServer.getConnections((err, count) => resolve(err ? -1 : count));
+          } else { resolve(-1); }
+        });
+        return {
+          http: httpConns,
+          websocket: io && io.engine ? io.engine.clientsCount || 0 : 0,
+        };
+      } catch (_) { return { http: -1, websocket: -1 }; }
+    })(),
     env: {
       database: !!process.env.DATABASE_URL,
       stripe: !!process.env.STRIPE_SECRET_KEY,
@@ -714,8 +729,17 @@ function bindCatchAll() {
       if (fs.existsSync(fourOhFour)) return res.status(404).sendFile(fourOhFour);
       return res.status(404).send('Not found');
     }
-    const indexPath = hasBundle ? path.join(distPath, 'index.html') : path.join(FRONTEND_ROOT, 'index.html');
-    res.sendFile(indexPath);
+    // Known SPA routes that should serve index.html (lobby handles these client-side)
+    const spaRoutes = ['/', '/lobby', '/slots', '/games', '/promotions', '/vip',
+      '/leaderboard', '/achievements', '/referral', '/spin-wheel', '/daily-missions'];
+    if (spaRoutes.includes(reqPath) || reqPath.startsWith('/game/')) {
+      const indexPath = hasBundle ? path.join(distPath, 'index.html') : path.join(FRONTEND_ROOT, 'index.html');
+      return res.sendFile(indexPath);
+    }
+    // Unknown clean URL → proper 404
+    const fourOhFour = path.join(FRONTEND_ROOT, '404.html');
+    if (fs.existsSync(fourOhFour)) return res.status(404).sendFile(fourOhFour);
+    res.status(404).send('Not found');
   });
 
   // Global error handler (4-arg, must be last) — winston-backed, redacts in prod
@@ -847,13 +871,14 @@ async function start() {
   try {
     const realtime = require('./services/realtime.service');
     const jackpotService = require('./services/jackpot.service');
-    setInterval(async () => {
+    app._jackpotTimer = setInterval(async () => {
       try {
         if (!realtime.isAttached()) return;
         const levels = await jackpotService.getJackpotLevels();
         realtime.broadcastJackpotPools(levels);
       } catch (e) { /* swallow — purely cosmetic */ }
-    }, 4000).unref();
+    }, 4000);
+    app._jackpotTimer.unref();
   } catch (_) { /* services unavailable */ }
 
   const server = httpServer.listen(PORT, () => {
@@ -876,7 +901,8 @@ async function start() {
     const tournament = require('./services/tournament.service');
     if (typeof tournament.ensureActive === 'function') {
       tournament.ensureActive().catch(e => logger.warn('Tournament bootstrap', { error: e.message }));
-      setInterval(() => tournament.tick && tournament.tick().catch(e => logger.warn('Tournament tick', { error: e.message })), 5 * 60 * 1000);
+      app._tournamentTimer = setInterval(() => tournament.tick && tournament.tick().catch(e => logger.warn('Tournament tick', { error: e.message })), 5 * 60 * 1000);
+      app._tournamentTimer.unref();
     }
   } catch (_) {}
 
@@ -885,8 +911,15 @@ async function start() {
     const wager = require('./services/wagerace.service');
     if (typeof wager.ensureActiveRace === 'function') {
       wager.ensureActiveRace().catch(e => logger.warn('WagerRace bootstrap', { error: e.message }));
-      setInterval(() => wager.tick && wager.tick().catch(e => logger.warn('WagerRace tick', { error: e.message })), 60 * 1000);
+      app._wagerRaceTimer = setInterval(() => wager.tick && wager.tick().catch(e => logger.warn('WagerRace tick', { error: e.message })), 60 * 1000);
+      app._wagerRaceTimer.unref();
     }
+  } catch (_) {}
+
+  // GDPR: Account deletion scheduler
+  try {
+    const deletionScheduler = require('./services/account-deletion-scheduler');
+    deletionScheduler.start();
   } catch (_) {}
 
   return server;
@@ -899,11 +932,6 @@ async function gracefulShutdown(signal) {
   shuttingDown = true;
   logger.info('Received signal, shutting down gracefully', { signal });
 
-  const httpServer = app.get('server');
-  if (httpServer) {
-    httpServer.close(() => logger.info('HTTP server closed'));
-  }
-
   // Hard-fail timer — never let shutdown hang past 15s
   const hardKill = setTimeout(() => {
     logger.error('Graceful shutdown timed out — force exit');
@@ -911,9 +939,31 @@ async function gracefulShutdown(signal) {
   }, 15000);
   hardKill.unref();
 
-  // Drain in-flight requests (3s)
-  await new Promise(r => setTimeout(r, 3000));
+  // 1. Clear periodic timers so they don't fire during drain
+  ['_jackpotTimer', '_tournamentTimer', '_wagerRaceTimer'].forEach(k => {
+    if (app[k]) { clearInterval(app[k]); app[k] = null; }
+  });
 
+  // 2. Close Socket.IO — disconnect all WebSocket clients cleanly
+  const io = app.get('io');
+  if (io) {
+    try { io.close(); logger.info('Socket.IO closed'); } catch (_) {}
+  }
+
+  // 3. Stop accepting new HTTP connections and wait for in-flight to drain
+  const httpServer = app.get('server');
+  if (httpServer) {
+    await new Promise(resolve => {
+      httpServer.close(() => {
+        logger.info('HTTP server closed — all connections drained');
+        resolve();
+      });
+      // If connections don't drain in 5s, proceed anyway
+      setTimeout(resolve, 5000).unref();
+    });
+  }
+
+  // 4. Close database
   try {
     const { getBackend } = require('./database');
     const backend = getBackend();

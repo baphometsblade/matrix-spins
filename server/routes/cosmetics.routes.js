@@ -3,6 +3,14 @@
 const express = require('express');
 const { authenticate } = require('../middleware/auth');
 const cosmeticsService = require('../services/cosmetics.service');
+const rateLimit = require('express-rate-limit');
+const purchaseLimit = rateLimit({
+    windowMs: 60 * 1000,
+    max: 10,
+    standardHeaders: true,
+    legacyHeaders: false,
+    message: { error: 'Too many purchase attempts, please slow down' },
+});
 
 const router = express.Router();
 
@@ -48,7 +56,7 @@ router.get('/inventory', authenticate, async (req, res) => {
 });
 
 // POST /api/cosmetics/purchase — auth required, purchase a cosmetic with gems
-router.post('/purchase', authenticate, async (req, res) => {
+router.post('/purchase', authenticate, purchaseLimit, async (req, res) => {
     try {
         const { itemId } = req.body;
         if (!itemId) {
