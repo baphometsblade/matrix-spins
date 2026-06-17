@@ -1,5 +1,6 @@
 const express = require('express');
 const { authenticate } = require('../middleware/auth');
+const { validateSpin, runValidation } = require('../middleware/validators');
 const db = require('../database');
 const config = require('../config');
 const gameEngine = require('../services/game-engine');
@@ -338,7 +339,7 @@ router.get('/games/:id', async (req, res) => {
 });
 
 // POST /api/spin
-router.post('/', authenticate, async (req, res) => {
+router.post('/', authenticate, ...validateSpin, runValidation, async (req, res) => {
     try {
         const { gameId, nonce } = req.body;
         // Accept BOTH field names. The browser slot engine (js/api-client.js)

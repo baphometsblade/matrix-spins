@@ -4,6 +4,7 @@ const jwt = require('jsonwebtoken');
 const config = require('../config');
 const db = require('../database');
 const { authenticate, blacklistToken } = require('../middleware/auth');
+const { validateRegister, validateLogin, validateChangePassword, validateResetPassword, validateForgotPassword, runValidation } = require('../middleware/validators');
 
 const crypto = require('crypto');
 const fraudDetection = require('../services/fraud-detection');
@@ -157,7 +158,7 @@ setInterval(() => {
     }
 }, 10 * 60 * 1000);
 // POST /api/auth/register
-router.post('/register', async (req, res) => {
+router.post('/register', ...validateRegister, runValidation, async (req, res) => {
     try {
         // Check IP-based registration rate limit
         const clientIp = req.ip || req.connection.remoteAddress || 'unknown';
@@ -393,7 +394,7 @@ router.post('/register', async (req, res) => {
 });
 
 // POST /api/auth/login
-router.post('/login', async (req, res) => {
+router.post('/login', ...validateLogin, runValidation, async (req, res) => {
     try {
         const { username, password } = req.body;
 
@@ -530,7 +531,7 @@ db.run(`CREATE TABLE IF NOT EXISTS email_verification_tokens (
 // window) is the single source of truth.
 
 // POST /api/auth/forgot-password
-router.post('/forgot-password', async (req, res) => {
+router.post('/forgot-password', ...validateForgotPassword, runValidation, async (req, res) => {
     try {
         const { email } = req.body;
         if (!email) {
@@ -582,7 +583,7 @@ router.post('/forgot-password', async (req, res) => {
 
 // POST /api/auth/reset-password
 // Outer rate limit: sensitiveAuthLimiter (index.js) — 5 per 15min per IP.
-router.post('/reset-password', async (req, res) => {
+router.post('/reset-password', ...validateResetPassword, runValidation, async (req, res) => {
     try {
         const { token, newPassword } = req.body;
         if (!token || !newPassword) {
@@ -636,7 +637,7 @@ router.post('/reset-password', async (req, res) => {
 });
 
 // POST /api/auth/change-password
-router.post('/change-password', authenticate, async (req, res) => {
+router.post('/change-password', authenticate, ...validateChangePassword, runValidation, async (req, res) => {
     try {
         const { currentPassword, newPassword } = req.body;
 

@@ -1,5 +1,6 @@
 const express = require('express');
 const { authenticate } = require('../middleware/auth');
+const { validateDeposit, validateWithdraw, runValidation } = require('../middleware/validators');
 const db = require('../database');
 const config = require('../config');
 const crypto = require('crypto');
@@ -304,7 +305,7 @@ router.put('/methods/:id/default', authenticate, async (req, res) => {
 // ═══════════════════════════════════════════════════
 
 // POST /api/payments/deposit — create and auto-complete a deposit
-router.post('/deposit', authenticate, async (req, res) => {
+router.post('/deposit', authenticate, ...validateDeposit, runValidation, async (req, res) => {
     try {
         const { amount, paymentType, paymentMethodId } = req.body;
         const deposit = parseFloat(amount);
@@ -409,7 +410,7 @@ router.get('/deposits', authenticate, async (req, res) => {
 // ═══════════════════════════════════════════════════
 
 // POST /api/payments/withdraw — create a withdrawal request
-router.post('/withdraw', authenticate, async (req, res) => {
+router.post('/withdraw', authenticate, ...validateWithdraw, runValidation, async (req, res) => {
     // SECURITY: Per-user lock prevents concurrent withdrawal race condition
     const lockKey = String(req.user.id);
     if (activeWithdrawals.has(lockKey)) {
