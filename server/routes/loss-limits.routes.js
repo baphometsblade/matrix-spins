@@ -27,6 +27,10 @@ async function ensureSchema() {
     const numType = isPg ? 'NUMERIC(15,2)' : 'REAL';
     const intType = 'INTEGER';
     const altCols = [
+        // daily_wager_limit lives in the sqlite schema's user_limits CREATE TABLE but was
+        // missing from schema-pg.js → on PostgreSQL (prod) the session wager-limit UPDATEs
+        // threw "column daily_wager_limit does not exist". Backfill existing PG deployments.
+        'ALTER TABLE user_limits ADD COLUMN daily_wager_limit ' + numType,
         'ALTER TABLE user_limits ADD COLUMN weekly_loss_limit ' + numType,
         'ALTER TABLE user_limits ADD COLUMN monthly_loss_limit ' + numType,
         'ALTER TABLE user_limits ADD COLUMN max_bet_per_spin ' + numType,

@@ -51,9 +51,10 @@ async function purchaseBundle(userId, bundleId) {
     `, [userId, bundle.price, updated ? updated.balance : 0,
         'Bundle: ' + bundle.name + ' ($' + baseCredits + ' + $' + bonusCredits + ' bonus)']);
 
-    // Record deposit for tracking
+    // Record deposit for tracking. The deposits table has no `method` column and
+    // payment_type is NOT NULL — use payment_type ('bundle') as the deposit method.
     await db.run(`
-        INSERT INTO deposits (user_id, amount, method, status, created_at)
+        INSERT INTO deposits (user_id, amount, payment_type, status, created_at)
         VALUES (?, ?, 'bundle', 'completed', datetime('now'))
     `, [userId, bundle.price]);
 

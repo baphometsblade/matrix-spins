@@ -122,6 +122,7 @@ const TABLES = [
         monthly_deposit_limit NUMERIC(15,2),
         daily_loss_limit NUMERIC(15,2),
         session_time_limit INTEGER,
+        daily_wager_limit NUMERIC(15,2),
         self_excluded_until TIMESTAMPTZ,
         cooling_off_until TIMESTAMPTZ,
         created_at TIMESTAMPTZ DEFAULT NOW(),
@@ -1048,6 +1049,16 @@ const USER_MIGRATIONS = [
     ['vip_monthly_loss', 'NUMERIC(15,2) DEFAULT 0'],
     ['vip_monthly_period', 'TEXT'],
     ['achievement_points', 'INTEGER DEFAULT 0'],
+    // Gamification reward counters / boost expiries granted by streak, mystery-drop,
+    // and loyalty-store routes (were referenced by UPDATEs but never declared → those
+    // grants threw "column does not exist" and silently failed).
+    ['bonus_wheel_spins', 'INTEGER DEFAULT 0'],
+    ['cashback_boost_until', 'TIMESTAMPTZ'],
+    ['vip_boost_until', 'TIMESTAMPTZ'],
+    ['cashback_multiplier', 'NUMERIC(6,2) DEFAULT 1'],
+    // self_excluded exists in schema-sqlite.js users CREATE TABLE but was missing on PG
+    // (drift) — the account-deletion anonymizer sets it. Harmonize both backends.
+    ['self_excluded', 'INTEGER DEFAULT 0'],
 ];
 
 /** Extra columns added to withdrawals table via migrations (column name â†’ PG definition). */

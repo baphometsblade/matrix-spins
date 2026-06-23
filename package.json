@@ -18,6 +18,7 @@
     "qa:regression": "node scripts/qa_regression.js",
     "qa:smoke": "node scripts/smoke-money-flow.js",
     "qa:rtp": "node scripts/verify-rtp.js",
+    "qa:schema": "node scripts/check-schema-dml-consistency.js",
     "test": "jest --runInBand --forceExit",
     "test:unit": "jest --runInBand --forceExit tests/unit",
     "test:integration": "jest --runInBand --forceExit tests/integration",

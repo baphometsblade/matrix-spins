@@ -108,8 +108,11 @@ router.post('/claim', authenticate, bonusGuard, async (req, res) => { // ROUND 4
         await db.run('UPDATE users SET gems = COALESCE(gems, 0) + ? WHERE id = ?',
             [BIRTHDAY_GEMS, req.user.id]).catch(function(e) { console.warn('[birthday] Gems award error:', e.message); });
 
-        // Award free spins (if free_spins column exists)
-        await db.run('UPDATE users SET free_spins = COALESCE(free_spins, 0) + ? WHERE id = ?',
+        // Award free spins to the canonical, consumable counter (free_spins_count + a
+        // 30-day expiry) — the bare `free_spins` column never existed, so this grant used
+        // to silently no-op. Matches the grant pattern in freespins.routes.js.
+        await db.run(
+            "UPDATE users SET free_spins_count = COALESCE(free_spins_count, 0) + ?, free_spins_expires = datetime('now', '+30 days') WHERE id = ?",
             [BIRTHDAY_FREE_SPINS, req.user.id]).catch(function(e) { console.warn('[birthday] Free spins award error:', e.message); });
 
         // Transaction record

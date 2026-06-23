@@ -787,11 +787,16 @@ const TABLES = [
         created_at TEXT DEFAULT (datetime('now'))
     )`,
 
+    // Columns MUST match admin-rg.routes.js ensureSchema (the only reader/writer):
+    // admin_user_id + payload. This stale creator previously declared admin_id and
+    // omitted payload; on SQLite it ran first (CREATE IF NOT EXISTS), so admin-rg's
+    // INSERT/SELECT of admin_user_id/payload failed and the RG audit trail was dropped.
     `CREATE TABLE IF NOT EXISTS rg_admin_audit (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
-        admin_id INTEGER NOT NULL,
+        admin_user_id INTEGER NOT NULL,
         target_user_id INTEGER NOT NULL,
         action TEXT NOT NULL,
+        payload TEXT,
         reason TEXT,
         created_at TEXT DEFAULT (datetime('now'))
     )`
@@ -1023,6 +1028,18 @@ const USER_MIGRATIONS = [
     ['vip_monthly_loss', 'REAL DEFAULT 0'],
     ['vip_monthly_period', 'TEXT'],
     ['achievement_points', 'INTEGER DEFAULT 0'],
+    // Gamification reward counters / boost expiries granted by streak, mystery-drop,
+    // and loyalty-store routes (were referenced by UPDATEs but never declared → those
+    // grants threw "no column named …" and silently failed). Mirror schema-pg.js.
+    ['bonus_wheel_spins', 'INTEGER DEFAULT 0'],
+    ['cashback_boost_until', 'TEXT'],
+    ['vip_boost_until', 'TEXT'],
+    ['cashback_multiplier', 'REAL DEFAULT 1'],
+    // status exists on PG (schema-pg.js USER_STATUS_MIGRATIONS) but was never added to
+    // SQLite users → drift. Mirror it so account-deletion's `status='deleted'` (and any
+    // other users.status read/write) works on both backends.
+    ['status', "TEXT DEFAULT 'active'"],
+    // (self_excluded is already in the users CREATE TABLE on SQLite.)
 ];
 
 /** Extra columns added to withdrawals table via migrations (column name → definition). */

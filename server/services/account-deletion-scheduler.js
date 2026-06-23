@@ -48,7 +48,10 @@ async function anonymizeUser(userId, isPg) {
     const anonEmail = `deleted_${userId}@anonymized.invalid`;
     const anonUsername = `deleted_user_${userId}`;
 
-    // Anonymize user record — keep id and created_at for regulatory retention
+    // Anonymize user record — keep id and created_at for regulatory retention.
+    // Only columns that exist on the users table (both backends): the previous version
+    // referenced address / is_active / self_exclusion_until which do not exist on users,
+    // so the whole UPDATE threw and PII was never scrubbed. Deactivation is via `status`.
     await db.run(
         `UPDATE users SET
             username = ?,
@@ -58,13 +61,11 @@ async function anonymizeUser(userId, isPg) {
             avatar_url = NULL,
             phone = NULL,
             date_of_birth = NULL,
-            address = NULL,
             balance = 0,
             bonus_balance = 0,
             wagering_requirement = 0,
-            is_active = 0,
-            self_excluded = 1,
-            self_exclusion_until = '2099-12-31'
+            status = 'deleted',
+            self_excluded = 1
         WHERE id = ?`,
         [anonUsername, anonEmail, userId]
     );
@@ -78,9 +79,11 @@ async function anonymizeUser(userId, isPg) {
     // Clear notification tokens
     await db.run('DELETE FROM push_subscriptions WHERE user_id = ?', [userId]).catch(() => {});
 
-    // Anonymize support conversations
+    // Anonymize support conversations. support_messages has no user_id/message columns —
+    // the text column is `body` and ownership is via conversation_id → support_conversations.
     await db.run(
-        "UPDATE support_messages SET message = '[message removed — account deleted]' WHERE user_id = ?",
+        "UPDATE support_messages SET body = '[message removed — account deleted]' " +
+        "WHERE conversation_id IN (SELECT id FROM support_conversations WHERE user_id = ?)",
         [userId]
     ).catch(() => {});
 
