@@ -207,6 +207,7 @@ function pageHtml(game) {
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>${game.name} — Matrix Spins Casino</title>
   <meta name="theme-color" content="${game.accent}">
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
   <meta name="description" content="${desc}">
   <meta name="rating" content="adult">
   <link rel="canonical" href="https://msaart.online/games/${game.id}.html">

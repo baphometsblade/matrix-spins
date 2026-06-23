@@ -2,7 +2,7 @@
 // PWA: cache-first statics, network-first HTML, network-only API,
 // offline fallback, version-update messaging.
 
-const VERSION = 'b1781654533976';
+const VERSION = 'b1782220137859';
 const STATIC_CACHE  = `matrix-spins-static-${VERSION}`;
 const RUNTIME_CACHE = `matrix-spins-runtime-${VERSION}`;
 const HTML_CACHE    = `matrix-spins-html-${VERSION}`;
