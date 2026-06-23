@@ -62,5 +62,9 @@
  {
   "tile": "vintage-vault-riches/bar",
   "issue": "AUDIT 2026-06-17: ingot with garbled fake assay text"
+ },
+ {
+  "tile": "dragon-golden-fortune/coin",
+  "issue": "CRYPTO AUDIT 2026-06-23: square gold token with garbled CIRC-style monogram lettering — reads as a currency/crypto medallion, both audit passes flagged. Masked to emoji pending a clean dragon-emboss re-roll"
  }
 ]
