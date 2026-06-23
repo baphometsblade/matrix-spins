@@ -1424,18 +1424,23 @@
             }
         }
 
-        /* Narrow phones: the header-right packs balance + VIP widget + wagering
-           bar + Deposit + search + notification bell + menu, which overflowed
-           375px and pushed the bell/menu OFF-SCREEN. Keep the essentials
-           (balance — real-money rule — + Deposit + bell + menu); drop the
-           secondary VIP tier widget and header wagering bar (both available on
-           the VIP/account pages). */
-        @media (max-width: 480px) {
+        /* Tablet + phone (≤1023px): the header-right packs 12 items —
+           balance + VIP widget + wagering bar + Deposit + search + sound +
+           notification bell + limits + avatar + hamburger. The prior fix
+           only covered ≤480px; live playwright probe at 684px viewport
+           found the bell, Deposit, limits, avatar, sound, and hamburger
+           all OFF-SCREEN — tablet users could not reach the Deposit button
+           AT ALL across the full 481–1023px range. Apply the same hide-
+           secondary-icons rule to the broader tablet range; every hidden
+           control is still reachable from the 19-item hamburger drawer
+           that remains visible. */
+        @media (max-width: 1023px) {
             /* Keep only the essentials in the bar — balance (real-money rule),
                Deposit/Sign-Up (conversion), and the hamburger. The standalone
                icons (sound, search, notifications, RG-limits, avatar) are all
                reachable from the hamburger menu, so they are redundant here and
-               were overflowing Deposit + the menu OFF-SCREEN at 375px. */
+               were overflowing Deposit + the menu OFF-SCREEN at every tablet
+               width below 1024px. */
             .header-right #vipMiniWidget,
             .header-right #wageringBarWrap,
             .header-right .ms-search-trigger,
@@ -1446,6 +1451,10 @@
             .header-right .avatar { display: none !important; }
             .header-right { gap: 6px; flex-wrap: nowrap; }
             .header-right .balance-card { padding: 4px 8px; }
+        }
+        /* Phone-only layer (≤480px): also tighten the logo so the header
+           fits on the narrowest devices. Inherits the icon hides above. */
+        @media (max-width: 480px) {
             .header-logo { max-width: 120px; overflow: hidden; }
         }
     </style>
