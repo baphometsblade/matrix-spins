@@ -902,9 +902,6 @@ const INDEXES = [
     `CREATE INDEX IF NOT EXISTS idx_referral_codes_code ON referral_codes(code)`,
     `CREATE INDEX IF NOT EXISTS idx_referral_claims_referrer ON referral_claims(referrer_id)`,
     `CREATE INDEX IF NOT EXISTS idx_referral_claims_referred ON referral_claims(referred_id)`,
-    `CREATE INDEX IF NOT EXISTS idx_promo_codes_code ON promo_codes(code)`,
-    `CREATE INDEX IF NOT EXISTS idx_promo_redemptions_user ON promo_redemptions(user_id)`,
-    `CREATE INDEX IF NOT EXISTS idx_promo_redemptions_code ON promo_redemptions(code_id)`,
     `CREATE INDEX IF NOT EXISTS idx_battle_pass_claims_user_pass ON battle_pass_claims(user_id, pass_id)`,
     `CREATE INDEX IF NOT EXISTS idx_battle_pass_progress_user_pass ON battle_pass_progress(user_id, pass_id)`,
     // MEDIUM: Admin/analytics/service
@@ -912,15 +909,32 @@ const INDEXES = [
     `CREATE INDEX IF NOT EXISTS idx_activity_log_created ON activity_log(created_at)`,
     `CREATE INDEX IF NOT EXISTS idx_newsletter_subscribers_email ON newsletter_subscribers(email)`,
     `CREATE INDEX IF NOT EXISTS idx_password_reset_tokens_token ON password_reset_tokens(token)`,
-    `CREATE INDEX IF NOT EXISTS idx_email_verification_tokens_token ON email_verification_tokens(token)`,
     `CREATE INDEX IF NOT EXISTS idx_slot_races_status ON slot_races(status)`,
     `CREATE INDEX IF NOT EXISTS idx_slot_race_entries_race_user ON slot_race_entries(race_id, user_id)`,
-    `CREATE INDEX IF NOT EXISTS idx_gem_balances_user ON gem_balances(user_id)`,
-    `CREATE INDEX IF NOT EXISTS idx_cosmetic_inventory_user ON cosmetic_inventory(user_id, item_id)`,
-    `CREATE INDEX IF NOT EXISTS idx_active_boosts_user ON active_boosts(user_id, expires_at)`,
     `CREATE INDEX IF NOT EXISTS idx_slot_events_active ON slot_events(is_active, start_at, end_at)`,
     `CREATE INDEX IF NOT EXISTS idx_seasonal_event_progress_user ON seasonal_event_progress(user_id, event_id)`,
     `CREATE INDEX IF NOT EXISTS idx_gem_purchases_user ON gem_purchases(user_id, created_at)`,
+];
+
+/**
+ * Deferred indexes — target tables that are NOT in TABLES because they are
+ * bootstrapped lazily by route/service modules (promo_codes, promo_redemptions,
+ * email_verification_tokens, gem_balances, cosmetic_inventory, active_boosts).
+ * They are applied AFTER the eager INDEXES, each in its own try/catch, so a
+ * not-yet-created table can never abort init() and trip degraded mode on a
+ * real-money casino. Mirrors schema-sqlite.js DEFERRED_INDEXES and keeps the
+ * eager INDEXES array strictly limited to TABLES (enforced by
+ * tests/unit/schema-index-tables.test.js). Move an index here — never into the
+ * eager array — when it references a route-bootstrapped table.
+ */
+const DEFERRED_INDEXES = [
+    `CREATE INDEX IF NOT EXISTS idx_promo_codes_code ON promo_codes(code)`,
+    `CREATE INDEX IF NOT EXISTS idx_promo_redemptions_user ON promo_redemptions(user_id)`,
+    `CREATE INDEX IF NOT EXISTS idx_promo_redemptions_code ON promo_redemptions(code_id)`,
+    `CREATE INDEX IF NOT EXISTS idx_email_verification_tokens_token ON email_verification_tokens(token)`,
+    `CREATE INDEX IF NOT EXISTS idx_gem_balances_user ON gem_balances(user_id)`,
+    `CREATE INDEX IF NOT EXISTS idx_cosmetic_inventory_user ON cosmetic_inventory(user_id, item_id)`,
+    `CREATE INDEX IF NOT EXISTS idx_active_boosts_user ON active_boosts(user_id, expires_at)`,
 ];
 
 
@@ -1077,4 +1091,4 @@ const AUDIT_LOG_MIGRATIONS = [
     ['reference', 'TEXT'],
 ];
 
-module.exports = { TABLES, INDEXES, USER_MIGRATIONS, WITHDRAWAL_MIGRATIONS, SPIN_MIGRATIONS, TRANSACTION_MIGRATIONS, USER_STATUS_MIGRATIONS, AUDIT_LOG_MIGRATIONS };
+module.exports = { TABLES, INDEXES, DEFERRED_INDEXES, USER_MIGRATIONS, WITHDRAWAL_MIGRATIONS, SPIN_MIGRATIONS, TRANSACTION_MIGRATIONS, USER_STATUS_MIGRATIONS, AUDIT_LOG_MIGRATIONS };

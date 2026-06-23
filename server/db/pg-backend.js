@@ -192,6 +192,19 @@ class PgBackend {
             }
         }
 
+        // Deferred indexes — target tables bootstrapped lazily by route/service
+        // modules (promo_codes, gem_balances, …) that are NOT in schema.TABLES.
+        // Applied here, after the eager indexes, each in its own try/catch so a
+        // not-yet-created table is a no-op rather than a degraded-mode trip.
+        // (Mirrors sqlite-backend.js DEFERRED_INDEXES handling.)
+        for (const idx of schema.DEFERRED_INDEXES || []) {
+            try {
+                await this.pool.query(idx);
+            } catch (err) {
+                console.warn('[DB/PG] Skipping deferred index (non-fatal):', err.message);
+            }
+        }
+
         // Seed admin
         await this._seedAdmin();
 
