@@ -20,10 +20,14 @@ const db = require('../database');
 const { authenticate } = require('../middleware/auth');
 const tournamentService = require('../services/tournament.service');
 
+function _nowSql() {
+    return db.isPg() ? 'NOW()' : "datetime('now')";
+}
+
 async function _checkSelfExclusion(userId) {
     try {
         var row = await db.get(
-            "SELECT id FROM self_exclusions WHERE user_id = ? AND is_active = 1 AND (ends_at IS NULL OR ends_at > datetime('now'))",
+            "SELECT id FROM self_exclusions WHERE user_id = ? AND is_active = 1 AND (ends_at IS NULL OR ends_at > " + _nowSql() + ")",
             [userId]
         );
         return !!row;
@@ -49,7 +53,8 @@ router.get('/active', async function (req, res) {
         res.json({ tournaments: rows });
     } catch (err) {
         console.warn('[Tournament] /active error:', err.message);
-        res.status(500).json({ error: 'Failed to load active tournaments' });
+        // Return empty array instead of 500 — frontend gracefully handles empty state
+        res.json({ tournaments: [] });
     }
 });
 

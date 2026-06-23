@@ -118,13 +118,17 @@ async function ensureActive() {
 }
 
 async function getActive() {
+    // Use parameterized date comparison instead of SQL function interpolation —
+    // safer across SQLite / PostgreSQL and avoids type-cast issues
+    var now = nowIso();
     var rows = await db.all(
         "SELECT t.id, t.name, t.description, t.type, t.prize_pool, t.entry_fee, " +
         "t.start_date, t.end_date, COUNT(te.id) AS entry_count " +
         "FROM tournaments t LEFT JOIN tournament_entries te ON te.tournament_id = t.id " +
-        "WHERE t.status = 'active' AND t.end_date > " + nowSql() + " " +
+        "WHERE t.status = 'active' AND t.end_date > ? " +
         "GROUP BY t.id, t.name, t.description, t.type, t.prize_pool, t.entry_fee, t.start_date, t.end_date " +
-        "ORDER BY t.end_date ASC"
+        "ORDER BY t.end_date ASC",
+        [now]
     );
     return rows.map(_decorate);
 }
@@ -251,8 +255,8 @@ async function submitSpin(userId, winAmount, bet) {
     var activeRows = await db.all(
         "SELECT t.id, t.type FROM tournaments t " +
         "INNER JOIN tournament_entries te ON te.tournament_id = t.id AND te.user_id = ? " +
-        "WHERE t.status = 'active' AND t.end_date > " + nowSql(),
-        [userId]
+        "WHERE t.status = 'active' AND t.end_date > ?",
+        [userId, nowIso()]
     );
 
     for (var i = 0; i < activeRows.length; i++) {
@@ -430,7 +434,8 @@ async function _completeTournament(tournamentId) {
 async function tick() {
     try {
         var expired = await db.all(
-            "SELECT id FROM tournaments WHERE status = 'active' AND end_date < " + nowSql()
+            "SELECT id FROM tournaments WHERE status = 'active' AND end_date < ?",
+            [nowIso()]
         );
         for (var i = 0; i < expired.length; i++) {
             try {

@@ -511,6 +511,7 @@ mount('/api/revenue-dashboard', './routes/revenue-dashboard.routes',   'revenue-
 mount('/api/session-analytics', './routes/session-analytics.routes',   'session-analytics');
 mount('/api/campaigns',         './routes/campaigns.routes',           'campaigns');
 mount('/api/deposit-campaigns', './routes/campaigns.routes',           'deposit-campaigns-alias');
+mount('/api/promos',            './routes/campaigns.routes',           'promos-alias');
 
 // Health + newsletter + SEO (dynamic sitemap/robots)
 mount('/api/health',     './routes/health.routes',     'health');

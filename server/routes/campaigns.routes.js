@@ -76,7 +76,7 @@ router.get('/active', async function(req, res) {
         var campaigns = await db.all(
             `SELECT id, name, description, match_percent, max_bonus, min_deposit, start_at, end_at
              FROM deposit_campaigns
-             WHERE is_active = 1 AND start_at <= datetime(?) AND end_at >= datetime(?)
+             WHERE is_active = 1 AND start_at <= ? AND end_at >= ?
              ORDER BY created_at DESC`,
             [now, now]
         );
@@ -97,7 +97,7 @@ router.get('/active', async function(req, res) {
         return res.json(result);
     } catch (err) {
         console.warn('[campaigns] GET /active error:', err.message);
-        return res.status(500).json({ error: 'Internal server error' });
+        return res.json([]);
     }
 });
 

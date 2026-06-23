@@ -17,17 +17,28 @@ const fs = require('fs');
 //
 // SQLite and PG both accept partial unique indexes (WHERE client_nonce
 // IS NOT NULL) so historical rows without a nonce don't conflict.
-function _spinSchemaBootstrap(sql) {
-    db.run(sql).catch(function(e) {
-        var msg = String(e && e.message || e);
-        if (/duplicate column|already exists|no such table/i.test(msg)) return;
-        console.warn('[Spin] schema bootstrap failed:', msg);
-    });
+// Runs the given DDL statements STRICTLY IN ORDER. This matters on PostgreSQL:
+// db.run() resolves on the async pool, so firing the ALTER and the dependent
+// CREATE INDEX as two un-chained calls lets the index race ahead of the column
+// it references — Postgres then throws `column "client_nonce" does not exist`
+// and the idempotency unique index (the DB-level double-charge guard for spin
+// retries) is silently never created. Chaining guarantees the column exists
+// before the index that depends on it. Benign "already exists" errors are
+// swallowed so each statement still advances the chain. (SQLite happened to
+// serialize these, which is why this only ever bit the PG/serverless path.)
+function _spinSchemaBootstrap(statements) {
+    return statements.reduce(function (p, sql) {
+        return p.then(function () { return db.run(sql); }).catch(function (e) {
+            var msg = String(e && e.message || e);
+            if (/duplicate column|already exists|no such table/i.test(msg)) return;
+            console.warn('[Spin] schema bootstrap failed:', msg);
+        });
+    }, Promise.resolve());
 }
-_spinSchemaBootstrap("ALTER TABLE spins ADD COLUMN client_nonce TEXT");
-_spinSchemaBootstrap(
-    "CREATE UNIQUE INDEX IF NOT EXISTS idx_spins_user_nonce ON spins(user_id, client_nonce) WHERE client_nonce IS NOT NULL"
-);
+_spinSchemaBootstrap([
+    "ALTER TABLE spins ADD COLUMN client_nonce TEXT",
+    "CREATE UNIQUE INDEX IF NOT EXISTS idx_spins_user_nonce ON spins(user_id, client_nonce) WHERE client_nonce IS NOT NULL",
+]);
 
 // Client nonces are required to be 16-64 chars of [a-zA-Z0-9-_]. UUIDs
 // (36 char) and crypto.randomUUID outputs both fit. Anything outside
