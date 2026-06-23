@@ -5,87 +5,35 @@
  },
  {
   "tile": "cannonball-express/rum",
-  "issue": "QA-regen 2026-06-17: Rum bottle, but the label reads garbled fake text 'WHARLD RUUM' / 'WHARLD RUUM' with nonse"
+  "issue": "re-rolled 2026-06-17: rum bottle is a text-magnet (SDXL stamps a garbled PRATE RUM label even with no-label prompt) — kept on emoji"
  },
  {
   "tile": "cherry-blossom-bonus/bar",
   "issue": "Garbled gibberish embossed stamp text"
  },
  {
-  "tile": "druid-forest-magic/spell",
-  "issue": "QA-regen 2026-06-17: Ornate green/gold medallion with a stamped letter 'R' in the center standing in as the sub"
- },
- {
-  "tile": "elven-archer-legends/elf",
-  "issue": "QA-regen 2026-06-17: Depicts an ornate jeweled dagger/blade, not an elf. Off-theme for the 'elf' symbol id."
- },
- {
   "tile": "kangaroo-outback-bound/desert",
-  "issue": "QA-regen 2026-06-17: The desert is depicted INSIDE a small ornate gold picture frame standing on the dunes. The"
- },
- {
-  "tile": "lucky-sevens-infinity/sevens",
-  "issue": "QA-regen 2026-06-17: Gold medallion stamped with a red letter 'Z' instead of a seven. A stray rendered letter s"
- },
- {
-  "tile": "melon-madness-mixer/sevens",
-  "issue": "QA-regen 2026-06-17: Red/gold badge shows '17' over the garbled embossed text 'CASNO' (misspelled casino). Fake"
- },
- {
-  "tile": "merlin-arcane-wonders/spell",
-  "issue": "QA-regen 2026-06-17: Ornate gold medallion with a blue gem stamped with the letter 'K' - a stray rendered lette"
+  "issue": "re-rolled 2026-06-17: scene subject forced into a picture frame by the product-shot template (4x) — kept on emoji"
  },
  {
   "tile": "nebula-space-odyssey/comet",
-  "issue": "QA-regen 2026-06-17: Depicts an Ace of Spades playing card on a gold-trimmed table, not a comet. Clearly off-th"
- },
- {
-  "tile": "nebula-space-odyssey/satellite",
-  "issue": "QA-regen 2026-06-17: Shows an ornate gold winged pedestal/cake-stand ornament, not a satellite. Off-theme for t"
- },
- {
-  "tile": "quantum-leap-vault/spacecraft",
-  "issue": "QA-regen 2026-06-17: Depicts a gold-and-blue luxury box/lighter with a decorative gold crest on a table, not a "
+  "issue": "re-rolled 2026-06-17: SDXL renders an Ace-of-Spades card for this tile regardless of prompt — kept on emoji"
  },
  {
   "tile": "retro-fruit-fiesta/triple-bar",
   "issue": "Single gold bar with garbled text BAOR, not triple bars"
  },
  {
-  "tile": "siren-song-temptation/siren",
-  "issue": "QA-regen 2026-06-17: Depicts an ornate golden scallop shell brooch with a pearl, not a siren/mermaid figure. Of"
- },
- {
-  "tile": "sorcerer-arcane-tower/arcane",
-  "issue": "QA-regen 2026-06-17: Blue medallion stamped with rendered letters 'N A L' inside a circle — garbled/fake text a"
- },
- {
-  "tile": "sorcerer-arcane-tower/sorcerer",
-  "issue": "QA-regen 2026-06-17: Shows a small star atop a candlestick-like holder plus a crystal ball, not a sorcerer figu"
- },
- {
-  "tile": "stellar-collapse-spinner/comet",
-  "issue": "QA-regen 2026-06-17: Shows a glowing blue feather/ice shard rising from a small golden box, not a comet. Off-th"
- },
- {
   "tile": "sunshine-lemon-drop/bar",
   "issue": "Garbled stamped text EUROO 91 9999"
  },
  {
-  "tile": "wizard-spellbook-master/wizard",
-  "issue": "QA-regen 2026-06-17: Depicts an ornate gold-and-blue jeweled star ornament on a log, not a wizard. Clearly off-"
- },
- {
-  "tile": "cosmic-raider-mission/blaster",
-  "issue": "QA-regen 2026-06-17: Shows a conventional Beretta-style handgun, not a sci-fi blaster/raygun. Reads as a real-w"
- },
- {
   "tile": "cursed-carnival-night/popcorn",
-  "issue": "QA-regen 2026-06-17: Popcorn box on-theme but the label reads garbled 'POPROIN' instead of POPCORN - garbled fa"
+  "issue": "re-rolled 2026-06-17: popcorn carton is a text-magnet (stamps Casino label text) — kept on emoji"
  },
  {
   "tile": "cursed-carnival-night/ticket",
-  "issue": "QA-regen 2026-06-17: Ornate gold frame with a red gem star plaque; does not depict a carnival ticket. Off-theme"
+  "issue": "re-rolled 2026-06-17: ticket is a text-magnet (stamps garbled label text) — kept on emoji"
  },
  {
   "tile": "dingo-desert-runner/sunset",
