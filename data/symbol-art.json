@@ -711,7 +711,9 @@
     "luck": "koi-fish-abundance/luck.webp",
     "scatter": "koi-fish-abundance/scatter.webp",
     "silk": "koi-fish-abundance/silk.webp",
-    "wild": "koi-fish-abundance/wild.webp"
+    "wild": "koi-fish-abundance/wild.webp",
+    "pond": "koi-fish-abundance/pond.webp",
+    "water": "koi-fish-abundance/water.webp"
   },
   "luck-prosperity-wheel": {
     "coin": "luck-prosperity-wheel/coin.webp",
