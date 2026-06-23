@@ -61,9 +61,25 @@ const validateAmount = (field = 'amount', { min = 0.01, max = 100000 } = {}) => 
     body(field).isFloat({ min, max }).withMessage(`${field} must be between ${min} and ${max}`),
 ];
 
+// Spin accepts EITHER `bet` (canonical, sent by js/api-client.js) or the
+// long-standing legacy alias `betAmount`. The route at spin.routes.js:350
+// coalesces both, so the validator must too — otherwise every request that
+// sends only `betAmount` (every existing integration test + any client still
+// on the legacy field name) gets 400 BEFORE the route's business logic runs,
+// which masks self-exclusion (403), wagering caps, and over-draw checks
+// behind a misleading "bet must be 0.01-1000" message.
 const validateSpin = [
     body('gameId').optional().isString().isLength({ max: 64 }),
-    body('bet').isFloat({ min: 0.01, max: 1000 }).withMessage('bet must be 0.01-1000'),
+    body('bet').optional().isFloat({ min: 0.01, max: 1000 }).withMessage('bet must be 0.01-1000'),
+    body('betAmount').optional().isFloat({ min: 0.01, max: 1000 }).withMessage('betAmount must be 0.01-1000'),
+    body().custom((_value, { req }) => {
+        const b = req.body && req.body.bet;
+        const ba = req.body && req.body.betAmount;
+        if (b === undefined && ba === undefined) {
+            throw new Error('bet amount is required');
+        }
+        return true;
+    }),
     body('lines').optional().isInt({ min: 1, max: 100 }),
 ];
 
