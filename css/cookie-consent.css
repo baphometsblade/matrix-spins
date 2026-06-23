@@ -50,6 +50,22 @@
   font-size: 14px;
 }
 
+/* WCAG 2.1 AA 1.4.3: the policy link had no color rule, so it fell back to the
+   browser default #0000EE (~2:1 on this dark banner — fails). Brand bright-gold
+   gives ~11:1, underlined so it still reads as a link, with a visible focus ring
+   (2.4.7) for keyboard users. Shown to every new visitor on every page. */
+.mcc-policy-link {
+  color: #f0c66e;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+.mcc-policy-link:hover { color: #ffd97a; }
+.mcc-policy-link:focus-visible {
+  outline: 2px solid #f0c66e;
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
 .mcc-banner-actions {
   display: flex;
   gap: 12px;
