@@ -40,7 +40,7 @@ const MIGRATION_INDEXES = [
     'CREATE INDEX IF NOT EXISTS idx_promo_redemptions_user ON promo_redemptions(user_id)',
     'CREATE INDEX IF NOT EXISTS idx_promo_redemptions_code ON promo_redemptions(code_id)',
     'CREATE INDEX IF NOT EXISTS idx_battle_pass_claims_user_pass ON battle_pass_claims(user_id, pass_id)',
-    'CREATE INDEX IF NOT EXISTS idx_battle_pass_progress_user_pass ON battle_pass_progress(user_id, pass_id)',
+    'CREATE INDEX IF NOT EXISTS idx_battle_pass_user_progress_user_pass ON battle_pass_user_progress(user_id, pass_id)',
 
     // ── MEDIUM: Admin/analytics/service ──
     'CREATE INDEX IF NOT EXISTS idx_activity_log_user ON activity_log(user_id, created_at)',

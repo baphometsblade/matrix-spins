@@ -43,12 +43,14 @@ async function purchaseBundle(userId, bundleId) {
                    wagering_requirement = COALESCE(wagering_requirement, 0) + ? WHERE id = ?`,
         [baseCredits, bonusCredits, wageringReq, userId]);
 
-    // Log the purchase transaction
+    // Log the purchase transaction. transactions.balance_before is NOT NULL — supply it
+    // (the bundle credits bonus_balance, so withdrawable balance is unchanged → before==after).
     const updated = await db.get('SELECT balance FROM users WHERE id = ?', [userId]);
+    const bal = updated ? updated.balance : 0;
     await db.run(`
-        INSERT INTO transactions (user_id, type, amount, balance_after, reference, created_at)
-        VALUES (?, 'bundle_purchase', ?, ?, ?, datetime('now'))
-    `, [userId, bundle.price, updated ? updated.balance : 0,
+        INSERT INTO transactions (user_id, type, amount, balance_before, balance_after, reference, created_at)
+        VALUES (?, 'bundle_purchase', ?, ?, ?, ?, datetime('now'))
+    `, [userId, bundle.price, bal, bal,
         'Bundle: ' + bundle.name + ' ($' + baseCredits + ' + $' + bonusCredits + ' bonus)']);
 
     // Record deposit for tracking. The deposits table has no `method` column and

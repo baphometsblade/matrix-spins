@@ -266,8 +266,9 @@ async function claimReward(userId, level, track) {
             [reward.amount, reward.amount * wageringMult, userId]
         );
         await db.run(
-            "INSERT INTO transactions (user_id, type, amount, reference, created_at) VALUES (?, 'battle_pass_reward', ?, ?, datetime('now'))",
-            [userId, reward.amount, 'BP Level ' + level + ' ' + track + ' (bonus, 20x wagering)']
+            "INSERT INTO transactions (user_id, type, amount, balance_before, balance_after, reference, created_at) " +
+            "VALUES (?, 'battle_pass_reward', ?, COALESCE((SELECT balance FROM users WHERE id = ?), 0), COALESCE((SELECT balance FROM users WHERE id = ?), 0), ?, datetime('now'))",
+            [userId, reward.amount, userId, userId, 'BP Level ' + level + ' ' + track + ' (bonus, 20x wagering)']
         );
     }
     // For free_spins, wheel_spins: client handles via response data

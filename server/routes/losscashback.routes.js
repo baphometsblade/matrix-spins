@@ -7,17 +7,19 @@ var isPg = db.isPg();
 var idDef = isPg ? 'SERIAL PRIMARY KEY' : 'INTEGER PRIMARY KEY AUTOINCREMENT';
 var tsDef = isPg ? 'TIMESTAMPTZ DEFAULT NOW()' : "TEXT DEFAULT CURRENT_TIMESTAMP";
 
-// Bootstrap: create loss_cashback_claims table if it doesn't exist
+// Bootstrap: create loss_cashback_claims if it doesn't exist. Column set MUST match the
+// canonical schema-pg.js / schema-sqlite.js definitions (which run first and win on a fresh
+// DB): user_id INTEGER, loss_amount NOT NULL, cashback_amount NOT NULL — NOT user_id TEXT /
+// session_losses. Keeping this in sync prevents the creator-drift that broke the /claim INSERT.
 db.run(`
   CREATE TABLE IF NOT EXISTS loss_cashback_claims (
     id ${idDef},
-    user_id TEXT NOT NULL,
+    user_id INTEGER NOT NULL,
     tier TEXT NOT NULL,
+    loss_amount REAL NOT NULL,
     cashback_amount REAL NOT NULL,
-    session_losses REAL NOT NULL,
     claimed_at ${tsDef},
-    created_at ${tsDef},
-    UNIQUE(user_id, tier, DATE(claimed_at))
+    UNIQUE(user_id, tier, claimed_at)
   )
 `).catch(function(err) {
   console.warn('[LossCashback] Table creation error:', err.message);
@@ -174,11 +176,15 @@ router.post('/claim', authenticate, bonusGuard, async (req, res) => {
       [credited, credited * 10, req.user.id]
     );
 
-    // Record the claim
+    // Record the claim. The persisted table column is loss_amount (NOT NULL) — the prior
+    // INSERT used a nonexistent `session_losses` column AND omitted NOT-NULL loss_amount, so it
+    // threw AFTER the bonus credit above, leaving no claim row → the 24h re-claim guard never
+    // fired → players re-claimed cashback repeatedly (revenue leak). loss_amount == the session
+    // losses that generated the cashback.
     await db.run(
-      `INSERT INTO loss_cashback_claims (user_id, tier, cashback_amount, session_losses)
+      `INSERT INTO loss_cashback_claims (user_id, tier, loss_amount, cashback_amount)
        VALUES (?, ?, ?, ?)`,
-      [req.user.id, tier, credited, sessionLosses]
+      [req.user.id, tier, sessionLosses, credited]
     );
 
     // Record transaction

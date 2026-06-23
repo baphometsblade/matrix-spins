@@ -469,6 +469,7 @@ const TABLES = [
         user_id INTEGER NOT NULL,
         prize_type TEXT NOT NULL,
         prize_amount REAL NOT NULL,
+        spin_date TEXT,
         spun_at TEXT DEFAULT (datetime('now')),
         FOREIGN KEY (user_id) REFERENCES users(id)
     )`,
@@ -634,13 +635,16 @@ const TABLES = [
         purchased_at TEXT DEFAULT (datetime('now')),
         UNIQUE(user_id, pass_id)
     )`,
-    `CREATE TABLE IF NOT EXISTS battle_pass_progress (
+    // Route-based battle pass (battle-pass.routes.js, keyed by battle_passes.id) — kept
+    // separate from the service's season-based battle_pass_progress above. Mirror schema-pg.js.
+    `CREATE TABLE IF NOT EXISTS battle_pass_user_progress (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         user_id INTEGER NOT NULL,
         pass_id INTEGER NOT NULL,
         xp INTEGER DEFAULT 0,
-        current_level INTEGER DEFAULT 0,
+        current_level INTEGER DEFAULT 1,
         last_xp_gain TEXT DEFAULT (datetime('now')),
+        updated_at TEXT DEFAULT (datetime('now')),
         UNIQUE(user_id, pass_id)
     )`,
     `CREATE TABLE IF NOT EXISTS battle_pass_claims (
@@ -899,7 +903,7 @@ const DEFERRED_INDEXES = [
     `CREATE INDEX IF NOT EXISTS idx_promo_redemptions_user ON promo_redemptions(user_id)`,
     `CREATE INDEX IF NOT EXISTS idx_promo_redemptions_code ON promo_redemptions(code_id)`,
     `CREATE INDEX IF NOT EXISTS idx_battle_pass_claims_user_pass ON battle_pass_claims(user_id, pass_id)`,
-    `CREATE INDEX IF NOT EXISTS idx_battle_pass_progress_user_pass ON battle_pass_progress(user_id, pass_id)`,
+    `CREATE INDEX IF NOT EXISTS idx_battle_pass_user_progress_user_pass ON battle_pass_user_progress(user_id, pass_id)`,
     // MEDIUM: Admin/analytics/service
     `CREATE INDEX IF NOT EXISTS idx_activity_log_user ON activity_log(user_id, created_at)`,
     `CREATE INDEX IF NOT EXISTS idx_activity_log_created ON activity_log(created_at)`,

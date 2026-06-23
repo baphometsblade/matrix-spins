@@ -19,6 +19,7 @@
     "qa:smoke": "node scripts/smoke-money-flow.js",
     "qa:rtp": "node scripts/verify-rtp.js",
     "qa:schema": "node scripts/check-schema-dml-consistency.js",
+    "qa:inserts": "node scripts/check-insert-completeness.js",
     "test": "jest --runInBand --forceExit",
     "test:unit": "jest --runInBand --forceExit tests/unit",
     "test:integration": "jest --runInBand --forceExit tests/integration",

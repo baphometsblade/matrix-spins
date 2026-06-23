@@ -134,7 +134,7 @@ router.post('/claim', authenticate, bonusGuard, async (req, res) => {
                 await db.run('UPDATE users SET bonus_wheel_spins = COALESCE(bonus_wheel_spins, 0) + ? WHERE id = ?', [reward.amount, userId]);
             } else if (reward.type === 'promo') {
                 await db.run(
-                    "INSERT INTO campaigns (name, type, bonus_pct, max_bonus, wagering_mult, min_deposit, end_at, promo_code) VALUES (?, 'promo_code', 0, 0, 1, 0, datetime('now', '+7 days'), ?)",
+                    "INSERT INTO campaigns (name, type, bonus_pct, max_bonus, wagering_mult, min_deposit, start_at, end_at, promo_code) VALUES (?, 'promo_code', 0, 0, 1, 0, datetime('now'), datetime('now', '+7 days'), ?)",
                     ['Mystery Drop Promo', reward.code]
                 );
             }

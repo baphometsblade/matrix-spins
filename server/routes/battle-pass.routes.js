@@ -49,7 +49,7 @@ async function _ensureBattlePassData() {
         UNIQUE(user_id, pass_id)
       )`);
 
-      await db.run(`CREATE TABLE IF NOT EXISTS battle_pass_progress (
+      await db.run(`CREATE TABLE IF NOT EXISTS battle_pass_user_progress (
         id ${idDef},
         user_id INTEGER NOT NULL,
         pass_id INTEGER NOT NULL,
@@ -288,7 +288,7 @@ const XP_RATE_LIMIT_CAP = 200; // 200 XP per minute
 // In-memory limiter reset on server restart, allowing unlimited XP farming.
 async function checkXpRateLimitDB(userId) {
   try {
-    // Sum XP gained in the last 60 seconds from battle_pass_progress updates
+    // Sum XP gained in the last 60 seconds from battle_pass_user_progress updates
     var row = await db.get(
         `SELECT COALESCE(SUM(xp_amount), 0) as total_xp
          FROM bp_xp_rate_log
@@ -401,7 +401,7 @@ router.get('/', async (req, res) => {
 
             if (user) {
               const progress = await db.get(
-                'SELECT xp, current_level FROM battle_pass_progress WHERE user_id = ? AND pass_id = ?',
+                'SELECT xp, current_level FROM battle_pass_user_progress WHERE user_id = ? AND pass_id = ?',
                 [user.id, pass.id]
               );
 
@@ -457,13 +457,13 @@ router.get('/progress', authenticate, async (req, res) => {
 
     // Get or create user progress
     let progress = await db.get(
-      'SELECT xp, current_level FROM battle_pass_progress WHERE user_id = ? AND pass_id = ?',
+      'SELECT xp, current_level FROM battle_pass_user_progress WHERE user_id = ? AND pass_id = ?',
       [userId, pass.id]
     );
 
     if (!progress) {
       await db.run(
-        'INSERT INTO battle_pass_progress (user_id, pass_id, xp, current_level) VALUES (?, ?, 0, 1)',
+        'INSERT INTO battle_pass_user_progress (user_id, pass_id, xp, current_level) VALUES (?, ?, 0, 1)',
         [userId, pass.id]
       );
       progress = { xp: 0, current_level: 1 };
@@ -675,7 +675,7 @@ router.post('/claim', authenticate, bonusGuard, async (req, res) => {
 
     // Get user progress
     const progress = await db.get(
-      'SELECT current_level FROM battle_pass_progress WHERE user_id = ? AND pass_id = ?',
+      'SELECT current_level FROM battle_pass_user_progress WHERE user_id = ? AND pass_id = ?',
       [userId, pass.id]
     );
 
@@ -850,13 +850,13 @@ router.post('/add-xp', authenticate, async (req, res) => {
 
     // Get or create user progress
     let progress = await db.get(
-      'SELECT xp, current_level FROM battle_pass_progress WHERE user_id = ? AND pass_id = ?',
+      'SELECT xp, current_level FROM battle_pass_user_progress WHERE user_id = ? AND pass_id = ?',
       [userId, pass.id]
     );
 
     if (!progress) {
       await db.run(
-        'INSERT INTO battle_pass_progress (user_id, pass_id, xp, current_level) VALUES (?, ?, ?, 1)',
+        'INSERT INTO battle_pass_user_progress (user_id, pass_id, xp, current_level) VALUES (?, ?, ?, 1)',
         [userId, pass.id, xp]
       );
       progress = { xp: xp, current_level: 1 };
@@ -865,7 +865,7 @@ router.post('/add-xp', authenticate, async (req, res) => {
       const newLevel = calculateLevelFromXp(newXp);
 
       await db.run(
-        'UPDATE battle_pass_progress SET xp = ?, current_level = ? WHERE user_id = ? AND pass_id = ?',
+        'UPDATE battle_pass_user_progress SET xp = ?, current_level = ? WHERE user_id = ? AND pass_id = ?',
         [newXp, newLevel, userId, pass.id]
       );
 
@@ -918,7 +918,7 @@ router.get('/leaderboard', async (req, res) => {
           WHEN bpp.tier IS NOT NULL THEN bpp.tier
           ELSE 'free'
         END as tier
-      FROM battle_pass_progress bp
+      FROM battle_pass_user_progress bp
       JOIN users u ON bp.user_id = u.id
       LEFT JOIN battle_pass_purchases bpp ON bp.user_id = bpp.user_id AND bp.pass_id = bpp.pass_id
       WHERE bp.pass_id = ?
