@@ -117,6 +117,21 @@ describe('Tablet header — Deposit button must stay reachable at all widths < 1
         }
     });
 
+    test('the tablet rule RELEASES the .header-right CLS min-width reserve (the live 820px cause)', () => {
+        // .header-right { min-width: 480px } reserves width for desktop-injected icons
+        // (search/bell/menu) to prevent CLS. At <=1023px those icons are display:none,
+        // so the reserve MUST be released — otherwise .header-right stays 480px wide with
+        // ~155px of content and pushes Deposit + the hamburger off-screen. Confirmed live
+        // at 820px: Deposit sat at x=892 on an 820px viewport. Hiding the icons alone (the
+        // original 4047b7bd fix) did NOT fix it; the reserve has to be reset too.
+        const tablet = extractMediaRule(src, 'max-width:\\s*1023px');
+        expect(tablet).not.toBeNull();
+        // Isolate the bare `.header-right { ... }` rule (not `.header-right .child`).
+        const bareRules = tablet.match(/\.header-right\s*\{[^}]*\}/g) || [];
+        const releasesReserve = bareRules.some(r => /min-width:\s*(0|auto)\b/.test(r));
+        expect(releasesReserve).toBe(true);
+    });
+
     test('dist/index.html mirrors the source breakpoint (build pipeline propagated)', () => {
         if (!fs.existsSync(INDEX_DIST)) {
             // Acceptable on a fresh clone before `npm run build` — surface as

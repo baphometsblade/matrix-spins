@@ -1449,7 +1449,11 @@
             .header-right #limitsBtn,
             .header-right .limits-btn,
             .header-right .avatar { display: none !important; }
-            .header-right { gap: 6px; flex-wrap: nowrap; }
+            /* Release the desktop CLS reserve (.header-right min-width:480px) — the
+               injected icons it reserved for are display:none above, so the reserve
+               would otherwise keep .header-right 480px wide and shove Deposit (and the
+               hamburger) off-screen on tablets. Shrink to actual content instead. */
+            .header-right { gap: 6px; flex-wrap: nowrap; min-width: 0; }
             .header-right .balance-card { padding: 4px 8px; }
         }
         /* Phone-only layer (≤480px): also tighten the logo so the header
