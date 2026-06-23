@@ -31,3 +31,7 @@ server/data/maintenance.json
 .playwright-mcp/
 # Ad-hoc verification screenshots produced by playwright runs in repo root.
 live-slot-engine-tiles*.png
+# Ad-hoc QA zoom crops + stray npm output logs (scratch, never deliverables).
+zoomtmp/
+npm-out.txt
+*_zoom.png
