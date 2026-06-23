@@ -342,7 +342,7 @@
           errEl.textContent = (res.data && res.data.error) || 'Submission failed.';
           return;
         }
-        showToast('Deposit recorded. Awaiting on-chain confirmation.');
+        showToast('Deposit recorded. Awaiting network confirmation.');
         document.getElementById('amountCrypto').value = '';
         document.getElementById('txHash').value = '';
         updateConversion();

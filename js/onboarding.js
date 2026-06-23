@@ -169,7 +169,7 @@
     /* --- Step 2: Welcome Bonus --- */
     var featureData = [
       ['🎯', '100% match on your first deposit — up to $500'],
-      ['🔒', 'Provably fair games verified on-chain'],
+      ['🔒', 'Provably fair games with cryptographic verification'],
       ['⚡',        'Instant withdrawals, no waiting period']
     ];
     var featureList = el('ul', { className: 'mx-features' });
