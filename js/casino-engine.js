@@ -505,6 +505,15 @@ if (!window.escapeHtml) {
       this.winStrip = $el('div', { class: 'ce-winstrip' }, '\u00A0');
       this.main.appendChild(this.winStrip);
 
+      // Visually-hidden polite live region: announces each spin's outcome to
+      // assistive tech. The visual .ce-winstrip is NOT a live region, so without
+      // this a screen-reader player gets zero feedback after a spin (WCAG 4.1.3
+      // Status Messages). Written once per spin, after the balance is finalized.
+      this.srAnnounce = $el('div', {
+        class: 'ce-sr-announce', role: 'status', 'aria-live': 'polite', 'aria-atomic': 'true',
+      });
+      this.main.appendChild(this.srAnnounce);
+
       const controlBar = $el('div', { class: 'ce-panel', style: {
         display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '.8rem',
         marginTop: '1rem', flexWrap: 'wrap',
@@ -642,6 +651,7 @@ if (!window.escapeHtml) {
               linear-gradient(var(--ce-win),var(--ce-win)) 100% 100%/3px 20px no-repeat; }
           .ce-col { background: var(--ce-reel-bg, #0a0a15); border-radius: 10px; border: 1px solid color-mix(in srgb, var(--ce-reel-border) 32%, transparent); padding: .3rem; }
           .ce-winstrip { text-align: center; min-height: 2.4rem; margin-top: .8rem; font-size: 1.25rem; font-weight: 800; font-family: var(--ce-font-display); color: var(--ce-win); text-shadow: 0 0 14px color-mix(in srgb, var(--ce-win) 40%, transparent); transition: opacity .3s; }
+          .ce-sr-announce { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); clip-path: inset(50%); white-space: nowrap; border: 0; }
 
           /* Glassy themed control panel */
           .ce-panel { background: linear-gradient(180deg, rgba(10,12,18,.55), rgba(8,10,15,.78)); border: 1px solid color-mix(in srgb, var(--ce-primary) 38%, transparent); border-radius: 16px; padding: .85rem 1rem; box-shadow: inset 0 1px 0 rgba(255,255,255,.07), 0 8px 26px rgba(0,0,0,.4); -webkit-backdrop-filter: blur(7px); backdrop-filter: blur(7px); }
@@ -2150,6 +2160,15 @@ if (!window.escapeHtml) {
         this.state.balanceCents = b.availableCents;
       }
       this._updateBalanceChip(prevBalanceCents);
+
+      // Announce the spin outcome to assistive tech. Reuses the human-readable
+      // text already composed on the (non-live) visual winStrip + the final
+      // balance, so a screen-reader player hears e.g. "Win $6.46. Balance
+      // $1,006.46." instead of silence.
+      if (this.srAnnounce) {
+        const outcome = (this.winStrip.textContent || '').replace(/\s+/g, ' ').trim();
+        this.srAnnounce.textContent = `${outcome}. Balance ${fmt(this.state.balanceCents)}.`;
+      }
 
       // Bonus-run state machine — drives the free-spins banner.
       // Start: any spin that awards free spins and we don't have a run.
