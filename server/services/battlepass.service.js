@@ -45,8 +45,25 @@ function getRewardTiers() {
     // Level 50 grand finale (reduced — was $1000 / $5000)
     tiers[49].free = { type: 'credits', amount: 10 };
     tiers[49].premium = { type: 'credits', amount: 50 };
+
+    // Premium cosmetic unlocks at milestones — presentational only (zero delivery
+    // cost, high perceived value). Ride along on the existing milestone credit
+    // reward; the client renders/equips them. See unification design doc.
+    for (const level of Object.keys(PREMIUM_COSMETICS)) {
+        const t = tiers[Number(level) - 1];
+        if (t && t.premium) t.premium.cosmetic = PREMIUM_COSMETICS[level];
+    }
     return tiers;
 }
+
+// Cosmetic flair granted on the PREMIUM track at milestone levels.
+const PREMIUM_COSMETICS = {
+    10: 'Neon Frame',
+    20: 'Matrix Avatar',
+    30: 'Gold Win Effect',
+    40: 'Diamond Frame',
+    50: 'Legendary Matrix Set',
+};
 
 const REWARD_TIERS = getRewardTiers();
 
@@ -280,10 +297,39 @@ async function claimReward(userId, level, track) {
         [JSON.stringify(claimed), userId, season.id]
     );
 
-    return { ok: true, reward: { type: reward.type, amount: grantedAmount, level, track } };
+    return { ok: true, reward: { type: reward.type, amount: grantedAmount, level, track, cosmetic: reward.cosmetic || null } };
+}
+
+// ── Leaderboard ──────────────────────────────────────────────────────────
+// Top players in the CURRENT season, ranked by level then within-level XP.
+// Read-only; drives competitive engagement (more spins → more house edge).
+async function getLeaderboard(limit) {
+    const season = await getCurrentSeason();
+    if (!season) return [];
+    const cap = Math.max(1, Math.min(100, parseInt(limit, 10) || 20));
+    // cap is a sanitized integer (1-100) — inlined to avoid backend LIMIT-bind quirks.
+    const rows = await db.all(
+        `SELECT u.id AS user_id, u.username, p.level, p.xp, p.is_premium
+         FROM battle_pass_progress p
+         JOIN users u ON u.id = p.user_id
+         WHERE p.season_id = ?
+         ORDER BY p.level DESC, p.xp DESC
+         LIMIT ${cap}`,
+        [season.id]
+    );
+    return (rows || []).map(function (r) {
+        return {
+            user_id: r.user_id,
+            username: r.username,
+            level: r.level,
+            xp: r.xp,
+            tier: r.is_premium ? 'premium' : 'free',
+        };
+    });
 }
 
 module.exports = {
     ensureActiveSeason, getCurrentSeason, getProgress, addXp,
-    buyPremium, claimReward, PREMIUM_PRICE, MAX_LEVEL, REWARD_TIERS
+    buyPremium, claimReward, getLeaderboard,
+    PREMIUM_PRICE, MAX_LEVEL, REWARD_TIERS
 };

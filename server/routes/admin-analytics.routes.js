@@ -153,9 +153,11 @@ router.get('/players', async (req, res) => {
 // GET /api/admin/analytics/features — Feature engagement
 router.get('/features', async (req, res) => {
     try {
-        // Battle pass purchases count
+        // Battle pass premium count — sourced from the canonical season-based
+        // progress table (battle_pass_purchases was retired in the 2026-06-25
+        // unification; premium is now a flag on battle_pass_progress).
         var battlepassPurchases = await safeCount(
-            "SELECT COUNT(*) as count FROM battle_pass_purchases",
+            "SELECT COUNT(*) as count FROM battle_pass_progress WHERE is_premium = 1",
             []
         );
 
