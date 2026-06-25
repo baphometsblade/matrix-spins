@@ -73,6 +73,7 @@
     { href: 'history.html',      icon: '📊', label: 'History & Stats' },
     { href: 'tournaments.html',  icon: '🏆', label: 'Tournaments' },
     { href: 'leaderboard.html',  icon: '🥇', label: 'Leaderboard' },
+    { href: 'battle-pass.html',  icon: '⚔️', label: 'Battle Pass' },
     { href: 'spin-wheel.html',   icon: '🎡', label: 'Daily Wheel' },
     { section: 'Account' },
     { href: 'wallet.html',       icon: '💳', label: 'Wallet & Deposits' },

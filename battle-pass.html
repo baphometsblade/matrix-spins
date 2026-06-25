@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="icon" type="image/svg+xml" href="/favicon.svg">
+<link rel="manifest" href="/manifest.json">
+<title>Battle Pass — Matrix Spins Casino</title>
+<meta name="description" content="Climb the Matrix Spins Battle Pass — every spin earns XP. Level up to unlock bonus credits, free spins, and exclusive cosmetics. Go Premium for the full reward track.">
+<link rel="canonical" href="https://msaart.online/battle-pass.html">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/auth.css">
+<link rel="stylesheet" href="css/age-gate.css">
+<link rel="stylesheet" href="css/search.css">
+<link rel="stylesheet" href="css/favorites.css">
+<link rel="stylesheet" href="css/session-monitor.css">
+<link rel="stylesheet" href="css/chat-widget.css">
+<link rel="stylesheet" href="css/notifications.css">
+<link rel="stylesheet" href="css/conversion.css">
+<link rel="stylesheet" href="unified-ux.css">
+<script src="js/unified-ux.js" defer></script>
+<style>
+  /* ── Battle Pass page (self-contained; reuses .rs-card/.btn from auth.css) ── */
+  .bp-wrap { padding-bottom: 90px; }
+  .bp-hero { display: grid; grid-template-columns: 1fr; gap: 1rem; }
+  @media (min-width: 760px) { .bp-hero { grid-template-columns: 1.4fr 1fr; align-items: stretch; } }
+
+  .bp-hero h1 { margin: 0 0 .25rem; font-family: 'Plus Jakarta Sans', sans-serif; font-size: 1.9rem; letter-spacing: .5px; }
+  .bp-season { color: var(--muted); font-size: .95rem; margin-bottom: 1rem; }
+  .bp-level-row { display: flex; align-items: baseline; justify-content: space-between; gap: .5rem; margin-bottom: .4rem; }
+  .bp-level { font-size: 1.05rem; font-weight: 700; }
+  .bp-level b { color: var(--gold); font-size: 1.35rem; }
+  .bp-xp { color: var(--muted); font-size: .85rem; font-variant-numeric: tabular-nums; }
+  .bp-bar-wrap { height: 12px; background: rgba(255,255,255,.08); border-radius: 999px; overflow: hidden; border: 1px solid var(--border); }
+  .bp-bar { height: 100%; width: 0; border-radius: 999px; background: linear-gradient(90deg, var(--gold-2), var(--gold)); transition: width .6s cubic-bezier(.2,.7,.2,1); }
+
+  .bp-premium-card { display: flex; flex-direction: column; justify-content: center; gap: .6rem; text-align: center; }
+  .bp-premium-card .tag { font-weight: 800; letter-spacing: 1px; text-transform: uppercase; font-size: .78rem; color: var(--gold); }
+  .bp-premium-card .price { font-family: 'Plus Jakarta Sans', sans-serif; font-size: 1.6rem; font-weight: 800; }
+  .bp-premium-card .price small { font-size: .85rem; color: var(--muted); font-weight: 500; }
+  .bp-premium-active { color: var(--success); font-weight: 700; display: inline-flex; align-items: center; gap: .4rem; justify-content: center; }
+
+  .bp-section-title { font-family: 'Plus Jakarta Sans', sans-serif; font-size: 1.2rem; margin: 2rem 0 .35rem; }
+  .bp-section-sub { color: var(--muted); font-size: .85rem; margin-bottom: 1rem; }
+
+  .bp-tiers { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: .9rem; }
+  .bp-tier { background: linear-gradient(180deg, var(--bg-card), var(--bg-elev)); border: 1px solid var(--border); border-radius: 14px; padding: .9rem; display: flex; flex-direction: column; gap: .6rem; position: relative; }
+  .bp-tier.is-locked { opacity: .5; }
+  .bp-tier.is-current { border-color: var(--gold); box-shadow: 0 0 0 1px var(--gold), 0 10px 26px rgba(212,175,55,.18); }
+  .bp-tier-head { display: flex; align-items: center; justify-content: space-between; }
+  .bp-tier-lvl { font-weight: 800; font-size: .95rem; }
+  .bp-tier-lvl small { color: var(--muted); font-weight: 500; }
+  .bp-tier-state { font-size: .72rem; padding: .12rem .5rem; border-radius: 999px; border: 1px solid var(--border); color: var(--muted); }
+  .bp-tier-state.reached { color: var(--gold); border-color: var(--gold); }
+
+  .bp-track { border-top: 1px dashed var(--border); padding-top: .55rem; }
+  .bp-track-label { font-size: .68rem; letter-spacing: .6px; text-transform: uppercase; color: var(--muted); margin-bottom: .3rem; }
+  .bp-track.premium .bp-track-label { color: var(--gold); }
+  .bp-reward { font-size: .9rem; font-weight: 600; }
+  .bp-reward.none { color: var(--muted); font-weight: 500; }
+  .bp-cosmetic { display: inline-block; margin-top: .3rem; font-size: .72rem; padding: .12rem .5rem; border-radius: 999px; background: rgba(212,175,55,.14); color: var(--gold); border: 1px solid var(--border); }
+  .bp-claim { margin-top: .5rem; width: 100%; padding: .5rem; font-size: .78rem; border-radius: 8px; border: none; cursor: pointer; font-weight: 700; background: linear-gradient(180deg, var(--gold), var(--gold-2)); color: #1a1205; }
+  .bp-claim[disabled] { opacity: .45; cursor: not-allowed; filter: grayscale(.4); }
+  .bp-claim.claimed { background: transparent; border: 1px solid var(--success); color: var(--success); }
+  .bp-claim.locked { background: transparent; border: 1px solid var(--border); color: var(--muted); }
+
+  .bp-lb-row { display: grid; grid-template-columns: 2.2rem 1fr auto; gap: .6rem; align-items: center; padding: .55rem .2rem; border-bottom: 1px solid rgba(255,255,255,.05); }
+  .bp-lb-row:last-child { border-bottom: none; }
+  .bp-lb-rank { font-weight: 800; color: var(--gold); text-align: center; }
+  .bp-lb-name { font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .bp-lb-name .you { color: var(--gold); font-size: .72rem; margin-left: .35rem; }
+  .bp-lb-meta { color: var(--muted); font-size: .82rem; font-variant-numeric: tabular-nums; }
+
+  .bp-signin-note { background: rgba(212,175,55,.1); border: 1px solid var(--border); border-radius: 12px; padding: 1rem 1.2rem; margin-bottom: 1.4rem; display: flex; flex-wrap: wrap; gap: .8rem; align-items: center; justify-content: space-between; }
+  .bp-signin-note span { color: var(--text); font-weight: 600; }
+
+  .bp-toast { position: fixed; left: 50%; bottom: 26px; transform: translateX(-50%) translateY(20px); background: var(--bg-card); border: 1px solid var(--border); color: var(--text); padding: .8rem 1.2rem; border-radius: 10px; box-shadow: 0 12px 32px rgba(0,0,0,.5); opacity: 0; pointer-events: none; transition: opacity .25s, transform .25s; z-index: 1200; max-width: 90vw; text-align: center; }
+  .bp-toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+  .bp-toast.error { border-color: var(--danger); }
+  .bp-toast.success { border-color: var(--success); }
+
+  .bp-skeleton { color: var(--muted); text-align: center; padding: 3rem 1rem; }
+</style>
+</head>
+<body>
+
+<!-- ── Top bar ──────────────────────────────────────────────── -->
+<div class="topbar">
+  <a class="brand" href="index.html">Matrix Spins</a>
+  <div class="actions">
+    <span id="balanceChip" class="balance-chip">—</span>
+    <a href="wallet.html" class="btn btn-inline secondary">Wallet</a>
+    <button id="logout" class="btn btn-inline secondary">Sign out</button>
+  </div>
+</div>
+
+<div class="rs-shell-wide bp-wrap">
+
+  <!-- Logged-out conversion note (shown only when signed out) -->
+  <div id="bpSignInNote" class="bp-signin-note" style="display:none;">
+    <span>⚔️ Sign in to track your Battle Pass progress and claim rewards.</span>
+    <a id="bpSignInBtn" href="login.html?next=battle-pass.html" class="btn btn-inline">Sign in</a>
+  </div>
+
+  <!-- Hero -->
+  <div class="bp-hero">
+    <div class="rs-card">
+      <h1>Battle Pass ⚔️</h1>
+      <div class="bp-season" id="bpSeason">Loading season…</div>
+      <div class="bp-level-row">
+        <div class="bp-level">Level <b id="bpLevel">—</b> <small id="bpMaxLevel" style="color:var(--muted)"></small></div>
+        <div class="bp-xp" id="bpXp"></div>
+      </div>
+      <div class="bp-bar-wrap"><div class="bp-bar" id="bpBar"></div></div>
+    </div>
+
+    <div class="rs-card bp-premium-card" id="bpPremiumCard">
+      <div class="tag">Premium Pass</div>
+      <div class="price" id="bpPremiumPrice">—</div>
+      <div id="bpPremiumAction"></div>
+    </div>
+  </div>
+
+  <!-- Reward track -->
+  <div class="bp-section-title">Reward Track</div>
+  <div class="bp-section-sub" id="bpTracksSub">Every spin earns XP. Free track for everyone; Premium unlocks the full set.</div>
+  <div class="bp-tiers" id="bpTiers">
+    <div class="bp-skeleton">Loading rewards…</div>
+  </div>
+
+  <!-- Leaderboard -->
+  <div class="bp-section-title">Season Leaderboard</div>
+  <div class="bp-section-sub">Top players this season.</div>
+  <div class="rs-card">
+    <div id="bpLeaderboard"><div class="bp-skeleton">Loading leaderboard…</div></div>
+  </div>
+
+</div>
+
+<div class="bp-toast" id="bpToast" role="status" aria-live="polite"></div>
+
+<!-- Compliance + UX loaders (mirrors account.html) -->
+<script src="js/api-client.js"></script>
+<script src="js/age-gate.js" defer></script>
+<script src="js/cookie-consent.js" defer></script>
+<script src="js/session-monitor.js" defer></script>
+<script src="js/sound-manager.js" defer></script>
+<script src="js/notifications.js" defer></script>
+<!-- Battle Pass page logic -->
+<script src="js/battle-pass-page.js" defer></script>
+</body>
+</html>
