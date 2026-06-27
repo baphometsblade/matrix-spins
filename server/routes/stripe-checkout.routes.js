@@ -23,6 +23,46 @@ const DEPOSIT_PRICES = {
 const MIN_DEPOSIT = config.MIN_DEPOSIT || 5;
 const MAX_DEPOSIT = config.MAX_DEPOSIT || 10000;
 
+// ── Webhook idempotency (race-safe) ─────────────────────────────────────────
+// Stripe retries webhooks on any network hiccup. The pre-transaction SELECT
+// checks below are a fast path, but two concurrent deliveries can both pass them
+// before either COMMITs (a plain INSERT…WHERE NOT EXISTS is also NOT serialised
+// under READ COMMITTED). The only durable guard is a UNIQUE/PRIMARY KEY: the
+// second concurrent INSERT for the same session id violates the PK and is
+// reported as a duplicate. The claim is made INSIDE the credit transaction so a
+// failed credit rolls the claim back too (a genuine Stripe retry can re-process).
+function _isPgConn(dbConn) {
+    try { if (dbConn && typeof dbConn.isPg === 'function') return dbConn.isPg(); } catch (_) {}
+    try { return require('../database').isPg(); } catch (_) { return false; }
+}
+
+async function ensureStripeIdempotency(dbConn) {
+    const tsDef = _isPgConn(dbConn) ? 'TIMESTAMPTZ DEFAULT NOW()' : "TEXT DEFAULT (datetime('now'))";
+    await dbConn.run(
+        'CREATE TABLE IF NOT EXISTS stripe_processed_sessions (' +
+        'session_id TEXT PRIMARY KEY, ' +
+        'event_id TEXT, ' +
+        'processed_at ' + tsDef + ')'
+    );
+}
+
+// Returns true if THIS call claimed the session (proceed to credit), false if it
+// was already claimed (duplicate — skip). Throws on a genuine DB error so the
+// caller fails CLOSED (500 → Stripe retries) rather than silently double-crediting.
+async function claimStripeSession(dbConn, sessionId, eventId) {
+    try {
+        const r = await dbConn.run(
+            'INSERT INTO stripe_processed_sessions (session_id, event_id) VALUES (?, ?)',
+            [sessionId, eventId || null]
+        );
+        return !!(r && (r.changes === undefined || r.changes > 0));
+    } catch (e) {
+        const msg = (e && e.message) || '';
+        if (/UNIQUE|duplicate key|already exists|PRIMARY KEY|constraint/i.test(msg)) return false;
+        throw e;
+    }
+}
+
 // POST /api/payment/create-checkout — Create a Stripe Checkout session
 // SECURITY: Requires authentication — playerId is taken from the verified
 // JWT token, NOT from the request body (prevents crediting arbitrary accounts)
@@ -216,6 +256,7 @@ router.post('/payment/webhook', express.raw({ type: 'application/json' }), async
             const crypto = require('crypto');
             const db = getBackend();
             await ensureNFTTables();
+            await ensureStripeIdempotency(db);
 
             // SECURITY: Verify the user actually exists before crediting
             const userCheck = await db.get('SELECT id FROM users WHERE id = ?', [playerId]);
@@ -236,6 +277,18 @@ router.post('/payment/webhook', express.raw({ type: 'application/json' }), async
             // charged but uncredited, with the idempotency check blocking retries.
             await db.beginTransaction();
             try {
+                // Race-safe idempotency claim — FIRST statement in the transaction.
+                // If a concurrent webhook already claimed this session, the PK
+                // violation makes this return false → roll back + report duplicate
+                // (no double-credit). A genuine DB error throws → outer catch → 500
+                // → Stripe retries (fail closed, never silently double-credit).
+                const _claimed = await claimStripeSession(db, session.id, event.id);
+                if (!_claimed) {
+                    await db.rollback();
+                    console.warn('[Stripe] Concurrent duplicate webhook for session ' + session.id + ' — already claimed, skipping');
+                    return res.json({ received: true, duplicate: true });
+                }
+
                 await db.run(
                     'INSERT INTO nfts (id, user_id, amount, name, description, metadata, stripe_payment_id) VALUES (?, ?, ?, ?, ?, ?, ?)',
                     [nftId, playerId, amount, nftName, '$' + amount + ' Casino Credit NFT', metadata, session.payment_intent || session.id]
@@ -583,3 +636,6 @@ router.get('/config/public', (req, res) => {
 });
 
 module.exports = router;
+// Exposed for tests + reuse: the race-safe webhook idempotency primitives.
+module.exports.ensureStripeIdempotency = ensureStripeIdempotency;
+module.exports.claimStripeSession = claimStripeSession;
