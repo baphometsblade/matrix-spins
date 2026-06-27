@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="manifest" href="/manifest.json">
+<title>Scratch Cards — Matrix Spins Casino</title>
+<meta name="description" content="Scratch & win instant cash prizes at Matrix Spins Casino. Match 3 symbols to win up to 100x your ticket. Provably fair.">
+<link rel="canonical" href="https://msaart.online/games/scratch-cards.html">
+<meta name="theme-color" content="#00ff41">
+<link rel="icon" type="image/svg+xml" href="/favicon.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../css/age-gate.css">
+<link rel="stylesheet" href="../css/notifications.css">
+<link rel="stylesheet" href="../css/matrix-theme.css">
+<style>
+  :root{
+    --ms-green:#00ff41; --ms-green-bright:#39ff6a; --ms-green-deep:#00b82f;
+    --ms-green-glow:rgba(0,255,65,.35); --ms-green-border:rgba(0,255,65,.18);
+    --ms-bg:#070b07; --ms-panel:#0e160e; --ms-panel-2:#0a110a; --ms-gold:#FFD700;
+    --ms-text:#dffbe6; --ms-dim:#7da588;
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{background:var(--ms-bg);color:var(--ms-text);font-family:'Inter',sans-serif;min-height:100vh;
+    background-image:radial-gradient(circle at 20% 0%,rgba(0,255,65,.06),transparent 45%),radial-gradient(circle at 80% 100%,rgba(0,255,65,.05),transparent 45%);}
+  a{color:var(--ms-green);text-decoration:none}
+  .topbar{display:flex;align-items:center;justify-content:space-between;padding:14px 20px;border-bottom:1px solid var(--ms-green-border);
+    position:sticky;top:0;background:rgba(7,11,7,.92);backdrop-filter:blur(8px);z-index:20}
+  .brand{font-family:'Plus Jakarta Sans',sans-serif;font-weight:800;font-size:20px;color:var(--ms-green);letter-spacing:.02em}
+  .topbar .actions{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+  .balance-chip{background:var(--ms-panel);border:1px solid var(--ms-green-border);border-radius:999px;padding:8px 14px;font-weight:700;color:var(--ms-green)}
+  .btn{display:inline-block;border:1px solid var(--ms-green-border);background:var(--ms-panel);color:var(--ms-text);
+    border-radius:10px;padding:8px 14px;font-weight:600;cursor:pointer;font-size:14px;transition:.18s}
+  .btn:hover{border-color:var(--ms-green);box-shadow:0 0 12px var(--ms-green-glow)}
+  .btn.primary{background:linear-gradient(180deg,var(--ms-green),var(--ms-green-deep));color:#04150a;border:none;font-weight:800}
+  .btn.primary:disabled{opacity:.45;cursor:not-allowed;box-shadow:none}
+  .wrap{max-width:680px;margin:0 auto;padding:26px 18px 80px}
+  .hero{text-align:center;margin-bottom:22px}
+  .hero h1{font-family:'Plus Jakarta Sans',sans-serif;font-size:30px;font-weight:800;color:#fff}
+  .hero h1 .accent{color:var(--ms-green);text-shadow:0 0 18px var(--ms-green-glow)}
+  .hero p{color:var(--ms-dim);margin-top:6px;font-size:14px}
+  .panel{background:var(--ms-panel);border:1px solid var(--ms-green-border);border-radius:16px;padding:20px;margin-bottom:18px}
+  .tiers{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:16px}
+  .tier{background:var(--ms-panel-2);border:1px solid var(--ms-green-border);border-radius:12px;padding:14px 6px;text-align:center;cursor:pointer;transition:.15s;font-weight:800;font-size:18px;color:#fff}
+  .tier .sub{display:block;font-size:11px;color:var(--ms-dim);font-weight:600;margin-top:4px}
+  .tier:hover{border-color:var(--ms-green)}
+  .tier.sel{border-color:var(--ms-green);background:rgba(0,255,65,.10);box-shadow:0 0 14px var(--ms-green-glow);color:var(--ms-green)}
+  .buy-row{display:flex;gap:12px;align-items:center;justify-content:center;flex-wrap:wrap}
+  .commit{font-family:ui-monospace,Menlo,monospace;font-size:11px;color:var(--ms-dim);text-align:center;margin-top:12px;word-break:break-all}
+  .commit b{color:var(--ms-green)}
+  /* Card */
+  .card-stage{position:relative;width:300px;height:300px;margin:8px auto 4px;border-radius:16px;overflow:hidden;
+    border:2px solid var(--ms-green-border);background:#091309;display:none}
+  .grid{position:absolute;inset:0;display:grid;grid-template-columns:repeat(3,1fr);grid-template-rows:repeat(3,1fr);gap:4px;padding:4px}
+  .cell{display:flex;align-items:center;justify-content:center;font-size:46px;background:#0c170c;border-radius:8px;transition:.3s}
+  .cell.match{background:rgba(0,255,65,.18);box-shadow:inset 0 0 0 2px var(--ms-green),0 0 14px var(--ms-green-glow)}
+  #scratchCanvas{position:absolute;inset:0;width:100%;height:100%;cursor:crosshair;touch-action:none}
+  .stage-hint{text-align:center;color:var(--ms-dim);font-size:13px;margin:6px 0 2px;min-height:18px}
+  .paytable{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:6px}
+  .pt{display:flex;align-items:center;gap:8px;background:var(--ms-panel-2);border:1px solid var(--ms-green-border);border-radius:10px;padding:8px 10px;font-size:13px}
+  .pt .em{font-size:22px}
+  .pt .mx{margin-left:auto;font-weight:800;color:var(--ms-gold)}
+  h2.sec{font-size:13px;text-transform:uppercase;letter-spacing:.1em;color:var(--ms-dim);margin:0 0 12px}
+  /* Result modal */
+  .backdrop{position:fixed;inset:0;background:rgba(0,0,0,.78);display:none;align-items:center;justify-content:center;z-index:60;padding:20px}
+  .backdrop.show{display:flex}
+  .modal{background:var(--ms-panel);border:1px solid var(--ms-green);border-radius:18px;padding:28px;max-width:360px;width:100%;text-align:center;box-shadow:0 0 40px var(--ms-green-glow)}
+  .modal .em{font-size:58px}
+  .modal h2{font-family:'Plus Jakarta Sans',sans-serif;margin:6px 0;color:#fff}
+  .modal .amt{font-size:34px;font-weight:800;color:var(--ms-gold);margin:6px 0}
+  .modal .lose{color:var(--ms-dim);font-size:15px}
+  .modal .seed{font-family:ui-monospace,monospace;font-size:10px;color:var(--ms-dim);word-break:break-all;margin-top:12px}
+  #confettiBox{position:fixed;inset:0;pointer-events:none;z-index:80}
+  .confetti-piece{position:fixed;top:-20px;will-change:transform,opacity;animation:cf var(--cf-dur,3s) ease-out forwards;animation-delay:var(--cf-delay,0s)}
+  @keyframes cf{0%{top:-20px;opacity:1}100%{top:100vh;opacity:0}}
+  .gate{text-align:center;padding:40px 20px;color:var(--ms-dim)}
+  @media(max-width:520px){.card-stage{width:280px;height:280px}.cell{font-size:40px}}
+</style>
+</head>
+<body>
+<div class="topbar">
+  <a class="brand" href="../index.html">◂ Matrix Spins</a>
+  <div class="actions">
+    <span id="balanceChip" class="balance-chip">—</span>
+    <a href="../wallet.html" class="btn">Wallet</a>
+    <button id="logout" class="btn" style="display:none">Sign out</button>
+  </div>
+</div>
+
+<div class="wrap" id="app" style="display:none">
+  <div class="hero">
+    <h1>Scratch <span class="accent">Cards</span></h1>
+    <p>Pick a ticket, scratch the panel, match 3 symbols to win up to <b>100×</b>.</p>
+  </div>
+
+  <div class="panel">
+    <h2 class="sec">1 · Choose your ticket</h2>
+    <div class="tiers" id="tiers"></div>
+    <div class="buy-row">
+      <button class="btn primary" id="buyBtn">Buy &amp; Scratch</button>
+    </div>
+    <div class="commit" id="commit"></div>
+  </div>
+
+  <div class="panel" id="cardPanel" style="display:none">
+    <h2 class="sec">2 · Scratch to reveal</h2>
+    <div class="card-stage" id="cardStage">
+      <div class="grid" id="grid"></div>
+      <canvas id="scratchCanvas" width="300" height="300"></canvas>
+    </div>
+    <div class="stage-hint" id="stageHint">Drag across the card to scratch…</div>
+    <div class="buy-row"><button class="btn" id="revealAllBtn">Reveal all</button></div>
+  </div>
+
+  <div class="panel">
+    <h2 class="sec">Paytable (match 3)</h2>
+    <div class="paytable" id="paytable"></div>
+  </div>
+</div>
+
+<div class="gate" id="gate" style="display:none">
+  <p>Please <a href="../login.html">sign in</a> to play Scratch Cards.</p>
+</div>
+
+<div class="backdrop" id="resultBackdrop">
+  <div class="modal">
+    <div class="em" id="rEmoji">🎉</div>
+    <h2 id="rTitle">You won!</h2>
+    <div class="amt" id="rAmt"></div>
+    <p class="lose" id="rLose" style="display:none">No match this time — try another ticket!</p>
+    <div class="seed" id="rSeed"></div>
+    <div class="buy-row" style="margin-top:16px"><button class="btn primary" id="rClose">Play again</button></div>
+  </div>
+</div>
+<div id="confettiBox"></div>
+
+<script src="../js/api-client.js"></script>
+<script src="../js/age-gate.js" defer></script>
+<script src="../js/cookie-consent.js" defer></script>
+<script src="../js/sound-manager.js" defer></script>
+<script>
+(async () => {
+  'use strict';
+  const $ = id => document.getElementById(id);
+  const api = window.MatrixSpinsAPI;
+  const fmt = d => '$' + (Number(d) || 0).toFixed(2);
+  const emitSound = t => window.dispatchEvent(new CustomEvent('matrix-sound', { detail: { type: t } }));
+
+  const user = await api.loadSession();
+  if (!user) { $('gate').style.display = 'block'; return; }
+  $('app').style.display = 'block';
+  $('logout').style.display = 'inline-block';
+  $('logout').addEventListener('click', async () => { await api.logout(); location.href = '../index.html'; });
+
+  async function refreshBalance() {
+    try { const b = await api.getBalance(); $('balanceChip').textContent = api.formatCents(b.availableCents); } catch (_) {}
+  }
+  function setBalanceDollars(d) { $('balanceChip').textContent = fmt(d); }
+  await refreshBalance();
+
+  // Load config (tiers + paytable)
+  let cfg;
+  try { cfg = await api.fetch('/scratch-cards/config'); }
+  catch (e) { cfg = { tiers:[1,2,5,10], paytable:[] }; }
+
+  const SYMBOL_EMOJI = {};
+  (cfg.paytable || []).forEach(p => { SYMBOL_EMOJI[p.symbol] = p.label; });
+
+  // Render tiers
+  let selectedTier = cfg.tiers[0];
+  const tiersEl = $('tiers');
+  cfg.tiers.forEach((t, i) => {
+    const el = document.createElement('div');
+    el.className = 'tier' + (i === 0 ? ' sel' : '');
+    el.innerHTML = '$' + t + '<span class="sub">ticket</span>';
+    el.onclick = () => { if (busy) return; selectedTier = t; document.querySelectorAll('.tier').forEach(x => x.classList.remove('sel')); el.classList.add('sel'); };
+    tiersEl.appendChild(el);
+  });
+
+  // Render paytable
+  const ptEl = $('paytable');
+  (cfg.paytable || []).forEach(p => {
+    const el = document.createElement('div');
+    el.className = 'pt';
+    el.innerHTML = '<span class="em">' + p.label + '</span><span class="mx">' + p.multiplier + '×</span>';
+    ptEl.appendChild(el);
+  });
+
+  // ── Scratch card state ──────────────────────────────────────────────
+  let busy = false;
+  let current = null; // { cardId, grid, winSymbol, winAmount, serverSeed, newBalance, revealed }
+  const canvas = $('scratchCanvas');
+  const ctx = canvas.getContext('2d');
+
+  function paintCover() {
+    ctx.globalCompositeOperation = 'source-over';
+    const g = ctx.createLinearGradient(0, 0, 300, 300);
+    g.addColorStop(0, '#15351f'); g.addColorStop(1, '#0a210f');
+    ctx.fillStyle = g; ctx.fillRect(0, 0, 300, 300);
+    ctx.fillStyle = 'rgba(0,255,65,.55)';
+    ctx.font = '700 22px Plus Jakarta Sans, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('SCRATCH', 150, 142);
+    ctx.fillText('HERE', 150, 172);
+    ctx.font = '600 13px Inter, sans-serif';
+    ctx.fillStyle = 'rgba(223,251,230,.5)';
+    ctx.fillText('match 3 to win', 150, 200);
+  }
+
+  function renderGrid() {
+    const grid = $('grid');
+    grid.innerHTML = '';
+    current.grid.forEach((sym, idx) => {
+      const c = document.createElement('div');
+      c.className = 'cell';
+      c.dataset.idx = idx;
+      c.textContent = SYMBOL_EMOJI[sym] || sym;
+      grid.appendChild(c);
+    });
+  }
+
+  function highlightMatches() {
+    if (!current.winSymbol) return;
+    let shown = 0;
+    document.querySelectorAll('.cell').forEach((c, idx) => {
+      if (current.grid[idx] === current.winSymbol && shown < 3) { c.classList.add('match'); shown++; }
+    });
+  }
+
+  // Scratch interaction
+  let drawing = false, finished = false;
+  function eraseAt(x, y) {
+    ctx.globalCompositeOperation = 'destination-out';
+    ctx.beginPath(); ctx.arc(x, y, 22, 0, Math.PI * 2); ctx.fill();
+  }
+  function pos(e) {
+    const r = canvas.getBoundingClientRect();
+    const cx = (e.touches ? e.touches[0].clientX : e.clientX) - r.left;
+    const cy = (e.touches ? e.touches[0].clientY : e.clientY) - r.top;
+    return { x: cx * (canvas.width / r.width), y: cy * (canvas.height / r.height) };
+  }
+  function scratchedFraction() {
+    const img = ctx.getImageData(0, 0, canvas.width, canvas.height).data;
+    let clear = 0;
+    for (let i = 3; i < img.length; i += 4 * 80) { if (img[i] === 0) clear++; }
+    return clear / (img.length / (4 * 80));
+  }
+  function onMove(e) {
+    if (!drawing || finished || !current) return;
+    e.preventDefault();
+    const p = pos(e); eraseAt(p.x, p.y);
+    if (scratchedFraction() > 0.5) finishScratch();
+  }
+  canvas.addEventListener('mousedown', e => { if (current && !finished) { drawing = true; const p = pos(e); eraseAt(p.x, p.y); } });
+  canvas.addEventListener('mousemove', onMove);
+  window.addEventListener('mouseup', () => { drawing = false; });
+  canvas.addEventListener('touchstart', e => { if (current && !finished) { drawing = true; onMove(e); } }, { passive: false });
+  canvas.addEventListener('touchmove', onMove, { passive: false });
+  window.addEventListener('touchend', () => { drawing = false; });
+
+  $('revealAllBtn').addEventListener('click', () => { if (current && !finished) finishScratch(); });
+
+  function finishScratch() {
+    if (finished || !current) return;
+    finished = true;
+    ctx.globalCompositeOperation = 'destination-out';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    highlightMatches();
+    setBalanceDollars(current.newBalance);
+    setTimeout(showResult, 550);
+  }
+
+  function showResult() {
+    const win = current.winAmount > 0;
+    $('rEmoji').textContent = win ? '🎉' : '🍀';
+    $('rTitle').textContent = win ? 'You won!' : 'So close!';
+    $('rAmt').style.display = win ? 'block' : 'none';
+    $('rLose').style.display = win ? 'none' : 'block';
+    $('rAmt').textContent = fmt(current.winAmount) + (current.winSymbol ? '  ·  ' + (SYMBOL_EMOJI[current.winSymbol] || '') + '×3' : '');
+    $('rSeed').textContent = 'Provably fair · seed ' + (current.serverSeed || '').slice(0, 24) + '…';
+    $('resultBackdrop').classList.add('show');
+    if (win) { emitSound('win'); spawnConfetti(); } else { emitSound('lose'); }
+  }
+  $('rClose').addEventListener('click', () => {
+    $('resultBackdrop').classList.remove('show');
+    $('cardPanel').style.display = 'none';
+    $('cardStage').style.display = 'none';
+    current = null; $('buyBtn').disabled = false; busy = false; $('commit').innerHTML = '';
+  });
+
+  // ── Buy + reveal flow ───────────────────────────────────────────────
+  $('buyBtn').addEventListener('click', async () => {
+    if (busy) return;
+    busy = true; finished = false;
+    $('buyBtn').disabled = true;
+    $('commit').textContent = 'Sealing outcome…';
+    try {
+      const buy = await api.fetch('/scratch-cards/buy', { method: 'POST', body: { tier: selectedTier } });
+      setBalanceDollars(buy.newBalance);
+      $('commit').innerHTML = '🔒 Outcome sealed · commit <b>' + buy.commitHash.slice(0, 16) + '…</b>';
+      emitSound('spin');
+      // Reveal (server credits winnings; we render symbols beneath the cover)
+      const rev = await api.fetch('/scratch-cards/reveal', { method: 'POST', body: { cardId: buy.cardId } });
+      current = { cardId: buy.cardId, grid: rev.grid, winSymbol: rev.winSymbol, winAmount: rev.winAmount, serverSeed: rev.serverSeed, newBalance: rev.newBalance };
+      renderGrid();
+      $('cardPanel').style.display = 'block';
+      $('cardStage').style.display = 'block';
+      paintCover();
+      $('stageHint').textContent = 'Drag across the card to scratch…';
+    } catch (e) {
+      $('commit').textContent = '';
+      $('buyBtn').disabled = false; busy = false;
+      alert(e.message || 'Could not buy card');
+    }
+  });
+
+  function spawnConfetti() {
+    const box = $('confettiBox'); box.innerHTML = '';
+    const colors = ['#00ff41', '#FFD700', '#39ff6a', '#22d3ee', '#fff2a0'];
+    for (let i = 0; i < 70; i++) {
+      const p = document.createElement('div');
+      p.className = 'confetti-piece';
+      p.style.left = Math.random() * 100 + '%';
+      p.style.background = colors[Math.floor(Math.random() * colors.length)];
+      p.style.setProperty('--cf-dur', (2 + Math.random() * 2) + 's');
+      p.style.setProperty('--cf-delay', (Math.random() * .5) + 's');
+      p.style.width = (6 + Math.random() * 8) + 'px';
+      p.style.height = (6 + Math.random() * 8) + 'px';
+      p.style.borderRadius = Math.random() > .5 ? '50%' : '2px';
+      box.appendChild(p);
+    }
+    setTimeout(() => { box.innerHTML = ''; }, 4500);
+  }
+})();
+</script>
+</body>
+</html>

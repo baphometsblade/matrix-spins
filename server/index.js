@@ -314,6 +314,12 @@ const claimPaths = [
 ];
 claimPaths.forEach(p => app.use(p, claimLimiter));
 
+// Casual wagered games (scratch cards, mines) — allow brisk active play but
+// cap burst abuse. Per-action money safety is enforced atomically in-route.
+const casualGameLimiter = rateLimit({ windowMs: 60 * 1000, max: 180, standardHeaders: true, legacyHeaders: false });
+app.use('/api/scratch-cards', casualGameLimiter);
+app.use('/api/mines',         casualGameLimiter);
+
 const paymentLimiter = rateLimit({ windowMs: 60 * 1000, max: 6, standardHeaders: true, legacyHeaders: false });
 app.use('/api/payment/deposit',         paymentLimiter);
 app.use('/api/payment/withdraw',        paymentLimiter);
@@ -490,6 +496,8 @@ mount('/api/loss-insurance', './routes/loss-insurance.routes', 'loss-insurance')
 mount('/api/freespins',     './routes/freespins.routes',     'freespins');
 mount('/api/dailywheel',    './routes/dailywheel.routes',    'dailywheel');
 mount('/api/daily-wheel',   './routes/dailywheel.routes',    'daily-wheel-alias');
+mount('/api/scratch-cards', './routes/scratch-cards.routes', 'scratch-cards');
+mount('/api/mines',         './routes/mines.routes',         'mines');
 mount('/api/vipwheel',      './routes/vipwheel.routes',      'vipwheel');
 mount('/api/mystery',       './routes/mystery.routes',       'mystery');
 mount('/api/birthday',      './routes/birthday.routes',      'birthday');
