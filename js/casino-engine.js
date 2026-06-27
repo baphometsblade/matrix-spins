@@ -282,6 +282,13 @@ if (!window.escapeHtml) {
         // active. Activated when freeSpinsAwarded > 0 + freeSpinsAvailable
         // was 0; retriggers add to total. Cleared when run ends.
         bonusRun: null,
+        // Client-side current-session accumulators (presentation only —
+        // surfaced in the info modal's "This session" block). These reset
+        // on page load and never touch money/server-authority logic; they
+        // only sum the cents the UI already displays per spin.
+        sessionWinCents: 0,
+        sessionWageredCents: 0,
+        sessionSpins: 0,
       };
 
       this._buildShell();
@@ -440,6 +447,30 @@ if (!window.escapeHtml) {
 
       this.loading = $el('div', { style: { textAlign: 'center', padding: '3rem 0', opacity: .7 } }, 'Loading game…');
       this.main.appendChild(this.loading);
+
+      this._bindKeyboard();
+    }
+
+    // Keyboard controls (premium desktop UX): Space or Enter spins. While a
+    // spin is animating, the same key fast-forwards the reveal (tap-to-skip);
+    // during autoplay it stops the run. Ignored when the user is typing in a
+    // field, when a button/link/summary already owns the key (so the native
+    // click isn't doubled), or when a modal/picker is open. Bound once.
+    _bindKeyboard() {
+      if (this._keyBound) return;
+      this._keyBound = true;
+      document.addEventListener('keydown', (e) => {
+        if (e.code !== 'Space' && e.key !== ' ' && e.key !== 'Enter') return;
+        const t = e.target;
+        if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.isContentEditable ||
+                  t.tagName === 'BUTTON' || t.tagName === 'A' || t.tagName === 'SUMMARY' || t.tagName === 'SELECT')) return;
+        if (document.getElementById('ce-info-overlay') || document.getElementById('ce-autoplay-picker')) return;
+        if (!this.state.game || !this.spinBtn) return; // not loaded yet
+        e.preventDefault();
+        if (this.state.spinning) { this._skipAnim = true; return; }
+        if (this.state.autoplay) { this._stopAutoplay(); return; }
+        this._spin(false);
+      });
     }
 
     _fatal(msg) {
@@ -502,6 +533,12 @@ if (!window.escapeHtml) {
       this.reelBox.appendChild(this.reelGrid);
       this.main.appendChild(this.reelBox);
 
+      // Tap / click the reels mid-spin to skip the reveal animation and slam
+      // the reels straight to their (already server-decided) final symbols.
+      // Purely presentational fast-forward \u2014 the outcome is fixed before the
+      // reveal loop runs, so this never affects money/server-authority.
+      this.reelBox.addEventListener('click', () => { if (this.state.spinning) this._skipAnim = true; });
+
       this.winStrip = $el('div', { class: 'ce-winstrip' }, '\u00A0');
       this.main.appendChild(this.winStrip);
 
@@ -513,6 +550,29 @@ if (!window.escapeHtml) {
         class: 'ce-sr-announce', role: 'status', 'aria-live': 'polite', 'aria-atomic': 'true',
       });
       this.main.appendChild(this.srAnnounce);
+
+      // Persistent BET / WIN / BALANCE meter — premium-slot standard. The
+      // top-bar balance chip + control-row bet label still exist; this strip
+      // consolidates the three numbers that matter into one always-visible
+      // surface. The WIN cell counts up after each win and resets at spin
+      // start. Presentation only — reads state the engine already maintains.
+      const meter = $el('div', { class: 'ce-meter' });
+      const meterCell = (label, ref) => {
+        const cell = $el('div', { class: 'ce-meter-cell' });
+        cell.appendChild($el('div', { class: 'ce-meter-label' }, label));
+        const v = $el('div', { class: 'ce-meter-val' }, fmt(0));
+        cell.appendChild(v);
+        this[ref] = v;
+        return cell;
+      };
+      meter.append(
+        meterCell('Bet', 'meterBet'),
+        meterCell('Win', 'meterWin'),
+        meterCell('Balance', 'meterBalance'),
+      );
+      this.meter = meter;
+      this.main.appendChild(meter);
+      this._updateMeter();
 
       const controlBar = $el('div', { class: 'ce-panel', style: {
         display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '.8rem',
@@ -657,6 +717,16 @@ if (!window.escapeHtml) {
           .ce-panel { background: linear-gradient(180deg, rgba(10,12,18,.55), rgba(8,10,15,.78)); border: 1px solid color-mix(in srgb, var(--ce-primary) 38%, transparent); border-radius: 16px; padding: .85rem 1rem; box-shadow: inset 0 1px 0 rgba(255,255,255,.07), 0 8px 26px rgba(0,0,0,.4); -webkit-backdrop-filter: blur(7px); backdrop-filter: blur(7px); }
           .ce-betlabel { padding: .5rem 1rem; min-width: 130px; text-align: center; border: 1px solid color-mix(in srgb, var(--ce-primary) 50%, transparent); border-radius: 10px; color: var(--ce-primary); font-weight: 800; font-family: var(--ce-font-display); letter-spacing: 1px; background: rgba(0,0,0,.25); }
 
+          /* Persistent BET / WIN / BALANCE meter */
+          .ce-meter { display: grid; grid-template-columns: repeat(3, 1fr); gap: .5rem; max-width: 860px; margin: .7rem auto 0; }
+          .ce-meter-cell { background: linear-gradient(180deg, rgba(10,12,18,.5), rgba(8,10,15,.74)); border: 1px solid color-mix(in srgb, var(--ce-primary) 26%, transparent); border-radius: 12px; padding: .5rem .4rem; text-align: center; }
+          .ce-meter-cell:nth-child(2) { border-color: color-mix(in srgb, var(--ce-win) 38%, transparent); }
+          .ce-meter-label { font-size: .62rem; letter-spacing: .14em; text-transform: uppercase; color: #9aa3b2; font-family: var(--ce-font-body); font-weight: 700; }
+          .ce-meter-val { margin-top: .15rem; font-size: 1.12rem; font-weight: 800; font-family: var(--ce-font-display); color: #F0F0F5; font-variant-numeric: tabular-nums; }
+          .ce-meter-cell:nth-child(2) .ce-meter-val { color: var(--ce-win); text-shadow: 0 0 12px color-mix(in srgb, var(--ce-win) 35%, transparent); }
+          .ce-meter-cell:nth-child(3) .ce-meter-val { color: var(--ce-primary); }
+          @media (max-width: 640px) { .ce-meter-val { font-size: .98rem; } .ce-meter-label { font-size: .56rem; } .ce-meter { gap: .35rem; } }
+
           /* Buttons */
           .ce-btn { padding: .6rem 1rem; background: transparent; color: #fff; border: 1px solid color-mix(in srgb, var(--ce-primary) 45%, transparent); border-radius: 10px; font: inherit; font-family: var(--ce-font-body); cursor: pointer; font-weight: 700; transition: transform 120ms ease, border-color 160ms ease, box-shadow 160ms ease; touch-action: manipulation; }
           .ce-btn:hover { border-color: var(--ce-primary); box-shadow: 0 0 12px color-mix(in srgb, var(--ce-primary) 32%, transparent); }
@@ -757,6 +827,17 @@ if (!window.escapeHtml) {
             .ce-cell { font-size: 1.7rem; }
             body { font-size: 16px; }
             .ce-btn { font-size: 1rem; }
+          }
+          /* Short landscape phones — cap the reel box height so the bet/spin
+             controls stay above the fold. Without this the square-cell grid at
+             near-full width is taller than the viewport and pushes the panel
+             off-screen. svh tracks the actual visible viewport on mobile. */
+          @media (orientation: landscape) and (max-height: 560px) {
+            .ce-reelbox { max-width: min(680px, 150svh); padding: .6rem; margin-top: .4rem; }
+            .ce-cell { font-size: 1.15rem; }
+            .ce-meter { margin-top: .4rem; }
+            .ce-meter-val { font-size: .92rem; }
+            .ce-panel { margin-top: .5rem !important; }
           }
           /* ── Free-spin mode: distinct GREEN glow border on the reel frame ──
              While a free-spins bonus run is active the reel box gets a vivid
@@ -903,9 +984,11 @@ if (!window.escapeHtml) {
       const reduceMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
       if (prevCents == null || reduceMotion || prevCents === target) {
         this.balanceChip.textContent = fmt(target);
+        if (this.meterBalance) this.meterBalance.textContent = fmt(target);
         return;
       }
       this._countUp(this.balanceChip, prevCents, target, 700);
+      if (this.meterBalance) this._countUp(this.meterBalance, prevCents, target, 700);
     }
 
     _countUp(el, fromCents, toCents, durationMs) {
@@ -989,10 +1072,13 @@ if (!window.escapeHtml) {
       if (ratio >= 50) this._screenPulse();
 
       let tier = null;
-      if      (ratio >= 150) tier = { label: 'SUPER MEGA WIN', fx: 'mega', color: '#FF5DA2', size: '4.6rem' };
-      else if (ratio >= 100) tier = { label: 'EPIC WIN',  fx: 'mega', color: '#F0C66E', size: '4.2rem' };
-      else if (ratio >=  50) tier = { label: 'MEGA WIN',  fx: 'mega', color: '#F0C66E', size: '3.6rem' };
-      else if (ratio >=  15) tier = { label: 'BIG WIN',   fx: 'big',  color: '#FFD700', size: '3.0rem' };
+      // Sizes are viewport-clamped so the wide-tracked labels never overflow
+      // horizontally on <=360px phones (the overlay is built with inline
+      // cssText, so the stylesheet's mobile media queries don't reach it).
+      if      (ratio >= 150) tier = { label: 'SUPER MEGA WIN', fx: 'mega', color: '#FF5DA2', size: 'clamp(2.2rem,11vw,4.6rem)' };
+      else if (ratio >= 100) tier = { label: 'EPIC WIN',  fx: 'mega', color: '#F0C66E', size: 'clamp(2.1rem,10vw,4.2rem)' };
+      else if (ratio >=  50) tier = { label: 'MEGA WIN',  fx: 'mega', color: '#F0C66E', size: 'clamp(1.9rem,9vw,3.6rem)' };
+      else if (ratio >=  15) tier = { label: 'BIG WIN',   fx: 'big',  color: '#FFD700', size: 'clamp(1.7rem,8vw,3.0rem)' };
       if (!tier) return;
 
       this._fx(tier.fx);
@@ -1009,7 +1095,8 @@ if (!window.escapeHtml) {
       label.textContent = tier.label;
       label.style.cssText =
         'font-family:"Plus Jakarta Sans",Inter,sans-serif;font-weight:900;' +
-        'letter-spacing:.3rem;font-size:' + tier.size + ';color:' + tier.color + ';' +
+        'letter-spacing:clamp(.12rem,1vw,.3rem);font-size:' + tier.size + ';color:' + tier.color + ';' +
+        'max-width:96vw;text-align:center;' +
         'text-shadow:0 0 24px ' + tier.color + ',0 0 8px ' + tier.color + ';' +
         'animation:ceCelebratePop 600ms cubic-bezier(.2,.9,.4,1.2) both;';
       const amount = document.createElement('div');
@@ -1047,7 +1134,13 @@ if (!window.escapeHtml) {
         (this._confettiQueue || []).forEach(fn => { try { fn(); } catch (_) {} });
         this._confettiQueue = [];
       };
-      // onerror unbound — particles silently skipped on load failure.
+      // On load failure: reset the loading flag (so a later win can retry) and
+      // drop queued callbacks. Without this, a single failed load would wedge
+      // _confettiLoading=true forever and orphan every queued burst.
+      tag.onerror = () => {
+        this._confettiLoading = false;
+        this._confettiQueue = [];
+      };
       document.head.appendChild(tag);
     }
 
@@ -1118,7 +1211,8 @@ if (!window.escapeHtml) {
         // Rainbow shimmer for the top tier.
         label.style.cssText =
           'font-family:"Plus Jakarta Sans",Inter,sans-serif;font-weight:900;' +
-          'letter-spacing:.4rem;font-size:4.6rem;color:transparent;' +
+          'letter-spacing:clamp(.16rem,1.2vw,.4rem);font-size:clamp(2.4rem,12vw,4.6rem);color:transparent;' +
+          'max-width:96vw;text-align:center;' +
           'background:linear-gradient(90deg,#FF1744,#FFD700,#00E676,#00B0FF,#D500F9,#FF1744);' +
           'background-size:200% auto;-webkit-background-clip:text;background-clip:text;' +
           '-webkit-text-fill-color:transparent;' +
@@ -1128,7 +1222,8 @@ if (!window.escapeHtml) {
       } else {
         label.style.cssText =
           'font-family:"Plus Jakarta Sans",Inter,sans-serif;font-weight:900;' +
-          'letter-spacing:.35rem;font-size:4.0rem;color:' + theme.color + ';' +
+          'letter-spacing:clamp(.14rem,1.1vw,.35rem);font-size:clamp(2.1rem,11vw,4.0rem);color:' + theme.color + ';' +
+          'max-width:96vw;text-align:center;' +
           'text-shadow:0 0 32px rgba(' + theme.glow + ',0.9),0 0 12px ' + theme.color + ';' +
           'animation:ceCelebratePop 600ms cubic-bezier(.2,.9,.4,1.2) both;';
       }
@@ -1265,6 +1360,7 @@ if (!window.escapeHtml) {
       if (next > g.maxBetCents) next = g.maxBetCents;
       this.state.betCents = next;
       this.betLabel.textContent = fmt(next);
+      if (this.meterBet) this.meterBet.textContent = fmt(next);
     }
 
     _maxBet() {
@@ -1272,15 +1368,24 @@ if (!window.escapeHtml) {
       if (!g) return;
       this.state.betCents = g.maxBetCents;
       this.betLabel.textContent = fmt(g.maxBetCents);
+      if (this.meterBet) this.meterBet.textContent = fmt(g.maxBetCents);
       this._fx('stop');
     }
 
+    // Refresh the static cells of the BET/WIN/BALANCE meter from state. The WIN
+    // cell is driven separately by _spin (count-up + per-spin reset) so it isn't
+    // clobbered here.
+    _updateMeter() {
+      if (this.meterBet) this.meterBet.textContent = fmt(this.state.betCents);
+      if (this.meterBalance) this.meterBalance.textContent = fmt(this.state.balanceCents);
+    }
+
     _showAutoplayPicker(anchorEl) {
-      // Small choice popover anchored to the AUTO button. Lets the player
-      // pick a fixed run length (10/25/50/100 spins). The popover is
-      // strictly the picker — once the player chooses, autoplay starts
-      // immediately and the SPIN button morphs into a STOP control that
-      // shows the remaining count. Industry-standard pattern.
+      // Popover anchored to the AUTO button. Player picks a run length
+      // (10/25/50/100) and, optionally, advanced stop limits (single-win /
+      // loss / profit). Choosing a preset starts autoplay immediately with
+      // whatever limits were entered; SPIN morphs into a STOP control showing
+      // the remaining count. Built with createElement/textContent (XSS-safe).
       // Close any prior instance.
       const prev = document.getElementById('ce-autoplay-picker');
       if (prev) { prev.remove(); return; }
@@ -1291,16 +1396,64 @@ if (!window.escapeHtml) {
       const picker = document.createElement('div');
       picker.id = 'ce-autoplay-picker';
       picker.setAttribute('role', 'menu');
-      picker.setAttribute('aria-label', 'Choose autoplay length');
+      picker.setAttribute('aria-label', 'Autoplay settings');
       picker.style.cssText =
         'position:fixed;z-index:10550;background:#161B23;' +
         'border:1px solid ' + this._primary + '55;border-radius:10px;' +
         'box-shadow:0 12px 32px rgba(0,0,0,0.6);' +
-        'padding:6px;display:flex;gap:4px;flex-direction:column;' +
-        'min-width:120px;' +
+        'padding:10px;display:flex;gap:8px;flex-direction:column;' +
+        'width:230px;max-width:calc(100vw - 16px);' +
         'top:' + Math.round(rect.bottom + 6) + 'px;' +
         'left:' + Math.round(rect.left) + 'px;';
 
+      // ── Optional stop-limit inputs (responsible-gambling + premium) ──
+      const limitInputs = {};
+      const addLimit = (key, label) => {
+        const row = document.createElement('label');
+        row.style.cssText = 'display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:0.76rem;color:#C7CDD9;';
+        const span = document.createElement('span');
+        span.textContent = label;
+        const wrap = document.createElement('span');
+        wrap.style.cssText = 'display:inline-flex;align-items:center;gap:2px;';
+        const dollar = document.createElement('span');
+        dollar.textContent = '$';
+        dollar.style.cssText = 'color:#8B95A8;font-size:0.76rem;';
+        const input = document.createElement('input');
+        input.type = 'number';
+        input.min = '0';
+        input.step = '1';
+        input.placeholder = '—';
+        input.setAttribute('aria-label', label);
+        input.style.cssText =
+          'width:64px;background:rgba(0,0,0,0.35);border:1px solid ' + this._primary + '33;' +
+          'border-radius:6px;color:#F0F0F5;padding:4px 6px;font:inherit;font-size:0.8rem;text-align:right;';
+        // Stop key events bubbling to the global Space/Enter spin handler.
+        input.addEventListener('keydown', (e) => e.stopPropagation());
+        wrap.appendChild(dollar); wrap.appendChild(input);
+        row.appendChild(span); row.appendChild(wrap);
+        limitInputs[key] = input;
+        picker.appendChild(row);
+      };
+      const advTitle = document.createElement('div');
+      advTitle.textContent = 'Stop autoplay if…';
+      advTitle.style.cssText = 'font-size:0.66rem;letter-spacing:.1em;text-transform:uppercase;color:#8B95A8;font-weight:700;';
+      picker.appendChild(advTitle);
+      addLimit('singleWin', 'Single win ≥');
+      addLimit('loss', 'Cash drops by');
+      addLimit('profit', 'Cash rises by');
+
+      const dollarsToCents = (el) => {
+        const v = parseFloat(el && el.value);
+        return (isFinite(v) && v > 0) ? Math.round(v * 100) : null;
+      };
+
+      const presetTitle = document.createElement('div');
+      presetTitle.textContent = 'Number of spins';
+      presetTitle.style.cssText = 'font-size:0.66rem;letter-spacing:.1em;text-transform:uppercase;color:#8B95A8;font-weight:700;margin-top:2px;';
+      picker.appendChild(presetTitle);
+
+      const presetRow = document.createElement('div');
+      presetRow.style.cssText = 'display:grid;grid-template-columns:1fr 1fr;gap:6px;';
       const presets = [10, 25, 50, 100];
       presets.forEach(n => {
         const item = document.createElement('button');
@@ -1308,19 +1461,29 @@ if (!window.escapeHtml) {
         item.setAttribute('role', 'menuitem');
         item.textContent = n + ' spins';
         item.style.cssText =
-          'background:transparent;border:0;color:#F0F0F5;text-align:left;' +
-          'padding:8px 12px;border-radius:6px;cursor:pointer;font:inherit;' +
-          'font-size:0.92rem;';
+          'background:rgba(255,255,255,0.04);border:1px solid ' + this._primary + '33;color:#F0F0F5;' +
+          'padding:8px 10px;border-radius:6px;cursor:pointer;font:inherit;font-size:0.9rem;font-weight:600;';
         item.addEventListener('mouseenter', () => item.style.background = this._primary + '22');
-        item.addEventListener('mouseleave', () => item.style.background = 'transparent');
+        item.addEventListener('mouseleave', () => item.style.background = 'rgba(255,255,255,0.04)');
         item.addEventListener('click', () => {
+          const limits = {
+            singleWinLimitCents: dollarsToCents(limitInputs.singleWin),
+            lossLimitCents: dollarsToCents(limitInputs.loss),
+            profitLimitCents: dollarsToCents(limitInputs.profit),
+          };
           picker.remove();
-          this._startAutoplay(n);
+          this._startAutoplay(n, limits);
         });
-        picker.appendChild(item);
+        presetRow.appendChild(item);
       });
+      picker.appendChild(presetRow);
 
       document.body.appendChild(picker);
+
+      // Clamp horizontally so the popover never overflows off a narrow phone
+      // (the AUTO button can wrap to the right edge of the control bar).
+      const pw = picker.getBoundingClientRect().width || 230;
+      picker.style.left = Math.max(8, Math.min(Math.round(rect.left), window.innerWidth - pw - 8)) + 'px';
 
       // Close on outside click or Escape.
       const onDocClick = (e) => {
@@ -1589,12 +1752,23 @@ if (!window.escapeHtml) {
       this._clearPendingNonce();
     }
 
-    _startAutoplay(count) {
+    _startAutoplay(count, limits) {
       // Begin the autoplay run. Guard against starting on top of an
       // already-running run (a programmatic call could collide).
       if (this.state.autoplay) return;
       const n = Math.max(1, Math.min(500, parseInt(count, 10) || 0));
-      this.state.autoplay = { remaining: n, startCount: n };
+      const lim = limits || {};
+      this.state.autoplay = {
+        remaining: n,
+        startCount: n,
+        // Optional player-set stop limits (cents) + the balance baseline for
+        // loss/profit deltas. null = limit not set. Evaluated in
+        // _shouldStopAutoplay against the server results already in hand.
+        singleWinLimitCents: lim.singleWinLimitCents || null,
+        lossLimitCents: lim.lossLimitCents || null,
+        profitLimitCents: lim.profitLimitCents || null,
+        startBalanceCents: this.state.balanceCents,
+      };
       // Disable the AUTO button during the run so the player can't open
       // the picker mid-flight. SPIN morphs into STOP (see
       // _updateSpinBtnLabel) which is the correct in-run control.
@@ -1609,6 +1783,35 @@ if (!window.escapeHtml) {
       this.state.autoplay = null;
       this._setAutoBtnEnabled(true);
       this._updateSpinBtnLabel();
+    }
+
+    // Brief non-blocking toast explaining why autoplay stopped. Especially
+    // important for player-set limits (win/loss/profit) so the stop doesn't
+    // feel arbitrary. role=status so assistive tech announces it.
+    _autoplayStoppedToast(reason) {
+      const MAP = {
+        big_win: 'Autoplay stopped — big win!',
+        bonus: 'Autoplay paused for the bonus',
+        low_balance: 'Autoplay stopped — low balance',
+        win_limit: 'Autoplay stopped — single-win limit reached',
+        loss_limit: 'Autoplay stopped — loss limit reached',
+        profit_limit: 'Autoplay stopped — profit target reached',
+        error: 'Autoplay stopped',
+      };
+      const msg = MAP[reason];
+      if (!msg) return;
+      const toast = document.createElement('div');
+      toast.setAttribute('role', 'status');
+      toast.setAttribute('aria-live', 'polite');
+      toast.style.cssText =
+        'position:fixed;left:50%;bottom:24px;transform:translateX(-50%);z-index:10540;' +
+        'padding:.6rem 1.1rem;border-radius:999px;color:#F0F0F5;' +
+        'background:rgba(16,20,28,.94);border:1px solid ' + this._primary + '66;' +
+        'box-shadow:0 8px 24px rgba(0,0,0,0.5);font-family:"Plus Jakarta Sans",Inter,sans-serif;' +
+        'font-weight:600;font-size:.84rem;max-width:calc(100vw - 24px);text-align:center;';
+      toast.textContent = msg;
+      document.body.appendChild(toast);
+      setTimeout(() => toast.remove(), 2600);
     }
 
     _updateSpinBtnLabel() {
@@ -1640,6 +1843,15 @@ if (!window.escapeHtml) {
       if (!result) return 'error';
       const win = result.payoutCents || 0;
       const bet = betCents || 1;
+      const ap = this.state.autoplay || {};
+      // Player-configured stop limits (any one triggers). Evaluated against the
+      // server-returned payout + the live balance vs the run's start baseline.
+      if (ap.singleWinLimitCents && win >= ap.singleWinLimitCents) return 'win_limit';
+      if (ap.startBalanceCents != null) {
+        const delta = this.state.balanceCents - ap.startBalanceCents;
+        if (ap.lossLimitCents && (-delta) >= ap.lossLimitCents) return 'loss_limit';
+        if (ap.profitLimitCents && delta >= ap.profitLimitCents) return 'profit_limit';
+      }
       if (win / bet >= 15) return 'big_win';
       if ((result.freeSpinsAwarded || 0) > 0) return 'bonus';
       const g = this.state.game;
@@ -1736,11 +1948,15 @@ if (!window.escapeHtml) {
       // commit b2eec40d) but the paytable modal is the sanctioned place to
       // disclose it for players who open the info panel. Accepts a number
       // (96.4) or a pre-formatted string ("96.4%").
-      const rtpVal = (g.rtp != null ? g.rtp : g.rtpPercent);
-      if (rtpVal != null && rtpVal !== '') {
-        const rtpStr = (typeof rtpVal === 'number') ? rtpVal.toFixed(1) + '% RTP' : String(rtpVal).replace(/%?\s*(RTP)?$/i, '') + '% RTP';
-        metaTags.push(rtpStr);
+      const rtpRaw = (g.rtp != null ? g.rtp : g.rtpPercent);
+      let rtpStr = null;
+      if (typeof rtpRaw === 'number') {
+        if (isFinite(rtpRaw) && rtpRaw > 0) rtpStr = rtpRaw.toFixed(1) + '% RTP';
+      } else if (typeof rtpRaw === 'string') {
+        const n = parseFloat(rtpRaw); // tolerant of "96.4", "96.4%", "96.4% RTP"
+        if (isFinite(n) && n > 0) rtpStr = n.toFixed(1) + '% RTP';
       }
+      if (rtpStr) metaTags.push(rtpStr);
       if (g.volatility) metaTags.push(g.volatility + ' volatility');
       if (g.paylines)   metaTags.push(g.paylines + ' lines');
       const maxMult = (g.maxWinMultiplier || g.maxBetMultiplier);
@@ -1846,6 +2062,44 @@ if (!window.escapeHtml) {
       statsSection.appendChild(statsBody);
       this._fillPersonalStats(statsBody);
 
+      // ── This session ──
+      // Client-side running totals for the current sitting (reset on page
+      // load). Distinct from the lifetime server aggregates above — labelled so
+      // it reads as live continuity, not a duplicate. Presentation only.
+      const sessionSection = document.createElement('div');
+      if (this.state.sessionSpins > 0) {
+        sessionSection.style.cssText = 'padding:4px 22px 14px;';
+        const sH3 = document.createElement('h3');
+        sH3.textContent = 'This session';
+        sH3.style.cssText = 'margin:6px 0 8px;font-size:0.85rem;color:#9CA3AF;text-transform:uppercase;letter-spacing:0.06em;font-weight:600;';
+        const sGrid = document.createElement('div');
+        sGrid.style.cssText = 'display:grid;grid-template-columns:1fr 1fr;gap:8px 16px;';
+        const net = this.state.sessionWinCents - this.state.sessionWageredCents;
+        const sRows = [
+          ['Spins', String(this.state.sessionSpins)],
+          ['Won', fmt(this.state.sessionWinCents)],
+          ['Wagered', fmt(this.state.sessionWageredCents)],
+          ['Net', (net >= 0 ? '+' : '−') + fmt(Math.abs(net))],
+        ];
+        sRows.forEach(([label, value]) => {
+          const cell = document.createElement('div');
+          cell.style.cssText = 'display:flex;flex-direction:column;gap:2px;';
+          const l = document.createElement('span');
+          l.textContent = label;
+          l.style.cssText = 'font-size:0.7rem;color:#8B95A8;text-transform:uppercase;letter-spacing:0.04em;';
+          const v = document.createElement('span');
+          v.textContent = value;
+          let colour = '#F0F0F5';
+          if (label === 'Won') colour = '#F0C66E';
+          else if (label === 'Net') colour = net >= 0 ? '#4ade80' : '#f87171';
+          v.style.cssText = 'font-size:1.0rem;font-weight:700;color:' + colour + ';font-variant-numeric:tabular-nums;';
+          cell.appendChild(l); cell.appendChild(v);
+          sGrid.appendChild(cell);
+        });
+        sessionSection.appendChild(sH3);
+        sessionSection.appendChild(sGrid);
+      }
+
       const foot = document.createElement('p');
       foot.style.cssText =
         'margin:0;padding:10px 22px 18px;font-size:0.72rem;color:#8B95A8;line-height:1.5;';
@@ -1859,6 +2113,7 @@ if (!window.escapeHtml) {
       if (loreSection.children.length)     panel.appendChild(loreSection);
       if (paytableSection.children.length) panel.appendChild(paytableSection);
       if (bonusSection.children.length)    panel.appendChild(bonusSection);
+      if (sessionSection.children.length)  panel.appendChild(sessionSection);
       panel.appendChild(statsSection);
       panel.appendChild(foot);
       overlay.appendChild(panel);
@@ -2089,8 +2344,12 @@ if (!window.escapeHtml) {
     async _spin(useFreeSpin) {
       if (this.state.spinning) return;
       this.state.spinning = true;
+      this._skipAnim = false; // reset tap-to-skip for this spin
       this.spinBtn.disabled = true;
       this.winStrip.textContent = '\u00A0';
+      // Reset the WIN meter cell at the start of each spin (premium pattern \u2014
+      // the cell shows the CURRENT spin's win, counting up from zero).
+      if (this.meterWin) this.meterWin.textContent = fmt(0);
 
       // Capture pre-spin balance for the count-up animation after the
       // result lands. Lets the chip animate from prev \u2192 new value rather
@@ -2181,10 +2440,14 @@ if (!window.escapeHtml) {
       // outcome regardless \u2014 the server already decided. The tension
       // is the part the player remembers.
       for (let r = 0; r < g.reels; r++) {
-        const nearMiss = this._detectNearMiss(r, g, result);
+        // Tap-to-skip: once the player taps the reels mid-spin, slam every
+        // remaining reel to its final symbols with no delay or anticipation.
+        const nearMiss = !this._skipAnim && this._detectNearMiss(r, g, result);
         const delay = nearMiss ? 1500 : speedCfg.reelStopMs;
 
-        if (nearMiss) {
+        if (this._skipAnim) {
+          // No await — render this reel's final column immediately (below).
+        } else if (nearMiss) {
           // Slow the rolling visual so the eye can register tension.
           // 80ms \u2192 200ms cadence makes the symbols appear to crawl.
           clearInterval(rollInterval);
@@ -2262,6 +2525,21 @@ if (!window.escapeHtml) {
         this.winStrip.style.opacity = .6;
         setTimeout(() => { this.winStrip.style.opacity = 1; }, 400);
       }
+
+      // WIN meter — count the cell up from 0 to the amount won this spin
+      // (jackpot amount if a jackpot landed, else the base payout). Snaps
+      // instantly under reduced-motion.
+      const meterWinCents = jpCents > 0 ? jpCents : win;
+      if (this.meterWin) {
+        const reduceMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        if (meterWinCents > 0 && !reduceMotion) this._countUp(this.meterWin, 0, meterWinCents, 800);
+        else this.meterWin.textContent = fmt(meterWinCents);
+      }
+      // Current-session accumulators (presentation only — shown in the info
+      // modal). Sum the cents the UI already shows; never recompute outcomes.
+      this.state.sessionWinCents += meterWinCents;
+      if (!useFreeSpin) this.state.sessionWageredCents += bet;
+      this.state.sessionSpins += 1;
 
       if (result.freeSpinsAwarded > 0) {
         this.winStrip.textContent += `  •  +${result.freeSpinsAwarded} free spins!`;
@@ -2353,6 +2631,8 @@ if (!window.escapeHtml) {
         const stopReason = this._shouldStopAutoplay(result, bet);
         if (stopReason || this.state.autoplay.remaining <= 0) {
           this._stopAutoplay();
+          // Tell the player WHY autoplay stopped (esp. for player-set limits).
+          if (stopReason) this._autoplayStoppedToast(stopReason);
         } else {
           this._updateSpinBtnLabel();
           setTimeout(() => {
