@@ -20,6 +20,29 @@
 <link rel="stylesheet" href="css/notifications.css">
 <link rel="stylesheet" href="css/conversion.css">
 <link rel="stylesheet" href="unified-ux.css">
+<style>
+  /* Animated deposit-success checkmark — shown for the inline Stripe card
+     confirmation path (the hosted-checkout redirect lands on
+     /deposit/success.html, which has its own checkmark). */
+  .dep-success-overlay { position: fixed; inset: 0; z-index: 2147483000; background: rgba(8,10,14,.93); display: none; align-items: center; justify-content: center; flex-direction: column; padding: 24px; text-align: center; }
+  .dep-success-overlay.visible { display: flex; animation: depFade .3s ease; }
+  @keyframes depFade { from { opacity: 0; } to { opacity: 1; } }
+  .dep-check-wrap { width: 110px; height: 110px; position: relative; margin-bottom: 1.5rem; }
+  .dep-check-circle { width: 110px; height: 110px; border-radius: 50%; border: 5px solid #2ecc71; transform: scale(0); animation: depCircle .5s cubic-bezier(.16,.84,.44,1) forwards; }
+  @keyframes depCircle { 0% { transform: scale(0); } 60% { transform: scale(1.1); } 100% { transform: scale(1); } }
+  .dep-check-stem { position: absolute; top: 50%; left: 50%; width: 30px; height: 16px; border-left: 5px solid #2ecc71; border-bottom: 5px solid #2ecc71; transform: translate(-55%,-65%) rotate(-45deg) scale(0); animation: depCheck .35s ease-out .45s forwards; }
+  @keyframes depCheck { 0% { transform: translate(-55%,-65%) rotate(-45deg) scale(0); } 60% { transform: translate(-55%,-65%) rotate(-45deg) scale(1.15); } 100% { transform: translate(-55%,-65%) rotate(-45deg) scale(1); } }
+  .dep-check-glow { position: absolute; inset: -12px; border-radius: 50%; border: 2px solid rgba(46,204,113,.3); animation: depGlow 2s ease-in-out infinite; }
+  @keyframes depGlow { 0%,100% { transform: scale(1); opacity: .4; } 50% { transform: scale(1.18); opacity: 0; } }
+  .dep-success-title { font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 800; font-size: 1.6rem; color: #2ecc71; margin-bottom: .5rem; }
+  .dep-success-amount { font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 700; font-size: 2rem; color: #d4af37; margin-bottom: .4rem; min-height: 1.2em; }
+  .dep-success-sub { color: #8a8a9a; font-size: .95rem; max-width: 320px; }
+  @media (prefers-reduced-motion: reduce) {
+    .dep-check-glow { animation: none; }
+    .dep-check-circle { animation: none; transform: scale(1); }
+    .dep-check-stem { animation: none; transform: translate(-55%,-65%) rotate(-45deg) scale(1); }
+  }
+</style>
 <script src="js/unified-ux.js" defer></script>
 </head>
 <body>
@@ -226,6 +249,17 @@
       <span class="trust-chip">🎰 Licensed</span>
     </div>
   </div>
+</div>
+
+<!-- ── Deposit success checkmark overlay ───────────────────────── -->
+<div class="dep-success-overlay" id="depSuccessOverlay" role="status" aria-live="polite">
+  <div class="dep-check-wrap">
+    <div class="dep-check-glow"></div>
+    <div class="dep-check-circle"><div class="dep-check-stem"></div></div>
+  </div>
+  <div class="dep-success-title">Deposit Successful!</div>
+  <div class="dep-success-amount" id="depSuccessAmount"></div>
+  <div class="dep-success-sub">Your funds have been credited and are ready to play.</div>
 </div>
 
 <script src="js/api-client.js"></script>
@@ -472,6 +506,42 @@
     document.getElementById('cardErrors').textContent = '';
   }
 
+  // Animated success checkmark — the "done" step of the streamlined deposit
+  // flow (select amount → confirm → done). Restarts the CSS animations on
+  // each call by re-flowing the nodes, then closes the modal + refreshes the
+  // balance/history. amountDollars is the real deposit amount (never mocked).
+  function showDepositSuccess(amountDollars) {
+    const overlay = document.getElementById('depSuccessOverlay');
+    if (!overlay) { closeDepositModal(); refreshData(); return; }
+    const amtEl = document.getElementById('depSuccessAmount');
+    if (amtEl) amtEl.textContent = amountDollars ? '$' + Number(amountDollars).toFixed(2) : '';
+    // Re-trigger the draw animations if the overlay was shown before.
+    overlay.querySelectorAll('.dep-check-circle, .dep-check-stem, .dep-check-glow').forEach((el) => {
+      el.style.animation = 'none'; void el.offsetWidth; el.style.animation = '';
+    });
+    document.body.style.overflow = 'hidden';
+    overlay.classList.add('visible');
+    setTimeout(() => {
+      overlay.classList.remove('visible');
+      closeDepositModal();
+      refreshData();
+    }, 2600);
+  }
+
+  // Hosted Stripe Checkout can be configured to return to the wallet with
+  // ?deposit=success — surface the same checkmark then strip the param so a
+  // refresh doesn't replay it.
+  (function handleDepositReturn() {
+    try {
+      const p = new URLSearchParams(location.search);
+      if (p.get('deposit') === 'success') {
+        const amt = p.get('amount');
+        showDepositSuccess(amt ? parseFloat(amt) : 0);
+        history.replaceState(null, '', location.pathname);
+      }
+    } catch (_) { /* noop */ }
+  })();
+
   document.getElementById('closeDeposit').addEventListener('click', closeDepositModal);
   depositModal.addEventListener('click', (e) => {
     if (e.target === depositModal) closeDepositModal();
@@ -627,9 +697,7 @@
             alertEl.className = 'alert visible';
             alertEl.textContent = error.message;
           } else {
-            alertEl.className = 'alert success visible';
-            alertEl.textContent = 'Deposit successful! Funds are being credited.';
-            setTimeout(() => { closeDepositModal(); refreshData(); }, 2000);
+            showDepositSuccess(selectedAmount / 100);
           }
           redirected = true;
         }

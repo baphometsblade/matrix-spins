@@ -309,6 +309,10 @@ if (!window.escapeHtml) {
         sessionWinCents: 0,
         sessionWageredCents: 0,
         sessionSpins: 0,
+        // Rolling last-N spin log (newest first), surfaced in the collapsible
+        // win-history sidebar. Capped at HISTORY_MAX. Presentation only — each
+        // entry mirrors numbers the UI already showed for that spin.
+        spinHistory: [],
       };
 
       this._buildShell();
@@ -387,6 +391,9 @@ if (!window.escapeHtml) {
         if (this._balanceUnavailable) {
           this.winStrip && (this.winStrip.textContent = 'Reconnecting to your balance…');
         }
+        // First-visit-this-session game briefing (RTP / volatility / bet range /
+        // features). Shows once per game per browser session; never gates play.
+        try { this._maybeShowPreSpinInfo(); } catch (_) { /* briefing is polish — never block boot */ }
       } catch (err) {
         // Always dismiss the splash on the error path so a boot failure can
         // never leave the overlay stuck over the fatal message.
@@ -731,6 +738,17 @@ if (!window.escapeHtml) {
         onclick: (e) => this._showAutoplayPicker(e.currentTarget),
       }, 'AUTO');
       this.autoBtn = autoBtn;
+      // Win-history toggle — opens the collapsible last-20-spins sidebar.
+      // Lives in the control bar (the engine owns the whole game UI; there is
+      // no separate page header on a game page). Presentation only.
+      const histBtn = $el('button', {
+        class: 'ce-btn ce-btn-history',
+        'aria-label': 'Spin history',
+        'aria-expanded': 'false',
+        title: 'Spin history',
+        onclick: () => this._toggleHistory(),
+      }, '🕑');
+      this.histBtn = histBtn;
       // SPIN button doubles as STOP during autoplay — the onclick
       // checks this.state.autoplay to decide which mode is active.
       // _updateSpinBtnLabel keeps the visible text + aria-label in
@@ -744,7 +762,7 @@ if (!window.escapeHtml) {
         },
       }, 'SPIN');
 
-      [betMinus, this.betLabel, betPlus, betMax, infoBtn, turboBtn, autoBtn, this.spinBtn].forEach(b => controlBar.appendChild(b));
+      [betMinus, this.betLabel, betPlus, betMax, infoBtn, turboBtn, autoBtn, histBtn, this.spinBtn].forEach(b => controlBar.appendChild(b));
       this.main.appendChild(controlBar);
 
       // ── Bet presets (Min / Low / Med / High / Max) ──
@@ -774,6 +792,11 @@ if (!window.escapeHtml) {
       this._renderFreeSpins();
 
       this.main.appendChild(this._renderFairnessPanel());
+
+      // Collapsible win-history sidebar (built once per render; the spin log in
+      // this.state.spinHistory survives re-renders). Appended to the engine
+      // container so it overlays the game UI as a fixed slide-in panel.
+      this._buildHistorySidebar();
 
       if (!document.getElementById('ce-style')) {
         const s = document.createElement('style');
@@ -992,6 +1015,46 @@ if (!window.escapeHtml) {
             .ce-cell.ce-rolling { filter: none !important; }
             .ce-reelbox.ce-freespin, .ce-reelbox.ce-screen-pulse { animation: none !important; }
           }
+
+          /* ── Win-history toggle + sidebar ── */
+          .ce-btn-history { min-width: 40px; min-height: 40px; padding: .4rem; border-radius: 50%; font-weight: 800; color: var(--ce-primary); background: linear-gradient(135deg, color-mix(in srgb, var(--ce-primary) 20%, transparent), transparent); border-color: color-mix(in srgb, var(--ce-primary) 50%, transparent); }
+          .ce-history { position: fixed; top: 0; right: 0; height: 100%; width: min(340px, 86vw); transform: translateX(105%); transition: transform .32s cubic-bezier(.16,.84,.44,1); background: linear-gradient(180deg, #11151d, #0b0e14); border-left: 1px solid color-mix(in srgb, var(--ce-primary) 40%, transparent); box-shadow: -12px 0 40px rgba(0,0,0,.5); z-index: 10500; display: flex; flex-direction: column; }
+          .ce-history.open { transform: translateX(0); }
+          .ce-history-head { display: flex; align-items: center; justify-content: space-between; padding: 1rem 1.1rem; border-bottom: 1px solid color-mix(in srgb, var(--ce-primary) 24%, transparent); }
+          .ce-history-title { font-family: var(--ce-font-display); font-weight: 800; letter-spacing: .04em; color: var(--ce-primary); font-size: 1rem; }
+          .ce-history-close { background: transparent; border: 0; color: #9aa3b2; font-size: 1.5rem; line-height: 1; cursor: pointer; padding: 0 .3rem; }
+          .ce-history-close:hover { color: #fff; }
+          .ce-history-list { flex: 1; overflow-y: auto; padding: .4rem .6rem 1rem; }
+          .ce-history-empty { color: #8b95a8; font-size: .85rem; padding: 1.2rem .6rem; line-height: 1.5; text-align: center; }
+          .ce-history-row { display: grid; grid-template-columns: 1fr 1fr auto; gap: .4rem .6rem; align-items: center; padding: .5rem; border-bottom: 1px solid rgba(255,255,255,.05); font-variant-numeric: tabular-nums; font-size: .86rem; }
+          .ce-history-hdr { color: #8b95a8; text-transform: uppercase; letter-spacing: .06em; font-size: .66rem; font-weight: 700; border-bottom: 1px solid color-mix(in srgb, var(--ce-primary) 22%, transparent); }
+          .ce-history-bet { color: #cdd3de; }
+          .ce-history-win { color: #6b7280; }
+          .ce-history-row.win .ce-history-win { color: var(--ce-win); font-weight: 700; }
+          .ce-history-mult { color: #9aa3b2; text-align: right; font-weight: 700; min-width: 48px; }
+          .ce-history-row.win .ce-history-mult { color: var(--ce-win); }
+          @media (prefers-reduced-motion: reduce) { .ce-history { transition: none; } }
+
+          /* ── Pre-spin game briefing (slide-up sheet / centered modal) ── */
+          #ce-prespin-overlay { position: fixed; inset: 0; z-index: 10650; background: rgba(0,0,0,.66); display: flex; align-items: flex-end; justify-content: center; }
+          .ce-prespin-panel { width: 100%; max-width: 480px; background: linear-gradient(180deg, #161b23, #0f1218); border: 1px solid color-mix(in srgb, var(--ce-primary) 45%, transparent); border-radius: 18px 18px 0 0; box-shadow: 0 -16px 50px rgba(0,0,0,.55); padding: 1.4rem 1.4rem 1.5rem; color: #f0f0f5; animation: ceInfoSlideUp 300ms cubic-bezier(.16,.84,.44,1) both; }
+          .ce-prespin-eyebrow { font-size: .68rem; letter-spacing: .16em; text-transform: uppercase; color: var(--ce-primary); font-weight: 800; font-family: var(--ce-font-body); }
+          .ce-prespin-name { margin: .25rem 0 1rem; font-family: var(--ce-font-display); font-size: 1.5rem; font-weight: 900; color: #fff; line-height: 1.1; }
+          .ce-prespin-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: .6rem; margin-bottom: 1.2rem; }
+          .ce-prespin-stat { background: rgba(255,255,255,.04); border: 1px solid color-mix(in srgb, var(--ce-primary) 22%, transparent); border-radius: 12px; padding: .7rem .5rem; text-align: center; }
+          .ce-prespin-stat-label { font-size: .62rem; letter-spacing: .1em; text-transform: uppercase; color: #9aa3b2; font-weight: 700; }
+          .ce-prespin-stat-val { margin-top: .25rem; font-family: var(--ce-font-display); font-size: 1.05rem; font-weight: 800; color: var(--ce-primary); font-variant-numeric: tabular-nums; }
+          .ce-prespin-feat-label { font-size: .7rem; letter-spacing: .08em; text-transform: uppercase; color: #9aa3b2; font-weight: 700; margin-bottom: .55rem; }
+          .ce-prespin-feats { display: flex; flex-wrap: wrap; gap: .45rem; margin-bottom: 1.5rem; }
+          .ce-prespin-chip { padding: .4rem .8rem; border-radius: 999px; font-size: .8rem; font-weight: 600; color: color-mix(in srgb, var(--ce-primary) 86%, #fff); background: linear-gradient(180deg, color-mix(in srgb, var(--ce-primary) 16%, transparent), transparent); border: 1px solid color-mix(in srgb, var(--ce-primary) 36%, transparent); }
+          .ce-prespin-gotit { width: 100%; padding: .9rem; border: none; border-radius: 12px; cursor: pointer; font-family: var(--ce-font-display); font-weight: 800; letter-spacing: .04em; text-transform: uppercase; font-size: .95rem; color: #160f02; background: radial-gradient(circle at 50% 30%, var(--ce-secondary) 0%, var(--ce-primary) 70%); box-shadow: var(--ce-spin-glow); }
+          .ce-prespin-gotit:hover { filter: brightness(1.06); }
+          .ce-prespin-gotit:active { transform: scale(.98); }
+          @media (min-width: 641px) {
+            #ce-prespin-overlay { align-items: center; padding: 24px; }
+            .ce-prespin-panel { border-radius: 18px; animation-name: ceInfoPop; }
+          }
+          @media (prefers-reduced-motion: reduce) { .ce-prespin-panel { animation: none !important; } }
         `;
         document.head.appendChild(s);
       }
@@ -2317,6 +2380,163 @@ if (!window.escapeHtml) {
       setTimeout(() => closeBtn.focus(), 0);
     }
 
+    // ── Pre-spin game briefing (Item: game info panel) ─────────────────
+    // A slide-up sheet shown ONCE per game per browser session before the
+    // player's first spin: RTP, volatility, bet range, and the special-feature
+    // list. Dismissed with "Got it". Presentation only — never gates play.
+    _maybeShowPreSpinInfo() {
+      const g = this.state.game;
+      if (!g) return;
+      const key = 'ce_briefing_' + this.gameId;
+      try { if (sessionStorage.getItem(key) === '1') return; } catch (_) { /* private mode — show anyway */ }
+      this._showPreSpinPanel();
+      try { sessionStorage.setItem(key, '1'); } catch (_) { /* noop */ }
+    }
+
+    _showPreSpinPanel() {
+      const g = this.state.game;
+      if (!g) return;
+      if (document.getElementById('ce-prespin-overlay')) return;
+      const opener = document.activeElement;
+
+      // RTP — accepts a number (96.4) or a pre-formatted string ("96.4%").
+      const rtpRaw = (g.rtp != null ? g.rtp : g.rtpPercent);
+      let rtpStr = '—';
+      if (typeof rtpRaw === 'number') {
+        if (isFinite(rtpRaw) && rtpRaw > 0) rtpStr = rtpRaw.toFixed(1) + '%';
+      } else if (typeof rtpRaw === 'string') {
+        const n = parseFloat(rtpRaw);
+        if (isFinite(n) && n > 0) rtpStr = n.toFixed(1) + '%';
+      }
+      const volStr = g.volatility
+        ? String(g.volatility).charAt(0).toUpperCase() + String(g.volatility).slice(1)
+        : '—';
+      const betStr = (g.minBetCents != null && g.maxBetCents != null)
+        ? fmt(g.minBetCents) + ' – ' + fmt(g.maxBetCents)
+        : '—';
+
+      // Special features — built generously from whatever the server game
+      // object exposes (mechanic, bonus, wilds/scatters, free spins, max win).
+      const features = [];
+      const pushF = (s) => { if (s && features.indexOf(s) === -1) features.push(s); };
+      if (g.mechanic) pushF(g.mechanic);
+      if (g.bonusType) pushF(g.bonusType);
+      else if (g.bonusDesc) pushF(g.bonusDesc);
+      const syms = g.symbols || [];
+      if ((g.wilds && g.wilds.length) || syms.indexOf('wild') !== -1) pushF('Wild symbols');
+      if ((g.scatters && g.scatters.length) || syms.indexOf('scatter') !== -1) pushF('Scatter pays');
+      if (g.freeSpinCount) pushF(g.freeSpinCount + ' Free Spins');
+      const maxMult = g.maxWinMultiplier || g.maxBetMultiplier;
+      if (maxMult) pushF('Win up to ' + maxMult + '× your bet');
+      if (g.paylines) pushF(g.paylines + ' paylines');
+      if (!features.length) pushF('Classic reel play');
+
+      const overlay = $el('div', {
+        id: 'ce-prespin-overlay', role: 'dialog', 'aria-modal': 'true',
+        'aria-labelledby': 'ce-prespin-title',
+      });
+      const panel = $el('div', { class: 'ce-prespin-panel' });
+      panel.appendChild($el('div', { class: 'ce-prespin-eyebrow' }, 'Game briefing'));
+      panel.appendChild($el('h2', { id: 'ce-prespin-title', class: 'ce-prespin-name' }, g.name || this.displayName));
+
+      const stats = $el('div', { class: 'ce-prespin-stats' });
+      const stat = (label, value) => $el('div', { class: 'ce-prespin-stat' },
+        $el('div', { class: 'ce-prespin-stat-label' }, label),
+        $el('div', { class: 'ce-prespin-stat-val' }, value));
+      stats.append(stat('RTP', rtpStr), stat('Volatility', volStr), stat('Bet range', betStr));
+      panel.appendChild(stats);
+
+      panel.appendChild($el('div', { class: 'ce-prespin-feat-label' }, 'Special features'));
+      const featWrap = $el('div', { class: 'ce-prespin-feats' });
+      features.forEach((f) => featWrap.appendChild($el('span', { class: 'ce-prespin-chip' }, f)));
+      panel.appendChild(featWrap);
+
+      const gotIt = $el('button', { class: 'ce-prespin-gotit', onclick: () => close() }, 'Got it');
+      panel.appendChild(gotIt);
+
+      overlay.appendChild(panel);
+      document.body.appendChild(overlay);
+
+      function close() {
+        document.removeEventListener('keydown', onKey, true);
+        overlay.remove();
+        try { if (opener && opener.focus) opener.focus(); } catch (_) { /* noop */ }
+      }
+      function onKey(e) { if (e.key === 'Escape') { e.preventDefault(); close(); } }
+      overlay.addEventListener('click', (e) => { if (e.target === overlay) close(); });
+      document.addEventListener('keydown', onKey, true);
+      setTimeout(() => { try { gotIt.focus(); } catch (_) { /* noop */ } }, 0);
+    }
+
+    // ── Win-history sidebar (Item: collapsible last-20-spins log) ───────
+    // Fixed slide-in panel on the right edge. Built once per render; the spin
+    // log lives in this.state.spinHistory and survives re-renders.
+    _buildHistorySidebar() {
+      const panel = $el('aside', {
+        class: 'ce-history' + (this._historyOpen ? ' open' : ''),
+        role: 'complementary', 'aria-label': 'Spin history',
+        'aria-hidden': this._historyOpen ? 'false' : 'true',
+      });
+      const head = $el('div', { class: 'ce-history-head' },
+        $el('span', { class: 'ce-history-title' }, 'Last 20 spins'),
+        $el('button', {
+          class: 'ce-history-close', 'aria-label': 'Close spin history',
+          onclick: () => this._toggleHistory(false),
+        }, '×'),
+      );
+      const list = $el('div', { class: 'ce-history-list' });
+      this.historyListEl = list;
+      panel.appendChild(head);
+      panel.appendChild(list);
+      this.historyPanel = panel;
+      this.main.appendChild(panel);
+      this._renderHistoryList();
+    }
+
+    _renderHistoryList() {
+      const list = this.historyListEl;
+      if (!list) return;
+      list.replaceChildren();
+      const hist = this.state.spinHistory || [];
+      if (!hist.length) {
+        list.appendChild($el('div', { class: 'ce-history-empty' },
+          'No spins yet — your last 20 results will appear here.'));
+        return;
+      }
+      list.appendChild($el('div', { class: 'ce-history-row ce-history-hdr' },
+        $el('span', {}, 'Bet'), $el('span', {}, 'Win'), $el('span', {}, '×')));
+      hist.forEach((h) => {
+        const win = h.winCents > 0;
+        const multStr = h.betCents > 0
+          ? (h.winCents / h.betCents).toFixed(2) + '×'
+          : (win ? '—' : '0×');
+        list.appendChild($el('div', { class: 'ce-history-row' + (win ? ' win' : '') },
+          $el('span', { class: 'ce-history-bet' }, (h.free ? 'FS ' : '') + fmt(h.betCents)),
+          $el('span', { class: 'ce-history-win' }, win ? '+' + fmt(h.winCents) : '—'),
+          $el('span', { class: 'ce-history-mult' }, multStr)));
+      });
+    }
+
+    _recordSpinHistory(betCents, winCents, free) {
+      const HISTORY_MAX = 20;
+      if (!this.state.spinHistory) this.state.spinHistory = [];
+      this.state.spinHistory.unshift({ betCents, winCents, free: !!free });
+      if (this.state.spinHistory.length > HISTORY_MAX) {
+        this.state.spinHistory.length = HISTORY_MAX;
+      }
+      this._renderHistoryList();
+    }
+
+    _toggleHistory(force) {
+      const open = (typeof force === 'boolean') ? force : !this._historyOpen;
+      this._historyOpen = open;
+      if (this.historyPanel) {
+        this.historyPanel.classList.toggle('open', open);
+        this.historyPanel.setAttribute('aria-hidden', open ? 'false' : 'true');
+      }
+      if (this.histBtn) this.histBtn.setAttribute('aria-expanded', open ? 'true' : 'false');
+    }
+
     async _fillPersonalStats(container) {
       // Fetch per-game aggregates and render a compact stat grid. Failures
       // are swallowed — the stats card is decorative, never gating. The
@@ -2724,6 +2944,10 @@ if (!window.escapeHtml) {
       this.state.sessionWinCents += meterWinCents;
       if (!useFreeSpin) this.state.sessionWageredCents += bet;
       this.state.sessionSpins += 1;
+
+      // Log this spin for the win-history sidebar (bet, win, payout multiple).
+      // Free spins cost 0 — recorded as such so the multiple isn't divide-by-zero.
+      this._recordSpinHistory(useFreeSpin ? 0 : bet, meterWinCents, !!useFreeSpin);
 
       if (result.freeSpinsAwarded > 0) {
         this.winStrip.textContent += `  •  +${result.freeSpinsAwarded} free spins!`;
