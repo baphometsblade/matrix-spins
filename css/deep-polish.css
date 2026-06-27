@@ -1,0 +1,643 @@
+/* ═══════════════════════════════════════════════════════════════════════════
+   Matrix Spins — DEEP POLISH layer
+   Pairs with js/deep-polish.js. Pure progressive enhancement: every effect is
+   additive and namespaced `dp-*` so a single feature failing never touches the
+   base lobby / auth flows. Loaded LAST so refinements win the cascade.
+
+   Brand: Green Matrix (#00ff41). Reuses css/matrix-theme.css tokens
+   (--ms-green, --ms-green-bright, --ms-green-glow…) with hard-coded fallbacks
+   so it also works on pages that load deep-polish before matrix-theme.
+
+   Sections
+     0.  Design tokens + typography / spacing rhythm
+     1.  Lobby game cards (parallax tilt, glass shine, ribbon badges, jackpot dot)
+     2.  Auth polish (floating labels, strength meter, eye toggle, shake)
+     3.  Animations everywhere (page reveal, modal scale, toasts, buttons)
+     4.  Micro-interactions (matrix checkbox/toggle, valid tick, copy, scroll bar)
+     5.  Reduced-motion guard (MUST stay last — later source wins the cascade)
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* ─────────────────────────────────────────────────────────────────────────
+   0. TOKENS + TYPOGRAPHY / SPACING
+   A small, consistent scale layered over the existing system. Variables only —
+   we do NOT restyle global type wholesale (too risky); we expose a rhythm that
+   the deep-polish components below consume, plus a few safe touch-target rules.
+   ───────────────────────────────────────────────────────────────────────── */
+:root {
+  --dp-green:        var(--ms-green, #00ff41);
+  --dp-green-bright: var(--ms-green-bright, #39ff6a);
+  --dp-green-deep:   var(--ms-green-deep, #00b82f);
+  --dp-green-glow:   var(--ms-green-glow, rgba(0, 255, 65, 0.35));
+  --dp-green-dim:    var(--ms-green-dim, rgba(0, 255, 65, 0.12));
+  --dp-green-border: var(--ms-green-border-hi, rgba(0, 255, 65, 0.40));
+  --dp-danger:       #ff4d4d;
+  --dp-warn:         #ffcc33;
+
+  /* Type scale (spec): 14 body · 16 important · 24 section · 32 page */
+  --dp-fs-body: 14px;
+  --dp-fs-strong: 16px;
+  --dp-fs-section: 24px;
+  --dp-fs-title: 32px;
+
+  /* Spacing rhythm (spec): 20 card padding · 16 gap · 12 radius */
+  --dp-pad: 20px;
+  --dp-gap: 16px;
+  --dp-radius: 12px;
+
+  --dp-ease: cubic-bezier(0.22, 1, 0.36, 1);
+  --dp-tap: 44px; /* minimum touch target */
+}
+
+/* 44px minimum touch targets for primary interactive controls on the
+   client-facing surfaces deep-polish ships on. Scoped to known controls so we
+   don't inflate dense admin tables (deep-polish isn't loaded there anyway). */
+.signup-submit,
+.signup-modal-close,
+.rs-card .btn,
+.dp-eye,
+.dp-copy {
+  min-height: var(--dp-tap);
+}
+.dp-eye { min-width: var(--dp-tap); }
+
+/* ─────────────────────────────────────────────────────────────────────────
+   1. LOBBY GAME CARDS
+   ───────────────────────────────────────────────────────────────────────── */
+
+/* Parallax tilt — JS sets --dp-rx / --dp-ry (deg) and --dp-lift on hover.
+   We keep the base transform untouched on the card itself by tilting an inner
+   wrapper-free approach: the card already animates translateY elsewhere, so we
+   compose our rotation via a CSS var the JS drives and fall back to 0. */
+.game-card.dp-tilt {
+  transform-style: preserve-3d;
+  transition: transform 0.18s var(--dp-ease), box-shadow 0.25s var(--dp-ease);
+  will-change: transform;
+}
+.game-card.dp-tilt.dp-tilting {
+  transform: perspective(900px)
+             rotateX(var(--dp-rx, 0deg))
+             rotateY(var(--dp-ry, 0deg))
+             translateY(-6px)
+             scale(1.012);
+  box-shadow:
+    0 18px 40px -12px rgba(0, 0, 0, 0.7),
+    0 0 0 1px var(--dp-green-border),
+    0 12px 36px -10px var(--dp-green-glow);
+  z-index: 3;
+}
+
+/* Glass-reflection shine sweeping across the thumbnail on hover. The element
+   is injected by JS (.dp-shine) so we never clash with existing ::before/after
+   on .game-visual. */
+.game-visual { position: relative; }
+.dp-shine {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  border-radius: inherit;
+  overflow: hidden;
+  z-index: 2;
+}
+.dp-shine::before {
+  content: "";
+  position: absolute;
+  top: -60%;
+  left: -75%;
+  width: 50%;
+  height: 220%;
+  background: linear-gradient(
+    115deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.05) 38%,
+    rgba(180, 255, 200, 0.28) 50%,
+    rgba(255, 255, 255, 0.05) 62%,
+    transparent 100%
+  );
+  transform: rotate(8deg) translateX(0);
+  opacity: 0;
+}
+.game-card:hover .dp-shine::before,
+.game-card:focus-within .dp-shine::before {
+  animation: dpShineSweep 0.85s var(--dp-ease);
+}
+@keyframes dpShineSweep {
+  0%   { opacity: 0; transform: rotate(8deg) translateX(0); }
+  12%  { opacity: 1; }
+  100% { opacity: 0; transform: rotate(8deg) translateX(560%); }
+}
+
+/* A soft static glass gradient always present so thumbnails read as glossy. */
+.dp-shine::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.10) 0%,
+    rgba(255, 255, 255, 0.02) 22%,
+    transparent 45%
+  );
+  pointer-events: none;
+}
+
+/* Ribbon badges — give the existing corner badges a ribbon look + slight tilt.
+   We DON'T reposition them destructively; just add rotation, depth and a
+   stronger green identity for the default (Hot) badge. */
+.game-badges .badge {
+  transform: rotate(-3deg);
+  transform-origin: left center;
+  box-shadow: 0 3px 8px -2px rgba(0, 0, 0, 0.55);
+  letter-spacing: 0.04em;
+  backdrop-filter: blur(2px);
+  transition: transform 0.2s var(--dp-ease);
+}
+.game-card:hover .game-badges .badge { transform: rotate(-3deg) translateY(-1px) scale(1.04); }
+.game-badges .badge.new {
+  background: linear-gradient(135deg, var(--dp-green), var(--dp-green-deep));
+  color: #04140a;
+  text-shadow: none;
+}
+.game-badges .badge.featured {
+  background: linear-gradient(135deg, #ffd700, #d4af37);
+  color: #1a1200;
+}
+
+/* Pulsing "live jackpot" dot — injected element (.dp-jackpot-dot) on
+   .jackpot-eligible cards. */
+.dp-jackpot-dot {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--dp-green-bright);
+  box-shadow: 0 0 0 0 var(--dp-green-glow);
+  z-index: 4;
+  pointer-events: none;
+  animation: dpDotPulse 1.6s ease-out infinite;
+}
+.dp-jackpot-dot::after {
+  content: "LIVE";
+  position: absolute;
+  top: -3px;
+  right: 16px;
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  color: var(--dp-green-bright);
+  text-shadow: 0 0 6px var(--dp-green-glow);
+  opacity: 0.9;
+}
+@keyframes dpDotPulse {
+  0%   { box-shadow: 0 0 0 0 rgba(57, 255, 106, 0.55); }
+  70%  { box-shadow: 0 0 0 9px rgba(57, 255, 106, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(57, 255, 106, 0); }
+}
+
+/* Play button fade-in over the image (enhances the existing overlay). */
+.game-card .game-overlay .play-btn {
+  transform: translateY(8px) scale(0.96);
+  opacity: 0;
+  transition: opacity 0.22s var(--dp-ease), transform 0.22s var(--dp-ease),
+              box-shadow 0.22s var(--dp-ease);
+}
+.game-card:hover .game-overlay .play-btn,
+.game-card:focus-within .game-overlay .play-btn {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+  box-shadow: 0 6px 22px -6px var(--dp-green-glow);
+}
+
+/* ─────────────────────────────────────────────────────────────────────────
+   2. AUTH POLISH  (login.html .field / signup.html .field / index modal .signup-field)
+   ───────────────────────────────────────────────────────────────────────── */
+
+/* Floating label. JS adds .dp-ff to a field wrapper and toggles .dp-ff--active
+   when the input is focused or has a value. We animate the label up + shrink. */
+.dp-ff { position: relative; }
+.dp-ff > label {
+  position: absolute;
+  left: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  margin: 0;
+  padding: 0 4px;
+  pointer-events: none;
+  color: var(--ms-text-secondary, #9a9aae);
+  font-size: var(--dp-fs-strong);
+  font-weight: 500;
+  background: transparent;
+  transition: transform 0.16s var(--dp-ease), color 0.16s var(--dp-ease),
+              font-size 0.16s var(--dp-ease);
+  z-index: 2;
+  max-width: calc(100% - 28px);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.dp-ff > input {
+  position: relative;
+  z-index: 1;
+}
+.dp-ff.dp-ff--active > label {
+  transform: translateY(-152%) scale(0.82);
+  color: var(--dp-green-bright);
+  background: var(--ms-bg-card, #1a1a2e);
+  font-weight: 600;
+  border-radius: 4px;
+}
+/* When the field carries a trailing control (eye/tick) keep label clear of it. */
+.dp-ff.dp-ff--active > label { left: 10px; }
+
+/* Password field: room for the eye toggle on the right. */
+.dp-pw-wrap { position: relative; }
+.dp-eye {
+  position: absolute;
+  top: 0;
+  right: 0;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  background: transparent;
+  border: 0;
+  cursor: pointer;
+  color: var(--ms-text-secondary, #9a9aae);
+  padding: 0;
+  z-index: 3;
+  transition: color 0.15s var(--dp-ease);
+}
+.dp-eye:hover { color: var(--dp-green-bright); }
+.dp-eye svg { width: 20px; height: 20px; display: block; }
+.dp-pw-wrap > input { padding-right: 46px !important; }
+
+/* Password strength meter — injected after the password field. */
+.dp-strength {
+  margin-top: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.dp-strength-track {
+  height: 6px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.08);
+  overflow: hidden;
+}
+.dp-strength-fill {
+  height: 100%;
+  width: 0%;
+  border-radius: 999px;
+  background: var(--dp-danger);
+  transition: width 0.3s var(--dp-ease), background 0.3s var(--dp-ease);
+}
+.dp-strength[data-score="1"] .dp-strength-fill { width: 25%;  background: var(--dp-danger); }
+.dp-strength[data-score="2"] .dp-strength-fill { width: 50%;  background: var(--dp-warn); }
+.dp-strength[data-score="3"] .dp-strength-fill { width: 75%;  background: #9bdc3a; }
+.dp-strength[data-score="4"] .dp-strength-fill { width: 100%; background: var(--dp-green); box-shadow: 0 0 10px var(--dp-green-glow); }
+.dp-strength-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--ms-text-secondary, #9a9aae);
+  letter-spacing: 0.02em;
+}
+.dp-strength[data-score="4"] .dp-strength-label { color: var(--dp-green-bright); }
+
+/* Error shake on the auth card / modal. */
+.dp-shake { animation: dpShake 0.45s cubic-bezier(0.36, 0.07, 0.19, 0.97); }
+@keyframes dpShake {
+  10%, 90% { transform: translateX(-1px); }
+  20%, 80% { transform: translateX(2px); }
+  30%, 50%, 70% { transform: translateX(-5px); }
+  40%, 60% { transform: translateX(5px); }
+}
+
+/* Submit loading state ("Creating your account…"). */
+.dp-btn-loading { position: relative; color: transparent !important; pointer-events: none; }
+.dp-btn-loading > .dp-btn-label { visibility: hidden; }
+.dp-btn-loading::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 18px;
+  height: 18px;
+  margin: -9px 0 0 -9px;
+  border: 2px solid rgba(4, 20, 10, 0.35);
+  border-top-color: #04140a;
+  border-radius: 50%;
+  animation: dpSpin 0.7s linear infinite;
+}
+/* On dark/ghost buttons the spinner should be green, not near-black. */
+.rs-card .btn.dp-btn-loading::after { border-color: rgba(0,255,65,0.25); border-top-color: var(--dp-green-bright); }
+.dp-btn-loading .dp-btn-loading-text {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 26px;
+  color: #04140a;
+  font-weight: 700;
+}
+.rs-card .btn.dp-btn-loading .dp-btn-loading-text { color: var(--dp-green-bright); }
+@keyframes dpSpin { to { transform: rotate(360deg); } }
+
+/* ─────────────────────────────────────────────────────────────────────────
+   3. ANIMATIONS EVERYWHERE
+   ───────────────────────────────────────────────────────────────────────── */
+
+/* Staggered page reveal — JS tags sections with .dp-reveal and a delay var. */
+.dp-reveal {
+  opacity: 0;
+  transform: translateY(18px);
+  transition: opacity 0.55s var(--dp-ease), transform 0.55s var(--dp-ease);
+  transition-delay: var(--dp-delay, 0ms);
+}
+.dp-reveal.dp-revealed {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* Modal open: scale 0.95 → 1.0 with fade. Applies to the signup modal and any
+   matrix-modal/[role=dialog]. We animate the inner panel; overlay just fades. */
+.signup-overlay,
+.dp-modal-overlay {
+  transition: opacity 0.25s var(--dp-ease);
+}
+.signup-modal,
+.dp-modal-overlay > [class*="modal"] {
+  transition: transform 0.28s var(--dp-ease), opacity 0.28s var(--dp-ease);
+}
+.signup-overlay[aria-hidden="true"] .signup-modal {
+  transform: scale(0.95);
+  opacity: 0;
+}
+.signup-overlay:not([aria-hidden="true"]) .signup-modal {
+  animation: dpModalIn 0.3s var(--dp-ease);
+}
+@keyframes dpModalIn {
+  from { transform: scale(0.95); opacity: 0; }
+  to   { transform: scale(1); opacity: 1; }
+}
+
+/* Toast notifications (namespaced dp-notify — NOT "toast", which popup-nuke.css
+   hides). Slide in from right, auto-dismiss with a progress bar. */
+.dp-notify-stack {
+  position: fixed;
+  top: 84px;
+  right: 16px;
+  z-index: 2147483600;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  max-width: min(360px, calc(100vw - 32px));
+  pointer-events: none;
+}
+.dp-notify {
+  pointer-events: auto;
+  position: relative;
+  overflow: hidden;
+  background: var(--ms-bg-card, #1a1a2e);
+  border: 1px solid var(--dp-green-border);
+  border-left: 3px solid var(--dp-green);
+  border-radius: var(--dp-radius);
+  padding: 14px 16px;
+  color: var(--ms-text, #e0e0e0);
+  font-size: var(--dp-fs-body);
+  box-shadow: 0 14px 34px -12px rgba(0, 0, 0, 0.7);
+  transform: translateX(120%);
+  opacity: 0;
+  animation: dpNotifyIn 0.4s var(--dp-ease) forwards;
+}
+.dp-notify.dp-notify--out { animation: dpNotifyOut 0.32s var(--dp-ease) forwards; }
+.dp-notify.dp-notify--error { border-left-color: var(--dp-danger); }
+.dp-notify.dp-notify--error::after { background: var(--dp-danger) !important; }
+.dp-notify-title { font-weight: 700; color: var(--ms-text-heading, #fff); margin-bottom: 2px; }
+.dp-notify::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  height: 3px;
+  width: 100%;
+  background: var(--dp-green);
+  transform-origin: left center;
+  animation: dpNotifyProgress var(--dp-notify-ttl, 4000ms) linear forwards;
+}
+@keyframes dpNotifyIn  { to { transform: translateX(0); opacity: 1; } }
+@keyframes dpNotifyOut { to { transform: translateX(120%); opacity: 0; } }
+@keyframes dpNotifyProgress { from { transform: scaleX(1); } to { transform: scaleX(0); } }
+
+/* Button hover: subtle lift + glow intensify (client surfaces). */
+.signup-submit,
+.rs-card .btn,
+.dp-notify .dp-btn,
+.play-btn {
+  transition: transform 0.18s var(--dp-ease), box-shadow 0.18s var(--dp-ease),
+              filter 0.18s var(--dp-ease);
+}
+.signup-submit:hover,
+.rs-card .btn:hover:not(:disabled),
+.play-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 26px -8px var(--dp-green-glow);
+  filter: brightness(1.05);
+}
+.signup-submit:active,
+.rs-card .btn:active:not(:disabled) { transform: translateY(0); }
+
+/* Number count-up flash (JS toggles .dp-count-bump when a value changes). */
+.dp-count-bump { animation: dpCountBump 0.5s var(--dp-ease); }
+@keyframes dpCountBump {
+  0% { transform: scale(1); }
+  40% { transform: scale(1.14); color: var(--dp-green-bright); text-shadow: 0 0 12px var(--dp-green-glow); }
+  100% { transform: scale(1); }
+}
+
+/* ─────────────────────────────────────────────────────────────────────────
+   4. MICRO-INTERACTIONS
+   ───────────────────────────────────────────────────────────────────────── */
+
+/* Custom Matrix-green checkbox. Scoped to auth checkboxes + opt-in .dp-check so
+   we don't override checkboxes in unrelated widgets. */
+.signup-terms input[type="checkbox"],
+.rs-card .field.checkbox input[type="checkbox"],
+input.dp-check[type="checkbox"] {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 22px;
+  height: 22px;
+  min-width: 22px;
+  border: 2px solid var(--dp-green-border);
+  border-radius: 6px;
+  background: rgba(0, 0, 0, 0.35);
+  cursor: pointer;
+  position: relative;
+  vertical-align: middle;
+  transition: background 0.15s var(--dp-ease), border-color 0.15s var(--dp-ease),
+              box-shadow 0.15s var(--dp-ease);
+}
+.signup-terms input[type="checkbox"]:hover,
+.rs-card .field.checkbox input[type="checkbox"]:hover,
+input.dp-check[type="checkbox"]:hover { border-color: var(--dp-green-bright); }
+.signup-terms input[type="checkbox"]:checked,
+.rs-card .field.checkbox input[type="checkbox"]:checked,
+input.dp-check[type="checkbox"]:checked {
+  background: linear-gradient(135deg, var(--dp-green), var(--dp-green-deep));
+  border-color: var(--dp-green);
+  box-shadow: 0 0 10px var(--dp-green-glow);
+}
+.signup-terms input[type="checkbox"]:checked::after,
+.rs-card .field.checkbox input[type="checkbox"]:checked::after,
+input.dp-check[type="checkbox"]:checked::after {
+  content: "";
+  position: absolute;
+  left: 6px;
+  top: 2px;
+  width: 5px;
+  height: 10px;
+  border: solid #04140a;
+  border-width: 0 2.5px 2.5px 0;
+  transform: rotate(45deg);
+}
+.signup-terms input[type="checkbox"]:focus-visible,
+.rs-card .field.checkbox input[type="checkbox"]:focus-visible,
+input.dp-check[type="checkbox"]:focus-visible {
+  outline: 2px solid var(--dp-green-bright);
+  outline-offset: 2px;
+}
+
+/* Matrix toggle switch — opt-in via <label class="dp-toggle"><input…><span></span></label>. */
+.dp-toggle { display: inline-flex; align-items: center; cursor: pointer; }
+.dp-toggle input { position: absolute; opacity: 0; width: 0; height: 0; }
+.dp-toggle > span {
+  position: relative;
+  width: 46px;
+  height: 26px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.14);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  transition: background 0.2s var(--dp-ease), box-shadow 0.2s var(--dp-ease);
+}
+.dp-toggle > span::before {
+  content: "";
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: #fff;
+  transition: transform 0.2s var(--dp-ease);
+}
+.dp-toggle input:checked + span {
+  background: linear-gradient(135deg, var(--dp-green), var(--dp-green-deep));
+  box-shadow: 0 0 10px var(--dp-green-glow);
+}
+.dp-toggle input:checked + span::before { transform: translateX(20px); }
+.dp-toggle input:focus-visible + span { outline: 2px solid var(--dp-green-bright); outline-offset: 2px; }
+
+/* Real-time valid checkmark next to fields. */
+.dp-tick {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%) scale(0.4);
+  width: 18px;
+  height: 18px;
+  opacity: 0;
+  color: var(--dp-green-bright);
+  pointer-events: none;
+  transition: opacity 0.18s var(--dp-ease), transform 0.18s var(--dp-ease);
+  z-index: 3;
+}
+.dp-ff.dp-valid .dp-tick { opacity: 1; transform: translateY(-50%) scale(1); }
+/* keep tick clear of the eye toggle */
+.dp-ff.dp-pw-wrap .dp-tick { right: 46px; }
+
+/* Copy-to-clipboard "Copied!" tooltip. */
+.dp-copy { position: relative; cursor: pointer; }
+.dp-copy-tip {
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 50%;
+  transform: translateX(-50%) translateY(6px);
+  background: var(--dp-green);
+  color: #04140a;
+  font-size: 12px;
+  font-weight: 700;
+  padding: 4px 9px;
+  border-radius: 6px;
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  box-shadow: 0 6px 16px -6px var(--dp-green-glow);
+  transition: opacity 0.2s var(--dp-ease), transform 0.2s var(--dp-ease);
+  z-index: 2147483600;
+}
+.dp-copy-tip.dp-copy-tip--show { opacity: 1; transform: translateX(-50%) translateY(0); }
+.dp-copy-tip::after {
+  content: "";
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border: 5px solid transparent;
+  border-top-color: var(--dp-green);
+}
+
+/* Scroll progress indicator — thin green bar pinned to the very top. */
+.dp-scrollbar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  height: 3px;
+  width: 100%;
+  transform: scaleX(0);
+  transform-origin: left center;
+  background: linear-gradient(90deg, var(--dp-green-deep), var(--dp-green-bright));
+  box-shadow: 0 0 10px var(--dp-green-glow);
+  z-index: 2147483601;
+  pointer-events: none;
+  will-change: transform;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────
+   5. REDUCED-MOTION GUARD  — MUST REMAIN LAST IN THIS FILE.
+   Later source wins the cascade, so this neutralises every animation/transition
+   above for users who ask for reduced motion. (Mirrors the aaa-polish ordering
+   gotcha documented in MEMORY.md.)
+   ───────────────────────────────────────────────────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  .game-card.dp-tilt,
+  .game-card.dp-tilt.dp-tilting,
+  .dp-shine::before,
+  .dp-shine::after,
+  .dp-jackpot-dot,
+  .game-badges .badge,
+  .game-card .game-overlay .play-btn,
+  .dp-ff > label,
+  .dp-strength-fill,
+  .dp-reveal,
+  .signup-modal,
+  .dp-notify,
+  .dp-notify::after,
+  .signup-submit,
+  .rs-card .btn,
+  .play-btn,
+  .dp-tick,
+  .dp-copy-tip,
+  .dp-toggle > span,
+  .dp-toggle > span::before,
+  .dp-scrollbar {
+    animation: none !important;
+    transition: none !important;
+  }
+  /* Make reveal content visible immediately (no stuck-hidden sections). */
+  .dp-reveal { opacity: 1 !important; transform: none !important; }
+  .game-card.dp-tilt.dp-tilting { transform: translateY(-4px) !important; }
+  .dp-notify { transform: translateX(0) !important; opacity: 1 !important; }
+}

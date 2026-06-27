@@ -53,7 +53,10 @@ const STANDALONE_CSS = [
     'css/age-gate.css',
     // Green Matrix design system — referenced (as the LAST stylesheet) by every
     // non-index HTML page so the brand palette wins their local cascade too.
-    'css/matrix-theme.css'
+    'css/matrix-theme.css',
+    // Deep-polish — referenced directly by login.html / signup.html (auth polish:
+    // floating labels, strength meter, eye toggle, shake). Mirrored to dist/css/.
+    'css/deep-polish.css'
 ];
 
 // CSS files to bundle (in specificity order — premium overrides MUST be last).
@@ -103,7 +106,12 @@ const CSS_FILES = [
     'css/aaa-polish.css',
     // Green Matrix design system — the BRAND palette. MUST be dead last so it
     // overrides every gold-on-navy default in the bundle (CLAUDE.md: brand decision).
-    'css/matrix-theme.css'
+    'css/matrix-theme.css',
+    // Deep-polish layer — additive card/auth/animation/micro-interaction polish.
+    // Sits AFTER matrix-theme on purpose: it only adds green-on-dark component
+    // refinements (no gold-on-navy defaults), so the brand guarantee holds while
+    // these refinements win the final cascade. Loaded LAST everywhere.
+    'css/deep-polish.css'
 ];
 
 // --- Helper Functions ---
