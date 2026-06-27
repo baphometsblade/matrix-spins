@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="manifest" href="/manifest.json">
+<title>Mines — Matrix Spins Casino</title>
+<meta name="description" content="Play Mines at Matrix Spins Casino. Pick the gems, dodge the bombs, and cash out before you bust. Provably fair, real-time multipliers.">
+<link rel="canonical" href="https://msaart.online/games/mines.html">
+<meta name="theme-color" content="#00ff41">
+<link rel="icon" type="image/svg+xml" href="/favicon.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../css/age-gate.css">
+<link rel="stylesheet" href="../css/notifications.css">
+<link rel="stylesheet" href="../css/matrix-theme.css">
+<style>
+  :root{
+    --ms-green:#00ff41; --ms-green-bright:#39ff6a; --ms-green-deep:#00b82f;
+    --ms-green-glow:rgba(0,255,65,.35); --ms-green-border:rgba(0,255,65,.18);
+    --ms-bg:#070b07; --ms-panel:#0e160e; --ms-panel-2:#0a110a; --ms-gold:#FFD700;
+    --ms-red:#ff4d4d; --ms-text:#dffbe6; --ms-dim:#7da588;
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{background:var(--ms-bg);color:var(--ms-text);font-family:'Inter',sans-serif;min-height:100vh;
+    background-image:radial-gradient(circle at 20% 0%,rgba(0,255,65,.06),transparent 45%),radial-gradient(circle at 80% 100%,rgba(0,255,65,.05),transparent 45%);}
+  a{color:var(--ms-green);text-decoration:none}
+  .topbar{display:flex;align-items:center;justify-content:space-between;padding:14px 20px;border-bottom:1px solid var(--ms-green-border);
+    position:sticky;top:0;background:rgba(7,11,7,.92);backdrop-filter:blur(8px);z-index:20}
+  .brand{font-family:'Plus Jakarta Sans',sans-serif;font-weight:800;font-size:20px;color:var(--ms-green)}
+  .topbar .actions{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+  .balance-chip{background:var(--ms-panel);border:1px solid var(--ms-green-border);border-radius:999px;padding:8px 14px;font-weight:700;color:var(--ms-green)}
+  .btn{display:inline-block;border:1px solid var(--ms-green-border);background:var(--ms-panel);color:var(--ms-text);border-radius:10px;padding:9px 14px;font-weight:600;cursor:pointer;font-size:14px;transition:.18s}
+  .btn:hover{border-color:var(--ms-green);box-shadow:0 0 12px var(--ms-green-glow)}
+  .btn.primary{background:linear-gradient(180deg,var(--ms-green),var(--ms-green-deep));color:#04150a;border:none;font-weight:800}
+  .btn.gold{background:linear-gradient(180deg,#ffe066,#d4af37);color:#1a1400;border:none;font-weight:800}
+  .btn:disabled{opacity:.45;cursor:not-allowed;box-shadow:none}
+  .wrap{max-width:640px;margin:0 auto;padding:24px 18px 80px}
+  .hero{text-align:center;margin-bottom:18px}
+  .hero h1{font-family:'Plus Jakarta Sans',sans-serif;font-size:30px;font-weight:800;color:#fff}
+  .hero h1 .accent{color:var(--ms-green);text-shadow:0 0 18px var(--ms-green-glow)}
+  .hero p{color:var(--ms-dim);margin-top:6px;font-size:14px}
+  .panel{background:var(--ms-panel);border:1px solid var(--ms-green-border);border-radius:16px;padding:18px;margin-bottom:16px}
+  .controls{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px}
+  .field label{display:block;font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--ms-dim);margin-bottom:6px}
+  .stepper{display:flex;align-items:center;gap:6px}
+  .stepper input,.field select{flex:1;width:100%;background:var(--ms-panel-2);border:1px solid var(--ms-green-border);color:#fff;border-radius:10px;padding:10px;font-weight:700;font-size:15px;text-align:center}
+  .stepper button{width:38px;height:40px;border-radius:10px;border:1px solid var(--ms-green-border);background:var(--ms-panel-2);color:var(--ms-green);font-size:18px;font-weight:800;cursor:pointer}
+  .field select:focus,.stepper input:focus{outline:none;border-color:var(--ms-green);box-shadow:0 0 0 3px rgba(0,255,65,.18)}
+  .stat-row{display:flex;justify-content:space-between;gap:8px;margin-bottom:12px;flex-wrap:wrap}
+  .stat{flex:1;min-width:90px;background:var(--ms-panel-2);border:1px solid var(--ms-green-border);border-radius:10px;padding:10px;text-align:center}
+  .stat .k{font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:var(--ms-dim)}
+  .stat .v{font-size:18px;font-weight:800;color:#fff;margin-top:3px}
+  .stat .v.green{color:var(--ms-green)}
+  .stat .v.gold{color:var(--ms-gold)}
+  .board{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin:2px auto 4px;max-width:380px}
+  .tile{aspect-ratio:1/1;border-radius:12px;background:linear-gradient(180deg,#13241a,#0c170f);border:1px solid var(--ms-green-border);
+    display:flex;align-items:center;justify-content:center;font-size:30px;cursor:pointer;transition:transform .12s,background .2s,box-shadow .2s;user-select:none}
+  .tile:not(.done):hover{transform:translateY(-2px);border-color:var(--ms-green);box-shadow:0 0 12px var(--ms-green-glow)}
+  .tile.gem{background:rgba(0,255,65,.16);box-shadow:inset 0 0 0 1px var(--ms-green),0 0 14px var(--ms-green-glow);cursor:default}
+  .tile.mine{background:rgba(255,77,77,.18);box-shadow:inset 0 0 0 1px var(--ms-red);cursor:default}
+  .tile.dim{opacity:.4}
+  .tile.locked{cursor:not-allowed}
+  .board.idle .tile{cursor:not-allowed;opacity:.6}
+  .msg{text-align:center;min-height:20px;color:var(--ms-dim);font-size:13px;margin:8px 0}
+  .msg.win{color:var(--ms-gold);font-weight:700}
+  .msg.bust{color:var(--ms-red);font-weight:700}
+  .commit{font-family:ui-monospace,Menlo,monospace;font-size:11px;color:var(--ms-dim);text-align:center;word-break:break-all}
+  .commit b{color:var(--ms-green)}
+  h2.sec{font-size:13px;text-transform:uppercase;letter-spacing:.1em;color:var(--ms-dim);margin:0 0 12px}
+  .ladder{display:flex;gap:6px;overflow-x:auto;padding-bottom:6px}
+  .rung{flex:0 0 auto;background:var(--ms-panel-2);border:1px solid var(--ms-green-border);border-radius:8px;padding:6px 10px;font-size:12px;text-align:center;min-width:62px}
+  .rung.active{border-color:var(--ms-green);background:rgba(0,255,65,.12)}
+  .rung .n{color:var(--ms-dim);font-size:10px}
+  .rung .m{font-weight:800;color:var(--ms-green)}
+  #confettiBox{position:fixed;inset:0;pointer-events:none;z-index:80}
+  .confetti-piece{position:fixed;top:-20px;will-change:transform,opacity;animation:cf var(--cf-dur,3s) ease-out forwards;animation-delay:var(--cf-delay,0s)}
+  @keyframes cf{0%{top:-20px;opacity:1}100%{top:100vh;opacity:0}}
+  .gate{text-align:center;padding:40px 20px;color:var(--ms-dim)}
+</style>
+</head>
+<body>
+<div class="topbar">
+  <a class="brand" href="../index.html">◂ Matrix Spins</a>
+  <div class="actions">
+    <span id="balanceChip" class="balance-chip">—</span>
+    <a href="../wallet.html" class="btn">Wallet</a>
+    <button id="logout" class="btn" style="display:none">Sign out</button>
+  </div>
+</div>
+
+<div class="wrap" id="app" style="display:none">
+  <div class="hero">
+    <h1><span class="accent">Mines</span></h1>
+    <p>Pick the gems 💎, dodge the bombs 💣. Cash out anytime to lock your multiplier.</p>
+  </div>
+
+  <div class="panel">
+    <div class="controls">
+      <div class="field">
+        <label>Bet ($)</label>
+        <div class="stepper">
+          <button id="betMinus" type="button">−</button>
+          <input id="betInput" type="number" value="1.00" min="0.10" max="100" step="0.10" inputmode="decimal">
+          <button id="betPlus" type="button">+</button>
+        </div>
+      </div>
+      <div class="field">
+        <label>Mines</label>
+        <select id="minesSelect"></select>
+      </div>
+    </div>
+    <div class="stat-row">
+      <div class="stat"><div class="k">Gems found</div><div class="v green" id="sGems">0</div></div>
+      <div class="stat"><div class="k">Multiplier</div><div class="v" id="sMult">1.00×</div></div>
+      <div class="stat"><div class="k">Cash out</div><div class="v gold" id="sWin">$0.00</div></div>
+    </div>
+    <div class="stat-row">
+      <button class="btn primary" id="startBtn" style="flex:1">Start game</button>
+      <button class="btn gold" id="cashoutBtn" style="flex:1;display:none" disabled>Cash out</button>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="board idle" id="board"></div>
+    <div class="msg" id="msg">Set your bet and mines, then start.</div>
+    <div class="commit" id="commit"></div>
+  </div>
+
+  <div class="panel">
+    <h2 class="sec">Multiplier ladder</h2>
+    <div class="ladder" id="ladder"><span style="color:var(--ms-dim);font-size:13px">Start a game to see the ladder.</span></div>
+  </div>
+</div>
+
+<div class="gate" id="gate" style="display:none">
+  <p>Please <a href="../login.html">sign in</a> to play Mines.</p>
+</div>
+
+<div id="confettiBox"></div>
+
+<script src="../js/api-client.js"></script>
+<script src="../js/age-gate.js" defer></script>
+<script src="../js/cookie-consent.js" defer></script>
+<script src="../js/sound-manager.js" defer></script>
+<script>
+(async () => {
+  'use strict';
+  const $ = id => document.getElementById(id);
+  const api = window.MatrixSpinsAPI;
+  const fmt = d => '$' + (Number(d) || 0).toFixed(2);
+  const emitSound = t => window.dispatchEvent(new CustomEvent('matrix-sound', { detail: { type: t } }));
+
+  const user = await api.loadSession();
+  if (!user) { $('gate').style.display = 'block'; return; }
+  $('app').style.display = 'block';
+  $('logout').style.display = 'inline-block';
+  $('logout').addEventListener('click', async () => { await api.logout(); location.href = '../index.html'; });
+
+  function setBalanceDollars(d) { $('balanceChip').textContent = fmt(d); }
+  try { const b = await api.getBalance(); $('balanceChip').textContent = api.formatCents(b.availableCents); } catch (_) {}
+
+  // Mines selector 1..24
+  const ms = $('minesSelect');
+  for (let i = 1; i <= 24; i++) {
+    const o = document.createElement('option');
+    o.value = i; o.textContent = i + (i === 1 ? ' mine' : ' mines');
+    if (i === 3) o.selected = true;
+    ms.appendChild(o);
+  }
+
+  // Bet stepper
+  const betInput = $('betInput');
+  const clampBet = () => { let v = parseFloat(betInput.value) || 0.10; v = Math.min(100, Math.max(0.10, v)); betInput.value = v.toFixed(2); };
+  $('betMinus').onclick = () => { betInput.value = (Math.max(0.10, (parseFloat(betInput.value) || 0) - 0.5)).toFixed(2); };
+  $('betPlus').onclick = () => { betInput.value = (Math.min(100, (parseFloat(betInput.value) || 0) + 0.5)).toFixed(2); };
+  betInput.addEventListener('change', clampBet);
+
+  // Build board (25 tiles)
+  const board = $('board');
+  const tiles = [];
+  for (let i = 0; i < 25; i++) {
+    const t = document.createElement('div');
+    t.className = 'tile'; t.dataset.idx = i;
+    t.addEventListener('click', () => onTileClick(i));
+    board.appendChild(t); tiles.push(t);
+  }
+
+  let game = null; // { gameId, bet, mines, multiplierTable, revealed:Set, ended }
+  let pending = false;
+
+  function resetBoard() {
+    tiles.forEach(t => { t.className = 'tile'; t.textContent = ''; });
+    board.classList.add('idle');
+  }
+
+  function renderLadder() {
+    const lad = $('ladder'); lad.innerHTML = '';
+    if (!game) { lad.innerHTML = '<span style="color:var(--ms-dim);font-size:13px">Start a game to see the ladder.</span>'; return; }
+    const tbl = game.multiplierTable || [];
+    const found = game.revealed.size;
+    tbl.slice(0, 18).forEach((m, i) => {
+      const r = document.createElement('div');
+      r.className = 'rung' + (i + 1 === found ? ' active' : '');
+      r.innerHTML = '<div class="n">' + (i + 1) + ' gem' + (i ? 's' : '') + '</div><div class="m">' + m.toFixed(2) + '×</div>';
+      lad.appendChild(r);
+    });
+  }
+
+  function updateStats(mult, win) {
+    $('sGems').textContent = game ? game.revealed.size : 0;
+    $('sMult').textContent = (mult || 0).toFixed(2) + '×';
+    $('sWin').textContent = fmt(win || 0);
+  }
+
+  // ── Start ──────────────────────────────────────────────────────────
+  $('startBtn').addEventListener('click', async () => {
+    if (pending) return;
+    clampBet();
+    pending = true; $('startBtn').disabled = true;
+    $('msg').className = 'msg'; $('msg').textContent = 'Dealing…';
+    try {
+      const r = await api.fetch('/mines/start', { method: 'POST', body: { bet: parseFloat(betInput.value), mines: parseInt(ms.value, 10) } });
+      game = { gameId: r.gameId, bet: r.bet, mines: r.mines, multiplierTable: r.multiplierTable, revealed: new Set(), ended: false };
+      setBalanceDollars(r.newBalance);
+      resetBoard(); board.classList.remove('idle');
+      $('commit').innerHTML = '🔒 Provably fair · commit <b>' + r.commitHash.slice(0, 16) + '…</b>';
+      $('msg').textContent = 'Pick a tile. ' + r.mines + ' mines hidden.';
+      $('startBtn').style.display = 'none';
+      $('cashoutBtn').style.display = 'inline-block'; $('cashoutBtn').disabled = true;
+      ms.disabled = true; betInput.disabled = true;
+      updateStats(0, 0); renderLadder();
+      emitSound('spin');
+    } catch (e) {
+      $('msg').className = 'msg bust'; $('msg').textContent = e.message || 'Could not start game';
+      $('startBtn').disabled = false;
+    } finally { pending = false; }
+  });
+
+  // ── Reveal a tile ──────────────────────────────────────────────────
+  async function onTileClick(idx) {
+    if (!game || game.ended || pending) return;
+    if (game.revealed.has(idx)) return;
+    pending = true;
+    try {
+      const r = await api.fetch('/mines/reveal', { method: 'POST', body: { gameId: game.gameId, tile: idx } });
+      if (r.mine) {
+        // Bust
+        tiles[idx].classList.add('mine', 'done'); tiles[idx].textContent = '💣';
+        (r.minePositions || []).forEach(p => { if (p !== idx) { tiles[p].classList.add('mine', 'done', 'dim'); tiles[p].textContent = '💣'; } });
+        endGame();
+        $('msg').className = 'msg bust'; $('msg').textContent = '💥 Boom! You hit a mine.';
+        $('commit').innerHTML = '✅ Seed revealed · <b>' + (r.serverSeed || '').slice(0, 24) + '…</b>';
+        emitSound('lose');
+        setBalanceDollars(r.newBalance);
+      } else {
+        game.revealed.add(idx);
+        tiles[idx].classList.add('gem', 'done'); tiles[idx].textContent = '💎';
+        updateStats(r.multiplier, r.potentialWin != null ? r.potentialWin : r.winAmount);
+        renderLadder();
+        $('cashoutBtn').disabled = false;
+        emitSound('win');
+        if (r.cashedOut) {
+          // Auto cash-out — board fully cleared
+          finishWin(r.multiplier, r.winAmount, r.serverSeed, r.newBalance, true);
+        } else {
+          $('msg').textContent = 'Safe! ' + r.safeRemaining + ' gems left · next ' + r.nextMultiplier.toFixed(2) + '×';
+        }
+      }
+    } catch (e) {
+      $('msg').textContent = e.message || 'Reveal failed';
+    } finally { pending = false; }
+  }
+
+  // ── Cash out ───────────────────────────────────────────────────────
+  $('cashoutBtn').addEventListener('click', async () => {
+    if (!game || game.ended || pending || game.revealed.size < 1) return;
+    pending = true; $('cashoutBtn').disabled = true;
+    try {
+      const r = await api.fetch('/mines/cashout', { method: 'POST', body: { gameId: game.gameId } });
+      finishWin(r.multiplier, r.winAmount, r.serverSeed, r.newBalance, false);
+    } catch (e) {
+      $('msg').textContent = e.message || 'Cash out failed';
+      $('cashoutBtn').disabled = false;
+    } finally { pending = false; }
+  });
+
+  function finishWin(mult, win, seed, newBalance, cleared) {
+    endGame();
+    setBalanceDollars(newBalance);
+    $('msg').className = 'msg win';
+    $('msg').textContent = (cleared ? '🏆 Perfect clear! ' : '💰 Cashed out ') + mult.toFixed(2) + '× · ' + fmt(win);
+    $('commit').innerHTML = '✅ Seed revealed · <b>' + (seed || '').slice(0, 24) + '…</b>';
+    if (win > 0) { emitSound('win'); spawnConfetti(); }
+  }
+
+  function endGame() {
+    if (game) game.ended = true;
+    tiles.forEach(t => t.classList.add('locked'));
+    $('cashoutBtn').style.display = 'none';
+    $('startBtn').style.display = 'inline-block'; $('startBtn').disabled = false;
+    ms.disabled = false; betInput.disabled = false;
+  }
+
+  function spawnConfetti() {
+    const box = $('confettiBox'); box.innerHTML = '';
+    const colors = ['#00ff41', '#FFD700', '#39ff6a', '#22d3ee', '#fff2a0'];
+    for (let i = 0; i < 70; i++) {
+      const p = document.createElement('div');
+      p.className = 'confetti-piece';
+      p.style.left = Math.random() * 100 + '%';
+      p.style.background = colors[Math.floor(Math.random() * colors.length)];
+      p.style.setProperty('--cf-dur', (2 + Math.random() * 2) + 's');
+      p.style.setProperty('--cf-delay', (Math.random() * .5) + 's');
+      p.style.width = (6 + Math.random() * 8) + 'px';
+      p.style.height = (6 + Math.random() * 8) + 'px';
+      p.style.borderRadius = Math.random() > .5 ? '50%' : '2px';
+      box.appendChild(p);
+    }
+    setTimeout(() => { box.innerHTML = ''; }, 4500);
+  }
+
+  // Resume an in-progress game (e.g. after reload)
+  try {
+    const a = await api.fetch('/mines/active');
+    if (a && a.active) {
+      const g = a.active;
+      game = { gameId: g.gameId, bet: g.bet, mines: g.mines, multiplierTable: g.multiplierTable, revealed: new Set(g.revealed), ended: false };
+      resetBoard(); board.classList.remove('idle');
+      g.revealed.forEach(p => { tiles[p].classList.add('gem', 'done'); tiles[p].textContent = '💎'; });
+      $('startBtn').style.display = 'none';
+      $('cashoutBtn').style.display = 'inline-block'; $('cashoutBtn').disabled = g.revealedCount < 1;
+      ms.disabled = true; betInput.disabled = true; betInput.value = g.bet.toFixed(2); ms.value = g.mines;
+      $('commit').innerHTML = '🔒 Provably fair · commit <b>' + g.commitHash.slice(0, 16) + '…</b>';
+      $('msg').textContent = 'Resumed game · ' + g.revealedCount + ' gems found';
+      updateStats(g.multiplier, Math.round(g.bet * g.multiplier * 100) / 100);
+      renderLadder();
+    }
+  } catch (_) {}
+})();
+</script>
+</body>
+</html>

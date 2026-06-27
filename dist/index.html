@@ -679,6 +679,51 @@
             gap: 16px;
         }
 
+        /* Quick / casual games row (scratch cards, mines, daily wheel) */
+        .casual-section { margin-bottom: 12px; }
+        .casual-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+            gap: 16px;
+        }
+        .casual-card {
+            position: relative;
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            padding: 18px;
+            border-radius: 14px;
+            background: var(--ms-panel, #0e160e);
+            border: 1px solid rgba(0,255,65,0.18);
+            text-decoration: none;
+            color: inherit;
+            transition: transform .18s ease, border-color .18s ease, box-shadow .18s ease;
+        }
+        .casual-card:hover {
+            transform: translateY(-3px);
+            border-color: rgba(0,255,65,0.5);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5), 0 0 18px rgba(0,255,65,0.18);
+        }
+        .casual-icon {
+            font-size: 38px;
+            line-height: 1;
+            width: 58px; height: 58px;
+            display: flex; align-items: center; justify-content: center;
+            background: rgba(0,255,65,0.08);
+            border: 1px solid rgba(0,255,65,0.18);
+            border-radius: 12px;
+            flex: 0 0 auto;
+        }
+        .casual-name { font-weight: 800; font-size: 16px; color: #fff; }
+        .casual-desc { font-size: 12.5px; color: #7da588; margin-top: 3px; }
+        .casual-badge {
+            position: absolute; top: 12px; right: 12px;
+            font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: .06em;
+            padding: 3px 8px; border-radius: 6px;
+        }
+        .casual-badge.new { background: rgba(0,255,65,0.18); color: #00ff41; }
+        .casual-badge.hot { background: rgba(255,215,0,0.18); color: #FFD700; }
+
         /* Empty state shown when no games match the current filter. Lives
            inside .games-grid so it inherits the section's vertical rhythm
            but is itself a single full-width cell. */
@@ -1810,6 +1855,40 @@
                 <input class="search-input" id="searchInput" type="search" aria-label="Search games" placeholder="Search 100 games by name, theme, or studio...">
             </div>
         </div>
+
+        <!-- QUICK / CASUAL GAMES -->
+        <section class="games-section casual-section">
+            <div class="games-header">
+                <h2 style="font-family: 'Plus Jakarta Sans', sans-serif; font-size: 20px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em;">Quick Games</h2>
+                <div class="games-count">Instant play</div>
+            </div>
+            <div class="casual-grid">
+                <a class="casual-card" href="games/scratch-cards.html">
+                    <div class="casual-icon">🎫</div>
+                    <div class="casual-body">
+                        <div class="casual-name">Scratch Cards</div>
+                        <div class="casual-desc">Match 3 to win up to 100× — instant scratch &amp; win.</div>
+                    </div>
+                    <span class="casual-badge new">New</span>
+                </a>
+                <a class="casual-card" href="games/mines.html">
+                    <div class="casual-icon">💣</div>
+                    <div class="casual-body">
+                        <div class="casual-name">Mines</div>
+                        <div class="casual-desc">Pick gems, dodge bombs, cash out anytime.</div>
+                    </div>
+                    <span class="casual-badge new">New</span>
+                </a>
+                <a class="casual-card" href="spin-wheel.html">
+                    <div class="casual-icon">🎡</div>
+                    <div class="casual-body">
+                        <div class="casual-name">Daily Prize Wheel</div>
+                        <div class="casual-desc">One free spin every day for cash, free spins &amp; more.</div>
+                    </div>
+                    <span class="casual-badge hot">Free</span>
+                </a>
+            </div>
+        </section>
 
         <!-- GAMES -->
         <section class="games-section">

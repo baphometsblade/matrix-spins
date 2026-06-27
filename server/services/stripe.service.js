@@ -362,6 +362,13 @@ async function handlePaymentSuccess(metadata, externalId, amountFromStripe, even
         throw txErr;
     }
 
+    // Apply any pending Daily-Wheel "deposit bonus" voucher. POST-COMMIT,
+    // fire-and-forget — a voucher problem must never affect the deposit itself.
+    try {
+        require('./wheel-voucher.service').applyOnDeposit(depositUserId, depositAmount)
+            .catch(function (e) { console.warn('[WheelVoucher] apply (stripe) failed:', e && e.message); });
+    } catch (_) {}
+
     // Gem reward (fire-and-forget — outside transaction, non-critical)
     const depositGems = Math.max(25, Math.min(Math.floor(depositAmount * 20), 2500));
     await db.run('UPDATE users SET gems = COALESCE(gems, 0) + ? WHERE id = ?', [depositGems, depositUserId]).catch(function() {});
