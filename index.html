@@ -1698,8 +1698,27 @@
             </div>
         </section>
 
+        <!-- FEATURED CAROUSEL — auto-rotating featured games -->
+        <section class="featured-carousel" id="fcRoot" aria-roledescription="carousel" aria-label="Featured games" tabindex="0">
+            <div class="fc-head">
+                <span class="fc-title">Featured Games</span>
+                <span class="fc-sub">Hand-picked premium slots</span>
+            </div>
+            <div class="fc-stage">
+                <div class="fc-viewport" id="fcViewport">
+                    <div class="fc-track" id="fcTrack">
+                        <!-- Populated by JS with featured game slides -->
+                    </div>
+                </div>
+                <button class="fc-arrow fc-prev" id="fcPrev" type="button" aria-label="Previous featured game">&#8249;</button>
+                <button class="fc-arrow fc-next" id="fcNext" type="button" aria-label="Next featured game">&#8250;</button>
+            </div>
+            <div class="fc-dots" id="fcDots" role="tablist" aria-label="Select featured game"></div>
+        </section>
+
         <!-- LIVE WIN FEED -->
         <div class="win-feed">
+            <div class="win-feed-live" aria-hidden="true"><span class="live-dot"></span>Live Wins</div>
             <div class="win-feed-track" id="winFeedTrack">
                 <!-- Populated by JS with simulated recent wins -->
             </div>
@@ -1991,6 +2010,7 @@
             startJackpotTicker();
             initJackpotSystem();
             buildHeroShowcase();
+            buildFeaturedCarousel();
             buildWinFeed();
             buildStudiosGrid();
             initScrollReveal();
@@ -2500,6 +2520,87 @@
 
         // Service worker registration handled by js/pwa-install.js
 
+        // ── FEATURED CAROUSEL — auto-rotating featured games ───
+        function buildFeaturedCarousel() {
+            const track = document.getElementById('fcTrack');
+            const dotsWrap = document.getElementById('fcDots');
+            const root = document.getElementById('fcRoot');
+            if (!track || !dotsWrap || !root || !allGames.length) return;
+
+            let pool = allGames.filter(g => g.badges && g.badges.includes('featured'));
+            if (pool.length < 3) pool = allGames.slice(0, 6);
+            pool = pool.slice(0, 6);
+            if (!pool.length) return;
+
+            track.innerHTML = pool.map((g, i) => {
+                const studio = (typeof window.STUDIO_CONFIG !== 'undefined') ? window.STUDIO_CONFIG[g.studioId] : null;
+                const color = studio ? studio.colors.primary : '#D4A853';
+                const bg = g.bgGradient || ('linear-gradient(135deg,' + color + ',' + color + '66)');
+                const thumb = getGameThumbnail(g);
+                const img = thumb ? '<img class="fc-slide-img" src="' + thumb + '" alt="" loading="' + (i === 0 ? 'eager' : 'lazy') + '" decoding="async" onerror="this.style.display=\'none\'">' : '';
+                const vol = g.volatility ? (g.volatility.charAt(0).toUpperCase() + g.volatility.slice(1) + ' volatility') : '';
+                const meta = [g.studio || g.provider || '', vol].filter(Boolean).join(' · ');
+                const safeId = String(g.id).replace(/'/g, "\\'");
+                return '<div class="fc-slide" role="group" aria-roledescription="slide" aria-label="' + (i + 1) + ' of ' + pool.length + ': ' + g.name + '" onclick="navigateToGame(\'' + safeId + '\')">' +
+                    '<div class="fc-slide-bg" style="background:' + bg + '"></div>' +
+                    img +
+                    '<div class="fc-slide-scrim"></div>' +
+                    '<div class="fc-slide-content">' +
+                        '<span class="fc-badge">&#9733; Featured</span>' +
+                        '<h3 class="fc-slide-name">' + g.name + '</h3>' +
+                        '<div class="fc-slide-meta">' + meta + '</div>' +
+                        '<button class="fc-play" type="button" onclick="event.stopPropagation();navigateToGame(\'' + safeId + '\')">Play Now &#9656;</button>' +
+                    '</div></div>';
+            }).join('');
+
+            dotsWrap.innerHTML = pool.map((g, i) =>
+                '<button class="fc-dot' + (i === 0 ? ' active' : '') + '" type="button" role="tab" aria-label="Show ' + g.name + '" aria-selected="' + (i === 0 ? 'true' : 'false') + '" data-i="' + i + '"></button>'
+            ).join('');
+
+            const dots = Array.prototype.slice.call(dotsWrap.children);
+            const count = pool.length;
+            const reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+            let index = 0;
+            let timer = null;
+
+            function render() {
+                track.style.transform = 'translateX(' + (-index * 100) + '%)';
+                dots.forEach((d, i) => {
+                    const on = i === index;
+                    d.classList.toggle('active', on);
+                    d.setAttribute('aria-selected', on ? 'true' : 'false');
+                });
+            }
+            function goTo(i) { index = (i + count) % count; render(); }
+            function next() { goTo(index + 1); }
+            function prev() { goTo(index - 1); }
+            function stop() { if (timer) { clearInterval(timer); timer = null; } }
+            function start() { if (reduce || count < 2) return; stop(); timer = setInterval(next, 5500); }
+
+            document.getElementById('fcNext').onclick = () => { next(); start(); };
+            document.getElementById('fcPrev').onclick = () => { prev(); start(); };
+            dots.forEach(d => d.addEventListener('click', () => { goTo(parseInt(d.dataset.i, 10)); start(); }));
+
+            root.addEventListener('mouseenter', stop);
+            root.addEventListener('mouseleave', start);
+            root.addEventListener('focusin', stop);
+            root.addEventListener('focusout', start);
+            root.addEventListener('keydown', (e) => {
+                if (e.key === 'ArrowRight') { next(); start(); }
+                else if (e.key === 'ArrowLeft') { prev(); start(); }
+            });
+
+            // Touch swipe
+            let sx = 0, dx = 0, swiping = false;
+            const vp = document.getElementById('fcViewport');
+            vp.addEventListener('touchstart', (e) => { sx = e.touches[0].clientX; dx = 0; swiping = true; stop(); }, { passive: true });
+            vp.addEventListener('touchmove', (e) => { if (swiping) dx = e.touches[0].clientX - sx; }, { passive: true });
+            vp.addEventListener('touchend', () => { if (swiping && Math.abs(dx) > 40) { dx < 0 ? next() : prev(); } swiping = false; start(); });
+
+            render();
+            start();
+        }
+
         // ── HERO SHOWCASE — 4 featured game cards ──────────────
         function buildHeroShowcase() {
             const stack = document.getElementById('showcaseStack');
@@ -2598,6 +2699,11 @@
             }
 
             loadFeed();
+            // Keep the ticker live — pull fresh big wins periodically.
+            // Guard prevents stacking intervals if buildWinFeed re-runs.
+            if (!window.__winFeedTimer) {
+                window.__winFeedTimer = setInterval(loadFeed, 30000);
+            }
         }
 
         // ── STUDIOS GRID — studio cards from config ────────────

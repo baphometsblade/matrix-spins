@@ -98,6 +98,22 @@
   display: none !important;
 }
 
+/* Exemption: the lobby "Live Wins" ticker is an intentional, real-data feed
+   (GET /api/activity-feed, simulated only as fallback) — NOT injected clutter.
+   Scoped to `.main > .win-feed` so specificity (0,2,0)/(0,3,0) beats the
+   [class*="win-feed"] nuke above and any later sheet that re-hides it. */
+.main > .win-feed { display: block !important; }
+.main > .win-feed .win-feed-track { display: flex !important; }
+.main > .win-feed .win-feed-live { display: flex !important; }
+/* A global `.win-amount` (34px big-number style for slot wins) otherwise
+   hijacks the ticker amount and blows each row up to ~90px. Keep it inline
+   and ticker-sized. */
+.main > .win-feed .win-details .win-amount {
+  font-size: 12px !important;
+  line-height: 1.5 !important;
+  display: inline !important;
+}
+
 /* === Verification Bars === */
 [class*="verification-bar"], [class*="submit-verification"],
 .kyc-panel, #kyc-panel, .audit-panel, #audit-panel {
