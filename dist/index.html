@@ -1464,7 +1464,7 @@
     </style>
 
 
-    <link rel="stylesheet" href="styles.a2145cd9.min.css">
+    <link rel="stylesheet" href="styles.ecfb5ceb.min.css">
 </head>
 <body>
     <!-- HEADER -->
@@ -1714,7 +1714,7 @@
                 <button class="fc-arrow fc-prev" id="fcPrev" type="button" aria-label="Previous featured game">&#8249;</button>
                 <button class="fc-arrow fc-next" id="fcNext" type="button" aria-label="Next featured game">&#8250;</button>
             </div>
-            <div class="fc-dots" id="fcDots" role="tablist" aria-label="Select featured game"></div>
+            <div class="fc-dots" id="fcDots" aria-label="Select featured game"></div>
         </section>
 
         <!-- LIVE WIN FEED -->
@@ -2521,6 +2521,16 @@
 
         // Service worker registration handled by js/pwa-install.js
 
+        // ── escapeHtml — safe interpolation of dynamic/user data into markup.
+        //    Escapes & < > " ' so it is safe in BOTH text content and quoted
+        //    attributes. User-controlled fields (displayName/username) reach the
+        //    lobby via the activity feed, so this is a hard XSS boundary.
+        function escapeHtml(value) {
+            return String(value == null ? '' : value).replace(/[&<>"']/g, function (c) {
+                return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+            });
+        }
+
         // ── FEATURED CAROUSEL — auto-rotating featured games ───
         function buildFeaturedCarousel() {
             const track = document.getElementById('fcTrack');
@@ -2540,22 +2550,25 @@
                 const thumb = getGameThumbnail(g);
                 const img = thumb ? '<img class="fc-slide-img" src="' + thumb + '" alt="" loading="' + (i === 0 ? 'eager' : 'lazy') + '" decoding="async" onerror="this.style.display=\'none\'">' : '';
                 const vol = g.volatility ? (g.volatility.charAt(0).toUpperCase() + g.volatility.slice(1) + ' volatility') : '';
-                const meta = [g.studio || g.provider || '', vol].filter(Boolean).join(' · ');
+                const meta = escapeHtml([g.studio || g.provider || '', vol].filter(Boolean).join(' · '));
+                const name = escapeHtml(g.name);
                 const safeId = String(g.id).replace(/'/g, "\\'");
-                return '<div class="fc-slide" role="group" aria-roledescription="slide" aria-label="' + (i + 1) + ' of ' + pool.length + ': ' + g.name + '" onclick="navigateToGame(\'' + safeId + '\')">' +
+                return '<div class="fc-slide" role="group" aria-roledescription="slide" aria-label="' + (i + 1) + ' of ' + pool.length + ': ' + name + '" onclick="navigateToGame(\'' + safeId + '\')">' +
                     '<div class="fc-slide-bg" style="background:' + bg + '"></div>' +
                     img +
                     '<div class="fc-slide-scrim"></div>' +
                     '<div class="fc-slide-content">' +
                         '<span class="fc-badge">&#9733; Featured</span>' +
-                        '<h3 class="fc-slide-name">' + g.name + '</h3>' +
+                        '<h3 class="fc-slide-name">' + name + '</h3>' +
                         '<div class="fc-slide-meta">' + meta + '</div>' +
                         '<button class="fc-play" type="button" onclick="event.stopPropagation();navigateToGame(\'' + safeId + '\')">Play Now &#9656;</button>' +
                     '</div></div>';
             }).join('');
 
+            // Dots are plain buttons (aria-pressed), NOT the ARIA tab pattern —
+            // the slides aren't tabpanels, so role="tab"/"tablist" would be invalid.
             dotsWrap.innerHTML = pool.map((g, i) =>
-                '<button class="fc-dot' + (i === 0 ? ' active' : '') + '" type="button" role="tab" aria-label="Show ' + g.name + '" aria-selected="' + (i === 0 ? 'true' : 'false') + '" data-i="' + i + '"></button>'
+                '<button class="fc-dot' + (i === 0 ? ' active' : '') + '" type="button" aria-label="Show ' + escapeHtml(g.name) + ': slide ' + (i + 1) + ' of ' + pool.length + '" aria-pressed="' + (i === 0 ? 'true' : 'false') + '" data-i="' + i + '"></button>'
             ).join('');
 
             const dots = Array.prototype.slice.call(dotsWrap.children);
@@ -2569,7 +2582,7 @@
                 dots.forEach((d, i) => {
                     const on = i === index;
                     d.classList.toggle('active', on);
-                    d.setAttribute('aria-selected', on ? 'true' : 'false');
+                    d.setAttribute('aria-pressed', on ? 'true' : 'false');
                 });
             }
             function goTo(i) { index = (i + count) % count; render(); }
@@ -2590,6 +2603,10 @@
                 if (e.key === 'ArrowRight') { next(); start(); }
                 else if (e.key === 'ArrowLeft') { prev(); start(); }
             });
+
+            // Pause autoplay while the tab is hidden; resume on return (avoids
+            // multi-slide jumps and wasted work in a backgrounded tab).
+            document.addEventListener('visibilitychange', () => { document.hidden ? stop() : start(); });
 
             // Touch swipe
             let sx = 0, dx = 0, swiping = false;
@@ -2627,84 +2644,96 @@
             }).join('');
         }
 
-        // ── LIVE WIN FEED — scrolling recent win ticker ────────
+        // ── LIVE WIN FEED — REAL recent big wins only ──────────
+        //  No fabricated players/amounts/times: showing fake "social proof" on a
+        //  real-money casino is misleading and an advertising/responsible-gambling
+        //  risk. If there aren't enough genuine wins to fill a continuous ticker,
+        //  the strip hides itself rather than inventing data.
         function buildWinFeed() {
             const track = document.getElementById('winFeedTrack');
-            if (!track || !allGames.length) return;
+            if (!track) return;
+            const section = track.closest('.win-feed');
+            const MIN_WINS = 5;   // below this we hide rather than show a sparse loop
 
-            const firstNames = ['Alex','Sarah','Mike','Emma','Chris','David','Maria','James','Lisa','Kevin',
-                'Nicole','Ryan','Amy','Daniel','Sophie','Jake','Anna','Tom','Laura','Ben'];
-
-            function makeSimulatedItem(i) {
-                const game = allGames[Math.floor(Math.random() * allGames.length)];
-                const name = firstNames[i % firstNames.length];
-                const initial = name.charAt(0);
-                const amount = (Math.random() * 5000 + 50).toFixed(2);
-                const ago = Math.floor(Math.random() * 59 + 1);
-                return '<div class="win-item">' +
-                    '<div class="win-avatar">' + initial + '</div>' +
-                    '<div class="win-details">' +
-                    '<span>' + name + ' won </span>' +
-                    '<span class="win-amount">$' + Number(amount).toLocaleString('en-US', {minimumFractionDigits:2}) + '</span>' +
-                    '<span class="win-game"> on ' + game.name + '</span>' +
-                    '<span style="color:var(--text-muted)"> · ' + ago + 'm ago</span>' +
-                    '</div></div>';
+            function resolveGameName(gameId) {
+                if (!gameId) return 'Slots';
+                const known = (typeof allGames !== 'undefined' && Array.isArray(allGames))
+                    ? allGames.find(x => String(x.id) === String(gameId)) : null;
+                if (known && known.name) return known.name;
+                // Fall back to a tidy Title Case of the id (first letter per word).
+                return String(gameId).replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
             }
 
             function makeRealItem(event) {
-                const name = event.displayName || event.username || 'Player';
-                const initial = name.charAt(0).toUpperCase();
-                const amount = parseFloat(event.winAmount || 0).toFixed(2);
-                let gameName = (event.gameId || 'Slots').replace(/_/g, ' ')
-                    .replace(/\w/g, c => c.toUpperCase());
-                const multBadge = (event.multiplier && event.multiplier >= 25)
-                    ? ' <span style="color:#FFD700">🔥 ' + event.multiplier + 'x!</span>' : '';
-                let timeAgo = '';
-                if (event.createdAt) {
-                    const diffMs = Date.now() - new Date(event.createdAt).getTime();
-                    const diffMin = Math.floor(diffMs / 60000);
-                    timeAgo = diffMin < 60 ? diffMin + 'm ago' : Math.floor(diffMin / 60) + 'h ago';
-                } else {
-                    timeAgo = Math.floor(Math.random() * 59 + 1) + 'm ago';
-                }
+                // Require a genuine timestamp and a positive win — never fabricate.
+                if (!event || !event.createdAt) return null;
+                const amount = Number(parseFloat(event.winAmount || 0).toFixed(2));
+                if (!(amount > 0)) return null;
+                const diffMin = Math.floor((Date.now() - new Date(event.createdAt).getTime()) / 60000);
+                if (!(diffMin >= 0)) return null;   // discard future/invalid timestamps
+
+                const rawName = event.displayName || event.username || 'Player';
+                const name = escapeHtml(rawName);
+                const initial = escapeHtml((rawName.charAt(0) || '?').toUpperCase());
+                const gameName = escapeHtml(resolveGameName(event.gameId));
+                const mult = Number(event.multiplier);
+                const multBadge = (mult && mult >= 25)
+                    ? ' <span style="color:#FFD700">🔥 ' + Math.floor(mult) + 'x!</span>' : '';
+                const timeAgo = diffMin < 60 ? diffMin + 'm ago' : Math.floor(diffMin / 60) + 'h ago';
+
                 return '<div class="win-item">' +
                     '<div class="win-avatar">' + initial + '</div>' +
                     '<div class="win-details">' +
                     '<span>' + name + ' won </span>' +
-                    '<span class="win-amount">$' + Number(amount).toLocaleString('en-US', {minimumFractionDigits:2}) + '</span>' +
+                    '<span class="win-amount">$' + amount.toLocaleString('en-US', {minimumFractionDigits:2}) + '</span>' +
                     '<span class="win-game"> on ' + gameName + '</span>' + multBadge +
                     '<span style="color:var(--text-muted)"> · ' + timeAgo + '</span>' +
                     '</div></div>';
             }
 
+            function showSection(show) {
+                if (!section) return;
+                // popup-nuke.css forces `.main > .win-feed { display:block !important }`,
+                // so an inline override must also be !important to actually hide it.
+                if (show) section.style.removeProperty('display');
+                else section.style.setProperty('display', 'none', 'important');
+            }
+
             async function loadFeed() {
+                if (document.hidden) return;   // don't fetch/churn in a backgrounded tab
                 let wins = [];
                 try {
                     const resp = await fetch('/api/activity-feed?limit=20');
                     if (resp.ok) {
                         const data = await resp.json();
                         const events = Array.isArray(data) ? data : (data.events || data.feed || []);
-                        if (events.length >= 5) {
-                            wins = events.map(makeRealItem);
-                        }
+                        wins = events.map(makeRealItem).filter(Boolean);
+                    } else {
+                        console.warn('[live-wins] activity-feed returned', resp.status);
                     }
-                } catch (e) { /* fall through to simulated */ }
-
-                const needed = 20 - wins.length;
-                for (let i = 0; i < needed; i++) {
-                    wins.push(makeSimulatedItem(wins.length + i));
+                } catch (e) {
+                    console.warn('[live-wins] activity-feed unavailable:', e.message);
                 }
 
-                // Duplicate for seamless scroll
-                track.innerHTML = wins.join('') + wins.join('');
+                if (wins.length < MIN_WINS) { showSection(false); return; }
+                showSection(true);
+
+                // Duplicate for the seamless marquee loop. Skip the rebuild when
+                // content is unchanged to avoid needless DOM churn/reflow.
+                const combined = wins.join('') + wins.join('');
+                if (track.__lastFeedHtml === combined) return;
+                track.__lastFeedHtml = combined;
+                track.innerHTML = combined;
             }
 
             loadFeed();
-            // Keep the ticker live — pull fresh big wins periodically.
+            // Refresh real wins periodically so the ticker stays current.
             // Guard prevents stacking intervals if buildWinFeed re-runs.
             if (!window.__winFeedTimer) {
                 window.__winFeedTimer = setInterval(loadFeed, 30000);
             }
+            // Pull fresh data immediately when the user returns to the tab.
+            document.addEventListener('visibilitychange', () => { if (!document.hidden) loadFeed(); });
         }
 
         // ── STUDIOS GRID — studio cards from config ────────────

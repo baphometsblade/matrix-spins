@@ -590,11 +590,12 @@
 .fc-dots {
     display: flex;
     justify-content: center;
-    gap: 8px;
+    gap: 14px;
     margin-top: 14px;
 }
 
 .fc-dot {
+    position: relative;
     width: 8px; height: 8px;
     border-radius: 50%;
     border: none;
@@ -602,6 +603,16 @@
     cursor: pointer;
     background: rgba(255, 255, 255, 0.2);
     transition: background 200ms ease, width 200ms ease;
+}
+
+/* Invisible 24px hit area — keeps the dot visually 8px while meeting the
+   WCAG target-size minimum for touch/click. */
+.fc-dot::before {
+    content: "";
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    width: 24px; height: 24px;
 }
 
 .fc-dot.active {
