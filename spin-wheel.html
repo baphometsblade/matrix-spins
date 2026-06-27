@@ -173,17 +173,14 @@
 
   function buildWheel() {
     const wheel = $('wheel');
-    // Conic gradient slices
     const stops = [];
     prizes.forEach((p, i) => { stops.push((p.color || (i % 2 ? '#0a2e18' : '#0f3d20')) + ' ' + (i * SEG_DEG) + 'deg ' + ((i + 1) * SEG_DEG) + 'deg'); });
     wheel.style.background = 'conic-gradient(from 0deg,' + stops.join(',') + ')';
-    // Labels
     wheel.querySelectorAll('.seg-label').forEach(n => n.remove());
     prizes.forEach((p, i) => {
       const center = i * SEG_DEG + SEG_DEG / 2;
       const lab = document.createElement('div');
       lab.className = 'seg-label';
-      // rotate to slice center, push outward, counter-rotate text upright
       lab.style.transform = 'rotate(' + center + 'deg) translateY(-128px)';
       lab.innerHTML = '<span class="inner" style="transform:translate(-50%,-50%) rotate(' + (-center) + 'deg)"><span class="em">' + p.emoji + '</span>' + shortLabel(p) + '</span>';
       wheel.appendChild(lab);
@@ -261,8 +258,6 @@
       setTimeout(() => {
         showPrize(r);
         renderStreak(r.streak || 0, (r.streak + 1) % 7 === 0);
-        if (r.newBonusBalance != null) { /* bonus balance changed; main balance chip stays */ }
-        // schedule next-spin countdown (next UTC midnight)
         const now = new Date();
         const next = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() + 1, 0, 0, 0));
         $('spinBtn').textContent = 'COME BACK SOON';
@@ -292,7 +287,8 @@
     $('mDesc').textContent = desc;
     $('backdrop').classList.add('show');
     const big = (p.kind === 'cash' && (r.creditedCash || p.amount) >= 5) || p.kind !== 'cash';
-    if (big) { emitSound('win'); spawnConfetti(); } else { emitSound('win'); }
+    emitSound('win');
+    if (big) spawnConfetti();
   }
   $('mClose').addEventListener('click', () => $('backdrop').classList.remove('show'));
   $('backdrop').addEventListener('click', e => { if (e.target === $('backdrop')) $('backdrop').classList.remove('show'); });
