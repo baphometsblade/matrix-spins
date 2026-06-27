@@ -686,6 +686,11 @@ if (!window.escapeHtml) {
              tile already includes an integrated themed background, so the
              cell gradient shows only if the image fails to decode. */
           .ce-cell-img { width: 100%; height: 100%; display: block; border-radius: inherit; object-fit: cover; object-position: center; pointer-events: none; -webkit-user-drag: none; user-select: none; }
+          /* Motion blur while a cell is still rolling. Cleared the instant the
+             reel lands (the just-landed bounce takes over). Blurring the cell
+             also blurs the inner .ce-cell-img since filter cascades to children,
+             so both emoji-glyph and bitmap-tile reels get the spin smear. */
+          .ce-cell.ce-rolling { filter: blur(2.6px) brightness(1.05); will-change: filter, transform; transform: translateZ(0); }
           .ce-cell.just-landed { animation: ceLand 240ms cubic-bezier(.34,1.4,.64,1) both; }
           .ce-cell.highlight { animation: ceWinGlow 0.8s ease-in-out infinite alternate; box-shadow: 0 0 12px ${primary}, 0 0 24px ${primary}66; z-index: 1; position: relative; }
           @keyframes ceLand { 0% { transform: translateY(-14px) scale(0.94); filter: brightness(0.7); } 60% { transform: translateY(2px) scale(1.04); filter: brightness(1.1); } 100% { transform: translateY(0) scale(1); filter: brightness(1); } }
@@ -753,10 +758,41 @@ if (!window.escapeHtml) {
             body { font-size: 16px; }
             .ce-btn { font-size: 1rem; }
           }
-          /* Reduced-motion honour — cells just snap, no landing/winglow loop. */
+          /* ── Free-spin mode: distinct GREEN glow border on the reel frame ──
+             While a free-spins bonus run is active the reel box gets a vivid
+             emerald frame + pulsing glow so the player can tell at a glance
+             they're spinning on the house's dime. Overrides the per-game themed
+             frame for the duration of the run only. */
+          .ce-reelbox.ce-freespin {
+            border: 2px solid #2BE07A !important;
+            box-shadow: 0 0 26px rgba(43,224,122,.55), 0 0 60px rgba(43,224,122,.30), inset 0 0 34px rgba(43,224,122,.16) !important;
+            animation: ceFreeSpinGlow 1.5s ease-in-out infinite alternate;
+          }
+          .ce-reelbox.ce-freespin::before { box-shadow: inset 0 0 0 1px rgba(43,224,122,.5) !important; }
+          .ce-reelbox.ce-freespin::after { filter: drop-shadow(0 0 5px #2BE07A); }
+          @keyframes ceFreeSpinGlow {
+            0%   { box-shadow: 0 0 22px rgba(43,224,122,.45), 0 0 50px rgba(43,224,122,.22), inset 0 0 30px rgba(43,224,122,.14); }
+            100% { box-shadow: 0 0 34px rgba(43,224,122,.70), 0 0 78px rgba(43,224,122,.38), inset 0 0 40px rgba(43,224,122,.20); }
+          }
+
+          /* ── Mega-win screen pulse (≥50x). A brief full-frame flash + zoom on
+             the reel box so a mega win physically shakes the screen, distinct
+             from the overlay text. Added/removed by _celebrateWin. ── */
+          @keyframes ceScreenPulse {
+            0%   { transform: scale(1);    filter: brightness(1); }
+            18%  { transform: scale(1.035); filter: brightness(1.5) saturate(1.3); }
+            40%  { transform: scale(0.992); filter: brightness(1.05); }
+            62%  { transform: scale(1.018); filter: brightness(1.28) saturate(1.18); }
+            100% { transform: scale(1);    filter: brightness(1); }
+          }
+          .ce-reelbox.ce-screen-pulse { animation: ceScreenPulse 900ms cubic-bezier(.36,.07,.19,.97) both; }
+
+          /* Reduced-motion honour — cells just snap, no landing/winglow/blur loop. */
           @media (prefers-reduced-motion: reduce) {
             .ce-cell, .ce-cell.just-landed, .ce-cell.highlight,
             .ce-btn, .ce-btn.primary { animation: none !important; transition: none !important; }
+            .ce-cell.ce-rolling { filter: none !important; }
+            .ce-reelbox.ce-freespin, .ce-reelbox.ce-screen-pulse { animation: none !important; }
           }
         `;
         document.head.appendChild(s);
@@ -901,11 +937,11 @@ if (!window.escapeHtml) {
       try {
         const snd = window.MatrixSound && window.MatrixSound.play;
         if (snd) {
-          if      (kind === 'spin')     snd('spin');
-          else if (kind === 'stop')     snd('tick');
+          if      (kind === 'spin')     snd('spin-start');
+          else if (kind === 'stop')     snd('reel-stop');
           else if (kind === 'small')    snd('win-small');
           else if (kind === 'big')      snd('win-big');
-          else if (kind === 'mega')     snd('jackpot');
+          else if (kind === 'mega')     snd('win-mega');
           else if (kind === 'jackpot')  snd('jackpot');
           else if (kind === 'bonus')    snd('notification');
           else if (kind === 'error')    snd('error');
@@ -943,6 +979,15 @@ if (!window.escapeHtml) {
       // so it stays safe even when payoutCents is large.
       if (!betCents || betCents <= 0) return;
       const ratio = payoutCents / betCents;
+
+      // Particle burst for big wins (≥10x). Fires even on a 10–15x win that
+      // doesn't earn a full-screen tier overlay, so the 10x threshold the
+      // brief feels rewarding before the named tiers kick in.
+      if (ratio >= 10) this._winConfetti(ratio);
+      // Screen pulse for mega wins (≥50x) — the reel frame zooms + flashes so
+      // the whole screen reacts, on top of the overlay text.
+      if (ratio >= 50) this._screenPulse();
+
       let tier = null;
       if      (ratio >= 150) tier = { label: 'SUPER MEGA WIN', fx: 'mega', color: '#FF5DA2', size: '4.6rem' };
       else if (ratio >= 100) tier = { label: 'EPIC WIN',  fx: 'mega', color: '#F0C66E', size: '4.2rem' };
@@ -978,6 +1023,60 @@ if (!window.escapeHtml) {
       document.body.appendChild(overlay);
       // Self-clean
       setTimeout(() => overlay.remove(), 2000);
+    }
+
+    // Lazy-load confetti.min.js (not preloaded on the 100 game pages — saves
+    // ~8KB for the sessions that never hit a big win) and fire a burst sized to
+    // the win. Skipped under reduced-motion. Shared shape with the jackpot
+    // confetti but tuned lighter for regular big wins. Never throws.
+    _ensureConfetti(cb) {
+      if (typeof window.confetti === 'function') { cb(); return; }
+      if (this._confettiLoading) {
+        // Already loading — queue this callback for when it lands.
+        (this._confettiQueue || (this._confettiQueue = [])).push(cb);
+        return;
+      }
+      this._confettiLoading = true;
+      this._confettiQueue = [cb];
+      const src = location.pathname.includes('/games/') ? '../js/confetti.min.js' : 'js/confetti.min.js';
+      const tag = document.createElement('script');
+      tag.src = src;
+      tag.async = true;
+      tag.onload = () => {
+        this._confettiLoading = false;
+        (this._confettiQueue || []).forEach(fn => { try { fn(); } catch (_) {} });
+        this._confettiQueue = [];
+      };
+      // onerror unbound — particles silently skipped on load failure.
+      document.head.appendChild(tag);
+    }
+
+    _winConfetti(ratio) {
+      const reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      if (reduce) return;
+      // Scale particle count with the win — a 10x sprinkle, a 100x downpour.
+      const count = Math.min(160, 50 + Math.round(ratio));
+      this._ensureConfetti(() => {
+        if (typeof window.confetti !== 'function') return;
+        const opts = { spread: 70, startVelocity: 42, ticks: 220, scalar: 1.0, particleCount: count };
+        try {
+          window.confetti(Object.assign({}, opts, { origin: { x: 0.5, y: 0.6 } }));
+          if (ratio >= 25) {
+            setTimeout(() => { try { window.confetti(Object.assign({}, opts, { particleCount: Math.round(count * 0.6), origin: { x: 0.2, y: 0.7 } })); } catch (_) {} }, 220);
+            setTimeout(() => { try { window.confetti(Object.assign({}, opts, { particleCount: Math.round(count * 0.6), origin: { x: 0.8, y: 0.7 } })); } catch (_) {} }, 420);
+          }
+        } catch (_) { /* silent */ }
+      });
+    }
+
+    _screenPulse() {
+      const reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      if (reduce || !this.reelBox) return;
+      this.reelBox.classList.remove('ce-screen-pulse');
+      // eslint-disable-next-line no-unused-expressions
+      this.reelBox.offsetWidth; // reflow so the animation re-fires on repeat megas
+      this.reelBox.classList.add('ce-screen-pulse');
+      setTimeout(() => { if (this.reelBox) this.reelBox.classList.remove('ce-screen-pulse'); }, 950);
     }
 
     _celebrateJackpot(amountCents, tier) {
@@ -1633,6 +1732,15 @@ if (!window.escapeHtml) {
       meta.style.cssText =
         'padding:0 22px 12px;display:flex;flex-wrap:wrap;gap:8px;font-size:0.85rem;';
       const metaTags = [];
+      // RTP is intentionally omitted from the in-game HEADER (operator policy,
+      // commit b2eec40d) but the paytable modal is the sanctioned place to
+      // disclose it for players who open the info panel. Accepts a number
+      // (96.4) or a pre-formatted string ("96.4%").
+      const rtpVal = (g.rtp != null ? g.rtp : g.rtpPercent);
+      if (rtpVal != null && rtpVal !== '') {
+        const rtpStr = (typeof rtpVal === 'number') ? rtpVal.toFixed(1) + '% RTP' : String(rtpVal).replace(/%?\s*(RTP)?$/i, '') + '% RTP';
+        metaTags.push(rtpStr);
+      }
       if (g.volatility) metaTags.push(g.volatility + ' volatility');
       if (g.paylines)   metaTags.push(g.paylines + ' lines');
       const maxMult = (g.maxWinMultiplier || g.maxBetMultiplier);
@@ -1880,6 +1988,8 @@ if (!window.escapeHtml) {
       // transitions tracked in _spin().
       const existing = document.getElementById('ce-bonus-banner');
       const run = this.state.bonusRun;
+      // Distinct green glow border on the reel frame for the duration of the run.
+      if (this.reelBox) this.reelBox.classList.toggle('ce-freespin', !!run);
       if (!run) {
         if (existing) existing.remove();
         return;
@@ -1998,6 +2108,9 @@ if (!window.escapeHtml) {
       const cells = Array.from(this.reelGrid.querySelectorAll('.ce-cell'));
       cells.forEach(c => c.classList.remove('highlight'));
       cells.forEach(c => c.classList.remove('just-landed'));
+      // Motion blur — every cell rolls blurred; the blur is cleared per-reel
+      // the moment that reel lands (see the stop loop below).
+      cells.forEach(c => c.classList.add('ce-rolling'));
 
       // Reel-speed config drives the base rolling cadence + per-reel
       // landing delay. Near-miss anticipation slowdown (below) layers
@@ -2028,6 +2141,7 @@ if (!window.escapeHtml) {
         });
       } catch (err) {
         clearInterval(rollInterval);
+        cells.forEach(c => c.classList.remove('ce-rolling')); // never leave reels blurred on failure
         this.state.spinning = false;
         this.spinBtn.disabled = false;
         this._fx('error');
@@ -2101,6 +2215,7 @@ if (!window.escapeHtml) {
           const cell = cells[cellIdx];
           this._renderCell(cell, column[y], r, y);
           if (cell) {
+            cell.classList.remove('ce-rolling'); // reel landed — drop the blur
             cell.classList.remove('just-landed');
             // eslint-disable-next-line no-unused-expressions
             cell.offsetWidth; // reflow so re-adding the class re-fires the keyframe

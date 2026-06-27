@@ -99,6 +99,23 @@
       tone(784, 'sine', t + 0.3, 0.4, 0.35);
     },
 
+    // Distinct MEGA-win fanfare — bigger than win-big, but separate from the
+    // jackpot cascade so a 50x mega doesn't sound identical to a grand jackpot.
+    // Rising major arpeggio (C-E-G-C-E) with a triangle "brass" layer + a
+    // sparkle tail, all synthesized (no external files).
+    'win-mega': function () {
+      var t = ctx.currentTime;
+      var notes = [523.25, 659.25, 783.99, 1046.50, 1318.51];
+      for (var i = 0; i < notes.length; i++) {
+        tone(notes[i], 'sine', t + i * 0.11, 0.28, 0.34);
+        tone(notes[i] / 2, 'triangle', t + i * 0.11, 0.30, 0.18); // brassy lower octave
+      }
+      // Held top chord + shimmer tail for the "moment".
+      tone(1046.50, 'sine', t + 0.62, 0.5, 0.22);
+      tone(1318.51, 'sine', t + 0.62, 0.5, 0.16);
+      tone(1567.98, 'sine', t + 0.74, 0.45, 0.10);
+    },
+
     jackpot: function () {
       var t = ctx.currentTime;
       var notes = [523.25, 659.25, 783.99, 1046.50];
@@ -130,10 +147,21 @@
     }
   };
 
+  // Spec-named event aliases. The slot engine + audit refer to events as
+  // spin-start / reel-stop / button-click; map them onto the canonical
+  // synth functions so both names resolve. Cheap, keeps the public API
+  // matching the documented event vocabulary.
+  var ALIASES = {
+    'spin-start': 'spin',
+    'reel-stop': 'tick',
+    'button-click': 'click'
+  };
+
   // ── Play ────────────────────────────────────────────────────────────
 
   function play(name) {
     if (!initialized || muted) return;
+    if (ALIASES[name]) name = ALIASES[name];
     if (!sounds[name]) return;
     ensureContext(function () { sounds[name](); });
   }
