@@ -50,7 +50,10 @@ const STANDALONE_CSS = [
     'unified-ux.css',
     'css/search.css',
     'css/cookie-consent.css',
-    'css/age-gate.css'
+    'css/age-gate.css',
+    // Green Matrix design system — referenced (as the LAST stylesheet) by every
+    // non-index HTML page so the brand palette wins their local cascade too.
+    'css/matrix-theme.css'
 ];
 
 // CSS files to bundle (in specificity order — premium overrides MUST be last).
@@ -96,8 +99,11 @@ const CSS_FILES = [
     'premium-v2-fixes.css',
     'premium-v3-upgrades.css',
     'unified-ux.css',
-    // AAA polish layer — MUST stay last so its refinements win the cascade
-    'css/aaa-polish.css'
+    // AAA polish layer — refinements that must beat the component sheets
+    'css/aaa-polish.css',
+    // Green Matrix design system — the BRAND palette. MUST be dead last so it
+    // overrides every gold-on-navy default in the bundle (CLAUDE.md: brand decision).
+    'css/matrix-theme.css'
 ];
 
 // --- Helper Functions ---

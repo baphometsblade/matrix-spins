@@ -1,0 +1,315 @@
+/* ═══════════════════════════════════════════════════════════════════════════
+   MATRIX SPINS — GREEN MATRIX DESIGN SYSTEM  (css/matrix-theme.css)
+   ───────────────────────────────────────────────────────────────────────────
+   SINGLE SOURCE OF TRUTH for the brand palette. This file is loaded LAST in the
+   cascade (after every component/premium/polish sheet AND after each page's own
+   <link>s) so it wins same-specificity battles. Most existing rules consume CSS
+   custom properties, so the cheapest, broadest lever is to REDEFINE those tokens
+   here — that recolours thousands of existing rules automatically. The explicit
+   selectors below mop up the few surfaces that hard-code colours.
+
+   BRAND PALETTE (the only colours allowed):
+     #00ff41  Matrix green   — primary: brand, chrome, primary buttons, focus, links
+     #0a0a0a  Near-black     — page background
+     #1a1a2e  Dark panel     — cards, modals, inputs, elevated surfaces
+     #FFD700  Gold           — ACCENT ONLY: deposit/CTA buttons, prices, jackpot amounts
+     #e0e0e0  Body text  /  #ffffff  Headings
+   Borders: 1px solid rgba(0,255,65,0.15)
+
+   Do NOT introduce navy, cyan, violet, or amber primaries anywhere. Gold is an
+   accent, never a surface or chrome colour.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+:root {
+  /* ── Brand palette (the requested public API) ─────────────────────────── */
+  --ms-green:            #00ff41;   /* primary Matrix green */
+  --ms-green-bright:     #39ff6a;   /* hover / glow lift */
+  --ms-green-deep:       #00b82f;   /* gradient bottom */
+  --ms-green-dim:        rgba(0, 255, 65, 0.12);
+  --ms-green-glow:       rgba(0, 255, 65, 0.35);
+  --ms-green-border:     rgba(0, 255, 65, 0.15);
+  --ms-green-border-hi:  rgba(0, 255, 65, 0.40);
+
+  --ms-bg:               #0a0a0a;   /* page background */
+  --ms-bg-2:             #050505;   /* deepest wells */
+  --ms-panel:            #1a1a2e;   /* cards / modals / elevated surfaces */
+  --ms-panel-2:          #15151f;   /* slightly darker panel for layering */
+
+  --ms-accent-gold:      #FFD700;   /* CTAs, prices, jackpot amounts ONLY */
+  --ms-accent-gold-2:    #d4af37;   /* gold gradient bottom */
+  --ms-accent-gold-glow: rgba(255, 215, 0, 0.35);
+
+  --ms-text-body:        #e0e0e0;   /* body copy */
+  --ms-text-heading:     #ffffff;   /* headings */
+  --ms-text-dim2:        #8a8a9a;   /* muted / secondary */
+
+  /* ── Remap the LEGACY design-tokens.css (--ms-*) vocabulary ───────────────
+     These names are consumed all over the lobby + premium sheets. Re-pointing
+     them at the green/black palette recolours the whole site in one stroke. */
+  --ms-bg-darkest:  #050505;
+  --ms-bg-dark:     #0a0a0a;
+  --ms-bg-base:     #0c0c14;
+  --ms-bg-surface:  #15151f;
+  --ms-bg-card:     #1a1a2e;
+  --ms-bg-elevated: #1f1f33;
+  --ms-bg-hover:    #24243c;
+
+  --ms-text:           #e0e0e0;
+  --ms-text-secondary: #9a9aae;
+  --ms-text-muted:     #6a6a80;
+  --ms-text-dim:       #44445a;
+
+  /* Gold token stays GOLD so deposit/price/jackpot rules that read --ms-gold
+     keep their accent — but retuned to the brand gold #FFD700. */
+  --ms-gold:       #FFD700;
+  --ms-gold-light: #FFE869;
+  --ms-gold-dim:   rgba(255, 215, 0, 0.12);
+  --ms-gold-glow:  rgba(255, 215, 0, 0.35);
+
+  /* Collapse the old multi-accent palette (cyan/violet) onto Matrix green so the
+     site reads as ONE green system, not a rainbow. Keep red for losses/danger. */
+  --ms-cyan:       #00ff41;
+  --ms-cyan-dim:   rgba(0, 255, 65, 0.12);
+  --ms-violet:     #00ff41;
+  --ms-violet-dim: rgba(0, 255, 65, 0.12);
+
+  /* --ms-green is a positive/success colour elsewhere; #00ff41 still reads green */
+
+  --ms-border:       rgba(0, 255, 65, 0.15);
+  --ms-border-hover: rgba(0, 255, 65, 0.40);
+
+  --ms-glass-bg:     rgba(10, 10, 10, 0.82);
+  --ms-glass-border: rgba(0, 255, 65, 0.15);
+
+  /* ── Remap the auth.css (--bg/--gold/...) vocabulary used by signup/login/
+     account/wallet/etc. so those pages turn green-on-black too. ───────────── */
+  --bg:       #0a0a0a;
+  --bg-elev:  #15151f;
+  --bg-card:  #1a1a2e;
+  --border:   rgba(0, 255, 65, 0.15);
+  --gold:     #FFD700;   /* auth submit = conversion CTA → stays gold */
+  --gold-2:   #d4af37;
+  --text:     #e0e0e0;
+  --muted:    #8a8a9a;
+  --success:  #00ff41;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   1. PAGE FOUNDATION — black background with a faint Matrix-green ambience
+   ───────────────────────────────────────────────────────────────────────────── */
+html,
+body {
+  background-color: #0a0a0a !important;
+}
+
+body {
+  /* Subtle green vignette + scanline grid over pure black. Kept low-alpha so
+     content stays readable; the matrix-rain canvas (auth pages) layers above. */
+  background-image:
+    radial-gradient(1100px 620px at 15% -8%,  rgba(0, 255, 65, 0.08), transparent 60%),
+    radial-gradient(900px 520px at 108% 112%, rgba(0, 255, 65, 0.06), transparent 60%),
+    linear-gradient(180deg, #0a0a0a 0%, #060606 100%) !important;
+  background-attachment: fixed !important;
+  color: var(--ms-text-body);
+}
+
+::selection      { background: rgba(0, 255, 65, 0.30); color: #ffffff; }
+::-moz-selection { background: rgba(0, 255, 65, 0.30); color: #ffffff; }
+
+/* Green scrollbars to complete the immersion */
+* {
+  scrollbar-color: var(--ms-green-deep) #0a0a0a;
+}
+*::-webkit-scrollbar { width: 11px; height: 11px; }
+*::-webkit-scrollbar-track { background: #0a0a0a; }
+*::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, var(--ms-green-deep), #007a20);
+  border-radius: 6px;
+  border: 2px solid #0a0a0a;
+}
+*::-webkit-scrollbar-thumb:hover { background: var(--ms-green); }
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   2. TYPOGRAPHY — white headings, light-grey body, green links
+   ───────────────────────────────────────────────────────────────────────────── */
+h1, h2, h3, h4, h5, h6 { color: var(--ms-text-heading); }
+
+a            { color: var(--ms-green); }
+a:hover      { color: var(--ms-green-bright); text-shadow: 0 0 8px var(--ms-green-glow); }
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   3. BRAND / LOGO — the wordmark becomes Matrix green with a phosphor glow
+      (overrides the gold gradient set in premium-redesign.css / premium-polish.css)
+   ───────────────────────────────────────────────────────────────────────────── */
+.logo, .casino-logo, .header-logo,
+.logo-text h1, h1.casino-logo,
+.rs-brand, .topbar .brand {
+  background: linear-gradient(135deg, var(--ms-green), var(--ms-green-bright)) !important;
+  -webkit-background-clip: text !important;
+  background-clip: text !important;
+  -webkit-text-fill-color: transparent !important;
+  color: var(--ms-green) !important;
+  text-shadow: 0 0 18px rgba(0, 255, 65, 0.25);
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   4. PANELS / CARDS / MODALS — #1a1a2e with a 1px green hairline border
+   ───────────────────────────────────────────────────────────────────────────── */
+.rs-card, .stat,
+.game-card, .card,
+.panel, .modal, .modal-content,
+.signup-modal, .ms-modal, .modal-v2,
+.widget, .tile, .promo-card,
+.dropdown-menu, .account-dropdown,
+.daily-challenge, .recently-played,
+.win-history, .activity-feed-panel {
+  background: var(--ms-panel) !important;
+  border: 1px solid var(--ms-green-border) !important;
+}
+/* Auth card keeps its layered look but on the panel colour */
+.rs-card {
+  background: linear-gradient(180deg, #1d1d33, #15151f) !important;
+}
+
+.game-card:hover, .card:hover, .tile:hover {
+  border-color: var(--ms-green-border-hi) !important;
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.6), 0 0 0 1px var(--ms-green-border-hi),
+              0 0 22px rgba(0, 255, 65, 0.12) !important;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   5. INPUTS — dark fields with a green focus glow
+   ───────────────────────────────────────────────────────────────────────────── */
+input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="submit"]):not([type="button"]),
+select,
+textarea,
+.field input, .field select, .field textarea {
+  background: #101018 !important;
+  color: var(--ms-text-body) !important;
+  border: 1px solid var(--ms-green-border) !important;
+  border-radius: 8px;
+}
+input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):focus,
+select:focus,
+textarea:focus,
+.field input:focus, .field select:focus, .field textarea:focus {
+  outline: none !important;
+  border-color: var(--ms-green) !important;
+  box-shadow: 0 0 0 3px rgba(0, 255, 65, 0.18), 0 0 14px rgba(0, 255, 65, 0.22) !important;
+}
+input::placeholder, textarea::placeholder { color: #5a5a6e; }
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   6. BUTTONS
+      • PRIMARY actions → green gradient (Play, Spin, Submit, generic .btn-primary)
+      • DEPOSIT / money CTAs → GOLD gradient (the only place gold belongs on a button)
+   ───────────────────────────────────────────────────────────────────────────── */
+
+/* 6a. Primary / generic action buttons → Matrix green */
+.btn-primary, .btn-primary-cta, .play-btn, .spin-button, .btn-spin,
+button.primary, .btn.primary-action, .cta-green,
+.signup-submit {
+  background: linear-gradient(135deg, var(--ms-green), var(--ms-green-deep)) !important;
+  border: none !important;
+  color: #04210b !important;            /* dark-on-green for AA contrast */
+  font-weight: 800 !important;
+  text-shadow: none !important;
+  box-shadow: 0 4px 16px rgba(0, 255, 65, 0.28) !important;
+}
+.btn-primary:hover, .btn-primary-cta:hover, .play-btn:hover, .spin-button:hover,
+.btn-spin:hover, button.primary:hover, .signup-submit:hover {
+  background: linear-gradient(135deg, var(--ms-green-bright), var(--ms-green)) !important;
+  box-shadow: 0 6px 24px rgba(0, 255, 65, 0.45) !important;
+  color: #04210b !important;
+  transform: translateY(-1px);
+}
+
+/* 6b. Deposit & money CTAs → GOLD (accent). Reinforces existing gold so the
+       remapped --ms-gold can't accidentally drift, and covers auth .btn. */
+.btn-deposit, .btn-deposit-hero, .btn-secondary-cta.deposit, .deposit-cta,
+.quick-deposit-btn, a.btn-deposit, .auth-card .btn, .rs-card .btn,
+button.btn.gold, .btn.cta-gold {
+  background: linear-gradient(135deg, var(--ms-accent-gold), var(--ms-accent-gold-2)) !important;
+  border: none !important;
+  color: #1a1205 !important;
+  font-weight: 800 !important;
+  box-shadow: 0 4px 16px var(--ms-accent-gold-glow) !important;
+}
+.btn-deposit:hover, .btn-deposit-hero:hover, .quick-deposit-btn:hover,
+.auth-card .btn:hover, .rs-card .btn:hover {
+  background: linear-gradient(135deg, #ffe24a, var(--ms-accent-gold)) !important;
+  box-shadow: 0 6px 24px var(--ms-accent-gold-glow) !important;
+  color: #1a1205 !important;
+}
+
+/* Auth submit (.btn in auth.css) = the register/login conversion CTA → gold */
+.rs-shell .btn:not(.secondary):not(.danger),
+form .btn:not(.secondary):not(.danger) {
+  background: linear-gradient(135deg, var(--ms-accent-gold), var(--ms-accent-gold-2)) !important;
+  color: #1a1205 !important;
+}
+.btn.secondary {
+  background: transparent !important;
+  color: var(--ms-text-body) !important;
+  border: 1px solid var(--ms-green-border) !important;
+}
+.btn.secondary:hover { border-color: var(--ms-green) !important; color: var(--ms-green) !important; }
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   7. ACCENT CARVE-OUTS — keep GOLD strictly for prices / jackpot amounts
+   ───────────────────────────────────────────────────────────────────────────── */
+.jackpot-amount, .jackpot-hero .amount, .jackpot-value, .jackpot-bar .amount,
+.ce-jackpot-pill .amount, .price, .amount-gold, .currency-amount,
+.stat .value, .balance-chip, .deposit-amount {
+  color: var(--ms-accent-gold) !important;
+}
+.jackpot-amount, .jackpot-hero .amount, .jackpot-value {
+  text-shadow: 0 0 18px var(--ms-accent-gold-glow) !important;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   8. CHROME ACCENTS — nav, active states, badges, dividers → green
+   ───────────────────────────────────────────────────────────────────────────── */
+.nav-link.active, .nav-link:hover,
+.tab.active, .filter-pill.active, .provider-pill.active,
+.section-title::after, .badge-new, .badge-hot, .live-dot {
+  color: var(--ms-green) !important;
+  border-color: var(--ms-green) !important;
+}
+.live-dot, .online-dot { background: var(--ms-green) !important; box-shadow: 0 0 10px var(--ms-green-glow); }
+
+hr, .divider { border-color: var(--ms-green-border) !important; }
+
+/* Generic green focus ring for keyboard a11y */
+:focus-visible {
+  outline: 2px solid var(--ms-green) !important;
+  outline-offset: 2px;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   9. MATRIX-RAIN BACKGROUND (auth pages add <canvas class="matrix-rain-canvas">)
+      The canvas is injected by js/matrix-rain-bg.js only on signup/login.
+   ───────────────────────────────────────────────────────────────────────────── */
+.matrix-rain-canvas {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 0;
+  pointer-events: none;
+  opacity: 0.45;
+}
+/* Lift the auth shell above the rain and drop the navy photo backdrop for black */
+body.matrix-auth {
+  background-image:
+    radial-gradient(900px 520px at 50% -10%, rgba(0,255,65,0.10), transparent 60%),
+    linear-gradient(180deg, #0a0a0a, #050505) !important;
+}
+body.matrix-auth .rs-shell,
+body.matrix-auth .rs-shell-wide,
+body.matrix-auth .topbar { position: relative; z-index: 1; }
+
+@media (prefers-reduced-motion: reduce) {
+  .matrix-rain-canvas { display: none; }
+  body { background-attachment: scroll !important; }
+}

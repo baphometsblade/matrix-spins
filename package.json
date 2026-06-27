@@ -14,7 +14,7 @@
     "lint": "eslint --ext .js server/ scripts/ api/ shared/ blockchain/ --cache --no-error-on-unmatched-pattern",
     "lint:fix": "eslint --ext .js server/ scripts/ api/ shared/ blockchain/ --fix --no-error-on-unmatched-pattern",
     "lint:strict": "eslint --ext .js server/middleware/metrics.js server/utils/heap-watch.js server/utils/slow-query.js scripts/migrate.js scripts/seed.js scripts/monitor.js --max-warnings=0",
-    "lint:client": "eslint --no-ignore --no-eslintrc -c .eslintrc.client.json js/casino-engine.js js/api-client.js js/age-gate.js js/session-monitor.js js/responsible-gambling-page.js js/loading-screen.js js/daily-missions.js js/activity-feed.js js/jackpot.js js/search-autocomplete.js js/csrf-helper.js js/matrix-modal.js",
+    "lint:client": "eslint --no-ignore --no-eslintrc -c .eslintrc.client.json js/casino-engine.js js/api-client.js js/age-gate.js js/session-monitor.js js/responsible-gambling-page.js js/loading-screen.js js/daily-missions.js js/activity-feed.js js/jackpot.js js/search-autocomplete.js js/csrf-helper.js js/matrix-modal.js js/matrix-rain-bg.js",
     "qa:regression": "node scripts/qa_regression.js",
     "qa:smoke": "node scripts/smoke-money-flow.js",
     "qa:rtp": "node scripts/verify-rtp.js",
