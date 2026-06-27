@@ -507,19 +507,59 @@ if (!window.escapeHtml) {
       container.classList.add('ce-root');
       container.replaceChildren();
 
+      // ── Game header ── home · provider logo · styled game name | balance ·
+      // sound toggle · info — all in the Matrix-green brand. Replaces the old
+      // "← Lobby / Wallet / Account" bar with a premium slot-machine header.
       this.topbar = $el('div', { style: {
         display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-        padding: '.8rem 1.4rem', background: 'rgba(0,0,0,.35)',
-        borderBottom: `1px solid ${primary}33`, backdropFilter: 'blur(8px)',
+        padding: '.7rem 1.1rem', gap: '.6rem', background: 'rgba(0,0,0,.42)',
+        borderBottom: `1px solid color-mix(in srgb, #00ff41 30%, transparent)`,
+        backdropFilter: 'blur(8px)',
       }});
-      this.topbar.append(
-        $el('a', { href: '../index.html', style: { color: primary, fontWeight: 700, textDecoration: 'none', letterSpacing: '2px', textTransform: 'uppercase' } }, '← Lobby'),
-        $el('div', { style: { display: 'flex', gap: '.8rem', alignItems: 'center' } },
-          (this.balanceChip = $el('div', { style: { padding: '.4rem .8rem', border: `1px solid ${primary}55`, borderRadius: '999px', color: primary, fontWeight: 600 } }, '—')),
-          $el('a', { href: '../wallet.html', style: { color: '#fff', textDecoration: 'none', fontSize: '.9rem', opacity: .8 } }, 'Wallet'),
-          $el('a', { href: '../account.html', style: { color: '#fff', textDecoration: 'none', fontSize: '.9rem', opacity: .8 } }, 'Account'),
-        )
-      );
+
+      const home = $el('a', { class: 'ce-hdr-home', href: '../index.html', 'aria-label': 'Back to lobby', title: 'Lobby' },
+        $el('span', {}, 'Lobby'));
+      // ⌂ home glyph node prepended (kept out of the label span so the label
+      // hides on mobile while the glyph stays).
+      home.insertBefore(document.createTextNode('⌂'), home.firstChild);
+
+      const left = $el('div', { class: 'ce-hdr-left' }, home);
+      // Provider logo (per-studio SVG). Path is relative to the game page
+      // (/games/<slug>.html → ../assets/...). Hidden if it fails to load.
+      const logoUrl = this.theme && this.theme.logoUrl;
+      if (logoUrl) {
+        const src = /^(https?:|\/)/.test(logoUrl) ? logoUrl : '../' + logoUrl;
+        const logo = $el('img', { class: 'ce-prov-logo', alt: (this.theme.name || 'Studio') + ' logo', src });
+        logo.addEventListener('error', () => { logo.style.display = 'none'; }, { once: true });
+        left.appendChild(logo);
+      }
+      left.appendChild($el('div', { class: 'ce-hdr-name' }, this.displayName));
+
+      // Balance chip doubles as the wallet/deposit shortcut (keeps the revenue
+      // path one tap away now that the explicit Wallet link is gone).
+      this.balanceChip = $el('a', { class: 'ce-bal-chip', href: '../wallet.html', title: 'Wallet & deposits' }, '—');
+
+      const soundBtn = $el('button', {
+        class: 'ce-iconbtn', type: 'button', 'aria-label': 'Toggle sound', title: 'Sound',
+        onclick: () => {
+          try {
+            if (window.MatrixSound && window.MatrixSound.toggleMute) {
+              window.MatrixSound.toggleMute();
+              soundBtn.textContent = window.MatrixSound.isMuted() ? '🔇' : '🔊';
+            }
+          } catch (_) { /* sound is optional polish */ }
+        },
+      }, '🔊');
+      try { if (window.MatrixSound && window.MatrixSound.isMuted && window.MatrixSound.isMuted()) soundBtn.textContent = '🔇'; } catch (_) {}
+
+      const infoTop = $el('button', {
+        class: 'ce-iconbtn', type: 'button', 'aria-label': 'Game information and paytable',
+        title: 'Paytable & info', style: { fontStyle: 'italic', fontFamily: 'var(--ce-font-display)' },
+        onclick: () => this._showInfoModal(),
+      }, 'i');
+
+      const right = $el('div', { class: 'ce-hdr-right' }, this.balanceChip, soundBtn, infoTop);
+      this.topbar.append(left, right);
       container.appendChild(this.topbar);
 
       this.main = $el('div', { style: { maxWidth: '1100px', margin: '1.5rem auto 0', padding: '0 1rem' } });
@@ -757,6 +797,7 @@ if (!window.escapeHtml) {
         class: 'ce-btn primary ce-spin',
         'aria-label': 'Spin',
         onclick: () => {
+          this._spinPress();
           if (this.state.autoplay) this._stopAutoplay();
           else this._spin(false);
         },
@@ -1055,6 +1096,185 @@ if (!window.escapeHtml) {
             .ce-prespin-panel { border-radius: 18px; animation-name: ceInfoPop; }
           }
           @media (prefers-reduced-motion: reduce) { .ce-prespin-panel { animation: none !important; } }
+
+          /* ════════════════════════════════════════════════════════════════
+             AAA UPGRADE LAYER (2026-06-28). Additive polish on top of the
+             per-game skin: a physical-machine bezel with green LED trim,
+             animated paylines, an LED control read-out, tiered win takeovers
+             (coin shower / Matrix code rain / MEGA banner) and a dramatic
+             free-spins reveal. The Matrix brand green (#00ff41) is the
+             through-line accent layered over each studio palette.
+             ════════════════════════════════════════════════════════════════ */
+          .ce-root { --ce-matrix: #00ff41; }
+
+          /* ── Physical reel bezel + green LED trim ── */
+          .ce-root .ce-reelbox {
+            background: linear-gradient(180deg, #0c0f13 0%, #06080b 100%);
+            border: 2px solid color-mix(in srgb, var(--ce-reel-border) 65%, #000);
+            box-shadow:
+              var(--ce-frame-shadow),
+              inset 0 2px 0 rgba(255,255,255,.07),
+              inset 0 -4px 10px rgba(0,0,0,.65),
+              inset 0 0 0 2px color-mix(in srgb, var(--ce-matrix) 14%, transparent),
+              0 0 0 5px #0a0d11,
+              0 0 0 6px color-mix(in srgb, var(--ce-matrix) 42%, transparent),
+              0 0 24px color-mix(in srgb, var(--ce-matrix) 26%, transparent),
+              0 14px 44px rgba(0,0,0,.55);
+          }
+          /* Reel window inner shading so the columns sit in a recessed slot. */
+          .ce-reelgrid { position: relative; }
+          .ce-col {
+            background:
+              linear-gradient(180deg, rgba(255,255,255,.04), rgba(0,0,0,0) 14%, rgba(0,0,0,0) 86%, rgba(0,0,0,.45)),
+              var(--ce-reel-bg, #0a0a15);
+            box-shadow: inset 0 0 14px rgba(0,0,0,.6);
+            overflow: hidden;
+          }
+          /* Vertical scrolling-light streak while a reel is spinning — sells the
+             "physical reel in motion" read on top of the per-cell symbol swap. */
+          .ce-col.ce-col-spin { position: relative; }
+          .ce-col.ce-col-spin::after {
+            content:''; position:absolute; inset:0; pointer-events:none; border-radius:inherit; z-index:2;
+            background: repeating-linear-gradient(180deg,
+              rgba(255,255,255,0) 0, rgba(255,255,255,0) 14px,
+              color-mix(in srgb, var(--ce-matrix) 10%, transparent) 16px,
+              rgba(255,255,255,.05) 18px, rgba(255,255,255,0) 30px);
+            background-size: 100% 64px;
+            animation: ceReelStreak .28s linear infinite;
+            mix-blend-mode: screen; opacity:.8;
+          }
+          @keyframes ceReelStreak { from { background-position-y: 0; } to { background-position-y: 64px; } }
+          /* Per-column settle when a reel lands — a weighty vertical overshoot. */
+          .ce-col.ce-col-land { animation: ceReelLand 420ms cubic-bezier(.18,1.3,.5,1) both; }
+          @keyframes ceReelLand {
+            0%   { transform: translateY(-10px); }
+            55%  { transform: translateY(4px); }
+            78%  { transform: translateY(-2px); }
+            100% { transform: translateY(0); }
+          }
+
+          /* ── Winning symbol: pulsing GREEN border glow ── */
+          .ce-cell.highlight {
+            animation: ceWinGlowG .7s ease-in-out infinite alternate;
+            box-shadow: 0 0 0 2px var(--ce-matrix), 0 0 14px var(--ce-matrix),
+                        0 0 28px color-mix(in srgb, var(--ce-matrix) 55%, transparent);
+            z-index: 2; position: relative; border-radius: 8px;
+          }
+          @keyframes ceWinGlowG {
+            from { box-shadow: 0 0 0 2px var(--ce-matrix), 0 0 10px var(--ce-matrix); transform: scale(1.02); filter: brightness(1.05); }
+            to   { box-shadow: 0 0 0 3px var(--ce-matrix), 0 0 22px var(--ce-matrix), 0 0 42px color-mix(in srgb, var(--ce-matrix) 60%, transparent); transform: scale(1.09); filter: brightness(1.4) saturate(1.25); }
+          }
+
+          /* ── Animated paylines (SVG overlay) ── */
+          .ce-payline-svg { position: absolute; pointer-events: none; z-index: 3; overflow: visible; }
+          @keyframes cePaylineDraw { to { stroke-dashoffset: 0; } }
+
+          /* ── LED control read-out ── */
+          .ce-meter-cell {
+            background: linear-gradient(180deg, rgba(4,8,5,.86), rgba(2,5,3,.94));
+            border-color: color-mix(in srgb, var(--ce-matrix) 28%, transparent);
+            box-shadow: inset 0 0 12px rgba(0,0,0,.7), inset 0 0 0 1px rgba(255,255,255,.02);
+          }
+          .ce-meter-val, .ce-betlabel {
+            font-family: 'Orbitron', var(--ce-font-display); letter-spacing: .06em;
+            font-variant-numeric: tabular-nums; text-shadow: 0 0 9px color-mix(in srgb, currentColor 55%, transparent);
+          }
+          .ce-meter-cell:nth-child(1) .ce-meter-val { color: #e8edf5; }
+          .ce-betlabel { background: linear-gradient(180deg, rgba(4,8,5,.7), rgba(2,5,3,.85)); box-shadow: inset 0 0 12px rgba(0,0,0,.6); }
+
+          /* ── Signature SPIN press: scale-down → glow pulse → spring back ── */
+          .ce-btn.primary.ce-spin.ce-spin-press { animation: ceSpinPress 460ms cubic-bezier(.34,1.56,.64,1) both; }
+          @keyframes ceSpinPress {
+            0%   { transform: scale(1); }
+            20%  { transform: scale(.86); box-shadow: var(--ce-spin-glow), 0 0 34px var(--ce-matrix), inset 0 2px 6px rgba(255,255,255,.4); }
+            55%  { transform: scale(1.07); }
+            78%  { transform: scale(.97); }
+            100% { transform: scale(1); }
+          }
+
+          /* ── Small-win number popup ── */
+          .ce-winpop {
+            position: absolute; left: 50%; top: 42%; z-index: 4; pointer-events: none;
+            font-family: 'Orbitron', var(--ce-font-display); font-weight: 900;
+            font-size: clamp(1.4rem, 5.5vw, 2.3rem); color: var(--ce-matrix);
+            text-shadow: 0 0 14px var(--ce-matrix), 0 2px 6px rgba(0,0,0,.75);
+            animation: ceWinPop 1150ms cubic-bezier(.2,.9,.4,1.2) forwards;
+          }
+          @keyframes ceWinPop {
+            0%   { opacity: 0; transform: translate(-50%,-30%) scale(.5); }
+            22%  { opacity: 1; transform: translate(-50%,-58%) scale(1.12); }
+            70%  { opacity: 1; transform: translate(-50%,-62%) scale(1); }
+            100% { opacity: 0; transform: translate(-50%,-98%) scale(.95); }
+          }
+
+          /* ── MEGA banner (gold text on green ribbon) ── */
+          .ce-mega-banner {
+            margin-bottom: 1.1rem; padding: .5rem 2.4rem;
+            background: linear-gradient(180deg, #00ff41 0%, #00b32d 100%);
+            border-radius: 8px; border: 2px solid #063a14;
+            box-shadow: 0 0 26px rgba(0,255,65,.6), inset 0 2px 4px rgba(255,255,255,.5), inset 0 -4px 8px rgba(0,0,0,.3);
+            transform: skewX(-7deg);
+          }
+          .ce-mega-banner span {
+            display: block; transform: skewX(7deg);
+            font-family: 'Orbitron','Plus Jakarta Sans',sans-serif; font-weight: 900;
+            letter-spacing: .14em; font-size: clamp(1rem,4.4vw,1.6rem);
+            color: #1a1205; text-shadow: 0 1px 0 #FFE89A, 0 2px 4px rgba(0,0,0,.35);
+            background: linear-gradient(180deg,#FFF1B8,#E5A800); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
+          }
+
+          /* ── Dramatic free-spins reveal ── */
+          .ce-fsreveal {
+            position: fixed; inset: 0; z-index: 10520; display: flex; flex-direction: column;
+            align-items: center; justify-content: center; pointer-events: none;
+            background: radial-gradient(circle at center, rgba(0,40,12,.78) 0%, rgba(0,0,0,.55) 60%, rgba(0,0,0,0) 100%);
+            animation: ceFSFade 2.6s ease-out forwards;
+          }
+          .ce-fsreveal .ce-fs-eyebrow { font-family:'Orbitron',sans-serif; font-weight:700; letter-spacing:.4em; text-transform:uppercase; font-size:clamp(.8rem,3vw,1.1rem); color:#aaffcc; opacity:.9; }
+          .ce-fsreveal .ce-fs-count { font-family:'Orbitron',sans-serif; font-weight:900; font-size:clamp(4rem,22vw,9rem); line-height:1; color:#00ff41; text-shadow:0 0 30px #00ff41,0 0 70px rgba(0,255,65,.6); animation: ceFSPop 700ms cubic-bezier(.2,.9,.4,1.4) both; }
+          .ce-fsreveal .ce-fs-label { margin-top:.4rem; font-family:'Orbitron','Plus Jakarta Sans',sans-serif; font-weight:800; letter-spacing:.22em; text-transform:uppercase; font-size:clamp(1.2rem,6vw,2.4rem); color:#fff; text-shadow:0 0 18px rgba(0,255,65,.7); animation: ceFSPop 700ms 120ms cubic-bezier(.2,.9,.4,1.4) both; }
+          @keyframes ceFSFade { 0%{opacity:0;} 8%{opacity:1;} 82%{opacity:1;} 100%{opacity:0;} }
+          @keyframes ceFSPop { 0%{opacity:0; transform:scale(.3) rotate(-4deg);} 70%{opacity:1; transform:scale(1.12);} 100%{opacity:1; transform:scale(1) rotate(0);} }
+
+          /* ── Premium paytable symbol tiles ── */
+          .ce-pt-row { display:flex; align-items:center; gap:10px; padding:7px 8px; border-radius:9px; background:rgba(255,255,255,.02); border:1px solid rgba(0,255,65,.08); }
+          .ce-pt-row:nth-child(odd) { background:rgba(0,255,65,.035); }
+          .ce-pt-tile { width:38px; height:38px; flex:0 0 38px; border-radius:8px; display:flex; align-items:center; justify-content:center; font-size:1.3rem; overflow:hidden; box-shadow:inset 0 0 0 1px rgba(0,255,65,.18), 0 2px 6px rgba(0,0,0,.4); }
+          .ce-pt-tile img { width:100%; height:100%; object-fit:cover; display:block; }
+          .ce-pt-name { flex:1; min-width:0; font-weight:600; color:#dfe5ef; text-transform:capitalize; font-size:.86rem; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+          .ce-pt-pay { color:#FFD700; font-weight:700; text-align:right; font-variant-numeric:tabular-nums; font-size:.82rem; white-space:nowrap; }
+
+          /* ── Game header (game-page top bar) ── */
+          .ce-hdr-left, .ce-hdr-right { display:flex; align-items:center; gap:.7rem; min-width:0; }
+          .ce-hdr-home, .ce-iconbtn {
+            display:inline-flex; align-items:center; justify-content:center; gap:.4rem;
+            height:38px; min-width:38px; padding:0 .7rem; border-radius:10px; cursor:pointer;
+            background:rgba(0,255,65,.06); border:1px solid color-mix(in srgb, var(--ce-matrix) 38%, transparent);
+            color:var(--ce-matrix); font-weight:800; font-size:.95rem; text-decoration:none; line-height:1;
+            font-family:var(--ce-font-body); transition:border-color .16s, box-shadow .16s, background .16s;
+          }
+          .ce-hdr-home span { font-size:.72rem; letter-spacing:.12em; text-transform:uppercase; }
+          .ce-hdr-home:hover, .ce-iconbtn:hover { border-color:var(--ce-matrix); box-shadow:0 0 12px color-mix(in srgb, var(--ce-matrix) 35%, transparent); background:rgba(0,255,65,.12); }
+          .ce-prov-logo { height:30px; width:auto; max-width:120px; object-fit:contain; opacity:.92; filter:drop-shadow(0 0 6px rgba(0,255,65,.25)); }
+          .ce-hdr-name { font-family:var(--ce-font-display); font-weight:900; letter-spacing:.04em; text-transform:uppercase; font-size:clamp(.9rem,2.4vw,1.15rem); color:#fff; text-shadow:0 0 14px color-mix(in srgb, var(--ce-matrix) 40%, transparent); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:min(38vw,320px); }
+          .ce-bal-chip { display:inline-flex; align-items:center; gap:.4rem; padding:.42rem .85rem; border-radius:999px; text-decoration:none; font-family:'Orbitron',var(--ce-font-display); font-weight:800; font-variant-numeric:tabular-nums; color:var(--ce-matrix); background:linear-gradient(180deg,rgba(4,8,5,.85),rgba(2,5,3,.92)); border:1px solid color-mix(in srgb, var(--ce-matrix) 45%, transparent); box-shadow:inset 0 0 10px rgba(0,0,0,.6),0 0 10px color-mix(in srgb, var(--ce-matrix) 18%, transparent); text-shadow:0 0 8px color-mix(in srgb, var(--ce-matrix) 55%, transparent); }
+          .ce-bal-chip::before { content:'◈'; font-size:.8em; opacity:.85; }
+          @media (max-width:560px) {
+            .ce-hdr-home span { display:none; }
+            .ce-prov-logo { display:none; }
+            .ce-hdr-name { max-width:42vw; }
+            .ce-bal-chip { padding:.4rem .6rem; font-size:.82rem; }
+          }
+
+          /* ── Reduced-motion: this layer's animations off (must come AFTER the
+             rules above so it wins the cascade for reduced-motion users). ── */
+          @media (prefers-reduced-motion: reduce) {
+            .ce-cell.highlight { animation: none !important; }
+            .ce-col.ce-col-spin::after, .ce-col.ce-col-land { animation: none !important; }
+            .ce-btn.primary.ce-spin.ce-spin-press { animation: none !important; }
+            .ce-winpop, .ce-fsreveal, .ce-fsreveal .ce-fs-count, .ce-fsreveal .ce-fs-label { animation: none !important; }
+            .ce-payline-svg path { animation: none !important; stroke-dashoffset: 0 !important; }
+          }
         `;
         document.head.appendChild(s);
       }
@@ -1242,54 +1462,76 @@ if (!window.escapeHtml) {
       // so it stays safe even when payoutCents is large.
       if (!betCents || betCents <= 0) return;
       const ratio = payoutCents / betCents;
+      // Sub-medium wins are handled by the small-win flash + number popup in
+      // _spin — the named-tier takeover starts at the MEDIUM band (5x).
+      if (ratio < 5) return;
 
-      // Particle burst for big wins (≥10x). Fires even on a 10–15x win that
-      // doesn't earn a full-screen tier overlay, so the 10x threshold the
-      // brief feels rewarding before the named tiers kick in.
-      if (ratio >= 10) this._winConfetti(ratio);
-      // Screen pulse for mega wins (≥50x) — the reel frame zooms + flashes so
-      // the whole screen reacts, on top of the overlay text.
-      if (ratio >= 50) this._screenPulse();
+      // MEDIUM+ (≥5x): coin shower of gold/green particles.
+      this._winConfetti(ratio);
+      // BIG+ (≥20x): full-screen Matrix code-rain takeover + screen shake.
+      if (ratio >= 20) { this._matrixRain(2600); this._screenPulse(); }
 
-      let tier = null;
-      // Sizes are viewport-clamped so the wide-tracked labels never overflow
-      // horizontally on <=360px phones (the overlay is built with inline
-      // cssText, so the stylesheet's mobile media queries don't reach it).
-      if      (ratio >= 150) tier = { label: 'SUPER MEGA WIN', fx: 'mega', color: '#FF5DA2', size: 'clamp(2.2rem,11vw,4.6rem)' };
-      else if (ratio >= 100) tier = { label: 'EPIC WIN',  fx: 'mega', color: '#F0C66E', size: 'clamp(2.1rem,10vw,4.2rem)' };
-      else if (ratio >=  50) tier = { label: 'MEGA WIN',  fx: 'mega', color: '#F0C66E', size: 'clamp(1.9rem,9vw,3.6rem)' };
-      else if (ratio >=  15) tier = { label: 'BIG WIN',   fx: 'big',  color: '#FFD700', size: 'clamp(1.7rem,8vw,3.0rem)' };
-      if (!tier) return;
+      // Tier ladder. `mega` flags the gold-on-green banner treatment (≥50x).
+      // Sizes are viewport-clamped so wide-tracked labels never overflow on
+      // <=360px phones (overlay is inline cssText, beyond the stylesheet's
+      // mobile media queries).
+      let tier;
+      if      (ratio >= 150) tier = { label: 'SUPER MEGA WIN', fx: 'mega', mega: true,  color: '#FF5DA2', size: 'clamp(2.2rem,11vw,4.6rem)' };
+      else if (ratio >= 100) tier = { label: 'EPIC WIN',  fx: 'mega', mega: true,  color: '#F0C66E', size: 'clamp(2.1rem,10vw,4.2rem)' };
+      else if (ratio >=  50) tier = { label: 'MEGA WIN',  fx: 'mega', mega: true,  color: '#F0C66E', size: 'clamp(1.9rem,9vw,3.6rem)' };
+      else if (ratio >=  20) tier = { label: 'BIG WIN',   fx: 'big',  mega: false, color: '#FFD700', size: 'clamp(1.7rem,8vw,3.0rem)' };
+      else                   tier = { label: 'NICE WIN',  fx: 'big',  mega: false, color: '#00ff41', size: 'clamp(1.5rem,7vw,2.6rem)' };
 
       this._fx(tier.fx);
 
       const overlay = document.createElement('div');
       overlay.setAttribute('role', 'status');
       overlay.setAttribute('aria-live', 'polite');
+      const bg = tier.mega
+        ? 'radial-gradient(circle at center,rgba(0,60,18,0.62) 0%,rgba(0,0,0,0.35) 55%,rgba(0,0,0,0) 78%)'
+        : 'radial-gradient(circle at center,rgba(0,0,0,0.55) 0%,rgba(0,0,0,0) 70%)';
       overlay.style.cssText =
         'position:fixed;inset:0;z-index:10500;display:flex;flex-direction:column;' +
         'align-items:center;justify-content:center;pointer-events:none;' +
-        'background:radial-gradient(circle at center,rgba(0,0,0,0.55) 0%,rgba(0,0,0,0) 70%);' +
-        'animation:ceCelebrateFade 1.8s ease-out forwards;';
-      const label = document.createElement('div');
-      label.textContent = tier.label;
-      label.style.cssText =
-        'font-family:"Plus Jakarta Sans",Inter,sans-serif;font-weight:900;' +
-        'letter-spacing:clamp(.12rem,1vw,.3rem);font-size:' + tier.size + ';color:' + tier.color + ';' +
-        'max-width:96vw;text-align:center;' +
-        'text-shadow:0 0 24px ' + tier.color + ',0 0 8px ' + tier.color + ';' +
-        'animation:ceCelebratePop 600ms cubic-bezier(.2,.9,.4,1.2) both;';
+        'background:' + bg + ';animation:ceCelebrateFade ' + (tier.mega ? '2.6s' : '1.8s') + ' ease-out forwards;';
+
+      let label;
+      if (tier.mega) {
+        // Gold text on a green ribbon banner.
+        label = document.createElement('div');
+        label.className = 'ce-mega-banner';
+        const span = document.createElement('span');
+        span.textContent = tier.label;
+        span.style.fontSize = tier.size;
+        label.appendChild(span);
+        label.style.animation = 'ceCelebratePop 600ms cubic-bezier(.2,.9,.4,1.2) both';
+      } else {
+        label = document.createElement('div');
+        label.textContent = tier.label;
+        label.style.cssText =
+          'font-family:"Orbitron","Plus Jakarta Sans",sans-serif;font-weight:900;' +
+          'letter-spacing:clamp(.12rem,1vw,.3rem);font-size:' + tier.size + ';color:' + tier.color + ';' +
+          'max-width:96vw;text-align:center;' +
+          'text-shadow:0 0 24px ' + tier.color + ',0 0 8px ' + tier.color + ';' +
+          'animation:ceCelebratePop 600ms cubic-bezier(.2,.9,.4,1.2) both;';
+      }
+
       const amount = document.createElement('div');
-      amount.textContent = fmt(payoutCents);
+      amount.textContent = fmt(0);
       amount.style.cssText =
-        'margin-top:1rem;font-size:2.4rem;font-weight:800;color:#fff;' +
-        'text-shadow:0 2px 12px rgba(0,0,0,0.7);' +
+        'margin-top:1rem;font-size:clamp(1.8rem,7vw,2.8rem);font-weight:800;color:#fff;' +
+        'font-family:"Orbitron",sans-serif;font-variant-numeric:tabular-nums;' +
+        'text-shadow:0 2px 12px rgba(0,0,0,0.7),0 0 20px rgba(0,255,65,0.4);' +
         'animation:ceCelebratePop 700ms 120ms cubic-bezier(.2,.9,.4,1.2) both;';
       overlay.appendChild(label);
       overlay.appendChild(amount);
       document.body.appendChild(overlay);
-      // Self-clean
-      setTimeout(() => overlay.remove(), 2000);
+      // Watch the win amount climb instead of popping in.
+      const reduceMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      if (reduceMotion) amount.textContent = fmt(payoutCents);
+      else this._countUp(amount, 0, payoutCents, tier.mega ? 1400 : 900);
+      // Self-clean (matches the fade keyframe duration).
+      setTimeout(() => overlay.remove(), tier.mega ? 2700 : 2000);
     }
 
     // Lazy-load confetti.min.js (not preloaded on the 100 game pages — saves
@@ -1327,11 +1569,13 @@ if (!window.escapeHtml) {
     _winConfetti(ratio) {
       const reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
       if (reduce) return;
-      // Scale particle count with the win — a 10x sprinkle, a 100x downpour.
-      const count = Math.min(160, 50 + Math.round(ratio));
+      // Coin shower — scale particle count with the win (a 5x sprinkle, a 100x
+      // downpour). Gold + Matrix-green palette, round shapes read as coins.
+      const count = Math.min(180, 40 + Math.round(ratio * 1.4));
+      const coins = { colors: ['#FFD700', '#F0C66E', '#FFE89A', '#00ff41', '#9CFFB3'], shapes: ['circle'] };
       this._ensureConfetti(() => {
         if (typeof window.confetti !== 'function') return;
-        const opts = { spread: 70, startVelocity: 42, ticks: 220, scalar: 1.0, particleCount: count };
+        const opts = Object.assign({ spread: 72, startVelocity: 45, ticks: 240, scalar: 1.05, particleCount: count }, coins);
         try {
           window.confetti(Object.assign({}, opts, { origin: { x: 0.5, y: 0.6 } }));
           if (ratio >= 25) {
@@ -1350,6 +1594,192 @@ if (!window.escapeHtml) {
       this.reelBox.offsetWidth; // reflow so the animation re-fires on repeat megas
       this.reelBox.classList.add('ce-screen-pulse');
       setTimeout(() => { if (this.reelBox) this.reelBox.classList.remove('ce-screen-pulse'); }, 950);
+    }
+
+    // Replay the SPIN button press keyframe (scale-down → glow pulse → spring
+    // back). Class re-add + reflow so consecutive presses re-fire it.
+    _spinPress() {
+      const b = this.spinBtn;
+      if (!b) return;
+      const reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      if (reduce) return;
+      b.classList.remove('ce-spin-press');
+      // eslint-disable-next-line no-unused-expressions
+      b.offsetWidth; // reflow
+      b.classList.add('ce-spin-press');
+      setTimeout(() => { if (b) b.classList.remove('ce-spin-press'); }, 480);
+    }
+
+    // Full-screen Matrix code-rain takeover for big wins. A self-terminating
+    // canvas of falling green katakana over the page. Pure polish — guarded so
+    // it can never throw into the spin flow, and skipped under reduced-motion.
+    _matrixRain(durationMs) {
+      const reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      if (reduce) return;
+      try {
+        const canvas = document.createElement('canvas');
+        canvas.className = 'ce-matrix-rain';
+        canvas.setAttribute('aria-hidden', 'true');
+        canvas.style.cssText = 'position:fixed;inset:0;z-index:10450;pointer-events:none;opacity:0;transition:opacity .3s;';
+        document.body.appendChild(canvas);
+        const ctx = canvas.getContext('2d');
+        if (!ctx) { canvas.remove(); return; }
+        const dpr = Math.min(2, window.devicePixelRatio || 1);
+        const glyphs = 'ｱｲｳｴｵｶｷｸｹｺｻｼｽｾｿﾀﾁﾂﾃﾄﾅﾆﾇﾈ0123456789ABCDEF$¥€';
+        let W = 0, H = 0, cols = 0, drops = [], fontSize = 16 * dpr;
+        const resize = () => {
+          W = canvas.width = Math.floor(window.innerWidth * dpr);
+          H = canvas.height = Math.floor(window.innerHeight * dpr);
+          canvas.style.width = window.innerWidth + 'px';
+          canvas.style.height = window.innerHeight + 'px';
+          fontSize = 16 * dpr;
+          cols = Math.max(1, Math.floor(W / fontSize));
+          drops = new Array(cols).fill(0).map(() => Math.floor(Math.random() * -50));
+          ctx.font = fontSize + 'px monospace';
+        };
+        resize();
+        requestAnimationFrame(() => { canvas.style.opacity = '1'; });
+        const start = performance.now();
+        const draw = (now) => {
+          ctx.fillStyle = 'rgba(0,0,0,0.10)';
+          ctx.fillRect(0, 0, W, H);
+          ctx.font = fontSize + 'px monospace';
+          ctx.fillStyle = '#00ff41';
+          ctx.shadowColor = '#00ff41';
+          ctx.shadowBlur = 6;
+          for (let i = 0; i < cols; i++) {
+            const ch = glyphs[(Math.random() * glyphs.length) | 0];
+            ctx.fillText(ch, i * fontSize, drops[i] * fontSize);
+            if (drops[i] * fontSize > H && Math.random() > 0.975) drops[i] = 0;
+            drops[i]++;
+          }
+          ctx.shadowBlur = 0;
+          if (now - start < durationMs) {
+            requestAnimationFrame(draw);
+          } else {
+            canvas.style.opacity = '0';
+            window.removeEventListener('resize', resize);
+            setTimeout(() => { try { canvas.remove(); } catch (_) {} }, 350);
+          }
+        };
+        window.addEventListener('resize', resize);
+        requestAnimationFrame(draw);
+      } catch (_) { /* rain is pure polish — never block a spin */ }
+    }
+
+    // Quick floating "+$X" popup over the reels for small wins. Self-cleaning.
+    _smallWinPopup(cents) {
+      if (!this.reelBox) return;
+      try {
+        const pop = document.createElement('div');
+        pop.className = 'ce-winpop';
+        pop.textContent = '+' + fmt(cents);
+        this.reelBox.appendChild(pop);
+        setTimeout(() => { try { pop.remove(); } catch (_) {} }, 1250);
+      } catch (_) { /* popup is polish */ }
+    }
+
+    // Dramatic free-spins trigger reveal — big green count + "FREE SPINS".
+    _freeSpinsReveal(count) {
+      try {
+        const overlay = document.createElement('div');
+        overlay.className = 'ce-fsreveal';
+        overlay.setAttribute('role', 'status');
+        overlay.setAttribute('aria-live', 'polite');
+        overlay.setAttribute('aria-label', count + ' free spins awarded');
+        overlay.appendChild($el('div', { class: 'ce-fs-eyebrow' }, 'You triggered'));
+        overlay.appendChild($el('div', { class: 'ce-fs-count' }, String(count)));
+        overlay.appendChild($el('div', { class: 'ce-fs-label' }, 'Free Spins'));
+        document.body.appendChild(overlay);
+        setTimeout(() => { try { overlay.remove(); } catch (_) {} }, 2700);
+      } catch (_) { /* reveal is polish */ }
+    }
+
+    // Remove any drawn paylines + cancel their auto-clear timer.
+    _clearPaylines() {
+      if (this._paylineSvg) { try { this._paylineSvg.remove(); } catch (_) {} this._paylineSvg = null; }
+      if (this._paylineTimer) { clearTimeout(this._paylineTimer); this._paylineTimer = null; }
+    }
+
+    // Draw animated SVG paylines connecting each winning line's cells. Each
+    // line gets a glow underlay + bright stroke that "draws on" via
+    // stroke-dashoffset, plus node rings on every winning cell. Coordinates are
+    // measured live from the rendered cells so it tracks any responsive size.
+    _drawPaylines(lineWins) {
+      this._clearPaylines();
+      const reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      if (!this.reelBox || !this.reelGrid) return;
+      if (!Array.isArray(lineWins) || !lineWins.length) return;
+      try {
+        const g = this.state.game;
+        const grid = this.reelGrid;
+        const cells = Array.from(grid.querySelectorAll('.ce-cell'));
+        const gridRect = grid.getBoundingClientRect();
+        const W = grid.offsetWidth, H = grid.offsetHeight;
+        if (!W || !H) return;
+        const NS = 'http://www.w3.org/2000/svg';
+        const svg = document.createElementNS(NS, 'svg');
+        svg.setAttribute('class', 'ce-payline-svg');
+        svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
+        svg.setAttribute('aria-hidden', 'true');
+        svg.style.left = grid.offsetLeft + 'px';
+        svg.style.top = grid.offsetTop + 'px';
+        svg.style.width = W + 'px';
+        svg.style.height = H + 'px';
+        const palette = ['#00ff41', '#FFD700', '#00e5ff', '#ff5da2', '#b06bff', '#ff8c00'];
+        const center = (r, y) => {
+          const cell = cells[r * g.rows + y];
+          if (!cell) return null;
+          const cr = cell.getBoundingClientRect();
+          return [cr.left - gridRect.left + cr.width / 2, cr.top - gridRect.top + cr.height / 2];
+        };
+        let colorIdx = 0;
+        lineWins.forEach((w) => {
+          const pts = (w.positions || []).map((p) => center(p[0], p[1])).filter(Boolean);
+          if (pts.length < 2) return;
+          const color = palette[colorIdx % palette.length];
+          colorIdx++;
+          const d = pts.map((p, i) => (i === 0 ? 'M' : 'L') + p[0].toFixed(1) + ' ' + p[1].toFixed(1)).join(' ');
+          const mkPath = (width, opacity, glow) => {
+            const path = document.createElementNS(NS, 'path');
+            path.setAttribute('d', d);
+            path.setAttribute('fill', 'none');
+            path.setAttribute('stroke', color);
+            path.setAttribute('stroke-width', width);
+            path.setAttribute('stroke-linejoin', 'round');
+            path.setAttribute('stroke-linecap', 'round');
+            path.setAttribute('opacity', opacity);
+            if (glow) path.style.filter = 'drop-shadow(0 0 6px ' + color + ')';
+            if (!reduce) {
+              let len = 0;
+              try { len = path.getTotalLength ? path.getTotalLength() : 0; } catch (_) { len = 0; }
+              if (len) {
+                path.style.strokeDasharray = String(len);
+                path.style.strokeDashoffset = String(len);
+                path.style.animation = 'cePaylineDraw .55s ease forwards';
+              }
+            }
+            return path;
+          };
+          svg.appendChild(mkPath(7, 0.32, true));
+          svg.appendChild(mkPath(3, 0.95, false));
+          pts.forEach((p) => {
+            const c = document.createElementNS(NS, 'circle');
+            c.setAttribute('cx', p[0].toFixed(1));
+            c.setAttribute('cy', p[1].toFixed(1));
+            c.setAttribute('r', '7');
+            c.setAttribute('fill', 'none');
+            c.setAttribute('stroke', color);
+            c.setAttribute('stroke-width', '2.5');
+            c.style.filter = 'drop-shadow(0 0 5px ' + color + ')';
+            svg.appendChild(c);
+          });
+        });
+        if (!svg.childNodes.length) return;
+        this.reelBox.appendChild(svg);
+        this._paylineSvg = svg;
+        this._paylineTimer = setTimeout(() => this._clearPaylines(), 4200);
+      } catch (_) { /* paylines are polish — never block a spin */ }
     }
 
     _celebrateJackpot(amountCents, tier) {
@@ -2134,6 +2564,26 @@ if (!window.escapeHtml) {
       return false;
     }
 
+    // Map a bonus mechanic name/description to a representative emoji icon for
+    // the paytable feature card. Keyword match against the 28 bonusType values.
+    _featureIcon(text) {
+      const t = String(text || '').toLowerCase();
+      const map = [
+        [/free.?spin|respin|spin/, '🔄'],
+        [/wild/, '🃏'],
+        [/multiplier|mult|zeus/, '✖️'],
+        [/jackpot/, '💰'],
+        [/wheel|prize/, '🎡'],
+        [/hold|collect|coin|money/, '🪙'],
+        [/cascad|tumble|avalanche/, '🌊'],
+        [/expand|colossal|stack|mystery/, '🔲'],
+        [/scatter/, '⭐'],
+        [/chamber|vault|buy.?feature/, '🔓'],
+      ];
+      for (const [re, icon] of map) { if (re.test(t)) return icon; }
+      return '🎁';
+    }
+
     _showInfoModal() {
       // Paytable / game-info modal. Reads from this.state.game and
       // builds a quick-glance reference for the player mid-session.
@@ -2247,7 +2697,7 @@ if (!window.escapeHtml) {
         h3.style.cssText = 'margin:6px 0 8px;font-size:0.85rem;color:#9CA3AF;text-transform:uppercase;letter-spacing:0.06em;font-weight:600;';
         paytableSection.appendChild(h3);
         const table = document.createElement('div');
-        table.style.cssText = 'display:grid;grid-template-columns:1fr auto;gap:6px 14px;font-size:0.88rem;';
+        table.style.cssText = 'display:flex;flex-direction:column;gap:5px;';
         const betCents = this.state.betCents;
         const cashFor = (mult) => {
           const n = parseFloat(mult);
@@ -2256,24 +2706,43 @@ if (!window.escapeHtml) {
         };
         Object.keys(g.paytable).forEach(sym => {
           const val = g.paytable[sym];
-          const left = document.createElement('span');
-          left.textContent = this._symbolGlyph(String(sym)) + '  ' + String(sym);
-          left.style.cssText = 'color:#CDD3DE;font-variant-numeric:tabular-nums;';
-          const right = document.createElement('span');
+          const row = document.createElement('div');
+          row.className = 'ce-pt-row';
+          // Symbol tile — real per-game bitmap art when available, else the
+          // themed emoji glyph (falls back on decode error, like the reels).
+          const tile = document.createElement('div');
+          tile.className = 'ce-pt-tile';
+          const [ca, cb] = symbolColors(String(sym), 0);
+          tile.style.background = `linear-gradient(135deg, ${ca}, ${cb})`;
+          const url = this._symbolArtURL(String(sym).toLowerCase());
+          if (url) {
+            const img = document.createElement('img');
+            img.alt = ''; img.loading = 'lazy'; img.decoding = 'async';
+            img.addEventListener('error', () => { tile.textContent = this._symbolGlyph(String(sym)); }, { once: true });
+            img.src = url;
+            tile.appendChild(img);
+          } else {
+            tile.textContent = this._symbolGlyph(String(sym));
+          }
+          const name = document.createElement('span');
+          name.className = 'ce-pt-name';
+          name.textContent = String(sym).replace(/-/g, ' ');
+          const pay = document.createElement('span');
+          pay.className = 'ce-pt-pay';
           if (val && typeof val === 'object') {
-            // Nested: show the top match-count payout in cash + multiplier.
             const parts = Object.keys(val).map(k => {
               const cash = cashFor(val[k]);
-              return k + ' ' + (cash ? cash : (val[k] + '×'));
+              return k + '× ' + (cash ? cash : (val[k] + '×'));
             });
-            right.textContent = parts.join('  ·  ');
+            pay.textContent = parts.join('  ·  ');
           } else {
             const cash = cashFor(val);
-            right.textContent = cash ? (val + '×  →  ' + cash) : String(val);
+            pay.textContent = cash ? (val + '×  →  ' + cash) : String(val);
           }
-          right.style.cssText = 'color:#F0C66E;font-weight:600;text-align:right;font-variant-numeric:tabular-nums;';
-          table.appendChild(left);
-          table.appendChild(right);
+          row.appendChild(tile);
+          row.appendChild(name);
+          row.appendChild(pay);
+          table.appendChild(row);
         });
         paytableSection.appendChild(table);
       }
@@ -2285,10 +2754,18 @@ if (!window.escapeHtml) {
         h3.textContent = 'Bonus feature';
         h3.style.cssText = 'margin:6px 0 6px;font-size:0.85rem;color:#9CA3AF;text-transform:uppercase;letter-spacing:0.06em;font-weight:600;';
         bonusSection.appendChild(h3);
+        // Feature card with an icon keyed to the bonus mechanic.
+        const card = document.createElement('div');
+        card.style.cssText = 'display:flex;gap:11px;align-items:flex-start;padding:11px 12px;border-radius:11px;background:rgba(0,255,65,0.05);border:1px solid rgba(0,255,65,0.18);';
+        const icon = document.createElement('div');
+        icon.textContent = this._featureIcon(g.bonusType || g.bonusDesc || '');
+        icon.style.cssText = 'flex:0 0 auto;font-size:1.5rem;line-height:1;filter:drop-shadow(0 0 6px rgba(0,255,65,0.4));';
         const p = document.createElement('p');
         p.textContent = g.bonusDesc || g.bonusType || '';
         p.style.cssText = 'margin:0;';
-        bonusSection.appendChild(p);
+        card.appendChild(icon);
+        card.appendChild(p);
+        bonusSection.appendChild(card);
       }
 
       // ── Your stats on this game ──
@@ -2774,6 +3251,11 @@ if (!window.escapeHtml) {
       // Motion blur — every cell rolls blurred; the blur is cleared per-reel
       // the moment that reel lands (see the stop loop below).
       cells.forEach(c => c.classList.add('ce-rolling'));
+      // Clear any paylines from the previous spin + mark every reel column as
+      // spinning (drives the vertical scrolling-light streak overlay).
+      this._clearPaylines();
+      const cols = Array.from(this.reelGrid.querySelectorAll('.ce-col'));
+      cols.forEach(c => { c.classList.remove('ce-col-land'); c.classList.add('ce-col-spin'); });
 
       // Reel-speed config drives the base rolling cadence + per-reel
       // landing delay. Near-miss anticipation slowdown (below) layers
@@ -2889,9 +3371,21 @@ if (!window.escapeHtml) {
             cell.classList.add('just-landed');
           }
         }
+        // Reel landed — stop the spinning streak on this column + play the
+        // weighty vertical settle.
+        const landedCol = cols[r];
+        if (landedCol) {
+          landedCol.classList.remove('ce-col-spin');
+          landedCol.classList.remove('ce-col-land');
+          // eslint-disable-next-line no-unused-expressions
+          landedCol.offsetWidth; // reflow so the settle re-fires
+          landedCol.classList.add('ce-col-land');
+        }
         this._fx('stop');
       }
       clearInterval(rollInterval);
+      // Safety: ensure no column is left in the spinning state (e.g. tap-to-skip).
+      cols.forEach(c => c.classList.remove('ce-col-spin'));
 
       const winPositions = new Set();
       (result.lineWins || []).forEach(w => w.positions.forEach(([r, y]) => winPositions.add(`${r}-${y}`)));
@@ -2901,6 +3395,9 @@ if (!window.escapeHtml) {
         const cell = cells[r * g.rows + y];
         if (cell) cell.classList.add('highlight');
       });
+      // Draw animated paylines connecting the winning cells. Measured live from
+      // the just-rendered grid; auto-clears after a few seconds (or next spin).
+      if ((result.payoutCents || 0) > 0) this._drawPaylines(result.lineWins);
 
       const bet = this.state.betCents;
       const win = result.payoutCents || 0;
@@ -2919,10 +3416,10 @@ if (!window.escapeHtml) {
         this._celebrateJackpot(jpCents, jpTier);
       } else if (win > 0) {
         this.winStrip.textContent = `Win ${fmt(win)}${result.multiplier !== 1 ? `  ×${result.multiplier}` : ''}`;
-        // Win tier: small win sound + light haptic. Big/Mega/Epic are
-        // handled by _celebrateWin which plays the bigger sound + the
-        // full-screen overlay.
-        if (win / Math.max(bet, 1) < 15) this._fx('small');
+        // Sub-medium wins (<5x) get a quick flash + floating number popup +
+        // light sound here; MEDIUM/BIG/MEGA tiers are handled by _celebrateWin
+        // (coin shower / Matrix rain / banner + the bigger sound).
+        if (win / Math.max(bet, 1) < 5) { this._fx('small'); this._smallWinPopup(win); }
         this._celebrateWin(win, bet);
       } else {
         this.winStrip.textContent = 'No win — try again';
@@ -2952,6 +3449,8 @@ if (!window.escapeHtml) {
       if (result.freeSpinsAwarded > 0) {
         this.winStrip.textContent += `  •  +${result.freeSpinsAwarded} free spins!`;
         this._fx('bonus');
+        // Dramatic full-screen reveal of the free-spins count.
+        this._freeSpinsReveal(result.freeSpinsAwarded);
       }
 
       if (typeof result.balanceAfterCents === 'number') {
