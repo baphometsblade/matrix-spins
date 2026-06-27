@@ -40,6 +40,22 @@ if (!window.escapeHtml) {
 
   const HAS_API = typeof window !== 'undefined' && window.MatrixSpinsAPI;
 
+  // Capture THIS script's own URL at load time so we can derive sibling-script
+  // paths (e.g. js/matrix-loader.js) regardless of where the page lives
+  // (/index.html vs /games/foo.html). document.currentScript is only valid
+  // during top-level execution, so it must be read here, not inside a method.
+  const ENGINE_SCRIPT_SRC = (function () {
+    try {
+      if (document.currentScript && document.currentScript.src) return document.currentScript.src;
+      const scripts = document.getElementsByTagName('script');
+      for (let i = scripts.length - 1; i >= 0; i--) {
+        const src = scripts[i].src || '';
+        if (/casino-engine\.js(\?|$)/.test(src)) return src;
+      }
+    } catch (_) { /* noop */ }
+    return '';
+  })();
+
   function $el(tag, props = {}, ...children) {
     const el = document.createElement(tag);
     for (const [k, v] of Object.entries(props)) {
@@ -261,6 +277,10 @@ if (!window.escapeHtml) {
       if (!this.gameId) throw new Error('CasinoEngine: gameConfig.id is required');
       this.theme = gameConfig.studioTheme || {};
       this.displayName = gameConfig.name || 'Slot Game';
+      // Page-supplied RTP (display-only; authoritative value comes from the
+      // server later). Captured for the matrix-loader splash, which shows
+      // before the server config is fetched.
+      this._initialRtp = (gameConfig.rtp != null) ? gameConfig.rtp : gameConfig.rtpPercent;
 
       this.state = {
         balanceCents: 0,
@@ -308,8 +328,19 @@ if (!window.escapeHtml) {
         this._fatal('Matrix Spins API client not loaded. Include js/api-client.js before casino-engine.js.');
         return;
       }
+      // Matrix-rain boot splash. Best-effort + fully guarded: ensure the module
+      // is present (dynamically injected from this script's own folder if the
+      // page didn't include it), then show. If anything is missing, boot
+      // proceeds normally — the loader is pure polish, never a gate.
+      try {
+        await this._ensureMatrixLoader();
+        if (typeof window.MatrixLoader !== 'undefined') {
+          window.MatrixLoader.show({ name: this.displayName || 'Loading', rtp: this._initialRtp });
+        }
+      } catch (_) { /* loader is optional — never block boot */ }
       const user = await window.MatrixSpinsAPI.loadSession();
       if (!user) {
+        try { if (typeof window.MatrixLoader !== 'undefined') window.MatrixLoader.hide(); } catch (_) {}
         const next = encodeURIComponent(location.pathname + location.search);
         window.location.href = `../login.html?next=${next}`;
         return;
@@ -350,12 +381,54 @@ if (!window.escapeHtml) {
         // never throws, so a missing/!ok manifest just yields emoji reels.
         await this._loadSymbolArt();
         this._render();
+        // Reels are painted — tear down the boot splash. MatrixLoader enforces
+        // its own minimum-display window, so this won't flash on fast boots.
+        try { if (typeof window.MatrixLoader !== 'undefined') window.MatrixLoader.hide(); } catch (_) {}
         if (this._balanceUnavailable) {
           this.winStrip && (this.winStrip.textContent = 'Reconnecting to your balance…');
         }
       } catch (err) {
+        // Always dismiss the splash on the error path so a boot failure can
+        // never leave the overlay stuck over the fatal message.
+        try { if (typeof window.MatrixLoader !== 'undefined') window.MatrixLoader.hide(); } catch (_) {}
         this._fatal(err.message || 'Failed to load game.');
       }
+    }
+
+    // Ensure window.MatrixLoader is available, dynamically injecting
+    // js/matrix-loader.js if the page didn't include it. The path is derived
+    // from THIS script's own src (ENGINE_SCRIPT_SRC) so it resolves correctly
+    // whether the page is /index.html or /games/<slug>.html — both load the
+    // engine as a sibling of matrix-loader.js. Resolves quietly (never
+    // rejects): if injection fails, boot proceeds without the loader.
+    _ensureMatrixLoader() {
+      return new Promise((resolve) => {
+        try {
+          if (typeof window.MatrixLoader !== 'undefined') { resolve(); return; }
+          if (!ENGINE_SCRIPT_SRC) { resolve(); return; }
+          // If a prior boot already kicked off the inject, reuse that load.
+          const existing = document.getElementById('ce-matrix-loader-js');
+          if (existing) {
+            existing.addEventListener('load', () => resolve(), { once: true });
+            existing.addEventListener('error', () => resolve(), { once: true });
+            // It may already be loaded; resolve on next tick as a fallback.
+            setTimeout(resolve, 0);
+            return;
+          }
+          const url = ENGINE_SCRIPT_SRC.replace(/casino-engine\.js(\?.*)?$/, 'matrix-loader.js');
+          const tag = document.createElement('script');
+          tag.id = 'ce-matrix-loader-js';
+          tag.src = url;
+          tag.async = false;
+          tag.addEventListener('load', () => resolve(), { once: true });
+          tag.addEventListener('error', () => resolve(), { once: true });
+          (document.head || document.documentElement).appendChild(tag);
+          // Hard safety: never let a hung script request stall boot.
+          setTimeout(resolve, 2500);
+        } catch (_) {
+          resolve();
+        }
+      });
     }
 
     // Inject the studio display/body fonts (Cinzel, Orbitron, Black Ops One,
@@ -674,6 +747,28 @@ if (!window.escapeHtml) {
       [betMinus, this.betLabel, betPlus, betMax, infoBtn, turboBtn, autoBtn, this.spinBtn].forEach(b => controlBar.appendChild(b));
       this.main.appendChild(controlBar);
 
+      // ── Bet presets (Min / Low / Med / High / Max) ──
+      // Quick-jump chips computed from the game's bet bounds. Clicking a chip
+      // sets the bet via _setBet (same state + UI sync the steppers use); the
+      // chip matching the current bet is highlighted .active. Presentation
+      // only — never touches spin/balance logic.
+      const presetRow = $el('div', { class: 'ce-presets', role: 'group', 'aria-label': 'Bet presets' });
+      this._betPresetBtns = [];
+      this._betPresets().forEach(({ label, cents }) => {
+        const btn = $el('button', {
+          class: 'ce-btn ce-btn-preset',
+          'aria-label': `Set bet to ${label} (${fmt(cents)})`,
+          'aria-pressed': 'false',
+          title: fmt(cents),
+          onclick: () => this._setBet(cents),
+        }, label);
+        btn.dataset.cents = String(cents);
+        this._betPresetBtns.push(btn);
+        presetRow.appendChild(btn);
+      });
+      this.main.appendChild(presetRow);
+      this._syncBetPresets();
+
       this.freeSpinsRow = $el('div', { style: { textAlign: 'center', marginTop: '.8rem', fontSize: '.9rem', opacity: .85 } });
       this.main.appendChild(this.freeSpinsRow);
       this._renderFreeSpins();
@@ -737,6 +832,13 @@ if (!window.escapeHtml) {
           .ce-btn-maxbet, .ce-btn-auto { background: linear-gradient(135deg, color-mix(in srgb, var(--ce-primary) 22%, transparent), transparent); border-color: color-mix(in srgb, var(--ce-primary) 55%, transparent); color: var(--ce-primary); letter-spacing: 1px; font-weight: 800; }
           .ce-btn-info, .ce-btn-turbo { min-width: 40px; min-height: 40px; padding: .4rem; border-radius: 50%; font-weight: 800; color: var(--ce-primary); background: linear-gradient(135deg, color-mix(in srgb, var(--ce-primary) 20%, transparent), transparent); border-color: color-mix(in srgb, var(--ce-primary) 50%, transparent); }
           .ce-btn-info { font-style: italic; font-family: var(--ce-font-display); font-size: 1.05rem; }
+
+          /* ── Bet presets (Min / Low / Med / High / Max) ── */
+          .ce-presets { display: flex; flex-wrap: wrap; justify-content: center; gap: .4rem; max-width: 860px; margin: .7rem auto 0; }
+          .ce-btn-preset { padding: .42rem .9rem; font-size: .76rem; letter-spacing: .06em; text-transform: uppercase; font-weight: 800; color: color-mix(in srgb, var(--ce-primary) 82%, #fff); background: linear-gradient(180deg, color-mix(in srgb, var(--ce-primary) 14%, transparent), transparent); border: 1px solid color-mix(in srgb, var(--ce-primary) 38%, transparent); border-radius: 999px; }
+          .ce-btn-preset:hover { border-color: var(--ce-primary); box-shadow: 0 0 10px color-mix(in srgb, var(--ce-primary) 28%, transparent); }
+          .ce-btn-preset.active { color: #160f02; background: radial-gradient(circle at 50% 30%, var(--ce-secondary) 0%, var(--ce-primary) 70%); border-color: var(--ce-primary); box-shadow: 0 0 14px color-mix(in srgb, var(--ce-primary) 42%, transparent); }
+          @media (max-width: 640px) { .ce-btn-preset { padding: .5rem .85rem; font-size: .72rem; min-height: 40px; flex: 1 1 auto; } .ce-presets { gap: .35rem; } }
           .ce-btn-autoplay { background: linear-gradient(180deg, #ef4444, #b91c1c) !important; color: #fff !important; border: none !important; box-shadow: 0 4px 14px rgba(239,68,68,0.45) !important; }
           /* During autoplay the spin button turns into a red STOP — hide the
              gold themed arrow-ring so it doesn't orbit the red button. */
@@ -867,6 +969,21 @@ if (!window.escapeHtml) {
             100% { transform: scale(1);    filter: brightness(1); }
           }
           .ce-reelbox.ce-screen-pulse { animation: ceScreenPulse 900ms cubic-bezier(.36,.07,.19,.97) both; }
+
+          /* ── Game-info panel: slide-up sheet on mobile, centered modal on
+             desktop. The overlay flexes its panel to the bottom on phones and
+             to center on wider screens; the panel animates in accordingly. ── */
+          #ce-info-overlay { align-items: flex-end; }
+          #ce-info-overlay .ce-info-panel { animation: ceInfoSlideUp 280ms cubic-bezier(.16,.84,.44,1) both; width: 100%; max-width: 560px; border-bottom-left-radius: 0; border-bottom-right-radius: 0; }
+          @keyframes ceInfoSlideUp { from { transform: translateY(100%); opacity: .4; } to { transform: translateY(0); opacity: 1; } }
+          @keyframes ceInfoPop { from { transform: scale(.94); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+          @media (min-width: 641px) {
+            #ce-info-overlay { align-items: center; }
+            #ce-info-overlay .ce-info-panel { animation-name: ceInfoPop; border-radius: 14px; }
+          }
+          @media (prefers-reduced-motion: reduce) {
+            #ce-info-overlay .ce-info-panel { animation: none !important; }
+          }
 
           /* Reduced-motion honour — cells just snap, no landing/winglow/blur loop. */
           @media (prefers-reduced-motion: reduce) {
@@ -1361,6 +1478,7 @@ if (!window.escapeHtml) {
       this.state.betCents = next;
       this.betLabel.textContent = fmt(next);
       if (this.meterBet) this.meterBet.textContent = fmt(next);
+      this._syncBetPresets();
     }
 
     _maxBet() {
@@ -1370,6 +1488,71 @@ if (!window.escapeHtml) {
       this.betLabel.textContent = fmt(g.maxBetCents);
       if (this.meterBet) this.meterBet.textContent = fmt(g.maxBetCents);
       this._fx('stop');
+      this._syncBetPresets();
+    }
+
+    // Compute the five bet presets (Min / Low / Med / High / Max) from the
+    // game's bet bounds. Each interior preset is snapped to a betStep multiple
+    // and clamped into [min, max]; duplicates (tiny ranges) are de-duped while
+    // preserving order, so a near-flat range may yield fewer than 5 chips.
+    // Returns [{ label, cents }, …]. Presentation only — no money logic.
+    _betPresets() {
+      const g = this.state.game;
+      if (!g) return [];
+      const min = g.minBetCents;
+      const max = g.maxBetCents;
+      const step = g.betStepCents || 1;
+      const range = max - min;
+      const snap = (cents) => {
+        // Snap to the nearest step multiple ABOVE min, then clamp.
+        let v = min + Math.round((cents - min) / step) * step;
+        if (v < min) v = min;
+        if (v > max) v = max;
+        return v;
+      };
+      const defs = [
+        ['Min', min],
+        ['Low', snap(min + range * 0.25)],
+        ['Med', snap(min + range * 0.50)],
+        ['High', snap(min + range * 0.75)],
+        ['Max', max],
+      ];
+      const seen = new Set();
+      const out = [];
+      for (const [label, cents] of defs) {
+        if (seen.has(cents)) continue;
+        seen.add(cents);
+        out.push({ label, cents });
+      }
+      return out;
+    }
+
+    // Set the bet to an exact cents value (clamped) and mirror every UI surface
+    // the steppers/max touch: bet label + BET meter cell + active-preset
+    // highlight. Does NOT invent new state — writes the same this.state.betCents
+    // the spin path reads, identical to _changeBet/_maxBet.
+    _setBet(cents) {
+      const g = this.state.game;
+      if (!g) return;
+      let next = cents;
+      if (next < g.minBetCents) next = g.minBetCents;
+      if (next > g.maxBetCents) next = g.maxBetCents;
+      this.state.betCents = next;
+      this.betLabel.textContent = fmt(next);
+      if (this.meterBet) this.meterBet.textContent = fmt(next);
+      this._syncBetPresets();
+      this._fx('stop');
+    }
+
+    // Toggle the .active class on whichever preset chip matches the current bet.
+    _syncBetPresets() {
+      if (!this._betPresetBtns) return;
+      const cur = this.state.betCents;
+      for (const btn of this._betPresetBtns) {
+        const on = Number(btn.dataset.cents) === cur;
+        btn.classList.toggle('active', on);
+        btn.setAttribute('aria-pressed', on ? 'true' : 'false');
+      }
     }
 
     // Refresh the static cells of the BET/WIN/BALANCE meter from state. The WIN
@@ -1915,6 +2098,7 @@ if (!window.escapeHtml) {
         'display:flex;align-items:center;justify-content:center;padding:24px;';
 
       const panel = document.createElement('div');
+      panel.className = 'ce-info-panel';
       panel.style.cssText =
         'background:linear-gradient(180deg,#161B23,#0F1218);' +
         'border:1px solid ' + this._primary + '55;border-radius:14px;' +

@@ -497,6 +497,7 @@ mount('/api/user-search',    './routes/user-search.routes',   'user-search');
 mount('/api/vip',           './routes/vip.routes',           'vip-loyalty');
 mount('/api/achievements',  './routes/achievements.routes',  'achievements');
 mount('/api/challenges',    './routes/challenges.routes',    'challenges');
+mount('/api/players-online', './routes/players-online.routes', 'players-online');
 mount('/api/milestones',    './routes/milestones.routes',    'milestones');
 mount('/api/notifications', './routes/notifications.routes', 'notifications');
 mount('/api/cosmetics',     './routes/cosmetics.routes',     'cosmetics');

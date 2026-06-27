@@ -167,4 +167,67 @@ router.get('/summary', authenticate, async (req, res) => {
   }
 });
 
+/**
+ * GET /api/game-history/recent
+ * Returns the player's last N distinct games played (for the lobby
+ * "Continue Playing" row). Pulled from real spin history.
+ *
+ * Query params:
+ *   - limit: number of distinct games (default 5, max 12)
+ *
+ * Response: { games: [{ gameId, slug, name, thumbnail, url, lastPlayed, spins }] }
+ */
+let _slugRegistry;
+try { _slugRegistry = require('../services/slug-registry'); } catch (_) { _slugRegistry = null; }
+
+router.get('/recent', authenticate, async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const limit = Math.min(12, Math.max(1, parseInt(req.query.limit, 10) || 5));
+
+    // Most-recently-played distinct games, newest first.
+    const rows = await db.all(
+      `SELECT game_id,
+              MAX(created_at) AS last_played,
+              COUNT(*)        AS spins
+         FROM spins
+        WHERE user_id = ?
+        GROUP BY game_id
+        ORDER BY last_played DESC
+        LIMIT ?`,
+      [userId, limit]
+    );
+
+    const games = (rows || []).map((r) => {
+      const gameId = r.game_id;
+      let meta = null;
+      if (_slugRegistry && typeof _slugRegistry.getSlugGame === 'function') {
+        try { meta = _slugRegistry.getSlugGame(gameId); } catch (_) { meta = null; }
+      }
+      const slug = (meta && meta.id) || String(gameId).replace(/_/g, '-');
+      return {
+        gameId,
+        slug,
+        name: (meta && meta.name) || prettifyId(gameId),
+        thumbnail: (meta && meta.thumbnail) || null,
+        url: '/games/' + slug + '.html',
+        lastPlayed: r.last_played,
+        spins: Number(r.spins) || 0,
+      };
+    });
+
+    res.json({ games });
+  } catch (err) {
+    console.warn('[GameHistory] Get recent error:', err.message);
+    res.status(500).json({ error: 'Failed to retrieve recent games' });
+  }
+});
+
+function prettifyId(id) {
+  return String(id || '')
+    .replace(/[_-]+/g, ' ')
+    .replace(/\b\w/g, (c) => c.toUpperCase())
+    .trim();
+}
+
 module.exports = router;

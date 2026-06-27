@@ -94,6 +94,12 @@ function init(httpServer) {
       if (u.is_admin) socket.join('agent');
     }
 
+    // ── Players-online counter ─────────────────────────────────
+    // Broadcast the live connected-client count on every connect and
+    // disconnect so the lobby "players online" badge updates in realtime.
+    broadcastPlayerCount();
+    socket.on('disconnect', () => { broadcastPlayerCount(); });
+
     // Send unread support count for this user on connect
     if (u) {
       support.unreadCountForUser(u.id).then(count => {
@@ -165,6 +171,34 @@ function getIO() {
 
 function isAttached() { return !!_io; }
 
+/**
+ * Live count of currently-connected Socket.IO clients.
+ * @returns {number}
+ */
+function getClientCount() {
+  if (!_io) return 0;
+  try {
+    if (_io.engine && typeof _io.engine.clientsCount === 'number') return _io.engine.clientsCount;
+    if (_io.sockets && _io.sockets.sockets && typeof _io.sockets.sockets.size === 'number') return _io.sockets.sockets.size;
+  } catch (_) { /* fall through */ }
+  return 0;
+}
+
+/**
+ * Broadcast the current connected-client count to all sockets.
+ * Throttled to avoid a thundering herd during reconnect storms.
+ */
+let _lastCountBroadcast = 0;
+function broadcastPlayerCount() {
+  if (!_io) return;
+  try {
+    const now = Date.now();
+    if (now - _lastCountBroadcast < 1500) return; // throttle: at most ~every 1.5s
+    _lastCountBroadcast = now;
+    _io.emit('players:count', { online: getClientCount(), t: now });
+  } catch (_) { /* cosmetic only */ }
+}
+
 function sendToUser(userId, event, payload) {
   if (!_io) return;
   try {
@@ -216,6 +250,7 @@ const attach = init;
 
 module.exports = {
   init, attach, getIO, isAttached,
+  getClientCount, broadcastPlayerCount,
   sendToUser, broadcastToAgents, broadcastAll,
   broadcastJackpotPools, broadcastJackpotWin, broadcastBonusGranted,
 };
