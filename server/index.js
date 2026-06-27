@@ -50,6 +50,17 @@ if (missing.length > 0) {
 }
 
 if (config.NODE_ENV === 'production') {
+  // Fail-fast: a production deploy missing a core secret must FAIL loudly rather
+  // than boot half-broken and 500 on every deposit/login. Scoped to the vars
+  // required for money + auth. STRIPE_WEBHOOK_SECRET stays a warning (above), not
+  // fatal — a deploy that hasn't set it yet should still start and surface the
+  // gap via /api/health rather than crash-loop.
+  const FATAL_ENV = ['DATABASE_URL', 'JWT_SECRET', 'STRIPE_SECRET_KEY', 'STRIPE_PUBLISHABLE_KEY', 'ADMIN_PASSWORD'];
+  const fatalMissing = FATAL_ENV.filter(v => !process.env[v]);
+  if (fatalMissing.length > 0) {
+    logger.error('FATAL: missing required env vars in production', { missing: fatalMissing });
+    process.exit(1);
+  }
   if (process.env.JWT_SECRET && process.env.JWT_SECRET.length < 32) {
     logger.error('FATAL: JWT_SECRET must be at least 32 characters in production');
     process.exit(1);
@@ -315,6 +326,10 @@ app.use('/api/payment/create-checkout', degradedModeGuard);
 app.use('/api/balance',          degradedModeGuard);
 app.use('/api/crypto',           degradedModeGuard);
 app.use('/api/withdrawal-enhance', degradedModeGuard);
+// Spin debits balance + awards wins — it is a money operation and MUST NOT run
+// against the ephemeral SQLite fallback (those spins are wiped on redeploy →
+// player charged, outcome lost). Guard it like every other money endpoint.
+app.use('/api/spin',             degradedModeGuard);
 
 // ── KYC enforcement on money endpoints ─────────────────────
 // Lazy-resolves so kyc.routes module loads after DB init (its migrations
@@ -327,12 +342,23 @@ function _kycMw(name) {
         _kycCache.mod = require('./routes/kyc.routes');
         _kycCache.loaded = true;
       } catch (err) {
-        logger.warn('KYC enforcement load failed — passing through', { error: err.message });
+        logger.error('KYC enforcement module failed to load', { error: err.message });
         _kycCache.loaded = true;
         _kycCache.mod = null;
+        _kycCache.failed = true;
       }
     }
-    if (!_kycCache.mod || typeof _kycCache.mod[name] !== 'function') return next();
+    if (!_kycCache.mod || typeof _kycCache.mod[name] !== 'function') {
+      // CLAUDE.md rule 9: never silently substitute a no-op for a failed
+      // money-safety check. In production, fail CLOSED — block the money op with
+      // 503 rather than let withdrawals/deposits bypass KYC enforcement. In dev,
+      // pass through so local testing doesn't require the full KYC module.
+      if (config.NODE_ENV === 'production') {
+        logger.error('KYC enforcement unavailable — blocking money op (fail closed)', { mw: name, loadFailed: !!_kycCache.failed });
+        return res.status(503).json({ error: 'Compliance check temporarily unavailable. Please try again shortly.' });
+      }
+      return next();
+    }
     return _kycCache.mod[name](req, res, next);
   };
 }

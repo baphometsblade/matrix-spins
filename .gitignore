@@ -14,6 +14,7 @@ push_err.log
 .DS_Store
 Thumbs.db
 *.tmp
+.fuse_hidden*
 
 # Local SQLite databases (development/testing)
 casino.db

@@ -60,8 +60,13 @@ function adaptSQL(sql) {
         'NOW() + CAST(? AS INTERVAL)'
     );
 
-    // F. datetime('now') → NOW()
-    adapted = adapted.replace(/datetime\(\s*'now'\s*\)/gi, 'NOW()');
+    // F. datetime('now') or datetime("now") → NOW()
+    adapted = adapted.replace(/datetime\(\s*['"]now['"]\s*\)/gi, 'NOW()');
+
+    // F2. datetime(?) → (?::TIMESTAMP)
+    //     Route code passes ISO date strings as params; PostgreSQL needs
+    //     an explicit cast so the comparison uses timestamp semantics.
+    adapted = adapted.replace(/datetime\(\s*\?\s*\)/gi, '(?::TIMESTAMP)');
 
     // G. datetime(<column>, '±N <unit>') → <column> ± INTERVAL 'N <unit>'
     //    Column-based date arithmetic (e.g. datetime(u.created_at, '+7 days')).
@@ -102,6 +107,34 @@ function adaptSQL(sql) {
         /strftime\(\s*'%Y-%m-%d'\s*,\s*([^)]+)\)/gi,
         function (_, col) {
             return "TO_CHAR(" + col.trim() + ", 'YYYY-MM-DD')";
+        }
+    );
+
+    // K0. strftime('%H', <col>) → TO_CHAR(<col>, 'HH24')
+    //     Hour extraction (admin peak-hours analysis).
+    adapted = adapted.replace(
+        /strftime\(\s*'%H'\s*,\s*([^)]+)\)/gi,
+        function (_, col) {
+            return "TO_CHAR(" + col.trim() + ", 'HH24')";
+        }
+    );
+
+    // K1. strftime('%w', <col>) → EXTRACT(DOW FROM <col>)::TEXT
+    //     Day-of-week (0 = Sunday). SQLite returns '0'–'6', PG EXTRACT(DOW)
+    //     also uses 0 = Sunday, and ::TEXT matches the string type.
+    adapted = adapted.replace(
+        /strftime\(\s*'%w'\s*,\s*([^)]+)\)/gi,
+        function (_, col) {
+            return "EXTRACT(DOW FROM " + col.trim() + ")::TEXT";
+        }
+    );
+
+    // K2. strftime('%Y-%W', <col>) → TO_CHAR(<col>, 'IYYY-IW')
+    //     Year-week without "W" prefix (revenue cohort analysis).
+    adapted = adapted.replace(
+        /strftime\(\s*'%Y-%W'\s*,\s*([^)]+)\)/gi,
+        function (_, col) {
+            return "TO_CHAR(" + col.trim() + ", 'IYYY-IW')";
         }
     );
 

@@ -94,8 +94,9 @@ If a route fails to load, log the error and let the API return 503 — never sub
 | `STRIPE_WEBHOOK_SECRET` | Async deposit confirmation | Webhooks unverified |
 | `STRIPE_PUBLISHABLE_KEY` | Frontend Stripe.js | Checkout UI broken |
 | `ADMIN_PASSWORD` | Admin dashboard | Admin login disabled |
-| `ALLOWED_ORIGIN` | CORS | Frontend cannot call API |
-| `ALLOWED_COUNTRIES` | Geo compliance | Inert if missing — UNSAFE for licensed operation |
+| `ALLOWED_ORIGIN` | CORS + Stripe redirect URLs | Frontend cannot call API; checkout redirects fall back to https://msaart.online |
+
+> **Geo-gating REMOVED (commit 819a9018):** the server no longer enforces `ALLOWED_COUNTRIES` — there is no country/IP gate on registration or payments (`server/index.js`: "Geo-Block REMOVED — open to all jurisdictions"). This is an **operator responsibility**: you must ensure your gambling licence covers every market you serve, or re-introduce a geo-gate before operating in a jurisdiction that legally requires one. Setting `ALLOWED_COUNTRIES` currently has no effect.
 
 ## Workflow
 - Commit directly to `master` (no feature branches)

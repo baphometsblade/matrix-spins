@@ -181,12 +181,31 @@ async function rollback() {
     return getBackend().rollback();
 }
 
+/**
+ * Returns a SQL literal for "current timestamp" for use in string-built SQL.
+ * Works on both SQLite and PostgreSQL.
+ */
+function nowLiteral() {
+    return isPg() ? 'NOW()' : "datetime('now')";
+}
+
+/**
+ * Returns current UTC timestamp as ISO string for use as a parameterized value.
+ * Works identically on SQLite (TEXT cols) and PostgreSQL (TIMESTAMPTZ cols).
+ * Prefer this over nowLiteral() — parameterized queries are always safer.
+ */
+function nowIso() {
+    return new Date().toISOString().slice(0, 19).replace('T', ' ');
+}
+
 module.exports = {
     initDatabase,
     getBackend,
     isPg,
     isDegraded,
     lastPgError,
+    nowLiteral,
+    nowIso,
     // Keep legacy alias for any code that calls getDb()
     getDb: getBackend,
     run,

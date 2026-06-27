@@ -27,6 +27,11 @@ module.exports = {
     NODE_ENV: process.env.NODE_ENV || 'development',
     DB_PATH: process.env.DB_PATH || './casino.db',
     DATABASE_URL: process.env.DATABASE_URL || null,
+    // Canonical site origin. Consumed by Stripe success/cancel redirect URLs
+    // (stripe-checkout.routes.js) and stripe.service.js, which referenced
+    // config.ALLOWED_ORIGIN but it was never exported — so a non-production
+    // deployment on another domain silently fell back to the hardcoded prod URL.
+    ALLOWED_ORIGIN: process.env.ALLOWED_ORIGIN || (isProd ? 'https://msaart.online' : null),
 
     // Game limits
     MAX_SPINS_PER_SECOND: 2,
