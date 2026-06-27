@@ -95,7 +95,9 @@ const CSS_FILES = [
     'modals-v2.css',
     'premium-v2-fixes.css',
     'premium-v3-upgrades.css',
-    'unified-ux.css'
+    'unified-ux.css',
+    // AAA polish layer — MUST stay last so its refinements win the cascade
+    'css/aaa-polish.css'
 ];
 
 // --- Helper Functions ---

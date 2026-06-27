@@ -1,0 +1,476 @@
+/* ============================================================
+   Matrix Spins — AAA Polish layer
+   Lobby reveals, sticky/shrinking header, account dropdown,
+   matrix loaders, retry/empty states, footer, page transitions
+   and a back-to-top control.
+
+   Loaded LAST in the CSS bundle so these refinements win the
+   cascade over the base lobby styles. Everything here is purely
+   presentational + progressive — it degrades cleanly if the
+   companion js/aaa-polish.js never runs.
+   ============================================================ */
+
+:root {
+  --ms-matrix: #22e584;
+  --ms-matrix-dim: rgba(34, 229, 132, 0.35);
+  --ms-gold: var(--accent-gold-bright, #f0c060);
+  --ms-fav-red: #ff3b5c;
+}
+
+/* ─────────────────────────────────────────────────────────────
+   1. LOBBY — scroll-reveal for game cards (IntersectionObserver)
+   js/aaa-polish.js adds .ms-reveal to fresh cards, then .ms-in
+   once they enter the viewport. We neutralise the old immediate
+   .entering cascade so cards reveal as the player scrolls.
+   ───────────────────────────────────────────────────────────── */
+.game-card.ms-reveal {
+  opacity: 0;
+  transform: translateY(18px) scale(0.985);
+  transition: opacity 0.55s ease, transform 0.55s cubic-bezier(0.22, 1, 0.36, 1);
+  will-change: opacity, transform;
+  animation: none !important; /* override .entering keyframe */
+}
+.game-card.ms-reveal.ms-in {
+  opacity: 1;
+  transform: none;
+}
+
+/* ─────────────────────────────────────────────────────────────
+   2. CATEGORY FILTER PILLS — satisfying press + grid swap
+   ───────────────────────────────────────────────────────────── */
+.filter-chip {
+  transition: background 0.2s ease, color 0.2s ease, border-color 0.2s ease,
+    transform 0.12s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.2s ease;
+}
+.filter-chip:active {
+  transform: scale(0.93);
+}
+.filter-chip.active {
+  box-shadow: 0 4px 18px -6px var(--ms-gold);
+}
+/* Click ripple injected by JS */
+.filter-chip {
+  position: relative;
+  overflow: hidden;
+}
+.ms-ripple {
+  position: absolute;
+  border-radius: 50%;
+  transform: scale(0);
+  background: rgba(255, 255, 255, 0.45);
+  pointer-events: none;
+  animation: msRipple 0.6s ease-out forwards;
+}
+@keyframes msRipple {
+  to { transform: scale(2.4); opacity: 0; }
+}
+/* Brief cross-fade on the grid when a filter changes */
+.games-grid.ms-swapping {
+  opacity: 0.25;
+  transition: opacity 0.16s ease;
+}
+
+/* ─────────────────────────────────────────────────────────────
+   3. FAVORITES — heart fills RED when active (was gold)
+   ───────────────────────────────────────────────────────────── */
+.fav-heart.active svg {
+  fill: var(--ms-fav-red) !important;
+  stroke: var(--ms-fav-red) !important;
+}
+.fav-heart.active {
+  border-color: rgba(255, 59, 92, 0.5) !important;
+}
+@keyframes msHeartPop {
+  0% { transform: scale(1); }
+  40% { transform: scale(1.35); }
+  70% { transform: scale(0.9); }
+  100% { transform: scale(1); }
+}
+.fav-heart.pulse svg {
+  animation: msHeartPop 0.4s ease;
+}
+
+/* ─────────────────────────────────────────────────────────────
+   4. HEADER — sticky shrink-on-scroll + balance glow + username
+   ───────────────────────────────────────────────────────────── */
+.header {
+  transition: height 0.28s ease, background 0.28s ease, box-shadow 0.28s ease,
+    backdrop-filter 0.28s ease;
+}
+.header.ms-scrolled {
+  height: 50px;
+  background: rgba(9, 11, 15, 0.92);
+  box-shadow: 0 6px 24px -10px rgba(0, 0, 0, 0.8);
+}
+.header.ms-scrolled .header-logo {
+  font-size: 0.95em;
+}
+.header.ms-scrolled .header-logo .logo-crown {
+  transform: scale(0.85);
+}
+.header-logo,
+.header-logo .logo-crown {
+  transition: transform 0.28s ease, font-size 0.28s ease;
+}
+.header.ms-scrolled .header-trust {
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* Balance gets a subtle living glow when authenticated */
+.auth-loggedin .balance-card {
+  position: relative;
+}
+.auth-loggedin .balance-amount {
+  text-shadow: 0 0 10px rgba(240, 192, 96, 0.45);
+  animation: msBalanceGlow 3.2s ease-in-out infinite;
+}
+@keyframes msBalanceGlow {
+  0%, 100% { text-shadow: 0 0 8px rgba(240, 192, 96, 0.30); }
+  50% { text-shadow: 0 0 16px rgba(240, 192, 96, 0.65); }
+}
+.balance-amount.ms-bump {
+  animation: msBalanceBump 0.5s ease;
+}
+@keyframes msBalanceBump {
+  0% { transform: scale(1); }
+  45% { transform: scale(1.16); color: var(--ms-matrix); }
+  100% { transform: scale(1); }
+}
+
+/* Username chip — only meaningful when logged in (JS unhides) */
+.ms-username {
+  display: none;
+  align-items: center;
+  max-width: 120px;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--ms-gold);
+  letter-spacing: 0.02em;
+}
+.auth-loggedin .ms-username.ms-ready {
+  display: inline-flex;
+}
+
+/* ─────────────────────────────────────────────────────────────
+   5. ACCOUNT QUICK-ACCESS DROPDOWN
+   ───────────────────────────────────────────────────────────── */
+.ms-acct-wrap {
+  position: relative;
+}
+.ms-acct-menu {
+  position: absolute;
+  top: calc(100% + 10px);
+  right: 0;
+  min-width: 210px;
+  background: rgba(16, 19, 26, 0.98);
+  border: 1px solid var(--border-subtle, rgba(255, 255, 255, 0.1));
+  border-radius: 14px;
+  box-shadow: 0 18px 50px -12px rgba(0, 0, 0, 0.85);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  padding: 8px;
+  z-index: 1200;
+  opacity: 0;
+  transform: translateY(-8px) scale(0.97);
+  transform-origin: top right;
+  pointer-events: none;
+  transition: opacity 0.18s ease, transform 0.18s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.ms-acct-menu.open {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+  pointer-events: auto;
+}
+.ms-acct-head {
+  padding: 8px 12px 10px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+  margin-bottom: 6px;
+}
+.ms-acct-head .nm { font-weight: 800; color: #fff; font-size: 0.9rem; }
+.ms-acct-head .bal { font-size: 0.75rem; color: var(--ms-gold); margin-top: 2px; }
+.ms-acct-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 9px 12px;
+  border: none;
+  background: transparent;
+  color: #d7dbe4;
+  font-size: 0.85rem;
+  font-weight: 600;
+  text-align: left;
+  text-decoration: none;
+  border-radius: 9px;
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease, transform 0.1s ease;
+}
+.ms-acct-item:hover {
+  background: rgba(240, 192, 96, 0.12);
+  color: #fff;
+}
+.ms-acct-item:active { transform: scale(0.98); }
+.ms-acct-item svg { width: 16px; height: 16px; flex: 0 0 auto; opacity: 0.85; }
+.ms-acct-item.danger:hover { background: rgba(255, 59, 92, 0.14); color: #ff8095; }
+.ms-acct-sep { height: 1px; background: rgba(255, 255, 255, 0.07); margin: 6px 4px; }
+
+/* ─────────────────────────────────────────────────────────────
+   6. MATRIX LOADERS + RETRY + EMPTY STATES
+   ───────────────────────────────────────────────────────────── */
+.ms-spinner {
+  display: inline-flex;
+  gap: 6px;
+  align-items: center;
+  justify-content: center;
+}
+.ms-spinner span {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: var(--ms-matrix);
+  box-shadow: 0 0 8px var(--ms-matrix-dim);
+  animation: msDot 1s ease-in-out infinite;
+}
+.ms-spinner span:nth-child(2) { animation-delay: 0.16s; }
+.ms-spinner span:nth-child(3) { animation-delay: 0.32s; }
+.ms-spinner span:nth-child(4) { animation-delay: 0.48s; }
+@keyframes msDot {
+  0%, 80%, 100% { transform: translateY(0) scale(0.7); opacity: 0.45; }
+  40% { transform: translateY(-7px) scale(1); opacity: 1; }
+}
+.ms-loading-block {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  padding: 28px 16px;
+  width: 100%;
+  min-height: 90px;
+  color: var(--ms-matrix);
+}
+.ms-loading-block .ms-loading-label {
+  font-size: 0.8rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(34, 229, 132, 0.8);
+  font-family: var(--font-mono, 'Space Mono', monospace);
+}
+
+/* Inline retry panel for failed async loads */
+.ms-retry {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 26px 18px;
+  width: 100%;
+  text-align: center;
+  color: #c3c8d2;
+}
+.ms-retry svg { width: 34px; height: 34px; color: #ff8095; opacity: 0.9; }
+.ms-retry .ms-retry-msg { font-size: 0.88rem; max-width: 360px; }
+.ms-retry button {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 20px;
+  border: 1px solid rgba(34, 229, 132, 0.5);
+  border-radius: 10px;
+  background: rgba(34, 229, 132, 0.1);
+  color: var(--ms-matrix);
+  font-weight: 700;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: background 0.18s ease, transform 0.1s ease;
+}
+.ms-retry button:hover { background: rgba(34, 229, 132, 0.2); }
+.ms-retry button:active { transform: scale(0.96); }
+
+/* ─────────────────────────────────────────────────────────────
+   7. BACK-TO-TOP
+   ───────────────────────────────────────────────────────────── */
+.ms-backtotop {
+  position: fixed;
+  right: 20px;
+  bottom: 84px;
+  width: 46px;
+  height: 46px;
+  border-radius: 50%;
+  border: 1px solid rgba(240, 192, 96, 0.45);
+  background: rgba(16, 19, 26, 0.9);
+  color: var(--ms-gold);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 1100;
+  opacity: 0;
+  transform: translateY(14px) scale(0.85);
+  pointer-events: none;
+  box-shadow: 0 10px 28px -10px rgba(0, 0, 0, 0.8);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  transition: opacity 0.25s ease, transform 0.25s cubic-bezier(0.22, 1, 0.36, 1),
+    background 0.2s ease;
+}
+.ms-backtotop.show {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+  pointer-events: auto;
+}
+.ms-backtotop:hover {
+  background: rgba(240, 192, 96, 0.16);
+  transform: translateY(-2px) scale(1.05);
+}
+.ms-backtotop svg { width: 22px; height: 22px; }
+@media (min-width: 900px) {
+  .ms-backtotop { bottom: 28px; }
+}
+
+/* ─────────────────────────────────────────────────────────────
+   8. PAGE TRANSITIONS — fade body in on load, out on nav
+   ───────────────────────────────────────────────────────────── */
+.ms-page-fade {
+  opacity: 0;
+  transition: opacity 0.32s ease;
+}
+.ms-page-fade.ms-page-in {
+  opacity: 1;
+}
+.ms-page-fade.ms-page-out {
+  opacity: 0;
+}
+
+/* ─────────────────────────────────────────────────────────────
+   9. FOOTER — AAA upgrade (payments, social, 18+, disclaimer)
+   ───────────────────────────────────────────────────────────── */
+.footer-extras {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 24px 24px 4px;
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+}
+.footer-extras-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+}
+.footer-pay-label,
+.footer-social-label {
+  width: 100%;
+  text-align: center;
+  font-size: 0.7rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text-muted, #8b90a0);
+  margin-bottom: 2px;
+}
+.pay-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 34px;
+  padding: 0 12px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  color: #cfd3dd;
+}
+.pay-badge svg { height: 18px; width: auto; }
+.pay-badge.visa { color: #e9eefb; }
+.pay-badge.mc { color: #ffd9c2; }
+.pay-badge.btc { color: #f7931a; }
+.pay-badge.eth { color: #a5b4fc; }
+.pay-badge.usdt { color: #26a17b; }
+
+.footer-social {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: #b6bcc9;
+  transition: background 0.18s ease, color 0.18s ease, transform 0.15s ease;
+}
+.footer-social:hover {
+  background: rgba(240, 192, 96, 0.14);
+  color: var(--ms-gold);
+  transform: translateY(-2px);
+}
+.footer-social svg { width: 18px; height: 18px; }
+
+.footer-compliance {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  text-align: center;
+}
+.ms-18plus {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  border: 2px solid var(--ms-fav-red);
+  color: var(--ms-fav-red);
+  font-weight: 900;
+  font-size: 0.82rem;
+  letter-spacing: -0.02em;
+  flex: 0 0 auto;
+}
+.footer-disclaimer {
+  max-width: 760px;
+  font-size: 0.72rem;
+  line-height: 1.6;
+  color: var(--text-muted, #8b90a0);
+}
+.footer-disclaimer strong { color: #c3c8d2; }
+.footer-license {
+  font-size: 0.7rem;
+  color: var(--text-muted, #8b90a0);
+  text-align: center;
+  padding: 2px 24px 0;
+}
+
+@media (max-width: 600px) {
+  .footer-extras-row { gap: 10px; }
+  .pay-badge { height: 30px; padding: 0 9px; font-size: 0.72rem; }
+}
+
+/* ─────────────────────────────────────────────────────────────
+   10. Reduced motion — honour the user preference everywhere
+   ───────────────────────────────────────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  .game-card.ms-reveal,
+  .auth-loggedin .balance-amount,
+  .ms-spinner span,
+  .balance-amount.ms-bump,
+  .header,
+  .header-logo,
+  .header-logo .logo-crown {
+    animation: none !important;
+    transition: none !important;
+  }
+  .game-card.ms-reveal { opacity: 1; transform: none; }
+  .ms-page-fade { opacity: 1 !important; transition: none !important; }
+}

@@ -81,6 +81,17 @@
     `;
   }
 
+  // Smooth value setter — tweens the displayed number toward the target
+  // via js/aaa-polish.js (window.MSCountUp) so the ticker counts instead
+  // of jumping. Falls back to a discrete write if the helper isn't loaded.
+  function setJackpotValue(el, cents) {
+    if (typeof window.MSCountUp === 'function') {
+      window.MSCountUp(el, cents, formatJackpot);
+    } else {
+      el.textContent = formatJackpot(cents);
+    }
+  }
+
   // ── Tick Animation ─────────────────────────────────────────
   function tick() {
     TIERS.forEach(t => {
@@ -88,15 +99,15 @@
       const growth = t.growthPerSec + Math.round((Math.random() - 0.3) * t.variance);
       state.pools[t.id] += Math.max(0, growth);
 
-      // Update all matching DOM elements
+      // Update all matching DOM elements (smooth count-up)
       document.querySelectorAll(`[data-jackpot="${t.id}"]`).forEach(el => {
-        el.textContent = formatJackpot(state.pools[t.id]);
+        setJackpotValue(el, state.pools[t.id]);
         el.classList.add('ticking');
         setTimeout(() => el.classList.remove('ticking'), 150);
       });
 
       document.querySelectorAll(`[data-jackpot-hero="${t.id}"]`).forEach(el => {
-        el.textContent = formatJackpot(state.pools[t.id]);
+        setJackpotValue(el, state.pools[t.id]);
       });
     });
   }
