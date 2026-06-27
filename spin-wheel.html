@@ -3,318 +3,379 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<link rel="manifest" href="/manifest.json">
+    <link rel="manifest" href="/manifest.json">
 <title>Daily Prize Wheel — Matrix Spins Casino</title>
-<meta name="description" content="Spin the Daily Prize Wheel at Matrix Spins Casino — one free spin every 24 hours for bonus credits, free spins, deposit bonuses and up to $50.">
+<meta name="description" content="Spin the Daily Prize Wheel at Matrix Spins Casino — free prizes every 24 hours including bonus credits, free spins, and up to $100 jackpot.">
 <meta property="og:title" content="Daily Prize Wheel — Matrix Spins Casino">
-<meta property="og:description" content="Spin the wheel once every 24 hours for free prizes. No deposit required.">
+<meta property="og:description" content="Spin the wheel once every 24 hours for free prizes up to $100. No deposit required.">
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://msaart.online/spin-wheel.html">
+<meta name="twitter:card" content="summary">
 <link rel="canonical" href="https://msaart.online/spin-wheel.html">
-<meta name="theme-color" content="#00ff41">
-<link rel="icon" type="image/svg+xml" href="/favicon.svg">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@700;800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="css/age-gate.css">
+<link rel="stylesheet" href="css/auth.css">
+<link rel="stylesheet" href="css/spin-wheel.css">
+<link rel="stylesheet" href="css/chat-widget.css">
 <link rel="stylesheet" href="css/notifications.css">
-<link rel="stylesheet" href="css/matrix-theme.css">
-<style>
-  :root{
-    --ms-green:#00ff41; --ms-green-bright:#39ff6a; --ms-green-deep:#00b82f;
-    --ms-green-glow:rgba(0,255,65,.35); --ms-green-border:rgba(0,255,65,.18);
-    --ms-bg:#070b07; --ms-panel:#0e160e; --ms-panel-2:#0a110a; --ms-gold:#FFD700;
-    --ms-text:#dffbe6; --ms-dim:#7da588;
-  }
-  *{margin:0;padding:0;box-sizing:border-box}
-  body{background:var(--ms-bg);color:var(--ms-text);font-family:'Inter',sans-serif;min-height:100vh;
-    background-image:radial-gradient(circle at 50% -10%,rgba(0,255,65,.08),transparent 50%);}
-  a{color:var(--ms-green);text-decoration:none}
-  .topbar{display:flex;align-items:center;justify-content:space-between;padding:14px 20px;border-bottom:1px solid var(--ms-green-border);
-    position:sticky;top:0;background:rgba(7,11,7,.92);backdrop-filter:blur(8px);z-index:20}
-  .brand{font-family:'Plus Jakarta Sans',sans-serif;font-weight:800;font-size:20px;color:var(--ms-green)}
-  .topbar .actions{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
-  .balance-chip{background:var(--ms-panel);border:1px solid var(--ms-green-border);border-radius:999px;padding:8px 14px;font-weight:700;color:var(--ms-green)}
-  .btn{display:inline-block;border:1px solid var(--ms-green-border);background:var(--ms-panel);color:var(--ms-text);border-radius:10px;padding:8px 14px;font-weight:600;cursor:pointer;font-size:14px;transition:.18s}
-  .btn:hover{border-color:var(--ms-green);box-shadow:0 0 12px var(--ms-green-glow)}
-  .wrap{max-width:560px;margin:0 auto;padding:22px 18px 80px;text-align:center}
-  .hero h1{font-family:'Plus Jakarta Sans',sans-serif;font-size:30px;font-weight:800;color:#fff}
-  .hero h1 .accent{color:var(--ms-green);text-shadow:0 0 18px var(--ms-green-glow)}
-  .hero p{color:var(--ms-dim);margin-top:6px;font-size:14px}
-  .streakbar{display:flex;justify-content:center;gap:6px;margin:14px 0}
-  .pip{width:26px;height:8px;border-radius:6px;background:var(--ms-panel-2);border:1px solid var(--ms-green-border)}
-  .pip.on{background:var(--ms-green);box-shadow:0 0 8px var(--ms-green-glow)}
-  .pip.gold{background:var(--ms-gold);box-shadow:0 0 8px rgba(255,215,0,.5)}
-  .streak-label{color:var(--ms-dim);font-size:13px;margin-bottom:6px}
-  .streak-label b{color:var(--ms-green)}
-  /* Wheel */
-  .stage{position:relative;width:340px;height:340px;margin:14px auto}
-  .pointer{position:absolute;top:-6px;left:50%;transform:translateX(-50%);z-index:6;
-    width:0;height:0;border-left:16px solid transparent;border-right:16px solid transparent;border-top:30px solid var(--ms-gold);filter:drop-shadow(0 2px 4px rgba(0,0,0,.6))}
-  .wheel{position:absolute;inset:0;border-radius:50%;border:6px solid #06170c;box-shadow:0 0 0 3px var(--ms-green-border),0 0 40px rgba(0,255,65,.18);
-    transition:transform 5s cubic-bezier(.17,.67,.18,1);overflow:hidden}
-  .seg-label{position:absolute;top:50%;left:50%;transform-origin:0 0;font-size:11px;font-weight:700;color:#fff;pointer-events:none}
-  .seg-label .inner{display:block;transform:translate(-50%,-50%);text-align:center;width:78px;text-shadow:0 1px 3px rgba(0,0,0,.8)}
-  .seg-label .em{font-size:20px;display:block}
-  .hub{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:60px;height:60px;border-radius:50%;
-    background:radial-gradient(circle,#0e160e,#04110a);border:3px solid var(--ms-green);display:flex;align-items:center;justify-content:center;font-size:26px;z-index:5;box-shadow:0 0 18px var(--ms-green-glow)}
-  .spin-btn{margin-top:8px;font-size:18px;font-weight:800;padding:14px 44px;border:none;border-radius:14px;cursor:pointer;
-    background:linear-gradient(180deg,var(--ms-green),var(--ms-green-deep));color:#04150a;box-shadow:0 8px 24px rgba(0,255,65,.25);transition:.15s}
-  .spin-btn:disabled{opacity:.5;cursor:not-allowed;box-shadow:none}
-  .countdown{margin-top:10px;color:var(--ms-dim);font-size:14px;min-height:20px}
-  .countdown b{color:var(--ms-green);font-variant-numeric:tabular-nums}
-  .voucher{margin:14px auto;max-width:420px;background:rgba(255,215,0,.08);border:1px solid rgba(255,215,0,.35);border-radius:12px;padding:10px 14px;color:var(--ms-gold);font-size:13px;font-weight:600}
-  .panel{background:var(--ms-panel);border:1px solid var(--ms-green-border);border-radius:16px;padding:18px;margin:18px 0;text-align:left}
-  h2.sec{font-size:13px;text-transform:uppercase;letter-spacing:.1em;color:var(--ms-dim);margin:0 0 12px}
-  .hist{list-style:none;display:flex;flex-direction:column;gap:6px}
-  .hist li{display:flex;justify-content:space-between;font-size:13px;background:var(--ms-panel-2);border:1px solid var(--ms-green-border);border-radius:8px;padding:8px 12px}
-  .hist .d{color:var(--ms-dim)} .hist .p{color:var(--ms-green);font-weight:700}
-  .rules{color:var(--ms-dim);font-size:13px;line-height:1.7}
-  .rules li{margin-left:18px}
-  /* Modal */
-  .backdrop{position:fixed;inset:0;background:rgba(0,0,0,.8);display:none;align-items:center;justify-content:center;z-index:60;padding:20px}
-  .backdrop.show{display:flex}
-  .modal{background:var(--ms-panel);border:1px solid var(--ms-green);border-radius:18px;padding:30px;max-width:360px;width:100%;text-align:center;box-shadow:0 0 40px var(--ms-green-glow)}
-  .modal .em{font-size:60px}
-  .modal h2{font-family:'Plus Jakarta Sans',sans-serif;margin:8px 0;color:#fff}
-  .modal .val{font-size:30px;font-weight:800;color:var(--ms-gold);margin:6px 0}
-  .modal p{color:var(--ms-dim);font-size:14px}
-  #confettiBox{position:fixed;inset:0;pointer-events:none;z-index:80}
-  .confetti-piece{position:fixed;top:-20px;will-change:transform,opacity;animation:cf var(--cf-dur,3s) ease-out forwards;animation-delay:var(--cf-delay,0s)}
-  @keyframes cf{0%{top:-20px;opacity:1}100%{top:100vh;opacity:0}}
-  .gate{text-align:center;padding:40px 20px;color:var(--ms-dim)}
-  @media(max-width:420px){.stage{width:300px;height:300px}.seg-label .inner{width:66px}}
-</style>
+<link rel="stylesheet" href="css/age-gate.css">
+<link rel="stylesheet" href="css/favorites.css">
+<link rel="stylesheet" href="css/session-monitor.css">
+<link rel="stylesheet" href="css/search.css">
+<link rel="stylesheet" href="css/conversion.css">
+<link rel="stylesheet" href="unified-ux.css">
+<script src="js/unified-ux.js" defer></script>
+    <link rel="stylesheet" href="css/matrix-theme.css">
 </head>
 <body>
+
+<!-- ── Top bar ──────────────────────────────────────────────── -->
 <div class="topbar">
-  <a class="brand" href="index.html">◂ Matrix Spins</a>
+  <a class="brand" href="index.html">Matrix Spins</a>
   <div class="actions">
     <span id="balanceChip" class="balance-chip">—</span>
-    <a href="wallet.html" class="btn">Wallet</a>
-    <button id="logout" class="btn" style="display:none">Sign out</button>
+    <a href="wallet.html" class="btn btn-inline secondary">Wallet</a>
+    <a href="account.html" class="btn btn-inline secondary">Account</a>
+    <button id="logout" class="btn btn-inline secondary">Sign out</button>
   </div>
 </div>
 
-<div class="wrap" id="app" style="display:none">
-  <div class="hero">
-    <h1>Daily <span class="accent">Prize Wheel</span></h1>
-    <p>One free spin every 24 hours. Reach a 7-day streak for a guaranteed premium prize!</p>
+<div class="rs-shell-wide">
+
+  <!-- ── Hero ──────────────────────────────────────────────────── -->
+  <div class="spin-hero">
+    <h1>Daily Prize Wheel</h1>
+    <p class="subtitle">Spin once every 24 hours for free prizes!</p>
+    <div id="countdownArea"></div>
   </div>
 
-  <div class="streak-label" id="streakLabel"></div>
-  <div class="streakbar" id="streakBar"></div>
-
-  <div class="stage">
-    <div class="pointer"></div>
-    <div class="wheel" id="wheel"></div>
-    <div class="hub">🍀</div>
+  <!-- ── Wheel ─────────────────────────────────────────────────── -->
+  <div class="wheel-stage">
+    <div class="wheel-pointer" id="pointer"></div>
+    <div class="wheel-outer">
+      <div class="wheel-disc" id="wheelDisc">
+        <!-- Segment labels -->
+        <div class="wheel-label" style="transform:rotate(22.5deg)"><span>$5 Bonus</span></div>
+        <div class="wheel-label" style="transform:rotate(67.5deg)"><span>$10 Bonus</span></div>
+        <div class="wheel-label" style="transform:rotate(112.5deg)"><span>$25 Bonus</span></div>
+        <div class="wheel-label" style="transform:rotate(157.5deg)"><span>$5 Bonus</span></div>
+        <div class="wheel-label" style="transform:rotate(202.5deg)"><span>10 Free Spins</span></div>
+        <div class="wheel-label" style="transform:rotate(247.5deg)"><span>$10 Bonus</span></div>
+        <div class="wheel-label" style="transform:rotate(292.5deg)"><span>$50 Bonus</span></div>
+        <div class="wheel-label" style="transform:rotate(337.5deg)"><span>$100 Jackpot</span></div>
+      </div>
+      <div class="wheel-hub"><span class="crown">👑</span></div>
+    </div>
   </div>
 
-  <button class="spin-btn" id="spinBtn" disabled>SPIN</button>
-  <div class="countdown" id="countdown"></div>
-
-  <div class="voucher" id="voucher" style="display:none"></div>
-
-  <div class="panel">
-    <h2 class="sec">Recent spins</h2>
-    <ul class="hist" id="hist"><li class="d">No spins yet — try your luck!</li></ul>
+  <!-- ── Spin Button ───────────────────────────────────────────── -->
+  <div class="spin-btn-wrap">
+    <button class="spin-btn" id="spinBtn" disabled>SPIN!</button>
   </div>
 
-  <div class="panel">
-    <h2 class="sec">How it works</h2>
-    <ul class="rules">
-      <li>One free spin every 24 hours (resets at midnight UTC).</li>
-      <li>Cash prizes credit your bonus balance with a 15× wagering requirement.</li>
-      <li>Free Spins are valid on any slot and expire after 48 hours.</li>
-      <li>"10% Deposit Bonus" applies automatically to your next deposit.</li>
-      <li>Hit a 7-day streak for a guaranteed premium prize.</li>
-      <li>Provably fair — outcomes use cryptographic server-side RNG.</li>
+  <!-- ── Prize History ─────────────────────────────────────────── -->
+  <div class="spin-history">
+    <h2>Recent Spins</h2>
+    <ul class="history-list" id="historyList">
+      <li class="history-empty">No spins yet — try your luck!</li>
     </ul>
   </div>
+
+  <!-- ── Rules ─────────────────────────────────────────────────── -->
+  <div class="spin-rules">
+    <h3>Prize Wheel Rules</h3>
+    <ul>
+      <li>One free spin every 24 hours — timer resets after each spin.</li>
+      <li>Prizes are credited instantly to your bonus balance.</li>
+      <li>All bonus credits carry a 10x wagering requirement before withdrawal.</li>
+      <li>Free spins are valid on any slot game and expire after 48 hours.</li>
+      <li>The $100 Jackpot has a 1% chance per spin.</li>
+      <li>You must be logged in to spin. Abuse or multi-accounting voids prizes.</li>
+    </ul>
+  </div>
+
 </div>
 
-<div class="gate" id="gate" style="display:none">
-  <p>Please <a href="login.html">sign in</a> to spin the Daily Wheel.</p>
-</div>
-
-<div class="backdrop" id="backdrop">
-  <div class="modal">
-    <div class="em" id="mEmoji">🎉</div>
-    <h2 id="mTitle">Congratulations!</h2>
-    <div class="val" id="mVal"></div>
-    <p id="mDesc"></p>
-    <button class="btn" id="mClose" style="margin-top:16px">Awesome!</button>
+<!-- ── Prize Reveal Modal ────────────────────────────────────── -->
+<div class="prize-modal-backdrop" id="prizeBackdrop">
+  <div class="prize-modal">
+    <div class="prize-emoji" id="prizeEmoji">🎉</div>
+    <h2>Congratulations!</h2>
+    <div class="prize-value" id="prizeValue">$10 Bonus</div>
+    <p class="prize-desc" id="prizeDesc">Credited to your bonus balance instantly.</p>
+    <button class="claim-btn" id="claimBtn">Claim Prize</button>
   </div>
 </div>
-<div id="confettiBox"></div>
 
+<!-- ── Confetti container ────────────────────────────────────── -->
+<div class="confetti-container" id="confettiBox"></div>
+
+<!-- ── Scripts ────────────────────────────────────────────────── -->
 <script src="js/api-client.js"></script>
+<script src="js/chat-widget.js" defer></script>
+<script src="js/notifications.js" defer></script>
 <script src="js/age-gate.js" defer></script>
 <script src="js/cookie-consent.js" defer></script>
-<script src="js/sound-manager.js" defer></script>
+<script src="js/search.js" defer></script>
+<script src="js/analytics.js" defer></script>
+<script src="js/email-capture.js" defer></script>
+<script src="js/conversion.js" defer></script>
 <script>
 (async () => {
   'use strict';
+
+  /* ── Helpers ──────────────────────────────────────────────── */
   const $ = id => document.getElementById(id);
   const api = window.MatrixSpinsAPI;
-  const fmt = d => '$' + (Number(d) || 0).toFixed(2);
-  const emitSound = t => window.dispatchEvent(new CustomEvent('matrix-sound', { detail: { type: t } }));
-
   const user = await api.loadSession();
-  if (!user) { $('gate').style.display = 'block'; return; }
-  $('app').style.display = 'block';
-  $('logout').style.display = 'inline-block';
-  $('logout').addEventListener('click', async () => { await api.logout(); location.href = 'index.html'; });
-  try { const b = await api.getBalance(); $('balanceChip').textContent = api.formatCents(b.availableCents); } catch (_) {}
 
-  const SEG = 12, SEG_DEG = 30;
-  let prizes = [], rotation = 0, spinning = false, cdTimer = null;
-
-  function buildWheel() {
-    const wheel = $('wheel');
-    // Conic gradient slices
-    const stops = [];
-    prizes.forEach((p, i) => { stops.push((p.color || (i % 2 ? '#0a2e18' : '#0f3d20')) + ' ' + (i * SEG_DEG) + 'deg ' + ((i + 1) * SEG_DEG) + 'deg'); });
-    wheel.style.background = 'conic-gradient(from 0deg,' + stops.join(',') + ')';
-    // Labels
-    wheel.querySelectorAll('.seg-label').forEach(n => n.remove());
-    prizes.forEach((p, i) => {
-      const center = i * SEG_DEG + SEG_DEG / 2;
-      const lab = document.createElement('div');
-      lab.className = 'seg-label';
-      // rotate to slice center, push outward, counter-rotate text upright
-      lab.style.transform = 'rotate(' + center + 'deg) translateY(-128px)';
-      lab.innerHTML = '<span class="inner" style="transform:translate(-50%,-50%) rotate(' + (-center) + 'deg)"><span class="em">' + p.emoji + '</span>' + shortLabel(p) + '</span>';
-      wheel.appendChild(lab);
-    });
-  }
-  function shortLabel(p) {
-    if (p.kind === 'free_spins') return p.value + ' Free<br>Spins';
-    if (p.kind === 'deposit_bonus') return p.percent + '%<br>Deposit';
-    return p.label;
-  }
-
-  function renderStreak(streak, day7Next) {
-    const inWeek = streak % 7;
-    $('streakLabel').innerHTML = 'Daily streak: <b>' + streak + '</b> day' + (streak === 1 ? '' : 's') +
-      (day7Next ? ' · next spin is a <b>guaranteed premium prize!</b>' : '');
-    const bar = $('streakBar'); bar.innerHTML = '';
-    for (let i = 0; i < 7; i++) {
-      const pip = document.createElement('div');
-      pip.className = 'pip' + (i < inWeek || (inWeek === 0 && streak > 0) ? ' on' : '') + (i === 6 ? ' gold' : '');
-      bar.appendChild(pip);
-    }
-  }
-
-  function startCountdown(nextSpinAt) {
-    if (cdTimer) clearInterval(cdTimer);
-    const tick = () => {
-      const ms = new Date(nextSpinAt).getTime() - Date.now();
-      if (ms <= 0) { clearInterval(cdTimer); $('countdown').textContent = ''; $('spinBtn').disabled = false; $('spinBtn').textContent = 'SPIN'; return; }
-      const h = Math.floor(ms / 3600000), m = Math.floor((ms % 3600000) / 60000), s = Math.floor((ms % 60000) / 1000);
-      $('countdown').innerHTML = 'Next free spin in <b>' + String(h).padStart(2, '0') + ':' + String(m).padStart(2, '0') + ':' + String(s).padStart(2, '0') + '</b>';
-    };
-    tick(); cdTimer = setInterval(tick, 1000);
-  }
-
-  async function loadHistory() {
+  /* ── Balance + Logout (standard pattern) ─────────────────── */
+  if (user) {
+    $('logout').style.display = 'inline-block';
     try {
-      const h = await api.fetch('/dailywheel/history');
-      const ul = $('hist');
-      if (!h.spins || !h.spins.length) { ul.innerHTML = '<li class="d">No spins yet — try your luck!</li>'; return; }
-      ul.innerHTML = h.spins.slice(0, 8).map(s => {
-        const d = new Date(s.spun_at);
-        return '<li><span class="d">' + d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) + '</span><span class="p">' + (s.prize_type || '') + '</span></li>';
-      }).join('');
+      const b = await api.getBalance();
+      $('balanceChip').textContent = api.formatCents(b.availableCents);
     } catch (_) {}
+  } else {
+    $('logout').style.display = 'none';
   }
-
-  async function loadStatus() {
-    const st = await api.fetch('/dailywheel/');
-    prizes = st.prizes || [];
-    buildWheel();
-    renderStreak(st.streak || 0, st.day7Next);
-    if (st.pendingVoucher) {
-      $('voucher').style.display = 'block';
-      $('voucher').textContent = '🎁 You have a ' + st.pendingVoucher.percent + '% deposit bonus waiting — it applies to your next deposit.';
-    }
-    if (st.canSpin) { $('spinBtn').disabled = false; $('countdown').textContent = ''; }
-    else { $('spinBtn').disabled = true; $('spinBtn').textContent = 'COME BACK SOON'; if (st.nextSpinAt) startCountdown(st.nextSpinAt); }
-    await loadHistory();
-  }
-
-  await loadStatus();
-
-  $('spinBtn').addEventListener('click', async () => {
-    if (spinning || $('spinBtn').disabled) return;
-    spinning = true; $('spinBtn').disabled = true;
-    emitSound('spin');
-    try {
-      const r = await api.fetch('/dailywheel/spin', { method: 'POST', body: {} });
-      const idx = r.prize.index;
-      const center = idx * SEG_DEG + SEG_DEG / 2;
-      const spins = 6;
-      rotation += 360 * spins + ((360 - center) - (rotation % 360));
-      $('wheel').style.transform = 'rotate(' + rotation + 'deg)';
-
-      setTimeout(() => {
-        showPrize(r);
-        renderStreak(r.streak || 0, (r.streak + 1) % 7 === 0);
-        if (r.newBonusBalance != null) { /* bonus balance changed; main balance chip stays */ }
-        // schedule next-spin countdown (next UTC midnight)
-        const now = new Date();
-        const next = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() + 1, 0, 0, 0));
-        $('spinBtn').textContent = 'COME BACK SOON';
-        startCountdown(next.toISOString());
-        loadHistory();
-        if (r.voucher) {
-          $('voucher').style.display = 'block';
-          $('voucher').textContent = '🎁 You have a ' + r.voucher.percent + '% deposit bonus waiting — it applies to your next deposit.';
-        }
-        spinning = false;
-      }, 5200);
-    } catch (e) {
-      spinning = false; $('spinBtn').disabled = false;
-      alert(e.message || 'Could not spin');
-    }
+  $('logout').addEventListener('click', async () => {
+    await api.logout();
+    window.location.href = 'index.html';
   });
 
-  function showPrize(r) {
-    const p = r.prize;
-    $('mEmoji').textContent = p.emoji || '🎉';
-    let val = '', desc = '';
-    if (p.kind === 'cash') { val = fmt(r.creditedCash || p.amount); desc = 'Credited to your bonus balance (15× wagering).'; }
-    else if (p.kind === 'free_spins') { val = (r.freeSpinsGranted || p.value) + ' Free Spins'; desc = 'Use them on any slot within 48 hours!'; }
-    else if (p.kind === 'deposit_bonus') { val = p.percent + '% Deposit Bonus'; desc = 'Applies automatically to your next deposit.'; }
-    $('mTitle').textContent = (r.day7Bonus ? '7-Day Streak Reward!' : 'Congratulations!');
-    $('mVal').textContent = val;
-    $('mDesc').textContent = desc;
-    $('backdrop').classList.add('show');
-    const big = (p.kind === 'cash' && (r.creditedCash || p.amount) >= 5) || p.kind !== 'cash';
-    if (big) { emitSound('win'); spawnConfetti(); } else { emitSound('win'); }
-  }
-  $('mClose').addEventListener('click', () => $('backdrop').classList.remove('show'));
-  $('backdrop').addEventListener('click', e => { if (e.target === $('backdrop')) $('backdrop').classList.remove('show'); });
+  /* ── Prize Definitions (8 segments, 45 deg each) ─────────── */
+  const PRIZES = [
+    { label: '$5 Bonus',      emoji: '💵', value: '$5',   desc: '$5 bonus credited to your balance.',          weight: 30 },
+    { label: '$10 Bonus',     emoji: '💰', value: '$10',  desc: '$10 bonus credited to your balance.',         weight: 25 },
+    { label: '$25 Bonus',     emoji: '💎', value: '$25',  desc: '$25 bonus credited to your balance.',         weight: 15 },
+    { label: '$5 Bonus',      emoji: '💵', value: '$5',   desc: '$5 bonus credited to your balance.',          weight: 30 },
+    { label: '10 Free Spins', emoji: '🎰', value: '10 Free Spins', desc: 'Use on any slot within 48 hours.', weight: 12 },
+    { label: '$10 Bonus',     emoji: '💰', value: '$10',  desc: '$10 bonus credited to your balance.',         weight: 25 },
+    { label: '$50 Bonus',     emoji: '🔥', value: '$50',  desc: '$50 bonus credited to your balance!',         weight: 5  },
+    { label: '$100 Jackpot',  emoji: '👑', value: '$100 JACKPOT', desc: 'You hit the jackpot! $100 bonus credited!', weight: 1 }
+  ];
 
+  const SEGMENT_DEG = 360 / PRIZES.length; // 45
+  const COOLDOWN_MS = 24 * 60 * 60 * 1000;
+  const LS_LAST_SPIN = 'ms_last_spin';
+  const LS_HISTORY   = 'ms_spin_history';
+
+  /* ── Weighted random selection ───────────────────────────── */
+  function pickPrize() {
+    const totalWeight = PRIZES.reduce((s, p) => s + p.weight, 0);
+    let r = Math.random() * totalWeight;
+    for (let i = 0; i < PRIZES.length; i++) {
+      r -= PRIZES[i].weight;
+      if (r <= 0) return i;
+    }
+    return 0;
+  }
+
+  /* ── Cooldown / Countdown ────────────────────────────────── */
+  let canSpin = false;
+  let countdownInterval = null;
+
+  function getLastSpin() {
+    const v = localStorage.getItem(LS_LAST_SPIN);
+    return v ? parseInt(v, 10) : 0;
+  }
+
+  function msUntilReady() {
+    const last = getLastSpin();
+    if (!last) return 0;
+    const diff = (last + COOLDOWN_MS) - Date.now();
+    return diff > 0 ? diff : 0;
+  }
+
+  function renderCountdown() {
+    const area = $('countdownArea');
+    const remaining = msUntilReady();
+
+    if (remaining <= 0) {
+      canSpin = true;
+      $('spinBtn').disabled = false;
+      area.innerHTML = '<span class="spin-ready-badge">READY TO SPIN!</span>';
+      if (countdownInterval) { clearInterval(countdownInterval); countdownInterval = null; }
+      return;
+    }
+
+    canSpin = false;
+    $('spinBtn').disabled = true;
+
+    const totalSec = Math.ceil(remaining / 1000);
+    const h = Math.floor(totalSec / 3600);
+    const m = Math.floor((totalSec % 3600) / 60);
+    const s = totalSec % 60;
+
+    area.innerHTML =
+      '<div class="countdown-wrap">' +
+        '<div class="cd-unit"><div class="num">' + String(h).padStart(2, '0') + '</div><div class="lbl">hrs</div></div>' +
+        '<span class="colon">:</span>' +
+        '<div class="cd-unit"><div class="num">' + String(m).padStart(2, '0') + '</div><div class="lbl">min</div></div>' +
+        '<span class="colon">:</span>' +
+        '<div class="cd-unit"><div class="num">' + String(s).padStart(2, '0') + '</div><div class="lbl">sec</div></div>' +
+      '</div>';
+  }
+
+  renderCountdown();
+  countdownInterval = setInterval(renderCountdown, 1000);
+
+  /* ── History ─────────────────────────────────────────────── */
+  function getHistory() {
+    try { return JSON.parse(localStorage.getItem(LS_HISTORY) || '[]'); }
+    catch (_) { return []; }
+  }
+
+  function saveHistory(entry) {
+    const hist = getHistory();
+    hist.unshift(entry);
+    if (hist.length > 7) hist.length = 7;
+    localStorage.setItem(LS_HISTORY, JSON.stringify(hist));
+  }
+
+  function renderHistory() {
+    const hist = getHistory();
+    const list = $('historyList');
+    if (!hist.length) {
+      list.innerHTML = '<li class="history-empty">No spins yet — try your luck!</li>';
+      return;
+    }
+    list.innerHTML = hist.map(h => {
+      const d = new Date(h.ts);
+      const dateStr = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+      return '<li>' +
+        '<span class="h-date">' + dateStr + '</span>' +
+        '<span class="h-prize">' + h.prize + '</span>' +
+        '<span class="h-status">Claimed</span>' +
+      '</li>';
+    }).join('');
+  }
+
+  renderHistory();
+
+  /* ── Confetti ────────────────────────────────────────────── */
   function spawnConfetti() {
-    const box = $('confettiBox'); box.innerHTML = '';
-    const colors = ['#00ff41', '#FFD700', '#39ff6a', '#22d3ee', '#fff2a0'];
-    for (let i = 0; i < 80; i++) {
-      const pc = document.createElement('div');
-      pc.className = 'confetti-piece';
-      pc.style.left = Math.random() * 100 + '%';
-      pc.style.background = colors[Math.floor(Math.random() * colors.length)];
-      pc.style.setProperty('--cf-dur', (2 + Math.random() * 2) + 's');
-      pc.style.setProperty('--cf-delay', (Math.random() * .5) + 's');
-      pc.style.width = (6 + Math.random() * 8) + 'px';
-      pc.style.height = (6 + Math.random() * 8) + 'px';
-      pc.style.borderRadius = Math.random() > .5 ? '50%' : '2px';
-      box.appendChild(pc);
+    const box = $('confettiBox');
+    box.innerHTML = '';
+    const colors = ['#d4af37', '#a78bfa', '#22d3ee', '#10b981', '#f97316', '#ef4444', '#fff2a0', '#f0f0f5'];
+    for (let i = 0; i < 60; i++) {
+      const piece = document.createElement('div');
+      piece.className = 'confetti-piece';
+      piece.style.left = Math.random() * 100 + '%';
+      piece.style.background = colors[Math.floor(Math.random() * colors.length)];
+      piece.style.setProperty('--cf-dur', (2 + Math.random() * 2) + 's');
+      piece.style.setProperty('--cf-delay', (Math.random() * .6) + 's');
+      piece.style.setProperty('--cf-rot', (360 + Math.random() * 720) + 'deg');
+      piece.style.width  = (6 + Math.random() * 8) + 'px';
+      piece.style.height = (6 + Math.random() * 8) + 'px';
+      piece.style.borderRadius = Math.random() > 0.5 ? '50%' : '2px';
+      box.appendChild(piece);
     }
     setTimeout(() => { box.innerHTML = ''; }, 4500);
   }
+
+  /* ── Sound events ────────────────────────────────────────── */
+  function emitSound(type) {
+    window.dispatchEvent(new CustomEvent('matrix-sound', { detail: { type: type } }));
+  }
+
+  /* ── Spin logic ──────────────────────────────────────────── */
+  let spinning = false;
+  const disc = $('wheelDisc');
+  let currentRotation = 0;
+
+  $('spinBtn').addEventListener('click', () => {
+    if (spinning || !canSpin) return;
+    spinning = true;
+    $('spinBtn').disabled = true;
+
+    emitSound('spin');
+
+    // Pick prize
+    const winIndex = pickPrize();
+    const prize = PRIZES[winIndex];
+
+    // Calculate target rotation:
+    //  - Pointer is at top (0 deg).
+    //  - Segment 0 starts at 0 deg on the conic-gradient.
+    //  - To land on segment `winIndex`, the center of that segment
+    //    must end up under the pointer (top = 0/360).
+    //  - Segment center = winIndex * 45 + 22.5 deg from start.
+    //  - We rotate clockwise, so target = -(segCenter) + full spins
+    const segCenter = winIndex * SEGMENT_DEG + SEGMENT_DEG / 2;
+    const extraSpins = 5 + Math.floor(Math.random() * 3); // 5-7 full turns
+    const targetRotation = currentRotation + (360 * extraSpins) + (360 - segCenter) - (currentRotation % 360);
+
+    // Randomize spin duration slightly
+    const duration = 4.5 + Math.random() * 1.5;
+    disc.style.setProperty('--spin-duration', duration + 's');
+
+    // Apply spin
+    disc.classList.add('spinning');
+    disc.style.transform = 'rotate(' + targetRotation + 'deg)';
+    currentRotation = targetRotation;
+
+    setTimeout(() => {
+      disc.classList.remove('spinning');
+
+      // Pointer bounce
+      $('pointer').classList.add('bounce');
+      setTimeout(() => $('pointer').classList.remove('bounce'), 1500);
+
+      // Record spin
+      localStorage.setItem(LS_LAST_SPIN, String(Date.now()));
+      saveHistory({ ts: Date.now(), prize: prize.label });
+      renderHistory();
+      renderCountdown();
+
+      // Show modal
+      $('prizeEmoji').textContent = prize.emoji;
+      $('prizeValue').textContent = prize.value;
+      $('prizeDesc').textContent  = prize.desc;
+      $('prizeBackdrop').classList.add('visible');
+
+      // Confetti + sound
+      spawnConfetti();
+      emitSound('win');
+
+      spinning = false;
+    }, duration * 1000 + 200);
+  });
+
+  /* ── Claim button — close modal ──────────────────────────── */
+  $('claimBtn').addEventListener('click', () => {
+    $('prizeBackdrop').classList.remove('visible');
+  });
+
+  // Close on backdrop click
+  $('prizeBackdrop').addEventListener('click', (e) => {
+    if (e.target === $('prizeBackdrop')) {
+      $('prizeBackdrop').classList.remove('visible');
+    }
+  });
+
 })();
 </script>
+<script src="js/favorites.js" defer></script>
+<script src="js/session-monitor.js" defer></script>
+<script src="js/sound-manager.js" defer></script>
+    <script src="js/social-proof.js" defer></script>
+    <script src="js/deposit-urgency.js" defer></script>
+    <script src="js/onboarding.js" defer></script>
+    <script src="/js/pwa-install.js" defer></script>
+<footer style="border-top:1px solid rgba(218,165,32,0.15);padding:32px 24px;text-align:center;margin-top:40px;">
+<p style="color:#666;font-size:13px;margin-bottom:8px;">&copy; 2024-2026 Matrix Spins Casino. All rights reserved.</p>
+<p style="color:#666;font-size:12px;margin-bottom:12px;">Players must be 18+ to participate. Please gamble responsibly.</p>
+<div style="display:flex;flex-wrap:wrap;justify-content:center;gap:8px 20px;">
+<a href="/terms.html" style="color:#888;font-size:12px;text-decoration:none;">Terms</a>
+<a href="/privacy.html" style="color:#888;font-size:12px;text-decoration:none;">Privacy</a>
+<a href="/cookie-policy.html" style="color:#888;font-size:12px;text-decoration:none;">Cookies</a>
+<a href="/aml.html" style="color:#888;font-size:12px;text-decoration:none;">AML Policy</a>
+<a href="/responsible-gambling.html" style="color:#888;font-size:12px;text-decoration:none;">Responsible Gambling</a>
+<a href="/contact.html" style="color:#888;font-size:12px;text-decoration:none;">Contact</a>
+</div>
+</footer>
 </body>
 </html>

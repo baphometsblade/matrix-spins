@@ -28,16 +28,12 @@ const { getSlugGame, size } = require('../../server/services/slug-registry');
 
 const GENERIC = new Set(['s1', 's2', 's3', 's4', 's5', 's6', 's7', 's8']);
 
-// Non-slot game pages (casual games with their own engines/routes — NOT driven
-// by the slot symbol registry). Excluded from the themed-symbol checks below.
-const NON_SLOT_PAGES = new Set(['template', 'scratch-cards', 'mines']);
-
 // Build the list of expected slugs straight from the game HTML pages, so the
 // test scales with the real catalog instead of a hard-coded count.
 function listGamePageSlugs() {
   const dir = path.resolve(__dirname, '../../games');
   return fs.readdirSync(dir)
-    .filter((f) => f.endsWith('.html') && !NON_SLOT_PAGES.has(f.replace(/\.html$/, '')))
+    .filter((f) => f.endsWith('.html') && f !== 'template.html')
     .map((f) => f.replace(/\.html$/, ''));
 }
 
