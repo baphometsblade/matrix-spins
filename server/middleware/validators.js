@@ -95,6 +95,28 @@ const validateWithdraw = [
     body('address').optional().isString().isLength({ max: 200 }),
 ];
 
+// Promo-code redemption. The route uppercases + slices to 32 chars after this,
+// but validating up-front gives a clean 400 (and blocks junk before bonusGuard's
+// self-exclusion/cap DB reads run). Codes are alphanumeric + dash/underscore.
+const validatePromoRedeem = [
+    body('code').isString().trim().isLength({ min: 1, max: 32 })
+        .matches(/^[A-Za-z0-9_-]+$/).withMessage('Invalid promo code format'),
+];
+
+// Profile update — every field is optional (partial update). Mirrors the inline
+// checks in profile.routes.js PUT /me as a typed first line of defence.
+const validateProfileUpdate = [
+    body('displayName').optional({ nullable: true }).isString().isLength({ max: 30 })
+        .withMessage('Display name must be ≤ 30 chars'),
+    body('bio').optional({ nullable: true }).isString().isLength({ max: 280 })
+        .withMessage('Bio must be ≤ 280 chars'),
+    body('avatarId').optional({ nullable: true }).isString().isLength({ max: 40 }),
+    body('profileVisibility').optional().isIn(['public', 'friends', 'private'])
+        .withMessage('Invalid profile visibility'),
+    body('showOnLeaderboard').optional().isBoolean(),
+    body('showActivityFeed').optional().isBoolean(),
+];
+
 const validateIdParam = [
     param('id').isInt({ min: 1, max: 2147483647 }).withMessage('Invalid id'),
 ];
@@ -116,6 +138,8 @@ module.exports = {
     validateSpin,
     validateDeposit,
     validateWithdraw,
+    validatePromoRedeem,
+    validateProfileUpdate,
     validateIdParam,
     validatePagination,
 };

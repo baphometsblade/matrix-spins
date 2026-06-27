@@ -170,6 +170,23 @@ try {
   logger.warn('cookie-parser not installed — cookie middleware disabled');
 }
 
+// ── Secure cookie defaults ─────────────────────────────────
+// Auth is JWT-in-Authorization-header today, so the server sets no cookies.
+// This wrapper is belt-and-suspenders: if any current/future route calls
+// res.cookie(), force HttpOnly + Secure + SameSite=Strict in production so a
+// session/CSRF cookie can never ship over plain HTTP or be read by JS. Explicit
+// per-call options still win (e.g. a deliberately lax SameSite for an embed).
+app.use((req, res, next) => {
+  const origCookie = res.cookie.bind(res);
+  res.cookie = function (name, value, options) {
+    const secureDefaults = config.NODE_ENV === 'production'
+      ? { httpOnly: true, secure: true, sameSite: 'strict' }
+      : { httpOnly: true, sameSite: 'lax' };
+    return origCookie(name, value, Object.assign({}, secureDefaults, options || {}));
+  };
+  next();
+});
+
 // ── Sanitize, CSRF, Maintenance ────────────────────────────
 function safeMiddleware(modulePath, name) {
   try {
@@ -234,8 +251,27 @@ const globalLimiter = rateLimit({
 });
 app.use('/api/', globalLimiter);
 
-// Cache-control for API responses (no caching of sensitive data)
+// Cache-control for API responses.
+//   • Public, non-personalised GET data endpoints → private, max-age=300 (5 min).
+//     These never vary by user (jackpot pools, leaderboards, online count, etc.),
+//     so a short browser-side cache cuts load without leaking anything. ETag
+//     (app.set('etag','strong')) still yields cheap 304s after expiry. 'private'
+//     (not 'public') keeps responses out of shared/CDN caches as a safety margin.
+//   • Everything else (auth, balance, spins, profile, any mutation) → no-store.
+const PUBLIC_API_CACHE = [
+  /^\/api\/jackpot(\/|$)/,
+  /^\/api\/leaderboard(\/|$)/,
+  /^\/api\/players-online(\/|$)/,
+  /^\/api\/game-of-day(\/|$)/,
+  /^\/api\/hotgame(\/|$)/,
+  /^\/api\/socialproof(\/|$)/,
+  /^\/api\/health\/stats$/,
+];
 app.use('/api/', (req, res, next) => {
+  if (req.method === 'GET' && PUBLIC_API_CACHE.some(re => re.test(req.path))) {
+    res.setHeader('Cache-Control', 'private, max-age=300, must-revalidate');
+    return next();
+  }
   res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, private');
   res.setHeader('Pragma', 'no-cache');
   next();

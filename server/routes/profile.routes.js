@@ -11,6 +11,7 @@
 const express = require('express');
 const db = require('../database');
 const { authenticate, optionalAuth } = require('../middleware/auth');
+const { validateProfileUpdate, runValidation } = require('../middleware/validators');
 const logger = require('../utils/logger');
 
 const router = express.Router();
@@ -151,7 +152,7 @@ router.get('/me', authenticate, async (req, res) => {
 });
 
 // ─── PUT /api/profile/me ─────────────────────────────────────
-router.put('/me', authenticate, async (req, res) => {
+router.put('/me', authenticate, ...validateProfileUpdate, runValidation, async (req, res) => {
     try {
         const { displayName, bio, avatarId, profileVisibility, showOnLeaderboard, showActivityFeed } = req.body || {};
         const updates = [];

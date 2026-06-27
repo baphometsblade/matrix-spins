@@ -3,6 +3,7 @@
 const router = require('express').Router();
 const { authenticate, requireAdmin } = require('../middleware/auth');
 const { bonusGuard } = require('../middleware/bonus-guard');
+const { validatePromoRedeem, runValidation } = require('../middleware/validators');
 const db = require('../database');
 
 // Bootstrap tables + seed (delayed to ensure DB is initialized)
@@ -40,7 +41,7 @@ setTimeout(async function() {
 }, 3000);
 
 // POST /api/promocode/redeem
-router.post('/redeem', authenticate, bonusGuard, async function(req, res) {
+router.post('/redeem', authenticate, ...validatePromoRedeem, runValidation, bonusGuard, async function(req, res) {
   try {
     var userId = req.user.id;
 

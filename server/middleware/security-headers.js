@@ -12,7 +12,17 @@ const helmet = require('helmet');
 
 const CSP_DIRECTIVES = {
     defaultSrc: ["'self'"],
-    scriptSrc: ["'self'", "'unsafe-inline'", 'https://js.stripe.com', 'https://www.googletagmanager.com', 'https://www.google-analytics.com', 'https://cdn.jsdelivr.net'],
+    // script-src is locked to self + the two third parties the casino genuinely
+    // loads at runtime: Stripe.js (card deposits) and Google Analytics/Tag Manager
+    // (consent-gated). Removing either breaks revenue/measurement, so they stay.
+    // cdn.jsdelivr.net was removed — confetti is self-hosted (js/confetti.min.js),
+    // nothing else pulls from a public CDN. 'unsafe-inline' is required by the
+    // inline bootstrap scripts in index.html and the 100 game pages.
+    scriptSrc: ["'self'", "'unsafe-inline'", 'https://js.stripe.com', 'https://www.googletagmanager.com', 'https://www.google-analytics.com'],
+    // style-src keeps 'unsafe-inline' — the lobby + game pages rely on inline
+    // <style> blocks and style="" attributes; fonts.googleapis.com serves the
+    // web-font CSS. img-src keeps data:/blob: (generated tiles + canvas exports)
+    // and the GA pixel domains.
     styleSrc: ["'self'", "'unsafe-inline'", 'https://fonts.googleapis.com'],
     fontSrc: ["'self'", 'data:', 'https://fonts.gstatic.com'],
     imgSrc: ["'self'", 'data:', 'blob:', 'https://www.google-analytics.com', 'https://www.googletagmanager.com'],
