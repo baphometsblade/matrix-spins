@@ -81,6 +81,43 @@ function adaptSQL(sql) {
         }
     );
 
+    // ── date('now') family ─────────────────────────────────────────────
+    // SQLite's date('now') returns TEXT 'YYYY-MM-DD'. Many tables store the
+    // day as a TEXT column (daily_challenges.date, challenge_streaks.
+    // last_completed_date, rtp_daily_stats.date, …) and compare/insert with
+    // date('now'). On PG, date('now') is a cast to the DATE *type*, so
+    // `text_col = date('now')` throws "operator does not exist: text = date".
+    // We translate to to_char(...,'YYYY-MM-DD') so the result stays TEXT and
+    // matches the stored values. (The only real DATE columns — spin_date,
+    // subscription_daily_claimed — are never compared against date('now');
+    // spin_date is only INSERTed, and PG's text→date assignment cast covers
+    // that.)  Lookbehind guards against matching the tail of identifiers.
+
+    // D1. date('now', '-' || ? || ' days') — parameterised concat (rtp-monitor).
+    //     Must run before the literal-interval rule.
+    adapted = adapted.replace(
+        /(?<![a-z_])date\(\s*'now'\s*,\s*'-'\s*\|\|\s*\?\s*\|\|\s*' days'\s*\)/gi,
+        "to_char(CURRENT_DATE - ((?) || ' days')::INTERVAL, 'YYYY-MM-DD')"
+    );
+
+    // D2. date('now', '±N <unit>') → to_char(CURRENT_DATE ± INTERVAL 'N unit', 'YYYY-MM-DD')
+    adapted = adapted.replace(
+        /(?<![a-z_])date\(\s*'now'\s*,\s*'([+-]?\s*\d+\s+\w+)'\s*\)/gi,
+        function (_, interval) {
+            var t = interval.trim();
+            var isAdd = /^\+/.test(t);
+            var clean = t.replace(/^[+-]\s*/, '');
+            var op = isAdd ? '+' : '-';
+            return "to_char(CURRENT_DATE " + op + " INTERVAL '" + clean + "', 'YYYY-MM-DD')";
+        }
+    );
+
+    // D3. date('now') → to_char(CURRENT_DATE, 'YYYY-MM-DD')
+    adapted = adapted.replace(
+        /(?<![a-z_])date\(\s*'now'\s*\)/gi,
+        "to_char(CURRENT_DATE, 'YYYY-MM-DD')"
+    );
+
     // ── strftime ───────────────────────────────────────────────────────
     // Most-specific formats first, then broader formats.
 
