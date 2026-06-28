@@ -646,6 +646,37 @@ if (!window.escapeHtml) {
       try { this._buildAmbientLayers(vt); } catch (_) { /* atmosphere is polish */ }
       // 5) Win-line config consumed by _drawPaylines().
       this._winLineCfg = vt.winLine || null;
+      // 6) Tell the sound engine which procedural soundscape fits this game.
+      // No-op unless the player has opted into ambient audio in settings.
+      try {
+        const cat = this._ambientCategory(vt);
+        if (window.MatrixSound && window.MatrixSound.startAmbient) window.MatrixSound.startAmbient(cat);
+      } catch (_) { /* ambience is optional polish */ }
+    }
+
+    // Pick the ambient soundscape category (egyptian / ocean / forest /
+    // space / fire / neon / default) that best matches this game. Game
+    // name + id keywords are the strongest signal; the visualTheme particle
+    // type is the fallback. Pure presentation — drives only which looping
+    // procedural bed MatrixSound plays when ambient audio is enabled.
+    _ambientCategory(vt) {
+      const hay = `${this.gameId || ''} ${this.displayName || ''}`.toLowerCase();
+      const has = (words) => words.some(w => hay.indexOf(w) !== -1);
+      if (has(['egypt', 'pharaoh', 'anubis', 'horus', 'isis', 'osiris', 'sphinx', 'pyramid', 'cleopatra', 'scarab', 'thoth', 'bastet', 'ra-', 'sun-god', 'nile', 'desert', 'dune', 'sahara', 'mummy'])) return 'egyptian';
+      if (has(['ocean', 'sea-', 'coral', 'reef', 'shark', 'fish', 'koi', 'mermaid', 'siren', 'underwater', 'pearl', 'wave', 'atlantis', 'poseidon', 'nautical', 'aqua', 'tide', 'abyss'])) return 'ocean';
+      if (has(['forest', 'grove', 'fairy', 'druid', 'enchant', 'woodland', 'nature', 'jungle', 'safari', 'elven', 'garden', 'blossom', 'bloom', 'spirit', 'leaf', 'tree'])) return 'forest';
+      if (has(['space', 'cosmic', 'galaxy', 'nebula', 'stellar', 'star', 'astro', 'alien', 'quantum', 'pulsar', 'void', 'singularity', 'meteor', 'asteroid', 'planet', 'orbit', 'nexus', 'cosmos', 'lunar', 'moon'])) return 'space';
+      if (has(['fire', 'inferno', 'flame', 'demon', 'phoenix', 'dragon', 'lava', 'volcano', 'ember', 'hell', 'blaze', 'scorch', 'magma', 'heat', 'burning'])) return 'fire';
+      if (has(['neon', 'cyber', 'robot', 'machine', 'circuit', 'electric', 'digital', 'tech', 'clockwork', 'steampunk', 'turbo', 'flux', 'pulse', 'singular', 'matrix', 'chrome'])) return 'neon';
+      // Particle fallback.
+      const p = (vt && vt.particle) || '';
+      if (/(bubble|drop|water)/.test(p)) return 'ocean';
+      if (/(ember|spark|ash|fire|flame)/.test(p)) return 'fire';
+      if (/(star|cosmic|nebula|orbit)/.test(p)) return 'space';
+      if (/(leaf|leaves|petal|pollen|firefly|fireflies)/.test(p)) return 'forest';
+      if (/(sand|dust)/.test(p)) return 'egyptian';
+      if (/(neon|glitch|data|grid|circuit)/.test(p)) return 'neon';
+      return 'default';
     }
 
     // Build the fixed scrim + particle canvas behind the game UI. The
@@ -843,10 +874,15 @@ if (!window.escapeHtml) {
       this.balanceChip = $el('a', { class: 'ce-bal-chip', href: '../wallet.html', title: 'Wallet & deposits' }, '—');
 
       const soundBtn = $el('button', {
-        class: 'ce-iconbtn', type: 'button', 'aria-label': 'Toggle sound', title: 'Sound',
+        class: 'ce-iconbtn', type: 'button', 'aria-label': 'Sound settings', title: 'Sound settings',
         onclick: () => {
           try {
-            if (window.MatrixSound && window.MatrixSound.toggleMute) {
+            // Prefer the full settings panel (master volume + SFX/Music/
+            // Ambient toggles); fall back to a plain mute toggle on an
+            // older sound-manager build.
+            if (window.MatrixSound && window.MatrixSound.openSettings) {
+              window.MatrixSound.openSettings();
+            } else if (window.MatrixSound && window.MatrixSound.toggleMute) {
               window.MatrixSound.toggleMute();
               soundBtn.textContent = window.MatrixSound.isMuted() ? '🔇' : '🔊';
             }
@@ -1696,6 +1732,13 @@ if (!window.escapeHtml) {
       }
       this._countUp(this.balanceChip, prevCents, target, 700);
       if (this.meterBalance) this._countUp(this.meterBalance, prevCents, target, 700);
+      // Money landed in the wallet — a metallic coin clink + a soft
+      // cash-register ding to settle it. Only on an increase (a winning
+      // spin / deposit), never when the bet is deducted.
+      if (target > prevCents) {
+        this._fx('coin');
+        setTimeout(() => this._fx('ding'), 320);
+      }
     }
 
     _countUp(el, fromCents, toCents, durationMs) {
@@ -1719,22 +1762,34 @@ if (!window.escapeHtml) {
       requestAnimationFrame(step);
     }
 
-    _fx(kind) {
+    _fx(kind, opts) {
       // Centralised sound + haptic dispatcher. Sound names map to the
-      // js/sound-manager.js library (window.MatrixSound.play). Haptics
-      // honour prefers-reduced-motion: reduce per WCAG 2.3.3 (motion
-      // can trigger vestibular issues).
+      // premium synthesis library in js/sound-manager.js
+      // (window.MatrixSound.play). `opts` is forwarded verbatim — e.g.
+      // { reel } so each reel-stop thud descends in pitch. Haptics honour
+      // prefers-reduced-motion: reduce per WCAG 2.3.3 (motion can trigger
+      // vestibular issues).
       try {
         const snd = window.MatrixSound && window.MatrixSound.play;
         if (snd) {
-          if      (kind === 'spin')     snd('spin-start');
-          else if (kind === 'stop')     snd('reel-stop');
-          else if (kind === 'small')    snd('win-small');
-          else if (kind === 'big')      snd('win-big');
-          else if (kind === 'mega')     snd('win-mega');
-          else if (kind === 'jackpot')  snd('jackpot');
-          else if (kind === 'bonus')    snd('notification');
-          else if (kind === 'error')    snd('error');
+          if      (kind === 'spin')      snd('spin-start');
+          else if (kind === 'stop')      snd('reel-stop', opts);
+          else if (kind === 'heartbeat') snd('jackpot-tick');
+          else if (kind === 'small')     snd('win-small');
+          else if (kind === 'medium')    snd('win-medium');
+          else if (kind === 'big')       snd('win-big');
+          else if (kind === 'mega')      snd('win-mega');
+          else if (kind === 'jackpot')   snd('jackpot');
+          else if (kind === 'bonus')     snd('freespins');
+          else if (kind === 'scatter')   snd('scatter');
+          else if (kind === 'wild')      snd('wild');
+          else if (kind === 'coin')      snd('coin');
+          else if (kind === 'ding')      snd('balance-ding');
+          else if (kind === 'bet-up')    snd('bet-up');
+          else if (kind === 'bet-down')  snd('bet-down');
+          else if (kind === 'toggle')    snd('toggle');
+          else if (kind === 'click')     snd('button-click');
+          else if (kind === 'error')     snd('error');
         }
       } catch (_) { /* never let audio crash the spin */ }
 
@@ -1742,14 +1797,18 @@ if (!window.escapeHtml) {
       const reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
       if (reduce || !navigator.vibrate) return;
       try {
-        if      (kind === 'spin')    navigator.vibrate(20);
-        else if (kind === 'stop')    navigator.vibrate(10);
-        else if (kind === 'small')   navigator.vibrate(60);
-        else if (kind === 'big')     navigator.vibrate([80, 60, 80]);
-        else if (kind === 'mega')    navigator.vibrate([100, 60, 100, 60, 200]);
-        else if (kind === 'jackpot') navigator.vibrate([300, 100, 300, 100, 300, 100, 600]);
-        else if (kind === 'bonus')   navigator.vibrate([40, 30, 40]);
-        else if (kind === 'error')   navigator.vibrate([30, 30, 30]);
+        if      (kind === 'spin')      navigator.vibrate(20);
+        else if (kind === 'stop')      navigator.vibrate(10);
+        else if (kind === 'heartbeat') navigator.vibrate(14);
+        else if (kind === 'small')     navigator.vibrate(60);
+        else if (kind === 'medium')    navigator.vibrate([60, 40, 60]);
+        else if (kind === 'big')       navigator.vibrate([80, 60, 80]);
+        else if (kind === 'mega')      navigator.vibrate([100, 60, 100, 60, 200]);
+        else if (kind === 'jackpot')   navigator.vibrate([300, 100, 300, 100, 300, 100, 600]);
+        else if (kind === 'bonus')     navigator.vibrate([40, 30, 40]);
+        else if (kind === 'scatter')   navigator.vibrate([30, 20, 30]);
+        else if (kind === 'wild')      navigator.vibrate(25);
+        else if (kind === 'error')     navigator.vibrate([30, 30, 30]);
       } catch (_) { /* some browsers throw on vibrate */ }
     }
 
@@ -1786,8 +1845,8 @@ if (!window.escapeHtml) {
       if      (ratio >= 150) tier = { label: 'SUPER MEGA WIN', fx: 'mega', mega: true,  color: '#FF5DA2', size: 'clamp(2.2rem,11vw,4.6rem)' };
       else if (ratio >= 100) tier = { label: 'EPIC WIN',  fx: 'mega', mega: true,  color: '#F0C66E', size: 'clamp(2.1rem,10vw,4.2rem)' };
       else if (ratio >=  50) tier = { label: 'MEGA WIN',  fx: 'mega', mega: true,  color: '#F0C66E', size: 'clamp(1.9rem,9vw,3.6rem)' };
-      else if (ratio >=  20) tier = { label: 'BIG WIN',   fx: 'big',  mega: false, color: '#FFD700', size: 'clamp(1.7rem,8vw,3.0rem)' };
-      else                   tier = { label: 'NICE WIN',  fx: 'big',  mega: false, color: '#00ff41', size: 'clamp(1.5rem,7vw,2.6rem)' };
+      else if (ratio >=  20) tier = { label: 'BIG WIN',   fx: 'big',    mega: false, color: '#FFD700', size: 'clamp(1.7rem,8vw,3.0rem)' };
+      else                   tier = { label: 'NICE WIN',  fx: 'medium', mega: false, color: '#00ff41', size: 'clamp(1.5rem,7vw,2.6rem)' };
 
       this._fx(tier.fx);
 
@@ -2293,6 +2352,7 @@ if (!window.escapeHtml) {
       this.state.betCents = next;
       this.betLabel.textContent = fmt(next);
       if (this.meterBet) this.meterBet.textContent = fmt(next);
+      this._fx(dir > 0 ? 'bet-up' : 'bet-down');
       this._syncBetPresets();
     }
 
@@ -2302,7 +2362,7 @@ if (!window.escapeHtml) {
       this.state.betCents = g.maxBetCents;
       this.betLabel.textContent = fmt(g.maxBetCents);
       if (this.meterBet) this.meterBet.textContent = fmt(g.maxBetCents);
-      this._fx('stop');
+      this._fx('bet-up');
       this._syncBetPresets();
     }
 
@@ -2356,7 +2416,7 @@ if (!window.escapeHtml) {
       this.betLabel.textContent = fmt(next);
       if (this.meterBet) this.meterBet.textContent = fmt(next);
       this._syncBetPresets();
-      this._fx('stop');
+      this._fx('bet-up');
     }
 
     // Toggle the .active class on whichever preset chip matches the current bet.
@@ -2772,6 +2832,7 @@ if (!window.escapeHtml) {
       // _updateSpinBtnLabel) which is the correct in-run control.
       this._setAutoBtnEnabled(false);
       this._updateSpinBtnLabel();
+      this._fx('toggle');
       // Kick off the first spin. _spin will schedule the next one.
       this._spin(false);
     }
@@ -2781,6 +2842,7 @@ if (!window.escapeHtml) {
       this.state.autoplay = null;
       this._setAutoBtnEnabled(true);
       this._updateSpinBtnLabel();
+      this._fx('toggle');
     }
 
     // Brief non-blocking toast explaining why autoplay stopped. Especially
@@ -3548,6 +3610,7 @@ if (!window.escapeHtml) {
       if (this.state.spinning) return;
       this.state.spinning = true;
       this._skipAnim = false; // reset tap-to-skip for this spin
+      this._sawScatter = false; this._sawWild = false; // reset per-spin landing stingers
       this.spinBtn.disabled = true;
       this.winStrip.textContent = '\u00A0';
       // Reset the WIN meter cell at the start of each spin (premium pattern \u2014
@@ -3668,13 +3731,13 @@ if (!window.escapeHtml) {
               this._renderCell(c, s, reelCol, i % g.rows);
             });
           }, 200);
-          // Heartbeat haptic \u2014 pulsing tension. Honoured by _fx for
-          // reduced-motion users (no buzz).
-          this._fx('stop');
+          // Heartbeat pulse \u2014 quiet lub-dub + haptic for rising tension.
+          // Honoured by _fx for reduced-motion users (no buzz).
+          this._fx('heartbeat');
           await new Promise((resolve) => setTimeout(resolve, delay * 0.4));
-          this._fx('stop');
+          this._fx('heartbeat');
           await new Promise((resolve) => setTimeout(resolve, delay * 0.4));
-          this._fx('stop');
+          this._fx('heartbeat');
           await new Promise((resolve) => setTimeout(resolve, delay * 0.2));
         } else {
           await new Promise((resolve) => setTimeout(resolve, delay));
@@ -3693,6 +3756,15 @@ if (!window.escapeHtml) {
             cell.classList.add('just-landed');
           }
         }
+        // Premium landing stingers — an ethereal bell when a scatter drops,
+        // an electric zap for a wild. Fired at most once per spin per type
+        // so a screen full of wilds doesn't become a wall of noise.
+        if (!this._sawScatter && g.scatters && column.some(s => g.scatters.indexOf(s) !== -1)) {
+          this._sawScatter = true; this._fx('scatter');
+        }
+        if (!this._sawWild && g.wilds && column.some(s => g.wilds.indexOf(s) !== -1)) {
+          this._sawWild = true; this._fx('wild');
+        }
         // Reel landed — stop the spinning streak on this column + play the
         // weighty vertical settle.
         const landedCol = cols[r];
@@ -3703,7 +3775,9 @@ if (!window.escapeHtml) {
           landedCol.offsetWidth; // reflow so the settle re-fires
           landedCol.classList.add('ce-col-land');
         }
-        this._fx('stop');
+        // Per-reel pitch: each successive reel thuds a little lower, giving
+        // a 5-reel stop a satisfying descending staircase.
+        this._fx('stop', { reel: r, total: g.reels });
       }
       clearInterval(rollInterval);
       // Safety: ensure no column is left in the spinning state (e.g. tap-to-skip).

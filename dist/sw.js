@@ -2,7 +2,7 @@
 // PWA: cache-first statics, network-first HTML, network-only API,
 // offline fallback, version-update messaging.
 
-const VERSION = 'b1782606893177';
+const VERSION = 'b1782608598492';
 const STATIC_CACHE  = `matrix-spins-static-${VERSION}`;
 const RUNTIME_CACHE = `matrix-spins-runtime-${VERSION}`;
 const HTML_CACHE    = `matrix-spins-html-${VERSION}`;
@@ -38,7 +38,7 @@ const PRECACHE_OPTIONAL = [
 // in dist/sw.js during each build (see scripts/bundle-js.js).
 const PRECACHE_HASHED_BUNDLES = [
   '/styles.2a978728.min.css',
-  '/bundle.66e0214b.min.js',
+  '/bundle.3e6085c9.min.js',
 ];
 
 // ─── Install: precache app shell ───────────────────────────────
