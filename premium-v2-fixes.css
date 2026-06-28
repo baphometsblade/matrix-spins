@@ -121,17 +121,22 @@
   transition-duration: 0.08s !important;
 }
 
-/* Card thumbnail area — gradient overlay for text readability */
+/* Card thumbnail area — gradient overlay for text readability.
+   NOTE: `.game-thumb` is deliberately EXCLUDED here. In this codebase
+   `.game-thumb` is the <img> element itself (a sibling of the fallback
+   `.game-placeholder` letter inside `.game-visual`), and it must stay
+   `position:absolute; inset:0` so it fully covers the card. Forcing it
+   to `position:relative` dropped it back into flow and let the giant
+   placeholder letter render on top of the loaded art. These selectors
+   target the background-image CONTAINER variants only. */
 .game-card .game-card-thumb,
-.game-card .game-thumb,
 .game-card .card-thumbnail {
   position: relative !important;
   aspect-ratio: 16 / 10 !important;
   overflow: hidden !important;
 }
 
-.game-card .game-card-thumb::after,
-.game-card .game-thumb::after {
+.game-card .game-card-thumb::after {
   content: '' !important;
   position: absolute !important;
   inset: 0 !important;

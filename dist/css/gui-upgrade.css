@@ -155,8 +155,21 @@ body::after {
 /* ─────────────────────────────────────────────────────────────────────────────
    7. CARD THUMBNAIL — full cover + bottom gradient for title
    ───────────────────────────────────────────────────────────────────────────── */
+/* The <img class="game-thumb"> is positioned absolute:inset-0 inside
+   .game-visual, so .game-visual MUST be a full-width banner with a real
+   height or the image collapses. Earlier sheets squashed it: the card is
+   `display:flex; flex-direction:column; align-items:center` (so the visual
+   never stretches to full width) and css/performance-mobile.css forces
+   `aspect-ratio: 4/3`. As the cascade's final word we pin it here: full
+   card width + 16:10 ratio, never flex-squashed. Without this the giant
+   .game-placeholder fallback letter showed through / beside the art —
+   the "wrong thumbnails" the lobby was displaying. */
 .game-visual {
   position: relative;
+  width: 100% !important;
+  aspect-ratio: 16 / 10 !important;
+  flex: 0 0 auto !important;
+  align-self: stretch !important;
   overflow: hidden;
 }
 .game-visual::after {
@@ -170,10 +183,28 @@ body::after {
   z-index: 2;
   pointer-events: none;
 }
-.game-thumb {
-  object-fit: cover;
-  width: 100%;
-  height: 100%;
+/* High specificity (0,3,0) so z-index:1 beats premium-redesign.css's
+   `.game-card img { z-index:0 !important }` (0,1,1). Otherwise the thumb
+   and the fallback letter tie at z-index:0 and DOM order paints the giant
+   letter ON TOP of the loaded art. */
+.game-card .game-visual .game-thumb {
+  position: absolute !important;
+  inset: 0 !important;
+  object-fit: cover !important;
+  width: 100% !important;
+  height: 100% !important;
+  z-index: 1 !important;
+}
+/* The fallback first-letter tile must sit BEHIND the loaded image; it is
+   only meant to show when the <img> errors out (onerror hides the img). */
+.game-card .game-visual .game-placeholder {
+  position: absolute !important;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0;
+  z-index: 0 !important;
 }
 
 /* ─────────────────────────────────────────────────────────────────────────────
