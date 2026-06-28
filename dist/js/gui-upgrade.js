@@ -14,43 +14,53 @@
   var prefersReduced = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
   /* ─────────────────────────────────────────────────────────────────────────
-     1. TYPEWRITER EFFECT — types out the hero subtitle letter by letter
+     1. TYPEWRITER TAGLINE — types "120+ PREMIUM SLOTS" above the hero headline.
+        Adds a dedicated tagline element (leaves the real subtitle untouched).
      ───────────────────────────────────────────────────────────────────────── */
   function initTypewriter() {
-    var heroP = document.querySelector('.hero-content > p');
-    if (!heroP) return;
+    var heroContent = document.querySelector('.hero-content');
+    if (!heroContent) return;
+    if (heroContent.querySelector('.gui-hero-tagline')) return;
 
-    var fullText = heroP.textContent.trim();
-    if (!fullText) return;
+    var TAGLINE = '120+ PREMIUM SLOTS';
 
-    /* If reduced motion, just show the text immediately */
-    if (prefersReduced) return;
+    var tagline = document.createElement('div');
+    tagline.className = 'gui-hero-tagline';
 
-    heroP.textContent = '';
-    heroP.style.minHeight = '1.5em';
+    /* Place it right after the eyebrow (or as the first hero element). */
+    var eyebrow = heroContent.querySelector('.hero-eyebrow');
+    if (eyebrow && eyebrow.nextSibling) {
+      heroContent.insertBefore(tagline, eyebrow.nextSibling);
+    } else {
+      heroContent.insertBefore(tagline, heroContent.firstChild);
+    }
+
+    /* Reduced motion → show the full tagline immediately, no caret. */
+    if (prefersReduced) {
+      tagline.textContent = TAGLINE;
+      return;
+    }
 
     var cursor = document.createElement('span');
     cursor.className = 'gui-typewriter-cursor';
-    heroP.appendChild(cursor);
+    tagline.appendChild(cursor);
 
     var i = 0;
-    var speed = 28; /* ms per character */
+    var speed = 55; /* ms per character */
 
     function type() {
-      if (i < fullText.length) {
-        heroP.insertBefore(document.createTextNode(fullText.charAt(i)), cursor);
+      if (i < TAGLINE.length) {
+        tagline.insertBefore(document.createTextNode(TAGLINE.charAt(i)), cursor);
         i++;
         setTimeout(type, speed);
       } else {
-        /* Remove cursor after 2s */
         setTimeout(function () {
           if (cursor.parentNode) cursor.parentNode.removeChild(cursor);
-        }, 2000);
+        }, 1800);
       }
     }
 
-    /* Start after a small delay to let the page settle */
-    setTimeout(type, 600);
+    setTimeout(type, 500);
   }
 
   /* ─────────────────────────────────────────────────────────────────────────
@@ -185,6 +195,153 @@
   }
 
   /* ─────────────────────────────────────────────────────────────────────────
+     5. GLOWING "PLAY NOW" CTA — prepended to the hero CTAs; scrolls to the grid
+     ───────────────────────────────────────────────────────────────────────── */
+  function initPlayNow() {
+    var ctas = document.querySelector('.hero .hero-ctas');
+    if (!ctas || ctas.querySelector('.gui-playnow')) return;
+
+    var btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'gui-playnow';
+    btn.textContent = 'Play Now';
+    btn.addEventListener('click', function () {
+      var grid = document.getElementById('gameGrid') || document.querySelector('.games-grid');
+      if (grid) {
+        grid.scrollIntoView({ behavior: prefersReduced ? 'auto' : 'smooth', block: 'start' });
+      }
+    });
+    ctas.insertBefore(btn, ctas.firstChild);
+  }
+
+  /* ─────────────────────────────────────────────────────────────────────────
+     6. FLOATING PREVIEW CARDS — 3 gently bobbing cards in the hero showcase.
+        If the live showcase stack is already populated, just bob its cards;
+        otherwise build 3 cards from the first real game thumbnails.
+     ───────────────────────────────────────────────────────────────────────── */
+  function initFloatingCards() {
+    var showcase = document.querySelector('.hero .hero-showcase');
+    if (!showcase) return;
+    if (showcase.querySelector('.gui-float-cards')) return;
+
+    function build() {
+      var stack = showcase.querySelector('#showcaseStack, .showcase-stack');
+
+      /* Path A — live showcase already has cards: bob the first three. */
+      if (stack && stack.children.length) {
+        for (var n = 0; n < Math.min(3, stack.children.length); n++) {
+          stack.children[n].classList.add('gui-bob');
+          stack.children[n].style.animationDelay = (n * 0.6) + 's';
+        }
+        return;
+      }
+
+      /* Path B — build our own from real game thumbnails (fallback to gradients). */
+      var thumbs = [];
+      var imgs = document.querySelectorAll('#gameGrid .game-thumb');
+      for (var j = 0; j < imgs.length && thumbs.length < 3; j++) {
+        if (imgs[j].src) thumbs.push(imgs[j].src);
+      }
+
+      var wrap = document.createElement('div');
+      wrap.className = 'gui-float-cards';
+      wrap.setAttribute('aria-hidden', 'true');
+
+      var labels = ['JACKPOT', 'MEGA WIN', 'FREE SPINS'];
+      for (var k = 0; k < 3; k++) {
+        var card = document.createElement('div');
+        card.className = 'gui-float-card gui-bob';
+        card.style.animationDelay = (k * 0.6) + 's';
+        if (thumbs[k]) card.style.backgroundImage = 'url("' + thumbs[k] + '")';
+
+        var badge = document.createElement('span');
+        badge.className = 'gui-float-badge';
+        badge.textContent = labels[k];
+        card.appendChild(badge);
+        wrap.appendChild(card);
+      }
+      showcase.appendChild(wrap);
+    }
+
+    /* Give the live populators (jackpot.js / lobby-live.js) a moment first. */
+    setTimeout(build, 1200);
+  }
+
+  /* ─────────────────────────────────────────────────────────────────────────
+     7. AUTH PAGES — social proof + animated tracing border on the form card
+     ───────────────────────────────────────────────────────────────────────── */
+  function initAuth() {
+    var card = document.querySelector('.rs-card');
+    if (!card) return;
+
+    document.body.classList.add('gui-auth');
+    card.classList.add('gui-trace');
+
+    if (!card.querySelector('.gui-social-proof')) {
+      var sp = document.createElement('div');
+      sp.className = 'gui-social-proof';
+
+      var dots = document.createElement('span');
+      dots.className = 'gui-sp-dots';
+      for (var d = 0; d < 4; d++) dots.appendChild(document.createElement('i'));
+
+      var text = document.createElement('span');
+      var strong = document.createElement('strong');
+      strong.textContent = '10,000+';
+      text.appendChild(document.createTextNode('Join '));
+      text.appendChild(strong);
+      text.appendChild(document.createTextNode(' players winning daily'));
+
+      sp.appendChild(dots);
+      sp.appendChild(text);
+      card.appendChild(sp);
+    }
+  }
+
+  /* ─────────────────────────────────────────────────────────────────────────
+     8. DEPOSIT (wallet) — glowing balance, step indicator, pill presets
+     ───────────────────────────────────────────────────────────────────────── */
+  function initDeposit() {
+    var balance = document.getElementById('mainBalance');
+    var presets = document.querySelector('.amount-presets');
+    if (!balance && !presets) return;
+
+    document.body.classList.add('gui-deposit');
+    if (balance) balance.classList.add('gui-balance-glow');
+
+    if (presets && !document.querySelector('.gui-steps')) {
+      var steps = document.createElement('div');
+      steps.className = 'gui-steps';
+      steps.setAttribute('aria-hidden', 'true');
+
+      var labels = ['Amount', 'Method', 'Confirm'];
+      var nodes = [];
+      for (var s = 0; s < labels.length; s++) {
+        var step = document.createElement('div');
+        step.className = 'gui-step' + (s === 0 ? ' gui-step-active' : '');
+        var num = document.createElement('span');
+        num.className = 'gui-step-n';
+        num.textContent = String(s + 1);
+        step.appendChild(num);
+        step.appendChild(document.createTextNode(' ' + labels[s]));
+        steps.appendChild(step);
+        nodes.push(step);
+      }
+
+      /* Insert above the "Choose amount" label that precedes the presets. */
+      var prev = presets.previousElementSibling;
+      var ref = (prev && prev.tagName === 'LABEL') ? prev : presets;
+      ref.parentNode.insertBefore(steps, ref);
+
+      /* Light progress feedback: picking an amount advances to step 2. */
+      presets.addEventListener('click', function () {
+        nodes[0].classList.remove('gui-step-active');
+        nodes[1].classList.add('gui-step-active');
+      });
+    }
+  }
+
+  /* ─────────────────────────────────────────────────────────────────────────
      BOOT — wait for DOM ready
      ───────────────────────────────────────────────────────────────────────── */
   function boot() {
@@ -193,6 +350,10 @@
     initPlayOverlays();
     observeNewCards();
     initHeroRain();
+    initPlayNow();
+    initFloatingCards();
+    initAuth();
+    initDeposit();
   }
 
   if (document.readyState === 'loading') {

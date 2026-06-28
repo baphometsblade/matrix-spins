@@ -56,7 +56,11 @@ const STANDALONE_CSS = [
     'css/matrix-theme.css',
     // Deep-polish — referenced directly by login.html / signup.html (auth polish:
     // floating labels, strength meter, eye toggle, shake). Mirrored to dist/css/.
-    'css/deep-polish.css'
+    'css/deep-polish.css',
+    // GUI-upgrade — cinematic lobby/auth/deposit polish. Referenced directly by
+    // login/signup/wallet HTML, so it MUST be mirrored to dist/css/ (without this
+    // the <link> 404'd in production and the whole layer's CSS went missing).
+    'css/gui-upgrade.css'
 ];
 
 // CSS files to bundle (in specificity order — premium overrides MUST be last).
@@ -111,7 +115,12 @@ const CSS_FILES = [
     // Sits AFTER matrix-theme on purpose: it only adds green-on-dark component
     // refinements (no gold-on-navy defaults), so the brand guarantee holds while
     // these refinements win the final cascade. Loaded LAST everywhere.
-    'css/deep-polish.css'
+    'css/deep-polish.css',
+    // GUI-upgrade cinematic layer — the ca­scade's final word. Glassmorphic nav,
+    // CRT scanlines, hero rain/ticker/PLAY-NOW, frosted auth + traced border,
+    // deposit step indicator. MUST stay dead last so its green-on-dark overrides
+    // beat every earlier sheet (including deep-polish).
+    'css/gui-upgrade.css'
 ];
 
 // --- Helper Functions ---
