@@ -47,6 +47,30 @@ body { background-image: url('../assets/backgrounds/slots/asteroid-lockdown.webp
     const gameConfig = {
       name: 'Asteroid Lockdown',
       id: 'asteroid-lockdown',
+      // visualTheme:begin (auto — scripts/inject-visual-themes.js)
+      visualTheme: {
+        "primary": "#00E5FF",
+        "secondary": "#7C4DFF",
+        "accent": "#FF4081",
+        "win": "#80FFEA",
+        "bgGradient": "linear-gradient(180deg, rgba(10,12,30,.55) 0%, rgba(4,5,16,.92) 100%)",
+        "frame": "neon",
+        "spin": "diamond",
+        "symAnim": "flip",
+        "winLine": {
+          "style": "neon",
+          "glow": 9,
+          "color": "#80FFEA"
+        },
+        "particle": "matrix",
+        "particleColor": [
+          "#FF4081",
+          "#80FFEA",
+          "#00E5FF"
+        ],
+        "density": 26
+      },
+      // visualTheme:end
       studioTheme: {
         id: 'nebula-gaming',
         name: 'Nebula Gaming',

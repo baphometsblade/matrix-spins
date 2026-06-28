@@ -47,6 +47,30 @@ body { background-image: url('../assets/backgrounds/slots/carnival-spinning-whee
     const gameConfig = {
       name: 'Carnival Spinning Wheel',
       id: 'carnival-spinning-wheel',
+      // visualTheme:begin (auto — scripts/inject-visual-themes.js)
+      visualTheme: {
+        "primary": "#D500F9",
+        "secondary": "#FFC400",
+        "accent": "#1DE9B6",
+        "win": "#EA80FC",
+        "bgGradient": "linear-gradient(180deg, rgba(30,10,40,.5) 0%, rgba(14,5,20,.88) 100%)",
+        "frame": "gold",
+        "spin": "round",
+        "symAnim": "pulse",
+        "winLine": {
+          "style": "neon",
+          "glow": 9,
+          "color": "#EA80FC"
+        },
+        "particle": "coins",
+        "particleColor": [
+          "#ffd700",
+          "#ffe066",
+          "#f0c75e"
+        ],
+        "density": 28
+      },
+      // visualTheme:end
       studioTheme: {
         id: 'ironclad-entertainment',
         name: 'Ironclad Entertainment',

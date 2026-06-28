@@ -269,6 +269,126 @@ if (!window.escapeHtml) {
     road: '🛣️', safari: '🦁', scythe: '☠️', wail: '👻',
   };
 
+  // ──────────────────────────────────────────────────────────────────
+  // VISUAL-THEME PARTICLE ENGINE
+  //
+  // A single lightweight <canvas> layer renders one of ~15 ambient
+  // particle types per game, giving every slot its own atmosphere
+  // (embers, snow, blossom, coins, bubbles, stars, leaves, fireflies,
+  // fog, aurora, caustics, rain, matrix, dust, sparkles). The engine is
+  // GC-conscious: 8–44 pre-allocated particles, recycled in place (never
+  // re-allocated mid-flight), animated with requestAnimationFrame and
+  // paused via the Page Visibility API. All motion is transform/opacity
+  // on a single canvas (GPU-friendly). Skipped entirely under
+  // prefers-reduced-motion. See SlotGame._initAmbientParticles().
+  //
+  // Each spec is STATELESS (shared across games) — all per-game state
+  // lives in the particle objects (the `P` array) or is derived from the
+  // monotonic timestamp `ts`, so specs can be const at module scope.
+  // ──────────────────────────────────────────────────────────────────
+  function _vtRnd(a, b) { return a + Math.random() * (b - a); }
+  function _vtPick(arr) { return arr[(Math.random() * arr.length) | 0] || arr[0]; }
+  function _vtRgba(hex, a) {
+    let c = (hex || '#ffffff').replace('#', '');
+    if (c.length === 3) c = c.split('').map((x) => x + x).join('');
+    const n = parseInt(c, 16) || 0xffffff;
+    return `rgba(${(n >> 16) & 255},${(n >> 8) & 255},${n & 255},${a})`;
+  }
+  const _vtKatakana = 'ｱｲｳｴｵｶｷｸｹｺｻｼｽｾｿﾀﾁﾂﾃﾄﾅﾆﾇﾈﾉﾊﾋﾌﾍﾎ0123456789';
+
+  const PARTICLE_SPECS = {
+    // Rising embers — flicker + upward drift. Fire / demon / inferno.
+    embers: {
+      spawn(W, H, D, col) { return { x: Math.random() * W, y: H + Math.random() * H * 0.4, vx: _vtRnd(-0.2, 0.2) * D, vy: -_vtRnd(0.3, 0.9) * D, s: _vtRnd(1, 3) * D, a: _vtRnd(0.3, 0.9), ph: _vtRnd(0, 6.28), c: _vtPick(col) }; },
+      step(p, W, H, D, dt) { const f = dt / 16; p.ph += 0.05 * f; p.x += (p.vx + Math.sin(p.ph) * 0.4 * D) * f; p.y += p.vy * f; if (p.y < -p.s * 4) { p.y = H + p.s; p.x = Math.random() * W; } },
+      draw(ctx, p) { ctx.globalAlpha = Math.max(0, p.a * (0.55 + 0.45 * Math.sin(p.ph))); ctx.fillStyle = p.c; ctx.shadowColor = p.c; ctx.shadowBlur = p.s * 4; ctx.beginPath(); ctx.arc(p.x, p.y, p.s, 0, 6.283); ctx.fill(); },
+    },
+    // Falling snow — gentle horizontal sway. Norse / ice / winter.
+    snow: {
+      spawn(W, H, D, col) { return { x: Math.random() * W, y: Math.random() * H, vy: _vtRnd(0.3, 0.9) * D, s: _vtRnd(1, 3.2) * D, a: _vtRnd(0.4, 0.9), ph: _vtRnd(0, 6.28), c: _vtPick(col) }; },
+      step(p, W, H, D, dt) { const f = dt / 16; p.ph += 0.02 * f; p.y += p.vy * f; p.x += Math.sin(p.ph) * 0.6 * D * f; if (p.y > H + p.s) { p.y = -p.s; p.x = Math.random() * W; } },
+      draw(ctx, p) { ctx.globalAlpha = p.a; ctx.fillStyle = p.c; ctx.shadowColor = p.c; ctx.shadowBlur = p.s * 2; ctx.beginPath(); ctx.arc(p.x, p.y, p.s, 0, 6.283); ctx.fill(); },
+    },
+    // Cherry-blossom / leaf petals — rotate while drifting down diagonally.
+    blossom: {
+      spawn(W, H, D, col) { return { x: Math.random() * W, y: Math.random() * H, vx: _vtRnd(-0.5, -0.1) * D, vy: _vtRnd(0.3, 0.8) * D, s: _vtRnd(4, 9) * D, a: _vtRnd(0.5, 0.95), rot: _vtRnd(0, 6.28), vr: _vtRnd(-0.04, 0.04), ph: _vtRnd(0, 6.28), c: _vtPick(col) }; },
+      step(p, W, H, D, dt) { const f = dt / 16; p.ph += 0.03 * f; p.rot += p.vr * f; p.x += (p.vx + Math.sin(p.ph) * 0.5 * D) * f; p.y += p.vy * f; if (p.y > H + p.s || p.x < -p.s) { p.y = -p.s; p.x = Math.random() * W; } },
+      draw(ctx, p) { ctx.globalAlpha = p.a; ctx.fillStyle = p.c; ctx.shadowColor = p.c; ctx.shadowBlur = p.s; ctx.save(); ctx.translate(p.x, p.y); ctx.rotate(p.rot); ctx.beginPath(); ctx.ellipse(0, 0, p.s, p.s * 0.5, 0, 0, 6.283); ctx.fill(); ctx.restore(); },
+    },
+    // Falling spinning coins — gold shimmer. Egyptian / fortune / wealth.
+    coins: {
+      spawn(W, H, D, col) { return { x: Math.random() * W, y: Math.random() * H, vy: _vtRnd(0.6, 1.4) * D, s: _vtRnd(4, 8) * D, a: _vtRnd(0.55, 0.95), ph: _vtRnd(0, 6.28), vp: _vtRnd(0.08, 0.16), c: _vtPick(col) }; },
+      step(p, W, H, D, dt) { const f = dt / 16; p.ph += p.vp * f; p.y += p.vy * f; p.x += Math.sin(p.ph * 0.5) * 0.3 * D * f; if (p.y > H + p.s) { p.y = -p.s; p.x = Math.random() * W; } },
+      draw(ctx, p) { const sx = Math.abs(Math.cos(p.ph)); ctx.globalAlpha = p.a; ctx.fillStyle = p.c; ctx.shadowColor = p.c; ctx.shadowBlur = p.s * 1.5; ctx.save(); ctx.translate(p.x, p.y); ctx.scale(sx < 0.12 ? 0.12 : sx, 1); ctx.beginPath(); ctx.arc(0, 0, p.s, 0, 6.283); ctx.fill(); ctx.restore(); },
+    },
+    // Rising bubbles — wobble upward. Ocean / underwater / koi.
+    bubbles: {
+      spawn(W, H, D, col) { return { x: Math.random() * W, y: H + Math.random() * H, vy: -_vtRnd(0.4, 1.1) * D, s: _vtRnd(3, 9) * D, a: _vtRnd(0.25, 0.6), ph: _vtRnd(0, 6.28), c: _vtPick(col) }; },
+      step(p, W, H, D, dt) { const f = dt / 16; p.ph += 0.04 * f; p.y += p.vy * f; p.x += Math.sin(p.ph) * 0.7 * D * f; if (p.y < -p.s) { p.y = H + p.s; p.x = Math.random() * W; } },
+      draw(ctx, p) { ctx.globalAlpha = p.a; ctx.strokeStyle = p.c; ctx.lineWidth = Math.max(1, p.s * 0.18); ctx.shadowColor = p.c; ctx.shadowBlur = p.s; ctx.beginPath(); ctx.arc(p.x, p.y, p.s, 0, 6.283); ctx.stroke(); ctx.globalAlpha = p.a * 0.5; ctx.beginPath(); ctx.arc(p.x - p.s * 0.3, p.y - p.s * 0.3, p.s * 0.22, 0, 6.283); ctx.fillStyle = p.c; ctx.fill(); },
+    },
+    // Twinkling stars — slow drift + opacity pulse. Space / cosmic / night.
+    stars: {
+      spawn(W, H, D, col) { return { x: Math.random() * W, y: Math.random() * H, vx: _vtRnd(-0.05, 0.05) * D, vy: _vtRnd(0.01, 0.08) * D, s: _vtRnd(0.6, 2.4) * D, a: _vtRnd(0.3, 1), ph: _vtRnd(0, 6.28), vp: _vtRnd(0.02, 0.06), c: _vtPick(col) }; },
+      step(p, W, H, D, dt) { const f = dt / 16; p.ph += p.vp * f; p.x += p.vx * f; p.y += p.vy * f; if (p.y > H + p.s) { p.y = -p.s; p.x = Math.random() * W; } if (p.x < -p.s) p.x = W; else if (p.x > W + p.s) p.x = 0; },
+      draw(ctx, p) { ctx.globalAlpha = p.a * (0.4 + 0.6 * Math.abs(Math.sin(p.ph))); ctx.fillStyle = p.c; ctx.shadowColor = p.c; ctx.shadowBlur = p.s * 3; ctx.beginPath(); ctx.arc(p.x, p.y, p.s, 0, 6.283); ctx.fill(); },
+    },
+    // Falling leaves — tumble + sway. Nature / forest / druid / autumn.
+    leaves: {
+      spawn(W, H, D, col) { return { x: Math.random() * W, y: Math.random() * H, vx: _vtRnd(-0.4, 0.4) * D, vy: _vtRnd(0.3, 0.7) * D, s: _vtRnd(5, 11) * D, a: _vtRnd(0.5, 0.9), rot: _vtRnd(0, 6.28), vr: _vtRnd(-0.05, 0.05), ph: _vtRnd(0, 6.28), c: _vtPick(col) }; },
+      step(p, W, H, D, dt) { const f = dt / 16; p.ph += 0.035 * f; p.rot += p.vr * f; p.x += (p.vx + Math.sin(p.ph) * 0.8 * D) * f; p.y += p.vy * f; if (p.y > H + p.s) { p.y = -p.s; p.x = Math.random() * W; } },
+      draw(ctx, p) { ctx.globalAlpha = p.a; ctx.fillStyle = p.c; ctx.shadowColor = p.c; ctx.shadowBlur = p.s * 0.6; ctx.save(); ctx.translate(p.x, p.y); ctx.rotate(p.rot); ctx.beginPath(); ctx.moveTo(0, -p.s); ctx.quadraticCurveTo(p.s * 0.7, 0, 0, p.s); ctx.quadraticCurveTo(-p.s * 0.7, 0, 0, -p.s); ctx.fill(); ctx.restore(); },
+    },
+    // Wandering fireflies — random walk + glow pulse. Fantasy / enchanted.
+    fireflies: {
+      spawn(W, H, D, col) { return { x: Math.random() * W, y: Math.random() * H, vx: _vtRnd(-0.3, 0.3) * D, vy: _vtRnd(-0.3, 0.3) * D, s: _vtRnd(1.5, 3.5) * D, a: _vtRnd(0.4, 1), ph: _vtRnd(0, 6.28), vp: _vtRnd(0.03, 0.08), c: _vtPick(col) }; },
+      step(p, W, H, D, dt) { const f = dt / 16; p.ph += p.vp * f; p.vx += _vtRnd(-0.04, 0.04) * D * f; p.vy += _vtRnd(-0.04, 0.04) * D * f; p.vx = Math.max(-0.5 * D, Math.min(0.5 * D, p.vx)); p.vy = Math.max(-0.5 * D, Math.min(0.5 * D, p.vy)); p.x += p.vx * f; p.y += p.vy * f; if (p.x < 0) p.x = W; else if (p.x > W) p.x = 0; if (p.y < 0) p.y = H; else if (p.y > H) p.y = 0; },
+      draw(ctx, p) { ctx.globalAlpha = p.a * (0.25 + 0.75 * Math.abs(Math.sin(p.ph))); ctx.fillStyle = p.c; ctx.shadowColor = p.c; ctx.shadowBlur = p.s * 5; ctx.beginPath(); ctx.arc(p.x, p.y, p.s, 0, 6.283); ctx.fill(); },
+    },
+    // Drifting fog — large soft translucent blobs. Haunted / mystery / swamp.
+    fog: {
+      spawn(W, H, D, col) { return { x: Math.random() * W, y: _vtRnd(0.3, 1) * H, vx: _vtRnd(0.05, 0.25) * D * (Math.random() < 0.5 ? -1 : 1), s: _vtRnd(60, 160) * D, a: _vtRnd(0.04, 0.12), c: _vtPick(col) }; },
+      step(p, W, H, D, dt) { const f = dt / 16; p.x += p.vx * f; if (p.x < -p.s) p.x = W + p.s; else if (p.x > W + p.s) p.x = -p.s; },
+      draw(ctx, p) { const g = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, p.s); g.addColorStop(0, _vtRgba(p.c, p.a)); g.addColorStop(1, _vtRgba(p.c, 0)); ctx.globalAlpha = 1; ctx.fillStyle = g; ctx.beginPath(); ctx.arc(p.x, p.y, p.s, 0, 6.283); ctx.fill(); },
+    },
+    // Northern lights — slow wavy luminous bands. Norse / arctic / mystic.
+    aurora: {
+      count: 0,
+      frame(ctx, W, H, D, ts, col) { ctx.globalCompositeOperation = 'lighter'; for (let b = 0; b < 3; b++) { const c = col[b % col.length]; const yBase = H * (0.18 + b * 0.16); const amp = H * 0.07; const g = ctx.createLinearGradient(0, yBase - H * 0.18, 0, yBase + H * 0.18); g.addColorStop(0, _vtRgba(c, 0)); g.addColorStop(0.5, _vtRgba(c, 0.13)); g.addColorStop(1, _vtRgba(c, 0)); ctx.fillStyle = g; ctx.beginPath(); ctx.moveTo(0, H); for (let x = 0; x <= W; x += 24 * D) { const y = yBase + Math.sin(x * 0.004 / D + ts * 0.0006 + b) * amp + Math.sin(x * 0.011 / D - ts * 0.0009) * amp * 0.4; ctx.lineTo(x, y); } ctx.lineTo(W, H); ctx.closePath(); ctx.fill(); } ctx.globalCompositeOperation = 'source-over'; },
+      spawn() { return {}; }, step() {}, draw() {},
+    },
+    // Underwater caustics — shifting light ripples. Ocean / reef / atlantis.
+    caustics: {
+      count: 0,
+      frame(ctx, W, H, D, ts, col) { ctx.globalCompositeOperation = 'lighter'; const c = col[0]; for (let i = 0; i < 6; i++) { const x = (Math.sin(ts * 0.0004 + i * 1.7) * 0.5 + 0.5) * W; const y = (Math.cos(ts * 0.0005 + i * 2.3) * 0.5 + 0.5) * H; const r = (50 + 40 * Math.sin(ts * 0.001 + i)) * D; const g = ctx.createRadialGradient(x, y, 0, x, y, r); g.addColorStop(0, _vtRgba(c, 0.09)); g.addColorStop(1, _vtRgba(c, 0)); ctx.fillStyle = g; ctx.beginPath(); ctx.arc(x, y, r, 0, 6.283); ctx.fill(); } ctx.globalCompositeOperation = 'source-over'; },
+      spawn() { return {}; }, step() {}, draw() {},
+    },
+    // Rain — fast vertical streaks. Storm / noir / city / jungle.
+    rain: {
+      spawn(W, H, D, col) { return { x: Math.random() * W, y: Math.random() * H, vy: _vtRnd(6, 11) * D, len: _vtRnd(8, 20) * D, a: _vtRnd(0.15, 0.4), c: _vtPick(col) }; },
+      step(p, W, H, D, dt) { const f = dt / 16; p.y += p.vy * f; p.x -= 0.6 * D * f; if (p.y > H) { p.y = -p.len; p.x = Math.random() * W; } },
+      draw(ctx, p) { ctx.globalAlpha = p.a; ctx.strokeStyle = p.c; ctx.lineWidth = Math.max(1, 1.2); ctx.beginPath(); ctx.moveTo(p.x, p.y); ctx.lineTo(p.x - p.len * 0.12, p.y + p.len); ctx.stroke(); },
+    },
+    // Matrix code rain — falling katakana columns. Cyber / tech / quantum.
+    matrix: {
+      spawn(W, H, D, col, i, n) { const cell = 16 * D; return { x: (i / n) * W + _vtRnd(0, cell), y: _vtRnd(-H, 0), vy: _vtRnd(2, 5) * D, len: (6 + (Math.random() * 10 | 0)), cell, c: _vtPick(col) }; },
+      step(p, W, H, D, dt) { const f = dt / 16; p.y += p.vy * f; if (p.y - p.len * p.cell > H) { p.y = _vtRnd(-H * 0.5, 0); } },
+      draw(ctx, p) { ctx.font = `${p.cell}px monospace`; ctx.textAlign = 'center'; for (let k = 0; k < p.len; k++) { const yy = p.y - k * p.cell; if (yy < 0 || yy > 100000) continue; ctx.globalAlpha = k === 0 ? 0.95 : Math.max(0, 0.5 - k / p.len * 0.5); ctx.fillStyle = k === 0 ? '#d7ffd9' : p.c; ctx.shadowColor = p.c; ctx.shadowBlur = k === 0 ? 8 : 0; ctx.fillText(_vtKatakana[(Math.random() * _vtKatakana.length) | 0], p.x, yy); } },
+    },
+    // Floating dust / sand motes — slow lazy drift. Desert / ancient / tomb.
+    dust: {
+      spawn(W, H, D, col) { return { x: Math.random() * W, y: Math.random() * H, vx: _vtRnd(-0.12, 0.12) * D, vy: _vtRnd(-0.06, 0.06) * D, s: _vtRnd(0.6, 2.2) * D, a: _vtRnd(0.12, 0.4), ph: _vtRnd(0, 6.28), c: _vtPick(col) }; },
+      step(p, W, H, D, dt) { const f = dt / 16; p.ph += 0.01 * f; p.x += (p.vx + Math.sin(p.ph) * 0.1 * D) * f; p.y += p.vy * f; if (p.x < 0) p.x = W; else if (p.x > W) p.x = 0; if (p.y < 0) p.y = H; else if (p.y > H) p.y = 0; },
+      draw(ctx, p) { ctx.globalAlpha = p.a; ctx.fillStyle = p.c; ctx.beginPath(); ctx.arc(p.x, p.y, p.s, 0, 6.283); ctx.fill(); },
+    },
+    // Sparkles — star-bursts that twinkle in and out. Magic / crystal / glam.
+    sparkles: {
+      spawn(W, H, D, col) { return { x: Math.random() * W, y: Math.random() * H, s: _vtRnd(2, 6) * D, ph: _vtRnd(0, 6.28), vp: _vtRnd(0.03, 0.07), c: _vtPick(col) }; },
+      step(p, W, H, D, dt) { const f = dt / 16; p.ph += p.vp * f; if (p.ph > 6.283) { p.ph -= 6.283; p.x = Math.random() * W; p.y = Math.random() * H; } },
+      draw(ctx, p) { const t = Math.sin(p.ph); if (t <= 0) return; const a = t, r = p.s * t; ctx.globalAlpha = a; ctx.strokeStyle = p.c; ctx.lineWidth = Math.max(1, p.s * 0.18); ctx.shadowColor = p.c; ctx.shadowBlur = p.s * 2; ctx.beginPath(); ctx.moveTo(p.x - r, p.y); ctx.lineTo(p.x + r, p.y); ctx.moveTo(p.x, p.y - r); ctx.lineTo(p.x, p.y + r); ctx.moveTo(p.x - r * 0.45, p.y - r * 0.45); ctx.lineTo(p.x + r * 0.45, p.y + r * 0.45); ctx.moveTo(p.x - r * 0.45, p.y + r * 0.45); ctx.lineTo(p.x + r * 0.45, p.y - r * 0.45); ctx.stroke(); },
+    },
+  };
+
   class SlotGame {
     constructor(containerId, gameConfig) {
       this.container = document.getElementById(containerId);
@@ -276,6 +396,11 @@ if (!window.escapeHtml) {
       this.gameId = gameConfig.id || gameConfig.gameId;
       if (!this.gameId) throw new Error('CasinoEngine: gameConfig.id is required');
       this.theme = gameConfig.studioTheme || {};
+      // Per-game visual identity (palette / frame / spin button / symbol
+      // animation / win-line / ambient particles). Drives _applyVisualTheme()
+      // so every slot looks completely distinct. Optional — games without it
+      // fall back to the studioTheme skin. See scripts/inject-visual-themes.js.
+      this.visualTheme = gameConfig.visualTheme || null;
       this.displayName = gameConfig.name || 'Slot Game';
       // Page-supplied RTP (display-only; authoritative value comes from the
       // server later). Captured for the matrix-loader splash, which shows
@@ -488,6 +613,184 @@ if (!window.escapeHtml) {
       this._primary = primary;
     }
 
+    // ──────────────────────────────────────────────────────────────────
+    // COMPREHENSIVE PER-GAME VISUAL THEME
+    //
+    // Reads gameConfig.visualTheme and gives THIS game a completely unique
+    // look that no other slot shares: its own palette, reel-frame material,
+    // spin-button shape/glow, symbol-landing animation, win-line style, and
+    // an animated ambient particle background. Layers (bottom→top):
+    //   body art  <  #ce-vt-scrim (legibility + color glow)  <
+    //   #ce-vt-particles canvas  <  game UI (.ce-root, z-index 2)
+    // CSS variant rules are keyed off data-vt-* attributes on .ce-root.
+    // Fully guarded — any failure leaves the studioTheme skin intact.
+    // ──────────────────────────────────────────────────────────────────
+    _applyVisualTheme() {
+      const vt = this.visualTheme;
+      if (!vt || typeof vt !== 'object') return;
+      const root = this.container;
+      const setVar = (k, v) => { if (v) root.style.setProperty(k, v); };
+      // 1) Palette — override the studioTheme vars with the game's own hues.
+      if (vt.primary) { setVar('--ce-primary', vt.primary); setVar('--ce-primary-d', shade(vt.primary, -26)); this._primary = vt.primary; }
+      if (vt.secondary) { setVar('--ce-secondary', vt.secondary); setVar('--ce-secondary-d', shade(vt.secondary, -26)); }
+      if (vt.accent) setVar('--ce-accent', vt.accent);
+      if (vt.win) setVar('--ce-win', vt.win);
+      // 2) Data hooks the variant stylesheet keys off.
+      root.dataset.vtFrame = vt.frame || 'gold';
+      root.dataset.vtSpin = vt.spin || 'round';
+      root.dataset.vtSymanim = vt.symAnim || 'bounce';
+      root.dataset.vtParticle = vt.particle || 'none';
+      // 3) Variant stylesheet (frames / spin shapes / symbol anims / win lines).
+      this._injectVisualThemeStyle();
+      // 4) Layered ambient background (scrim + particle canvas).
+      try { this._buildAmbientLayers(vt); } catch (_) { /* atmosphere is polish */ }
+      // 5) Win-line config consumed by _drawPaylines().
+      this._winLineCfg = vt.winLine || null;
+    }
+
+    // Build the fixed scrim + particle canvas behind the game UI. The
+    // container itself is made transparent and lifted to z-index 2 so the
+    // particles read between the body art and the reels.
+    _buildAmbientLayers(vt) {
+      const root = this.container;
+      root.style.background = 'transparent';
+      root.style.position = 'relative';
+      root.style.zIndex = '2';
+      const tint = vt.primary || this._primary || '#D4A853';
+      let scrim = document.getElementById('ce-vt-scrim');
+      if (!scrim) { scrim = document.createElement('div'); scrim.id = 'ce-vt-scrim'; scrim.setAttribute('aria-hidden', 'true'); document.body.appendChild(scrim); }
+      const base = vt.bgGradient || 'linear-gradient(180deg, rgba(7,9,13,.55) 0%, rgba(7,9,13,.72) 52%, rgba(7,9,13,.9) 100%)';
+      scrim.style.cssText = `position:fixed;inset:0;z-index:0;pointer-events:none;background:radial-gradient(120% 80% at 50% -10%, ${_vtRgba(tint, 0.18)} 0%, rgba(0,0,0,0) 55%), ${base};`;
+      this._initAmbientParticles(vt);
+    }
+
+    // Single-canvas ambient particle layer. ~15 selectable types; 8–44
+    // recycled particles; rAF with Page-Visibility pause; skipped under
+    // prefers-reduced-motion. Idempotent (tears down a prior layer first).
+    _initAmbientParticles(vt) {
+      if (this._vtRaf) { cancelAnimationFrame(this._vtRaf); this._vtRaf = null; }
+      if (this._vtCanvas) { try { this._vtCanvas.remove(); } catch (_) {} this._vtCanvas = null; }
+      if (this._vtCleanup) { try { this._vtCleanup(); } catch (_) {} this._vtCleanup = null; }
+      const reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      const type = vt.particle;
+      const spec = type && PARTICLE_SPECS[type];
+      if (!spec || reduce) return;
+      const canvas = document.createElement('canvas');
+      canvas.id = 'ce-vt-particles';
+      canvas.setAttribute('aria-hidden', 'true');
+      canvas.style.cssText = 'position:fixed;inset:0;z-index:1;pointer-events:none;';
+      document.body.appendChild(canvas);
+      this._vtCanvas = canvas;
+      const ctx = canvas.getContext('2d');
+      if (!ctx) { canvas.remove(); this._vtCanvas = null; return; }
+      const D = Math.min(window.devicePixelRatio || 1, 1.5);
+      let W = 0, H = 0;
+      const resize = () => {
+        W = canvas.width = Math.max(1, Math.floor(window.innerWidth * D));
+        H = canvas.height = Math.max(1, Math.floor(window.innerHeight * D));
+        canvas.style.width = window.innerWidth + 'px';
+        canvas.style.height = window.innerHeight + 'px';
+      };
+      resize();
+      const colors = Array.isArray(vt.particleColor) ? vt.particleColor.slice()
+        : [vt.particleColor || vt.accent || vt.primary || '#ffffff'];
+      const n = spec.count != null ? spec.count : Math.max(8, Math.min(44, vt.density || 28));
+      const P = [];
+      for (let i = 0; i < n; i++) P.push(spec.spawn(W, H, D, colors, i, n));
+      let last = 0, running = true;
+      const tick = (ts) => {
+        if (!running) return;
+        const dt = last ? Math.min(50, ts - last) : 16; last = ts;
+        ctx.clearRect(0, 0, W, H);
+        if (spec.frame) spec.frame(ctx, W, H, D, ts, colors);
+        for (let i = 0; i < P.length; i++) { spec.step(P[i], W, H, D, dt, colors); spec.draw(ctx, P[i], D); }
+        ctx.globalAlpha = 1; ctx.shadowBlur = 0;
+        this._vtRaf = requestAnimationFrame(tick);
+      };
+      this._vtRaf = requestAnimationFrame(tick);
+      const onVis = () => {
+        if (document.hidden) { running = false; if (this._vtRaf) { cancelAnimationFrame(this._vtRaf); this._vtRaf = null; } }
+        else if (!running) { running = true; last = 0; this._vtRaf = requestAnimationFrame(tick); }
+      };
+      let rt = null;
+      const onResize = () => { clearTimeout(rt); rt = setTimeout(resize, 200); };
+      document.addEventListener('visibilitychange', onVis);
+      window.addEventListener('resize', onResize);
+      this._vtCleanup = () => {
+        document.removeEventListener('visibilitychange', onVis);
+        window.removeEventListener('resize', onResize);
+        clearTimeout(rt);
+      };
+    }
+
+    // Inject the visual-theme variant stylesheet once per page. Every rule is
+    // keyed off a data-vt-* attribute on .ce-root and reads the live theme
+    // CSS vars, so it composes with the studioTheme skin. The reduced-motion
+    // guard MUST stay LAST in this block so it wins the cascade.
+    _injectVisualThemeStyle() {
+      if (document.getElementById('ce-vt-style')) return;
+      const s = document.createElement('style');
+      s.id = 'ce-vt-style';
+      s.textContent = `
+        /* ── Reel-frame materials (data-vt-frame) ── */
+        .ce-root[data-vt-frame] .ce-reelbox { transition: box-shadow .4s ease; }
+        .ce-root[data-vt-frame="silver"] .ce-reelbox { border: 4px solid #c9d2dc; border-image: linear-gradient(135deg,#f5f7fa,#9aa6b4 45%,#e8edf2 55%,#7d8896) 1; box-shadow: 0 0 28px rgba(201,210,220,.32), inset 0 0 22px rgba(201,210,220,.12); }
+        .ce-root[data-vt-frame="wood"] .ce-reelbox { border: 7px solid #6b4423; border-image: repeating-linear-gradient(115deg,#7a4a26,#7a4a26 7px,#5c361b 7px,#5c361b 14px) 7; box-shadow: 0 0 24px rgba(90,54,27,.5), inset 0 0 26px rgba(0,0,0,.45); }
+        .ce-root[data-vt-frame="crystal"] .ce-reelbox { border: 3px solid color-mix(in srgb, var(--ce-accent) 70%, #fff); box-shadow: 0 0 34px color-mix(in srgb, var(--ce-accent) 55%, transparent), inset 0 0 30px color-mix(in srgb, var(--ce-accent) 22%, transparent); background: linear-gradient(160deg, color-mix(in srgb, var(--ce-accent) 10%, transparent), rgba(0,0,0,.45)); }
+        .ce-root[data-vt-frame="neon"] .ce-reelbox { border: 2px solid var(--ce-primary); box-shadow: 0 0 8px var(--ce-primary), 0 0 26px color-mix(in srgb, var(--ce-primary) 70%, transparent), inset 0 0 18px color-mix(in srgb, var(--ce-primary) 45%, transparent); }
+        .ce-root[data-vt-frame="neon"] .ce-reelbox::before { box-shadow: inset 0 0 0 1px var(--ce-accent), 0 0 12px color-mix(in srgb, var(--ce-accent) 60%, transparent); }
+        .ce-root[data-vt-frame="stone"] .ce-reelbox { border: 8px solid #59606b; border-image: linear-gradient(135deg,#7c8390,#3f444c 50%,#6a7079) 8; box-shadow: 0 0 20px rgba(0,0,0,.55), inset 0 0 24px rgba(0,0,0,.5); }
+        .ce-root[data-vt-frame="jade"] .ce-reelbox { border: 4px solid #2fb98a; border-image: linear-gradient(135deg,#7ff0c4,#149c6e 50%,#3fd6a0) 1; box-shadow: 0 0 30px rgba(47,185,138,.4), inset 0 0 22px rgba(47,185,138,.16); }
+        .ce-root[data-vt-frame="obsidian"] .ce-reelbox { border: 3px solid #14161c; box-shadow: 0 0 22px rgba(0,0,0,.7), inset 0 0 0 1px color-mix(in srgb, var(--ce-primary) 55%, transparent), inset 0 0 26px rgba(0,0,0,.6); background: linear-gradient(160deg,#0b0c10,#1a1d25); }
+        .ce-root[data-vt-frame="bamboo"] .ce-reelbox { border: 6px solid #6a994e; border-image: repeating-linear-gradient(0deg,#a7c957,#a7c957 12px,#6a994e 12px,#6a994e 16px) 6; box-shadow: 0 0 20px rgba(106,153,78,.4), inset 0 0 22px rgba(0,0,0,.4); }
+        .ce-root[data-vt-frame="copper"] .ce-reelbox { border: 5px solid #b87333; border-image: linear-gradient(135deg,#e8a76b,#8a4f1e 50%,#c9803f) 1; box-shadow: 0 0 26px rgba(184,115,51,.42), inset 0 0 22px rgba(120,70,30,.3); }
+        .ce-root[data-vt-frame="ice"] .ce-reelbox { border: 3px solid #bfe9ff; border-image: linear-gradient(135deg,#eaf8ff,#7fc3e8 50%,#cdeeff) 1; box-shadow: 0 0 32px rgba(150,210,240,.4), inset 0 0 26px rgba(190,230,255,.18); }
+        .ce-root[data-vt-frame="bone"] .ce-reelbox { border: 5px solid #d9cfb8; border-image: linear-gradient(135deg,#efe7d2,#b3a888 50%,#ddd3bb) 1; box-shadow: 0 0 18px rgba(0,0,0,.5), inset 0 0 22px rgba(0,0,0,.4); }
+        .ce-root[data-vt-frame="coral"] .ce-reelbox { border: 4px solid #ff7e6b; border-image: linear-gradient(135deg,#ffb199,#ff5e7e 55%,#ff8f70) 1; box-shadow: 0 0 28px rgba(255,126,107,.38), inset 0 0 22px rgba(255,126,107,.14); }
+        .ce-root[data-vt-frame="velvet"] .ce-reelbox { border: 5px solid #7a1330; box-shadow: 0 0 30px rgba(120,20,48,.45), inset 0 0 34px rgba(0,0,0,.55); background: radial-gradient(120% 100% at 50% 0%, rgba(120,20,48,.28), rgba(0,0,0,.5)); }
+
+        /* ── Spin-button shapes (data-vt-spin) ── */
+        .ce-root[data-vt-spin="hex"] .ce-btn.primary.ce-spin { border-radius: 14px; clip-path: polygon(25% 4%,75% 4%,100% 50%,75% 96%,25% 96%,0% 50%); }
+        .ce-root[data-vt-spin="gem"] .ce-btn.primary.ce-spin { border-radius: 12px; clip-path: polygon(50% 0,85% 18%,100% 50%,85% 82%,50% 100%,15% 82%,0 50%,15% 18%); }
+        .ce-root[data-vt-spin="shield"] .ce-btn.primary.ce-spin { border-radius: 12px; clip-path: polygon(50% 0,100% 14%,100% 60%,50% 100%,0 60%,0 14%); }
+        .ce-root[data-vt-spin="diamond"] .ce-btn.primary.ce-spin { clip-path: polygon(50% 0,100% 50%,50% 100%,0 50%); }
+        .ce-root[data-vt-spin="hex"] .ce-btn.primary.ce-spin::before,
+        .ce-root[data-vt-spin="gem"] .ce-btn.primary.ce-spin::before,
+        .ce-root[data-vt-spin="shield"] .ce-btn.primary.ce-spin::before,
+        .ce-root[data-vt-spin="diamond"] .ce-btn.primary.ce-spin::before { display: none; }
+        .ce-root[data-vt-spin="ring"] .ce-btn.primary.ce-spin { box-shadow: var(--ce-spin-glow), 0 0 0 4px color-mix(in srgb, var(--ce-win) 70%, transparent), 0 0 0 7px color-mix(in srgb, var(--ce-primary) 40%, transparent), 0 6px 18px rgba(0,0,0,.5); }
+        .ce-root[data-vt-spin="pulsar"] .ce-btn.primary.ce-spin::before { animation-duration: 1.6s; opacity: 1; }
+
+        /* ── Symbol landing animations (data-vt-symanim) ── */
+        .ce-root[data-vt-symanim="spin"] .ce-cell.just-landed { animation: ceVtSpin 360ms cubic-bezier(.2,.9,.3,1) both; }
+        .ce-root[data-vt-symanim="flip"] .ce-cell.just-landed { animation: ceVtFlip 420ms cubic-bezier(.3,.8,.3,1) both; }
+        .ce-root[data-vt-symanim="pulse"] .ce-cell.just-landed { animation: ceVtPulse 360ms ease both; }
+        .ce-root[data-vt-symanim="shimmer"] .ce-cell.just-landed { animation: ceVtShimmer 520ms ease both; }
+        .ce-root[data-vt-symanim="grow"] .ce-cell.just-landed { animation: ceVtGrow 320ms cubic-bezier(.2,1.4,.5,1) both; }
+        .ce-root[data-vt-symanim="wobble"] .ce-cell.just-landed { animation: ceVtWobble 480ms ease both; }
+        @keyframes ceVtSpin { 0% { transform: rotate(-180deg) scale(.5); opacity: .3; } 100% { transform: rotate(0) scale(1); opacity: 1; } }
+        @keyframes ceVtFlip { 0% { transform: perspective(320px) rotateY(90deg); opacity: .2; } 100% { transform: perspective(320px) rotateY(0); opacity: 1; } }
+        @keyframes ceVtPulse { 0% { transform: scale(.6); filter: brightness(1.6); } 55% { transform: scale(1.14); } 100% { transform: scale(1); filter: brightness(1); } }
+        @keyframes ceVtShimmer { 0% { filter: brightness(2.2) saturate(1.6); transform: scale(.92); } 100% { filter: brightness(1) saturate(1); transform: scale(1); } }
+        @keyframes ceVtGrow { 0% { transform: scale(0); } 100% { transform: scale(1); } }
+        @keyframes ceVtWobble { 0% { transform: rotate(0); } 20% { transform: rotate(-9deg) scale(1.05); } 45% { transform: rotate(7deg); } 70% { transform: rotate(-4deg); } 100% { transform: rotate(0) scale(1); } }
+
+        /* Highlight glow follows the live primary var (overrides the baked literal). */
+        .ce-root .ce-cell.highlight { box-shadow: 0 0 12px var(--ce-primary), 0 0 24px color-mix(in srgb, var(--ce-primary) 42%, transparent); }
+
+        /* Marching win-line dash for dashed/dotted styles (see _drawPaylines). */
+        @keyframes ceVtMarch { to { stroke-dashoffset: -40; } }
+
+        /* ── Reduced-motion guard (MUST be last so it wins the cascade) ── */
+        @media (prefers-reduced-motion: reduce) {
+          .ce-root[data-vt-symanim] .ce-cell.just-landed { animation: ceLand 240ms ease both; }
+          .ce-root[data-vt-spin] .ce-btn.primary.ce-spin::before { animation: none; }
+          .ce-payline-svg path { animation: none !important; }
+        }
+      `;
+      document.head.appendChild(s);
+    }
+
     _buildShell() {
       const theme = this.theme;
       const primary = theme.primaryColor || '#D4A853';
@@ -569,6 +872,10 @@ if (!window.escapeHtml) {
       this.main.appendChild(this.loading);
 
       this._bindKeyboard();
+      // Apply the comprehensive per-game visual theme LAST so its scrim +
+      // particle layers and transparent-container override win over the
+      // default background set above. Guarded — never blocks boot.
+      try { this._applyVisualTheme(); } catch (_) { /* visual theme is polish */ }
     }
 
     // Keyboard controls (premium desktop UX): Space or Enter spins. While a
@@ -1726,7 +2033,15 @@ if (!window.escapeHtml) {
         svg.style.top = grid.offsetTop + 'px';
         svg.style.width = W + 'px';
         svg.style.height = H + 'px';
-        const palette = ['#00ff41', '#FFD700', '#00e5ff', '#ff5da2', '#b06bff', '#ff8c00'];
+        // Per-game win-line styling (set by the visual theme). `colors`
+        // overrides the default rainbow; `pattern` switches solid → dashed /
+        // dotted (marching ants); `glow` scales the underlay blur.
+        const wl = this._winLineCfg || {};
+        const wlColors = Array.isArray(wl.colors) && wl.colors.length ? wl.colors
+          : (wl.color ? [wl.color] : null);
+        const palette = wlColors || ['#00ff41', '#FFD700', '#00e5ff', '#ff5da2', '#b06bff', '#ff8c00'];
+        const wlPattern = wl.style || wl.pattern || 'solid';
+        const wlGlow = wl.glow != null ? wl.glow : 6;
         const center = (r, y) => {
           const cell = cells[r * g.rows + y];
           if (!cell) return null;
@@ -1749,8 +2064,15 @@ if (!window.escapeHtml) {
             path.setAttribute('stroke-linejoin', 'round');
             path.setAttribute('stroke-linecap', 'round');
             path.setAttribute('opacity', opacity);
-            if (glow) path.style.filter = 'drop-shadow(0 0 6px ' + color + ')';
-            if (!reduce) {
+            if (glow) path.style.filter = 'drop-shadow(0 0 ' + wlGlow + 'px ' + color + ')';
+            const dashed = wlPattern === 'dashed' || wlPattern === 'dotted';
+            if (dashed && !glow) {
+              // Bright stroke renders as marching dashes/dots instead of a
+              // solid draw-on — a distinct per-game win-line signature.
+              const dash = wlPattern === 'dotted' ? '1 9' : '12 8';
+              path.style.strokeDasharray = dash;
+              if (!reduce) path.style.animation = 'ceVtMarch 1s linear infinite';
+            } else if (!reduce) {
               let len = 0;
               try { len = path.getTotalLength ? path.getTotalLength() : 0; } catch (_) { len = 0; }
               if (len) {

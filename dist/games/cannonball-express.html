@@ -47,6 +47,30 @@ body { background-image: url('../assets/backgrounds/slots/cannonball-express.web
     const gameConfig = {
       name: 'Cannonball Express',
       id: 'cannonball-express',
+      // visualTheme:begin (auto — scripts/inject-visual-themes.js)
+      visualTheme: {
+        "primary": "#9C6B3F",
+        "secondary": "#CDA06B",
+        "accent": "#4FB0A8",
+        "win": "#E6C290",
+        "bgGradient": "linear-gradient(180deg, rgba(40,28,16,.6) 0%, rgba(20,14,8,.9) 100%)",
+        "frame": "wood",
+        "spin": "gem",
+        "symAnim": "wobble",
+        "winLine": {
+          "style": "dashed",
+          "color": "#E8C07D",
+          "glow": 7
+        },
+        "particle": "embers",
+        "particleColor": [
+          "#ff6a00",
+          "#ff3d00",
+          "#ffb300"
+        ],
+        "density": 28
+      },
+      // visualTheme:end
       studioTheme: {
         id: 'ironclad-entertainment',
         name: 'Ironclad Entertainment',

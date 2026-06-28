@@ -47,6 +47,30 @@ body { background-image: url('../assets/backgrounds/slots/fruit-fortune-wheel.we
     const gameConfig = {
       name: 'Fruit Fortune Wheel',
       id: 'fruit-fortune-wheel',
+      // visualTheme:begin (auto — scripts/inject-visual-themes.js)
+      visualTheme: {
+        "primary": "#EF476F",
+        "secondary": "#FFD166",
+        "accent": "#06D6A0",
+        "win": "#FFE08A",
+        "bgGradient": "linear-gradient(180deg, rgba(20,30,40,.5) 0%, rgba(8,14,20,.85) 100%)",
+        "frame": "silver",
+        "spin": "gem",
+        "symAnim": "pulse",
+        "winLine": {
+          "style": "solid",
+          "glow": 7,
+          "color": "#FFE08A"
+        },
+        "particle": "coins",
+        "particleColor": [
+          "#ffd700",
+          "#ffe066",
+          "#f0c75e"
+        ],
+        "density": 28
+      },
+      // visualTheme:end
       studioTheme: {
         id: 'golden-reels',
         name: 'Golden Reels Studio',
