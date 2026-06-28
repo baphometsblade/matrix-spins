@@ -20,6 +20,7 @@
     "qa:rtp": "node scripts/verify-rtp.js",
     "qa:schema": "node scripts/check-schema-dml-consistency.js",
     "qa:inserts": "node scripts/check-insert-completeness.js",
+    "qa:assets": "node scripts/verify-asset-refs.js",
     "test": "jest --runInBand --forceExit",
     "test:unit": "jest --runInBand --forceExit tests/unit",
     "test:integration": "jest --runInBand --forceExit tests/integration",
